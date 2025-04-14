@@ -97,7 +97,6 @@ public class CladeKey {
     public void setTo(CladeKey key) {
         assert this != key;
 
-        Arrays.fill(words, 0);
         wordsInUse = key.wordsInUse;
         System.arraycopy(key.words, 0,
                 words, 0,
@@ -169,7 +168,7 @@ public class CladeKey {
         assert getMaxIndex() >= key.getMaxIndex();
         
         int wordsInCommon = Math.min(wordsInUse, key.wordsInUse);
-        wordsInUse = key.wordsInUse;
+        wordsInUse = Math.max(wordsInUse, key.wordsInUse);
 
         // Perform logical OR on words in common
         for (int i = 0; i < wordsInCommon; i++) {

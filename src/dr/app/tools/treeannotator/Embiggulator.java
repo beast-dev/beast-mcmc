@@ -288,7 +288,7 @@ public class Embiggulator {
         long embiggulationCount = 0;
 
         // create and reuse a bitset to avoid reallocating it
-        final CladeKey bits = new CladeKey(maxSize);
+        final CladeKey key = new CladeKey(maxSize);
 
         for (int i = sizeIndices[maxSize - 1]; i < n - 1; i++) {
             BiClade clade1 = clades[i];
@@ -301,18 +301,18 @@ public class Embiggulator {
                         continue;
                     }
 
-                    bits.setTo(key1);
+                    key.setTo(key1);
 
                     if (clade2.key instanceof Integer) {
-                        bits.set((Integer) clade2.key);
+                        key.set((Integer) clade2.key);
                     } else {
-                        bits.or((CladeKey) clade2.key);
+                        key.or((CladeKey) clade2.key);
                     }
 
                     int size = clade1.size + clade2.size;
-                    if (bits.cardinality() == size) {
+                    if (key.cardinality() == size) {
 //                        BiClade clade = (BiClade) cladeMap.get(bits);
-                        BiClade clade = getCladeBySize(bits, size);
+                        BiClade clade = getCladeBySize(key, size);
                         if (clade != null) {
                             clade.addSubClades(clade1, clade2);
                             embiggulationCount++;

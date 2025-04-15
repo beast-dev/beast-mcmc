@@ -181,8 +181,6 @@ public class CladeKey {
                     words, wordsInCommon,
                     wordsInUse - wordsInCommon);
         }
-
-        // recalculateWordsInUse() is unnecessary
     }
 
     public void or(CladeKey key1, CladeKey key2) {

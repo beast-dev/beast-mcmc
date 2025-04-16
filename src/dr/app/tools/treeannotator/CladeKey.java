@@ -27,7 +27,10 @@
 
 package dr.app.tools.treeannotator;
 
+import jebl.math.Random;
+
 import java.util.Arrays;
+import java.util.BitSet;
 
 public class CladeKey {
     /*
@@ -188,13 +191,20 @@ public class CladeKey {
 
         if (key1.wordsInUse >= key2.wordsInUse) {
             wordsInUse = key1.wordsInUse;
-            words = Arrays.copyOf(key1.words, key1.wordsInUse);
+            System.arraycopy(key1.words, 0,
+                    words, 0,
+                    wordsInUse);
+
+//            words = Arrays.copyOf(key1.words, key1.wordsInUse);
             for (int i = 0; i < key2.wordsInUse; i++) {
                 words[i] |= key2.words[i];
             }
         } else {
             wordsInUse = key2.wordsInUse;
-            words = Arrays.copyOf(key2.words, key2.wordsInUse);
+            System.arraycopy(key2.words, 0,
+                    words, 0,
+                    wordsInUse);
+//            words = Arrays.copyOf(key2.words, key2.wordsInUse);
             for (int i = 0; i < key1.wordsInUse; i++) {
                 words[i] |= key1.words[i];
             }
@@ -245,4 +255,74 @@ public class CladeKey {
     public int getMaxIndex() {
         return maxIndex;
     }
+
+    public static void main(String[] argv) {
+        int size = 10000;
+        int count = 100000000;
+
+        BitSet bitset1 = new BitSet();
+        BitSet bitset2 = new BitSet();
+        for (int i = 0; i < 1000; i++) {
+            bitset1.set(Random.nextInt(size));
+            bitset2.set(Random.nextInt(size));
+        }
+
+
+        BitSet bitset = new BitSet();
+
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < count; i++) {
+            bitset.clear();
+            bitset.or(bitset1);
+            bitset.or(bitset2);
+        }
+        long time = System.currentTimeMillis() - startTime;
+        System.out.println("Bitset clear/or/or: " + time);
+
+        CladeKey cladeKey1 = new CladeKey(size);
+        CladeKey cladeKey2 = new CladeKey(size);
+        for (int i = 0; i < 1000; i++) {
+            cladeKey1.set(Random.nextInt(size));
+            cladeKey2.set(Random.nextInt(size));
+        }
+
+        CladeKey cladeKey = new CladeKey(size);
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < count; i++) {
+//            cladeKey.setTo(cladeKey1);
+            cladeKey.clear();
+            cladeKey.or(cladeKey1);
+            cladeKey.or(cladeKey2);
+        }
+         time = System.currentTimeMillis() - startTime;
+        System.out.println("CladeKey clear/or/or: " + time);
+
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < count; i++) {
+            cladeKey.setTo(cladeKey1);
+            cladeKey.or(cladeKey2);
+        }
+        time = System.currentTimeMillis() - startTime;
+        System.out.println("CladeKey setTo/or: " + time);
+
+        // count = 10^9
+        // size = 1024
+//        Bitset clear/or/or: 12977
+//        CladeKey clear/or/or: 12798
+//        CladeKey setTo/or: 8594
+
+        // size = 1600
+//        Bitset clear/or/or: 15151
+//        CladeKey clear/or/or: 15373
+//        CladeKey setTo/or: 10699
+
+        // size = 10000
+//        Bitset clear/or/or: 59138
+//        CladeKey clear/or/or: 59450
+//        CladeKey setTo/or: 36380
+
+
+    }
+
 }

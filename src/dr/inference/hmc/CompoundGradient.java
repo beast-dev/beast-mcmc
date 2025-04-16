@@ -39,7 +39,7 @@ import java.util.concurrent.Future;
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
+public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
 
     protected final int dimension;
     final List<GradientWrtParameterProvider> derivativeList;
@@ -163,7 +163,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
         if (parallelExecutor != null)
             return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.GRADIENT);
         else {
-            return getDerivativeLogDensitySerialImpl();
+            return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.GRADIENT);
         }
     }
 
@@ -181,14 +181,14 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
         }, dimension);
     }
 
-    private double[] getDerivativeLogDensitySerialImpl() {
+    private double[] getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType derivativeType) {
 
         double[] result = new double[dimension];
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
             
-            double[] tmp = grad.getGradientLogDensity(); // TODO Generalize for Hessian
+            double[] tmp = derivativeType.getDerivativeLogDensity(grad);
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();
         }
@@ -206,5 +206,19 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
 
     public List<GradientWrtParameterProvider> getDerivativeList() {
         return derivativeList;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        if (parallelExecutor != null)
+            return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.DIAGONAL_HESSIAN);
+        else {
+            return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.DIAGONAL_HESSIAN);
+        }
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not implemented yet");
     }
 }

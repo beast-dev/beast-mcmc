@@ -38,6 +38,7 @@ import java.util.*;
  */
 class BiClade implements Clade {
 
+
     /**
      * Clade for a tip
      * @param index number of the tip
@@ -206,6 +207,8 @@ class BiClade implements Clade {
      final Object key;
 
     private final Taxon taxon;
+
+    public Set<BiClade> majorityRuleSubClades;
 
     private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
     BiClade bestLeft = null;

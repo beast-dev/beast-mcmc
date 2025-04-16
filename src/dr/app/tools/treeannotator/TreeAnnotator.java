@@ -87,6 +87,7 @@ public class TreeAnnotator extends BaseTreeTool {
     enum Target {
         HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
+        MAJORITY_RULE("Majority-rule consensus tree"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -154,7 +155,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         this.threadCount = threadCount;
 
-        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR);
+        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR || targetOption == Target.MAJORITY_RULE);
 
         if (COUNT_TREES) {
             countTrees(inputFileName);
@@ -200,6 +201,11 @@ public class TreeAnnotator extends BaseTreeTool {
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
                 targetTree = getHIPSTRTree(cladeSystem);
+                break;
+            }
+            case MAJORITY_RULE: {
+                progressStream.println("Finding majority-rule consensus tree...");
+                targetTree = getMajorityRuleConsensusTree(cladeSystem);
                 break;
             }
             default: throw new IllegalArgumentException("Unknown targetOption");
@@ -570,6 +576,26 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println();
 
         return bestTree;
+    }
+
+    private MutableTree getMajorityRuleConsensusTree(CladeSystem cladeSystem) {
+
+        long startTime = System.currentTimeMillis();
+
+        MajorityRuleTreeBuilder treeBuilder = new MajorityRuleTreeBuilder();
+        MutableTree tree = treeBuilder.getMajorityRuleConsensusTree(cladeSystem, taxa);
+
+        double score = scoreTree(tree, cladeSystem);
+
+        double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
+        progressStream.println("[" + timeElapsed + " secs]");
+        progressStream.println();
+        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
+        reportStatistics(cladeSystem, tree);
+//        reportStatisticTables(cladeSystem, tree);
+        progressStream.println();
+
+        return tree;
     }
 
     private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
@@ -943,7 +969,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.StringOption("type", new String[] {"hipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default), 'mcc' or 'mrc'"),
                         new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1024,8 +1050,12 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         Target target = Target.HIPSTR;
-        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
-            target = Target.MAX_CLADE_CREDIBILITY;
+        if (arguments.hasOption("type")) {
+            if (arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
+                target = Target.MAX_CLADE_CREDIBILITY;
+            } else if (arguments.getStringOption("type").equalsIgnoreCase("MRC")) {
+                target = Target.MAJORITY_RULE;
+            }
         }
 
         if (arguments.hasOption("target")) {
@@ -1083,6 +1113,8 @@ public class TreeAnnotator extends BaseTreeTool {
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
             progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+        } else if (target == Target.MAJORITY_RULE) {
+            progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {
 //            progressStream.println("Loaded user target tree.");
         }

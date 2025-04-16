@@ -30,6 +30,8 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.WrappedVector;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +40,7 @@ import java.util.List;
  * @author Xinghua Tao
  * @author Marc Suchard
  */
-public class StronglyLumpableCtmcRates extends AbstractModel implements LogAdditiveCtmcRateProvider {
+public class StronglyLumpableCtmcRates extends AbstractModel implements LogAdditiveCtmcRateProvider, Reportable {
 
     // Stores SuperInfo objects, which hold transition rate information between lumped states.
     private final SuperInfo[] map;
@@ -251,6 +253,12 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
     @Override
     protected void acceptState() {
 
+    }
+
+    @Override
+    public String getReport() {
+        double[] rates = getRates();
+        return new WrappedVector.Raw(rates).toString();
     }
 
 

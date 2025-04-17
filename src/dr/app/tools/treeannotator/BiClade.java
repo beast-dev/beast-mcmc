@@ -86,6 +86,9 @@ class BiClade implements Clade {
     }
 
     public void addSubClades(Clade child1, Clade child2) {
+        if (subClades == null) {
+            subClades = new HashSet<>();
+        }
         // arrange with the lowest index on the left
         BiClade left = (BiClade)child1;
         BiClade right = (BiClade)child2;
@@ -96,6 +99,28 @@ class BiClade implements Clade {
         assert left.size + right.size == size;
         assert left.index == index;
         subClades.add(new Pair<>(left, right));
+    }
+
+    void addParent(BiClade parentClade) {
+        if (parentClades == null) {
+            parentClades = new HashSet<>();
+        }
+        parentClades.add(parentClade);
+    }
+
+    void addChild(BiClade childClade) {
+        if (childClades == null) {
+            childClades = new HashSet<>();
+        }
+        childClades.add(childClade);
+    }
+
+    public BiClade getMajorityRuleParent() {
+        return majorityRuleParent;
+    }
+
+    public void setMajorityRuleParent(BiClade majorityRuleParent) {
+        this.majorityRuleParent = majorityRuleParent;
     }
 
     @Override
@@ -159,6 +184,14 @@ class BiClade implements Clade {
         return subClades;
     }
 
+    public Set<BiClade> getParentClades() {
+        return parentClades;
+    }
+
+    public Set<BiClade> getChildClades() {
+        return childClades;
+    }
+
     @Override
     public Object getKey() {
         return key;
@@ -208,11 +241,14 @@ class BiClade implements Clade {
 
     private final Taxon taxon;
 
-    public Set<BiClade> majorityRuleSubClades;
+    public Set<BiClade> majorityRuleSubClades = null;
+    public BiClade majorityRuleParent = null;
 
-    private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
+    private Set<Pair<BiClade, BiClade>> subClades = null;
     BiClade bestLeft = null;
     BiClade bestRight = null;
+    private Set<BiClade> parentClades = null;
+    private Set<BiClade> childClades = null;
 
 
     double bestSubTreeScore = Double.NaN;

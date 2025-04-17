@@ -155,7 +155,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         this.threadCount = threadCount;
 
-        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR || targetOption == Target.MAJORITY_RULE);
+        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR || targetOption == Target.MAJORITY_RULE, targetOption == Target.MAJORITY_RULE);
 
         if (COUNT_TREES) {
             countTrees(inputFileName);
@@ -646,8 +646,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 treeCladeCount);
         if (treeCladeCount < allCladeCount) {
             if (extendedMetrics) {
-                Set<Clade> treeClades = cladeSystem.getTopClades(tree, threshold);
-                Set<Clade> allClades = cladeSystem.getTopClades(threshold);
+                Set<BiClade> treeClades = cladeSystem.getTopClades(tree, threshold);
+                Set<BiClade> allClades = cladeSystem.getTopClades(threshold);
 
                 Set<Clade> missingClades = new HashSet<>(allClades);
                 missingClades.removeAll(treeClades);

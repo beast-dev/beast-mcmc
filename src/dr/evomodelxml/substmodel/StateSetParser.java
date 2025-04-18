@@ -28,13 +28,16 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.StronglyLumpableCtmcRates;
+import dr.inference.model.Parameter;
 import dr.util.Identifiable;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.StateSet;
+//import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.StateSet;
+import dr.inference.model.StateSet;
 import static dr.evoxml.GeneralDataTypeParser.CODE;
 import static dr.evoxml.GeneralDataTypeParser.STATE;
 
@@ -64,6 +67,10 @@ public class StateSetParser extends AbstractXMLObjectParser {
 
         return new StateSet(id, states, dataType);
     }
+
+//    private StateSet parseStateSet(XMLObject xo, DataType dataType) throws XMLParseException {
+//
+//        }
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;

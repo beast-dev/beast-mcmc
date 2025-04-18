@@ -115,6 +115,11 @@ public class TaxonEffectTraitDataModel extends
     }
 
     @Override
+    protected int getTaxonIndex(int parameterIndex) {
+        return map.getTaxonIndex(parameterIndex / (dimTrait * numTraits));
+    }
+
+    @Override
     public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
                                       int offset, int dimGradient) {
         throw new RuntimeException("not yet implemented");
@@ -130,6 +135,7 @@ public class TaxonEffectTraitDataModel extends
         private final Parameter parameter;
         private final Map<String,Integer> taxonNameToIndex;
         private final int[] map;
+        private final int[] inverseMap;
         private final int dim;
 
         public EffectMap(Tree tree, Parameter parameter, int dim) {
@@ -156,6 +162,7 @@ public class TaxonEffectTraitDataModel extends
             parameter.setDimensionNames(names);
 
             this.map = makeMap(tree, taxonNameToIndex);
+            this.inverseMap = makeInverseMap(map);
         }
 
         public EffectMap(Tree tree, EffectMap original) {
@@ -165,13 +172,27 @@ public class TaxonEffectTraitDataModel extends
             this.dim = original.dim;
 
             this.map = makeMap(tree, taxonNameToIndex);
+            this.inverseMap = makeInverseMap(map);
         }
 
-        public int getEffectIndex(int taxonId) {
-            return map[taxonId];
+        public int getEffectIndex(int taxonIndex) {
+            return map[taxonIndex];
+        }
+
+        public int getTaxonIndex(int effectIndex) {
+            return inverseMap[effectIndex];
         }
 
         public Parameter getEffects() { return parameter; }
+
+        private int[] makeInverseMap(int[] map) {
+            int[] inverse = new int[map.length];
+            for (int i = 0; i < map.length; ++i) {
+                inverse[map[i]] = i;
+            }
+
+            return inverse;
+        }
 
         private int[] makeMap(Tree tree, Map<String,Integer> taxonNameToIndex) {
             int[] map = new int[tree.getExternalNodeCount()];

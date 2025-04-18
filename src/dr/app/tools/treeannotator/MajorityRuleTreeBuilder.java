@@ -45,14 +45,20 @@ public class MajorityRuleTreeBuilder {
             BiClade mrParent = findMajorityRuleParent(mrClade);
             mrParent.addChild(mrClade);
         }
-
-        Set<BiClade> majorityRuleClades = cladeSystem.getTopClades(0.5);
-        for (BiClade mrClade : majorityRuleClades) {
-            if (mrClade != rootClade) {
-                BiClade mrParent = findMajorityRuleParent(mrClade);
-                mrParent.addChild(mrClade);
+        Set<BiClade> majorityRuleCladeSet = cladeSystem.getTopClades(0.5);
+        List<BiClade> majorityRuleClades = cladeSystem.getTopCladeList(0.5);
+        boolean done;
+        do {
+            done = true;
+            for (BiClade mrClade : majorityRuleClades) {
+                if (mrClade != rootClade) {
+                        BiClade mrParent = findMajorityRuleParent(mrClade);
+                        mrParent.addChild(mrClade);
+                    assert true;
+                }
             }
-        }
+        } while (!done);
+
 
 //        findMajorityR uleConsensusTree(rootClade);
 
@@ -132,7 +138,7 @@ public class MajorityRuleTreeBuilder {
             }
         }
 
- //       clade.setMajorityRuleParent(mrParent);
+        clade.setMajorityRuleParent(mrParent);
 
         return mrParent;
     }

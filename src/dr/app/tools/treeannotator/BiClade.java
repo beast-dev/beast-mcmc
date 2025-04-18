@@ -228,8 +228,20 @@ class BiClade implements Clade {
 //        return left.hashCode() ^ right.hashCode();
 //    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BiClade biClade)) return false;
+        return Objects.equals(key, biClade.key);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key);
+    }
+
     public String toString() {
-        return "clade " + hashCode();
+        return "clade " + key;
     }
 
      int count;
@@ -255,3 +267,4 @@ class BiClade implements Clade {
 
     private final List<Object[]> attributeValues = new ArrayList<>();
 }
+

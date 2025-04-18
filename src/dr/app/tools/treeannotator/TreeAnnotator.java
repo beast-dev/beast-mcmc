@@ -585,13 +585,14 @@ public class TreeAnnotator extends BaseTreeTool {
         MajorityRuleTreeBuilder treeBuilder = new MajorityRuleTreeBuilder();
         MutableTree tree = treeBuilder.getMajorityRuleConsensusTree(cladeSystem, taxa);
 
-        double score = scoreTree(tree, cladeSystem);
+        // majority rule tree may be non-bifurcating
+        // double score = scoreTree(tree, cladeSystem);
 
         double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
-        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
-        reportStatistics(cladeSystem, tree);
+//        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
+//        reportStatistics(cladeSystem, tree);
 //        reportStatisticTables(cladeSystem, tree);
         progressStream.println();
 

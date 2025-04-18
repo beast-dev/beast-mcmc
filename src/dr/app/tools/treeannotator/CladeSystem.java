@@ -140,11 +140,14 @@ public final class CladeSystem {
 //            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
-
             BiClade clade1 = addClades(tree, tree.getChild(node, 0));
             BiClade clade2 = addClades(tree, tree.getChild(node, 1));
             synchronized (cladeMap) {
                 clade = getOrAddClade(clade1, clade2);
+            }
+
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                BiClade = childClade = addClades(tree, tree.getChild(node, i));
             }
 
             clade1.addParent(clade);
@@ -163,6 +166,27 @@ public final class CladeSystem {
      * see if a clade exists otherwise create it
      */
     private BiClade getOrAddClade(Clade child1, Clade child2) {
+        Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
+        BiClade clade = cladeMap.get(key);
+        if (clade == null) {
+            if (keepSubClades) {
+                clade = new BiClade(child1, child2);
+            } else {
+                clade = new BiClade(key, child1.getSize() + child2.getSize());
+            }
+            cladeMap.put(clade.getKey(), clade);
+        } else {
+            synchronized (clade) {
+                if (keepSubClades) {
+                    clade.addSubClades(child1, child2);
+                }
+            }
+        }
+
+        return clade;
+    }
+
+    private BiClade getOrAddClade(Clade childClades ...) {
         Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
         BiClade clade = cladeMap.get(key);
         if (clade == null) {
@@ -390,6 +414,19 @@ public final class CladeSystem {
     public Set<BiClade> getTopClades(double threshold) {
         Set<BiClade> clades = new TreeSet<>();
         for (BiClade clade : cladeMap.values()) {
+            if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
+                clades.add(clade);
+            }
+        }
+        return clades;
+    }
+
+    public List<BiClade> getTopCladeList(double threshold) {
+        List<BiClade> clades = new ArrayList<>();
+        for (BiClade clade : cladeMap.values()) {
+            if (clade.toString().equals("clade {7, 13}")) {
+                System.out.println();
+            }
             if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
                 clades.add(clade);
             }

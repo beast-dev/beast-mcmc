@@ -214,6 +214,19 @@ class BiClade implements Clade {
         return bits;
     }
 
+    public static Object makeKey(Object... keys) {
+        BitSet bits = new BitSet();
+        for (Object key : keys) {
+            if (key instanceof Integer) {
+                bits.set((Integer) key);
+            } else {
+                assert key instanceof BitSet;
+                bits.or((BitSet) key);
+            }
+        }
+        return bits;
+    }
+
 //    public boolean equals(Object o) {
 //        if (this == o) return true;
 //        if (o == null || getClass() != o.getClass()) return false;

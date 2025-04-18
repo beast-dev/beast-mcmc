@@ -35,18 +35,30 @@ import dr.util.Transform;
 public class InfinitesimalRatesLogger implements Loggable {
 
     public InfinitesimalRatesLogger(SubstitutionModel substitutionModel,  Transform transform,
-                                    boolean diagonalElements, String order) {
+                                    boolean diagonalElements, String order, Integer subset) {
         this.substitutionModel = substitutionModel;
         this.diagonalElements = diagonalElements;
         this.transform = transform;
         this.order = order;
+        this.subset = subset;
         this.stateCount = substitutionModel.getDataType().getStateCount();
+    }
+
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel,  Transform transform,
+                                    boolean diagonalElements, String order) {
+        this(substitutionModel, transform, diagonalElements, order, null);
     }
 
     @Override
     public LogColumn[] getColumns() {
-        int nOutputs = stateCount * stateCount;
-        if (!diagonalElements) nOutputs -= stateCount;
+        int nOutputs;
+
+        if (subset != null) {
+            nOutputs = subset;
+        } else {
+            nOutputs = stateCount * stateCount;
+            if (!diagonalElements) nOutputs -= stateCount;
+        }
         LogColumn[] columns = new LogColumn[nOutputs];
 
         if (generator == null) {
@@ -69,6 +81,7 @@ public class InfinitesimalRatesLogger implements Loggable {
                 } else {
                     throw new IllegalArgumentException("Invalid order: " + order);
                 }
+                if (subset != null && indexK >= subset) {continue;}
                 final int k = indexK;
                 columns[k] = new NumberColumn(substitutionModel.getId() + "." + (i + 1) + "." + (j + 1)) {
                     @Override
@@ -111,4 +124,5 @@ public class InfinitesimalRatesLogger implements Loggable {
     private final boolean diagonalElements;
     private final String order;
     private double[] generator;
+    private final Integer subset;
 }

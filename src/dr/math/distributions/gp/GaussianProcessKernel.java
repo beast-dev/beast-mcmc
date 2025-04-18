@@ -27,10 +27,8 @@
 
 package dr.math.distributions.gp;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.*;
 
 import java.util.List;
 
@@ -46,6 +44,8 @@ public interface GaussianProcessKernel {
     double getUnscaledCovariance(double[] x, double[] y);
 
     double getScale();
+
+    List<Parameter> getParameters();
 
     class Linear extends Base {
 
@@ -70,6 +70,11 @@ public interface GaussianProcessKernel {
 
         private static final String TYPE = "DotProduct";
 
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            throw new RuntimeException("The linear kernel does not have a length parameter");
+        }
+
     }
 
     class SquaredExponential extends Base {
@@ -93,6 +98,14 @@ public interface GaussianProcessKernel {
         }
 
         private static final String TYPE = "SquaredExponential";
+
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            double normSquared = (a - b) * (a - b);
+            double scale = getScale();
+            return scale * Math.exp(-normSquared / (2 * l * l)) *
+                    normSquared / (l * l * l);
+        }
     }
 
     class OrnsteinUhlenbeck extends NormedBase {
@@ -103,7 +116,12 @@ public interface GaussianProcessKernel {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-
+        @Override
+        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+                                                  double[] alpha, double[] P, double[] matrix, int dim,
+                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+            return new double[0];
+        }
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
@@ -119,7 +137,12 @@ public interface GaussianProcessKernel {
 
             return (1 + argument1 + argument2) * Math.exp(-argument1);
         }
-
+        @Override
+        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+                                                  double[] alpha, double[] P, double[] matrix, int dim,
+                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+            return new double[0];
+        }
         private static final String TYPE = "Matern5/2";
     }
 
@@ -133,6 +156,12 @@ public interface GaussianProcessKernel {
             double argument = Math.sqrt(3) * norm / length;
 
             return (1 + argument) * Math.exp(-argument);
+        }
+        @Override
+        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+                                                  double[] alpha, double[] P, double[] matrix, int dim,
+                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+            return new double[0];
         }
 
         private static final String TYPE = "Matern3/2";
@@ -199,6 +228,11 @@ public interface GaussianProcessKernel {
         throw new IllegalArgumentException("Unknown kernel type");
     }
 
+    @FunctionalInterface
+    interface HyperparameterGradientFunction {
+        double apply(double a, double b, double hyperValue);
+    }
+
     abstract class Base extends AbstractModel implements GaussianProcessKernel {
 
         final List<Parameter> parameters;
@@ -226,6 +260,65 @@ public interface GaussianProcessKernel {
             return normSquared;
         }
 
+        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+                                                  double[] alpha, double[] P, double[] matrix, int dim,
+                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+            GaussianProcessKernel.HyperparameterGradientFunction gradientFunction;
+            double hyperValue = parameter.getParameterValue(0);
+
+            if (parameter == getParameters().get(0)) {
+                gradientFunction = this::computeGradientWrtScale;
+            } else if (parameter == getParameters().get(1)) {
+                gradientFunction = this::computeGradientWrtLength;
+            } else {
+                throw new IllegalArgumentException("Unknown parameter");
+            }
+            return getGeneralGradient(alpha, P, matrix, dim, designMatrix1, designMatrix2, hyperValue, gradientFunction);
+        }
+
+        public double computeGradientWrtScale(double a, double b, double value) {
+            return getUnscaledCovariance(a, b);
+        }
+
+        public double computeGradientWrtLength(double a, double b, double hypervalue) {
+            throw new RuntimeException("Method implemented in the subclasses");
+        }
+
+        static double[] getGeneralGradient(double[] alpha, double[] P, double[] matrix, int dim,
+                                           DesignMatrix designMatrix1, DesignMatrix designMatrix2,
+                                           double hyperValue, HyperparameterGradientFunction gradientFunction) {
+            // Compute \frac{\partial K}{\partial \theta}
+            for (int i = 0; i < dim; ++i) {
+                double a = designMatrix1.getParameterValue(i, 0);
+                for (int j = 0; j < dim; ++j) {
+                    double b = designMatrix2.getParameterValue(j, 0);
+                    matrix[i * dim + j] = gradientFunction.apply(a, b, hyperValue);
+                }
+            }
+            return new double[]{computeGeneralGradient(alpha, P, matrix, dim)};
+        }
+
+        static double computeGeneralGradient(double[] alpha, double[] P, double[] matrix, int dim) { // notice that the sign of alpha does not matter
+
+            double quadForm = 0.0;
+            double traceAB = 0.0;
+
+            // Compute alpha^T B alpha
+            // Compute trace(AB) = sum_{i,j} A_{ij} * B_{ij}
+            int idx = 0;
+            for (int i = 0; i < dim; ++i) {
+                double alpha_i = alpha[i];
+                for (int j = 0; j < dim; ++j, ++idx) {
+                    double alpha_j = alpha[j];
+                    double matrixij = matrix[idx];
+                    quadForm += alpha_i * matrixij * alpha_j;
+                    traceAB += P[idx] * matrixij;
+                }
+            }
+
+            return 0.5 * (quadForm - traceAB);
+        }
+
         @Override
         public double getScale() {
             return parameters.get(0).getParameterValue(0);
@@ -233,6 +326,10 @@ public interface GaussianProcessKernel {
 
         double getLength() {
             return parameters.get(1).getParameterValue(0);
+        }
+
+        public List<Parameter> getParameters() {
+            return parameters;
         }
 
         @Override

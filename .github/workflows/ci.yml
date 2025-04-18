@@ -23,11 +23,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - name: Set up JDK 8
-              uses: actions/setup-java@v4
-              with:
-                  java-version: "8"
-                  distribution: "adopt"
+#             - name: Set up JDK 8
+#               uses: actions/setup-java@v4
+#               with:
+#                   java-version: "17"
+#                   distribution: "temurin"
             - name: Setup cmake
               uses: lukka/get-cmake@latest
             - name: Cache BEAGLE

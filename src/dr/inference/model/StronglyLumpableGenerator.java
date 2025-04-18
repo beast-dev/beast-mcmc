@@ -40,7 +40,7 @@ public class StronglyLumpableGenerator {
         // across lump rate
         xml.append("\t<rates>\n");
         int acrossRateValueSize = stateSets.length * (stateSets.length - 1);
-        String acrossRateValues = "1 ".repeat(acrossRateValueSize).trim();
+        String acrossRateValues = new String(new char[acrossRateValueSize]).replace("\0", "1 ").trim();
         xml.append("\t\t<parameter id=\"lump.across.rates\"  value=\"").append(acrossRateValues).append("\"/>\n");
         xml.append("\t</rates>\n");
 
@@ -60,7 +60,8 @@ public class StronglyLumpableGenerator {
             String lumpId = "L" + (i + 1);
             int numStates = stateSets[i].states().length;
             int rateValueSize = numStates * (numStates - 1);
-            String rateValues = "1 ".repeat(rateValueSize).trim();
+            String rateValues = new String(new char[rateValueSize]).replace("\0", "1 ").trim();
+
 
 
             xml.append("\t<lump id=\"").append(lumpId).append("\">\n");

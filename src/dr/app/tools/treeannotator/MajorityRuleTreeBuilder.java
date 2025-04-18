@@ -41,6 +41,11 @@ public class MajorityRuleTreeBuilder {
     public MutableTree getMajorityRuleConsensusTree(CladeSystem cladeSystem, TaxonList taxonList) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();
 
+        for (BiClade mrClade : cladeSystem.getTipClades()) {
+            BiClade mrParent = findMajorityRuleParent(mrClade);
+            mrParent.addChild(mrClade);
+        }
+
         Set<BiClade> majorityRuleClades = cladeSystem.getTopClades(0.5);
         for (BiClade mrClade : majorityRuleClades) {
             if (mrClade != rootClade) {
@@ -49,7 +54,7 @@ public class MajorityRuleTreeBuilder {
             }
         }
 
-//        findMajorityRuleConsensusTree(rootClade);
+//        findMajorityR uleConsensusTree(rootClade);
 
         // create a map so that tip numbers are in the same order as the taxon list
         Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
@@ -62,7 +67,7 @@ public class MajorityRuleTreeBuilder {
         tree.setLengthsKnown(false);
         return tree;
     }
-    
+
 //    private static BiClade findMajorityRuleParent(BiClade clade) {
 //        if (clade.getMajorityRuleParent() != null) {
 //            return clade.getMajorityRuleParent();
@@ -109,36 +114,25 @@ public class MajorityRuleTreeBuilder {
             return clade.getMajorityRuleParent();
         }
 
-        assert clade.getParentClades() != null;
-
-        BiClade mrParent = null;
+        Set<BiClade> mrParents = new HashSet<>();
 
         // find the smallest parent clade that is majority rule
         for (BiClade parent : clade.getParentClades()) {
             if (parent.getCredibility() < 0.5) {
-                mrParent = findMajorityRuleParent(parent);
+                mrParents.add(findMajorityRuleParent(parent));
+            } else {
+                mrParents.add(parent);
             }
+        }
+
+        BiClade mrParent = null;
+        for (BiClade parent : mrParents) {
             if (mrParent == null || parent.getSize() < mrParent.getSize()) {
                 mrParent = parent;
             }
         }
 
-//        if (mrParent == null) {
-//            // no MR direct parents so crawl upwards
-//            for (BiClade parent : clade.getParentClades()) {
-//                BiClade p = parent;
-//                while (p.getCredibility() < 0.5 && p.getParentClades() != null) {
-//                    p = findMajorityRuleParent(p);
-//                }
-//                if (mrParent == null || p.getSize() < mrParent.getSize()) {
-//                    mrParent = p;
-//                }
-//            }
-//        }
-
-        if (mrParent.getCredibility() >= 0.5) {
-            clade.setMajorityRuleParent(mrParent);
-        }
+ //       clade.setMajorityRuleParent(mrParent);
 
         return mrParent;
     }

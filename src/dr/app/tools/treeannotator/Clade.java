@@ -65,6 +65,6 @@ public interface Clade extends Comparable<Clade> {
      */
     @Override
     default int compareTo(Clade o) {
-        return o.getSize() - this.getSize();
+        return this.getSize() - o.getSize();
     }
 }

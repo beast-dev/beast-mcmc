@@ -138,8 +138,6 @@ public final class CladeSystem {
             BiClade tipClade = (BiClade)tipClades.get(index);
             clade = tipClade;
 //            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
-
-            tipClade.addParent(clade);
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
@@ -166,7 +164,7 @@ public final class CladeSystem {
      */
     private BiClade getOrAddClade(Clade child1, Clade child2) {
         Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
-        BiClade clade = (BiClade) cladeMap.get(key);
+        BiClade clade = cladeMap.get(key);
         if (clade == null) {
             if (keepSubClades) {
                 clade = new BiClade(child1, child2);

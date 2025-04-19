@@ -973,7 +973,7 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="true"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testAdaptiveMCMC.chkpt" overwrite="true"/>
 	</mcmc>
 
 </beast>

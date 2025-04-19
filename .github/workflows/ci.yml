@@ -52,11 +52,11 @@ jobs:
               id: set-matrices
               run: |
                   echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep MC.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+#                  echo "xml-short-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep MC.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
                   echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
-            xml-short-load-state-matrix: ${{ steps.set-matrices.outputs.xml-short-load-state-matrix }}
+#            xml-short-load-state-matrix: ${{ steps.set-matrices.outputs.xml-short-load-state-matrix }}
             xml-long-load-state-matrix: ${{ steps.set-matrices.outputs.xml-long-load-state-matrix }}
 
     test-xml:
@@ -85,10 +85,10 @@ jobs:
     test-xml-short-load-state:
         needs: build
         runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                file: ${{fromJson(needs.build.outputs.xml-short-load-state-matrix)}}
+#        strategy:
+#            fail-fast: false
+#            matrix:
+#                file: ${{fromJson(needs.build.outputs.xml-short-load-state-matrix)}}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/cache@v4
@@ -101,12 +101,18 @@ jobs:
                       beagle-beast
             - name: Rebuild project
               run: ant dist
-            - name: Run test with load state for ${{ matrix.file }}
-              id: short-checkpointing
+ #           - name: Run test with load state for ${{ matrix.file }}
+            - name: checkpoint adaptive MCMC
+              id: checkpoint-adaptive-mcmc
               run: |
-                  checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state $checkpoint -save_at 5000 ${{ matrix.file }}
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -save_state $checkpoint -save_at 10000 -overwrite ${{ matrix.file }}
+ #                 checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state adaptiveMCMC.chkpt -save_at 5000 tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state adaptiveMCMC.chkpt -save_state adaptiveMCMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+            - name: checkpoint HMC
+              id: checkpoint-hmc
+              run: |
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state HMC.chkpt -save_at 5000 tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state HMC.chkpt -save_state HMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
             - name: Check generated files
               run: ls -R
             - name: Upload checkpoint file

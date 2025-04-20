@@ -101,12 +101,12 @@ jobs:
               id: checkpoint-adaptive-mcmc
               run: |
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testAdaptiveMCMC.chkpt -save_at 5000 tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testAdaptiveMCMC.chkpt -save_state testAdaptiveMCMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -load_state testAdaptiveMCMC.chkpt -save_state testAdaptiveMCMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
             - name: checkpoint HMC
               id: checkpoint-hmc
               run: |
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testHMC.chkpt -save_at 5000 tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testHMC.chkpt -save_state testHMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -load_state testHMC.chkpt -save_state testHMC.chkpt -save_at 10000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
             - name: Check generated files
               run: ls -R
             - name: Upload checkpoint file

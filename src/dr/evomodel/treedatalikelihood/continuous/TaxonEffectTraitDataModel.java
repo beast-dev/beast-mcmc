@@ -84,6 +84,10 @@ public class TaxonEffectTraitDataModel extends
         return tree;
     }
 
+    public Parameter getEffects() {
+        return map.getEffects();
+    }
+
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
@@ -104,9 +108,10 @@ public class TaxonEffectTraitDataModel extends
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);
         if (variable == effects) {
-            if (type == Parameter.ChangeType.VALUE_CHANGED) {
-                fireModelChanged(this, getTaxonIndex(index));
-            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
+            if (type == Parameter.ChangeType.VALUE_CHANGED && index != -1) {
+                fireModelChanged(this, getTaxonIndex(index)); // TODO does this really work?
+//                fireModelChanged(this);
+            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED || index == -1) {
                 fireModelChanged(this);
             } else {
                 throw new RuntimeException("Unhandled parameter change type");

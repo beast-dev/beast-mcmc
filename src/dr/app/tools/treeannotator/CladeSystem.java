@@ -110,11 +110,11 @@ public final class CladeSystem {
     private void addTipClades(Tree tree) {
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
+            int index = tip.getNumber();
             Taxon taxon = tree.getNodeTaxon(tip);
-//            int index = tip.getNumber();
-//            if (taxonNumberMap != null) {
-            int index = taxonNumberMap.get(taxon);
-//            }
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(taxon);
+            }
             BiClade clade = new BiClade(index, taxon);
             tipClades.put(index, clade);
         }
@@ -127,13 +127,11 @@ public final class CladeSystem {
         BiClade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
-//            int index = node.getNumber();
-//            if (taxonNumberMap != null) {
-            int index = taxonNumberMap.get(tree.getNodeTaxon(node));
-//            }
-
-            BiClade tipClade = (BiClade)tipClades.get(index);
-            clade = tipClade;
+            int index = node.getNumber();
+            if (taxonNumberMap != null) {
+                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
+            clade = tipClades.get(index);
 //            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
@@ -172,9 +170,10 @@ public final class CladeSystem {
             }
             cladeMap.put(clade.getKey(), clade);
         } else {
-//            synchronized (clade) {
-            if (keepSubClades) {
-                clade.addSubClades(child1, child2);
+            synchronized (clade) {
+                if (keepSubClades) {
+                    clade.addSubClades(child1, child2);
+                }
             }
 //            }
         }
@@ -198,10 +197,10 @@ public final class CladeSystem {
         Object key;
 
         if (tree.isExternal(node)) {
-//            key = node.getNumber();
-//            if (taxonNumberMap != null) {
+            key = node.getNumber();
+            if (taxonNumberMap != null) {
                 key = taxonNumberMap.get(tree.getNodeTaxon(node));
-//            }
+            }
         } else {
             assert tree.getChildCount(node) == 2;
 
@@ -418,7 +417,6 @@ public final class CladeSystem {
     public Set<BiClade> getTopClades(double threshold) {
         Set<BiClade> clades = new HashSet<>();
         for (BiClade clade : cladeMap.values()) {
-            Object key = clade.getKey();
             if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
                 clades.add(clade);
             }
@@ -429,9 +427,6 @@ public final class CladeSystem {
     public List<BiClade> getTopCladeList(double threshold) {
         List<BiClade> clades = new ArrayList<>();
         for (BiClade clade : cladeMap.values()) {
-            if (clade.toString().equals("clade {7, 13}")) {
-                System.out.println();
-            }
             if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
                 clades.add(clade);
             }

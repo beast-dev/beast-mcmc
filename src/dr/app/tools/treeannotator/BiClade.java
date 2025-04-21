@@ -282,7 +282,6 @@ class BiClade implements Clade {
 
     private final Taxon taxon;
 
-    public Set<BiClade> majorityRuleSubClades = null;
     public BiClade majorityRuleParent = null;
 
     private Set<Pair<BiClade, BiClade>> subClades = null;
@@ -296,4 +295,3 @@ class BiClade implements Clade {
 
     private final List<Object[]> attributeValues = new ArrayList<>();
 }
-

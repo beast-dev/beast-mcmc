@@ -1,7 +1,7 @@
 /*
  * XMLObject.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -344,7 +344,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the named attribute as a int[].
+     * @return the named attribute as an int[].
      */
     public int[] getIntegerArrayAttribute(String name) throws XMLParseException {
         return getIntegerArray(getAndTest(name));
@@ -352,7 +352,7 @@ public class XMLObject {
 
     /**
      * @param i the index of the child to return
-     * @return the ith child as a int[].
+     * @return the ith child as an int[].
      * @throws XMLParseException if getChild(i) would
      */
     public int[] getIntegerArrayChild(int i) throws XMLParseException {
@@ -561,7 +561,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double if possible
+     * @return the object as a double if possible
      */
     private double getDouble(Object obj) throws XMLParseException {
         try {
@@ -578,7 +578,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private double[] getDoubleArray(Object obj) throws XMLParseException {
 
@@ -600,7 +600,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private int[] getIntegerArray(Object obj) throws XMLParseException {
 
@@ -655,7 +655,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private String[] getStringArray(Object obj) throws XMLParseException {
 
@@ -695,7 +695,6 @@ public class XMLObject {
         return defaultValue;
     }
 
-
     public XMLObject getParent() {
         return parent;
     }
@@ -711,5 +710,5 @@ public class XMLObject {
     private Object nativeObject;
 
     // The objectStore representing the local scope of this element.
-//	private ObjectStore store;
+    // private ObjectStore store;
 }

@@ -548,7 +548,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public final boolean doImportTraits() {
         File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat")});
+                new FileNameExtensionFilter("Tab-delimited text files", "tsv", "txt", "tab", "dat")});
 
         if (files != null && files.length != 0) {
             try {

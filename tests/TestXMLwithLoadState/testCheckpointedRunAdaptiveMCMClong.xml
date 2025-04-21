@@ -873,7 +873,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="5000" autoOptimize="false">
+	<mcmc id="mcmc" chainLength="10000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -973,7 +973,17 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testAdaptiveMCMC.chkpt" overwrite="true"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="10000" checkpointFinal="10000" fileName="testAdaptiveMCMClong.chkpt" overwrite="false"/>
 	</mcmc>
 
+	<assertEqual tolerance="1e-6" toleranceType="absolute" verbose="true">
+		<message>
+			Check log joint density after 10000 iterations against the result stored in testAdaptiveMCMC.chkpt
+		</message>
+		<actual regex="posterior log-likelihood\s*=\s*(.*)\n">
+			<posterior idref="posterior"/>
+		</actual>
+		<expected checkpointFileName="testAdaptiveMCMC.chkpt"/>
+	</assertEqual>
+	
 </beast>

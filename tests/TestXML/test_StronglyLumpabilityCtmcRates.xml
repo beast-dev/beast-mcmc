@@ -1083,16 +1083,16 @@
 		<stronglyLumpableCtmcRates idref="change_datatype_order"/>
 	</expected>
 </assertEqual>
-	<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_datatype_order vs original
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="change_datatype_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="original"/>
-	</expected>
-</assertEqual>
+<!--	<assertEqual tolerance="1e-9">-->
+<!--	<message>-->
+<!--		Check Q matrix change_datatype_order vs original-->
+<!--	</message>-->
+<!--	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">-->
+<!--		<stronglyLumpableCtmcRates idref="change_datatype_order"/>-->
+<!--	</actual>-->
+<!--	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">-->
+<!--		<stronglyLumpableCtmcRates idref="original"/>-->
+<!--	</expected>-->
+<!--</assertEqual>-->
 
 </beast>

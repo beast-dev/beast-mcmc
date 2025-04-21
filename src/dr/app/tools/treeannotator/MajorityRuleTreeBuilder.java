@@ -32,7 +32,6 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.util.Pair;
 
 import java.util.*;
 
@@ -45,22 +44,14 @@ public class MajorityRuleTreeBuilder {
             BiClade mrParent = findMajorityRuleParent(mrClade);
             mrParent.addChild(mrClade);
         }
-        Set<BiClade> majorityRuleCladeSet = cladeSystem.getTopClades(0.5);
-        List<BiClade> majorityRuleClades = cladeSystem.getTopCladeList(0.5);
-        boolean done;
-        do {
-            done = true;
-            for (BiClade mrClade : majorityRuleClades) {
-                if (mrClade != rootClade) {
-                        BiClade mrParent = findMajorityRuleParent(mrClade);
-                        mrParent.addChild(mrClade);
-                    assert true;
-                }
+        Set<BiClade> majorityRuleClades = cladeSystem.getTopClades(0.5);
+        for (BiClade mrClade : majorityRuleClades) {
+            if (mrClade != rootClade) {
+                BiClade mrParent = findMajorityRuleParent(mrClade);
+                mrParent.addChild(mrClade);
+                assert true;
             }
-        } while (!done);
-
-
-//        findMajorityR uleConsensusTree(rootClade);
+        }
 
         // create a map so that tip numbers are in the same order as the taxon list
         Map<Taxon, Integer> taxonNumberMap = new HashMap<>();

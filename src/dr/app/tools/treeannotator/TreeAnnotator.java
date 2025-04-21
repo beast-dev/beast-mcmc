@@ -211,9 +211,10 @@ public class TreeAnnotator extends BaseTreeTool {
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
-        CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
         if (referenceTreeFileName != null) {
+            CladeSystem targetCladeSystem = new CladeSystem(targetTree);
+
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 
             MutableTree referenceTree = readTreeFile(referenceTreeFileName);
@@ -592,7 +593,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
 //        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
-//        reportStatistics(cladeSystem, tree);
+        reportStatistics(cladeSystem, tree);
 //        reportStatisticTables(cladeSystem, tree);
         progressStream.println();
 

@@ -38,7 +38,6 @@ import java.util.*;
  */
 class BiClade implements Clade {
 
-
     /**
      * Clade for a tip
      * @param index number of the tip
@@ -198,30 +197,46 @@ class BiClade implements Clade {
     }
 
     public static Object makeKey(Object key1, Object key2) {
-        BitSet bits = new BitSet();
+        int maxIndex;
         if (key1 instanceof Integer) {
-            bits.set((Integer) key1);
+            maxIndex = (Integer) key1;
         } else {
-            assert key1 instanceof BitSet;
-            bits.or((BitSet) key1);
+            assert key1 instanceof CladeKey;
+            maxIndex = ((CladeKey) key1).getMaxIndex();
         }
         if (key2 instanceof Integer) {
-            bits.set((Integer) key2);
+            maxIndex = Math.max(maxIndex, (Integer) key2);
         } else {
-            assert key2 instanceof BitSet;
-            bits.or((BitSet) key2);
+            assert key2 instanceof CladeKey;
+            maxIndex = Math.max(maxIndex, ((CladeKey) key2).getMaxIndex());
         }
-        return bits;
-    }
 
+        CladeKey key = new CladeKey(maxIndex);
+        if (key1 instanceof Integer) {
+            key.set((Integer) key1);
+        } else {
+            key.setTo((CladeKey) key1);
+        }
+        if (key2 instanceof Integer) {
+            key.set((Integer) key2);
+        } else {
+            key.or((CladeKey) key2);
+        }
+
+        return key;
+    }
     public static Object makeKey(Object... keys) {
-        BitSet bits = new BitSet();
+        int maxIndex = 0;
+        for (Object key : keys) {
+            maxIndex = Math.max(maxIndex, key instanceof Integer ? (Integer) key : ((CladeKey) key).getMaxIndex());
+        }
+        CladeKey bits = new CladeKey(maxIndex);
         for (Object key : keys) {
             if (key instanceof Integer) {
                 bits.set((Integer) key);
             } else {
-                assert key instanceof BitSet;
-                bits.or((BitSet) key);
+                assert key instanceof CladeKey;
+                bits.or((CladeKey) key);
             }
         }
         return bits;
@@ -250,19 +265,20 @@ class BiClade implements Clade {
 
     @Override
     public int hashCode() {
-        return Objects.hash(key);
+        return key.hashCode();
+//        return Objects.hash(key);
     }
 
     public String toString() {
         return "clade " + key;
     }
 
-     int count;
-     double credibility;
-     final int size;
-     final int index;
+    int count;
+    double credibility;
+    final int size;
+    final int index;
 
-     final Object key;
+    final Object key;
 
     private final Taxon taxon;
 

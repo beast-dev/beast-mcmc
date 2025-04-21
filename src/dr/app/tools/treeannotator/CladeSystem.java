@@ -31,12 +31,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
 import dr.stats.DiscreteStatistics;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * @author Andrew Rambaut
@@ -204,12 +201,20 @@ public final class CladeSystem {
                 key = taxonNumberMap.get(tree.getNodeTaxon(node));
             }
         } else {
-            assert tree.getChildCount(node) == 2;
+            if (tree.getChildCount(node) == 2) {
+                assert tree.getChildCount(node) == 2;
 
-            Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
-            Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
+                Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
+                Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
 
-            key = BiClade.makeKey(key1, key2);
+                key = BiClade.makeKey(key1, key2);
+            } else {
+                List<Object> keys = new ArrayList<>();
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+                    keys.add(traverseTree(tree, tree.getChild(node, i), action));
+                }
+                key = BiClade.makeKey(keys.toArray());
+            }
         }
 
         Clade clade = getClade(key);
@@ -388,8 +393,9 @@ public final class CladeSystem {
      * @return
      */
     public Set<BiClade> getTopClades(double threshold) {
-        Set<BiClade> clades = new TreeSet<>();
+        Set<BiClade> clades = new HashSet<>();
         for (BiClade clade : cladeMap.values()) {
+            Object key = clade.getKey();
             if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
                 clades.add(clade);
             }

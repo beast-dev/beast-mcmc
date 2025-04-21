@@ -62,8 +62,6 @@ public class StronglyLumpableGenerator {
             int rateValueSize = numStates * (numStates - 1);
             String rateValues = new String(new char[rateValueSize]).replace("\0", "1 ").trim();
 
-
-
             xml.append("\t<lump id=\"").append(lumpId).append("\">\n");
             xml.append("\t\t<stateSet idref=\"").append(stateSets[i].getId()).append("\"/>\n");
 

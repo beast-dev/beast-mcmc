@@ -84,6 +84,10 @@ public class TaxonEffectTraitDataModel extends
         return tree;
     }
 
+    public Parameter getEffects() {
+        return map.getEffects();
+    }
+
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
@@ -104,14 +108,20 @@ public class TaxonEffectTraitDataModel extends
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);
         if (variable == effects) {
-            if (type == Parameter.ChangeType.VALUE_CHANGED) {
-                fireModelChanged(this, getTaxonIndex(index));
-            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
+            if (type == Parameter.ChangeType.VALUE_CHANGED && index != -1) {
+                fireModelChanged(this, getTaxonIndex(index)); // TODO does this really work?
+//                fireModelChanged(this);
+            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED || index == -1) {
                 fireModelChanged(this);
             } else {
                 throw new RuntimeException("Unhandled parameter change type");
             }
         }
+    }
+
+    @Override
+    protected int getTaxonIndex(int parameterIndex) {
+        return map.getTaxonIndex(parameterIndex / (dimTrait * numTraits));
     }
 
     @Override
@@ -130,6 +140,7 @@ public class TaxonEffectTraitDataModel extends
         private final Parameter parameter;
         private final Map<String,Integer> taxonNameToIndex;
         private final int[] map;
+        private final int[] inverseMap;
         private final int dim;
 
         public EffectMap(Tree tree, Parameter parameter, int dim) {
@@ -156,6 +167,7 @@ public class TaxonEffectTraitDataModel extends
             parameter.setDimensionNames(names);
 
             this.map = makeMap(tree, taxonNameToIndex);
+            this.inverseMap = makeInverseMap(map);
         }
 
         public EffectMap(Tree tree, EffectMap original) {
@@ -165,13 +177,27 @@ public class TaxonEffectTraitDataModel extends
             this.dim = original.dim;
 
             this.map = makeMap(tree, taxonNameToIndex);
+            this.inverseMap = makeInverseMap(map);
         }
 
-        public int getEffectIndex(int taxonId) {
-            return map[taxonId];
+        public int getEffectIndex(int taxonIndex) {
+            return map[taxonIndex];
+        }
+
+        public int getTaxonIndex(int effectIndex) {
+            return inverseMap[effectIndex];
         }
 
         public Parameter getEffects() { return parameter; }
+
+        private int[] makeInverseMap(int[] map) {
+            int[] inverse = new int[map.length];
+            for (int i = 0; i < map.length; ++i) {
+                inverse[map[i]] = i;
+            }
+
+            return inverse;
+        }
 
         private int[] makeMap(Tree tree, Map<String,Integer> taxonNameToIndex) {
             int[] map = new int[tree.getExternalNodeCount()];

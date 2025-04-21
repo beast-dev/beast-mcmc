@@ -110,11 +110,11 @@ public final class CladeSystem {
     private void addTipClades(Tree tree) {
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
-            int index = tip.getNumber();
             Taxon taxon = tree.getNodeTaxon(tip);
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(taxon);
-            }
+//            int index = tip.getNumber();
+//            if (taxonNumberMap != null) {
+            int index = taxonNumberMap.get(taxon);
+//            }
             BiClade clade = new BiClade(index, taxon);
             tipClades.put(index, clade);
         }
@@ -127,10 +127,10 @@ public final class CladeSystem {
         BiClade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
+//            int index = node.getNumber();
+//            if (taxonNumberMap != null) {
+            int index = taxonNumberMap.get(tree.getNodeTaxon(node));
+//            }
 
             BiClade tipClade = (BiClade)tipClades.get(index);
             clade = tipClade;
@@ -144,8 +144,10 @@ public final class CladeSystem {
                 clade = getOrAddClade(clade1, clade2);
             }
 
-            clade1.addParent(clade);
-            clade2.addParent(clade);
+            if (keepParents) {
+                clade1.addParent(clade);
+                clade2.addParent(clade);
+            }
         }
         assert clade != null;
 
@@ -170,11 +172,11 @@ public final class CladeSystem {
             }
             cladeMap.put(clade.getKey(), clade);
         } else {
-            synchronized (clade) {
-                if (keepSubClades) {
-                    clade.addSubClades(child1, child2);
-                }
+//            synchronized (clade) {
+            if (keepSubClades) {
+                clade.addSubClades(child1, child2);
             }
+//            }
         }
 
         return clade;
@@ -196,25 +198,46 @@ public final class CladeSystem {
         Object key;
 
         if (tree.isExternal(node)) {
-            key = node.getNumber();
-            if (taxonNumberMap != null) {
+//            key = node.getNumber();
+//            if (taxonNumberMap != null) {
                 key = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
+//            }
         } else {
-            if (tree.getChildCount(node) == 2) {
-                assert tree.getChildCount(node) == 2;
+            assert tree.getChildCount(node) == 2;
 
-                Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
-                Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
+            Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
+            Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
 
-                key = BiClade.makeKey(key1, key2);
-            } else {
-                List<Object> keys = new ArrayList<>();
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-                    keys.add(traverseTree(tree, tree.getChild(node, i), action));
-                }
-                key = BiClade.makeKey(keys.toArray());
+            key = BiClade.makeKey(key1, key2);
+        }
+
+        Clade clade = getClade(key);
+        if (clade != null) {
+            action.actOnClade(clade, tree, node);
+        } else {
+            assert action.expectAllClades();
+        }
+
+        return key;
+    }
+
+    public void traverseNonBinaryTree(Tree tree, CladeAction action) {
+        traverseNonBinaryTree(tree, tree.getRoot(), action);
+    }
+
+    private Object traverseNonBinaryTree(Tree tree, NodeRef node, CladeAction action) {
+
+        Object key;
+
+        if (tree.isExternal(node)) {
+//            key = node.getNumber();
+            key = taxonNumberMap.get(tree.getNodeTaxon(node));
+        } else {
+            List<Object> keys = new ArrayList<>();
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                keys.add(traverseNonBinaryTree(tree, tree.getChild(node, i), action));
             }
+            key = BiClade.makeKey(keys.toArray());
         }
 
         Clade clade = getClade(key);

@@ -897,7 +897,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="5000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="5000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -945,7 +945,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="rabiesskygrid_hmc.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testHMC.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -962,7 +962,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="rabiesskygrid_hmc.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testHMC.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<discretizedBranchRates idref="branchRates"/>
@@ -971,7 +971,7 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testCheckpointedRunHMC.chkpt" overwrite="true"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testHMC.chkpt" overwrite="true"/>
 	</mcmc>
 
 </beast>

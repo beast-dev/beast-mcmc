@@ -119,10 +119,9 @@ class BiClade implements Clade {
 
     @Override
     public void addAttributeValues(Object[] values) {
-        if (attributeValues == null) {
-            attributeValues = new ArrayList<>();
+        synchronized (attributeValues) {
+            attributeValues.add(values);
         }
-        attributeValues.add(values);
     }
 
     @Override
@@ -215,5 +214,5 @@ class BiClade implements Clade {
 
     double bestSubTreeScore = Double.NaN;
 
-    private List<Object[]> attributeValues = null;
+    private final List<Object[]> attributeValues = new ArrayList<>();
 }

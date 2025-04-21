@@ -46,9 +46,7 @@ class CollectionAction implements CladeAction {
 
     @Override
     public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-//        synchronized (clade) {
-            collectAttributesForClade(clade, attributeNames, tree, node);
-//        }
+        collectAttributesForClade(clade, attributeNames, tree, node);
     }
 
     @Override

@@ -171,7 +171,10 @@ public class XMLParser {
                 String xmlVersion = e.getAttribute(VERSION);
                 if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
                         !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
-                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
+                            "the version of BEAST running it (" + version.getVersion() + "). \n" +
+                            "This may be incompatible and cause unpredictable errors. \n" +
+                            "To override this behaviour use the `-ignore_versions` command line option." );
                 }
             }
 

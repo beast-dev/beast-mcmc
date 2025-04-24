@@ -1,30 +1,3 @@
-/*
- * BeastUnitTest.java
- *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
- */
-
 package dr.xml.unittest;
 
 import dr.xml.*;
@@ -33,38 +6,35 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Gabriel Hassler
- * @author Marc A. Suchard
- */
-
 public class BeastUnitTest implements Reportable {
 
     private final String message;
     private final String[] actual;
     private final String expected;
     private final int[] indices;
-
     private Boolean pass;
-
     private final AssertType assertType;
+    private final boolean equalMode;
 
     public BeastUnitTest(String message, String[] actual, String expected,
-                         AssertType assertType, int[] indices) {
+                         AssertType assertType, int[] indices, boolean equalMode) {
         this.message = message;
         this.actual = actual;
         this.expected = expected;
         this.assertType = assertType;
         this.indices = indices;
+        this.equalMode = equalMode;
     }
 
     public void execute() {
         for (int i = 0; i < actual.length; i++) {
-            if (!assertType.equivalent(actual[i], indices, expected)) {
+            boolean result = equalMode
+                    ? assertType.equivalent(actual[i], indices, expected)
+                    : !assertType.equivalent(actual[i], indices, expected);
+            if (!result) {
                 failCheck(i);
             }
         }
-
         pass = true;
     }
 
@@ -95,7 +65,6 @@ public class BeastUnitTest implements Reportable {
         boolean equivalent(String a, int[] aIndices, String b);
 
         class StringAssert implements AssertType {
-
             @Override
             public boolean equivalent(String a, int[] aIndices, String b) {
                 return a.compareTo(b) == 0;
@@ -176,12 +145,11 @@ public class BeastUnitTest implements Reportable {
 
                 abstract boolean close(double lhs, double rhs, double tolerance);
             }
-
         }
     }
 
-
     private static final String CHECK = "assertEqual";
+    private static final String EQUAL = "equal";
     private static final String MESSAGE = "message";
     private static final String EXPECTED = "expected";
     private static final String ACTUAL = "actual";
@@ -203,6 +171,8 @@ public class BeastUnitTest implements Reportable {
             if (xo.hasChildNamed(MESSAGE)) {
                 message = xo.getChild(MESSAGE).getStringChild(0);
             }
+
+            boolean equal = xo.getAttribute(EQUAL, true);
 
             String[] expectedArray = parseValues(xo.getChild(EXPECTED));
             if (expectedArray.length != 1) {
@@ -240,7 +210,7 @@ public class BeastUnitTest implements Reportable {
             int[] indices = null;
             if (xo.hasAttribute(INDICES)) indices = xo.getIntegerArrayAttribute(INDICES);
 
-            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType, indices);
+            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType, indices, equal);
             unitTest.execute();
 
             if (xo.getAttribute(VERBOSE, false)) {
@@ -253,7 +223,6 @@ public class BeastUnitTest implements Reportable {
         private String[] parseValues(XMLObject xo) throws XMLParseException {
             int nChildren = xo.getChildCount();
             String[] rawStrings = new String[nChildren];
-
 
             for (int i = 0; i < nChildren; i++) {
                 if (xo.getChild(i) instanceof Reportable) {
@@ -282,7 +251,6 @@ public class BeastUnitTest implements Reportable {
             return rules;
         }
 
-
         @Override
         public String getParserDescription() {
             return null;
@@ -300,6 +268,7 @@ public class BeastUnitTest implements Reportable {
     };
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newBooleanRule(EQUAL, true),
             new ElementRule(EXPECTED, new XMLSyntaxRule[]{
                     new XORRule(
                             new ElementRule(Reportable.class),
@@ -316,7 +285,6 @@ public class BeastUnitTest implements Reportable {
             }),
             new ElementRule(MESSAGE, new XMLSyntaxRule[]{
                     new ElementRule(String.class),
-
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
             AttributeRule.newBooleanRule(VERBOSE, true),

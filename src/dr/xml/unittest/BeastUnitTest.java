@@ -6,6 +6,13 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Gabriel Hassler
+ * @author Marc A. Suchard
+ * @author Xinghua Tao
+ */
+
+
 public class BeastUnitTest implements Reportable {
 
     private final String message;

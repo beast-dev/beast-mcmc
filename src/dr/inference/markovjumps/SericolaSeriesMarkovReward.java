@@ -229,16 +229,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return W;
     }
 
-    private double[] initializeP(double[] Q, double lambda) {
-        double[] P = new double[dim * dim];
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                double identity = (i == j) ? 1.0 : 0.0;
-                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
-            }
-        }
-        return P;
-    }
 
     private void accumulateCdf(double[][] W, double[] X, int[] H, int n, double time) {
 

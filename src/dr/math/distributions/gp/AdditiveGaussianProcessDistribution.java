@@ -541,28 +541,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                 } else {
                     for (Parameter kernelParameter : basis.getKernel().getParameters()) {
                         if (parameter == kernelParameter) {
-                            return new GradientProvider() {
-                                @Override
-                                public int getDimension() {
-                                    return parameter.getDimension();
-                                }
-
-                                @Override
-                                public double[] getGradientLogDensity(Object x) {
-                                    if(DEBUG) System.out.println("Gradient Hyperparameters");
-                                    final DesignMatrix designMatrix1 = bases.get(0).getDesignMatrix1();
-                                    final DesignMatrix designMatrix2 = bases.get(0).getDesignMatrix2();
-                                    final double[] fieldValue = (double[]) x;
-                                    if (field == null) {
-                                        fieldUpdated = true;
-                                        precisionDiffKnown = false;
-                                    }
-                                    computingDelegate(fieldValue);
-                                    return ((GaussianProcessKernel.Base) basis.getKernel()).getGradientHyperParameter(parameter, fieldValue,
-                                            precisionDiff, getPrecision(), tmpMatrix, dim,
-                                            designMatrix1, designMatrix2); // the sign of precisionDiff does not matter
-                                }
-                            };
+                            throw new RuntimeException("Use GaussianProcessKernelGradient");
                         }
                     }
                 }

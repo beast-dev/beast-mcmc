@@ -104,6 +104,24 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         }
         return h;
     }
+    private int[] getHfromX(double[] X, double time) {
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            H[i] = getHfromX(X[i], time);
+        }
+        return H;
+//        return new int[] { 1 };      // AR nasty hack - revert shortly
+    }
+    private int[] getHfromX(double[] X, double[] time) { // there should be an element-wise correspondence
+        if (X.length != time.length) {
+            throw new IllegalArgumentException("X and time must have the same length");
+        }
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            H[i] = getHfromX(X[i], time[i]); // TODO this can be made faster
+        }
+        return H;
+    }
 
     private void growC(double time, int extraN) { // TODO grow C dynamically with time
         int newN = getNfromC(); // C current size

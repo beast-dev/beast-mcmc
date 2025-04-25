@@ -83,8 +83,8 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return h;
     }
 
-    private void growC(double time, int extraN) {
-        int newN = getNfromC();
+    private void growC(double time, int extraN) { // TODO grow C dynamically with time
+        int newN = getNfromC(); // C current size
         if (time > maxTime) {
             newN = determineNumberOfSteps(time, lambda) + extraN;
             maxTime = time;

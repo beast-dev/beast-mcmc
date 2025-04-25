@@ -126,15 +126,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
     // END: internal structure of C, TODO Change to expandable list
 
-    private int[] getHfromX(double[] X, double time) {
-        int[] H = new int[X.length];
-        for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[i], time);
-        }
-        return H;
-//        return new int[] { 1 };      // AR nasty hack - revert shortly
-    }
-
+    // Pdf: compute and accumulate
     public double computePdf(double x, double time, int i, int j) {
         if (x == time) return 0.0;
         else return computePdf(x, time)[i * dim + j];

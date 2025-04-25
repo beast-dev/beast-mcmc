@@ -97,9 +97,9 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
     }
 
     private int getHfromX(double x, double time) {
-        // TODO assert x > h[0] * time;
+        if (x < r[0] * time) throw new IllegalArgumentException("x must be greater than a[0] * time");
         int h = 1;
-        while (x >= r[h] * time) {
+        while (h < r.length && x > r[h] * time) {
             h++;
         }
         return h;

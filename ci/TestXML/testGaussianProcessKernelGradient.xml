@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_6">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_7">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_8">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_9">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_10">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <attributePatterns id="loc.pattern" attribute="loc">
+        <taxa idref="taxa"/>
+        <generalDataType idref="loc.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (taxon_6:1,((((taxon_8:1,taxon_4:1):1,taxon_7:1):1,taxon_10:1):1,((taxon_1:1,(taxon_2:1,taxon_5:1):1):1,(taxon_9:1,taxon_3:1):1):1):1);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="loc.branchRates">
+        <rate>
+            <parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <randomField id="test.field2">
+        <data>
+            <parameter id="loc.coefficients2" value="1 0 -1 0 0 0"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp2" dim="6">
+                <field>
+                    <parameter idref="loc.coefficients2"/>
+                </field>
+                <orderVariance>
+                    <parameter id="orderVariance2" value="1.0"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise2" value="0.001"/>
+                </gaussianNoise>
+                <basis id="expBasis">
+                    <designMatrix id="gp.designMatrix2">
+                        <parameter value="1 0 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel id="firstKernel" type="SquaredExponential">
+                        <scale>
+                            <parameter id="hyperScaleExp1" value="1" lower="0"/>
+                        </scale>
+                        <length>
+                            <parameter id="hyperLengthExp1" value="1" lower="0"/>
+                        </length>
+                    </kernel>
+                </basis>
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
+
+    <gaussianProcessKernelGradient id="gpKernelGradient1">
+        <randomField idref="test.field2"/>
+        <kernel idref="firstKernel"/>
+    </gaussianProcessKernelGradient>
+
+    <report>
+        <gaussianProcessKernelGradient idref="gpKernelGradient1"/>
+    </report>
+
+    <gaussianProcessKernelGradient id="gpKernelGradient2">
+        <randomField idref="test.field2"/>
+        <!--        <parameter idref="hyperScaleExp1"/>-->
+        <parameter idref="hyperLengthExp1"/>
+    </gaussianProcessKernelGradient>
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check Gradient wrt scale and length
+        </message>
+        <actual regex="gradient:(.*?)\n">
+            <gaussianProcessKernelGradient idref="gpKernelGradient1"/>
+        </actual>
+        <expected>
+            0.012015728295978079 -0.7872819010954416
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check Gradient wrt length
+        </message>
+        <actual regex="gradient:(.*?)\n">
+            <gaussianProcessKernelGradient idref="gpKernelGradient2"/>
+        </actual>
+        <expected>
+            -0.7872819010954416
+        </expected>
+    </assertEqual>
+
+</beast>

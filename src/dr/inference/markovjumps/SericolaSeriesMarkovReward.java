@@ -74,6 +74,28 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return new double[times][dim * dim];
     }
 
+    private double determineLambda() {
+        double lambda = Q[0]; // Q[idx(0,0)]
+        for (int i = 1; i < dim; ++i) {
+            int ii = idx(i, i);
+            if (Q[ii] < lambda) {
+                lambda = Q[ii];
+            }
+        }
+        return -lambda;
+    }
+
+    private double[] initializeP(double[] Q, double lambda) {
+        double[] P = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double identity = (i == j) ? 1.0 : 0.0;
+                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
+            }
+        }
+        return P;
+    }
+
     private int getHfromX(double x, double time) {
         // TODO assert x > h[0] * time;
         int h = 1;

@@ -1,1098 +1,1103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<beast>  
-    <generalDataType id="cmt4567">
-        <state code="CA"/>
-        <state code="MI"/>
-        <state code="TX"/>
-        <state code="s4"/>
-        <state code="s5"/>
-        <state code="s6"/>
-        <state code="s7"/>
-    </generalDataType>     
+<beast>
+	<generalDataType id="cmt4567">
+		<state code="CA"/>
+		<state code="MI"/>
+		<state code="TX"/>
+		<state code="s4"/>
+		<state code="s5"/>
+		<state code="s6"/>
+		<state code="s7"/>
+	</generalDataType>
 	<stateSet id="l1">
 		<generalDataType idref="cmt4567"/>
 		<state code="CA"/>
-	 </stateSet>
+	</stateSet>
 	<stateSet id="l2">
 		<generalDataType idref="cmt4567"/>
 		<state code="MI"/>
 		<state code="TX"/>
 		<state code="s4"/>
-	</stateSet> 	
+	</stateSet>
 	<stateSet id="l3">
 		<generalDataType idref="cmt4567"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l4">
 		<generalDataType idref="cmt4567"/>
 		<state code="s7"/>
-	</stateSet> 
+	</stateSet>
 	<stronglyLumpableCtmcRates id="original" normalize="false">
 		<generalDataType idref="cmt4567"/>
 		<rates>
-		<parameter id="lump.across.rates.original"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.original"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1">
-		<stateSet idref="l1"/>
-		<!-- 
-		<rates>
-			<parameter id="L1.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2"/>
-			<parameter id="CA.l2.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1"/>
+			<!--
+            <rates>
+                <parameter id="L1.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2"/>
+				<parameter id="CA.l2.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3"/>
-			<parameter id="CA.l3.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4"/>
-			<parameter id="CA.l4.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3"/>
+				<parameter id="CA.l3.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4"/>
+				<parameter id="CA.l4.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2">
-		<stateSet idref="l2"/>
-		<rates>
-			<parameter id="L2.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1"/>
-			<parameter id="MI.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3"/>
-			<parameter id="MI.l3.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4"/>
-			<parameter id="MI.l4.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1"/>
-			<parameter id="TX.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3"/>
-			<parameter id="TX.l3.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4"/>
-			<parameter id="TX.l4.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1"/>
-			<parameter id="s4.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3"/>
-			<parameter id="s4.l3.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4"/>
-			<parameter id="s4.l4.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			<stateSet idref="l2"/>
+			<rates>
+				<parameter id="L2.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1"/>
+				<parameter id="MI.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3"/>
+				<parameter id="MI.l3.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4"/>
+				<parameter id="MI.l4.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1"/>
+				<parameter id="TX.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3"/>
+				<parameter id="TX.l3.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4"/>
+				<parameter id="TX.l4.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1"/>
+				<parameter id="s4.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3"/>
+				<parameter id="s4.l3.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4"/>
+				<parameter id="s4.l4.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L3">
-		<stateSet idref="l3"/>
-		<rates>
-			<parameter id="L3.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1"/>
-			<parameter id="s5.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2"/>
-			<parameter id="s5.l2.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4"/>
-			<parameter id="s5.l4.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1"/>
-			<parameter id="s6.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2"/>
-			<parameter id="s6.l2.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4"/>
-			<parameter id="s6.l4.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4">
-		<stateSet idref="l4"/>
-		<!-- 
-		<rates>
-			<parameter id="L4.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1"/>
-			<parameter id="s7.l1.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2"/>
-			<parameter id="s7.l2.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3"/>
-			<parameter id="s7.l3.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
-</stronglyLumpableCtmcRates>
+			<rates>
+				<parameter id="L3.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1"/>
+				<parameter id="s5.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2"/>
+				<parameter id="s5.l2.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4"/>
+				<parameter id="s5.l4.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1"/>
+				<parameter id="s6.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2"/>
+				<parameter id="s6.l2.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4"/>
+				<parameter id="s6.l4.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4">
+			<stateSet idref="l4"/>
+			<!--
+            <rates>
+                <parameter id="L4.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1"/>
+				<parameter id="s7.l1.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2"/>
+				<parameter id="s7.l2.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3"/>
+				<parameter id="s7.l3.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
+	</stronglyLumpableCtmcRates>
 
 	<stateSet id="l1_change_lump_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="CA"/>
 	</stateSet>
-	 <stateSet id="l3_change_lump_order">
+	<stateSet id="l3_change_lump_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l2_change_lump_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="MI"/>
 		<state code="TX"/>
 		<state code="s4"/>
-	</stateSet> 	
+	</stateSet>
 	<stateSet id="l4_change_lump_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="s7"/>
-	</stateSet> 
+	</stateSet>
 	<stronglyLumpableCtmcRates id="change_lump_order" normalize="false">
 		<generalDataType idref="cmt4567"/>
 		<rates>
-		<parameter id="lump.across.rates.change.lump.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.change.lump.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1_change_lump_order">
-		<stateSet idref="l1_change_lump_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l1_change_lump_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2_change_lump_order"/>
-			<parameter id="CA.l2_change_lump_order.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1_change_lump_order"/>
+			<!--
+            <rates>
+                <parameter id="l1_change_lump_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2_change_lump_order"/>
+				<parameter id="CA.l2_change_lump_order.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3_change_lump_order"/>
-			<parameter id="CA.l3_change_lump_order.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="CA.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3_change_lump_order"/>
+				<parameter id="CA.l3_change_lump_order.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="CA.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2_change_lump_order">
-		<stateSet idref="l2_change_lump_order"/>
-		<rates>
-			<parameter id="l2_change_lump_order.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="MI.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3_change_lump_order"/>
-			<parameter id="MI.l3_change_lump_order.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="MI.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="TX.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3_change_lump_order"/>
-			<parameter id="TX.l3_change_lump_order.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="TX.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="s4.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3_change_lump_order"/>
-			<parameter id="s4.l3_change_lump_order.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="s4.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			<stateSet idref="l2_change_lump_order"/>
+			<rates>
+				<parameter id="l2_change_lump_order.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="MI.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3_change_lump_order"/>
+				<parameter id="MI.l3_change_lump_order.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="MI.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="TX.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3_change_lump_order"/>
+				<parameter id="TX.l3_change_lump_order.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="TX.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="s4.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3_change_lump_order"/>
+				<parameter id="s4.l3_change_lump_order.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="s4.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L3_change_lump_order">
-		<stateSet idref="l3_change_lump_order"/>
-		<rates>
-			<parameter id="l3_change_lump_order.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="s5.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2_change_lump_order"/>
-			<parameter id="s5.l2_change_lump_order.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="s5.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="s6.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2_change_lump_order"/>
-			<parameter id="s6.l2_change_lump_order.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4_change_lump_order"/>
-			<parameter id="s6.l4_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4_change_lump_order">
-		<stateSet idref="l4_change_lump_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l4_change_lump_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1_change_lump_order"/>
-			<parameter id="s7.l1_change_lump_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2_change_lump_order"/>
-			<parameter id="s7.l2_change_lump_order.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3_change_lump_order"/>
-			<parameter id="s7.l3_change_lump_order.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
+			<rates>
+				<parameter id="l3_change_lump_order.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="s5.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2_change_lump_order"/>
+				<parameter id="s5.l2_change_lump_order.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="s5.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="s6.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2_change_lump_order"/>
+				<parameter id="s6.l2_change_lump_order.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4_change_lump_order"/>
+				<parameter id="s6.l4_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4_change_lump_order">
+			<stateSet idref="l4_change_lump_order"/>
+			<!--
+            <rates>
+                <parameter id="l4_change_lump_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1_change_lump_order"/>
+				<parameter id="s7.l1_change_lump_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2_change_lump_order"/>
+				<parameter id="s7.l2_change_lump_order.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3_change_lump_order"/>
+				<parameter id="s7.l3_change_lump_order.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
 	</stronglyLumpableCtmcRates>
 
-    <generalDataType id="m7t45c6">     
-        <state code="MI"/>
-        <state code="s7"/>
-        <state code="TX"/>
-        <state code="s4"/>
-        <state code="s5"/>
-        <state code="CA"/>
-        <state code="s6"/>      
-    </generalDataType>     
+	<generalDataType id="m7t45c6">
+		<state code="MI"/>
+		<state code="s7"/>
+		<state code="TX"/>
+		<state code="s4"/>
+		<state code="s5"/>
+		<state code="CA"/>
+		<state code="s6"/>
+	</generalDataType>
 	<stateSet id="l1_change_datatype_order">
 		<generalDataType idref="m7t45c6"/>
 		<state code="CA"/>
-	 </stateSet>
+	</stateSet>
 	<stateSet id="l2_change_datatype_order">
 		<generalDataType idref="m7t45c6"/>
 		<state code="MI"/>
 		<state code="TX"/>
 		<state code="s4"/>
-	</stateSet> 	
+	</stateSet>
 	<stateSet id="l3_change_datatype_order">
 		<generalDataType idref="m7t45c6"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l4_change_datatype_order">
 		<generalDataType idref="m7t45c6"/>
 		<state code="s7"/>
-	</stateSet> 	
+	</stateSet>
 	<stronglyLumpableCtmcRates id="change_datatype_order" normalize="false">
 		<generalDataType idref="m7t45c6"/>
 		<rates>
-		<parameter id="lump.across.rates.change.datatype.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.change.datatype.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1_change_datatype_order">
-		<stateSet idref="l1_change_datatype_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l1_change_datatype_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2_change_datatype_order"/>
-			<parameter id="CA.l2_change_datatype_order.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1_change_datatype_order"/>
+			<!--
+            <rates>
+                <parameter id="l1_change_datatype_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2_change_datatype_order"/>
+				<parameter id="CA.l2_change_datatype_order.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3_change_datatype_order"/>
-			<parameter id="CA.l3_change_datatype_order.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="CA.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3_change_datatype_order"/>
+				<parameter id="CA.l3_change_datatype_order.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="CA.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2_change_datatype_order">
-		<stateSet idref="l2_change_datatype_order"/>
-		<rates>
-			<parameter id="l2_change_datatype_order.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="MI.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3_change_datatype_order"/>
-			<parameter id="MI.l3_change_datatype_order.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="MI.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="TX.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3_change_datatype_order"/>
-			<parameter id="TX.l3_change_datatype_order.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="TX.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="s4.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3_change_datatype_order"/>
-			<parameter id="s4.l3_change_datatype_order.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="s4.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			<stateSet idref="l2_change_datatype_order"/>
+			<rates>
+				<parameter id="l2_change_datatype_order.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="MI.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3_change_datatype_order"/>
+				<parameter id="MI.l3_change_datatype_order.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="MI.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="TX.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3_change_datatype_order"/>
+				<parameter id="TX.l3_change_datatype_order.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="TX.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="s4.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3_change_datatype_order"/>
+				<parameter id="s4.l3_change_datatype_order.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="s4.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L3_change_datatype_order">
-		<stateSet idref="l3_change_datatype_order"/>
-		<rates>
-			<parameter id="l3_change_datatype_order.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="s5.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2_change_datatype_order"/>
-			<parameter id="s5.l2_change_datatype_order.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="s5.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="s6.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2_change_datatype_order"/>
-			<parameter id="s6.l2_change_datatype_order.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4_change_datatype_order"/>
-			<parameter id="s6.l4_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4_change_datatype_order">
-		<stateSet idref="l4_change_datatype_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l4_change_datatype_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1_change_datatype_order"/>
-			<parameter id="s7.l1_change_datatype_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2_change_datatype_order"/>
-			<parameter id="s7.l2_change_datatype_order.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3_change_datatype_order"/>
-			<parameter id="s7.l3_change_datatype_order.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
+			<rates>
+				<parameter id="l3_change_datatype_order.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="s5.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2_change_datatype_order"/>
+				<parameter id="s5.l2_change_datatype_order.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="s5.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="s6.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2_change_datatype_order"/>
+				<parameter id="s6.l2_change_datatype_order.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4_change_datatype_order"/>
+				<parameter id="s6.l4_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4_change_datatype_order">
+			<stateSet idref="l4_change_datatype_order"/>
+			<!--
+            <rates>
+                <parameter id="l4_change_datatype_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1_change_datatype_order"/>
+				<parameter id="s7.l1_change_datatype_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2_change_datatype_order"/>
+				<parameter id="s7.l2_change_datatype_order.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3_change_datatype_order"/>
+				<parameter id="s7.l3_change_datatype_order.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
 	</stronglyLumpableCtmcRates>
 
 	<stateSet id="l1_change_within_stateset_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="CA"/>
-	 </stateSet>
+	</stateSet>
 	<stateSet id="l2_change_within_stateset_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="s4"/>
 		<state code="MI"/>
-		<state code="TX"/>		
-	</stateSet> 	
+		<state code="TX"/>
+	</stateSet>
 	<stateSet id="l3_change_within_stateset_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l4_change_within_stateset_order">
 		<generalDataType idref="cmt4567"/>
 		<state code="s7"/>
-	</stateSet> 
+	</stateSet>
 	<stronglyLumpableCtmcRates id="change_within_stateset_order" normalize="false">
 		<generalDataType idref="cmt4567"/>
 		<rates>
-		<parameter id="lump.across.rates.change.within.stateset.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.change.within.stateset.order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1_change_within_stateset_order">
-		<stateSet idref="l1_change_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l1_change_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2_change_within_stateset_order"/>
-			<parameter id="CA.l2_change_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1_change_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l1_change_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2_change_within_stateset_order"/>
+				<parameter id="CA.l2_change_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3_change_within_stateset_order"/>
-			<parameter id="CA.l3_change_within_stateset_order.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="CA.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3_change_within_stateset_order"/>
+				<parameter id="CA.l3_change_within_stateset_order.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="CA.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2_change_within_stateset_order">
-		<stateSet idref="l2_change_within_stateset_order"/>
-		<rates>
-			<parameter id="l2_change_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="s4.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3_change_within_stateset_order"/>
-			<parameter id="s4.l3_change_within_stateset_order.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="s4.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="MI.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3_change_within_stateset_order"/>
-			<parameter id="MI.l3_change_within_stateset_order.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="MI.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="TX.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3_change_within_stateset_order"/>
-			<parameter id="TX.l3_change_within_stateset_order.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="TX.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
+			<stateSet idref="l2_change_within_stateset_order"/>
+			<rates>
+				<parameter id="l2_change_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="s4.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3_change_within_stateset_order"/>
+				<parameter id="s4.l3_change_within_stateset_order.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="s4.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="MI.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3_change_within_stateset_order"/>
+				<parameter id="MI.l3_change_within_stateset_order.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="MI.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="TX.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3_change_within_stateset_order"/>
+				<parameter id="TX.l3_change_within_stateset_order.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="TX.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
 
-	</lump>
+		</lump>
 		<lump id="L3_change_within_stateset_order">
-		<stateSet idref="l3_change_within_stateset_order"/>
-		<rates>
-			<parameter id="l3_change_within_stateset_order.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="s5.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2_change_within_stateset_order"/>
-			<parameter id="s5.l2_change_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="s5.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="s6.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2_change_within_stateset_order"/>
-			<parameter id="s6.l2_change_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4_change_within_stateset_order"/>
-			<parameter id="s6.l4_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4_change_within_stateset_order">
-		<stateSet idref="l4_change_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l4_change_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1_change_within_stateset_order"/>
-			<parameter id="s7.l1_change_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2_change_within_stateset_order"/>
-			<parameter id="s7.l2_change_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3_change_within_stateset_order"/>
-			<parameter id="s7.l3_change_within_stateset_order.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
+			<rates>
+				<parameter id="l3_change_within_stateset_order.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="s5.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2_change_within_stateset_order"/>
+				<parameter id="s5.l2_change_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="s5.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="s6.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2_change_within_stateset_order"/>
+				<parameter id="s6.l2_change_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4_change_within_stateset_order"/>
+				<parameter id="s6.l4_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4_change_within_stateset_order">
+			<stateSet idref="l4_change_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l4_change_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1_change_within_stateset_order"/>
+				<parameter id="s7.l1_change_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2_change_within_stateset_order"/>
+				<parameter id="s7.l2_change_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3_change_within_stateset_order"/>
+				<parameter id="s7.l3_change_within_stateset_order.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
 	</stronglyLumpableCtmcRates>
 
-    <generalDataType id="m7t45c6_change_datatype_within_stateset_order">     
-        <state code="MI"/>
-        <state code="s7"/>
-        <state code="TX"/>
-        <state code="s4"/>
-        <state code="s5"/>
-        <state code="CA"/>
-        <state code="s6"/>      
-    </generalDataType>     
+	<generalDataType id="m7t45c6_change_datatype_within_stateset_order">
+		<state code="MI"/>
+		<state code="s7"/>
+		<state code="TX"/>
+		<state code="s4"/>
+		<state code="s5"/>
+		<state code="CA"/>
+		<state code="s6"/>
+	</generalDataType>
 	<stateSet id="l1_change_datatype_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_within_stateset_order"/>
 		<state code="CA"/>
-	 </stateSet>
+	</stateSet>
 	<stateSet id="l2_change_datatype_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_within_stateset_order"/>
 		<state code="s4"/>
 		<state code="TX"/>
-		<state code="MI"/>	
-	</stateSet> 	
+		<state code="MI"/>
+	</stateSet>
 	<stateSet id="l3_change_datatype_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_within_stateset_order"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l4_change_datatype_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_within_stateset_order"/>
 		<state code="s7"/>
-	</stateSet> 
+	</stateSet>
 	<stronglyLumpableCtmcRates id="change_datatype_within_stateset_order" normalize="false">
 		<generalDataType idref="m7t45c6_change_datatype_within_stateset_order"/>
 		<rates>
-		<parameter id="lump.across.rates.change_datatype_within_stateset_order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.change_datatype_within_stateset_order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1_change_datatype_within_stateset_order">
-		<stateSet idref="l1_change_datatype_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l1_change_datatype_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2_change_datatype_within_stateset_order"/>
-			<parameter id="CA.l2_change_datatype_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1_change_datatype_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l1_change_datatype_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2_change_datatype_within_stateset_order"/>
+				<parameter id="CA.l2_change_datatype_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3_change_datatype_within_stateset_order"/>
-			<parameter id="CA.l3_change_datatype_within_stateset_order.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="CA.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3_change_datatype_within_stateset_order"/>
+				<parameter id="CA.l3_change_datatype_within_stateset_order.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="CA.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2_change_datatype_within_stateset_order">
-		<stateSet idref="l2_change_datatype_within_stateset_order"/>
-		<rates>
-			<parameter id="l2_change_datatype_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="s4.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3_change_datatype_within_stateset_order"/>
-			<parameter id="s4.l3_change_datatype_within_stateset_order.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="s4.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="TX.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3_change_datatype_within_stateset_order"/>
-			<parameter id="TX.l3_change_datatype_within_stateset_order.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="TX.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="MI.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3_change_datatype_within_stateset_order"/>
-			<parameter id="MI.l3_change_datatype_within_stateset_order.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="MI.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			<stateSet idref="l2_change_datatype_within_stateset_order"/>
+			<rates>
+				<parameter id="l2_change_datatype_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="s4.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3_change_datatype_within_stateset_order"/>
+				<parameter id="s4.l3_change_datatype_within_stateset_order.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="s4.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="TX.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3_change_datatype_within_stateset_order"/>
+				<parameter id="TX.l3_change_datatype_within_stateset_order.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="TX.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="MI.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3_change_datatype_within_stateset_order"/>
+				<parameter id="MI.l3_change_datatype_within_stateset_order.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="MI.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L3_change_datatype_within_stateset_order">
-		<stateSet idref="l3_change_datatype_within_stateset_order"/>
-		<rates>
-			<parameter id="l3_change_datatype_within_stateset_order.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="s5.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2_change_datatype_within_stateset_order"/>
-			<parameter id="s5.l2_change_datatype_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="s5.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="s6.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2_change_datatype_within_stateset_order"/>
-			<parameter id="s6.l2_change_datatype_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4_change_datatype_within_stateset_order"/>
-			<parameter id="s6.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4_change_datatype_within_stateset_order">
-		<stateSet idref="l4_change_datatype_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l4_change_datatype_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1_change_datatype_within_stateset_order"/>
-			<parameter id="s7.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2_change_datatype_within_stateset_order"/>
-			<parameter id="s7.l2_change_datatype_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3_change_datatype_within_stateset_order"/>
-			<parameter id="s7.l3_change_datatype_within_stateset_order.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
+			<rates>
+				<parameter id="l3_change_datatype_within_stateset_order.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="s5.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2_change_datatype_within_stateset_order"/>
+				<parameter id="s5.l2_change_datatype_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="s5.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="s6.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2_change_datatype_within_stateset_order"/>
+				<parameter id="s6.l2_change_datatype_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4_change_datatype_within_stateset_order"/>
+				<parameter id="s6.l4_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4_change_datatype_within_stateset_order">
+			<stateSet idref="l4_change_datatype_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l4_change_datatype_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1_change_datatype_within_stateset_order"/>
+				<parameter id="s7.l1_change_datatype_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2_change_datatype_within_stateset_order"/>
+				<parameter id="s7.l2_change_datatype_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3_change_datatype_within_stateset_order"/>
+				<parameter id="s7.l3_change_datatype_within_stateset_order.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
 	</stronglyLumpableCtmcRates>
 
-    <generalDataType id="m7t45c6_change_datatype_lump_within_stateset_order">     
-        <state code="MI"/>
-        <state code="s7"/>
-        <state code="TX"/>
-        <state code="s4"/>
-        <state code="s5"/>
-        <state code="CA"/>
-        <state code="s6"/>      
-    </generalDataType>  
+	<generalDataType id="m7t45c6_change_datatype_lump_within_stateset_order">
+		<state code="MI"/>
+		<state code="s7"/>
+		<state code="TX"/>
+		<state code="s4"/>
+		<state code="s5"/>
+		<state code="CA"/>
+		<state code="s6"/>
+	</generalDataType>
 	<stateSet id="l2_change_datatype_lump_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_lump_within_stateset_order"/>
 		<state code="s4"/>
 		<state code="TX"/>
-		<state code="MI"/>	
-	</stateSet>    
+		<state code="MI"/>
+	</stateSet>
 	<stateSet id="l1_change_datatype_lump_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_lump_within_stateset_order"/>
 		<state code="CA"/>
-	 </stateSet>
+	</stateSet>
 	<stateSet id="l4_change_datatype_lump_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_lump_within_stateset_order"/>
 		<state code="s7"/>
-	</stateSet> 
+	</stateSet>
 	<stateSet id="l3_change_datatype_lump_within_stateset_order">
 		<generalDataType idref="m7t45c6_change_datatype_lump_within_stateset_order"/>
 		<state code="s5"/>
 		<state code="s6"/>
-	</stateSet> 
+	</stateSet>
 	<stronglyLumpableCtmcRates id="change_datatype_lump_within_stateset_order" normalize="false">
 		<generalDataType idref="m7t45c6_change_datatype_lump_within_stateset_order"/>
 		<rates>
-		<parameter id="lump.across.rates.change_datatype_lump_within_stateset_order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
-	</rates>
+			<parameter id="lump.across.rates.change_datatype_lump_within_stateset_order"  value="1 2 3 11 12 17 4 13 18 14 19 20"/>
+		</rates>
 		<lump id="L1_change_datatype_lump_within_stateset_order">
-		<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l1_change_datatype_lump_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
-			<parameter id="CA.l2_change_datatype_lump_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
+			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l1_change_datatype_lump_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
+				<parameter id="CA.l2_change_datatype_lump_within_stateset_order.proportions" value="0.11 0.12 0.13"/>
 
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-			<parameter id="CA.l3_change_datatype_lump_within_stateset_order.proportions" value="0.14 0.15"/>
-		</proportions>
-		<proportions>
-			<state code="CA"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="CA.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
+				<parameter id="CA.l3_change_datatype_lump_within_stateset_order.proportions" value="0.14 0.15"/>
+			</proportions>
+			<proportions>
+				<state code="CA"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="CA.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L2_change_datatype_lump_within_stateset_order">
-		<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
-		<rates>
-			<parameter id="l2_change_datatype_lump_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
-		</rates>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s4.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s4.l3_change_datatype_lump_within_stateset_order.proportions" value="0.20 0.21"/>
-		</proportions>
-		<proportions>
-			<state code="s4"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s4.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="TX.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-			<parameter id="TX.l3_change_datatype_lump_within_stateset_order.proportions" value="0.18 0.19"/>
-		</proportions>
-		<proportions>
-			<state code="TX"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="TX.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="MI.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-			<parameter id="MI.l3_change_datatype_lump_within_stateset_order.proportions" value="0.16 0.17"/>
-		</proportions>
-		<proportions>
-			<state code="MI"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="MI.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
+			<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
+			<rates>
+				<parameter id="l2_change_datatype_lump_within_stateset_order.within.rates" value="5 6 7 8 9 10"/>
+			</rates>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s4.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s4.l3_change_datatype_lump_within_stateset_order.proportions" value="0.20 0.21"/>
+			</proportions>
+			<proportions>
+				<state code="s4"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s4.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="TX.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
+				<parameter id="TX.l3_change_datatype_lump_within_stateset_order.proportions" value="0.18 0.19"/>
+			</proportions>
+			<proportions>
+				<state code="TX"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="TX.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="MI.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
+				<parameter id="MI.l3_change_datatype_lump_within_stateset_order.proportions" value="0.16 0.17"/>
+			</proportions>
+			<proportions>
+				<state code="MI"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="MI.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
 		<lump id="L3_change_datatype_lump_within_stateset_order">
-		<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-		<rates>
-			<parameter id="l3_change_datatype_lump_within_stateset_order.within.rates" value="15 16"/>
-		</rates>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s5.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s5.l2_change_datatype_lump_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
-		</proportions>
-		<proportions>
-			<state code="s5"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s5.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s6.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s6.l2_change_datatype_lump_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
-		</proportions>
-		<proportions>
-			<state code="s6"/>
-			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s6.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-	</lump>
-		<lump id="L4_change_datatype_lump_within_stateset_order">
-		<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
-		<!-- 
-		<rates>
-			<parameter id="l4_change_datatype_lump_within_stateset_order.within.rates" value=""/>
-		</rates>
-		 -->
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s7.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
-			<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s7.l2_change_datatype_lump_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
-		</proportions>
-		<proportions>
-			<state code="s7"/>
 			<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
-			<parameter id="s7.l3_change_datatype_lump_within_stateset_order.proportions" value="0.31 0.32"/>
-		</proportions>
-	</lump>
+			<rates>
+				<parameter id="l3_change_datatype_lump_within_stateset_order.within.rates" value="15 16"/>
+			</rates>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s5.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s5.l2_change_datatype_lump_within_stateset_order.proportions" value="0.22 0.23 0.24"/>
+			</proportions>
+			<proportions>
+				<state code="s5"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s5.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s6.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s6.l2_change_datatype_lump_within_stateset_order.proportions" value="0.25 0.26 0.27"/>
+			</proportions>
+			<proportions>
+				<state code="s6"/>
+				<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s6.l4_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+		</lump>
+		<lump id="L4_change_datatype_lump_within_stateset_order">
+			<stateSet idref="l4_change_datatype_lump_within_stateset_order"/>
+			<!--
+            <rates>
+                <parameter id="l4_change_datatype_lump_within_stateset_order.within.rates" value=""/>
+            </rates>
+             -->
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l1_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s7.l1_change_datatype_lump_within_stateset_order.proportions" value="1.00"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l2_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s7.l2_change_datatype_lump_within_stateset_order.proportions" value="0.28 0.29 0.30"/>
+			</proportions>
+			<proportions>
+				<state code="s7"/>
+				<stateSet idref="l3_change_datatype_lump_within_stateset_order"/>
+				<parameter id="s7.l3_change_datatype_lump_within_stateset_order.proportions" value="0.31 0.32"/>
+			</proportions>
+		</lump>
 	</stronglyLumpableCtmcRates>
 
 	<report>
-	<stronglyLumpableCtmcRates idref="original"/>
-	<stronglyLumpableCtmcRates idref="change_lump_order"/>
-	<stronglyLumpableCtmcRates idref="change_within_stateset_order"/>
-	<stronglyLumpableCtmcRates idref="change_datatype_order"/>
-	<stronglyLumpableCtmcRates idref="change_datatype_within_stateset_order"/>
-	<stronglyLumpableCtmcRates idref="change_datatype_lump_within_stateset_order"/>
-</report>
-	<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_lump_order vs original
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+		<stronglyLumpableCtmcRates idref="original"/>
 		<stronglyLumpableCtmcRates idref="change_lump_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
-<!-- 
-	/*
-* Explanation of the regex:
-* \\[                 // Matches the literal opening bracket '['
-* \\s*                // Matches optional whitespace after the bracket
-*
-* (                   // Start of capturing group:
-*   [-?\\d.Ee+,\\s]+   // Matches one or more of the following:
-*                     // - digits (\\d)
-*                     // - decimal points (.)
-*                     // - negative signs (-)
-*                     // - optional plus signs (+)
-*                     // - scientific notation markers (E or e)
-*                     // - commas (,) between values
-*                     // - whitespace (\\s)
-* )                   // End of capturing group — this captures the number list as a single string
-*
-* \\s*                // Matches optional whitespace before the closing bracket
-* \\]                 // Matches the literal closing bracket ']'
-*/
--->
-		<stronglyLumpableCtmcRates idref="original"/>
-	</expected>
-</assertEqual>
-	<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_within_stateset_order vs original
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
 		<stronglyLumpableCtmcRates idref="change_within_stateset_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="original"/>
-	</expected>
-</assertEqual>
-	<!--
-<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_datatype_within_stateset_order vs original
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="change_datatype_within_stateset_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="original"/>
-	</expected>
-</assertEqual>
- -->
-	<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_datatype_within_stateset_order vs change_datatype_order
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="change_datatype_within_stateset_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
 		<stronglyLumpableCtmcRates idref="change_datatype_order"/>
-	</expected>
-</assertEqual>
-	<assertEqual tolerance="1e-9">
-	<message>
-		Check Q matrix change_datatype_lump_within_stateset_order vs change_datatype_order
-	</message>
-	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+		<stronglyLumpableCtmcRates idref="change_datatype_within_stateset_order"/>
 		<stronglyLumpableCtmcRates idref="change_datatype_lump_within_stateset_order"/>
-	</actual>
-	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
-		<stronglyLumpableCtmcRates idref="change_datatype_order"/>
-	</expected>
-</assertEqual>
-<!--	<assertEqual tolerance="1e-9">-->
-<!--	<message>-->
-<!--		Check Q matrix change_datatype_order vs original-->
-<!--	</message>-->
-<!--	<actual regex="\[\s*([-?\d.Ee+, ]+)\]">-->
-<!--		<stronglyLumpableCtmcRates idref="change_datatype_order"/>-->
-<!--	</actual>-->
-<!--	<expected regex="\[\s*([-?\d.Ee+, ]+)\]">-->
-<!--		<stronglyLumpableCtmcRates idref="original"/>-->
-<!--	</expected>-->
-<!--</assertEqual>-->
+	</report>
+	<assertEqual tolerance="1e-9">
+		<message>
+			Check Q matrix change_lump_order vs original
+		</message>
+		<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_lump_order"/>
+		</actual>
+		<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<!--
+                /*
+            * Explanation of the regex:
+            * \\[                 // Matches the literal opening bracket '['
+            * \\s*                // Matches optional whitespace after the bracket
+            *
+            * (                   // Start of capturing group:
+            *   [-?\\d.Ee+,\\s]+   // Matches one or more of the following:
+            *                     // - digits (\\d)
+            *                     // - decimal points (.)
+            *                     // - negative signs (-)
+            *                     // - optional plus signs (+)
+            *                     // - scientific notation markers (E or e)
+            *                     // - commas (,) between values
+            *                     // - whitespace (\\s)
+            * )                   // End of capturing group — this captures the number list as a single string
+            *
+            * \\s*                // Matches optional whitespace before the closing bracket
+            * \\]                 // Matches the literal closing bracket ']'
+            */
+            -->
+			<stronglyLumpableCtmcRates idref="original"/>
+		</expected>
+	</assertEqual>
+	<assertEqual tolerance="1e-9">
+		<message>
+			Check Q matrix change_within_stateset_order vs original
+		</message>
+		<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_within_stateset_order"/>
+		</actual>
+		<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="original"/>
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-9">
+		<message>
+			Check Q matrix change_datatype_within_stateset_order vs change_datatype_order
+		</message>
+		<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_datatype_within_stateset_order"/>
+		</actual>
+		<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_datatype_order"/>
+		</expected>
+	</assertEqual>
+	<assertEqual tolerance="1e-9">
+		<message>
+			Check Q matrix change_datatype_lump_within_stateset_order vs change_datatype_order
+		</message>
+		<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_datatype_lump_within_stateset_order"/>
+		</actual>
+		<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_datatype_order"/>
+		</expected>
+	</assertEqual>
+
+
+
+	<assertEqual equal="false" tolerance="1e-9">
+		<message>
+			Check Q matrix change_datatype_order vs original
+		</message>
+		<actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="change_datatype_order"/>
+		</actual>
+		<expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+			<stronglyLumpableCtmcRates idref="original"/>
+		</expected>
+	</assertEqual>
+	<!--
+    <assertEqual tolerance="1e-9">
+        <message>
+            Check Q matrix change_datatype_order vs change_datatype_lump_within_stateset_order
+        </message>
+        <actual regex="\[\s*([-?\d.Ee+, ]+)\]">
+            <stronglyLumpableCtmcRates idref="change_datatype_order"/>
+        </actual>
+        <expected regex="\[\s*([-?\d.Ee+, ]+)\]">
+            <stronglyLumpableCtmcRates idref="change_datatype_lump_within_stateset_order"/>
+        </expected>
+    </assertEqual>
+     -->
+
 
 </beast>

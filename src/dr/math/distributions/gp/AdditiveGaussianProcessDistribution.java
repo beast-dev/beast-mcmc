@@ -158,7 +158,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return orderVariance;
     }
 
-    List<BasisDimension> getBases() {
+    public List<BasisDimension> getBases() {
         return bases;
     }
 
@@ -210,7 +210,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return sum;
     }
 
-    private double[] getPrecision() {
+    protected double[] getPrecision() {
         return getPrecisionAsMatrix().getData();
     }
 
@@ -270,11 +270,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return mean;
     }
 
-    private double[] getPrecisionDiff() {
-        if (!precisionDiffKnown) {
-            computePrecisionDiff();
-            precisionDiffKnown = true;
-        }
+    protected double[] getPrecisionDiff(double[] x) {
+        computingDelegate(x);
         return precisionDiff;
     }
 
@@ -329,12 +326,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         if (DEBUG) System.out.println("LogPdf: " + precisionAndDeterminantKnown + " " + gramianAndVarianceKnown);
         double exponent = 0.0;
         if (field == null) {
-            final double[] mean = getMean();
+            computeDiff(x);
             final double[] precision = getPrecision();
-
-            for (int i = 0; i < dim; ++i) {
-                diff[i] = x[i] - mean[i];
-            }
             for (int i = 0; i < dim; ++i) {
                 for (int j = 0; j < dim; ++j) {
                     exponent += diff[i] * precision[i * dim + j] * diff[j];
@@ -372,12 +365,15 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     public void computingDelegate(double[] x) {
+        if (field == null) fieldUpdated = true;
+
         if (fieldUpdated || !meanKnown) {
             if(DEBUG) System.out.println("Field updated");
-            computeDiff(x); //or use field.getParameterValues();
+            computeDiff(x);
             precisionDiffKnown = false;
             fieldUpdated = false;
         }
+
         if (!precisionDiffKnown) {
             computePrecisionDiff();
             precisionDiffKnown = true;
@@ -504,11 +500,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
                 @Override
                 public double[] getGradientLogDensity(Object x) {
-                    if (field == null) {
-                        fieldUpdated = true;
-                        precisionDiffKnown = false;
-                    }
-                    computingDelegate((double[]) x); // or field.getParameterValues()
+                    computingDelegate((double[]) x);
                     if (meanParameter.getDimension() == dim) {
                         return precisionDiff;
                     } else if (meanParameter.getDimension() == 1) {
@@ -541,28 +533,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
                 } else {
                     for (Parameter kernelParameter : basis.getKernel().getParameters()) {
                         if (parameter == kernelParameter) {
-                            return new GradientProvider() {
-                                @Override
-                                public int getDimension() {
-                                    return parameter.getDimension();
-                                }
-
-                                @Override
-                                public double[] getGradientLogDensity(Object x) {
-                                    if(DEBUG) System.out.println("Gradient Hyperparameters");
-                                    final DesignMatrix designMatrix1 = bases.get(0).getDesignMatrix1();
-                                    final DesignMatrix designMatrix2 = bases.get(0).getDesignMatrix2();
-                                    final double[] fieldValue = (double[]) x;
-                                    if (field == null) {
-                                        fieldUpdated = true;
-                                        precisionDiffKnown = false;
-                                    }
-                                    computingDelegate(fieldValue);
-                                    return ((GaussianProcessKernel.Base) basis.getKernel()).getGradientHyperParameter(parameter, fieldValue,
-                                            precisionDiff, getPrecision(), tmpMatrix, dim,
-                                            designMatrix1, designMatrix2); // the sign of precisionDiff does not matter
-                                }
-                            };
+                            throw new RuntimeException("Use GaussianProcessKernelGradient");
                         }
                     }
                 }
@@ -588,19 +559,23 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     @Override
     public String getReport() {
+        final double[] mean = getMean();
+        final double[] precision = getPrecision();
+        final double[] precisionDiff = getPrecisionDiff(new double[dim]);
+
         StringBuilder sb = new StringBuilder();
         sb.append("predictionDiff:");
-        for (double value : getPrecisionDiff()) {
+        for (double value : precisionDiff) {
             sb.append(" ").append(value);
         }
         sb.append("\n");
         sb.append("mean:");
-        for (double value : getMean()) {
+        for (double value : mean) {
             sb.append(" ").append(value);
         }
         sb.append("\n");
         sb.append("precision:");
-        for (double value : getPrecision()) {
+        for (double value : precision) {
             sb.append(" ").append(value);
         }
         return sb.toString();
@@ -626,7 +601,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             this(kernel, makeDesignMatrixFromWeights(weights));
         }
 
-        GaussianProcessKernel getKernel() { return kernel; }
+        public GaussianProcessKernel getKernel() { return kernel; }
 
         DesignMatrix getDesignMatrix1() { return design1; }
 

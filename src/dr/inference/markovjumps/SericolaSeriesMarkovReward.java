@@ -74,17 +74,57 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return new double[times][dim * dim];
     }
 
+    private double determineLambda() {
+        double lambda = Q[0]; // Q[idx(0,0)]
+        for (int i = 1; i < dim; ++i) {
+            int ii = idx(i, i);
+            if (Q[ii] < lambda) {
+                lambda = Q[ii];
+            }
+        }
+        return -lambda;
+    }
+
+    private double[] initializeP(double[] Q, double lambda) {
+        double[] P = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double identity = (i == j) ? 1.0 : 0.0;
+                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
+            }
+        }
+        return P;
+    }
+
     private int getHfromX(double x, double time) {
-        // TODO assert x > h[0] * time;
+        if (x < r[0] * time) throw new IllegalArgumentException("x must be greater than a[0] * time");
         int h = 1;
-        while (x >= r[h] * time) {
+        while (h < r.length && x > r[h] * time) {
             h++;
         }
         return h;
     }
+    private int[] getHfromX(double[] X, double time) {
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            H[i] = getHfromX(X[i], time);
+        }
+        return H;
+//        return new int[] { 1 };      // AR nasty hack - revert shortly
+    }
+    private int[] getHfromX(double[] X, double[] time) { // there should be an element-wise correspondence
+        if (X.length != time.length) {
+            throw new IllegalArgumentException("X and time must have the same length");
+        }
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            H[i] = getHfromX(X[i], time[i]); // TODO this can be made faster
+        }
+        return H;
+    }
 
-    private void growC(double time, int extraN) {
-        int newN = getNfromC();
+    private void growC(double time, int extraN) { // TODO grow C dynamically with time
+        int newN = getNfromC(); // C current size
         if (time > maxTime) {
             newN = determineNumberOfSteps(time, lambda) + extraN;
             maxTime = time;
@@ -126,15 +166,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
     // END: internal structure of C, TODO Change to expandable list
 
-    private int[] getHfromX(double[] X, double time) {
-        int[] H = new int[X.length];
-        for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[i], time);
-        }
-        return H;
-//        return new int[] { 1 };      // AR nasty hack - revert shortly
-    }
-
+    // Pdf: compute and accumulate
     public double computePdf(double x, double time, int i, int j) {
         if (x == time) return 0.0;
         else return computePdf(x, time)[i * dim + j];
@@ -197,16 +229,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return W;
     }
 
-    private double[] initializeP(double[] Q, double lambda) {
-        double[] P = new double[dim * dim];
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                double identity = (i == j) ? 1.0 : 0.0;
-                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
-            }
-        }
-        return P;
-    }
 
     private void accumulateCdf(double[][] W, double[] X, int[] H, int n, double time) {
 
@@ -370,17 +392,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
 //            accumulate(n);
         }
-    }
-
-    private double determineLambda() {
-        double lambda = Q[0]; // Q[idx(0,0)]
-        for (int i = 1; i < dim; ++i) {
-            int ii = idx(i, i);
-            if (Q[ii] < lambda) {
-                lambda = Q[ii];
-            }
-        }
-        return -lambda;
     }
 
     private double[][] squareMatrix(final double[] mat) {

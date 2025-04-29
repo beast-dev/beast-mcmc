@@ -275,12 +275,12 @@ public class PairedParalogSitePatterns extends UncertainSiteList {
 
     @Override
     public boolean areUnique() {
-        return false;
+        return sitePatterns.areUnique();
     }
 
     @Override
     public boolean areUncertain() {
-        return false;
+        return sitePatterns.areUncertain();
     }
 
     @Override

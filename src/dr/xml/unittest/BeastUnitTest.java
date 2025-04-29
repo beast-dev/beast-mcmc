@@ -29,7 +29,6 @@ package dr.xml.unittest;
 
 import dr.xml.*;
 
-
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

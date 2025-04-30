@@ -753,6 +753,64 @@ public interface Transform {
         public double logJacobian(double x) { return Math.log(2 * x); }
     }
 
+    // y = abs(x)
+    class AbsTransform extends UnivariableTransform {
+
+        @Override
+        public Transform inverseTransform() {
+            throw new RuntimeException("Not defined");
+        }
+
+        public double transform(double x) {
+            return Math.abs(x);
+        }
+
+        public double inverse(double y) {
+            throw new RuntimeException("Not defined");
+        }
+
+        public boolean isInInteriorDomain(double x) {
+            return !Double.isInfinite(x);
+        }
+
+        public double gradientInverse(double y) { throw new RuntimeException("Not defined"); }
+
+        public double updateGradientLogDensity(double gradientWrtX, double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double gradientLogJacobianInverse(double y) {
+            throw new RuntimeException("Mot yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transfomationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            if (value > 0.0) {
+                return 1.0;
+            } else if (value < 0.0) {
+                return -1.0;
+            } else {
+                return Double.NaN;
+            }
+        }
+
+        public String getTransformName() { return "abs"; }
+
+        public double logJacobian(double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
     // y = log(x)
     class LogTransform extends UnivariableTransform {
 
@@ -2739,6 +2797,7 @@ public interface Transform {
     ExpTransform EXP = new ExpTransform();
     NegateTransform NEGATE = new NegateTransform();
     SquaredTransform SQUARED = new SquaredTransform();
+    AbsTransform ABS = new AbsTransform();
     Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
@@ -2757,6 +2816,7 @@ public interface Transform {
         FISHER_Z("fisherZ",new FisherZTransform()),
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
         SQUARED("squared", new SquaredTransform()),
+        ABS("abs", new AbsTransform()),
         POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {

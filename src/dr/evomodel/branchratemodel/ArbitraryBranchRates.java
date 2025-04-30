@@ -665,9 +665,6 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         return citations;
     }
 
-    public void addCitation(Citation citation) {
-        citations.add(citation);
-    }
     List<Citation> citations = new ArrayList<>();
 
     public static Citation CITATION = new Citation(

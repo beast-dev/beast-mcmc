@@ -20,7 +20,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
     private final int parametersCount;
     private final Parameter hyperParameter;
 
-    private double[] matrix;
+    private final double[] matrix;
 
     private final boolean DEBUG = false;
 
@@ -68,7 +68,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
                         return new double[]{getGradientScale()};
                     }
                 };
-            } else if (doLength) {
+            } else if (doLength) { // TODO This condition is always true
                 this.provider = new GradientProvider() {
                     @Override
                     public int getDimension() {
@@ -87,6 +87,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
             hyperParameter = new CompoundParameter( null);
             for (int i = 0; i < parametersCount; i++) {
                 ((CompoundParameter) hyperParameter).addParameter(parametersList.get(i));
+                // TODO Above may cause error when parametersList is ordered { length, scale }
             }
            this.provider = new GradientProvider() {
                 @Override
@@ -165,9 +166,9 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
             double alpha_i = alpha[i];
             for (int j = 0; j < dim; ++j, ++idx) {
                 double alpha_j = alpha[j];
-                double matrixij = matrix[idx];
-                quadForm += alpha_i * matrixij * alpha_j;
-                traceAB += P[idx] * matrixij;
+                double matrix_ij = matrix[idx];
+                quadForm += alpha_i * matrix_ij * alpha_j;
+                traceAB += P[idx] * matrix_ij;
             }
         }
 

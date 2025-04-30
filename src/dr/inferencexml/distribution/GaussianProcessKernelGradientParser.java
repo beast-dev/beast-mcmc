@@ -98,11 +98,8 @@ public class GaussianProcessKernelGradientParser extends AbstractXMLObjectParser
             new ElementRule(RandomField.class),
             new XORRule(
                     new XMLSyntaxRule[]{
-                            new ElementRule(GaussianProcessKernel.class),
-                            new AndRule(
-                                    new ElementRule(Parameter.class, false),
-                                    new ElementRule(Parameter.class, true)
-                            )
+                        new ElementRule(GaussianProcessKernel.class),
+                        new ElementRule(Parameter.class, 1, 2),
                     }
             ),
     };

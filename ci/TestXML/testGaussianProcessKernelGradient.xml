@@ -130,7 +130,13 @@
 
     <gaussianProcessKernelGradient id="gpKernelGradient2">
         <randomField idref="test.field2"/>
-        <!--        <parameter idref="hyperScaleExp1"/>-->
+<!--                <parameter idref="hyperScaleExp1"/>-->
+        <parameter idref="hyperLengthExp1"/>
+    </gaussianProcessKernelGradient>
+
+    <gaussianProcessKernelGradient id="gpKernelGradient3">
+        <randomField idref="test.field2"/>
+        <parameter idref="hyperScaleExp1"/>
         <parameter idref="hyperLengthExp1"/>
     </gaussianProcessKernelGradient>
 
@@ -155,6 +161,18 @@
         </actual>
         <expected>
             -0.7872819010954416
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check Gradient wrt scale and length
+        </message>
+        <actual regex="gradient:(.*?)\n">
+            <gaussianProcessKernelGradient idref="gpKernelGradient3"/>
+        </actual>
+        <expected>
+            0.012015728295978079 -0.7872819010954416
         </expected>
     </assertEqual>
 

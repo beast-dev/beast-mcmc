@@ -103,6 +103,10 @@ public class TaxonEffectGradient implements GradientWrtParameterProvider, Report
     @Override
     public double[] getGradientLogDensity() {
 
+        if (TIMING) {
+            stopWatches[0].start();
+        }
+
         double[] gradient = new double[getDimension()];
 
         for (Partition p : partitions) {
@@ -110,12 +114,17 @@ public class TaxonEffectGradient implements GradientWrtParameterProvider, Report
                 Tree tree = p.tree;
                 TreeTrait trait = p.treeTraitProvider;
                 double[] taxonGradient = (double[]) trait.getTrait(tree, tree.getExternalNode(taxon));
-                int effectIndex = p.model.getMap().getEffectIndex(taxon);
-                int offsetOutput = effectIndex * dimTrait * nTraits;
+                final int effectIndex = p.model.getMap().getEffectIndex(taxon);
+                final int sign = p.model.getMap().getSign(taxon);
+                final int offsetOutput = effectIndex * dimTrait * nTraits;
                 for (int i = 0; i < dimTrait; ++i) {
-                    gradient[offsetOutput + i] -= taxonGradient[i];
+                    gradient[offsetOutput + i] -= sign * taxonGradient[i];
                 }
             }
+        }
+
+        if (TIMING) {
+            stopWatches[0].stop();
         }
 
         return gradient;

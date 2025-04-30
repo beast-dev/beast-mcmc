@@ -1,7 +1,7 @@
 /*
- * IntegratedProcessTraitDataModel.java
+ * TaxonEffectTraitDataModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -50,6 +50,7 @@ public class TaxonEffectTraitDataModel extends
     private final EffectMap map;
     private final Parameter effects;
     private final Tree tree;
+    private final Parameter sign;
 
     public TaxonEffectTraitDataModel(String name,
                                      Tree tree,
@@ -64,6 +65,7 @@ public class TaxonEffectTraitDataModel extends
         this.tree = tree;
         this.map = map;
         this.effects = map.parameter;
+        this.sign = map.sign;
 
         if (parameter.getDimension() != effects.getDimension()) {
             throw new IllegalArgumentException("Unequal effects dimension");
@@ -74,6 +76,9 @@ public class TaxonEffectTraitDataModel extends
         }
 
         addVariable(effects);
+        if (sign != null) {
+            addVariable(sign);
+        }
     }
 
     public EffectMap getMap() {
@@ -94,12 +99,9 @@ public class TaxonEffectTraitDataModel extends
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
 
         int index = map.getEffectIndex(taxonIndex);
-
-//        if (index == 1) {
-//            System.err.println("one");
-//        }
-        double effect = effects.getParameterValue(index);
-        partial[0] -= effect;
+        final double effect = effects.getParameterValue(index);
+        final int sign = map.getSign(taxonIndex);
+        partial[0] -= sign * effect;
 
         return partial;
     }
@@ -116,6 +118,8 @@ public class TaxonEffectTraitDataModel extends
             } else {
                 throw new RuntimeException("Unhandled parameter change type");
             }
+        } else if (variable == sign && variable != null) {
+            fireModelChanged(this);
         }
     }
 
@@ -138,18 +142,20 @@ public class TaxonEffectTraitDataModel extends
     public static class EffectMap {
 
         private final Parameter parameter;
+        private final Parameter sign;
         private final Map<String,Integer> taxonNameToIndex;
         private final int[] map;
         private final int[] inverseMap;
         private final int dim;
 
-        public EffectMap(Tree tree, Parameter parameter, int dim) {
+        public EffectMap(Tree tree, Parameter parameter, Parameter sign, int dim) {
 
             if (tree.getExternalNodeCount() != parameter.getDimension() * dim) {
                 throw new IllegalArgumentException("Invalid effect dimension");
             }
 
             this.parameter = parameter;
+            this.sign = sign;
             this.dim = dim;
             this.taxonNameToIndex = new HashMap<>();
 
@@ -173,6 +179,7 @@ public class TaxonEffectTraitDataModel extends
         public EffectMap(Tree tree, EffectMap original) {
 
             this.parameter = original.parameter;
+            this.sign = original.sign;
             this.taxonNameToIndex = original.taxonNameToIndex;
             this.dim = original.dim;
 
@@ -182,6 +189,16 @@ public class TaxonEffectTraitDataModel extends
 
         public int getEffectIndex(int taxonIndex) {
             return map[taxonIndex];
+        }
+
+        public int getSign(int taxonIndex) {
+            if (taxonIndex == 0
+                    || sign == null
+                    || sign.getParameterValue(0) > 1.0)  {
+                return 1;
+            } else {
+                return -1;
+            }
         }
 
         public int getTaxonIndex(int effectIndex) {

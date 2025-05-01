@@ -100,7 +100,7 @@ public class TaxonEffectTraitDataModel extends
 
         int index = map.getEffectIndex(taxonIndex);
         final double effect = effects.getParameterValue(index);
-        final int sign = map.getSign(taxonIndex);
+        final int sign = map.getSign();
         partial[0] -= sign * effect;
 
         return partial;
@@ -191,10 +191,8 @@ public class TaxonEffectTraitDataModel extends
             return map[taxonIndex];
         }
 
-        public int getSign(int taxonIndex) {
-            if (taxonIndex == 0
-                    || sign == null
-                    || sign.getParameterValue(0) > 1.0)  {
+        public int getSign() {
+            if (sign == null || sign.getParameterValue(0) > 0.0)  {
                 return 1;
             } else {
                 return -1;

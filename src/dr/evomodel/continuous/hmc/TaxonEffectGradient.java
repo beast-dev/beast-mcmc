@@ -110,12 +110,12 @@ public class TaxonEffectGradient implements GradientWrtParameterProvider, Report
         double[] gradient = new double[getDimension()];
 
         for (Partition p : partitions) {
+            final int sign = p.model.getMap().getSign();
             for (int taxon = 0; taxon < nTaxa; ++taxon) {
                 Tree tree = p.tree;
                 TreeTrait trait = p.treeTraitProvider;
                 double[] taxonGradient = (double[]) trait.getTrait(tree, tree.getExternalNode(taxon));
                 final int effectIndex = p.model.getMap().getEffectIndex(taxon);
-                final int sign = p.model.getMap().getSign(taxon);
                 final int offsetOutput = effectIndex * dimTrait * nTraits;
                 for (int i = 0; i < dimTrait; ++i) {
                     gradient[offsetOutput + i] -= sign * taxonGradient[i];

@@ -35,6 +35,7 @@ import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 
+import static dr.app.bss.Utils.max;
 /**
  * @author Marc Suchard
  * @author Forrest Crawford

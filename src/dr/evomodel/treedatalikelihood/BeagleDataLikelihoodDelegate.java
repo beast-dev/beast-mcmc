@@ -34,6 +34,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;

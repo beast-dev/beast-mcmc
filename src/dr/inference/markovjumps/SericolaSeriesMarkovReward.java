@@ -321,36 +321,95 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         }
     }
 
-    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double time) {
+//    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double time) {
+//        // n indexes the inner max of the inner sum
+//        // time is the branch length
+//        // external sum weights
+//        final double premult = Math.exp(
+//                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+//        );
+//
+//        // TODO Make factorial/choose static look-up tables
+//        // AR - Binomial has a look-up-table built in for k=2.
+//
+//
+//        for (int t = 0; t < X.length; ++t) { // For each time point
+//            double x = X[t];
+//            int h = H[t];
+//
+//            final double factor = lambda / (r[h] - r[h - 1]);
+//
+//            double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+//
+//            final int dim2 = dim * dim;
+//            double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
+//            for (int k = 0; k <= n; k++) {
+//                final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+//                for (int uv = 0; uv < dim2; ++uv) {
+//                    inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+//                }
+//            }
+//
+//            for (int uv = 0; uv < dim2; ++uv) {
+//                W[t][uv] += factor * premult * inc[uv];
+//            }
+//        }
+//    }
 
-        final double premult = Math.exp(
-                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
-        );
-
+    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double[] times, int[] NN) {
+        // n indexes the inner max of the inner sum
+        // time is the branch length
         // TODO Make factorial/choose static look-up tables
         // AR - Binomial has a look-up-table built in for k=2.
+        double premult = 0.0;
+        double time = 0.0;
 
+        boolean singleTime = false;
+        if (times.length == 1) {
+            premult = computingPremultiplier(lambda, times[0], n);
+            time = times[0];
+            singleTime = true;
+        }
 
-        for (int t = 0; t < X.length; ++t) { // For each time point
-            double x = X[t];
-            int h = H[t];
+        boolean restrictLoop = false;
+        if (NN != null)  restrictLoop = true;
 
-            final double factor = lambda / (r[h] - r[h - 1]);
-
-            double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
-
-            final int dim2 = dim * dim;
-            double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
-            for (int k = 0; k <= n; k++) {
-                final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
-                for (int uv = 0; uv < dim2; ++uv) {
-                    inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
-                }
+        for (int t = 0; t < X.length; ++t) {
+            if (restrictLoop && NN[t] < n) continue;
+            if (!singleTime) {
+                time = times[t];
+                premult = computingPremultiplier(lambda, time, n);
             }
+            loopCyclePdf(X[t], time, H[t], n,  premult, W[t]);
+        }
+    }
 
+    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double[] times) {
+        accumulatePdf(W, X, H, n, times, null);
+    }
+
+    private double computingPremultiplier(double lambda, double time, int n) {
+        return Math.exp(
+                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+        );
+    }
+
+    private void loopCyclePdf(double x, double time,
+                           int h, int n,
+                           double premult, double[] Wt) {
+        final double factor = lambda / (r[h] - r[h - 1]); // only h
+        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time); // time and h
+        final int dim2 = dim * dim;
+        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
+        for (int k = 0; k <= n; k++) {
+            final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
             for (int uv = 0; uv < dim2; ++uv) {
-                W[t][uv] += factor * premult * inc[uv];
+                inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
             }
+        }
+        final double temp = factor * premult;
+        for (int uv = 0; uv < dim2; ++uv) {
+            Wt[uv] += temp * inc[uv];
         }
     }
 

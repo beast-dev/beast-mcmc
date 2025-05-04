@@ -193,16 +193,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
                         extraBufferCount, settings);
             } else {
-
-                if (branchModel.getSubstitutionModels().size() == 1) {
-                    evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
-                } else {
-                    // use a more general delegate that allows different substitution models on different branches and
-                    // can do matrix convolution.
-
-                    // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                if (settings.useRewardAwareBranchModelDelegate) {
+                    evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree, (TransitionMatrixProviderBranchModel) branchModel, 0,
                             extraBufferCount, settings);
+                } else {
+                    if (branchModel.getSubstitutionModels().size() == 1) {
+                        evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                    } else {
+                        // use a more general delegate that allows different substitution models on different branches and
+                        // can do matrix convolution.
+
+                        // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                        evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                                extraBufferCount, settings);
+                    }
                 }
             }
 

@@ -130,7 +130,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
         int[] H = new int[X.length];
         for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[i], time[i]); // TODO this can be made faster
             if (!singleTime) time = times[i];
             H[i] = getHfromX(X[i], time); // TODO this can be made faster
         }

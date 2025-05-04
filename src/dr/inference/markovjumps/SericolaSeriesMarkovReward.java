@@ -188,17 +188,65 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
     public double[] computePdf(double x, double time) {
         return computePdf(new double[]{x}, time)[0];
     }
+//    public double[][] computePdfTRUE(double[] X, double time) {
+//        int[] H = getHfromX(X, time);
+//
+//        growC(time, 1);
+//
+//        double[][] W = initializeW(X.length, dim); // initialize with zeros
+//
+//        final int N = getNfromC() - 1; // TODO N should be branch-length-specific to save computation
+//        for (int n = 0; n <= N; ++n) {
+//            accumulatePdf(W, X, H, n, time); // TODO This can be sped up when only a single entry is wanted
+//            System.out.print("n = " + n + " ");
+//            for (int j = 0; j < W[0].length; ++j) {
+//                System.out.printf("%.3f ", W[0][j]);
+//            }
+//            System.out.println();
+////            print2DArray(W);
+//        }
+//
+//        if (DEBUG) {
+//            for (int i = 0; i < W.length; ++i) {
+//                System.err.println("W'[" + i + "]:\n" + new Matrix(squareMatrix(W[i])));
+//            }
+//            System.err.println("");
+//        }
+//
+//        return W;
+//    }
 
     public double[][] computePdf(double[] X, double time) {
-        int[] H = getHfromX(X, time);
+        return  computePdf(X, new double[]{time});
+    }
 
-        growC(time, 1);
+    public double[][] computePdf(double[] X, double[] times) {
+        return computePdf(X, times, false);
+    }
 
+    public double[][] computePdf(double[] X, double[] times, boolean parsimonious) {
         double[][] W = initializeW(X.length, dim); // initialize with zeros
+        int[] H = getHfromX(X, times);
+        growC(max(times), 1);
+
+        int[] externalSumRestrictions = new int[times.length];
+        if (parsimonious && times.length > 1) {
+            for (int i = 0; i < times.length; i++) {
+                externalSumRestrictions[i] = determineNumberOfSteps(times[i], lambda);
+            }
+        } else {
+            externalSumRestrictions = null;
+        }
 
         final int N = getNfromC() - 1; // TODO N should be branch-length-specific to save computation
         for (int n = 0; n <= N; ++n) {
-            accumulatePdf(W, X, H, n, time); // TODO This can be sped up when only a single entry is wanted
+            accumulatePdf(W, X, H, n, times, externalSumRestrictions); // TODO This can be sped up when only a single entry is wanted
+//            System.out.print("n = " + n + " ");
+//            for (int j = 0; j < W[0].length; ++j) {
+//                System.out.printf("%.3f ", W[0][j]);
+//            }
+//            System.out.println();
+//            print2DArray(W);
         }
 
         if (DEBUG) {

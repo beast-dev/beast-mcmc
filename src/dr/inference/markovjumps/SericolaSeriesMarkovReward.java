@@ -105,21 +105,33 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         }
         return h;
     }
+
     private int[] getHfromX(double[] X, double time) {
-        int[] H = new int[X.length];
-        for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[i], time);
-        }
-        return H;
+        return getHfromX(X, new double[]{time});
+//        int[] H = new int[X.length];
+//        for (int i = 0; i < X.length; ++i) {
+//            H[i] = getHfromX(X[i], time);
+//        }
+//        return H;
 //        return new int[] { 1 };      // AR nasty hack - revert shortly
     }
-    private int[] getHfromX(double[] X, double[] time) { // there should be an element-wise correspondence
-        if (X.length != time.length) {
-            throw new IllegalArgumentException("X and time must have the same length");
+
+    private int[] getHfromX(double[] X, double[] times) {
+        boolean singleTime = false;
+        double time = 0.0;
+        if (times.length == 1) {
+            singleTime = true;
+            time = times[0];
+        } else if (X.length != times.length) {
+            throw new IllegalArgumentException("Either times must have one dimension, " +
+                    "or X and times must have the same dimension");
         }
+
         int[] H = new int[X.length];
         for (int i = 0; i < X.length; ++i) {
             H[i] = getHfromX(X[i], time[i]); // TODO this can be made faster
+            if (!singleTime) time = times[i];
+            H[i] = getHfromX(X[i], time); // TODO this can be made faster
         }
         return H;
     }

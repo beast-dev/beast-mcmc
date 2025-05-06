@@ -134,7 +134,7 @@ public interface ActionEnabledSubstitution extends SubstitutionModel {
 
         @Override
         public void getInfinitesimalMatrix(double[] matrix) {
-            throw new RuntimeException("Not yet implemented!");
+            substitutionModel.getInfinitesimalMatrix(matrix);
         }
 
         @Override

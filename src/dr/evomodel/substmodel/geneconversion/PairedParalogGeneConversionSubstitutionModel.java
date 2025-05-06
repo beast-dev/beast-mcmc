@@ -138,7 +138,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
     @Override
     public void getInfinitesimalMatrix(double[] matrix) {
-        throw new RuntimeException("Not yet implemented!");
+        numberParalog.setupQMatrix(baseSubstitutionModel, frequencyModel, dataType, matrix, rateCase, igcRateParameter);
     }
 
     @Override
@@ -242,16 +242,14 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
     public enum NumberParalog {
         SINGLE("1") {
             @Override
-            void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
-                              PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter) {
+            void setupQMatrix(ActionEnabledSubstitution baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
+                              PairedDataType dataType, double[] matrix, RateCase rateCase, Parameter igcRateParameter) {
 
                 final int baseNumStates = freqModel.getFrequencyParameter().getDimension();
                 double[] infinitesimalMatrix = new double[baseNumStates * baseNumStates];
                 baseSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
 
-                for (int i = 0; i < dataType.getStateCount(); i++) {
-                    Arrays.fill(matrix[i], 0.0);
-                }
+                Arrays.fill(matrix, 0.0);
 
                 for (int i = 0; i < baseNumStates; i++) {
 
@@ -260,7 +258,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
                     for (int j = 0; j < baseNumStates; j++) {
                         if (j != i) {
                             final int stateTo = dataType.getState(j, j);
-                            matrix[stateFrom][stateTo] = infinitesimalMatrix[i * baseNumStates + j];
+                            matrix[stateFrom * baseNumStates * baseNumStates + stateTo] = infinitesimalMatrix[i * baseNumStates + j];
                         }
                     }
                 }
@@ -293,14 +291,15 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
         },
         PAIR("2") {
             @Override
-            void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
-                              PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter) {
+            void setupQMatrix(ActionEnabledSubstitution baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
+                              PairedDataType dataType, double[] matrix, RateCase rateCase, Parameter igcRateParameter) {
                 final int baseNumStates = freqModel.getFrequencyParameter().getDimension();
                 double[] infinitesimalMatrix = new double[baseNumStates * baseNumStates];
                 baseSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+                Arrays.fill(matrix, 0.0);
 
                 for (int i = 0; i < dataType.getStateCount(); i++) {
-                    Arrays.fill(matrix[i], 0.0);
+
                     final int state1 = freqModel.getState1(i, baseNumStates);
                     final int state2 = freqModel.getState2(i, baseNumStates);
 
@@ -311,20 +310,20 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
                             final int colIndex1 = dataType.getState(stateTo, state2);
 
                             if (stateTo != state1) {
-                                matrix[i][colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
+                                matrix[i * dataType.getStateCount() + colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
 
                                 if (stateTo == state2) {
-                                    matrix[i][colIndex1] += rateCase.getIGCRate(igcRateParameter, 1);
+                                    matrix[i * dataType.getStateCount() + colIndex1] += rateCase.getIGCRate(igcRateParameter, 1);
                                 }
                             }
 
                             final int colIndex2 = dataType.getState(state1, stateTo);
 
                             if (stateTo != state2) {
-                                matrix[i][colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
+                                matrix[i * dataType.getStateCount() + colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
 
                                 if (stateTo == state1) {
-                                    matrix[i][colIndex2] += rateCase.getIGCRate(igcRateParameter, 0);
+                                    matrix[i * dataType.getStateCount() + colIndex2] += rateCase.getIGCRate(igcRateParameter, 0);
                                 }
                             }
                         }
@@ -332,9 +331,9 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
                         for (int stateTo = 0; stateTo < baseNumStates; stateTo++) {
                             if (stateTo != state1) {
                                 final int colIndex1 = dataType.getState(stateTo, state2);
-                                matrix[i][colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
+                                matrix[i * dataType.getStateCount() + colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
                                 final int colIndex2 = dataType.getState(state1, stateTo);
-                                matrix[i][colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
+                                matrix[i * dataType.getStateCount() + colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
                             }
                         }
                     }
@@ -460,8 +459,8 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
             this.name = name;
         }
 
-        abstract void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
-                                   PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter);
+        abstract void setupQMatrix(ActionEnabledSubstitution baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
+                                   PairedDataType dataType, double[] matrix, RateCase rateCase, Parameter igcRateParameter);
 
         abstract int processSubstitutionModel(ActionEnabledSubstitution baseSubstitution, Parameter igcRateParameter, PairedDataType dataType,
                                               int[] rowIndices, int[] colIndices, double[] values);

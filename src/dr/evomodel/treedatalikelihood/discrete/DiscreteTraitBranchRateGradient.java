@@ -179,7 +179,7 @@ public class DiscreteTraitBranchRateGradient
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double nodeResult = gradient[v] * getChainGradient(tree, node);
-                result[destinationIndex] = nodeResult; //TODO: XJ thinks destinationIndex == v here.
+//                result[destinationIndex] = nodeResult; //TODO: XJ thinks destinationIndex == v here.
                 result[v] = nodeResult;
                 v++;
             }

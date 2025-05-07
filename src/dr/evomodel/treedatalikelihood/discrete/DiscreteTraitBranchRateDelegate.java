@@ -31,6 +31,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
+import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
 /**
@@ -48,25 +50,38 @@ public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradien
 
     protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix) {
         for (int i = 0; i < evolutionaryProcessDelegate.getSubstitutionModelCount(); i++) {
-            double[] infinitesimalMatrix = new double[stateCount * stateCount];
-            SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
 
-            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
-            evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
-            if (cacheSquaredMatrix) {
-                double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-                for (int l = 0; l < stateCount; l++) {
-                    for (int j = 0; j < stateCount; j++) {
-                        double sumOverState = 0.0;
-                        for (int k = 0; k < stateCount; k++) {
-                            sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-                        }
-                        infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-                    }
+            SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
+
+            if (evolutionaryProcessDelegate instanceof ActionSubstitutionModelDelegate) {
+
+                ActionSubstitutionModelDelegate actionSubstitutionModelDelegate = (ActionSubstitutionModelDelegate) evolutionaryProcessDelegate;
+                actionSubstitutionModelDelegate.cacheSparseDifferentialMatrix(beagle, i);
+
+                if (cacheSquaredMatrix) {
+                    throw new RuntimeException("Not yet implemented!");
                 }
-                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
-                evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
+
+            } else {
+                double[] infinitesimalMatrix = new double[stateCount * stateCount];
+                substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+                double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
+                evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
+
+                if (cacheSquaredMatrix) {
+                    double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
+                    for (int l = 0; l < stateCount; l++) {
+                        for (int j = 0; j < stateCount; j++) {
+                            double sumOverState = 0.0;
+                            for (int k = 0; k < stateCount; k++) {
+                                sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
+                            }
+                            infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
+                        }
+                    }
+                    double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
+                    evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
+                }
             }
         }
     }

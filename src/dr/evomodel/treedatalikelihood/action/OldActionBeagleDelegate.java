@@ -230,6 +230,11 @@ public class OldActionBeagleDelegate implements Beagle {
     }
 
     @Override
+    public void setSparseDifferentialMatrix(int i, int[] ints, int[] ints1, double[] doubles, int i1) {
+
+    }
+
+    @Override
     public void setStateFrequencies(int i, double[] doubles) {
         System.arraycopy(doubles, 0, this.stateFrequencies, 0, this.stateCount);
     }

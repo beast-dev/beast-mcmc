@@ -176,6 +176,17 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     }
 
+    public void cacheSparseDifferentialMatrix(Beagle beagle, int substitutionIndex) {
+        ActionEnabledSubstitution substitutionModel = (ActionEnabledSubstitution) getSubstitutionModel(substitutionIndex);
+
+        int[] rowIndices = new int[substitutionModel.getNonZeroEntryCount()];
+        int[] colIndices = new int[substitutionModel.getNonZeroEntryCount()];
+        double[] values = new double[substitutionModel.getNonZeroEntryCount()];
+
+        substitutionModel.getNonZeroEntries(rowIndices, colIndices, values);
+        beagle.setSparseDifferentialMatrix(getInfinitesimalMatrixBufferIndex(substitutionIndex), rowIndices, colIndices, values, substitutionModel.getNonZeroEntryCount());
+    }
+
     private int getEigenIndexForBranch(int branchIndex) {
         SubstitutionModel substitutionModel = getSubstitutionModelForBranch(branchIndex);
         return eigenIndexMap.get(substitutionModel);

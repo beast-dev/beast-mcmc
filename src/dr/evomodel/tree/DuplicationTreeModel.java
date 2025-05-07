@@ -100,6 +100,12 @@ public class DuplicationTreeModel extends AncestralTraitTreeModel{
         }
     }
 
+    public double getBranchLength(NodeRef iNode) {
+        final double parentHeight = getNodeHeight(getParent(iNode));
+        final double nodeHeight = getNodeHeight(iNode);
+        return parentHeight - nodeHeight;
+    }
+
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         fireModelChanged(new TreeChangedEvent.WholeTree());
     }

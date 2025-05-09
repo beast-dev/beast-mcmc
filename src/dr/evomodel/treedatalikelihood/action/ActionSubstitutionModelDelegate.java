@@ -62,17 +62,17 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getMatrixBufferCount() {
-        return nodeCount - 1;
+        return 0;
     }
 
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + eigenIndexMap.get(getSubstitutionModelForBranch(branchIndex));
+        return getEigenBufferCount() + eigenIndexMap.get(getSubstitutionModelForBranch(branchIndex));
     }
 
     @Override
     public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + getEigenBufferCount() + getInfinitesimalMatrixBufferIndex(branchIndex);
+        return getEigenBufferCount() + getInfinitesimalMatrixBufferIndex(branchIndex);
     }
 
     @Override

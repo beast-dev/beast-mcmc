@@ -1552,6 +1552,82 @@ public interface Transform {
         }
     }
 
+    class LocationScaleTransform extends UnivariableTransform{
+        private final double location;
+        private final double scale;
+
+        LocationScaleTransform(){
+            this.location = 0.0;
+            this.scale = 1.0;
+        }
+
+        public LocationScaleTransform(double location, double scale){
+            this.location = location;
+            this.scale = scale;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "Location Scale Transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return (value - location) / scale;
+        }
+
+        @Override
+        public double inverse(double value) {
+            return value * scale + location;
+        }
+
+        @Override
+        public boolean isInInteriorDomain(double value) {
+            if (scale == 0.0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        public double gradientInverse(double value) {
+            return scale;
+        }
+        public double logGradientInverse(double value) { return Math.log(scale); }
+
+        public double logJacobian(double value) {
+            return -Math.log(scale);
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+//            gradient * gradientInverse(transform(value)) + gradientLogJacobianInverse(transform(value));
+            return gradient * scale; // + 0.0
+        } // TODO check this
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        public double gradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
     class NoTransform extends UnivariableTransform {
 
         @Override
@@ -2803,6 +2879,7 @@ public interface Transform {
     LogitTransform LOGIT = new LogitTransform();
     SigmoidTransform SIGMOID = new SigmoidTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
+    LocationScaleTransform LOCATIONSCALE = new LocationScaleTransform();
 
     enum Type {
         NONE("none", new NoTransform()),
@@ -2817,7 +2894,8 @@ public interface Transform {
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
         SQUARED("squared", new SquaredTransform()),
         ABS("abs", new AbsTransform()),
-        POWER("power", new PowerTransform());
+        POWER("power", new PowerTransform()),
+        LOCATIONSCALE("locationScale", new LocationScaleTransform());
 
         Type(String name, Transform transform) {
             this.name = name;

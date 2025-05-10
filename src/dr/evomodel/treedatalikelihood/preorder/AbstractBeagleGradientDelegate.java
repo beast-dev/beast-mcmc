@@ -229,7 +229,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     protected int getPreOrderPartialIndex(final int nodeNumber) {
-        return preOrderPartialOffset + nodeNumber;
+        return preOrderPartialOffset + getPostOrderPartialIndex(nodeNumber);
     }
 
     @Override

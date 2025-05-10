@@ -152,6 +152,14 @@ public class TransformParsers {
             Transform.ParsedTransform innerPT = (Transform.ParsedTransform)
                     innerXo.getChild(Transform.ParsedTransform.class);
 
+            if (outerPT.parameters == null || innerPT.parameters == null) {
+                if (outerPT.parameters == null) {
+                     outerPT.parameters = innerPT.parameters;
+                } else {
+                    innerPT.parameters = outerPT.parameters;
+                }
+            }
+            
             if (!outerPT.equivalent(innerPT)) {
                 throw new XMLParseException("Not equivalent transformations");
             }

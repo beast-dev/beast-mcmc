@@ -159,7 +159,7 @@ public class TransformParsers {
                     innerPT.parameters = outerPT.parameters;
                 }
             }
-            
+
             if (!outerPT.equivalent(innerPT)) {
                 throw new XMLParseException("Not equivalent transformations");
             }
@@ -170,6 +170,14 @@ public class TransformParsers {
                 Transform.ParsedTransform composition = outerPT.clone();
                 composition.transform = new Transform.Compose((Transform.UnivariableTransform) outerPT.transform,
                         (Transform.UnivariableTransform) innerPT.transform);
+                return composition;
+
+            } else if (outerPT.transform instanceof Transform.MultivariableTransform &&
+                    innerPT.transform instanceof Transform.MultivariableTransform) {
+
+                Transform.ParsedTransform composition = outerPT.clone();
+                composition.transform = new Transform.ComposeMultivariable((Transform.MultivariableTransform) outerPT.transform,
+                        (Transform.MultivariableTransform) innerPT.transform);
                 return composition;
 
             } else {

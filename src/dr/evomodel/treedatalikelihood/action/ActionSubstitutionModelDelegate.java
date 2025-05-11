@@ -204,7 +204,6 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
         System.arraycopy(branchIndices, 0, currentBranchIndices, 0, branchIndices.length);
         System.arraycopy(edgeLengths, 0, currentEdgeLengths, 0, edgeLengths.length);
         currentUpdateCount = updateCount;
-        storedBeagle = beagle;
     }
 
     private double[] currentEdgeLengths;
@@ -213,7 +212,6 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private int[] storedBranchIndices;
     private int currentUpdateCount;
     private int storedUpdateCount;
-    private Beagle storedBeagle; // TODO: XJ: bad assumption of single beagle instance
 
     @Override
     public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
@@ -229,6 +227,9 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void restoreState() {
-        updateTransitionMatrices(storedBeagle, storedBranchIndices, storedEdgeLengths, storedUpdateCount, false);
+    }
+
+    public void restoreState(Beagle beagle) {
+        updateTransitionMatrices(beagle, storedBranchIndices, storedEdgeLengths, storedUpdateCount, false);
     }
 }

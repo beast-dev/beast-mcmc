@@ -36,6 +36,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.action.ActionSubstitutionModelDelegate;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
@@ -1052,7 +1053,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         updateRootFrequency = true;
 
         partialBufferHelper.restoreState();
-        evolutionaryProcessDelegate.restoreState();
+        if (evolutionaryProcessDelegate instanceof ActionSubstitutionModelDelegate) {
+            ((ActionSubstitutionModelDelegate) evolutionaryProcessDelegate).restoreState(beagle);
+        } else {
+            evolutionaryProcessDelegate.restoreState();
+        }
 
         if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();

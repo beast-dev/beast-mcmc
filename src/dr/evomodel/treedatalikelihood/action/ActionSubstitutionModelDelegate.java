@@ -36,6 +36,10 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
         for (int i = 0; i < getSubstitutionModelCount(); i++) {
             eigenIndexMap.put(substitutionModels.get(i), i);
         }
+        this.storedBranchIndices = new int[tree.getNodeCount()];
+        this.storedEdgeLengths = new double[tree.getNodeCount()];
+        this.currentBranchIndices = new int[tree.getNodeCount()];
+        this.currentEdgeLengths = new double[tree.getNodeCount()];
     }
 
     private List<ActionEnabledSubstitution> getSubstitutionModels(BranchModel branchModel) {
@@ -197,7 +201,19 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
         for (int i = 0; i < updateCount; i++) {
             beagle.updateTransitionMatrices(getEigenIndexForBranch(branchIndices[i]), new int[]{branchIndices[i]}, null, null, new double[]{edgeLengths[i]}, 1);
         }
+        System.arraycopy(branchIndices, 0, currentBranchIndices, 0, branchIndices.length);
+        System.arraycopy(edgeLengths, 0, currentEdgeLengths, 0, edgeLengths.length);
+        currentUpdateCount = updateCount;
+        storedBeagle = beagle;
     }
+
+    private double[] currentEdgeLengths;
+    private double[] storedEdgeLengths;
+    private int[] currentBranchIndices;
+    private int[] storedBranchIndices;
+    private int currentUpdateCount;
+    private int storedUpdateCount;
+    private Beagle storedBeagle; // TODO: XJ: bad assumption of single beagle instance
 
     @Override
     public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
@@ -206,11 +222,13 @@ public class ActionSubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void storeState() {
-
+        System.arraycopy(currentBranchIndices, 0, storedBranchIndices, 0, currentBranchIndices.length);
+        System.arraycopy(currentEdgeLengths, 0, storedEdgeLengths, 0, currentEdgeLengths.length);
+        storedUpdateCount = currentUpdateCount;
     }
 
     @Override
     public void restoreState() {
-
+        updateTransitionMatrices(storedBeagle, storedBranchIndices, storedEdgeLengths, storedUpdateCount, false);
     }
 }

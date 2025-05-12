@@ -45,7 +45,8 @@ import dr.math.matrixAlgebra.Matrix;
 public class VarianceProportionStatistic extends AbstractVarianceProportionStatistic implements VariableListener, ModelListener {
 
     private final MultivariateDiffusionModel diffusionModel;
-    private TreeVarianceSums treeSums;
+    private final RepeatedMeasuresTraitDataModel repeatedMeasuresTraitDataModel;
+    private final TreeVarianceSums treeSums;
 
     private Matrix diffusionVariance;
     private Matrix samplingVariance;
@@ -60,6 +61,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
 
         super(tree, treeLikelihood, dataModel, ratio);
 
+        this.repeatedMeasuresTraitDataModel = dataModel;
         this.diffusionModel = diffusionModel;
         this.treeSums = new TreeVarianceSums(0, 0);
 
@@ -73,37 +75,6 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
         dataModel.getExtensionPrecision().addParameterListener(this);
     }
 
-
-    /**
-     * a class that stores the sum of the diagonal elements and all elements of a matrix
-     */
-    protected class TreeVarianceSums {
-
-        private double diagonalSum;
-        private double totalSum;
-
-        private TreeVarianceSums(double diagonalSum, double totalSum) {
-
-            this.diagonalSum = diagonalSum;
-            this.totalSum = totalSum;
-        }
-
-        public double getDiagonalSum() {
-            return diagonalSum;
-        }
-
-        public double getTotalSum() {
-            return totalSum;
-        }
-
-        public void setDiagonalSum(double diagonalSum) {
-            this.diagonalSum = diagonalSum;
-        }
-
-        public void setTotalSum(double totalSum) {
-            this.totalSum = totalSum;
-        }
-    }
 
     protected void updateVarianceComponents() {
 
@@ -145,7 +116,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
 
         if (!varianceKnown) {
 
-            samplingVariance = dataModel.getSamplingVariance();
+            samplingVariance = repeatedMeasuresTraitDataModel.getSamplingVariance();
             diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
 
             varianceKnown = true;
@@ -157,7 +128,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
     }
 
     /**
-     * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
+     * recalculates the sum of the diagonal elements and sum of all the elements of the tree variance
      * matrix statistic based on current parameters
      */
     private void updateTreeSums() {
@@ -177,7 +148,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
             throw new RuntimeException("VarianceProportionStatistic not yet implemented for " +
                     "traitDataLikelihood argument useTreeLength='true'.");
         } else if (rescalingScheme != RateRescalingScheme.NONE) {
-            throw new RuntimeException("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for RateRescalingScheme" +
                     rescalingScheme.getText() + ".");
         }
 
@@ -187,7 +158,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        assert (variable == dataModel.getExtensionPrecision() || variable == diffusionModel.getPrecisionParameter());
+        assert (variable == repeatedMeasuresTraitDataModel.getExtensionPrecision() || variable == diffusionModel.getPrecisionParameter());
 
         varianceKnown = false;
     }

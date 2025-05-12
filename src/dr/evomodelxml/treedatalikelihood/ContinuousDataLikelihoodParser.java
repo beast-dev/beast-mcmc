@@ -72,10 +72,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
 
-
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
-
-    public static final String FACTOR_NAME = "factors";
 
     public String getParserName() {
         return CONTINUOUS_DATA_LIKELIHOOD;
@@ -164,8 +161,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                         dataModel.getPrecisionType().getTag() + "'.");
             }
 
-//            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
-
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
                 System.err.println("Jitter is specified in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. If a jitter is needed, please add it to the data model " + dataModel.getClass().toString() + ".");
             }
@@ -248,16 +243,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
-
-//                String partialTraitName = getPartiallyMissingTraitName(traitName);
-//
-//                ProcessSimulationDelegate partialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
-//                        treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
-//
-//                TreeTraitProvider partialTraitProvider = new ProcessSimulation(partialTraitName,
-//                        treeDataLikelihood, partialSimulationDelegate);
-//
-//                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }
 
             //TODO: remove below (should let ConditionalTraitSimulationHelper figure everything out)

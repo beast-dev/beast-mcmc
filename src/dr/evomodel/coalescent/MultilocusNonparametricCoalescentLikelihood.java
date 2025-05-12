@@ -24,14 +24,12 @@
  */
 
 package dr.evomodel.coalescent;
-
-import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,12 +40,12 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLikelihood implements Citable {
+public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLikelihood implements Citable, Reportable {
 
     private final int numGridPoints;
 
-    private double[] numCoalEvents;
-    private double[] storedNumCoalEvents;
+    private int[] numCoalEvents;
+    private int[] storedNumCoalEvents;
     private double[] sufficientStatistics;
     private double[] storedSufficientStatistics;
 
@@ -56,7 +54,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double[] ploidySums;
     private double[] storedPloidySums;
 
-    private final List<TreeIntervals> intervalsList;
+    private final List<BigFastTreeIntervals> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -65,16 +63,21 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double storedLogLikelihood;
 
     private boolean intervalsKnown;
+    private boolean storedIntervalsKnown;
     private boolean likelihoodKnown;
 
-    public MultilocusNonparametricCoalescentLikelihood(List<TreeIntervals> intervalLists,
+    double[] fullTimeLine;
+    int[] gridIndices;
+    int[] numLineages;
+
+    public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
                                                        Parameter logPopSizes,
                                                        Parameter gridPoints,
                                                        Parameter ploidyFactors) {
 
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+        super("Multilocus Nonparametric Coalescent Likelihood");
 
-        // adding the key word to the the model means the keyword will be logged in the
+        // adding the key word to the model means the keyword will be logged in the
         // header of the logfile.
         this.addKeyword("skygrid");
         if (intervalLists.size() > 1) {
@@ -91,6 +94,10 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
+        for (BigFastTreeIntervals intervals : intervalLists) {
+            addModel(intervals);
+        }
+
         if (ploidyFactors.getDimension() != intervalLists.size()) {
             throw new IllegalArgumentException("Ploidy factors parameter should have length " + intervalLists.size());
         }
@@ -98,19 +105,19 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         int fieldLength = logPopSizes.getDimension();
 
         this.sufficientStatistics = new double[fieldLength];
-        this.numCoalEvents = new double[fieldLength];
-        this.storedNumCoalEvents = new double[fieldLength];
+        this.storedSufficientStatistics = new double[fieldLength];
+        this.numCoalEvents = new int[fieldLength];
+        this.storedNumCoalEvents = new int[fieldLength];
         this.ploidySums = new double[fieldLength];
         this.storedPloidySums = new double[fieldLength];
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-        if (model instanceof TreeIntervalList) {
-            TreeIntervalList treeModel = (TreeIntervalList) model;
+        if (model instanceof BigFastTreeIntervals) {
+            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
-                intervalsKnown = false;
+                intervalsKnown = false; // TODO This should only fire the change for one tree model
                 likelihoodKnown = false;
             } else {
                 throw new RuntimeException("Unknown tree");
@@ -122,186 +129,69 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        likelihoodKnown = false;
     }
 
-    private int moveToNextTimeIndex(int treeIndex, int lastTimeIndex, double[] times) {
-        int currentTimeIndex = lastTimeIndex;
-        double currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
-        double nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
-        while (nextTime <= currentTime && currentTimeIndex + 2 < intervalsList.get(treeIndex).getIntervalCount()) {
-            currentTimeIndex++;
-            currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
-            nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
-        }
-        times[0] = currentTime;
-        times[1] = nextTime;
-        return currentTimeIndex;
-    }
-
-    protected void setupSufficientStatistics() {
-
+    private void setupSufficientStatistics() {
+        Arrays.fill(sufficientStatistics, 0);
+        Arrays.fill(ploidySums, 0.0);
         Arrays.fill(numCoalEvents, 0);
-        Arrays.fill(sufficientStatistics, 0.0);
-        Arrays.fill(ploidySums, 0);
 
-//        //index of the smallest grid point greater than at least one sampling/coalescent time in current tree
-//        int minGridIndex;
-//        //index of the greatest grid point less than at least one sampling/coalescent time in current tree
-//        int maxGridIndex;
+        for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            double ploidyFactor = 1 / getPopulationFactor(treeIndex);
 
-        double[] gridPoints = this.gridPoints.getParameterValues(); // TODO delegate to interface
+            SingleTreeGriddedNodesTimeline singleTreeNodesTimeLine = new
+                    SingleTreeGriddedNodesTimeline(intervalsList.get(treeIndex), gridPoints);
+            fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
+            numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
+            gridIndices = singleTreeNodesTimeLine.getGridIndices();
 
-        for (int i = 0; i < intervalsList.size(); i++) {
+            int[] tempNumCoalEvents = singleTreeNodesTimeLine.getNumCoalEvents();
+            for (int j = 0; j < numCoalEvents.length; j++)  numCoalEvents[j] += tempNumCoalEvents[j];
 
-            double ploidyFactor = 1 / getPopulationFactor(i);
+            int i = 0; // index for the fullTimeLine
+            while (gridIndices[i] == i) i++; // choose the first grid point bigger than the most recent sampling time
 
-            double[] currentAndNextTime = new double[2];
+            boolean skipFirstSamplingTime = true; // necessary since "i" cannot be incremented here
 
-            int currentTimeIndex = moveToNextTimeIndex(i, 0, currentAndNextTime);
-
-            int numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-            int minGridIndex = 0;
-            while (minGridIndex < numGridPoints - 1 && gridPoints[minGridIndex] <= currentAndNextTime[0]) { // MAS: Unclear about need for -1
-                minGridIndex++;
-            }
-            int currentGridIndex = minGridIndex;
-
-            double lastCoalescentTime = currentAndNextTime[0] + intervalsList.get(i).getTotalDuration();
-
-            int maxGridIndex = numGridPoints - 1;
-            while ((maxGridIndex >= 0) && (gridPoints[maxGridIndex] >= lastCoalescentTime)) {
-                maxGridIndex = maxGridIndex - 1;
-            }
-
-            if (maxGridIndex >= 0 && minGridIndex < numGridPoints) {
-
-
-                //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
-
-                while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
-
-                    //check to see if interval ends with coalescent event
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-
-                        numCoalEvents[currentGridIndex]++;
-                    }
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                    currentTimeIndex++;
-                    currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-
-                }
-
-                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                ploidySums[currentGridIndex] = ploidySums[currentGridIndex] + Math.log(ploidyFactor) * numCoalEvents[currentGridIndex];
-
-                currentGridIndex++;
-
-
-                //from likelihood of intervals between gridPoints[minGridIndex] and gridPoints[maxGridIndex]
-
-                while (currentGridIndex <= maxGridIndex) {
-                    if (currentAndNextTime[1] >= gridPoints[currentGridIndex]) {
-                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex] - gridPoints[currentGridIndex - 1]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                        ploidySums[currentGridIndex] = ploidySums[currentGridIndex] + Math.log(ploidyFactor) * numCoalEvents[currentGridIndex];
-
-                        currentGridIndex++;
+            double interval;
+            for (int gridIndex = i; gridIndex < numGridPoints; gridIndex++) {
+                while (i <= gridIndices[gridIndex]) {
+                    if (!skipFirstSamplingTime) {
+                            interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
+                            sufficientStatistics[gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
+                                    interval * ploidyFactor;
+                            ploidySums[gridIndex] += Math.log(ploidyFactor) * tempNumCoalEvents[gridIndex];
                     } else {
-
-                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - gridPoints[currentGridIndex - 1]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-
-                        //check to see if interval ends with coalescent event
-                        if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                            numCoalEvents[currentGridIndex]++;
-                        }
-                        currentTimeIndex++;
-                        currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-
-                        while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
-                            //check to see if interval is coalescent interval or sampling interval
-                            if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                                numCoalEvents[currentGridIndex]++;
-                            }
-                            sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-
-                            currentTimeIndex++;
-                            currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-                            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-
-                        }
-                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                        ploidySums[currentGridIndex] = ploidySums[currentGridIndex] + Math.log(ploidyFactor) * numCoalEvents[currentGridIndex];
-
-                        currentGridIndex++;
+                        skipFirstSamplingTime = false;
                     }
+                    i++;
                 }
-
-                //from likelihood of interval between gridPoints[maxGridIndex] and lastCoalescentTime
-
-                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - gridPoints[currentGridIndex - 1]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-
-                //check to see if interval ends with coalescent event
-                if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                    numCoalEvents[currentGridIndex]++;
+            }
+            // manage events after last grid point
+            if (i < fullTimeLine.length) {
+                while (i < fullTimeLine.length) {
+                    interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
+                    sufficientStatistics[numGridPoints] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
+                            interval * ploidyFactor;
+                    ploidySums[numGridPoints] += Math.log(ploidyFactor) * tempNumCoalEvents[numGridPoints];
+                    i++;
                 }
-
-                currentTimeIndex++;
-
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
-
-                    currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-
-                    //check to see if interval is coalescent interval or sampling interval
-
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                        numCoalEvents[currentGridIndex]++;
-                    }
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                    currentAndNextTime[0] = currentAndNextTime[1];
-                    currentTimeIndex++;
-
-                }
-
-                // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
-
-            } else {
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
-                    //check to see if interval is coalescent interval or sampling interval
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                        numCoalEvents[currentGridIndex]++;
-                    }
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-
-                    currentTimeIndex++;
-                    if ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
-                        currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-
-                    }
-
-                }
-                ploidySums[currentGridIndex] = ploidySums[currentGridIndex] + Math.log(ploidyFactor) * numCoalEvents[currentGridIndex];
-
             }
         }
     }
 
-    private double calculateLogCoalescentLikelihood() {
 
-        checkIntervals();
+    protected double calculateLogCoalescentLikelihood() {
+
+        computeSufficientStatistics();
 
         double currentLike = 0;
         for (int i = 0; i < logPopSizes.getDimension(); i++) {
             double currentGamma = logPopSizes.getParameterValue(i);
-            currentLike += -numCoalEvents[i] * currentGamma + ploidySums[i] - sufficientStatistics[i] * Math.exp(-currentGamma);
+            currentLike += - numCoalEvents[i] * currentGamma
+                    + ploidySums[i]
+                    - sufficientStatistics[i] * Math.exp(-currentGamma);
         }
 
         return currentLike;
@@ -324,30 +214,47 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @Override
     public void makeDirty() {
+        intervalsKnown = false;
         likelihoodKnown = false;
     }
 
-    private double getPopulationFactor(int nt) {
-        return ploidyFactors.getParameterValue(nt);
-    }
+    private double getPopulationFactor(int nt) {return ploidyFactors.getParameterValue(nt);}
+
+    protected int getNGridPoints() { return gridPoints.getDimension();}
+
+    protected double getPopulationSize(int i) { return Math.exp(logPopSizes.getParameterValue(i)); }
+
+    protected double getLogPopulationSize(int i) { return logPopSizes.getParameterValue(i); }
+
+    protected Parameter getLogPopSizes() { return logPopSizes; }
+
+    protected int getPopSizeDimension() { return logPopSizes.getDimension(); }
 
     protected void storeState() {
         System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
         System.arraycopy(ploidySums, 0, storedPloidySums, 0, ploidySums.length);
+        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0,
+                sufficientStatistics.length);
 
+        storedIntervalsKnown = intervalsKnown;
         storedLogLikelihood = logLikelihood;
     }
 
-
     protected void restoreState() {
         // Swap pointers
-        double[] tmp = numCoalEvents;
+        int[] tmp = numCoalEvents;
         numCoalEvents = storedNumCoalEvents;
         storedNumCoalEvents = tmp;
 
         double[] tmp2 = ploidySums;
         ploidySums = storedPloidySums;
         storedPloidySums = tmp2;
+
+        double[] tmp3 = sufficientStatistics;
+        sufficientStatistics = storedSufficientStatistics;
+        storedSufficientStatistics = tmp3;
+
+        intervalsKnown = storedIntervalsKnown;
 
         logLikelihood = storedLogLikelihood;
     }
@@ -357,39 +264,41 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     }
 
-//    private double[] getGradientLogDensity() {
-//
-//        checkIntervals();
-//
-//        final int dim = popSizeParameter.getSize();
-//        double[] gradLogDens = new double[dim];
-//        double[] gamma = getMeanAdjustedGamma();
-//
-//        double currentPrec = precisionParameter.getParameterValue(0);
-//
-//        gradLogDens[0] = -currentPrec * (gamma[0] - gamma[1])
-//                - numCoalEvents[0] + sufficientStatistics[0]
-//                * Math.exp(-popSizeParameter.getParameterValue(0));
-//
-//        for (int i = 1; i < (dim - 1); i++) {
-//            gradLogDens[i] = -currentPrec * (-gamma[i - 1] + 2 * gamma[i] - gamma[i + 1])
-//                    - numCoalEvents[i] + sufficientStatistics[i]
-//                    * Math.exp(-popSizeParameter.getParameterValue(i));
-//        }
-//
-//        gradLogDens[dim - 1] = -currentPrec * (gamma[dim - 1] - gamma[dim - 2])
-//                - numCoalEvents[dim - 1] + sufficientStatistics[dim - 1]
-//                * Math.exp(-popSizeParameter.getParameterValue(dim - 1));
-//
-//        return gradLogDens;
-//
-//    }
+    @SuppressWarnings("unused")
+    private double[] getGradientLogDensity() {
+        return getGradientLogDensity(logPopSizes.getParameterValues());
+    }
 
-    private void checkIntervals() {
+    public double[] getGradientLogDensity(Object x) {
+        double[] field = (double[]) x;
+        computeSufficientStatistics();
+
+        final int dim = field.length;
+        double[] gradLogDens = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            gradLogDens[i] = -numCoalEvents[i] + sufficientStatistics[i]
+                    * Math.exp(-field[i]);
+        }
+
+        return gradLogDens;
+    }
+
+    private void computeSufficientStatistics() {
         if (!intervalsKnown) {
             setupSufficientStatistics();
             intervalsKnown = true;
         }
+    }
+
+    @Override
+    public String getReport() {
+        return "Non-parametric Coalescent LogLikelihood: " + getLogLikelihood() + "\n" +
+                "Sufficient statistics: " + Arrays.toString(sufficientStatistics) + "\n" +
+                "Ploidy factors: " + Arrays.toString(ploidyFactors.getParameterValues()) + "\n" +
+                "Grid points: " + Arrays.toString(gridPoints.getParameterValues()) + "\n" +
+                "Log population sizes: " + Arrays.toString(logPopSizes.getParameterValues()) + "\n" +
+                "Full time line: " + Arrays.toString(fullTimeLine) + "\n";
     }
 
     @Override
@@ -399,7 +308,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     @Override
     public String getDescription() {
-        return "non-parametric coalescent";
+        return "Non-parametric coalescent";
     }
 
     @Override

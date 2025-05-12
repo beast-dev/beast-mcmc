@@ -27,10 +27,8 @@
 
 package dr.math.distributions.gp;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.*;
 
 import java.util.List;
 
@@ -46,6 +44,8 @@ public interface GaussianProcessKernel {
     double getUnscaledCovariance(double[] x, double[] y);
 
     double getScale();
+
+    List<Parameter> getParameters();
 
     class Linear extends Base {
 
@@ -70,6 +70,11 @@ public interface GaussianProcessKernel {
 
         private static final String TYPE = "DotProduct";
 
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            throw new RuntimeException("The linear kernel does not have a length parameter");
+        }
+
     }
 
     class SquaredExponential extends Base {
@@ -93,6 +98,14 @@ public interface GaussianProcessKernel {
         }
 
         private static final String TYPE = "SquaredExponential";
+
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            double normSquared = (a - b) * (a - b);
+            double scale = getScale();
+            return scale * Math.exp(-normSquared / (2 * l * l)) *
+                    normSquared / (l * l * l);
+        }
     }
 
     class OrnsteinUhlenbeck extends NormedBase {
@@ -103,7 +116,12 @@ public interface GaussianProcessKernel {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-
+//        @Override
+//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+//                                                  double[] alpha, double[] P, double[] matrix, int dim,
+//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+//            return new double[0];
+//        }
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
@@ -119,7 +137,12 @@ public interface GaussianProcessKernel {
 
             return (1 + argument1 + argument2) * Math.exp(-argument1);
         }
-
+//        @Override
+//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+//                                                  double[] alpha, double[] P, double[] matrix, int dim,
+//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+//            return new double[0];
+//        }
         private static final String TYPE = "Matern5/2";
     }
 
@@ -134,6 +157,12 @@ public interface GaussianProcessKernel {
 
             return (1 + argument) * Math.exp(-argument);
         }
+//        @Override
+//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
+//                                                  double[] alpha, double[] P, double[] matrix, int dim,
+//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
+//            return new double[0];
+//        }
 
         private static final String TYPE = "Matern3/2";
     }
@@ -199,6 +228,11 @@ public interface GaussianProcessKernel {
         throw new IllegalArgumentException("Unknown kernel type");
     }
 
+    @FunctionalInterface
+    interface HyperparameterGradientFunction {
+        double apply(double a, double b, double hyperValue);
+    }
+
     abstract class Base extends AbstractModel implements GaussianProcessKernel {
 
         final List<Parameter> parameters;
@@ -231,8 +265,21 @@ public interface GaussianProcessKernel {
             return parameters.get(0).getParameterValue(0);
         }
 
-        double getLength() {
-            return parameters.get(1).getParameterValue(0);
+        double getLength() {return parameters.get(1).getParameterValue(0);}
+
+        public List<Parameter> getParameters() {
+            return parameters;
+        }
+
+        public HyperparameterGradientFunction getScaleGradientFunction() {
+            return (a, b, hyperValue) -> getUnscaledCovariance(a, b);
+        }
+        public HyperparameterGradientFunction getLengthGradientFunction() {
+            return (a, b, hyperValue) -> computeGradientWrtLength(a, b, hyperValue);
+        }
+
+        public double computeGradientWrtLength(double a, double b, double hypervalue) {
+            throw new RuntimeException("Method implemented in the subclasses");
         }
 
         @Override

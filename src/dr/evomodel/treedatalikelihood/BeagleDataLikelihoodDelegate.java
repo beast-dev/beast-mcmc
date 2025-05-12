@@ -34,6 +34,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.action.ActionEvolutionaryProcessDelegate;
@@ -202,6 +203,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 //                            new HomogeneousActionSubstitutionModelDelegate(branchModel.getSubstitutionModels().get(0), nodeCount) :
                             new ActionSubstitutionModelDelegate(tree, branchModel, nodeCount) :
                             new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                } else if (settings.useRewardAwareBranchModelDelegate) {
+                    evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree, (TransitionMatrixProviderBranchModel) branchModel, 0,
+                            extraBufferCount, settings);
                 } else {
                     // use a more general delegate that allows different substitution models on different branches and
                     // can do matrix convolution.

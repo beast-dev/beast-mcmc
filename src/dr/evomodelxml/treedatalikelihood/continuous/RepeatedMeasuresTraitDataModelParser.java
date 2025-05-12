@@ -44,7 +44,6 @@ import dr.xml.*;
 import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
-
 public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
     public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";

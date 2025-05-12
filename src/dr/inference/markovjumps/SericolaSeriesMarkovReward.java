@@ -35,6 +35,7 @@ import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 
+import static dr.app.bss.Utils.max;
 /**
  * @author Marc Suchard
  * @author Forrest Crawford
@@ -74,17 +75,69 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return new double[times][dim * dim];
     }
 
+    private double determineLambda() {
+        double lambda = Q[0]; // Q[idx(0,0)]
+        for (int i = 1; i < dim; ++i) {
+            int ii = idx(i, i);
+            if (Q[ii] < lambda) {
+                lambda = Q[ii];
+            }
+        }
+        return -lambda;
+    }
+
+    private double[] initializeP(double[] Q, double lambda) {
+        double[] P = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double identity = (i == j) ? 1.0 : 0.0;
+                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
+            }
+        }
+        return P;
+    }
+
     private int getHfromX(double x, double time) {
-        // TODO assert x > h[0] * time;
+        if (x < r[0] * time) throw new IllegalArgumentException("x must be greater than r[0] * time");
+        if (x > r[phi] * time) throw new IllegalArgumentException("x must be less than r[phi] * time");
         int h = 1;
-        while (x >= r[h] * time) {
+        while (x > r[h] * time) {
             h++;
         }
         return h;
     }
 
-    private void growC(double time, int extraN) {
-        int newN = getNfromC();
+    private int[] getHfromX(double[] X, double time) {
+        return getHfromX(X, new double[]{time});
+//        int[] H = new int[X.length];
+//        for (int i = 0; i < X.length; ++i) {
+//            H[i] = getHfromX(X[i], time);
+//        }
+//        return H;
+//        return new int[] { 1 };      // AR nasty hack - revert shortly
+    }
+
+    private int[] getHfromX(double[] X, double[] times) {
+        boolean singleTime = false;
+        double time = 0.0;
+        if (times.length == 1) {
+            singleTime = true;
+            time = times[0];
+        } else if (X.length != times.length) {
+            throw new IllegalArgumentException("Either times must have one dimension, " +
+                    "or X and times must have the same dimension");
+        }
+
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            if (!singleTime) time = times[i];
+            H[i] = getHfromX(X[i], time); // TODO this can be made faster
+        }
+        return H;
+    }
+
+    private void growC(double time, int extraN) { // TODO grow C dynamically with time
+        int newN = getNfromC(); // C current size
         if (time > maxTime) {
             newN = determineNumberOfSteps(time, lambda) + extraN;
             maxTime = time;
@@ -126,15 +179,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
     // END: internal structure of C, TODO Change to expandable list
 
-    private int[] getHfromX(double[] X, double time) {
-        int[] H = new int[X.length];
-        for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[i], time);
-        }
-        return H;
-//        return new int[] { 1 };      // AR nasty hack - revert shortly
-    }
-
+    // Pdf: compute and accumulate
     public double computePdf(double x, double time, int i, int j) {
         if (x == time) return 0.0;
         else return computePdf(x, time)[i * dim + j];
@@ -143,17 +188,65 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
     public double[] computePdf(double x, double time) {
         return computePdf(new double[]{x}, time)[0];
     }
+//    public double[][] computePdfTRUE(double[] X, double time) {
+//        int[] H = getHfromX(X, time);
+//
+//        growC(time, 1);
+//
+//        double[][] W = initializeW(X.length, dim); // initialize with zeros
+//
+//        final int N = getNfromC() - 1; // TODO N should be branch-length-specific to save computation
+//        for (int n = 0; n <= N; ++n) {
+//            accumulatePdf(W, X, H, n, time); // TODO This can be sped up when only a single entry is wanted
+//            System.out.print("n = " + n + " ");
+//            for (int j = 0; j < W[0].length; ++j) {
+//                System.out.printf("%.3f ", W[0][j]);
+//            }
+//            System.out.println();
+////            print2DArray(W);
+//        }
+//
+//        if (DEBUG) {
+//            for (int i = 0; i < W.length; ++i) {
+//                System.err.println("W'[" + i + "]:\n" + new Matrix(squareMatrix(W[i])));
+//            }
+//            System.err.println("");
+//        }
+//
+//        return W;
+//    }
 
     public double[][] computePdf(double[] X, double time) {
-        int[] H = getHfromX(X, time);
+        return  computePdf(X, new double[]{time});
+    }
 
-        growC(time, 1);
+    public double[][] computePdf(double[] X, double[] times) {
+        return computePdf(X, times, false);
+    }
 
+    public double[][] computePdf(double[] X, double[] times, boolean parsimonious) {
         double[][] W = initializeW(X.length, dim); // initialize with zeros
+        int[] H = getHfromX(X, times);
+        growC(max(times), 1);
+
+        int[] externalSumRestrictions = new int[times.length];
+        if (parsimonious && times.length > 1) {
+            for (int i = 0; i < times.length; i++) {
+                externalSumRestrictions[i] = determineNumberOfSteps(times[i], lambda);
+            }
+        } else {
+            externalSumRestrictions = null;
+        }
 
         final int N = getNfromC() - 1; // TODO N should be branch-length-specific to save computation
         for (int n = 0; n <= N; ++n) {
-            accumulatePdf(W, X, H, n, time); // TODO This can be sped up when only a single entry is wanted
+            accumulatePdf(W, X, H, n, times, externalSumRestrictions); // TODO This can be sped up when only a single entry is wanted
+//            System.out.print("n = " + n + " ");
+//            for (int j = 0; j < W[0].length; ++j) {
+//                System.out.printf("%.3f ", W[0][j]);
+//            }
+//            System.out.println();
+//            print2DArray(W);
         }
 
         if (DEBUG) {
@@ -197,16 +290,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         return W;
     }
 
-    private double[] initializeP(double[] Q, double lambda) {
-        double[] P = new double[dim * dim];
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                double identity = (i == j) ? 1.0 : 0.0;
-                P[idx(i, j)] = identity + Q[idx(i, j)] / lambda;
-            }
-        }
-        return P;
-    }
 
     private void accumulateCdf(double[][] W, double[] X, int[] H, int n, double time) {
 
@@ -237,36 +320,95 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         }
     }
 
-    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double time) {
+//    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double time) {
+//        // n indexes the inner max of the inner sum
+//        // time is the branch length
+//        // external sum weights
+//        final double premult = Math.exp(
+//                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+//        );
+//
+//        // TODO Make factorial/choose static look-up tables
+//        // AR - Binomial has a look-up-table built in for k=2.
+//
+//
+//        for (int t = 0; t < X.length; ++t) { // For each time point
+//            double x = X[t];
+//            int h = H[t];
+//
+//            final double factor = lambda / (r[h] - r[h - 1]);
+//
+//            double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+//
+//            final int dim2 = dim * dim;
+//            double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
+//            for (int k = 0; k <= n; k++) {
+//                final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+//                for (int uv = 0; uv < dim2; ++uv) {
+//                    inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+//                }
+//            }
+//
+//            for (int uv = 0; uv < dim2; ++uv) {
+//                W[t][uv] += factor * premult * inc[uv];
+//            }
+//        }
+//    }
 
-        final double premult = Math.exp(
-                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
-        );
-
+    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double[] times, int[] NN) {
+        // n indexes the inner max of the inner sum
+        // time is the branch length
         // TODO Make factorial/choose static look-up tables
         // AR - Binomial has a look-up-table built in for k=2.
+        double premult = 0.0;
+        double time = 0.0;
 
+        boolean singleTime = false;
+        if (times.length == 1) {
+            premult = computingPremultiplier(lambda, times[0], n);
+            time = times[0];
+            singleTime = true;
+        }
 
-        for (int t = 0; t < X.length; ++t) { // For each time point
-            double x = X[t];
-            int h = H[t];
+        boolean restrictLoop = false;
+        if (NN != null)  restrictLoop = true;
 
-            final double factor = lambda / (r[h] - r[h - 1]);
-
-            double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
-
-            final int dim2 = dim * dim;
-            double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
-            for (int k = 0; k <= n; k++) {
-                final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
-                for (int uv = 0; uv < dim2; ++uv) {
-                    inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
-                }
+        for (int t = 0; t < X.length; ++t) {
+            if (restrictLoop && NN[t] < n) continue;
+            if (!singleTime) {
+                time = times[t];
+                premult = computingPremultiplier(lambda, time, n);
             }
+            loopCyclePdf(X[t], time, H[t], n,  premult, W[t]);
+        }
+    }
 
+    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double[] times) {
+        accumulatePdf(W, X, H, n, times, null);
+    }
+
+    private double computingPremultiplier(double lambda, double time, int n) {
+        return Math.exp(
+                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+        );
+    }
+
+    private void loopCyclePdf(double x, double time,
+                           int h, int n,
+                           double premult, double[] Wt) {
+        final double factor = lambda / (r[h] - r[h - 1]); // only h
+        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time); // time and h
+        final int dim2 = dim * dim;
+        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
+        for (int k = 0; k <= n; k++) {
+            final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
             for (int uv = 0; uv < dim2; ++uv) {
-                W[t][uv] += factor * premult * inc[uv];
+                inc[uv] += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
             }
+        }
+        final double temp = factor * premult;
+        for (int uv = 0; uv < dim2; ++uv) {
+            Wt[uv] += temp * inc[uv];
         }
     }
 
@@ -370,17 +512,6 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
 //            accumulate(n);
         }
-    }
-
-    private double determineLambda() {
-        double lambda = Q[0]; // Q[idx(0,0)]
-        for (int i = 1; i < dim; ++i) {
-            int ii = idx(i, i);
-            if (Q[ii] < lambda) {
-                lambda = Q[ii];
-            }
-        }
-        return -lambda;
     }
 
     private double[][] squareMatrix(final double[] mat) {

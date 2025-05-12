@@ -42,17 +42,8 @@ public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiv
         super(dependentParam);
     }
 
-    public double[] getSuperXBeta() {
-        return super.getXBeta();
-    }
-    
     @Override
     public double[] getXBeta() {
-//        double[] xBeta = super.getXBeta();
-//        for(int i = 0; i < xBeta.length; i++) {
-//            xBeta[i] = Math.exp(xBeta[i]);
-//        }
-//        return xBeta;
         return super.getXBeta();
     }
 

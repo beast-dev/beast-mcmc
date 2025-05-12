@@ -112,6 +112,15 @@ public class ExponentialGrowth extends ConstantPopulation {
         }
     }
 
+    public double getIntensitySecondDerivative(double finishTime) {
+        double r = getGrowthRate();
+        if (r == 0.0) {
+            return 0.0;
+        } else {
+            return Math.exp(finishTime * r) * r / getN0();
+        }
+    }
+
     @Override
     public double getLogDemographicGradient(double finishTime) {
         double r = getGrowthRate();
@@ -120,6 +129,10 @@ public class ExponentialGrowth extends ConstantPopulation {
         } else {
             return -r;
         }
+    }
+
+    public double getLogDemographicSecondDerivative(double finishTime) {
+        return 0;
     }
 
 

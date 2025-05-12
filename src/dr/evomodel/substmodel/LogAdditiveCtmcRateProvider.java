@@ -31,7 +31,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.*;
 import dr.util.Transform;
 
-public interface LogAdditiveCtmcRateProvider extends Model, Likelihood {
+public interface LogAdditiveCtmcRateProvider extends Model {
 
     double[] getXBeta();
 

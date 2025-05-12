@@ -202,20 +202,22 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
 
     private static final Citation CITATION = new Citation(
             new Author[]{
-                    new Author( "AF", "Magee"),
-                    new Author( "AJ", "Holbrook"),
-                    new Author( "JE", "Pekar"),
-                    new Author( "IW", "Caviedes-Solis"),
-                    new Author( "FA", "Matsen"),
-                    new Author( "G", "Baele"),
-                    new Author( "JO", "Wertheim"),
-                    new Author( "X", "Ji"),
+                    new Author("AF", "Magee"),
+                    new Author("AJ", "Holbrook"),
+                    new Author("JE", "Pekar"),
+                    new Author("IW", "Caviedes-Solis"),
+                    new Author("FA", "Matsen"),
+                    new Author("G", "Baele"),
+                    new Author("JO", "Wertheim"),
+                    new Author("X", "Ji"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
             "Random-effects substitution models for phylogenetics via scalable gradient approximations",
-            "",
-            Citation.Status.IN_PREPARATION);
+            2024,
+            "Systematic Biology",
+            73, 562, 578,
+            Citation.Status.PUBLISHED);
 
     interface ParameterMap {
         double[] getCovariateColumn(int i);

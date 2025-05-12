@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
@@ -44,6 +45,8 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
     private static final String SIGN = "sign";
     private static final String SET_NAMES = "setEffectParameterNames";
     private static final String CHECK_NAMES = "checkEffectParameterNames";
+    private static final String RANDOMIZE = "randomizeEffects";
+    private static final String RANDOMIZATION_ST_DEV = "randomizationStDev";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -89,6 +92,14 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Invalid effects dimension");
         }
 
+        if (xo.getAttribute(RANDOMIZE, false)) {
+            double stdDev = xo.getAttribute(RANDOMIZATION_ST_DEV, 1.0);
+            for (int i = 0; i < effects.getDimension(); ++i) {
+                effects.setParameterValue(i, effects.getParameterValue(i) +
+                        MathUtils.nextGaussian() * stdDev);
+            }
+        }
+
         if (treeModel.getExternalNodeCount() != effects.getDimension() * dim) {
             throw new XMLParseException("Invalid effect dimension");
         }
@@ -118,6 +129,8 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             AttributeRule.newBooleanRule(SET_NAMES, true),
             AttributeRule.newBooleanRule(CHECK_NAMES, true),
+            AttributeRule.newBooleanRule(RANDOMIZE, true),
+            AttributeRule.newDoubleRule(RANDOMIZATION_ST_DEV, true),
     };
 
     @Override

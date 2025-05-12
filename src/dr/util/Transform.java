@@ -1552,16 +1552,16 @@ public interface Transform {
         }
     }
 
-    class LocationScaleTransform extends UnivariableTransform{
+    class AffineTransform extends UnivariableTransform{
         private final double location;
         private final double scale;
 
-        LocationScaleTransform(){
+        AffineTransform(){
             this.location = 0.0;
             this.scale = 1.0;
         }
 
-        public LocationScaleTransform(double location, double scale){
+        public AffineTransform(double location, double scale){
             this.location = location;
             this.scale = scale;
         }
@@ -2879,7 +2879,7 @@ public interface Transform {
     LogitTransform LOGIT = new LogitTransform();
     SigmoidTransform SIGMOID = new SigmoidTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
-    LocationScaleTransform LOCATIONSCALE = new LocationScaleTransform();
+    AffineTransform AFFINE = new AffineTransform();
 
     enum Type {
         NONE("none", new NoTransform()),
@@ -2895,7 +2895,7 @@ public interface Transform {
         SQUARED("squared", new SquaredTransform()),
         ABS("abs", new AbsTransform()),
         POWER("power", new PowerTransform()),
-        LOCATIONSCALE("locationScale", new LocationScaleTransform());
+        AFFINE("affine", new AffineTransform());
 
         Type(String name, Transform transform) {
             this.name = name;

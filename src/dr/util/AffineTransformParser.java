@@ -34,11 +34,13 @@ import dr.xml.*;
  * @author Filippo Monti
  */
 
-public class LocationScaleTransformParser extends AbstractXMLObjectParser {
-    public static final String LOCATIONSCALE_TRANSFORM = "locationScaleTransform";
+public class AffineTransformParser extends AbstractXMLObjectParser {
+    public static final String AFFINE_TRANSFORM = "affineTransform";
+    private static final String DIMENSION = "dim";
+
     private static final String LOCATION = "location";
     private static final String SCALE = "scale";
-    private static final String DIMENSION = "dim";
+
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,9 +59,9 @@ public class LocationScaleTransformParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("The '" + DIMENSION + "' attribute of the " +
                         TransformParsers.TRANSFORM + " xml element must be greater than 0.");
             }
-            parsedTransform.transform = new Transform.Array(new Transform.LocationScaleTransform(location, scale), dim, null);
+            parsedTransform.transform = new Transform.Array(new Transform.AffineTransform(location, scale), dim, null);
         } else {
-            parsedTransform.transform = new Transform.LocationScaleTransform(location, scale);
+            parsedTransform.transform = new Transform.AffineTransform(location, scale);
         }
         return parsedTransform;
     }
@@ -85,6 +87,6 @@ public class LocationScaleTransformParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserName() {
-        return LOCATIONSCALE_TRANSFORM;
+        return AFFINE_TRANSFORM;
     }
 }

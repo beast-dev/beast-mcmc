@@ -147,14 +147,14 @@ public class BeastUnitTest implements Reportable {
                     reals = new double[strings.length];
 
                     for (int i = 0; i < strings.length; ++i) {
-                        reals[i] = Double.valueOf(strings[i]);
+                        reals[i] = Double.parseDouble(strings[i]);
                     }
                 } else {
                     reals = new double[indices.length];
 
                     int dim = 0;
                     for (int i : indices) {
-                        reals[dim] = Double.valueOf(strings[i]);
+                        reals[dim] = Double.parseDouble(strings[i]);
                         dim++;
                     }
                 }

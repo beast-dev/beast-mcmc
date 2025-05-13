@@ -110,12 +110,11 @@ public class InfinitesimalRatesLogger implements Loggable {
         if (i <= j) {
             k = (stateCount - 1) * i - i * (i - 1) / 2 + j - i - 1;
             if (diagonalElements) k += i + 1;
-            return k;
         } else {
             k = nUpperTri;
             k += (stateCount - 1) * j - j * (j - 1) / 2 + i - j;
-            return k;
         }
+        return k;
     }
 
     private final int stateCount;

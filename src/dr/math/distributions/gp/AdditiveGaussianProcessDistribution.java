@@ -426,7 +426,10 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             meanKnown = false;
             fireModelChanged();
         } else if (variable == nuggetParameter) {
-            throw new RuntimeException("Not yet implemented");
+            precisionAndDeterminantKnown = false;
+            gramianAndVarianceKnown = false;
+            precisionDiffKnown = false;
+            fireModelChanged();
         } else if (variable == field) {
             if(DEBUG) System.out.println("Field changed event"); //TODO this is called for every entry wit compound parameter inside HMC
             fieldUpdated = true;

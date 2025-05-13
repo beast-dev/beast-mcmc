@@ -2,15 +2,13 @@ package dr.math.distributions.gp;
 
 import dr.inference.distribution.RandomField;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.DesignMatrix;
-import dr.inference.model.GradientProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 import java.util.List;
 
-public class GaussianProcessKernelGradient implements Reportable, GradientWrtParameterProvider {
+public class GaussianProcessKernelGradient implements GradientWrtParameterProvider, Reportable {
 
+    private final RandomField randomField;
     private final Parameter field;
     private final int dim;
     private final AdditiveGaussianProcessDistribution distribution;
@@ -18,18 +16,18 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
     private final DesignMatrix designMatrix1;
     private final DesignMatrix designMatrix2;
 
-//    private final boolean doScale;
-//    private final boolean doLength;
-
-    private final int parametersCount;
     private final GradientProvider provider;
-    private double[] matrix;
+    private final int parametersCount;
+    private final Parameter hyperParameter;
 
-    private final boolean DEBUG = true;
+    private final double[] matrix;
+
+    private final boolean DEBUG = false;
 
     public GaussianProcessKernelGradient(RandomField randomField,
                                          AdditiveGaussianProcessDistribution.BasisDimension basis,
                                          List<Parameter> parametersList) {
+        this.randomField = randomField;
         this.field = randomField.getField();
         this.dim = field.getDimension();
 
@@ -57,6 +55,7 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
         this.parametersCount = k;
 
         if (parametersCount == 1) {
+            hyperParameter = parametersList.get(0);
             if (doScale) {
                 this.provider = new GradientProvider() {
                     @Override
@@ -69,7 +68,7 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
                         return new double[]{getGradientScale()};
                     }
                 };
-            } else if (doLength) {
+            } else if (doLength) { // TODO This condition is always true
                 this.provider = new GradientProvider() {
                     @Override
                     public int getDimension() {
@@ -85,6 +84,11 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
                 throw new IllegalArgumentException("Gradient implemented only for scale or length");
             }
         } else if (parametersCount == 2) {
+            hyperParameter = new CompoundParameter( null);
+            for (int i = 0; i < parametersCount; i++) {
+                ((CompoundParameter) hyperParameter).addParameter(parametersList.get(i));
+                // TODO Above may cause error when parametersList is ordered { length, scale }
+            }
            this.provider = new GradientProvider() {
                 @Override
                 public int getDimension() {
@@ -116,12 +120,12 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
 
     @Override
     public Likelihood getLikelihood() {
-        return null;
+        return randomField;
     }
 
     @Override
     public Parameter getParameter() {
-        return null;
+        return hyperParameter;
     }
 
     @Override
@@ -133,7 +137,6 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
     public double[] getGradientLogDensity() {
         return provider.getGradientLogDensity(0.0);
     }
-
 
     private double getGeneralGradient(double hyperValue,
                                       GaussianProcessKernel.HyperparameterGradientFunction gradientFunction) {
@@ -163,9 +166,9 @@ public class GaussianProcessKernelGradient implements Reportable, GradientWrtPar
             double alpha_i = alpha[i];
             for (int j = 0; j < dim; ++j, ++idx) {
                 double alpha_j = alpha[j];
-                double matrixij = matrix[idx];
-                quadForm += alpha_i * matrixij * alpha_j;
-                traceAB += P[idx] * matrixij;
+                double matrix_ij = matrix[idx];
+                quadForm += alpha_i * matrix_ij * alpha_j;
+                traceAB += P[idx] * matrix_ij;
             }
         }
 

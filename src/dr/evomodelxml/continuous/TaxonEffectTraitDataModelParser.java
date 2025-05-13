@@ -1,5 +1,5 @@
 /*
- * ContinuousTraitDataModelParser.java
+ * TaxonEffectTraitDataModelParser.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,13 +27,13 @@
 
 package dr.evomodelxml.continuous;
 
-import dr.app.beauti.types.SequenceErrorType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.TaxonEffectTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
@@ -42,8 +42,11 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
 
     private static final String CONTINUOUS_TRAITS = "taxonEffectTraitDataModel";
     private static final String TAXON_EFFECTS = "effects";
+    private static final String SIGN = "sign";
     private static final String SET_NAMES = "setEffectParameterNames";
     private static final String CHECK_NAMES = "checkEffectParameterNames";
+    private static final String RANDOMIZE = "randomizeEffects";
+    private static final String RANDOMIZATION_ST_DEV = "randomizationStDev";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -73,7 +76,11 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
 
         if (xo.hasChildNamed(TAXON_EFFECTS)) {
             effects = (Parameter) xo.getElementFirstChild(TAXON_EFFECTS);
-            map = new TaxonEffectTraitDataModel.EffectMap(treeModel, effects, dim);
+            Parameter sign = null;
+            if (xo.hasChildNamed(SIGN)) {
+                sign = (Parameter) xo.getElementFirstChild(SIGN);
+            }
+            map = new TaxonEffectTraitDataModel.EffectMap(treeModel, effects, sign, dim);
         } else {
             TaxonEffectTraitDataModel original = (TaxonEffectTraitDataModel)
                     xo.getChild(TaxonEffectTraitDataModel.class);
@@ -85,19 +92,17 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Invalid effects dimension");
         }
 
+        if (xo.getAttribute(RANDOMIZE, false)) {
+            double stdDev = xo.getAttribute(RANDOMIZATION_ST_DEV, 1.0);
+            for (int i = 0; i < effects.getDimension(); ++i) {
+                effects.setParameterValue(i, effects.getParameterValue(i) +
+                        MathUtils.nextGaussian() * stdDev);
+            }
+        }
+
         if (treeModel.getExternalNodeCount() != effects.getDimension() * dim) {
             throw new XMLParseException("Invalid effect dimension");
         }
-
-//        if (xo.getAttribute(SET_NAMES, false)) {
-//            setEffectParameterNames(treeModel, effects);
-//        }
-//
-//        if (xo.getAttribute(CHECK_NAMES, false)) {
-//            if (!checkEffectParameterNames(treeModel, effects)) {
-//                throw new XMLParseException("Effect parameter names mismatch");
-//            }
-//        }
 
         return new TaxonEffectTraitDataModel(traitName,
                 treeModel,
@@ -105,33 +110,6 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
                 map,
                 missingIndicators, useMissingIndices,
                 dim, precisionType);
-    }
-
-    void setEffectParameterNames(Tree tree, Parameter effect) {
-        String base = effect.getParameterName();
-
-        String[] names = new String[effect.getDimension()];
-        for (int i = 0; i < effect.getDimension(); ++i) {
-            names[i] = makeName(base, tree, i);
-        }
-
-        effect.setDimensionNames(names);
-    }
-
-    private String makeName(String base, Tree tree, int taxonIndex) {
-        return base + "." + tree.getTaxon(taxonIndex).getId();
-    }
-
-    boolean checkEffectParameterNames(Tree tree, Parameter effect) {
-        String base = effect.getParameterName();
-
-        for (int i = 0; i < effect.getDimension(); ++i) {
-            if (!effect.getDimensionName(i).equals(makeName(base, tree, i))) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
@@ -144,10 +122,15 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class)
                     }),
                     new ElementRule(TaxonEffectTraitDataModel.class)),
+            new ElementRule(SIGN, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+            }, true),
             AttributeRule.newIntegerRule(NUM_TRAITS, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             AttributeRule.newBooleanRule(SET_NAMES, true),
             AttributeRule.newBooleanRule(CHECK_NAMES, true),
+            AttributeRule.newBooleanRule(RANDOMIZE, true),
+            AttributeRule.newDoubleRule(RANDOMIZATION_ST_DEV, true),
     };
 
     @Override

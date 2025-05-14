@@ -107,6 +107,8 @@ jobs:
                   checkpoint=$(basename ${{ matrix.file }} .xml).chkpt
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state $checkpoint -save_at 5000 ${{ matrix.file }}
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -save_state $checkpoint -save_at 10000 -overwrite ${{ matrix.file }}
+            - name: Check generated files
+              run: ls -R
             - name: Upload checkpoint file
               uses: actions/upload-artifact@v4
               with:
@@ -138,6 +140,8 @@ jobs:
               uses: actions/download-artifact@v4
               with:
                   name: checkpoint_short
+            - name: Check downloaded files
+              run: ls -R
             - name: Run test without load state for ${{ matrix.file }}
               id: long-checkpointing
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}

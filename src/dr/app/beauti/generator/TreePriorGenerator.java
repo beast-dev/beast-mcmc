@@ -43,6 +43,7 @@ import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.TreeIntervalsParser;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
@@ -620,14 +621,17 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
-                writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                writer.writeOpenTag(TreeIntervalsParser.TREE_INTERVALS);
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
-                writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                 if (subtreeTaxonSet != null) {
                     writer.writeOpenTag(CoalescentLikelihoodParser.EXCLUDE);
                     writer.writeIDref(TaxaParser.TAXA, subtreeTaxonSet.getId());
                     writer.writeCloseTag(CoalescentLikelihoodParser.EXCLUDE);
                 }
+                writer.writeCloseTag(TreeIntervalsParser.TREE_INTERVALS);
+//                    writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+//                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+//                    writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                 writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         }
     }

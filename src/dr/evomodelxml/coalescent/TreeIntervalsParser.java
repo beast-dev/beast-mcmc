@@ -43,6 +43,8 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
+    public static final boolean USE_FAST_INTERVALS = false;
+
     public String getParserName() {
         return TREE_INTERVALS;
     }
@@ -66,8 +68,13 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
             }
         }
 
+        boolean useFastIntervals = USE_FAST_INTERVALS;
+        if (xo.hasAttribute("oldIntervals")) {
+            useFastIntervals = !xo.getBooleanAttribute("oldIntervals");
+        }
+
         try {
-            return new TreeIntervals(tree, includeSubtree, excludeSubtrees);
+            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, useFastIntervals);
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
         }
@@ -90,6 +97,7 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule("oldIntervals", true),
             new ElementRule(TreeModel.class)
     };
 

@@ -1915,7 +1915,11 @@ public interface Transform {
 
         @Override
         public boolean isInInteriorDomain(double[] values, int from, int to) {
-            return inner.isInInteriorDomain(values, from, to);
+            if (inner.isInInteriorDomain(values, from, to)) {
+                return outer.isInInteriorDomain(inner.transform(values, from, to), from, to); //TODO this does a computation (.transform)
+            } else {
+                return false;
+            }
         }
 
         @Override

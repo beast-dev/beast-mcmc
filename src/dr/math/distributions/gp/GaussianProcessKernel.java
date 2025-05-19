@@ -158,12 +158,6 @@ public interface GaussianProcessKernel {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
@@ -179,12 +173,7 @@ public interface GaussianProcessKernel {
 
             return (1 + argument1 + argument2) * Math.exp(-argument1);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
+
         private static final String TYPE = "Matern5/2";
     }
 
@@ -199,12 +188,6 @@ public interface GaussianProcessKernel {
 
             return (1 + argument) * Math.exp(-argument);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
 
         private static final String TYPE = "Matern3/2";
     }

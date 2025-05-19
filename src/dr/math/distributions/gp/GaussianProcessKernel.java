@@ -76,6 +76,48 @@ public interface GaussianProcessKernel {
         }
 
     }
+    class NeuralNet extends Base {
+        private static final String TYPE = "NeuralNet";
+        public NeuralNet(String name, List<Parameter> parameters) {
+            super(name, parameters);
+        }
+
+        @Override
+        public double getUnscaledCovariance(double x, double y) {
+            return getUnscaledCovariance(new double[]{x}, new double[]{y});
+        }
+
+        @Override
+        public double getUnscaledCovariance(double[] x, double[] y) {
+            if (x.length != y.length) {
+                throw new IllegalArgumentException("Input vectors must have the same length.");
+            }
+
+            double dot = 0.0;
+            double normX = 0.0;
+            double normY = 0.0;
+
+            for (int i = 0; i < x.length; i++) {
+                dot += x[i] * y[i];
+                normX += x[i] * x[i];
+                normY += y[i] * y[i];
+            }
+
+            double numerator = 2 * dot;
+            double denominator = Math.sqrt((1 + 2 * normX) * (1 + 2 * normY));
+            double argument = numerator / denominator;
+
+            // Clamp to [-1, 1] for numerical safety
+            argument = Math.max(-1.0, Math.min(1.0, argument));
+
+            return (2.0 / Math.PI) * Math.asin(argument);
+        }
+
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            throw new RuntimeException("The linear kernel does not have a length parameter");
+        }
+    }
 
     class SquaredExponential extends Base {
 
@@ -188,6 +230,11 @@ public interface GaussianProcessKernel {
         LINEAR(Linear.TYPE) {
             GaussianProcessKernel factory(String name, List<Parameter> parameters) {
                 return new Linear(name, parameters);
+            }
+        },
+        NEURAL_NET(NeuralNet.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new NeuralNet(name, parameters);
             }
         },
         OU(OrnsteinUhlenbeck.TYPE) {

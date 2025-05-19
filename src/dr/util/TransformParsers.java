@@ -306,9 +306,13 @@ public class TransformParsers {
                      if (xo.hasAttribute(SUM)) {
                          transform.fixedSum = xo.getDoubleAttribute(SUM);
                      }
-                     transform.parameters = new ArrayList<Parameter>();
+                     if (xo.getAllChildren(Parameter.class).size() > 0) {
+                         transform.parameters = new ArrayList<Parameter>();
+                         transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+                     } else {
+                         transform.parameters = null;
+                     }
 
-                     transform.parameters.addAll(xo.getAllChildren(Parameter.class));
                  }
              }
 

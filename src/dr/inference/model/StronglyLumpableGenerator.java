@@ -11,6 +11,8 @@ public class StronglyLumpableGenerator {
     private final String xmlOutput;
     private final java.util.List<String> parameterRateIds = new java.util.ArrayList<>();
     private final java.util.List<String> parameterProportionIds = new java.util.ArrayList<>();
+    private final java.util.Map<String, Integer> proportionDimensions = new java.util.HashMap<>();
+
 
 
     public StronglyLumpableGenerator(StateSet[] stateSets, DataType dataType) {
@@ -115,6 +117,7 @@ public class StronglyLumpableGenerator {
                             //xml.append("\t\t\t<parameter id=\"").append(stateName).append(".").append(stateSets[j].getId()).append(".proportions\" value=\"").append(proportionValues).append("\"/>\n");
                             String proportionId = stateName + "." + stateSets[j].getId() + ".proportions";
                             parameterProportionIds.add(proportionId);
+                            proportionDimensions.put(proportionId, proportionValueSize);
                             xml.append("\t\t\t<parameter id=\"").append(proportionId).append("\" value=\"").append(proportionValues).append("\" lower=\"0\" upper=\"1\"/>\n");
                             xml.append("\t\t</proportions>\n");
                         }
@@ -135,10 +138,25 @@ public class StronglyLumpableGenerator {
             xml.append("\t</scaleOperator>\n");
         }
         for (String id : parameterProportionIds) {
-            xml.append("\t<deltaExchange delta=\"0.75\" weight=\"1\">\n");
-            xml.append("\t\t<parameter idref=\"").append(id).append("\"/>\n");
-            xml.append("\t</deltaExchange>\n");
+            Integer dim = proportionDimensions.get(id);
+            if (dim == null) {
+                System.err.println("Warning: No dimension recorded for proportion parameter '" + id + "'. Defaulting to dimension = 1.");
+                dim = 1;
+            }
+
+            if (dim <= 1) {
+                xml.append("\t<!--\n");
+                xml.append("\t<deltaExchange delta=\"0.75\" weight=\"1\">\n");
+                xml.append("\t\t<parameter idref=\"").append(id).append("\"/>\n");
+                xml.append("\t</deltaExchange>\n");
+                xml.append("\t-->\n");
+            } else {
+                xml.append("\t<deltaExchange delta=\"0.75\" weight=\"1\">\n");
+                xml.append("\t\t<parameter idref=\"").append(id).append("\"/>\n");
+                xml.append("\t</deltaExchange>\n");
+            }
         }
+
         xml.append("</operators>\n");
 
         // Add prior block

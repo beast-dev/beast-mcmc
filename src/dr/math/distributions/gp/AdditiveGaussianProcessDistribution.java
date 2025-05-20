@@ -298,32 +298,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return dim;
     }
 
-//    @Override
-//    public double[] getGradientLogDensity(Object x) {
-//        double[] grad = gradLogPdf((double[]) x, getMean(), getPrecision());
-//        if(DEBUG) System.out.println("GradientLogDensity: "+ Arrays.toString(Arrays.copyOfRange(grad, 0, Math.min(3, grad.length))));
-//        return grad;
-//    }
-
-//    @Override
-//    public double logPdf(double[] x) {
-//        final double[] mean = getMean();
-//        final double[] diff = tmp;
-//        final double[] precision = getPrecision();
-//
-//        for (int i = 0; i < dim; ++i) {
-//            diff[i] = x[i] - mean[i];
-//        }
-//
-//        double exponent = 0.0;
-//        for (int i = 0; i < dim; ++i) {
-//            for (int j = 0; j < dim; ++j) {
-//                exponent += diff[i] * precision[i * dim + j] * diff[j];
-//            }
-//        }
-//        return -0.5 * (dim * Math.log(2 * Math.PI) + getLogDeterminant()) - 0.5 * exponent;
-//    }
-
     @Override
     public double logPdf(double[] x) {
         if (DEBUG) System.out.println("LogPdf: " + precisionAndDeterminantKnown + " " + gramianAndVarianceKnown);

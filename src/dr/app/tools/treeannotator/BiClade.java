@@ -259,8 +259,8 @@ class BiClade implements Clade {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BiClade biClade)) return false;
-        return Objects.equals(key, biClade.key);
+        if (!(o instanceof BiClade)) return false;
+        return Objects.equals(key, ((BiClade)o).key);
     }
 
     @Override

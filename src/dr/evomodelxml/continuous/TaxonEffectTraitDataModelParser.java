@@ -47,6 +47,7 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
     private static final String CHECK_NAMES = "checkEffectParameterNames";
     private static final String RANDOMIZE = "randomizeEffects";
     private static final String RANDOMIZATION_ST_DEV = "randomizationStDev";
+    private static final String USE_ORDERING = "useOrdering";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -75,16 +76,25 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
         final Parameter effects;
 
         if (xo.hasChildNamed(TAXON_EFFECTS)) {
-            effects = (Parameter) xo.getElementFirstChild(TAXON_EFFECTS);
+            XMLObject cxo = xo.getChild(TAXON_EFFECTS);
+            effects = (Parameter) cxo.getChild(Parameter.class);
             Parameter sign = null;
             if (xo.hasChildNamed(SIGN)) {
                 sign = (Parameter) xo.getElementFirstChild(SIGN);
             }
-            map = new TaxonEffectTraitDataModel.EffectMap(treeModel, effects, sign, dim);
+
+            if (cxo.hasChildNamed(USE_ORDERING)) {
+                TaxonEffectTraitDataModel original = (TaxonEffectTraitDataModel)
+                        cxo.getElementFirstChild(USE_ORDERING);
+                map = new TaxonEffectTraitDataModel.EffectMap(treeModel, effects, sign, dim, original.getMap());
+            } else {
+                map = new TaxonEffectTraitDataModel.EffectMap(treeModel, effects, sign, dim);
+            }
         } else {
             TaxonEffectTraitDataModel original = (TaxonEffectTraitDataModel)
                     xo.getChild(TaxonEffectTraitDataModel.class);
             map = new TaxonEffectTraitDataModel.EffectMap(treeModel, original.getMap());
+//            map.setEffects(null);
             effects = map.getEffects();
         }
 
@@ -119,7 +129,10 @@ public class TaxonEffectTraitDataModelParser extends AbstractXMLObjectParser {
             }),
             new XORRule(
                     new ElementRule(TAXON_EFFECTS, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
+                            new ElementRule(Parameter.class),
+                            new ElementRule(USE_ORDERING, new XMLSyntaxRule[]{
+                                    new ElementRule(TaxonEffectTraitDataModel.class),
+                            }, true),
                     }),
                     new ElementRule(TaxonEffectTraitDataModel.class)),
             new ElementRule(SIGN, new XMLSyntaxRule[]{

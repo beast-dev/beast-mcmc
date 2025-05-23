@@ -37,7 +37,10 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
 import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDeterminant;
@@ -294,32 +297,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     public int getDimension() {
         return dim;
     }
-
-//    @Override
-//    public double[] getGradientLogDensity(Object x) {
-//        double[] grad = gradLogPdf((double[]) x, getMean(), getPrecision());
-//        if(DEBUG) System.out.println("GradientLogDensity: "+ Arrays.toString(Arrays.copyOfRange(grad, 0, Math.min(3, grad.length))));
-//        return grad;
-//    }
-
-//    @Override
-//    public double logPdf(double[] x) {
-//        final double[] mean = getMean();
-//        final double[] diff = tmp;
-//        final double[] precision = getPrecision();
-//
-//        for (int i = 0; i < dim; ++i) {
-//            diff[i] = x[i] - mean[i];
-//        }
-//
-//        double exponent = 0.0;
-//        for (int i = 0; i < dim; ++i) {
-//            for (int j = 0; j < dim; ++j) {
-//                exponent += diff[i] * precision[i * dim + j] * diff[j];
-//            }
-//        }
-//        return -0.5 * (dim * Math.log(2 * Math.PI) + getLogDeterminant()) - 0.5 * exponent;
-//    }
 
     @Override
     public double logPdf(double[] x) {
@@ -589,11 +566,17 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         private final GaussianProcessKernel kernel;
         private final DesignMatrix design1;
         private final DesignMatrix design2;
+        private final WeightFunction weightFunction;
 
         public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
+            this(kernel, design1, design2, null);
+        }
+
+        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2, WeightFunction weightFunction) {
             this.kernel = kernel;
             this.design1 = design1;
             this.design2 = design2;
+            this.weightFunction = weightFunction;
         }
 
         public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
@@ -609,6 +592,8 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         DesignMatrix getDesignMatrix1() { return design1; }
 
         DesignMatrix getDesignMatrix2() { return design2; }
+
+        WeightFunction getWeightFunction() {return weightFunction;}
 
         private static DesignMatrix makeDesignMatrixFromWeights(RandomField.WeightProvider weights) {
 
@@ -655,13 +640,21 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             final GaussianProcessKernel kernel = basis.getKernel();
             final DesignMatrix design1 = basis.getDesignMatrix1();
             final DesignMatrix design2 = basis.getDesignMatrix2();
+            final WeightFunction weightFunction = basis.getWeightFunction();
+
             final double scale = kernel.getScale();
 
             for (int i = 0; i < rowDim; ++i) {
                 for (int j = 0; j < colDim; ++j) {
                     double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
                     double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
-                    gramian.add(i, j, scale * kernel.getUnscaledCovariance(xi, xj));
+                    double value = scale * kernel.getUnscaledCovariance(xi, xj);
+                    if (weightFunction != null) {
+                        final double weightXi = weightFunction.getWeight(xi);
+                        final double weightXj = weightFunction.getWeight(xj);
+                        value *= weightXi * weightXj;
+                    }
+                    gramian.add(i, j, value);
                 }
             }
         }
@@ -670,6 +663,105 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         @SuppressWarnings("unused")
         final int order = orderVariance.getDimension();
 //        for (int n = 1; n < order; ++n) { }
+    }
+
+    public interface WeightFunction {
+        double getWeight(double x);
+        void configure(Map<String, Double> params);
+
+        class SigmoidWeightFunction implements WeightFunction {
+            private double location = 0.0; // default
+            private double scale = 1.0; // default
+
+            @Override
+            public void configure(Map<String, Double> params) {
+                if (params.containsKey("scale")) {
+                    scale = params.get("scale");
+                }
+                if (params.containsKey("location")) {
+                    location = params.get("location");
+                }
+            }
+
+            @Override
+            public double getWeight(double x) {
+                return 1.0 / (1.0 + Math.exp(- scale * ( x - location)));
+            }
+        }
+
+        class SigmoidComplementWeightFunction implements WeightFunction {
+            private double location = 0.0; // default
+            private double scale = 1.0; // default
+
+            @Override
+            public void configure(Map<String, Double> params) {
+                if (params.containsKey("scale")) {
+                    scale = params.get("scale");
+                }
+                if (params.containsKey("location")) {
+                    location = params.get("location");
+                }
+            }
+
+            @Override
+            public double getWeight(double x) {
+                return 1.0 - 1.0 / (1.0 + Math.exp(- scale * (x - location)));
+            }
+        }
+
+        class IdentityWeightFunction implements WeightFunction {
+            @Override
+            public void configure(Map<String, Double> params) {
+                // No parameters needed.
+            }
+
+            @Override
+            public double getWeight(double x) {
+                return 1.0;
+            }
+        }
+
+        class LinearWeightFunction implements WeightFunction {
+            private double slope = 1.0;
+            private double intercept = 0.0;
+
+            @Override
+            public void configure(Map<String, Double> params) {
+                if (params.containsKey("slope")) slope = params.get("slope");
+                if (params.containsKey("intercept")) intercept = params.get("intercept");
+            }
+
+            @Override
+            public double getWeight(double x) {
+                return slope * x + intercept;
+            }
+        }
+
+        class WeightFunctionFactory {
+
+            private static final Map<String, Supplier<WeightFunction>> registry = new HashMap<>();
+
+            static {
+                register("sigmoid", SigmoidWeightFunction::new);
+                register("sigmoidComplement", SigmoidComplementWeightFunction::new);
+                register("identity", IdentityWeightFunction::new);
+                register("linear", LinearWeightFunction::new);
+            }
+
+            public static void register(String name, Supplier<WeightFunction> constructor) {
+                registry.put(name.toLowerCase(), constructor);
+            }
+
+            public static WeightFunction create(String type, Map<String, Double> params) {
+                Supplier<WeightFunction> constructor = registry.get(type.toLowerCase());
+                if (constructor == null) {
+                    throw new IllegalArgumentException("Unknown weight function: " + type);
+                }
+                WeightFunction wf = constructor.get();
+                wf.configure(params);
+                return wf;
+            }
+        }
     }
 }
 

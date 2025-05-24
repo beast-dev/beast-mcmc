@@ -341,4 +341,72 @@ public class CladeKey {
 
     }
 
+    private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+    private static final long WORD_MASK = 0xffffffffffffffffL;
+
+    public int nextSetBit(int fromIndex) {
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return -1;
+
+        long word = words[u] & (WORD_MASK << fromIndex);
+
+        while (true) {
+            if (word != 0)
+                return (u * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
+            if (++u == wordsInUse)
+                return -1;
+            word = words[u];
+        }
+    }
+
+    public int nextClearBit(int fromIndex) {
+        // Neither spec nor implementation handle bitsets of maximal length.
+        // See 4816253.
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return fromIndex;
+
+        long word = ~words[u] & (WORD_MASK << fromIndex);
+
+        while (true) {
+            if (word != 0)
+                return (u * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
+            if (++u == wordsInUse)
+                return wordsInUse * BITS_PER_WORD;
+            word = ~words[u];
+        }
+    }
+
+    public String toString() {
+        final int MAX_INITIAL_CAPACITY = Integer.MAX_VALUE - 8;
+        int numBits = (wordsInUse > 128) ?
+                cardinality() : wordsInUse * BITS_PER_WORD;
+        // Avoid overflow in the case of a humongous numBits
+        int initialCapacity = (numBits <= (MAX_INITIAL_CAPACITY - 2) / 6) ?
+                6 * numBits + 2 : MAX_INITIAL_CAPACITY;
+        StringBuilder b = new StringBuilder(initialCapacity);
+        b.append('{');
+
+        int i = nextSetBit(0);
+        if (i != -1) {
+            b.append(i);
+            while (true) {
+                if (++i < 0) break;
+                if ((i = nextSetBit(i)) < 0) break;
+                int endOfRun = nextClearBit(i);
+                do { b.append(", ").append(i); }
+                while (++i != endOfRun);
+            }
+        }
+
+        b.append('}');
+        return b.toString();
+    }
 }

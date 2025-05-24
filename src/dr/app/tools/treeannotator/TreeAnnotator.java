@@ -86,6 +86,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     enum Target {
         HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
+        MRHIPSTR("Majority rule highest independent posterior subtree reconstruction (MrHIPSTR)"),
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
         MAJORITY_RULE("Majority-rule consensus tree"),
         USER_TARGET_TREE("User target tree");
@@ -155,7 +156,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         this.threadCount = threadCount;
 
-        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR || targetOption == Target.MAJORITY_RULE, targetOption == Target.MAJORITY_RULE);
+        CladeSystem cladeSystem = new CladeSystem(targetOption == Target.HIPSTR || targetOption == Target.MRHIPSTR || targetOption == Target.MAJORITY_RULE, targetOption == Target.MAJORITY_RULE);
 
         if (COUNT_TREES) {
             countTrees(inputFileName);
@@ -200,7 +201,12 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem);
+                targetTree = getHIPSTRTree(cladeSystem, false);
+                break;
+            }
+            case MRHIPSTR: {
+                progressStream.println("Finding majority rule highest independent posterior subtree reconstruction (MrHIPSTR) tree...");
+                targetTree = getHIPSTRTree(cladeSystem, true);
                 break;
             }
             case MAJORITY_RULE: {
@@ -600,12 +606,12 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule) {
 
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, majorityRule);
 
         double score = scoreTree(tree, cladeSystem);
 
@@ -633,7 +639,7 @@ public class TreeAnnotator extends BaseTreeTool {
             reportCladeCredibilityCount(cladeSystem, tree, 0.7, extendedMetrics);
             reportCladeCredibilityCount(cladeSystem, tree, 0.6, extendedMetrics);
         }
-        reportCladeCredibilityCount(cladeSystem, tree, 0.5, extendedMetrics);
+        reportCladeCredibilityCount(cladeSystem, tree, 0.5, extendedMetrics, true);
         if (extendedMetrics) {
             reportCladeCredibilityCount(cladeSystem, tree, 0.25, extendedMetrics);
             reportCladeCredibilityCount(cladeSystem, tree, 0.1, extendedMetrics);
@@ -642,6 +648,9 @@ public class TreeAnnotator extends BaseTreeTool {
     }
 
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics) {
+        reportCladeCredibilityCount(cladeSystem, tree, threshold, extendedMetrics, false);
+    }
+    private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics, boolean showMissingClades) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
         progressStream.print("Number of clades with credibility > " + threshold + ": " +
@@ -664,6 +673,12 @@ public class TreeAnnotator extends BaseTreeTool {
                 progressStream.print(" / " + allCladeCount + " | missing: " + missingClades.size());
                 progressStream.printf(",  mean size: %.2f", (sum / missingClades.size()));
                 progressStream.printf(",  max size: %d", max);
+                if (showMissingClades) {
+                    progressStream.println();
+                    for (BiClade missing : missingClades) {
+                        progressStream.println(" (" + missing.getSize() + ", " + missing.getCredibility() + ", {" + missing + "} )");
+                    }
+                }
 
             } else {
                 progressStream.print(" / " + allCladeCount + " (in all trees)");
@@ -971,7 +986,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] {"hipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default), 'mcc' or 'mrc'"),
+                        new Arguments.StringOption("type", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default), 'mrhipstr', 'mcc' or 'mrc'"),
                         new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
@@ -1053,7 +1068,9 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Target target = Target.HIPSTR;
         if (arguments.hasOption("type")) {
-            if (arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
+            if (arguments.getStringOption("type").equalsIgnoreCase("MRHIPSTR")) {
+                target = Target.MRHIPSTR;
+            } else if (arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
                 target = Target.MAX_CLADE_CREDIBILITY;
             } else if (arguments.getStringOption("type").equalsIgnoreCase("MRC")) {
                 target = Target.MAJORITY_RULE;
@@ -1115,10 +1132,14 @@ public class TreeAnnotator extends BaseTreeTool {
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
             progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+        } else if (target == Target.MRHIPSTR) {
+            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation: In prep.");
         } else if (target == Target.MAJORITY_RULE) {
             progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {
 //            progressStream.println("Loaded user target tree.");
+        } else {
+            throw new IllegalArgumentException("Unknown target option: " + target);
         }
 
         System.exit(0);

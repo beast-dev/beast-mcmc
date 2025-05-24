@@ -40,12 +40,12 @@ public class HIPSTRTreeBuilder {
 
     private final Map<Clade, Double> credibilityCache = new HashMap<>();
 
-    public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList) {
+    public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList, boolean majorityRule) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();
 
         credibilityCache.clear();
 
-        score = findHIPSTRTree(rootClade);
+        score = findHIPSTRTree(rootClade, majorityRule);
 
         // create a map so that tip numbers are in the same order as the taxon list
         Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
@@ -58,11 +58,13 @@ public class HIPSTRTreeBuilder {
         return tree;
     }
 
-    private double findHIPSTRTree(BiClade clade) {
+    private double findHIPSTRTree(BiClade clade, boolean majorityRule) {
 
         assert clade.getSize() > 1;
 
-        double cladeScore = Math.log(clade.getCredibility());
+        // This gives a bonus credibility score for clades with a credibility greater than 0.5
+        // - the bonus is equal to the number of tips in the clade
+        double cladeScore = Math.log(clade.getCredibility()) + (majorityRule && clade.getCredibility() > 0.5 ? clade.size : 0.0);
 
         Map<Pair<BiClade, BiClade>, Double> ties;
         if (breakTies) {
@@ -82,7 +84,7 @@ public class HIPSTRTreeBuilder {
                 if (left.getSize() > 1) {
                     leftScore = credibilityCache.getOrDefault(left, Double.NaN);
                     if (Double.isNaN(leftScore)) {
-                        leftScore = findHIPSTRTree(left);
+                        leftScore = findHIPSTRTree(left, majorityRule);
                         credibilityCache.put(left, leftScore);
                     }
                 }
@@ -94,7 +96,7 @@ public class HIPSTRTreeBuilder {
                 if (right.getSize() > 1) {
                     rightScore = credibilityCache.getOrDefault(right, Double.NaN);
                     if (Double.isNaN(rightScore)) {
-                        rightScore = findHIPSTRTree(right);
+                        rightScore = findHIPSTRTree(right, majorityRule);
                         credibilityCache.put(right, rightScore);
                     }
                 }

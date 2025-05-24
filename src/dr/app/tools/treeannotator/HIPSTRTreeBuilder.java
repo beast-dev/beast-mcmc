@@ -64,7 +64,7 @@ public class HIPSTRTreeBuilder {
 
         // This gives a bonus credibility score for clades with a credibility greater than 0.5
         // - the bonus is equal to the number of tips in the clade
-        double cladeScore = Math.log(clade.getCredibility()) + (majorityRule && clade.getCredibility() > 0.5 ? clade.size : 0.0);
+        double cladeScore = Math.log(clade.getCredibility()) + (majorityRule && clade.getCredibility() > 0.5 ? 1.0 : 0.0);
 
         Map<Pair<BiClade, BiClade>, Double> ties;
         if (breakTies) {

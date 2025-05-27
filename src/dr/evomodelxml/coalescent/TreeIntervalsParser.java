@@ -75,7 +75,7 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
         }
 
         try {
-            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, useFastIntervals);
+            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
         }

@@ -29,6 +29,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -98,7 +99,14 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule("oldIntervals", true),
-            new ElementRule(TreeModel.class)
+            new ElementRule(TreeModel.class),
+            new ElementRule(INCLUDE, new XMLSyntaxRule[]{
+                    new ElementRule(Taxa.class)
+            }, "An optional subset of taxa on which to calculate the likelihood (should be monophyletic)", true),
+
+            new ElementRule(EXCLUDE, new XMLSyntaxRule[]{
+                    new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
+            }, "One or more subsets of taxa which should be excluded from calculate the likelihood (should be monophyletic)", true)
     };
 
 }

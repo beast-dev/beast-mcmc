@@ -470,7 +470,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
-            return null; //rules;
+            return rules;
         }
 
         private final XMLSyntaxRule[] rules = {

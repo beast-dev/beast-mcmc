@@ -19,7 +19,7 @@ public class DataSliceFromMatrixParameter extends Parameter.Proxy implements Att
     }
 
     private static String makeParameterName(Parameter parameter, int slice, SliceDirection direction) {
-        return parameter.getParameterName() + "." + (slice + 1) + " " + direction.name();
+        return parameter.getParameterName() + "." + (slice + 1) + "." + direction.name();
     }
 
     @Override

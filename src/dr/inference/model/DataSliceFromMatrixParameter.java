@@ -2,34 +2,53 @@ package dr.inference.model;
 
 import dr.util.Attribute;
 
-public class DataSliceFromMatrixParameter implements Attribute<double[]> {
+public class DataSliceFromMatrixParameter extends Parameter.Proxy implements Attribute<double[]>{
 
     private final MatrixParameterInterface parameter;
     private final int slice;
     private final SliceDirection direction;
-    private final int dim;
 
     public DataSliceFromMatrixParameter(MatrixParameterInterface parameter,
                                         int slice,
                                         SliceDirection direction) {
+        super(makeParameterName(parameter, slice, direction),
+                direction.getLength(parameter));
         this.parameter = parameter;
         this.slice = slice;
         this.direction = direction;
-        this.dim = direction.getLength(parameter);
+    }
+
+    private static String makeParameterName(Parameter parameter, int slice, SliceDirection direction) {
+        return parameter.getParameterName() + "." + (slice + 1) + " " + direction.name();
     }
 
     @Override
-    public String getAttributeName() {
-        return parameter.getParameterName() + "." + (slice + 1) + direction.name();
+    public Bounds<Double> getBounds() {
+        return parameter.getBounds();
     }
 
     @Override
-    public double[] getAttributeValue() {
-        double[] result = new double[dim];
-        for (int i = 0; i < dim; ++i) {
-            result[i] = direction.getValue(parameter, slice, i);
-        }
-        return result;
+    public double getParameterValue(int dim) {
+        return direction.getValue(parameter, slice, dim);
+    }
+
+    @Override
+    public void setParameterValue(int dim, double value) {
+        direction.setValue(parameter, slice, dim, value);
+    }
+
+    @Override
+    public void setParameterValueQuietly(int dim, double value) {
+        direction.setValueQuietly(parameter, slice, dim, value);
+    }
+
+    public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
+        super.fireParameterChangedEvent(index, type);
+    }
+
+    @Override
+    public void setParameterValueNotifyChangedAll(int dim, double value) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     public enum SliceDirection {
@@ -37,6 +56,16 @@ public class DataSliceFromMatrixParameter implements Attribute<double[]> {
             @Override
             public double getValue(MatrixParameterInterface parameter, int slice, int index) {
                 return parameter.getParameterValue(slice, index);
+            }
+
+            @Override
+            public void setValue(MatrixParameterInterface parameter, int slice, int index, double value) {
+                parameter.setParameterValue(slice, index, value);
+            }
+
+            @Override
+            public void setValueQuietly(MatrixParameterInterface parameter, int slice, int index, double value) {
+                parameter.setParameterValueQuietly(slice, index, value);
             }
 
             @Override
@@ -56,6 +85,16 @@ public class DataSliceFromMatrixParameter implements Attribute<double[]> {
             }
 
             @Override
+            public void setValue(MatrixParameterInterface parameter, int slice, int index, double value) {
+                parameter.setParameterValue(index, slice, value);
+            }
+
+            @Override
+            public void setValueQuietly(MatrixParameterInterface parameter, int slice, int index, double value) {
+                parameter.setParameterValueQuietly(index, slice, value);
+            }
+
+            @Override
             public int getLength(MatrixParameterInterface parameter) {
                 return parameter.getRowDimension();
             }
@@ -71,6 +110,10 @@ public class DataSliceFromMatrixParameter implements Attribute<double[]> {
         }
 
         abstract public double getValue(MatrixParameterInterface parameter, int slice, int index);
+
+        abstract public void setValue(MatrixParameterInterface parameter, int slice, int index, double value);
+
+        abstract public void setValueQuietly(MatrixParameterInterface parameter, int slice, int index, double value);
 
         abstract public int getLength(MatrixParameterInterface parameter);
 

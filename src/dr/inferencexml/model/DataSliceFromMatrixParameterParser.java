@@ -29,6 +29,7 @@ package dr.inferencexml.model;
 
 import dr.inference.model.DataSliceFromMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.util.Attribute;
 import dr.xml.*;
 
@@ -52,7 +53,7 @@ public class DataSliceFromMatrixParameterParser extends AbstractXMLObjectParser 
         SliceDirection direction = parseDirection(directionString);
 
         int dim = direction.getCount(parameter);
-        Attribute[] attributes = new Attribute[dim];
+        Parameter[] attributes = new Parameter[dim];
         for (int i = 0; i < dim; ++i) {
             attributes[i] = new DataSliceFromMatrixParameter(parameter, i, direction);
         }
@@ -83,5 +84,5 @@ public class DataSliceFromMatrixParameterParser extends AbstractXMLObjectParser 
     }
 
     @Override
-    public Class getReturnType() { return Attribute[].class; }
+    public Class getReturnType() { return Parameter[].class; }
 }

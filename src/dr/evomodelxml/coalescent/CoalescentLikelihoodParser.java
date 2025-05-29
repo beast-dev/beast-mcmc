@@ -125,7 +125,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
             try {
                 if (intervalList == null) {
-                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, TreeIntervalsParser.USE_FAST_INTERVALS);
+                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, false);
                 }
                 // TreeIntervals now deals with all the interval stuff
 //                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);

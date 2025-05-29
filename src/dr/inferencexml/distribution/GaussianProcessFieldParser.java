@@ -33,9 +33,12 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
 import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.xml.*;
+import org.w3c.dom.NamedNodeMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
@@ -74,7 +77,9 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
         return distribution;
     }
-
+    public static final String WEIGHTFUNCTION = "weightFunction";
+    public static final String TYPE = "type";
+    
     private List<BasisDimension> parseBases(XMLObject xo) {
         List<BasisDimension> bases = new ArrayList<>();
         for (XMLObject cxo : xo.getAllChildren(BASIS)) {
@@ -83,7 +88,30 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             DesignMatrix design = (DesignMatrix) cxo.getChild(DesignMatrix.class);
 
             if (design != null) {
-                bases.add(new BasisDimension(kernel, design));
+                XMLObject wfElement = cxo.getChild(WEIGHTFUNCTION);
+                if (wfElement != null) {
+                    AdditiveGaussianProcessDistribution.WeightFunction weightFunction = null;
+                    String type;
+                    try {
+                        type = (String) wfElement.getAttribute(TYPE);
+                    } catch (XMLParseException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    Map<String, Double> params = new HashMap<>();
+                    NamedNodeMap attributeList = wfElement.getAttributes();
+                    for (int i = 0; i < attributeList.getLength(); i++) {
+                        String attrName = attributeList.item(i).getNodeName();
+                        if (!attrName.equalsIgnoreCase(TYPE)) {
+                            params.put(attrName, Double.parseDouble(attributeList.item(i).getNodeValue()));
+                        }
+                    }
+
+                    weightFunction = AdditiveGaussianProcessDistribution.WeightFunction.WeightFunctionFactory.create(type, params);
+                    bases.add(new BasisDimension(kernel, design, design, weightFunction));
+                } else {
+                    bases.add(new BasisDimension(kernel, design));
+                }
             } else {
                 RandomField.WeightProvider weights = (RandomField.WeightProvider)
                         cxo.getChild(RandomField.WeightProvider.class);

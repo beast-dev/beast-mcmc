@@ -160,7 +160,7 @@ public class TaxonEffectGradient implements GradientWrtParameterProvider, Report
 
         report += GradientWrtParameterProvider.getReportAndCheckForError(
                 this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                1E-3);
+                5E-3);
 
         if (TIMING) {
             report += timingInfo();

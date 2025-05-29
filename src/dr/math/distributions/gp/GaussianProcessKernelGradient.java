@@ -23,6 +23,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
     private final double[] matrix;
 
     private final boolean DEBUG = false;
+    private  final AdditiveGaussianProcessDistribution.BasisDimension basis;
 
     public GaussianProcessKernelGradient(RandomField randomField,
                                          AdditiveGaussianProcessDistribution.BasisDimension basis,
@@ -30,6 +31,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
         this.randomField = randomField;
         this.field = randomField.getField();
         this.dim = field.getDimension();
+        this.basis = basis;
 
         this.distribution = (AdditiveGaussianProcessDistribution) randomField.getDistribution();
         this.kernel = (GaussianProcessKernel.Base) basis.getKernel();
@@ -86,8 +88,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
         } else if (parametersCount == 2) {
             hyperParameter = new CompoundParameter( null);
             for (int i = 0; i < parametersCount; i++) {
-                ((CompoundParameter) hyperParameter).addParameter(parametersList.get(i));
-                // TODO Above may cause error when parametersList is ordered { length, scale }
+                ((CompoundParameter) hyperParameter).addParameter(kernelParameters.get(i));
             }
            this.provider = new GradientProvider() {
                 @Override
@@ -145,10 +146,16 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
 
         // Compute \frac{\partial K}{\partial \theta}
         for (int i = 0; i < dim; ++i) {
-            double a = designMatrix1.getParameterValue(i, 0);
+            double xi = designMatrix1.getParameterValue(i, 0);
             for (int j = 0; j < dim; ++j) {
-                double b = designMatrix2.getParameterValue(j, 0);
-                matrix[i * dim + j] = gradientFunction.apply(a, b, hyperValue);
+                double xj = designMatrix2.getParameterValue(j, 0);
+                double weight = 1.0;
+                if (basis.getWeightFunction() != null) {
+                    final double weightXi = basis.getWeightFunction().getWeight(xi);
+                    final double weightXj = basis.getWeightFunction().getWeight(xj);
+                    weight *= weightXi * weightXj;
+                }
+                matrix[i * dim + j] = gradientFunction.apply(xi, xj, hyperValue) * weight;
             }
         }
         return computeGeneralGradient(precisionDiff, P, matrix, dim);

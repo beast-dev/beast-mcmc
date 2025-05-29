@@ -1,7 +1,7 @@
 /*
- * IntegratedLoadingsGradientParser.java
+ * TaxonEffectGradientParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.

@@ -29,6 +29,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -43,7 +44,7 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
-    public static final boolean USE_FAST_INTERVALS = false;
+    public static final boolean USE_FAST_INTERVALS = true;
 
     public String getParserName() {
         return TREE_INTERVALS;
@@ -69,12 +70,12 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
         }
 
         boolean useFastIntervals = USE_FAST_INTERVALS;
-        if (xo.hasAttribute("oldIntervals")) {
-            useFastIntervals = !xo.getBooleanAttribute("oldIntervals");
+        if (xo.hasAttribute("fastIntervals")) {
+            useFastIntervals = xo.getBooleanAttribute("fastIntervals");
         }
 
         try {
-            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, useFastIntervals);
+            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
         }
@@ -98,7 +99,14 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule("oldIntervals", true),
-            new ElementRule(TreeModel.class)
+            new ElementRule(TreeModel.class),
+            new ElementRule(INCLUDE, new XMLSyntaxRule[]{
+                    new ElementRule(Taxa.class)
+            }, "An optional subset of taxa on which to calculate the likelihood (should be monophyletic)", true),
+
+            new ElementRule(EXCLUDE, new XMLSyntaxRule[]{
+                    new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
+            }, "One or more subsets of taxa which should be excluded from calculate the likelihood (should be monophyletic)", true)
     };
 
 }

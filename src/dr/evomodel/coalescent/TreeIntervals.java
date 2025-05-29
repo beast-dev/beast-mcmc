@@ -108,8 +108,10 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             intervals = new Intervals(tree.getNodeCount());
             storedIntervals = new Intervals(tree.getNodeCount());
         } else {
-            intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
-            storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+            intervals = new Intervals(tree.getNodeCount());
+            storedIntervals = new Intervals(tree.getNodeCount());
+//            intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+//            storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
         }
 
         eventsKnown = false;

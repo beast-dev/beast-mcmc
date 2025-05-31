@@ -135,6 +135,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         eventsKnown = false;
         this.intervalNodeMapping = buildIntervalNodeMapping ?new IntervalNodeMapping.Default(tree.getNodeCount(), tree):new IntervalNodeMapping.None();
 
+        checkMonophylyConstraints();
+
         addStatistic(new DeltaStatistic());
     }
 
@@ -151,11 +153,28 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
+            checkMonophylyConstraints();
             // treeModel has changed so recalculate the intervals
             eventsKnown = false;
         }
 
         fireModelChanged();
+    }
+
+    private void checkMonophylyConstraints() {
+        monophyly = true;
+        if (includedLeafSet != null) {
+            if (!TreeUtils.isMonophyletic(tree, includedLeafSet)) {
+                monophyly = false;
+            }
+        }
+        if (excludedLeafSets != null) {
+            for (Set<String> leafSet : excludedLeafSets) {
+                if (!TreeUtils.isMonophyletic(tree, leafSet)) {
+                    monophyly = false;
+                }
+            }
+        }
     }
 
     // **************************************************************
@@ -190,6 +209,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
         eventsKnown = storedEventsKnown;
         this.intervalNodeMapping.restoreMapping();
+
+        assert monophyly;
     }
 
     protected final void acceptState() {
@@ -755,13 +776,15 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
-    private Set[] excludedLeafSets = null;
+    private Set<String>[] excludedLeafSets = null;
     private final boolean buildIntervalNodeMapping;
 
     private int sampleCount;
     private int coalescentCount;
 
     private int includedCoalescentCount;
+
+    private boolean monophyly = true;
 
     /**
      * The intervals.

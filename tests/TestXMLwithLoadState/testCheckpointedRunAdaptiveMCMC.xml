@@ -873,7 +873,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="5000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="5000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -973,7 +973,7 @@
 		</logTree>
 
 		<!-- write state of Markov chain to checkpoint file                          -->
-		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testCheckpointedAdaptiveMCMC.chkpt" overwrite="true"/>
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testAdaptiveMCMC.chkpt" overwrite="true"/>
 	</mcmc>
 
 </beast>

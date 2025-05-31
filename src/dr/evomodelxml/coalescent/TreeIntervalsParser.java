@@ -27,6 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.coalescent.Intervals;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
@@ -37,6 +38,7 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class TreeIntervalsParser extends AbstractXMLObjectParser{
 
@@ -75,7 +77,12 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
         }
 
         try {
-            return new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
+            TreeIntervals intervals = new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
+            if (!intervals.isMonophyly()) {
+                throw new XMLParseException("The included or excluded clades in TreeLineages with id, " + xo.getId() + ", are not monophyletic..");
+            }
+
+            return intervals;
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
         }

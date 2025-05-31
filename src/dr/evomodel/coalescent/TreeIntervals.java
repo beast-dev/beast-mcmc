@@ -39,6 +39,7 @@ import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
@@ -135,8 +136,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         eventsKnown = false;
         this.intervalNodeMapping = buildIntervalNodeMapping ?new IntervalNodeMapping.Default(tree.getNodeCount(), tree):new IntervalNodeMapping.None();
 
-        checkMonophylyConstraints();
-
         addStatistic(new DeltaStatistic());
     }
 
@@ -153,7 +152,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            checkMonophylyConstraints();
             // treeModel has changed so recalculate the intervals
             eventsKnown = false;
         }
@@ -161,8 +159,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         fireModelChanged();
     }
 
-    private void checkMonophylyConstraints() {
-        monophyly = true;
+    public boolean isMonophyly() {
+        boolean monophyly = true;
         if (includedLeafSet != null) {
             if (!TreeUtils.isMonophyletic(tree, includedLeafSet)) {
                 monophyly = false;
@@ -175,6 +173,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
                 }
             }
         }
+        return monophyly;
     }
 
     // **************************************************************
@@ -210,7 +209,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         eventsKnown = storedEventsKnown;
         this.intervalNodeMapping.restoreMapping();
 
-        assert monophyly;
+        assert isMonophyly();
     }
 
     protected final void acceptState() {
@@ -264,6 +263,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     //TODO pull node interval map stuff out of old Abtract coalescentLikelihood into here
     public final void calculateIntervals() {
+
+        assert monophyly;
 
         intervals.resetEvents();
 

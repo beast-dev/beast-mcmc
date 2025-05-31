@@ -104,14 +104,32 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             addModel((TreeModel) tree);
         }
 
+        sampleCount = tree.getExternalNodeCount();
+        coalescentCount = tree.getInternalNodeCount();
+
         if (this.buildIntervalNodeMapping) {
             intervals = new Intervals(tree.getNodeCount());
             storedIntervals = new Intervals(tree.getNodeCount());
         } else {
-            intervals = new Intervals(tree.getNodeCount());
-            storedIntervals = new Intervals(tree.getNodeCount());
-//            intervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
-//            storedIntervals = new FastIntervals(tree.getExternalNodeCount(), tree.getInternalNodeCount());
+//            intervals = new Intervals(tree.getNodeCount());
+//            storedIntervals = new Intervals(tree.getNodeCount());
+            // unlike the Intervals class, FastIntervals needs the exact number of sample and coalescent
+            // events at construction to create fixed size arrays.
+            if (excludedLeafSets != null) {
+                for (Set excludedLeafSet : excludedLeafSets) {
+                    // remove all the tip sample events but add one back for
+                    // where the excluded subtree joins the full tree
+                    sampleCount = sampleCount - excludedLeafSet.size() + 1;
+                    // remove all the coalescent events in the excluded subtree
+                    coalescentCount = coalescentCount - (excludedLeafSet.size() - 1);
+                }
+            }
+            if (includedLeafSet != null) {
+                sampleCount = includedLeafSet.size();
+                coalescentCount = includedLeafSet.size() - 1;
+            }
+            intervals = new FastIntervals(sampleCount, coalescentCount);
+            storedIntervals = new FastIntervals(sampleCount, coalescentCount);
         }
 
         eventsKnown = false;
@@ -172,7 +190,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
         eventsKnown = storedEventsKnown;
         this.intervalNodeMapping.restoreMapping();
-
     }
 
     protected final void acceptState() {
@@ -191,7 +208,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     private NodeRef getIncludedMRCA(Tree tree) {
         if (includedLeafSet != null) {
-            return TreeUtils.getCommonAncestorNode(tree, includedLeafSet);
+            NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, includedLeafSet);
+            return mrca;
         } else {
             return tree.getRoot();
         }
@@ -227,6 +245,9 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     public final void calculateIntervals() {
 
         intervals.resetEvents();
+
+        includedCoalescentCount = 0;
+
         if (includedLeafSet != null || excludedLeafSets != null) {
             collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
         } else {
@@ -258,17 +279,14 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, MutableIntervalList intervals) {
 
+        includedCoalescentCount += 1;
         intervals.addCoalescentEvent(tree.getNodeHeight(node));
 
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef child = tree.getChild(node, i);
 
             // check if this subtree is included in the coalescent density
-            boolean include = true;
-
-            if (excludeNodesBelow != null && excludeNodesBelow.contains(child)) {
-                include = false;
-            }
+            boolean include = excludeNodesBelow == null || !excludeNodesBelow.contains(child);
 
             if (!include || tree.isExternal(child)) {
                 // the mrca of the clade below that is being excluded becomes a sampling event
@@ -739,6 +757,11 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
     private final boolean buildIntervalNodeMapping;
+
+    private int sampleCount;
+    private int coalescentCount;
+
+    private int includedCoalescentCount;
 
     /**
      * The intervals.

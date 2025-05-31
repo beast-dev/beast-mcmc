@@ -63,6 +63,8 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import static dr.evomodelxml.coalescent.CoalescentLikelihoodParser.INTERVALS;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -621,6 +623,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
+                writer.writeOpenTag(INTERVALS);
                 writer.writeOpenTag(TreeIntervalsParser.TREE_INTERVALS);
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
                 if (subtreeTaxonSet != null) {
@@ -629,6 +632,7 @@ public class TreePriorGenerator extends Generator {
                     writer.writeCloseTag(CoalescentLikelihoodParser.EXCLUDE);
                 }
                 writer.writeCloseTag(TreeIntervalsParser.TREE_INTERVALS);
+                writer.writeCloseTag(INTERVALS);
 //                    writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
 //                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
 //                    writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);

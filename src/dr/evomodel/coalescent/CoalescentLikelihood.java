@@ -192,8 +192,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		double absoluteStartTime = intervals.getStartTime();
 		demographicModel.setTimeOffset(absoluteStartTime);
 
-		DemographicFunction demographicFunction = demographicModel.getDemographicFunction();
-
 		double startTime = 0;
 
 		for (int i = 0; i < n; i++) {

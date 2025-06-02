@@ -1,4 +1,4 @@
-package dr.evomodelxml.treedatalikelihood;
+package dr.evomodelxml.stuff;
 
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
 import dr.evomodel.stuff.HDPPolyaUrn;

@@ -10,7 +10,7 @@ import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodelxml.treedatalikelihood.DataSquashingOperatorParser;
+import dr.evomodelxml.stuff.DataSquashingOperatorParser;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;

@@ -1,12 +1,13 @@
-package dr.evomodelxml.treedatalikelihood;
+package dr.evomodelxml.stuff;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.stuff.DataSquashingOperator;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.stuff.HDPPolyaUrn;
 import dr.evomodel.stuff.GenPolyaUrnProcessPrior;
+import dr.evomodel.stuff.HDPDataSquashingOperator;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -14,11 +15,10 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
+public class HDPDataSquashingOperatorParser extends AbstractXMLObjectParser {
 
-    public static final String DATA_SQUASHING_OPERATOR= "dataSquashingOperator";
+    public static final String HDP_DATA_SQUASHING_OPERATOR= "hdpDataSquashingOperator";
     public static final String DATA_LOG_LIKELIHOOD = "dataLogLikelihood";
-    public static final String GROUP_ASSIGNMENTS = "groupAssignments";
     public static final String MH_STEPS = "mhSteps";
     public static final String CATEGORIES = "categories";
     public static final String CYCLICAL = "cyclical";
@@ -36,7 +36,7 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
 
         boolean old = xo.getAttribute(OLD, false);
 
-        GenPolyaUrnProcessPrior gpuprocess = (GenPolyaUrnProcessPrior) xo.getChild(GenPolyaUrnProcessPrior.class);
+        HDPPolyaUrn hdp = (HDPPolyaUrn) xo.getChild(HDPPolyaUrn.class);
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
@@ -88,7 +88,7 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
         }
 
         if(sampleProportion >= 1 || sampleProportion <= 0){
-            throw new XMLParseException("sampleProportion must be between grater than 0 and less than or equal to 1");
+            throw new XMLParseException("sampleProportion must be between greater than 0 and less than or equal to 1");
         }
 
         int M = xo.getIntegerAttribute(MH_STEPS);
@@ -111,7 +111,7 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        return new DataSquashingOperator(gpuprocess,
+        return new HDPDataSquashingOperator(hdp,
                 tdl,
                 cl,
                 siteRateModelList,
@@ -149,17 +149,17 @@ public class DataSquashingOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserName() {
-        return DATA_SQUASHING_OPERATOR;
+        return HDP_DATA_SQUASHING_OPERATOR;
     }
 
     @Override
     public String getParserDescription() {
-        return DATA_SQUASHING_OPERATOR;
+        return HDP_DATA_SQUASHING_OPERATOR;
     }
 
     @Override
     public Class getReturnType() {
-        return DataSquashingOperator.class;
+        return HDPDataSquashingOperator.class;
     }
 
 }// END: class

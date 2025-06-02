@@ -5,9 +5,9 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.HDPPolyaUrn;
-import dr.evomodel.treedatalikelihood.GenPolyaUrnProcessPrior;
-import dr.evomodel.treedatalikelihood.HDPDataSquashingOperator;
+import dr.evomodel.stuff.HDPPolyaUrn;
+import dr.evomodel.stuff.GenPolyaUrnProcessPrior;
+import dr.evomodel.stuff.HDPDataSquashingOperator;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -111,7 +111,7 @@ public class HDPDataSquashingOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        return new dr.evomodel.treedatalikelihood.HDPDataSquashingOperator(hdp,
+        return new HDPDataSquashingOperator(hdp,
                 tdl,
                 cl,
                 siteRateModelList,

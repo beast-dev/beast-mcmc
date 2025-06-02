@@ -5,6 +5,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.stuff.DataSquashingOperator;
+import dr.evomodel.stuff.GenPolyaUrnProcessPrior;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;

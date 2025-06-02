@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.stuff;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;

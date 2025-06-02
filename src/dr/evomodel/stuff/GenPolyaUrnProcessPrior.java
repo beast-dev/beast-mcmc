@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.stuff;
 
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;

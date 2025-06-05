@@ -27,6 +27,7 @@
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.GriddedWeights;
 import dr.inference.distribution.RandomField;
 import dr.inference.distribution.Weights;
 import dr.inference.model.Parameter;
@@ -39,6 +40,7 @@ public class WeightsParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "weightProvider";
     private static final String RESCALE_BY_ROOT_HEIGHT = "rescaleByRootHeight";
+    private static final String GRID_POINTS = "gridPoints";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -50,7 +52,13 @@ public class WeightsParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_HEIGHT, false);
 
-        return new Weights(tree, rescaleByRootHeight);
+        if (xo.hasChildNamed(GRID_POINTS)) {
+            Parameter gridPoints = (Parameter) xo.getElementFirstChild(GRID_POINTS);
+            return new GriddedWeights(tree, gridPoints, rescaleByRootHeight);
+        } else {
+            return new Weights(tree, rescaleByRootHeight);
+
+        }
     }
 
     @Override
@@ -58,7 +66,8 @@ public class WeightsParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_HEIGHT, true),
-            new ElementRule(TreeModel.class)
+            new ElementRule(TreeModel.class),
+            new ElementRule(GRID_POINTS, Parameter.class, "provide grid points", true)
     };
 
     @Override

@@ -135,7 +135,6 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private void setupSufficientStatistics() {
         Arrays.fill(sufficientStatistics, 0);
         Arrays.fill(ploidySums, 0.0);
-        Arrays.fill(numCoalEvents, 0);
 
         for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
             double ploidyFactor = 1 / getPopulationFactor(treeIndex);
@@ -145,9 +144,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
             fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
             numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
             gridIndices = singleTreeNodesTimeLine.getGridIndices();
-
-            int[] tempNumCoalEvents = singleTreeNodesTimeLine.getNumCoalEvents();
-            for (int j = 0; j < numCoalEvents.length; j++)  numCoalEvents[j] += tempNumCoalEvents[j];
+            numCoalEvents = singleTreeNodesTimeLine.getNumCoalEvents();
 
             int i = 0; // index for the fullTimeLine
             while (gridIndices[i] == i) i++; // choose the first grid point bigger than the most recent sampling time
@@ -161,7 +158,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
                             interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
                             sufficientStatistics[gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
                                     interval * ploidyFactor;
-                            ploidySums[gridIndex] += Math.log(ploidyFactor) * tempNumCoalEvents[gridIndex];
+                            ploidySums[gridIndex] += Math.log(ploidyFactor) * numCoalEvents[gridIndex];
                     } else {
                         skipFirstSamplingTime = false;
                     }
@@ -174,7 +171,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
                     interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
                     sufficientStatistics[numGridPoints] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
                             interval * ploidyFactor;
-                    ploidySums[numGridPoints] += Math.log(ploidyFactor) * tempNumCoalEvents[numGridPoints];
+                    ploidySums[numGridPoints] += Math.log(ploidyFactor) * numCoalEvents[numGridPoints];
                     i++;
                 }
             }

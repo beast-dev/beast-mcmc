@@ -61,10 +61,10 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        Parameter originParameter = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
-        Parameter numGridPoints = (Parameter) xo.getChild(NUM_GRID_POINTS).getChild(Parameter.class);
-        Parameter cutoff = (Parameter) xo.getChild(CUT_OFF).getChild(Parameter.class);
-        Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getChild(GRIDS).getChild(Parameter.class) : null;
+        final Parameter originParameter = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
+        final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
+        final Parameter cutoff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
+        final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getChild(GRIDS).getChild(Parameter.class) : null;
 
         Parameter lambda = null;
         Parameter mu = null;
@@ -202,9 +202,9 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
             new ElementRule(ORIGIN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(NUM_GRID_POINTS,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
             new ElementRule(CUT_OFF,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
             new ElementRule(GRIDS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             XMLUnits.SYNTAX_RULES[0]

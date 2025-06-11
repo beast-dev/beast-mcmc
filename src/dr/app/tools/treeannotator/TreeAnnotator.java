@@ -618,7 +618,11 @@ public class TreeAnnotator extends BaseTreeTool {
         double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
-        progressStream.println("HIPSTR tree's log clade credibility: " + String.format("%.4f", score));
+        if (majorityRule) {
+            progressStream.println("MrHIPSTR tree's log clade credibility: " + String.format("%.4f", score));
+        } else {
+            progressStream.println("HIPSTR tree's log clade credibility: " + String.format("%.4f", score));
+        }
         reportStatistics(cladeSystem, tree);
 //        reportStatisticTables(cladeSystem, tree);
         progressStream.println();
@@ -653,7 +657,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics, boolean showMissingClades) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
-        progressStream.print("Number of clades with credibility > " + threshold + ": " +
+        progressStream.print("Number of clades with credibility >= " + threshold + ": " +
                 treeCladeCount);
         if (treeCladeCount < allCladeCount) {
             if (extendedMetrics) {

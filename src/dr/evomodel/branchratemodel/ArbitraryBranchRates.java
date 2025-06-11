@@ -298,7 +298,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             }
 
             @Override
-            public double randomize(double raw) { return -Math.exp(raw); }
+            public double randomize(double raw) { return Math.exp(-raw); }
         }
 
         class Exponentiate implements BranchRateTransform {

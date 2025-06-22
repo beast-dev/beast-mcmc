@@ -39,6 +39,7 @@ import java.util.*;
 class BiClade implements Clade {
 
     /**
+
      * Clade for a tip
      * @param index number of the tip
      */
@@ -152,6 +153,60 @@ class BiClade implements Clade {
     @Override
     public List<Object[]> getAttributeValues() {
         return attributeValues;
+    }
+
+    public void addHeightValue(double height) {
+        heightValues.add(height);
+    }
+
+    public List<Double> getHeightValues() {
+        return heightValues;
+    }
+    public void addChildHeightValues(double leftHeight, double rightHeight) {
+        leftHeightValues.add(leftHeight);
+        rightHeightValues.add(rightHeight);
+    }
+
+    public List<Double> getLeftHeightValues() {
+        return leftHeightValues;
+    }
+    public List<Double> getRightHeightValues() {
+        return rightHeightValues;
+    }
+
+    public void setMeanHeight(double meanHeight) {
+        if (this.meanHeight > 0 && this.meanHeight != meanHeight) {
+            System.out.println();
+        }
+        this.meanHeight = meanHeight;
+    }
+
+    public void setMedianHeight(double medianHeight) {
+        this.medianHeight = medianHeight;
+    }
+
+    public void setHeightRange(Double[] range) {
+        this.heightRange = range;
+    }
+
+    public void setHeightHPD(Double[] HPDs) {
+        this.heightHPDs = HPDs;
+    }
+
+    public double getMeanHeight() {
+        return meanHeight;
+    }
+
+    public double getMedianHeight() {
+        return medianHeight;
+    }
+
+    public Double[] getHeightRange() {
+        return heightRange;
+    }
+
+    public Double[] getHeightHPDs() {
+        return heightHPDs;
     }
 
     @Override
@@ -294,4 +349,13 @@ class BiClade implements Clade {
     double bestSubTreeScore = Double.NaN;
 
     private final List<Object[]> attributeValues = new ArrayList<>();
+    private final List<Double> heightValues = new ArrayList<>();
+    private final List<Double> leftHeightValues = new ArrayList<>();
+    private final List<Double> rightHeightValues = new ArrayList<>();
+
+    private double meanHeight;
+    private double medianHeight;
+    private Double[] heightRange;
+    private Double[] heightHPDs ;
+
 }

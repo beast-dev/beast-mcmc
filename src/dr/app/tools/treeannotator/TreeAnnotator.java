@@ -84,6 +84,8 @@ public class TreeAnnotator extends BaseTreeTool {
     private int totalTrees;
     private int totalTreesUsed;
 
+    List<Double> rootHeights = new ArrayList<>();
+
     enum Target {
         HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
         MRHIPSTR("Majority rule highest independent posterior subtree reconstruction (MrHIPSTR)"),
@@ -436,9 +438,13 @@ public class TreeAnnotator extends BaseTreeTool {
 
                     if (THREADED_READING) {
                         futures.add(pool.submit(() -> {
+                            cladeSystem.collectCladeHeights(tree);
+                            rootHeights.add(tree.getNodeHeight(tree.getRoot()));
                             cladeSystem.traverseTree(tree, collectionAction);
                         }));
                     } else {
+                        cladeSystem.collectCladeHeights(tree);
+                        rootHeights.add(tree.getNodeHeight(tree.getRoot()));
                         cladeSystem.traverseTree(tree, collectionAction);
                     }
                     totalTreesUsed += 1;
@@ -485,11 +491,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 }
             }
         }
-        // plugins now live in Annotation action and I am not sure this is need...
-//        for (AnnotationAction.TreeAnnotationPlugin plugin : plugins) {
-//            Set<String> claimed = plugin.setAttributeNames(attributeNames);
-//            attributeNames.removeAll(claimed);
-//        }
         collectionAction.addAttributeNames(attributeNames);
         annotationAction.addAttributeNames(attributeNames);
     }
@@ -654,6 +655,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics) {
         reportCladeCredibilityCount(cladeSystem, tree, threshold, extendedMetrics, false);
     }
+
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics, boolean showMissingClades) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
@@ -791,6 +793,8 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Annotating target tree...");
 
         try {
+            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights));
+
             cladeSystem.traverseTree(targetTree, annotationAction);
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
@@ -1015,7 +1019,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         if (arguments.hasOption("forceDiscrete")) {
-            System.out.println("  Forcing integer traits to be treated as discrete traits.");
+            progressStream.println("  Forcing integer traits to be treated as discrete traits.");
             forceIntegerToDiscrete = true;
         }
 
@@ -1049,7 +1053,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         if (arguments.hasOption("ess")) {
             if (burninStates != -1) {
-                System.out.println(" Calculating ESS for branch parameters.");
+                progressStream.println(" Calculating ESS for branch parameters.");
                 computeESS = true;
             } else {
                 throw new RuntimeException("Specify burnin as states to use 'ess' option.");

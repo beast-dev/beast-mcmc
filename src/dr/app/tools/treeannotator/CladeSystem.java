@@ -43,6 +43,7 @@ public final class CladeSystem {
     private final boolean keepSubClades;
     private final boolean keepParents;
     private double treeCount = 0;
+    private boolean storeTipHeights = false;
 
     /**
      * Constructor starting with an empty clade system
@@ -248,6 +249,52 @@ public final class CladeSystem {
 
         return key;
     }
+
+    public void collectCladeHeights(Tree tree) {
+        collectCladeHeights(tree, tree.getRoot());
+    }
+
+    private Object collectCladeHeights(Tree tree, NodeRef node) {
+
+        Object key;
+
+        if (tree.isExternal(node)) {
+            key = node.getNumber();
+            if (taxonNumberMap != null) {
+                key = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
+
+            if (storeTipHeights) {
+                BiClade tip = (BiClade) getClade(key);
+                tip.addHeightValue(tree.getNodeHeight(node));
+            }
+        } else {
+            assert tree.getChildCount(node) == 2;
+
+            Object key1 = collectCladeHeights(tree, tree.getChild(node, 0));
+            Object key2 = collectCladeHeights(tree, tree.getChild(node, 1));
+
+            Clade child1 = getClade(key1);
+            Clade child2 = getClade(key2);
+
+            key = BiClade.makeKey(key1, key2);
+
+            BiClade clade = (BiClade)getClade(key);
+
+            if (clade.getBestLeft() == child1 && clade.getBestRight() == child2) {
+                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
+                clade.addHeightValue(tree.getNodeHeight(node));
+            } else if (clade.getBestLeft() == child2 && clade.getBestRight() == child1) {
+                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 1)), tree.getNodeHeight(tree.getChild(node, 0)));
+                clade.addHeightValue(tree.getNodeHeight(node));
+            } else {
+                clade.addHeightValue(tree.getNodeHeight(node));
+            }
+        }
+
+        return key;
+    }
+
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (Clade clade : cladeMap.values()) {

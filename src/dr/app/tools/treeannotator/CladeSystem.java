@@ -344,7 +344,7 @@ public final class CladeSystem {
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
+                if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
                     count[0] += 1;
                 }
             }

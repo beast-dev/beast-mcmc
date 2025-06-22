@@ -577,7 +577,7 @@ public class TreeAnnotator extends BaseTreeTool {
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, false);
 
         double score = scoreTree(tree, cladeSystem);
 

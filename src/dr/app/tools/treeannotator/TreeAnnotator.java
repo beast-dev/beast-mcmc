@@ -814,7 +814,7 @@ public class TreeAnnotator extends BaseTreeTool {
             new NexusExporter(stream).exportTree(targetTree);
         } catch (Exception e) {
             System.err.println("Error writing annotated tree file: " + e.getMessage());
-            System.exit(1);
+            //System.exit(1);
         }
         progressStream.println();
         progressStream.println("Written to file: " + outputFileName);

@@ -70,7 +70,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static final boolean THREADED_READING = false;
+    private static final boolean THREADED_READING = true;
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
@@ -659,7 +659,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static void reportCladeCredibilityCount(CladeSystem cladeSystem, Tree tree, double threshold, boolean extendedMetrics, boolean showMissingClades) {
         int treeCladeCount = cladeSystem.getTopCladeCount(tree, threshold);
         int allCladeCount = cladeSystem.getTopCladeCount(threshold);
-        progressStream.print("Number of clades with credibility >= " + threshold + ": " +
+        progressStream.print("Number of clades with credibility > " + threshold + ": " +
                 treeCladeCount);
         if (treeCladeCount < allCladeCount) {
             if (extendedMetrics) {

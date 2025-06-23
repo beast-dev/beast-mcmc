@@ -391,7 +391,7 @@ public final class CladeSystem {
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
+                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
                     count[0] += 1;
                 }
             }
@@ -438,7 +438,7 @@ public final class CladeSystem {
     public int getTopCladeCount(double threshold) {
         int count = 0;
         for (Clade clade : cladeMap.values()) {
-            if (clade.getCredibility() >= threshold) {
+            if (clade.getCredibility() > threshold) {
                 count += 1;
             }
         }

@@ -316,7 +316,7 @@ public class NexusExporter implements TreeExporter {
             out.print("}");
         } else if (value instanceof String) {
             out.print("\"" + value.toString() + "\"");
-        } else {
+        } else if (value != null) {
             out.print(value.toString());
         }
     }

@@ -175,9 +175,6 @@ class BiClade implements Clade {
     }
 
     public void setMeanHeight(double meanHeight) {
-        if (this.meanHeight > 0 && this.meanHeight != meanHeight) {
-            System.out.println();
-        }
         this.meanHeight = meanHeight;
     }
 

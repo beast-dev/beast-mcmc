@@ -47,13 +47,14 @@ public class SetHeightsAction implements CladeAction {
         assert tree instanceof MutableTree;
         BiClade biclade = (BiClade)clade;
 
+        setCladeHeights(biclade, biclade.getHeightValues());
+
         if (clade.getBestLeft() == null) {
             return;
         }
 
 //        setCladeHeights((BiClade)biclade.getBestLeft(), biclade.getLeftHeightValues());
 //        setCladeHeights((BiClade)biclade.getBestRight(), biclade.getRightHeightValues());
-        setCladeHeights(biclade, biclade.getHeightValues());
 
         if (tree.isRoot(node)) {
             setCladeHeights(biclade, rootHeights);
@@ -62,23 +63,27 @@ public class SetHeightsAction implements CladeAction {
 
     @Override
     public boolean expectAllClades() {
-        return false;
+        return true;
     }
 
     public static void setCladeHeights(BiClade clade, List<Double> heights) {
         if (clade == null || heights.isEmpty()) {
             return;
         }
-        double[] values = new double[heights.size()];
-        for (int k = 0; k < heights.size(); k++) {
-            values[k] = heights.get(k);
+        if (heights.size() > 1) {
+            double[] values = new double[heights.size()];
+            for (int k = 0; k < heights.size(); k++) {
+                values[k] = heights.get(k);
+            }
+
+            clade.setMeanHeight(DiscreteStatistics.mean(values));
+            clade.setMedianHeight(DiscreteStatistics.median(values));
+            clade.setHeightRange(getRange(values));
+            clade.setHeightHPD(getHPDs(0.95, values));
+        } else {
+            clade.setMeanHeight(heights.get(0));
+            clade.setMedianHeight(heights.get(0));
         }
-
-        clade.setMeanHeight(DiscreteStatistics.mean(values));
-        clade.setMedianHeight(DiscreteStatistics.median(values));
-        clade.setHeightRange(getRange(values));
-        clade.setHeightHPD(getHPDs(0.95, values));
-
     }
     private static Double[] getRange(double[] values) {
         double min = DiscreteStatistics.min(values);

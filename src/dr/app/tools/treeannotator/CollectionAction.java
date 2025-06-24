@@ -61,6 +61,7 @@ class CollectionAction implements CladeAction {
             Object value;
             if (attributeName.equals("height")) {
                 value = tree.getNodeHeight(node);
+                ((BiClade)clade).addHeightValue((Double)value);
             } else if (attributeName.equals("length")) {
                 value = tree.getBranchLength(node);
             } else {

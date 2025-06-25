@@ -480,7 +480,7 @@ public class TreeAnnotator extends BaseTreeTool {
     }
 
     public void setupAttributes(Tree tree) {
-        Set<String> attributeNames = new HashSet<>();
+        Set<String> attributeNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             Iterator iter = tree.getNodeAttributeNames(node);
@@ -489,6 +489,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     String name = (String) iter.next();
                     attributeNames.add(name);
                 }
+
             }
         }
         collectionAction.addAttributeNames(attributeNames);

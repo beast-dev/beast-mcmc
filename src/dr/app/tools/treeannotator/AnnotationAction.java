@@ -103,8 +103,12 @@ public class AnnotationAction implements CladeAction {
                 if (!filter) {
                     tree.setNodeAttribute(node, "height_mean", ((BiClade) clade).getMeanHeight());
                     tree.setNodeAttribute(node, "height_median", ((BiClade) clade).getMedianHeight());
-                    tree.setNodeAttribute(node, "height_95%_HPD", ((BiClade) clade).getHeightHPDs());
-                    tree.setNodeAttribute(node, "height_range", ((BiClade) clade).getHeightRange());
+                    if (((BiClade) clade).getHeightHPDs() != null){
+                        tree.setNodeAttribute(node, "height_95%_HPD", ((BiClade) clade).getHeightHPDs());
+                    }
+                    if (((BiClade) clade).getHeightRange() != null){
+                        tree.setNodeAttribute(node, "height_range", ((BiClade) clade).getHeightRange());
+                    }
                 }
                 if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS) {
                     tree.setNodeHeight(node, ((BiClade) clade).getMeanHeight());

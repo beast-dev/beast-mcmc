@@ -32,10 +32,11 @@ import dr.evolution.tree.Tree;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 class CollectionAction implements CladeAction {
-    private final Set<String> attributeNames = new HashSet<>();
+    private final Set<String> attributeNames = new LinkedHashSet<>();
 
     public void addAttributeName(String attributeName) {
         this.attributeNames.add(attributeName);

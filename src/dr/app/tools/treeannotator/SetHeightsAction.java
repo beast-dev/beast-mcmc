@@ -70,21 +70,22 @@ public class SetHeightsAction implements CladeAction {
         if (clade == null || heights.isEmpty()) {
             return;
         }
-        if (heights.size() > 1) {
-            double[] values = new double[heights.size()];
-            for (int k = 0; k < heights.size(); k++) {
-                values[k] = heights.get(k);
-            }
+        double[] values = new double[heights.size()];
+        for (int k = 0; k < heights.size(); k++) {
+            values[k] = heights.get(k);
+        }
 
+        if (clade.getSize() > 1) {
             clade.setMeanHeight(DiscreteStatistics.mean(values));
             clade.setMedianHeight(DiscreteStatistics.median(values));
             clade.setHeightRange(getRange(values));
             clade.setHeightHPD(getHPDs(0.95, values));
         } else {
-            clade.setMeanHeight(heights.get(0));
-            clade.setMedianHeight(heights.get(0));
+            clade.setMeanHeight(DiscreteStatistics.mean(values));
+            clade.setMedianHeight(DiscreteStatistics.median(values));
         }
     }
+
     private static Double[] getRange(double[] values) {
         double min = DiscreteStatistics.min(values);
         double max = DiscreteStatistics.max(values);

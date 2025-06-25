@@ -30,6 +30,7 @@ package dr.util;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 /**
  * Interface for associating attributes with an object.
@@ -61,7 +62,7 @@ public interface Attributable extends Serializable {
 	 */
 	Iterator<String> getAttributeNames();
 	
-	public static final class AttributeHelper implements Attributable {
+	final class AttributeHelper implements Attributable {
 		/**
 		 * Sets an named attribute for this object.
 		 * @param name the name of the attribute.
@@ -98,7 +99,7 @@ public interface Attributable extends Serializable {
 		// INSTANCE VARIABLE
 		// **************************************************************
 		
-		private final HashMap<String, Object> attributes = new HashMap<String, Object>();
+		private final HashMap<String, Object> attributes = new LinkedHashMap<>();
 	}
 }
 

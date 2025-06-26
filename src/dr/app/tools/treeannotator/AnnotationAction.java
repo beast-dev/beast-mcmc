@@ -44,7 +44,8 @@ public class AnnotationAction implements CladeAction {
     private static final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
     private final TreeAnnotator.HeightsSummary heightsOption;
-    private double posteriorLimit = 0.0;
+    private double posteriorLimit;
+    private double countLimit;
     double[] hpd2D = {0.80};
     Set<String> attributeNames = new HashSet<String>();
     private boolean forceIntegerToDiscrete = false;
@@ -57,11 +58,14 @@ public class AnnotationAction implements CladeAction {
     private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
     AnnotationAction(TreeAnnotator.HeightsSummary heightsOption,
-                            double posteriorLimit, double[] hpd2D,
-                            boolean computeESS,
-                            boolean forceIntegerToDiscrete) {
+                     double posteriorLimit,
+                     int countLimit,
+                     double[] hpd2D,
+                     boolean computeESS,
+                     boolean forceIntegerToDiscrete) {
         this.heightsOption = heightsOption;
         this.posteriorLimit = posteriorLimit;
+        this.countLimit = countLimit;
         this.hpd2D = hpd2D;
         this.forceIntegerToDiscrete = forceIntegerToDiscrete;
     }
@@ -92,178 +96,186 @@ public class AnnotationAction implements CladeAction {
         if (!tree.isExternal(node)) {
             final double posterior = clade.getCredibility();
             tree.setNodeAttribute(node, "posterior", posterior);
-            if (posterior < posteriorLimit) {
+            if (posterior < posteriorLimit || clade.getCount() < countLimit) {
                 filter = true;
             }
         }
 
         int i = 0;
         for (String attributeName : attributeNames) {
-            if (clade.getAttributeValues() != null && !clade.getAttributeValues().isEmpty()) {
-                double[] values = new double[clade.getAttributeValues().size()];
+            if (attributeName.equals("height")) {
+                if (!filter) {
+                    tree.setNodeAttribute(node, "height_mean", ((BiClade) clade).getMeanHeight());
+                    tree.setNodeAttribute(node, "height_median", ((BiClade) clade).getMedianHeight());
+                    if (((BiClade) clade).getHeightHPDs() != null){
+                        tree.setNodeAttribute(node, "height_95%_HPD", ((BiClade) clade).getHeightHPDs());
+                    }
+                    if (((BiClade) clade).getHeightRange() != null){
+                        tree.setNodeAttribute(node, "height_range", ((BiClade) clade).getHeightRange());
+                    }
+                }
+                if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS) {
+                    tree.setNodeHeight(node, ((BiClade) clade).getMeanHeight());
+                } else if (heightsOption == TreeAnnotator.HeightsSummary.MEDIAN_HEIGHTS) {
+                    tree.setNodeHeight(node, ((BiClade) clade).getMedianHeight());
+                } else {
+                    // keep the existing height
+                }
+//                assert tree.isExternal(node) || (tree.getNodeHeight(node) - tree.getNodeHeight(tree.getChild(node, 0))) >= 0.0;
+//                assert tree.isExternal(node) || (tree.getNodeHeight(node) - tree.getNodeHeight(tree.getChild(node, 1))) >= 0.0;
+            } else {
+                if (clade.getAttributeValues() != null && !clade.getAttributeValues().isEmpty()) {
+                    double[] values = new double[clade.getAttributeValues().size()];
 
-                HashMap<Object, Integer> hashMap = new HashMap<>();
+                    HashMap<Object, Integer> hashMap = new HashMap<>();
 
-                Object[] v = clade.getAttributeValues().get(0);
-                if (v[i] != null) {
+                    Object[] v = clade.getAttributeValues().get(0);
+                    if (v[i] != null) {
+                        boolean isBoolean = v[i] instanceof Boolean;
 
-                    final boolean isHeight = attributeName.equals("height");
-                    boolean isBoolean = v[i] instanceof Boolean;
+                        boolean isDiscrete = v[i] instanceof String;
 
-                    boolean isDiscrete = v[i] instanceof String;
+                        if (forceIntegerToDiscrete && v[i] instanceof Integer) isDiscrete = true;
 
-                    if (forceIntegerToDiscrete && v[i] instanceof Integer) isDiscrete = true;
+                        double minValue = Double.MAX_VALUE;
+                        double maxValue = -Double.MAX_VALUE;
 
-                    double minValue = Double.MAX_VALUE;
-                    double maxValue = -Double.MAX_VALUE;
-
-                    final boolean isArray = v[i] instanceof Object[];
-                    boolean isDoubleArray = isArray && ((Object[]) v[i])[0] instanceof Double;
-                    // This is Java, friends - first value type does not imply all.
-                    if (isDoubleArray) {
-                        for (Object n : (Object[]) v[i]) {
-                            if (!(n instanceof Double)) {
-                                isDoubleArray = false;
-                                break;
+                        final boolean isArray = v[i] instanceof Object[];
+                        boolean isDoubleArray = isArray && ((Object[]) v[i])[0] instanceof Double;
+                        // This is Java, friends - first value type does not imply all.
+                        if (isDoubleArray) {
+                            for (Object n : (Object[]) v[i]) {
+                                if (!(n instanceof Double)) {
+                                    isDoubleArray = false;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    // todo Handle other types of arrays
+                        // todo Handle other types of arrays
 
-                    double[][] valuesArray = null;
-                    double[] minValueArray = null;
-                    double[] maxValueArray = null;
-                    int lenArray = 0;
+                        double[][] valuesArray = null;
+                        double[] minValueArray = null;
+                        double[] maxValueArray = null;
+                        int lenArray = 0;
 
-                    if (isDoubleArray) {
-                        lenArray = ((Object[]) v[i]).length;
+                        if (isDoubleArray) {
+                            lenArray = ((Object[]) v[i]).length;
 
-                        valuesArray = new double[lenArray][clade.getAttributeValues().size()];
-                        minValueArray = new double[lenArray];
-                        maxValueArray = new double[lenArray];
+                            valuesArray = new double[lenArray][clade.getAttributeValues().size()];
+                            minValueArray = new double[lenArray];
+                            maxValueArray = new double[lenArray];
 
-                        for (int k = 0; k < lenArray; k++) {
-                            minValueArray[k] = Double.MAX_VALUE;
-                            maxValueArray[k] = -Double.MAX_VALUE;
-                        }
-                    }
-
-                    for (int j = 0; j < clade.getAttributeValues().size(); j++) {
-                        Object value = clade.getAttributeValues().get(j)[i];
-                        if (isDiscrete) {
-                            final Object s = value;
-                            if (hashMap.containsKey(s)) {
-                                hashMap.put(s, hashMap.get(s) + 1);
-                            } else {
-                                hashMap.put(s, 1);
-                            }
-                        } else if (isBoolean) {
-                            values[j] = (((Boolean) value) ? 1.0 : 0.0);
-                        } else if (isDoubleArray) {
-                            // Forcing to Double[] causes a cast exception. MAS
-                            Object[] array = (Object[]) value;
                             for (int k = 0; k < lenArray; k++) {
-                                valuesArray[k][j] = ((Double) array[k]);
-                                if (valuesArray[k][j] < minValueArray[k]) minValueArray[k] = valuesArray[k][j];
-                                if (valuesArray[k][j] > maxValueArray[k]) maxValueArray[k] = valuesArray[k][j];
-                            }
-                        } else {
-                            // Ignore other (unknown) types
-                            if (value instanceof Number) {
-                                values[j] = ((Number) value).doubleValue();
-                                if (values[j] < minValue) minValue = values[j];
-                                if (values[j] > maxValue) maxValue = values[j];
-                            }
-                        }
-                    }
-                    if (isHeight) {
-                        if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS) {
-                            final double mean = DiscreteStatistics.mean(values);
-                            tree.setNodeHeight(node, mean);
-                        } else if (heightsOption == TreeAnnotator.HeightsSummary.MEDIAN_HEIGHTS) {
-                            final double median = DiscreteStatistics.median(values);
-                            tree.setNodeHeight(node, median);
-                        } else {
-                            // keep the existing height
-                        }
-                    }
-
-                    if (!filter) {
-                        boolean processed = false;
-                        for (TreeAnnotationPlugin plugin : plugins) {
-                            if (plugin.handleAttribute(tree, node, attributeName, values)) {
-                                processed = true;
+                                minValueArray[k] = Double.MAX_VALUE;
+                                maxValueArray[k] = -Double.MAX_VALUE;
                             }
                         }
 
-                        if (!processed) {
-                            if (!isDiscrete) {
-                                if (!isDoubleArray)
-                                    annotateMeanAttribute(tree, node, attributeName, values);
-                                else {
-                                    for (int k = 0; k < lenArray; k++) {
-                                        annotateMeanAttribute(tree, node, attributeName + (k + 1), valuesArray[k]);
+                        for (int j = 0; j < clade.getAttributeValues().size(); j++) {
+                            Object value = clade.getAttributeValues().get(j)[i];
+                            if (isDiscrete) {
+                                final Object s = value;
+                                if (hashMap.containsKey(s)) {
+                                    hashMap.put(s, hashMap.get(s) + 1);
+                                } else {
+                                    hashMap.put(s, 1);
+                                }
+                            } else if (isBoolean) {
+                                values[j] = (((Boolean) value) ? 1.0 : 0.0);
+                            } else if (isDoubleArray) {
+                                // Forcing to Double[] causes a cast exception. MAS
+                                Object[] array = (Object[]) value;
+                                for (int k = 0; k < lenArray; k++) {
+                                    valuesArray[k][j] = ((Double) array[k]);
+                                    if (valuesArray[k][j] < minValueArray[k]) minValueArray[k] = valuesArray[k][j];
+                                    if (valuesArray[k][j] > maxValueArray[k]) maxValueArray[k] = valuesArray[k][j];
+                                }
+                            } else {
+                                // Ignore other (unknown) types
+                                if (value instanceof Number) {
+                                    values[j] = ((Number) value).doubleValue();
+                                    if (values[j] < minValue) minValue = values[j];
+                                    if (values[j] > maxValue) maxValue = values[j];
+                                }
+                            }
+                        }
+                        if (!filter) {
+                            boolean processed = false;
+                            for (TreeAnnotationPlugin plugin : plugins) {
+                                if (plugin.handleAttribute(tree, node, attributeName, values)) {
+                                    processed = true;
+                                }
+                            }
+
+                            if (!processed) {
+                                if (!isDiscrete) {
+                                    if (!isDoubleArray)
+                                        annotateMeanAttribute(tree, node, attributeName, values);
+                                    else {
+                                        for (int k = 0; k < lenArray; k++) {
+                                            annotateMeanAttribute(tree, node, attributeName + (k + 1), valuesArray[k]);
+                                        }
+                                    }
+                                } else {
+                                    annotateModeAttribute(tree, node, attributeName, hashMap);
+                                    annotateFrequencyAttribute(tree, node, attributeName, hashMap);
+                                }
+                                if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {
+                                    // Basically, if it is a boolean (0, 1) then we don't need the distribution information
+                                    // Likewise if it doesn't vary.
+                                    annotateMedianAttribute(tree, node, attributeName + "_median", values);
+                                    annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
+                                    annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
+                                    if (computeESS == true) {
+                                        annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }
                                 }
-                            } else {
-                                annotateModeAttribute(tree, node, attributeName, hashMap);
-                                annotateFrequencyAttribute(tree, node, attributeName, hashMap);
-                            }
-                            if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {
-                                // Basically, if it is a boolean (0, 1) then we don't need the distribution information
-                                // Likewise if it doesn't vary.
-                                annotateMedianAttribute(tree, node, attributeName + "_median", values);
-                                annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
-                                annotateRangeAttribute(tree, node, attributeName + "_range", values);
-                                annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
-                                if (computeESS == true) {
-                                    annotateESSAttribute(tree, node, attributeName + "_ESS", values);
-                                }
-                            }
 
-                            if (isDoubleArray) {
-                                String name = attributeName;
-                                // todo
+                                if (isDoubleArray) {
+                                    String name = attributeName;
+                                    // todo
 //                                    if (name.equals(location1Attribute)) {
 //                                        name = locationOutputAttribute;
 //                                    }
-                                boolean want2d = PROCESS_BIVARIATE_ATTRIBUTES && lenArray == 2;
-                                if (name.equals("dmv")) {  // terrible hack
-                                    want2d = false;
-                                }
-                                for (int k = 0; k < lenArray; k++) {
-                                    if (minValueArray[k] < maxValueArray[k]) {
-                                        annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
-                                        annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
-                                        annotatePositiveProbability(tree, node, name + (k + 1) + "_positiveProb", valuesArray[k]);
-                                        if (!want2d)
-                                            annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
+                                    boolean want2d = PROCESS_BIVARIATE_ATTRIBUTES && lenArray == 2;
+                                    if (name.equals("dmv")) {  // terrible hack
+                                        want2d = false;
                                     }
-                                }
-                                // 2D contours
-                                if (want2d) {
+                                    for (int k = 0; k < lenArray; k++) {
+                                        if (minValueArray[k] < maxValueArray[k]) {
+                                            annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
+                                            annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
+                                            annotatePositiveProbability(tree, node, name + (k + 1) + "_positiveProb", valuesArray[k]);
+                                            if (!want2d)
+                                                annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
+                                        }
+                                    }
+                                    // 2D contours
+                                    if (want2d) {
 
-                                    boolean variationInFirst = (minValueArray[0] < maxValueArray[0]);
-                                    boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);
+                                        boolean variationInFirst = (minValueArray[0] < maxValueArray[0]);
+                                        boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);
 
-                                    if (variationInFirst && !variationInSecond)
-                                        annotateHPDAttribute(tree, node, name + "1" + "_95%_HPD", 0.95, valuesArray[0]);
+                                        if (variationInFirst && !variationInSecond)
+                                            annotateHPDAttribute(tree, node, name + "1" + "_95%_HPD", 0.95, valuesArray[0]);
 
-                                    if (variationInSecond && !variationInFirst)
-                                        annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
+                                        if (variationInSecond && !variationInFirst)
+                                            annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
-                                    if (variationInFirst && variationInSecond){
+                                        if (variationInFirst && variationInSecond) {
 
-                                        for (int l = 0; l < hpd2D.length; l++) {
+                                            for (int l = 0; l < hpd2D.length; l++) {
 
-                                            if (hpd2D[l] > 1) {
-                                                System.err.println("no HPD for proportion > 1 (" + hpd2D[l] + ")");
-                                            } else if (hpd2D[l] < 0){
-                                                System.err.println("no HPD for proportion < 0 (" + hpd2D[l] + ")");
-                                            }  else {
-                                                annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D[l]) + "%HPD", hpd2D[l], valuesArray);
+                                                if (hpd2D[l] > 1) {
+                                                    System.err.println("no HPD for proportion > 1 (" + hpd2D[l] + ")");
+                                                } else if (hpd2D[l] < 0) {
+                                                    System.err.println("no HPD for proportion < 0 (" + hpd2D[l] + ")");
+                                                } else {
+                                                    annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D[l]) + "%HPD", hpd2D[l], valuesArray);
+                                                }
+
                                             }
-
                                         }
                                     }
                                 }
@@ -271,8 +283,8 @@ public class AnnotationAction implements CladeAction {
                         }
                     }
                 }
+                i++;
             }
-            i++;
         }
     }
 

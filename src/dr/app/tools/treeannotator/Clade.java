@@ -35,7 +35,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $
  */
-public interface Clade {
+public interface Clade extends Comparable<Clade> {
     int getCount();
 
     void setCount(int count);
@@ -59,4 +59,12 @@ public interface Clade {
 
     List<Object[]> getAttributeValues();
 
+    /**
+     * Comparable to sort by ascending size
+     * @param o the object to be compared.
+     */
+    @Override
+    default int compareTo(Clade o) {
+        return this.getSize() - o.getSize();
+    }
 }

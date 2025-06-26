@@ -44,7 +44,8 @@ public class AnnotationAction implements CladeAction {
     private static final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
     private final TreeAnnotator.HeightsSummary heightsOption;
-    private double posteriorLimit = 0.0;
+    private double posteriorLimit;
+    private double countLimit;
     double[] hpd2D = {0.80};
     Set<String> attributeNames = new HashSet<String>();
     private boolean forceIntegerToDiscrete = false;
@@ -57,11 +58,14 @@ public class AnnotationAction implements CladeAction {
     private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
     AnnotationAction(TreeAnnotator.HeightsSummary heightsOption,
-                            double posteriorLimit, double[] hpd2D,
-                            boolean computeESS,
-                            boolean forceIntegerToDiscrete) {
+                     double posteriorLimit,
+                     int countLimit,
+                     double[] hpd2D,
+                     boolean computeESS,
+                     boolean forceIntegerToDiscrete) {
         this.heightsOption = heightsOption;
         this.posteriorLimit = posteriorLimit;
+        this.countLimit = countLimit;
         this.hpd2D = hpd2D;
         this.forceIntegerToDiscrete = forceIntegerToDiscrete;
     }
@@ -92,7 +96,7 @@ public class AnnotationAction implements CladeAction {
         if (!tree.isExternal(node)) {
             final double posterior = clade.getCredibility();
             tree.setNodeAttribute(node, "posterior", posterior);
-            if (posterior < posteriorLimit) {
+            if (posterior < posteriorLimit || clade.getCount() < countLimit) {
                 filter = true;
             }
         }

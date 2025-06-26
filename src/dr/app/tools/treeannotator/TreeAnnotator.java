@@ -128,6 +128,7 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
+                         final int countLimit,
                          final double[] hpd2D,
                          final boolean computeESS,
                          final int threadCount,
@@ -146,7 +147,7 @@ public class TreeAnnotator extends BaseTreeTool {
         collectionAction.addAttributeName("height");
         collectionAction.addAttributeName("length");
 
-        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, hpd2D, computeESS, true);
+        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, countLimit, hpd2D, computeESS, true);
 
         annotationAction.addAttributeName("height");
         annotationAction.addAttributeName("length");
@@ -236,7 +237,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         collectNodeAttributes(cladeSystem, inputFileName, burnin);
 
-        annotateTargetTree(cladeSystem, heightsOption, targetTree);
+        annotateTargetTree(cladeSystem, heightsOption, countLimit, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -790,11 +791,11 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, MutableTree targetTree) {
+    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, int countLmit, MutableTree targetTree) {
         progressStream.println("Annotating target tree...");
 
         try {
-            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights));
+            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLmit));
 
             cladeSystem.traverseTree(targetTree, annotationAction);
         } catch (Exception e) {
@@ -966,7 +967,8 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
-                        0.0,
+                        posteriorLimit,
+                        5,
                         hpd2D,
                         computeESS,
                         -1,
@@ -1001,6 +1003,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.IntegerOption("limitCount", "the minimum sample count for a node to be annotated (default 5)"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.StringOption("reference", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
                         new Arguments.StringOption("metrics", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
@@ -1066,6 +1069,15 @@ public class TreeAnnotator extends BaseTreeTool {
             posteriorLimit = arguments.getRealOption("limit");
         }
 
+        if (arguments.hasOption("limitFrequency")) {
+            posteriorLimit = arguments.getRealOption("limitFrequency");
+        }
+
+        int countLimit = 5;
+        if (arguments.hasOption("limitCount")) {
+            countLimit = arguments.getIntegerOption("limitCount");
+        }
+
         double[] hpd2D = {80};
         if (arguments.hasOption("hpd2D")) {
             try {
@@ -1126,6 +1138,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
+                countLimit,
                 hpd2D,
                 computeESS,
                 threadCount,

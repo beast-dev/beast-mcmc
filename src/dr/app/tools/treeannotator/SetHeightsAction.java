@@ -36,10 +36,18 @@ import dr.util.HeapSort;
 import java.util.*;
 
 public class SetHeightsAction implements CladeAction {
+    // the smallest a height range can be before we consider it a single value
+    double HEIGHT_EPSILON = 3e-8; // one second in decimal years
+
+    // the heights to set for the root of the tree
     private final List<Double> rootHeights;
 
-    SetHeightsAction(List<Double> rootHeights) {
+    // the number of heights that need to be present before we consider the range and HPD
+    private final int filterCount;
+
+    SetHeightsAction(List<Double> rootHeights, int filterCount) {
         this.rootHeights = rootHeights;
+        this.filterCount = filterCount;
     }
 
     @Override
@@ -66,23 +74,19 @@ public class SetHeightsAction implements CladeAction {
         return true;
     }
 
-    public static void setCladeHeights(BiClade clade, List<Double> heights) {
+    public void setCladeHeights(BiClade clade, List<Double> heights) {
         if (clade == null || heights.isEmpty()) {
             return;
         }
-        double[] values = new double[heights.size()];
-        for (int k = 0; k < heights.size(); k++) {
-            values[k] = heights.get(k);
-        }
+        double[] values = heights.stream().mapToDouble(Double::doubleValue).toArray();
+        Double[] range = getRange(values);
 
-        if (clade.getSize() > 1) {
-            clade.setMeanHeight(DiscreteStatistics.mean(values));
-            clade.setMedianHeight(DiscreteStatistics.median(values));
-            clade.setHeightRange(getRange(values));
+        clade.setMeanHeight(DiscreteStatistics.mean(values));
+        clade.setMedianHeight(DiscreteStatistics.median(values));
+
+        if (clade.getSize() > 1 && Math.abs(range[0] - range[1]) < HEIGHT_EPSILON && heights.size() >= filterCount) {
+            clade.setHeightRange(range);
             clade.setHeightHPD(getHPDs(0.95, values));
-        } else {
-            clade.setMeanHeight(DiscreteStatistics.mean(values));
-            clade.setMedianHeight(DiscreteStatistics.median(values));
         }
     }
 

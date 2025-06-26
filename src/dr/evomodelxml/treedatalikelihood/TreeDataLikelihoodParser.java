@@ -90,12 +90,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   boolean preferGPU,
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
-                                                  PreOrderSettings settings,
+                                                  PreOrderSettings settings/*,
                                                   Parameter siteAssignInd,
                                                   List<Parameter> polyaPartitionCategories,
                                                   List<SiteRateModel> polyaSiteRateModels,
                                                   List<BranchModel> polyaBranchModels,
-                                                  int initialNumCats) throws XMLParseException {
+                                                  int initialNumCats*/) throws XMLParseException {
 
         final Logger logger = Logger.getLogger("dr.evomodel");
 
@@ -147,7 +147,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
             beagleThreadCount = Runtime.getRuntime().availableProcessors();
             System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
-            
+
             // 'threadCount' controls the top level number of Java threads holding the
             // likelihood/prior evaluations. Shouldn't be considered here - by default
             // this will use an autosizing thread pool so should probably be left alone.
@@ -200,88 +200,87 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             logger.info("  dividing each partition between " + beagleInstanceCount + " BEAGLE instances:");
         }
 
-        if(siteAssignInd == null) {
+//        if(siteAssignInd == null) {
 
-            for (int i = 0; i < patternLists.size(); i++) {
-                PatternList partitionPatterns = patternLists.get(i);
-                // can't divide up a partition by more than the number of patterns...
-                int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
+        for (int i = 0; i < patternLists.size(); i++) {
+            PatternList partitionPatterns = patternLists.get(i);
+            // can't divide up a partition by more than the number of patterns...
+            int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
-                for (int j = 0; j < bic; j++) {
-                    PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
-                    DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                            treeModel,
-                            subPatterns,
-                            branchModels.get(i),
-                            siteRateModels.get(i),
-                            useAmbiguities,
-                            preferGPU,
-                            scalingScheme,
-                            delayRescalingUntilUnderflow,
-                            settings);
-
-                    TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
-                            dataLikelihoodDelegate,
-                            treeModel,
-                            branchRateModel);
-
-                    treeDataLikelihood.setId(id + "_" + (j + 1));
-
-                    treeDataLikelihoods.add(treeDataLikelihood);
-                }
-            }
-        }else{
-
-            for (int i = 0; i < initialNumCats; i++) {
-
+            for (int j = 0; j < bic; j++) {
+                PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
                 DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
-                        patternLists.get(0),
-                        polyaBranchModels.get(i),
-                        polyaSiteRateModels.get(i),
+                        subPatterns,
+                        branchModels.get(i),
+                        siteRateModels.get(i),
                         useAmbiguities,
                         preferGPU,
                         scalingScheme,
                         delayRescalingUntilUnderflow,
-                        settings,
-                        siteAssignInd,
-                        polyaPartitionCategories.get(i));
+                        settings);
 
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dataLikelihoodDelegate,
-                                treeModel,
-                                branchRateModel));
+                TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
 
+                treeDataLikelihood.setId(id + "_" + (j + 1));
+
+                treeDataLikelihoods.add(treeDataLikelihood);
             }
-
-            for (int i = initialNumCats; i < polyaSiteRateModels.size(); i++) {
-
-                DataLikelihoodDelegate dld = null;
-
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dld,
-                                treeModel,
-                                branchRateModel));
-
-            }
-
-
-
         }
+//        }else{
+//
+//            for (int i = 0; i < initialNumCats; i++) {
+//
+//                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+//                        treeModel,
+//                        patternLists.get(0),
+//                        polyaBranchModels.get(i),
+//                        polyaSiteRateModels.get(i),
+//                        useAmbiguities,
+//                        preferGPU,
+//                        scalingScheme,
+//                        delayRescalingUntilUnderflow,
+//                        settings,
+//                        siteAssignInd,
+//                        polyaPartitionCategories.get(i));
+//
+//                treeDataLikelihoods.add(
+//                        new TreeDataLikelihood(
+//                                dataLikelihoodDelegate,
+//                                treeModel,
+//                                branchRateModel));
+//
+//            }
+//
+//            for (int i = initialNumCats; i < polyaSiteRateModels.size(); i++) {
+//
+//                DataLikelihoodDelegate dld = null;
+//
+//                treeDataLikelihoods.add(
+//                        new TreeDataLikelihood(
+//                                dld,
+//                                treeModel,
+//                                branchRateModel));
+//
+//            }
+//
+//
+//
+//        }
 
         if (treeDataLikelihoods.size() == 1) {
             return treeDataLikelihoods.get(0);
         }
 
         return new CompoundLikelihood(treeDataLikelihoods);
-
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
+//        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
@@ -345,22 +344,22 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
                 XMLObject cxo = (XMLObject)xo.getChild(i);
 
-                int numSiteModelsInPartition = 0;
-
-                for(int j = 0; j < cxo.getChildCount(); j++) {
-                    Object testObject = cxo.getChild(j);
-
-                    if(testObject instanceof GammaSiteRateModel){
-                        GammaSiteRateModel polyaSiteRateModel = (GammaSiteRateModel) testObject;
-                        polyaSiteRateModels.add(polyaSiteRateModel);
-                        Parameter category = new Parameter.Default(1);
-                        category.setParameterValue(0,numSiteModelsInPartition);
-                        polyaPartitionCategories.add(category);
-                        BranchModel polyaBranchModel = new HomogeneousBranchModel(polyaSiteRateModel.getSubstitutionModel(), null);
-                        polyaBranchModels.add(polyaBranchModel);
-                        numSiteModelsInPartition += 1;
-                    }
-                }
+//                int numSiteModelsInPartition = 0;
+//
+//                for(int j = 0; j < cxo.getChildCount(); j++) {
+//                    Object testObject = cxo.getChild(j);
+//
+//                    if(testObject instanceof GammaSiteRateModel){
+//                        GammaSiteRateModel polyaSiteRateModel = (GammaSiteRateModel) testObject;
+//                        polyaSiteRateModels.add(polyaSiteRateModel);
+//                        Parameter category = new Parameter.Default(1);
+//                        category.setParameterValue(0,numSiteModelsInPartition);
+//                        polyaPartitionCategories.add(category);
+//                        BranchModel polyaBranchModel = new HomogeneousBranchModel(polyaSiteRateModel.getSubstitutionModel(), null);
+//                        polyaBranchModels.add(polyaBranchModel);
+//                        numSiteModelsInPartition += 1;
+//                    }
+//                }
 
                 patternList = (PatternList) cxo.getChild(PatternList.class);
                 patternLists.add(patternList);
@@ -444,12 +443,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 preferGPU,
                 scalingScheme,
                 delayScaling,
-                settings,
+                settings/*,
                 indicators,
                 polyaPartitionCategories,
                 polyaSiteRateModels,
                 polyaBranchModels,
-                initialNumCats);
+                initialNumCats*/);
     }
 
     //************************************************************************

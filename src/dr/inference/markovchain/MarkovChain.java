@@ -196,7 +196,7 @@ public final class MarkovChain implements Serializable {
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
-                diagnosticDensities = new HashMap<String, Double>();
+                diagnosticDensities = new HashMap<>();
                 fillDensities(likelihood, diagnosticDensities);
             }
 
@@ -275,8 +275,8 @@ public final class MarkovChain implements Serializable {
                 }
 
                 Map<String, Double> diagnosticOperatorDensities = null;
-                if (usingFullEvaluation) {
-                    diagnosticOperatorDensities = new HashMap<String, Double>();
+                if (usingFullEvaluation && !Double.isInfinite(score) && !Double.isNaN(score)) {
+                    diagnosticOperatorDensities = new HashMap<>();
                     fillDensities(likelihood, diagnosticOperatorDensities);
                 }
 
@@ -345,7 +345,9 @@ public final class MarkovChain implements Serializable {
                     final double testScore = evaluate(likelihood);
 
                     Map<String, Double> densitiesAfter = new HashMap<String, Double>();
-                    fillDensities(likelihood, densitiesAfter);
+                    if (!Double.isInfinite(testScore) && !Double.isNaN(testScore)) {
+                        fillDensities(likelihood, densitiesAfter);
+                    }
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();

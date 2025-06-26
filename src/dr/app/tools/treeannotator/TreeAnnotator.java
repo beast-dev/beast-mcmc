@@ -40,6 +40,7 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.util.Version;
@@ -129,6 +130,7 @@ public class TreeAnnotator extends BaseTreeTool {
                          final Target targetOption,
                          final String targetTreeFileName,
                          final String referenceTreeFileName,
+                         final String treeMetricFileName,
                          final String inputFileName,
                          final String outputFileName
     ) throws IOException {
@@ -205,7 +207,6 @@ public class TreeAnnotator extends BaseTreeTool {
 
         CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
-
         if (referenceTreeFileName != null) {
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 
@@ -223,6 +224,10 @@ public class TreeAnnotator extends BaseTreeTool {
         annotateTargetTree(cladeSystem, heightsOption, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
+
+        if (treeMetricFileName != null && !treeMetricFileName.isEmpty()) {
+            writeTreeMetrics(burnin, targetTree, inputFileName, treeMetricFileName);
+        }
 
         long timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
         progressStream.println("Total time: " + timeElapsed + " secs");
@@ -386,7 +391,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Reader reader = new BufferedReader(new FileReader(inputFileName));
 //         TreeImporter importer = new BEASTTreesImporter(reader, true);
-        TreeImporter importer = new NexusImporter(reader, true);
+        TreeImporter importer = new NexusImporter(reader, false);
 
         long startTime = System.currentTimeMillis();
 
@@ -572,7 +577,7 @@ public class TreeAnnotator extends BaseTreeTool {
         long startTime = System.currentTimeMillis();
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa);
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, false);
 
         double score = scoreTree(tree, cladeSystem);
 
@@ -657,6 +662,82 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println(cladeSystem.getTopCladeCount(threshold));
         }
 
+    }
+
+    private void writeTreeMetrics(int burnin, Tree referenceTree, String inputFileName, String outputFileName)
+            throws IOException {
+
+        long startTime = System.currentTimeMillis();
+
+        TreeMetric[] treeMetrics = new TreeMetric[] {
+                new BranchScoreMetric(),
+                new CladeHeightMetric(),
+                new KendallColijnPathDifferenceMetric(0.0),
+                new KendallColijnPathDifferenceMetric(0.5),
+                new KendallColijnPathDifferenceMetric(1.0),
+                new RobinsonFouldsMetric(),
+                new RootedBranchScoreMetric(),
+                new SteelPennyPathDifferenceMetric()
+        };
+
+        try {
+            final PrintStream stream = outputFileName != null ?
+                    new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
+                    System.out;
+
+
+            progressStream.println("Writing tree metrics for " + totalTreesUsed + " trees...");
+            progressStream.println("0              25             50             75            100");
+            progressStream.println("|--------------|--------------|--------------|--------------|");
+
+            int stepSize = totalTrees / 60;
+            if (stepSize < 1) stepSize = 1;
+
+            int counter = 0;
+            TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
+            try {
+                stream.print("tree");
+                for (TreeMetric treeMetric : treeMetrics) {
+                    stream.print("\t" + treeMetric.getType().getName());
+                }
+
+                stream.println();
+
+                while (importer.hasTree()) {
+                    Tree tree = importer.importNextTree();
+
+                    if (counter >= burnin) {
+                        stream.print(counter);
+
+                        for (TreeMetric treeMetric : treeMetrics) {
+                            double score = treeMetric.getMetric(tree, referenceTree);
+
+                            stream.print("\t" + score);
+                        }
+
+                        stream.println();
+                    }
+
+                    if (counter > 0 && counter % stepSize == 0) {
+                        progressStream.print("*");
+                        progressStream.flush();
+                    }
+                    counter++;
+                }
+            } catch (Importer.ImportException e) {
+                System.err.println("Error Parsing Input Tree: " + e.getMessage());
+                System.exit(1);
+            }
+
+            long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+            progressStream.println("* [" + timeElapsed + " secs]");
+            progressStream.println();
+            progressStream.println("Tree metric comparisons to target tree written to file: " + outputFileName);
+            progressStream.println();
+        } catch (Exception e) {
+            System.err.println("Error writing tree metric file: " + e.getMessage());
+            System.exit(1);
+        }
     }
 
     private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, MutableTree targetTree) {
@@ -758,6 +839,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         String targetTreeFileName = null;
         String referenceTreeFileName = null;
+        String treeMetricFileName = null;
         String inputFileName = null;
         String outputFileName = null;
 
@@ -840,6 +922,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         targetOption,
                         targetTreeFileName,
                         referenceTreeFileName,
+                        null,
                         inputFileName,
                         outputFileName);
 
@@ -864,12 +947,12 @@ public class TreeAnnotator extends BaseTreeTool {
                         new Arguments.StringOption("type", "t", new String[] {"hipstr", "mcc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        //"an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "l", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "tt", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
+                        new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
                         new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
                         new Arguments.Option("help", "h", "option to print this message"),
                         new Arguments.Option("forceDiscrete", null,"forces integer traits to be treated as discrete traits."),
@@ -945,14 +1028,6 @@ public class TreeAnnotator extends BaseTreeTool {
         if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MCC")) {
             target = Target.MAX_CLADE_CREDIBILITY;
         }
-        double hipstrPenalty = 0.0;
-        if (arguments.hasOption("penalty")) {
-            hipstrPenalty = arguments.getRealOption("penalty");
-        }
-        int minCladeCount = 0;
-        if (arguments.hasOption("minCount")) {
-            minCladeCount = arguments.getIntegerOption("minCount");
-        }
 
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
@@ -961,6 +1036,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         if (arguments.hasOption("reference")) {
             referenceTreeFileName = arguments.getStringOption("reference");
+        }
+
+        if (arguments.hasOption("metrics")) {
+            treeMetricFileName = arguments.getStringOption("metrics");
         }
 
         int threadCount = -1;
@@ -996,6 +1075,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 target,
                 targetTreeFileName,
                 referenceTreeFileName,
+                treeMetricFileName,
                 inputFileName,
                 outputFileName);
 

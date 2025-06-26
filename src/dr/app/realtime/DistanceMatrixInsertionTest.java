@@ -132,7 +132,7 @@ public class DistanceMatrixInsertionTest extends JPanel {
             for (int i = 0; i < matrix.getRowCount(); i++) {
                 data[i][0] = new String(columnNames[i+1]);
                 for (int j = 1; j < matrix.getColumnCount()+1; j++) {
-                    data[i][j] = new Double(matrix.getElement(i, j-1));
+                    data[i][j] = Double.valueOf(matrix.getElement(i, j-1));
                 }
             }
 
@@ -173,9 +173,9 @@ public class DistanceMatrixInsertionTest extends JPanel {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
-                        new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
-                        new Arguments.Option("help", "Print this information and stop")
+                        new Arguments.StringOption("BEAST_XML", null, "FILENAME", "Specify a BEAST XML file"),
+                        new Arguments.StringOption("update_choice", null, "UPDATECHOICE", "Specify a function by which to update the tree"),
+                        new Arguments.Option("help", "h", "Print this information and stop")
                 });
 
         try {

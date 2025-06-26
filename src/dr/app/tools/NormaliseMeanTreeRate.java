@@ -197,10 +197,10 @@ public class NormaliseMeanTreeRate {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("input-file-name", "infile", "Input file name"),
-                        new Arguments.StringOption("output-file-name", "outfile", "Output file name"),
-                        new Arguments.RealOption("normaliseMeanRateTo", "Mean rate we should normalise to"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.StringOption("input-file-name", "i", "infile", "Input file name"),
+                        new Arguments.StringOption("output-file-name", "o", "outfile", "Output file name"),
+                        new Arguments.RealOption("normaliseMeanRateTo", "n", "Mean rate we should normalise to"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

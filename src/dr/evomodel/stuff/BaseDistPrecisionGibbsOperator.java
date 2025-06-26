@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.stuff;
 
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;

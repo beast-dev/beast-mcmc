@@ -1,7 +1,7 @@
-package dr.evomodelxml.treedatalikelihood;
+package dr.evomodelxml.stuff;
 
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
-import dr.evomodel.treedatalikelihood.HMMPolyaUrn;
+import dr.evomodel.stuff.HMMPolyaUrn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;

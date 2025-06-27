@@ -393,6 +393,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
                         new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_basta_threading_off", "BEAGLE-BASTA: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_basta_threads", 0, Integer.MAX_VALUE, "BEAGLE-BASTA: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -618,9 +620,12 @@ public class BeastMain {
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
         }
-//        if (arguments.hasOption("beagle_double")) {
-//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//        }
+        if (arguments.hasOption("beagle_basta_threading_off")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_basta_threads")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(arguments.getIntegerOption("beagle_basta_threads")));
+        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
         } else {

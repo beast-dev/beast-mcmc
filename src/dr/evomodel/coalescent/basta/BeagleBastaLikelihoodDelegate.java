@@ -31,6 +31,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
+    private static final String THREAD_COUNT_PROPERTY = "beagle.basta.thread.count";
     int currentPartialsCount;
     int currentIntervalsCount;
     private static int instanceCount = 0;
@@ -90,6 +91,14 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
         }
 
+
+        int threadCount = -1;
+        String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+        if (tc != null) {
+            threadCount = Integer.parseInt(tc);
+        }
+
+
         if ((resourceList == null &&
                 (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
                         BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
@@ -141,6 +150,12 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         } else {
             logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
         }
+
+        if (threadCount > 0) {
+            logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for BEAGLE-BASTA CPU.");
+        } else if (threadCount == 0) {
+            logger.info("    BEAGLE-BASTA threading turned off for CPU.");
+        }
     }
 
 
@@ -157,7 +172,12 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
 
         if (updateStorage) {
-            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, currentPartialsCount, 0);
+            int threadCount = -1;
+            String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, currentPartialsCount, 0, threadCount);
         }
     }
 
@@ -351,14 +371,14 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     public void storeState() {
         //populationSizesBufferHelper.storeState();
         //eigenBufferHelper.storeState();
-        storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
+        //storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
     }
 
     @Override
     public void restoreState() {
         //populationSizesBufferHelper.restoreState();
        // eigenBufferHelper.restoreState();
-        currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;
+        //currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;
     }
 
 

@@ -84,7 +84,7 @@ public class SetHeightsAction implements CladeAction {
         clade.setMeanHeight(DiscreteStatistics.mean(values));
         clade.setMedianHeight(DiscreteStatistics.median(values));
 
-        if (clade.getSize() > 1 && Math.abs(range[0] - range[1]) < HEIGHT_EPSILON && heights.size() >= filterCount) {
+        if (clade.getSize() > 1 && Math.abs(range[0] - range[1]) > HEIGHT_EPSILON && heights.size() >= filterCount) {
             clade.setHeightRange(range);
             clade.setHeightHPD(getHPDs(0.95, values));
         }

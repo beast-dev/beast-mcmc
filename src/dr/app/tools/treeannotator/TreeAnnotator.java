@@ -790,11 +790,11 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, int countLmit, MutableTree targetTree) {
+    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, int countLimit, MutableTree targetTree) {
         progressStream.println("Annotating target tree...");
 
         try {
-            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLmit));
+            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
 
             cladeSystem.traverseTree(targetTree, annotationAction);
         } catch (Exception e) {

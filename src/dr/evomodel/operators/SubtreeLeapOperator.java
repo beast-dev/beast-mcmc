@@ -227,10 +227,13 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             throw new IllegalArgumentException("height error");
         }
 
+        boolean topologyChanged = true;
+
         tree.beginTreeEdit();
 
         if (j == parent || jParent == parent) {
             // the subtree is not actually moving but the height will change
+            topologyChanged = false;
         } else {
             if (grandParent == null) {
                 // if the parent of the original node is the root then the sibling becomes
@@ -264,6 +267,8 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         tree.setNodeHeight(parent, newHeight);
 
         tree.endTreeEdit();
+
+        setTopologyChanged(topologyChanged, delta);
 
         if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
             throw new IllegalArgumentException("height error");

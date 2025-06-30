@@ -36,31 +36,9 @@ import dr.inference.operators.SimpleMCMCOperator;
  */
 public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 
-	private long transitions = 0;
-
-	/**
-     * @return the number of transitions since last call to reset().
-     */
-    public long getTransitions() {
-    	return transitions;
-    }
-
-    /**
-     * Set the number of transitions since last call to reset(). This is used
-     * to restore the state of the operator
-     *
-     * @param transitions number of transition
-     */
-    public void setTransitions(long transitions) {
-    	this.transitions = transitions;
-    }
-
-    public double getTransistionProbability() {
-        final long accepted = getAcceptCount();
-        final long rejected = getRejectCount();
-        final long transition = getTransitions();
-        return (double) transition / (double) (accepted + rejected);
-    }
+	private long topologyChangeCount = 0;
+    private long operatorCount = 0;
+    private boolean topologyChanged = false;
 
 	/* exchange sub-trees whose root are i and j */
 	protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
@@ -75,11 +53,6 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
         tree.endTreeEdit();
 	}
 
-	public void reset() {
-        super.reset();
-        transitions = 0;
-    }
-
 	/**
 	 * @param tree   the tree
 	 * @param parent the parent
@@ -92,5 +65,29 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
         } else {
             return tree.getChild(parent, 0);
         }
+    }
+
+    /**
+     * For
+     * @param topologyChanged
+     */
+    protected void setTopologyChanged(boolean topologyChanged) {
+        this.topologyChanged = topologyChanged;
+        if (topologyChanged) {
+            topologyChangeCount += 1;
+        }
+        operatorCount += 1;
+    }
+
+    public long getTopologyChangeCount() {
+        return topologyChangeCount;
+    }
+
+    public long getOperatorCount() {
+        return operatorCount;
+    }
+
+    public boolean isTopologyChanged() {
+        return topologyChanged;
     }
 }

@@ -39,6 +39,7 @@ import java.util.*;
 class BiClade implements Clade {
 
     /**
+
      * Clade for a tip
      * @param index number of the tip
      */
@@ -85,6 +86,9 @@ class BiClade implements Clade {
     }
 
     public void addSubClades(Clade child1, Clade child2) {
+        if (subClades == null) {
+            subClades = new HashSet<>();
+        }
         // arrange with the lowest index on the left
         BiClade left = (BiClade)child1;
         BiClade right = (BiClade)child2;
@@ -95,6 +99,28 @@ class BiClade implements Clade {
         assert left.size + right.size == size;
         assert left.index == index;
         subClades.add(new Pair<>(left, right));
+    }
+
+    void addParent(BiClade parentClade) {
+        if (parentClades == null) {
+            parentClades = new HashSet<>();
+        }
+        parentClades.add(parentClade);
+    }
+
+    void addChild(BiClade childClade) {
+        if (childClades == null) {
+            childClades = new HashSet<>();
+        }
+        childClades.add(childClade);
+    }
+
+    public BiClade getMajorityRuleParent() {
+        return majorityRuleParent;
+    }
+
+    public void setMajorityRuleParent(BiClade majorityRuleParent) {
+        this.majorityRuleParent = majorityRuleParent;
     }
 
     @Override
@@ -129,6 +155,59 @@ class BiClade implements Clade {
         return attributeValues;
     }
 
+    public void addHeightValue(double height) {
+        synchronized (heightValues) {
+            heightValues.add(height);
+        }
+    }
+
+    public List<Double> getHeightValues() {
+        return heightValues;
+    }
+    public void addChildHeightValues(double leftHeight, double rightHeight) {
+        leftHeightValues.add(leftHeight);
+        rightHeightValues.add(rightHeight);
+    }
+
+    public List<Double> getLeftHeightValues() {
+        return leftHeightValues;
+    }
+    public List<Double> getRightHeightValues() {
+        return rightHeightValues;
+    }
+
+    public void setMeanHeight(double meanHeight) {
+        this.meanHeight = meanHeight;
+    }
+
+    public void setMedianHeight(double medianHeight) {
+        this.medianHeight = medianHeight;
+    }
+
+    public void setHeightRange(Double[] range) {
+        this.heightRange = range;
+    }
+
+    public void setHeightHPD(Double[] HPDs) {
+        this.heightHPDs = HPDs;
+    }
+
+    public double getMeanHeight() {
+        return meanHeight;
+    }
+
+    public double getMedianHeight() {
+        return medianHeight;
+    }
+
+    public Double[] getHeightRange() {
+        return heightRange;
+    }
+
+    public Double[] getHeightHPDs() {
+        return heightHPDs;
+    }
+
     @Override
     public int getSize() {
         return size;
@@ -158,24 +237,61 @@ class BiClade implements Clade {
         return subClades;
     }
 
+    public Set<BiClade> getParentClades() {
+        return parentClades;
+    }
+
+    public Set<BiClade> getChildClades() {
+        return childClades;
+    }
+
     @Override
     public Object getKey() {
         return key;
     }
 
     public static Object makeKey(Object key1, Object key2) {
-        BitSet bits = new BitSet();
+        int maxIndex;
         if (key1 instanceof Integer) {
-            bits.set((Integer) key1);
+            maxIndex = (Integer) key1;
         } else {
-            assert key1 instanceof BitSet;
-            bits.or((BitSet) key1);
+            assert key1 instanceof CladeKey;
+            maxIndex = ((CladeKey) key1).getMaxIndex();
         }
         if (key2 instanceof Integer) {
-            bits.set((Integer) key2);
+            maxIndex = Math.max(maxIndex, (Integer) key2);
         } else {
-            assert key2 instanceof BitSet;
-            bits.or((BitSet) key2);
+            assert key2 instanceof CladeKey;
+            maxIndex = Math.max(maxIndex, ((CladeKey) key2).getMaxIndex());
+        }
+
+        CladeKey key = new CladeKey(maxIndex);
+        if (key1 instanceof Integer) {
+            key.set((Integer) key1);
+        } else {
+            key.setTo((CladeKey) key1);
+        }
+        if (key2 instanceof Integer) {
+            key.set((Integer) key2);
+        } else {
+            key.or((CladeKey) key2);
+        }
+
+        return key;
+    }
+    public static Object makeKey(Object... keys) {
+        int maxIndex = 0;
+        for (Object key : keys) {
+            maxIndex = Math.max(maxIndex, key instanceof Integer ? (Integer) key : ((CladeKey) key).getMaxIndex());
+        }
+        CladeKey bits = new CladeKey(maxIndex);
+        for (Object key : keys) {
+            if (key instanceof Integer) {
+                bits.set((Integer) key);
+            } else {
+                assert key instanceof CladeKey;
+                bits.or((CladeKey) key);
+            }
         }
         return bits;
     }
@@ -194,25 +310,51 @@ class BiClade implements Clade {
 //        return left.hashCode() ^ right.hashCode();
 //    }
 
-    public String toString() {
-        return "clade " + hashCode();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BiClade)) return false;
+        return Objects.equals(key, ((BiClade)o).key);
     }
 
-     int count;
-     double credibility;
-     final int size;
-     final int index;
+    @Override
+    public int hashCode() {
+        return key.hashCode();
+//        return Objects.hash(key);
+    }
 
-     final Object key;
+    public String toString() {
+        return "clade " + key;
+    }
+
+    int count;
+    double credibility;
+    final int size;
+    final int index;
+
+    final Object key;
 
     private final Taxon taxon;
 
-    private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
+    public BiClade majorityRuleParent = null;
+
+    private Set<Pair<BiClade, BiClade>> subClades = null;
     BiClade bestLeft = null;
     BiClade bestRight = null;
+    private Set<BiClade> parentClades = null;
+    private Set<BiClade> childClades = null;
 
 
     double bestSubTreeScore = Double.NaN;
 
     private final List<Object[]> attributeValues = new ArrayList<>();
+    private final List<Double> heightValues = new ArrayList<>();
+    private final List<Double> leftHeightValues = new ArrayList<>();
+    private final List<Double> rightHeightValues = new ArrayList<>();
+
+    private double meanHeight;
+    private double medianHeight;
+    private Double[] heightRange;
+    private Double[] heightHPDs ;
+
 }

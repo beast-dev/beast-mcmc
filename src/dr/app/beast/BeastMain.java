@@ -158,7 +158,6 @@ public class BeastMain {
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
                 citationLogger.addHandler(citationHandler);
-                citationLogger.setUseParentHandlers(false);
             }
 
             logger.setUseParentHandlers(false);

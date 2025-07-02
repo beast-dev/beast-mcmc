@@ -111,14 +111,15 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator implements
                     @Override
                     protected String getFormattedValue() {
                         double sum = 0;
-                        for (double delta : topologyChanged) {
+                        for (double delta : delta) {
                             sum += delta;
                         }
-                        return String.valueOf(sum / (double) (topologyChanged.size()));
+                        return String.valueOf(sum / (double) (delta.size()));
                     }
                 }
         };
 
         return columns;
     }
+
 }

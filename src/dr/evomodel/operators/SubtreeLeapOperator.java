@@ -203,7 +203,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         // get the node's sibling
         final NodeRef sibling = getOtherChild(tree, parent, node);
 
-        // and its grand parent
+        // and its grandparent
         final NodeRef grandParent = tree.getParent(parent);
 
         final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta, slideOnly);

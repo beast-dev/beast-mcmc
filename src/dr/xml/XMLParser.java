@@ -384,9 +384,6 @@ public class XMLParser {
 
                     executingRunnable();
 
-                    //close citationHandler
-                    CitationLogHandler.closeHandler();
-
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();
                     } else {

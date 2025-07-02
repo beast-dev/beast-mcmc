@@ -65,6 +65,8 @@ public class BeastMain {
 
     private static final String CHKPT_OVERRULE = "checkpointOverrule";
 
+    private Logger citationLogger;
+
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
         public final static String backgroundColor =  "#35484F";
@@ -149,8 +151,9 @@ public class BeastMain {
                 FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
-                //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
-                Logger.getLogger("dr.util").addHandler(citationHandler);
+                citationLogger = Logger.getLogger("dr.util.citations");
+                citationLogger.addHandler(citationHandler);
+                citationLogger.setUseParentHandlers(false);
             }
 
             logger.setUseParentHandlers(false);

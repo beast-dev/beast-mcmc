@@ -65,7 +65,9 @@ public class BeastMain {
 
     private static final String CHKPT_OVERRULE = "checkpointOverrule";
 
-    private Logger citationLogger;
+    private final Logger citationLogger;
+    private final Logger infoLogger;
+    private final Logger errorLogger;
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -102,7 +104,8 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
+        infoLogger = Logger.getLogger("dr.apps.beast");
+
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -137,7 +140,10 @@ public class BeastMain {
                     }
                 }
             });
+
             infoLogger.addHandler(errorHandler);
+
+            citationLogger = Logger.getLogger("dr.util.citations");
 
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
                 String fileNamePrefix = (System.getProperty("file.name.prefix") != null ? System.getProperty("file.name.prefix") : "");
@@ -151,7 +157,6 @@ public class BeastMain {
                 FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
-                citationLogger = Logger.getLogger("dr.util.citations");
                 citationLogger.addHandler(citationHandler);
                 citationLogger.setUseParentHandlers(false);
             }
@@ -164,7 +169,7 @@ public class BeastMain {
             // This is a special logger that is for logging numerical and statistical errors
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
-            Logger errorLogger = Logger.getLogger("error");
+            errorLogger = Logger.getLogger("error");
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
@@ -185,7 +190,7 @@ public class BeastMain {
 
             if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
-                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+                infoLogger.info("Overriding checkpointing settings in the provided XML file");
             }
 
             if (mc3Options == null) {
@@ -201,12 +206,12 @@ public class BeastMain {
                 MCMC[] chains = new MCMC[chainCount];
 //                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
-                Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
+                infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
-                    Logger.getLogger("dr.apps.beast").info("Hot Chain " + i + ": " + chainTemperatures[i]);
+                    infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
                 }
 
-                Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+                infoLogger.info("Parsing XML file: " + fileName);
 
                 // parse the file for the initial cold chain returning the MCMC object
                 chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);

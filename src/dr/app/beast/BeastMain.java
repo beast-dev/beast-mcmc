@@ -138,12 +138,14 @@ public class BeastMain {
             infoLogger.addHandler(errorHandler);
 
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
+                String fileNamePrefix = (System.getProperty("file.name.prefix") != null ? System.getProperty("file.name.prefix") : "");
                 String citationFileName;
                 if (System.getProperty("citations.filename") != null) {
-                    citationFileName = System.getProperty("citations.filename");
+                    citationFileName = fileNamePrefix + System.getProperty("citations.filename");
                 } else {
-                    citationFileName = fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
+                    citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
+
                 FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
@@ -223,7 +225,7 @@ public class BeastMain {
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     PluginLoader.loadPlugins(parser);
-                    
+
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");

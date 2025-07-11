@@ -416,11 +416,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(bitPanel);
 
-        bitPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Backward-in-time CTMC"),
-                BorderFactory.createEmptyBorder(5,5,5,5)));
-        JEditorPane bitEditorPane = new JEditorPane("text/rtf", "");
-
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
                 .setToolTipText("<html>Select the model of continuous random walk, either homogenous<br>" +

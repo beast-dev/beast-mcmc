@@ -1,7 +1,7 @@
 /*
- * StructuredCoalescentParser.java
+ * StructuredCoalescentLikelihoodParser.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2025 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -33,7 +33,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -50,7 +49,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
-    protected static final String MODEL_NAME = "Basta";
     private static final String THREADS = "threads";
 
     public static final String MAP_RECONSTRUCTION = "useMAP";

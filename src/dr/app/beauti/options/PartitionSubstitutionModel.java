@@ -1,7 +1,7 @@
 /*
  * PartitionSubstitutionModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -28,15 +28,16 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
+import dr.app.beauti.components.discrete.BASTAModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
-import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.stats.Variate;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -60,7 +61,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
-    private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
+
+    private DiscreteSubstModelType discreteSubstModelType = DiscreteSubstModelType.FIT;
+    private BASTAModelType bastaModelType = BASTAModelType.CONST;
+    private boolean sharedCoalescentModel = true;
+
+    private DiscreteSubstModelStructureType discreteSubstType = DiscreteSubstModelStructureType.SYM_SUBST;
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
     private ContinuousModelExtensionType continuousExtensionType = ContinuousModelExtensionType.NONE;
 
@@ -949,11 +955,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public DiscreteSubstModelType getDiscreteSubstType() {
+    public DiscreteSubstModelStructureType getDiscreteSubstType() {
         return discreteSubstType;
     }
 
-    public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
+    public void setDiscreteSubstType(DiscreteSubstModelStructureType discreteSubstType) {
         this.discreteSubstType = discreteSubstType;
     }
 
@@ -1018,7 +1024,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public boolean isActivateBSSVS() {
-        return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
+        return discreteSubstType != DiscreteSubstModelStructureType.GLM_SUBST && activateBSSVS;
     }
 
     public void setActivateBSSVS(boolean activateBSSVS) {
@@ -1204,4 +1210,27 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return getName();
     }
 
+    public DiscreteSubstModelType getDiscreteSubstModelType() {
+        return discreteSubstModelType;
+    }
+
+    public void setDiscreteSubstModelType(DiscreteSubstModelType discreteSubstModelType) {
+        this.discreteSubstModelType = discreteSubstModelType;
+    }
+
+    public BASTAModelType getBastaModelType() {
+        return bastaModelType;
+    }
+
+    public void setBastaModelType(BASTAModelType bastaModelType) {
+        this.bastaModelType = bastaModelType;
+    }
+
+    public boolean isSharedCoalescentModel() {
+        return sharedCoalescentModel;
+    }
+
+    public void setSharedCoalescentModel(boolean sharedCoalescentModel) {
+        this.sharedCoalescentModel = sharedCoalescentModel;
+    }
 }

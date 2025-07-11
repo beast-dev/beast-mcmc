@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitsComponentOptions.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -103,13 +103,13 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
                 Set<String> states = substitutionModel.getDiscreteStateSet();
                 int K = states.size();
-                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
+                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
                     nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
                     nonZeroRates.offset = K - 1;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
                     nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     nonZeroRates.offset = 0.0;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                     throw new IllegalArgumentException("GLM substitution type can't be used by rate-level BSSVS");
                 } else {
                     throw new IllegalArgumentException("unknown discrete substitution type");
@@ -118,7 +118,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 params.add(nonZeroRates);
             }
 
-            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 params.add(modelOptions.getParameter(prefix + "coefficients"));
                 // Don't show this parameter as the prior is a custom MVN
                 // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
@@ -131,7 +131,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             String prefix = partition.getPrefix();
 
-            if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+            if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
                 params.add(modelOptions.getParameter(prefix + "root.frequencies"));
             }
 
@@ -147,7 +147,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = substitutionModel.getName() + ".";
 
-            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 ops.add(modelOptions.getOperator(prefix + "coefficients"));
                 ops.add(modelOptions.getOperator(prefix + "coefIndicators"));
 
@@ -162,7 +162,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
         }
         for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
                 ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
             }
         }

@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitsComponentGenerator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -79,7 +79,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         super.checkOptions();
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 if (model.getTraitData().getIncludedPredictors().size() < 1) {
                     throw new GeneratorException("The GLM model for trait, " + model.getTraitData().getName() + ", has no predictors included.");
                 }
@@ -104,7 +104,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         boolean hasGLM = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
             }
         }
@@ -142,7 +142,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             case IN_OPERATORS:
                 for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-                    if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                    if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                         writeGLMCoefficientOperator(model, writer);
                     }
                 }
@@ -150,7 +150,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             case IN_MCMC_PRIOR:
                 for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-                    if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                    if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                         writeGLMBinomialLikelihood(model, writer);
                     }
                 }
@@ -270,7 +270,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         int stateCount = options.getStatesForDiscreteModel(model).size();
         String prefix = model.getName() + ".";
 
-        if (model.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
+        if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
@@ -288,7 +288,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-        } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
@@ -307,7 +307,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-        } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             writer.writeComment("GLM substitution model");
 
             writer.writeOpenTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
@@ -396,7 +396,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     private void writeDiscreteTraitsSubstitutionModelReferences(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 // not strictly necessary but makes the XML consistent
                 writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             } else {
@@ -438,7 +438,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+        if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
             writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
@@ -537,7 +537,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
 
-        if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+        if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
             writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         } else {
@@ -548,7 +548,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-        if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+        if (substModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();
             writer.writeComment("The root state frequencies");
             writeDiscreteFrequencyModel(partition.getPrefix() + "root.", substModel.getName() + ".", stateCount, true, writer);
@@ -641,7 +641,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
                 writer.writeCloseTag(ColumnsParser.COLUMN);
             }
-            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 writer.writeOpenTag(ColumnsParser.COLUMN,
                         new Attribute[]{
                                 new Attribute.Default<String>(ColumnsParser.LABEL, prefix + "incPredictors"),
@@ -661,7 +661,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = model.getName() + ".";
 
-            if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
                 writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
             } else {
@@ -687,7 +687,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         String prefix = options.fileNameStem + "." + model.getName();
 
-        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+        if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, prefix + "glmLog"),
                     new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
@@ -707,7 +707,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeLogEntries(PartitionSubstitutionModel model, XMLWriter writer) {
         String prefix = model.getName() + ".";
 
-        if (model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+        if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefficients");
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefIndicators");
             writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");

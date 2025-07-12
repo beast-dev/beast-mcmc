@@ -80,7 +80,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //	private BeautiFrame frame = null;
 //	private BeautiOptions options = null;
 
-    PartitionTreePrior partitionTreePrior;
+    private PartitionTreePrior partitionTreePrior;
     private final TreesPanel treesPanel;
 
     private boolean settingOptions = false;

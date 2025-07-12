@@ -154,7 +154,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
     protected final PartitionSubstitutionModel model;
 
-    final BeautiFrame frame;
+    private final BeautiFrame frame;
 
     public PartitionModelPanel(final BeautiFrame frame, final PartitionSubstitutionModel partitionModel) {
 

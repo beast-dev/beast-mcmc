@@ -31,6 +31,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.app.beauti.components.discrete.BASTAModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -416,6 +417,8 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(bitPanel);
 
+        BeautiOptions.getInstance().needCoalescentModel.put(partitionModel.getName(), true);
+
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
                 .setToolTipText("<html>Select the model of continuous random walk, either homogenous<br>" +
@@ -772,9 +775,13 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.GENERAL:
                 removeAll();
                 addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
+                //use the mapping to the partition tree and not the model name itself for the HashMap
+                String modelName = model.getPartitionData().getPartitionTreeModel().getName();
                 if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, true);
                     addComponentWithLabel("Forward-in-time Model Structure:", discreteTraitSiteModelStructureCombo);
                 } else {
+                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, false);
                     addComponentWithLabel("Backward-in-time Coalescent Model:", bitModelCombo);
                     addComponentWithLabel("Backward-in-time Model structure:", discreteTraitSiteModelStructureCombo);
                     addComponent(bitDemeSharing);

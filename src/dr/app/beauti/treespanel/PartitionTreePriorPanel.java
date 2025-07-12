@@ -27,6 +27,7 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.PopulationSizeModelType;
@@ -281,7 +282,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
         }
 
-        if (treesPanel.options.maximumTipHeight > 0)
+        if (BeautiOptions.getInstance().maximumTipHeight > 0)
             citation = citation
 //                    + "\n" +
 //                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
@@ -291,10 +292,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         addComponentWithLabel("Citation:", citationText);
         citationText.setText(citation);
 
-        for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
+        for (PartitionTreeModel model : treesPanel.getPartitionTreeModels()) {
             if (model != null) {
-                treesPanel.treeModelPanels.get(model).setOptions();
-                treesPanel.treeModelPanels.get(model).setupPanel();
+                treesPanel.getPartitionTreeModelPanel(model).setOptions();
+                treesPanel.getPartitionTreeModelPanel(model).setupPanel();
             }
         }
 

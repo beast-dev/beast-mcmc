@@ -1,7 +1,7 @@
 /*
  * TreesPanel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -46,9 +46,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -61,7 +60,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = 2778103564318492601L;
 
     private BeautiFrame frame = null;
-    public BeautiOptions options = null;
+    private BeautiOptions options = BeautiOptions.getInstance();
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
@@ -70,13 +69,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     public JCheckBox linkTreePriorCheck = new JCheckBox("Link tree prior for all trees");
 
-    JPanel treeModelPanelParent;
-    public PartitionTreeModel currentTreeModel = null;
-    TitledBorder treeModelBorder;
-    Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
-    JPanel treePriorPanelParent;
-    TitledBorder treePriorBorder;
-    Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
+    private JPanel treeModelPanelParent;
+    private PartitionTreeModel currentTreeModel = null;
+    private TitledBorder treeModelBorder;
+    private Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
+    private JPanel treePriorPanelParent;
+    private TitledBorder treePriorBorder;
+    private Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
 
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
         super();
@@ -205,6 +204,14 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             setCurrentModelAndPrior(ptm);
             //TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));
         }
+    }
+
+    public Set<PartitionTreeModel> getPartitionTreeModels() {
+        return treeModelPanels.keySet();
+    }
+
+    public PartitionTreeModelPanel getPartitionTreeModelPanel(PartitionTreeModel model) {
+        return treeModelPanels.get(model);
     }
 
     /**

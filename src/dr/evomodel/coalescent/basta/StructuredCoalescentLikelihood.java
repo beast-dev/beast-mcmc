@@ -1025,6 +1025,18 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     public static Citation[] CITATIONS = new Citation[] {
             new Citation(
                     new Author[]{
+                            new Author("Yucai", "Shao"),
+                            new Author("Marc", "Suchard"),
+                            new Author("Andrew", "Rambaut"),
+                            new Author("Philippe", "Lemey"),
+                            new Author("Tetyana", "Vasylyeva"),
+                            new Author("Guy", "Baele")
+                    },
+                    "Parallel algorithms for phylogenetic inference under a structured coalescent approximation",
+                    "bioRxiv",
+                    Citation.Status.IN_PREPARATION),
+            new Citation(
+                    new Author[]{
                             new Author("Nicola", "De Maio"),
                             new Author("Chieh-Hsi", "Wu"),
                             new Author("Kathleen", "O'Reilly"),
@@ -1034,18 +1046,6 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     2015,
                     "PLOS Genetics",
                     11, "e1005421"),
-            new Citation(
-                    new Author[]{
-                            new Author("Yucai", "Shao"),
-                            new Author("Marc", "Suchard"),
-                            new Author("Andrew", "Rambaut"),
-                            new Author("Tetyana", "Vasylyeva"),
-                            new Author("Guy", "Baele")
-                    },
-                    "Many-core algorithms for phylogenetic inference under a structured coalescent approximation",
-                    "bioRxiv",
-                    Citation.Status.IN_PREPARATION
-            )
     };
 
     // ****************************************************************

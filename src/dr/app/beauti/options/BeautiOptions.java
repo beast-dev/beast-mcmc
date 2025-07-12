@@ -32,6 +32,7 @@ import java.util.*;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
@@ -384,7 +385,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return null;
     }
-
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
@@ -1258,6 +1258,10 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
+
+    //map that indicate for each partition whether a coalescent model is required
+    //if not, a backward-in-time model has already been specified for that partition
+    public HashMap<String, Boolean> needCoalescentModel = new HashMap<>();
 
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;

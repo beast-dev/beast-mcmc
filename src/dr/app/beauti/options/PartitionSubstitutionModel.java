@@ -95,12 +95,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean isIndependent = false;
     private double jitterWindow = 0.0;
 
-    public TraitData getTraitData() {
-        return traitData;
-    }
+    private AbstractPartitionData partition;
 
     public PartitionSubstitutionModel(BeautiOptions options, String name, AbstractPartitionData partition) {
         super(options, name);
+
+        this.partition = partition;
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
             continuousTraitCount = partition.getTraits().size();
@@ -171,6 +171,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         dataType = DataType.NUCLEOTIDES;
 
         initModelParametersAndOpererators();
+    }
+
+    public TraitData getTraitData() {
+        return traitData;
     }
 
     // only init in PartitionSubstitutionModel
@@ -1232,5 +1236,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setSharedCoalescentModel(boolean sharedCoalescentModel) {
         this.sharedCoalescentModel = sharedCoalescentModel;
+    }
+
+    public AbstractPartitionData getPartitionData() {
+        return partition;
     }
 }

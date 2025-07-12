@@ -69,7 +69,7 @@ public class BeautiTesterConfig {
     }
 
     public BeautiOptions createOptions() {
-        BeautiOptions beautiOptions = new BeautiOptions();
+        BeautiOptions beautiOptions = BeautiOptions.getInstance();
 
         beautiOptions.fileNameStem = "";
         beautiOptions.treeFileName.clear();

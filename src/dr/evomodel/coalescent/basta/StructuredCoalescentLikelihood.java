@@ -1032,8 +1032,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             "New routes to phylogeography: a Bayesian structured coalescent approximation",
             2015,
             "PLOS Genetics",
-            11, "e1005421",
-            "10.1371/journal.pgen.1005421"
+            11, "e1005421"
     );
 
     // ****************************************************************

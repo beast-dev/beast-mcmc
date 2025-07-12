@@ -214,6 +214,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         return treeModelPanels.get(model);
     }
 
+    public PartitionTreeModel getCurrentTreeModel() {
+        return this.currentTreeModel;
+    }
+
     /**
      * Sets the current model that this model panel is displaying
      *

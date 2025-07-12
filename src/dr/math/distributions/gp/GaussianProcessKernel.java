@@ -46,6 +46,32 @@ public interface GaussianProcessKernel {
 
     List<Parameter> getParameters();
 
+    double getUnscaledFirstDerivative(double x, double y);
+    double getUnscaledSecondDerivative(double x, double y);
+
+    class KernelDerivatives extends Base {
+        GaussianProcessKernel kernel;
+        boolean doSecondDerivative = false;
+        public KernelDerivatives(GaussianProcessKernel kernel, boolean doSecondDerivative) {
+            super("KernelFirstDerivative", kernel.getParameters());
+            this.kernel = kernel;
+            this.doSecondDerivative = doSecondDerivative;
+        }
+        @Override
+        public double getUnscaledCovariance(double x, double y) {
+            if (!doSecondDerivative) {
+                return kernel.getUnscaledFirstDerivative(x, y);
+            } else {
+                return kernel.getUnscaledSecondDerivative(x, y);
+            }
+        }
+
+        @Override
+        public double getUnscaledCovariance(double[] x, double[] y) {
+            throw new RuntimeException("Method not yet implemented");
+        }
+    }
+
     class Linear extends Base {
 
         public Linear(String name, List<Parameter> parameters) {
@@ -68,6 +94,13 @@ public interface GaussianProcessKernel {
         }
 
         private static final String TYPE = "DotProduct";
+
+        public double getUnscaledFirstDerivative(double x, double y) {
+            return y;
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+           return 1;
+        }
 
         @Override
         public double computeGradientWrtLength(double a, double b, double l) {
@@ -139,6 +172,19 @@ public interface GaussianProcessKernel {
         }
 
         private static final String TYPE = "SquaredExponential";
+
+        public double getUnscaledFirstDerivative(double x, double y) { //wrt x
+            double diff = x - y;
+            double length = getLength();
+            return - diff / (length * length) * getUnscaledCovariance(x, y);
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+            double diff = x - y;
+            double norm = diff * diff;
+            double length = getLength();
+            double lengthSquared = length * length;
+            return (1/lengthSquared -  norm / (lengthSquared * lengthSquared)) * getUnscaledCovariance(x, y);
+        }
 
         @Override
         public double computeGradientWrtLength(double a, double b, double l) {
@@ -306,6 +352,13 @@ public interface GaussianProcessKernel {
         }
         public HyperparameterGradientFunction getLengthGradientFunction() {
             return this::computeGradientWrtLength;
+        }
+
+        public double getUnscaledFirstDerivative(double x, double y) {
+            throw new RuntimeException("Method implemented in the subclasses");
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+            throw new RuntimeException("Method implemented in the subclasses");
         }
 
         public double computeGradientWrtLength(double a, double b, double hyperValue) {

@@ -1019,21 +1019,34 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        return Arrays.asList(CITATIONS);
     }
 
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("Nicola", "De Maio"),
-                    new Author("Chieh-Hsi", "Wu"),
-                    new Author("Kathleen", "O'Reilly"),
-                    new Author("Daniel", "Wilson")
-            },
-            "New routes to phylogeography: a Bayesian structured coalescent approximation",
-            2015,
-            "PLOS Genetics",
-            11, "e1005421"
-    );
+    public static Citation[] CITATIONS = new Citation[] {
+            new Citation(
+                    new Author[]{
+                            new Author("Nicola", "De Maio"),
+                            new Author("Chieh-Hsi", "Wu"),
+                            new Author("Kathleen", "O'Reilly"),
+                            new Author("Daniel", "Wilson")
+                    },
+                    "New routes to phylogeography: a Bayesian structured coalescent approximation",
+                    2015,
+                    "PLOS Genetics",
+                    11, "e1005421"),
+            new Citation(
+                    new Author[]{
+                            new Author("Yucai", "Shao"),
+                            new Author("Marc", "Suchard"),
+                            new Author("Andrew", "Rambaut"),
+                            new Author("Tetyana", "Vasylyeva"),
+                            new Author("Guy", "Baele")
+                    },
+                    "Many-core algorithms for phylogenetic inference under a structured coalescent approximation",
+                    "bioRxiv",
+                    Citation.Status.IN_PREPARATION
+            )
+    };
 
     // ****************************************************************
     // Private and protected stuff

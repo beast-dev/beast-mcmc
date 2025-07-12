@@ -77,14 +77,24 @@ public class BeautiOptions extends ModelOptions {
 
     private static final long serialVersionUID = -3676802825545741012L;
 
-    public BeautiOptions() {
+    private static BeautiOptions INSTANCE;
+
+    private BeautiOptions() {
         this(new ComponentFactory[]{});
     }
 
-    public BeautiOptions(ComponentFactory[] components) {
+    private BeautiOptions(ComponentFactory[] components) {
 
         // Install all the component's options from the given list of factories:
         registerComponents(components);
+    }
+
+    public static BeautiOptions getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new BeautiOptions();
+        }
+
+        return INSTANCE;
     }
 
     /**
@@ -101,7 +111,6 @@ public class BeautiOptions extends ModelOptions {
             }
         }
     }
-
 
     /**
      * resets the options to the initial conditions

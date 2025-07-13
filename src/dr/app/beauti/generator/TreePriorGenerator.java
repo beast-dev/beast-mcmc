@@ -38,6 +38,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
@@ -50,6 +51,7 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evoxml.TaxaParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.GammaDistributionModelParser;
@@ -58,6 +60,7 @@ import dr.inferencexml.hmc.CompoundGradientParser;
 import dr.inferencexml.hmc.GradientWrapperParser;
 import dr.inferencexml.hmc.JointGradientParser;
 import dr.inferencexml.model.CompoundParameterParser;
+import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -347,6 +350,7 @@ public class TreePriorGenerator extends Generator {
             case SKYGRID_HMC:
             case SKYGRID:
             case GMRF_SKYRIDE:
+            case SET_BY_BIT:
                 // do nothing here...
                 break;
             default:
@@ -586,6 +590,7 @@ public class TreePriorGenerator extends Generator {
 
             case SKYGRID:
             case SKYGRID_HMC:
+            case SET_BY_BIT:
                 break;
 
             default:
@@ -648,6 +653,10 @@ public class TreePriorGenerator extends Generator {
 //                writer.writeIDref(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY,
 //                        priorPrefix + BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
 //                break;
+            case SET_BY_BIT:
+                writer.writeIDref(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT,
+                        priorPrefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                break;
             default:
                 throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
         }

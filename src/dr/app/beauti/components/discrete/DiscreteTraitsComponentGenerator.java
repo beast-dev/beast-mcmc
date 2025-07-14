@@ -27,6 +27,7 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.substmodel.GlmSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
@@ -44,6 +45,7 @@ import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
+import dr.oldevomodel.substmodel.ComplexSubstitutionModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
@@ -271,10 +273,20 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         String prefix = model.getName() + ".";
 
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-            writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
-            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)});
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeComment("symmetric forward-in-time CTMC model for discrete state reconstructions");
+                writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)});
+            } else {
+                writer.writeComment("symmetric backward-in-time CTMC model for discrete state reconstructions");
+                writer.writeOpenTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
+                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, false),
+                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, false)
+                    });
+            }
 
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix +  "dataType");
 
@@ -287,13 +299,30 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             //---------------- rates and indicators -----------------
 
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
-            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
-            writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
-            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
-                    new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
+            } else {
+                writer.writeCloseTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL);
+            }
+
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
+
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeComment("asymmetric forward-in-time CTMC model for discrete state reconstructions");
+                writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
+                        new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
+            } else {
+                writer.writeComment("asymmetric backward-in-time CTMC model for discrete state reconstructions");
+                writer.writeOpenTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
+                                new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false),
+                                new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, false),
+                                new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, false)
+                        });
+            }
 
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
 
@@ -306,8 +335,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             //---------------- rates and indicators -----------------
             writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
-            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
+            } else {
+                writer.writeCloseTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL);
+            }
+
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
+
             writer.writeComment("GLM substitution model");
 
             writer.writeOpenTag(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, new Attribute[] {
@@ -399,8 +434,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 // not strictly necessary but makes the XML consistent
                 writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
-            } else {
+            } else if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
                 writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+            } else {
+                writer.writeIDref(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
             }
         }
     }
@@ -441,8 +478,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             // not strictly necessary but makes the XML consistent
             writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
-        } else {
+        } else if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
             writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        } else {
+            writer.writeIDref(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
         }
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
@@ -518,13 +557,19 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
-        String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-        if (ancestralStatesOptions.isCountingStates(partition)) {
-            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
-        }
-
         boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
 
+        String treeLikelihoodTag;
+        if (substModel.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+            treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+            if (ancestralStatesOptions.isCountingStates(partition)) {
+                treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+            }
+        } else {
+            treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+        }
+
+        //TODO continue here
         writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
@@ -548,6 +593,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
+        //TODO carefully check this for BIT
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();
             writer.writeComment("The root state frequencies");

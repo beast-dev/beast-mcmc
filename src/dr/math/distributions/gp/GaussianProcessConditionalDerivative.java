@@ -119,7 +119,7 @@ public class GaussianProcessConditionalDerivative extends GaussianProcessPredict
                 double noise = gp.getNugget(0); //TODO this is fixing the nugget. Not good if nugget is a vector
                 variance.add(i, i, noise);
             }
-            System.out.println("All elements were zero. Added 0.0001 to diagonal elements.");
+//            System.out.println("All elements were zero. Added 0.0001 to diagonal elements.");
             if(!solver.setA(variance)){
                 throw new RuntimeException("Unable to decompose matrix");
             }

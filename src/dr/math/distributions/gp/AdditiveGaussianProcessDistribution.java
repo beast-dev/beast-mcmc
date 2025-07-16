@@ -250,7 +250,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return variance;
     }
 
-    private double getNugget(int i) {
+    protected double getNugget(int i) {
         return nuggetParameter.getDimension() == 1 ?
                 nuggetParameter.getParameterValue(0) :
                 nuggetParameter.getParameterValue(i);

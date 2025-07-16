@@ -113,6 +113,20 @@ public class GaussianProcessConditionalDerivative extends GaussianProcessPredict
         }
     }
 
+    protected void computeCholesky() {
+        if (!solver.setA(variance)) {
+            for (int i = 0; i < dim; i++) {
+                double noise = gp.getNugget(0); //TODO this is fixing the nugget. Not good if nugget is a vector
+                variance.add(i, i, noise);
+            }
+            System.out.println("All elements were zero. Added 0.0001 to diagonal elements.");
+            if(!solver.setA(variance)){
+                throw new RuntimeException("Unable to decompose matrix");
+            }
+        }
+    }
+
+
 //    @Override
 //    public void modelChangedEvent(Model model, Object object, int index) { //TODO this should build again the cross and realized bases!!!
 //        if (model == gp) {

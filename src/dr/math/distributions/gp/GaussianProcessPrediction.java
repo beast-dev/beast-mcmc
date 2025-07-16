@@ -59,12 +59,12 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
     private final Parameter orderVariance;
     private final double[] prediction;
     protected double[] mean;
-    private final DenseMatrix64F variance;
+    protected DenseMatrix64F variance;
 
     private final DenseMatrix64F crossGramian;
     private DenseMatrix64F realizedPrecision;
 
-    private final LinearSolver<DenseMatrix64F> solver;
+    protected final LinearSolver<DenseMatrix64F> solver;
 
     protected final DenseMatrix64F crossRealized;
 
@@ -142,15 +142,19 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
 
     // CHECK nextMultivariateNormalViaBackSolvePrecision
 
+    protected void computeCholesky() {
+        if (!solver.setA(variance)) {
+            throw new RuntimeException("Unable to decompose matrix");
+        }
+    }
+
     private void computePredictions() {
         // Compute: prediction ~ p(f(predictivePoints) | realizedValues)
         computeMean();
         computeVariance();
 
-        // TODO here I am overwriting the variance with the lowerTriangular matrix. I do not want that
-        if (!solver.setA(variance)) {
-            throw new RuntimeException("Unable to decompose matrix");
-        }
+        computeCholesky();
+
         DenseMatrix64F lowerTriangularVar =  ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT();
 
         double[] standardGaussian = new double[predictiveDim];
@@ -167,6 +171,7 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
             prediction[i] += mean[i];
         }
     }
+
 
     private double getPrediction(int index) {
         if (!predictionKnown) {

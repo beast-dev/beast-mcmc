@@ -59,13 +59,13 @@ public class OperatorAnalysisPrinter {
             out.println("Operator analysis");
 
             out.println(formatter.formatToFieldWidth("Operator", 50) +
-                    formatter.formatToFieldWidth("Weight", 9) +
+                    formatter.formatToFieldWidth("Weight", 8) +
                     formatter.formatToFieldWidth("Tuning", 9) +
                     formatter.formatToFieldWidth("Count", 11) +
-                    formatter.formatToFieldWidth("Time", 9) +
-                    formatter.formatToFieldWidth("Time/Op (ns)", 9) +
+                    formatter.formatToFieldWidth("Time(ms)", 11) +
+                    formatter.formatToFieldWidth("Time/Op", 11) +
                     formatter.formatToFieldWidth("Pr(accept)", 11) +
-                    formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
+                    //formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                     (useAdaptation ? "" : " Performance suggestion"));
         } else {
             out.println("Operator,Weight,Tuning,Count,Time (ms),Time/Op (ms),Pr(accept),Smoothed_Pr(accept)" +
@@ -84,7 +84,7 @@ public class OperatorAnalysisPrinter {
                                 + formattedTimeString(op)
                                 + formattedTimePerOpString(op)
                                 + formattedProbString(jointOp)
-                                + formattedSmoothedProbString(op)
+                                //+ formattedSmoothedProbString(op)
                                 + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                         );
                     } else {
@@ -92,10 +92,10 @@ public class OperatorAnalysisPrinter {
                                 + op.getWeight() + ","
                                 + parameterString(jointOp.getSubOperator(k)) + ","
                                 + op.getCount() + ","
-                                + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
-                                + op.getMeanEvaluationTime() / 1000.0 + ","
-                                + op.getAcceptanceProbability() + ","
-                                + op.getSmoothedAcceptanceProbability()
+                                + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0) + ","
+                                + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4) + ","
+                                + formatter.formatDecimal(op.getAcceptanceProbability(), 4) + ","
+                                //+ formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                                 + (useAdaptation ? "" :  "," + formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                         );
                     }
@@ -109,7 +109,7 @@ public class OperatorAnalysisPrinter {
                             + formattedTimeString(op)
                             + formattedTimePerOpString(op)
                             + formattedProbString(op)
-                            + formattedSmoothedProbString(op)
+                            //+ formattedSmoothedProbString(op)
                             + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
                     );
                 } else {
@@ -117,10 +117,10 @@ public class OperatorAnalysisPrinter {
                             + op.getWeight() + ","
                             + parameterString(op) + ","
                             + op.getCount() + ","
-                            + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
-                            + op.getMeanEvaluationTime() / 1000.0 + ","
-                            + op.getAcceptanceProbability() + ","
-                            + op.getSmoothedAcceptanceProbability()
+                            + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0) + ","
+                            + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4) + ","
+                            + formatter.formatDecimal(op.getAcceptanceProbability(), 4) + ","
+                            //+ formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                             + (useAdaptation ? "" :  "," + formattedDiagnostics(op, op.getAcceptanceProbability()))
                     );
                 }
@@ -159,23 +159,23 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedTimeString(MCMCOperator op) {
-        final long time = op.getTotalEvaluationTime();
-        return formatter.formatToFieldWidth(Long.toString(time), 8) + " ";
+        final double time = ((double)op.getTotalEvaluationTime()) / 1000.0; // convert to milliseconds
+        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 0), 10) + " ";
     }
 
     private static String formattedTimePerOpString(MCMCOperator op) {
-        final double time = op.getMeanEvaluationTime();
-        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 2), 8) + " ";
+        final double time = op.getMeanEvaluationTime() / 1000.0; // convert to milliseconds
+        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 4), 10) + " ";
     }
 
     private static String formattedProbString(MCMCOperator op) {
         final double acceptanceProb = op.getAcceptanceProbability();
-        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
+        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 10) + " ";
     }
 
     private static String formattedSmoothedProbString(MCMCOperator op) {
         final double acceptanceProb = op.getSmoothedAcceptanceProbability();
-        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
+        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 10) + " ";
     }
 
     private static String formattedDiagnostics(MCMCOperator op, double acceptanceProb) {

@@ -158,12 +158,15 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         mcmc.setShowOperatorAnalysis(true);
         if (xo.hasAttribute(OPERATOR_ANALYSIS)) {
-            if (xo.hasAttribute(OPERATOR_ANALYSIS_FORMAT) &&
-                    xo.getStringAttribute(OPERATOR_ANALYSIS_FORMAT).equalsIgnoreCase("csv")) {
-                mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS), true);
-            } else {
-                mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS), false);
+            File file = XMLParser.getLogFile(xo, OPERATOR_ANALYSIS);
+            boolean csv = file.getName().toLowerCase().endsWith(".csv") ||
+                    file.getName().endsWith(".tsv");
+            if (xo.hasAttribute(OPERATOR_ANALYSIS_FORMAT)) {
+                csv = xo.getStringAttribute(OPERATOR_ANALYSIS_FORMAT).equalsIgnoreCase("csv") ||
+                        xo.getStringAttribute(OPERATOR_ANALYSIS_FORMAT).equalsIgnoreCase("tsv");
             }
+            mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS), csv);
+
         }
 
 

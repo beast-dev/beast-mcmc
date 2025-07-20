@@ -68,7 +68,8 @@ public class OperatorAnalysisPrinter {
                     //formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                     (useAdaptation ? "" : " Performance suggestion"));
         } else {
-            out.println("Operator,Weight,Tuning,Count,Time (ms),Time/Op (ms),Pr(accept),Smoothed_Pr(accept)" +
+            out.println("Operator,Weight,Tuning,Count,Time (ms),Time/Op (ms),Pr(accept)" +
+                    //",Smoothed_Pr(accept)" +
                     (useAdaptation ? "" : ",Performance suggestion"));
         }
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
@@ -88,14 +89,14 @@ public class OperatorAnalysisPrinter {
                                 + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                         );
                     } else {
-                        out.println(jointOp.getSubOperatorName(k) + ","
-                                + op.getWeight() + ","
-                                + parameterString(jointOp.getSubOperator(k)) + ","
-                                + op.getCount() + ","
-                                + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0) + ","
-                                + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4) + ","
-                                + formatter.formatDecimal(op.getAcceptanceProbability(), 4) + ","
-                                //+ formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
+                        out.println(jointOp.getSubOperatorName(k)
+                                + "," + op.getWeight()
+                                + "," + parameterString(jointOp.getSubOperator(k))
+                                + "," + op.getCount()
+                                + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0)
+                                + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4)
+                                + "," + formatter.formatDecimal(op.getAcceptanceProbability(), 4)
+                                //+ "," + formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                                 + (useAdaptation ? "" :  "," + formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                         );
                     }
@@ -113,14 +114,14 @@ public class OperatorAnalysisPrinter {
                             + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
                     );
                 } else {
-                    out.println(op.getOperatorName() + ","
-                            + op.getWeight() + ","
-                            + parameterString(op) + ","
-                            + op.getCount() + ","
-                            + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0) + ","
-                            + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4) + ","
-                            + formatter.formatDecimal(op.getAcceptanceProbability(), 4) + ","
-                            //+ formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
+                    out.println(op.getOperatorName()
+                            + "," + op.getWeight()
+                            + "," + parameterString(op)
+                            + "," + op.getCount()
+                            + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0)
+                            + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4)
+                            + "," + formatter.formatDecimal(op.getAcceptanceProbability(), 4)
+                            //+ "," + formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                             + (useAdaptation ? "" :  "," + formattedDiagnostics(op, op.getAcceptanceProbability()))
                     );
                 }

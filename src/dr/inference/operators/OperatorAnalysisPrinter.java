@@ -51,7 +51,8 @@ public class OperatorAnalysisPrinter {
      *
      * @param out the print stream to write operator analysis to
      */
-    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation, boolean csvFile) {
+    public static void
+    showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation, boolean csvFile) {
 
         if (!csvFile) {
             out.println();
@@ -77,8 +78,8 @@ public class OperatorAnalysisPrinter {
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     if (!csvFile) {
                         out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                                + formattedParameterString(jointOp.getSubOperator(k))
                                 + formattedWeightString(op)
+                                + formattedParameterString(jointOp.getSubOperator(k))
                                 + formattedCountString(op)
                                 + formattedTimeString(op)
                                 + formattedTimePerOpString(op)
@@ -88,8 +89,8 @@ public class OperatorAnalysisPrinter {
                         );
                     } else {
                         out.println(jointOp.getSubOperatorName(k) + ","
-                                + parameterString(jointOp.getSubOperator(k)) + ","
                                 + op.getWeight() + ","
+                                + parameterString(jointOp.getSubOperator(k)) + ","
                                 + op.getCount() + ","
                                 + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
                                 + op.getMeanEvaluationTime() / 1000.0 + ","
@@ -102,8 +103,8 @@ public class OperatorAnalysisPrinter {
             } else {
                 if (!csvFile) {
                     out.println(formattedOperatorName(op.getOperatorName())
-                            + formattedParameterString(op)
                             + formattedWeightString(op)
+                            + formattedParameterString(op)
                             + formattedCountString(op)
                             + formattedTimeString(op)
                             + formattedTimePerOpString(op)
@@ -113,8 +114,8 @@ public class OperatorAnalysisPrinter {
                     );
                 } else {
                     out.println(op.getOperatorName() + ","
-                            + parameterString(op)
                             + op.getWeight() + ","
+                            + parameterString(op) + ","
                             + op.getCount() + ","
                             + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
                             + op.getMeanEvaluationTime() / 1000.0 + ","

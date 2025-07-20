@@ -51,44 +51,78 @@ public class OperatorAnalysisPrinter {
      *
      * @param out the print stream to write operator analysis to
      */
-    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation) {
-        out.println();
-        out.println("Operator analysis");
-        out.println(formatter.formatToFieldWidth("Operator", 50) +
-                formatter.formatToFieldWidth("Tuning", 9) +
-                formatter.formatToFieldWidth("Count", 11) +
-                formatter.formatToFieldWidth("Time", 9) +
-                formatter.formatToFieldWidth("Time/Op (ns)", 9) +
-                formatter.formatToFieldWidth("Pr(accept)", 11) +
-                formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
-                (useAdaptation ? "" : " Performance suggestion"));
+    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation, boolean csvFile) {
 
+        if (!csvFile) {
+            out.println();
+            out.println("Operator analysis");
+
+            out.println(formatter.formatToFieldWidth("Operator", 50) +
+                    formatter.formatToFieldWidth("Weight", 9) +
+                    formatter.formatToFieldWidth("Tuning", 9) +
+                    formatter.formatToFieldWidth("Count", 11) +
+                    formatter.formatToFieldWidth("Time", 9) +
+                    formatter.formatToFieldWidth("Time/Op (ns)", 9) +
+                    formatter.formatToFieldWidth("Pr(accept)", 11) +
+                    formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
+                    (useAdaptation ? "" : " Performance suggestion"));
+        } else {
+            out.println("Operator,Weight,Tuning,Count,Time (ms),Time/Op (ms),Pr(accept),Smoothed_Pr(accept)" +
+                    (useAdaptation ? "" : ",Performance suggestion"));
+        }
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
             final MCMCOperator op = schedule.getOperator(i);
-            if (op instanceof JointOperator) {
-                JointOperator jointOp = (JointOperator) op;
+            if (op instanceof JointOperator jointOp) {
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
-                    out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                            + formattedParameterString(jointOp.getSubOperator(k))
+                    if (!csvFile) {
+                        out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
+                                + formattedParameterString(jointOp.getSubOperator(k))
+                                + formattedWeightString(op)
+                                + formattedCountString(op)
+                                + formattedTimeString(op)
+                                + formattedTimePerOpString(op)
+                                + formattedProbString(jointOp)
+                                + formattedSmoothedProbString(op)
+                                + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
+                        );
+                    } else {
+                        out.println(jointOp.getSubOperatorName(k) + ","
+                                + parameterString(jointOp.getSubOperator(k)) + ","
+                                + op.getWeight() + ","
+                                + op.getCount() + ","
+                                + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
+                                + op.getMeanEvaluationTime() / 1000.0 + ","
+                                + op.getAcceptanceProbability() + ","
+                                + op.getSmoothedAcceptanceProbability()
+                                + (useAdaptation ? "" :  "," + formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
+                        );
+                    }
+                }
+            } else {
+                if (!csvFile) {
+                    out.println(formattedOperatorName(op.getOperatorName())
+                            + formattedParameterString(op)
+                            + formattedWeightString(op)
                             + formattedCountString(op)
                             + formattedTimeString(op)
                             + formattedTimePerOpString(op)
-                            + formattedProbString(jointOp)
+                            + formattedProbString(op)
                             + formattedSmoothedProbString(op)
-                            + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
+                            + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
+                    );
+                } else {
+                    out.println(op.getOperatorName() + ","
+                            + parameterString(op)
+                            + op.getWeight() + ","
+                            + op.getCount() + ","
+                            + ((double)op.getTotalEvaluationTime()) / 1000.0 + ","
+                            + op.getMeanEvaluationTime() / 1000.0 + ","
+                            + op.getAcceptanceProbability() + ","
+                            + op.getSmoothedAcceptanceProbability()
+                            + (useAdaptation ? "" :  "," + formattedDiagnostics(op, op.getAcceptanceProbability()))
                     );
                 }
-            } else {
-                out.println(formattedOperatorName(op.getOperatorName())
-                        + formattedParameterString(op)
-                        + formattedCountString(op)
-                        + formattedTimeString(op)
-                        + formattedTimePerOpString(op)
-                        + formattedProbString(op)
-                        + formattedSmoothedProbString(op)
-                        + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
-                );
             }
 
         }
@@ -100,11 +134,22 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedParameterString(MCMCOperator op) {
-        String pString = "        ";
         if (op instanceof AdaptableMCMCOperator && ((AdaptableMCMCOperator) op).getMode() != AdaptationMode.ADAPTATION_OFF) {
-            pString = formatter.formatToFieldWidth(formatter.formatDecimal(((AdaptableMCMCOperator) op).getRawParameter(), 3), 8);
+            return formatter.formatToFieldWidth(formatter.formatDecimal(((AdaptableMCMCOperator) op).getRawParameter(), 3), 8);
         }
-        return pString;
+        return "        ";
+    }
+
+    private static String parameterString(MCMCOperator op) {
+        if (op instanceof AdaptableMCMCOperator && ((AdaptableMCMCOperator) op).getMode() != AdaptationMode.ADAPTATION_OFF) {
+            return Double.toString(((AdaptableMCMCOperator) op).getRawParameter());
+        }
+        return "";
+    }
+
+    private static String formattedWeightString(MCMCOperator op) {
+        final double weight = op.getWeight();
+        return formatter.formatToFieldWidth(formatter.formatDecimal(weight, 2), 8) + " ";
     }
 
     private static String formattedCountString(MCMCOperator op) {

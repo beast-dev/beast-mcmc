@@ -9,7 +9,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import static dr.app.bss.Utils.max;
+import static org.apache.commons.math.stat.StatUtils.max;
 import static org.apache.commons.math.stat.StatUtils.min;
 
 /**

@@ -75,7 +75,8 @@ public class OperatorAnalysisPrinter {
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
             final MCMCOperator op = schedule.getOperator(i);
-            if (op instanceof JointOperator jointOp) {
+            if (op instanceof JointOperator) {
+                JointOperator jointOp = (JointOperator)op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     if (!csvFile) {
                         out.println(formattedOperatorName(jointOp.getSubOperatorName(k))

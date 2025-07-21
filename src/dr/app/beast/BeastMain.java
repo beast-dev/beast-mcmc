@@ -392,9 +392,10 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.StringOption("beagle_threading", new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
                         new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
-                        new Arguments.Option("beagle_basta_threading_off", "BEAGLE-BASTA: turn off multi-threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_basta_threads", 0, Integer.MAX_VALUE, "BEAGLE-BASTA: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_basta_threading_off", "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_basta_threads", 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -619,6 +620,9 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_threading")) {
+            System.setProperty("beagle.threading.type", arguments.getStringOption("beagle_threading"));
         }
         if (arguments.hasOption("beagle_basta_threading_off")) {
             System.setProperty("beagle.basta.thread.count", Integer.toString(1));

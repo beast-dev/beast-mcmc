@@ -32,6 +32,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String THREAD_COUNT_PROPERTY = "beagle.basta.thread.count";
+    private static final String THREADING_TYPE = "beagle.threading.type";
     int currentPartialsCount;
     int currentIntervalsCount;
     private static int instanceCount = 0;
@@ -91,11 +92,41 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
         }
 
-
         int threadCount = -1;
         String tc = System.getProperty(THREAD_COUNT_PROPERTY);
         if (tc != null) {
             threadCount = Integer.parseInt(tc);
+        }
+
+
+        String threadingType = System.getProperty(THREADING_TYPE);
+        
+        if (threadingType != null) {
+            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+            
+            switch (threadingType.toLowerCase()) {
+                case "openmp":
+                    preferenceFlags |= BeagleFlag.THREADING_OPENMP.getMask();
+                    break;
+                case "cpp":
+                    preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                    break;
+                case "none":
+                default:
+                    preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+                    break;
+            }
+        } else {
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else if (threadCount > 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
         }
 
 
@@ -109,6 +140,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             // when using non-CPU preferences or prioritising non-CPU resource
             preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
             preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
         }
 
         beagle = BastaFactory.loadBastaInstance(0, coalescentBufferCount, maxNumCoalescentIntervals,
@@ -152,9 +184,9 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
 
         if (threadCount > 0) {
-            logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for BEAGLE-BASTA CPU.");
+            logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for BEAGLE-BIT CPU.");
         } else if (threadCount == 0) {
-            logger.info("    BEAGLE-BASTA threading turned off for CPU.");
+            logger.info("    BEAGLE-BIT threading turned off for CPU.");
         }
     }
 

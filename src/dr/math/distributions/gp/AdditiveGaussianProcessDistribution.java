@@ -411,6 +411,16 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             if(DEBUG) System.out.println("Field changed event"); //TODO this is called for every entry wit compound parameter inside HMC
             fieldUpdated = true;
             precisionDiffKnown = false;
+        } else {
+            for (BasisDimension basis : bases) {
+                if (variable == basis.getDesignMatrix1() || variable == basis.getDesignMatrix2()) {
+                    gramianAndVarianceKnown = false;
+                    precisionAndDeterminantKnown = false;
+                    precisionDiffKnown = false;
+                    fireModelChanged();
+                    return;
+                }
+            }
         }
     }
 

@@ -34,6 +34,8 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evomodel.tree.TreeModel;
 
+import java.util.List;
+
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 
 public class WeightsParser extends AbstractXMLObjectParser {
@@ -49,13 +51,17 @@ public class WeightsParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_HEIGHT, false);
+        List<TreeModel> treeModelList = xo.getAllChildren(TreeModel.class);
 
         if (xo.hasChildNamed(GRID_POINTS)) {
             Parameter gridPoints = (Parameter) xo.getElementFirstChild(GRID_POINTS);
-            return new GriddedWeights(tree, gridPoints, rescaleByRootHeight);
+            return new GriddedWeights(treeModelList, gridPoints, rescaleByRootHeight);
         } else {
+            if (treeModelList.size() != 1) {
+                throw new XMLParseException("Expected exactly one tree model, found " + treeModelList.size());
+            }
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
             return new Weights(tree, rescaleByRootHeight);
 
         }
@@ -63,10 +69,9 @@ public class WeightsParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
-
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_HEIGHT, true),
-            new ElementRule(TreeModel.class),
+            new ElementRule(TreeModel.class, "provide tree model(s)", null, 1, Integer.MAX_VALUE),
             new ElementRule(GRID_POINTS, Parameter.class, "provide grid points", true)
     };
 

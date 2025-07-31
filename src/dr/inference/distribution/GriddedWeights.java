@@ -34,17 +34,19 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.List;
+
 public class GriddedWeights extends AbstractModel implements RandomField.WeightProvider {
 
-    private final TreeModel tree;
+    private final List<TreeModel> treeModelList;
     private final boolean rescaleByRootHeight;
     private final Parameter gridPoints;
 
 
-    public GriddedWeights(TreeModel tree, Parameter gridPoints,
+    public GriddedWeights(List<TreeModel> treeModelList, Parameter gridPoints,
                           boolean rescaleByRootHeight) {
         super("Weight Provider with grid points");
-        this.tree = tree;
+        this.treeModelList = treeModelList;
         this.rescaleByRootHeight = rescaleByRootHeight;
         this.gridPoints = gridPoints;
 //        addModel(tree);
@@ -60,7 +62,8 @@ public class GriddedWeights extends AbstractModel implements RandomField.WeightP
             double lowerEnd;
             int maxIndex = Math.max(index1, index2);
             if (maxIndex >= gridPoints.getDimension()) {
-                if (gridPoints.getParameterValue(maxIndex - 1) < tree.getNodeHeight(tree.getRoot())) {
+                TreeModel tree = treeModelList.get(0);
+                if (treeModelList.size() == 1 && gridPoints.getParameterValue(maxIndex - 1) < tree.getNodeHeight(tree.getRoot())) {
                     higherEnd = tree.getNodeHeight(tree.getRoot());
                 } else {
                     higherEnd = gridPoints.getParameterValue(maxIndex - 1) +
@@ -81,7 +84,15 @@ public class GriddedWeights extends AbstractModel implements RandomField.WeightP
 
     private double getFieldScalar() {
         if (rescaleByRootHeight) {
-            return tree.getNodeHeight(tree.getRoot());
+            if (treeModelList.size() > 1) {
+                double sumRootsHeight = 0.0;
+                for(TreeModel tree : treeModelList) {
+                    sumRootsHeight += tree.getNodeHeight(tree.getRoot());
+                }
+                return sumRootsHeight / treeModelList.size();
+            } else {
+                return treeModelList.get(0).getNodeHeight(treeModelList.get(0).getRoot());
+            }
         }
         return 1.0;
     }

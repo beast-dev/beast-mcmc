@@ -45,7 +45,6 @@ import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
-import dr.oldevomodel.substmodel.ComplexSubstitutionModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
@@ -537,19 +536,77 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (partition.getTraits() != null) {
                 TraitData trait = partition.getTraits().get(0);
                 if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    writeTreeLikelihood(partition, writer);
+                    if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                        writeFITTreeLikelihood(partition, writer);
+                    } else {
+                        writeBITTreeLikelihood(partition, writer);
+                    }
                 }
             }
         }
     }
 
     /**
-     * Write Tree Likelihood
+     * Write Tree Likelihood for Backward-in-Time (BIT) discrete phylogeography
      *
      * @param partition PartitionData
      * @param writer    XMLWriter
      */
-    public void writeTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
+    public void writeBITTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
+        String prefix = partition.getName() + ".";
+
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
+
+        //AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+        //boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
+
+        String treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+
+        writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
+                new Attribute.Default<String>(StructuredCoalescentLikelihoodParser.TYPE, "BASTA"),
+                new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
+                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                new Attribute.Default<Boolean>(StructuredCoalescentLikelihoodParser.USE_AMBIGUITIES, true)
+        });
+
+        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
+        writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
+
+        if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
+            // not strictly necessary but makes the XML consistent
+            writer.writeIDref(GlmSubstitutionModelParser.GLM_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        } else {
+            writer.writeIDref(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, prefix + AbstractSubstitutionModel.MODEL);
+        }
+
+        writer.writeIDref(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
+
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+
+        writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+        int stateCount = options.getStatesForDiscreteModel(substModel).size();
+        if (substModel.getBastaModelType() == BASTAModelType.CONST) {
+            writeParameter("structured.popSizes", stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+        } else {
+            throw new IllegalArgumentException("Unknown BASTAModelType");
+        }
+        writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+
+        getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
+
+        writer.writeCloseTag(treeLikelihoodTag);
+    }
+
+    /**
+     * Write Tree Likelihood for Forward-in-Time (FIT) discrete phylogeography
+     *
+     * @param partition PartitionData
+     * @param writer    XMLWriter
+     */
+    public void writeFITTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
         String prefix = partition.getName() + ".";
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
@@ -559,17 +616,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
         boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
 
-        String treeLikelihoodTag;
-        if (substModel.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-            treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-            if (ancestralStatesOptions.isCountingStates(partition)) {
-                treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
-            }
-        } else {
-            treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+        String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+        if (ancestralStatesOptions.isCountingStates(partition)) {
+            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
         }
 
-        //TODO continue here
         writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
@@ -593,7 +644,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-        //TODO carefully check this for BIT
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();
             writer.writeComment("The root state frequencies");

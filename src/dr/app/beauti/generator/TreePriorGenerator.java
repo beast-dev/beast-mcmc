@@ -904,6 +904,9 @@ public class TreePriorGenerator extends Generator {
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
                 break;
+            case SET_BY_BIT:
+                //do nothing
+                break;
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
         }
@@ -935,6 +938,9 @@ public class TreePriorGenerator extends Generator {
             case SKYGRID_HMC:
 //                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skygrid");
                 // only 1 coalescent, so write it separately after this method
+                break;
+            case SET_BY_BIT:
+                //do nothing
                 break;
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);

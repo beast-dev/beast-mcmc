@@ -660,6 +660,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (partition.getTraits() != null) {
                 AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
                 String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+                }
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
                 }

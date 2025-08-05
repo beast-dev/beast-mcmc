@@ -860,6 +860,9 @@ public class TreePriorGenerator extends Generator {
                 writeParameterRef(priorPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.ORIGIN, writer);
                 break;
+            case SET_BY_BIT:
+                //nothing to do
+                break;
 //            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
 //                writeParameterRef(priorPrefix + BirthDeathEpidemiologyModelParser.R0, writer);
 //                writeParameterRef(priorPrefix + BirthDeathEpidemiologyModelParser.RECOVERY_RATE, writer);

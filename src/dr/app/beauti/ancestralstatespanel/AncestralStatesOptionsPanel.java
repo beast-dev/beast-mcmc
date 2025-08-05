@@ -28,6 +28,7 @@
 package dr.app.beauti.ancestralstatespanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -239,14 +240,20 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         boolean dNdSRobustCountingAvailable = false;
         boolean errorModelAvailable = false;
 
+        System.out.println(partition.getName() + " > " + partition.getDataType().getType());
+
         switch (partition.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 errorModelAvailable = true;
                 dNdSRobustCountingAvailable = true; // but will be disabled if not codon partitioned
                 break;
             case DataType.AMINO_ACIDS:
-            case DataType.GENERAL:
             case DataType.TWO_STATES:
+                break;
+            case DataType.GENERAL:
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    countingAvailable = false;
+                }
                 break;
             case DataType.CONTINUOUS:
                 countingAvailable = false;

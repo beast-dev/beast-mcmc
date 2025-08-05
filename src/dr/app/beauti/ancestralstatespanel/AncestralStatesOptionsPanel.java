@@ -240,8 +240,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         boolean dNdSRobustCountingAvailable = false;
         boolean errorModelAvailable = false;
 
-        System.out.println(partition.getName() + " > " + partition.getDataType().getType());
-
         switch (partition.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 errorModelAvailable = true;

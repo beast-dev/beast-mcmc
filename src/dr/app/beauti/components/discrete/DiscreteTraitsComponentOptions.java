@@ -132,7 +132,9 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             String prefix = partition.getPrefix();
 
             if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
-                params.add(modelOptions.getParameter(prefix + "root.frequencies"));
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    params.add(modelOptions.getParameter(prefix + "root.frequencies"));
+                }
             }
 
         }
@@ -163,7 +165,9 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         }
         for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
-                ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
+                if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
+                }
             }
         }
     }

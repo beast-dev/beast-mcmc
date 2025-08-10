@@ -81,7 +81,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
-                if (model.getTraitData().getIncludedPredictors().size() < 1) {
+                if (model.getTraitData().getIncludedPredictors().isEmpty()) {
                     throw new GeneratorException("The GLM model for trait, " + model.getTraitData().getName() + ", has no predictors included.");
                 }
 
@@ -98,16 +98,21 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
-        if (options.getDataPartitions(GeneralDataType.INSTANCE).size() == 0) {
+        if (options.getDataPartitions(GeneralDataType.INSTANCE).isEmpty()) {
             // Empty, so do nothing
             return false;
         }
 
+        //boolean to indicate whether the partition employs a structured coalescent approximation (SCA)
+        boolean isSCA = false;
         boolean hasGLM = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
             }
+            /*if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                isSCA = true;
+            }*/
         }
 
         switch (point) {
@@ -122,7 +127,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS();
+                return hasGLM || hasBSSVS(); // || isSCA;
             default:
                 return false;
         }
@@ -154,12 +159,19 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                         writeGLMBinomialLikelihood(model, writer);
                     }
+                    if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                        writeTreeLikelihoodReference(model, writer);
+                    }
                 }
                 writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_MCMC_LIKELIHOOD:
-                writeTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer, true);
+                break;
+
+            case IN_FILE_LOG_LIKELIHOODS:
+                writeTreeLikelihoodReferences(writer, false);
                 break;
 
             case IN_SCREEN_LOG:
@@ -170,14 +182,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writeFileLogEntries(writer);
                 break;
 
-            case IN_FILE_LOG_LIKELIHOODS:
-                writeTreeLikelihoodReferences(writer);
-                break;
-
             case AFTER_FILE_LOG:
                 writeDiscreteTraitFileLoggers(writer);
-
                 break;
+
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
         }
@@ -589,13 +597,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPSIZES);
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
-            writeParameter("structured.popSizes", stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+            writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                    stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
         } else {
             throw new IllegalArgumentException("Unknown BASTAModelType");
         }
         writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
 
-        getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
+        //getCallingGenerator().generateInsertionPoint(InsertionPoint.IN_MCMC_PRIOR, partition, writer);
 
         writer.writeCloseTag(treeLikelihoodTag);
     }
@@ -655,13 +664,44 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(treeLikelihoodTag);
     }
 
-    private void writeTreeLikelihoodReferences(XMLWriter writer) {
+    /**
+     * Write Tree Likelihood reference for a specific partition / model
+     *
+     * @param model PartitionSubstitutionModel
+     * @param writer XMLWriter
+     */
+    private void writeTreeLikelihoodReference(PartitionSubstitutionModel model, XMLWriter writer) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            if (partition.getTraits() != null && partition.getPartitionSubstitutionModel() == model) {
+                String treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                }
+                TraitData trait = partition.getTraits().get(0);
+                String prefix = partition.getName() + ".";
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    writer.writeIDref(treeLikelihoodTag,
+                            prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * @param writer XMLWriter
+     * @param onlyFIT boolean that indicates whether references to Backward-In-Time likelihoods also need to be written
+     */
+    private void writeTreeLikelihoodReferences(XMLWriter writer, boolean onlyFIT) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
                 AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
                 String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
                     treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+                    if (onlyFIT) {
+                        continue;
+                    }
                 }
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;

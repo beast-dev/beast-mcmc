@@ -31,6 +31,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.GeneralDataType;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.List;
@@ -67,8 +68,11 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createParameterNormalPrior(prefix + "coefficients", "a vector of log coefficients for each GLM predictor", PriorScaleType.NONE, 0.0, 0.0, 2.0, 0.0);
                 modelOptions.createParameter(prefix + "coefIndicators", "a vector of bits indicating non-zero coefficients for GLM", 1.0);
 
-                // Operators
+                //BASTA
+                modelOptions.createParameterGammaPrior(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        "a vector of constant population sizes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.001, 1000.0, false);
 
+                // Operators
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
@@ -85,10 +89,12 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                         "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                         prefix + "indicators", prefix + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 7.0);
 
-
                 modelOptions.createOperator(prefix + "coefficients", OperatorType.RANDOM_WALK, 0.75, 5.0);
                 // todo - this should be a special MVN operator.. 
                 modelOptions.createOperator(prefix + "coefIndicators", OperatorType.BITFLIP, -1.0, 5.0);
+
+                modelOptions.createOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        "Scales BASTA's population size parameter(s)", OperatorType.SCALE, 0.75, 3.0);
             }
         }
     }
@@ -125,6 +131,10 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             } else {
                 params.add(modelOptions.getParameter(prefix + "frequencies"));
                 params.add(modelOptions.getParameter(prefix + "rates"));
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    params.add(modelOptions.getParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
+                            "." + StructuredCoalescentLikelihoodParser.POPSIZES));
+                }
             }
         }
 
@@ -159,6 +169,11 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
                 if (substitutionModel.isActivateBSSVS()) {
                     ops.add(modelOptions.getOperator(prefix + "indicators"));
+                }
+
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    ops.add(modelOptions.getOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." +
+                            StructuredCoalescentLikelihoodParser.POPSIZES));
                 }
             }
 

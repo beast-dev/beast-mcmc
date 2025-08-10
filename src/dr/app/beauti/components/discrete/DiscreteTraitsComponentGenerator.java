@@ -282,11 +282,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
 
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                writer.writeComment("symmetric forward-in-time CTMC model for discrete state reconstructions");
+                writer.writeComment("symmetric forward-in-time (FIT) CTMC model for discrete state reconstructions");
                 writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL)});
             } else {
-                writer.writeComment("symmetric backward-in-time CTMC model for discrete state reconstructions");
+                writer.writeComment("symmetric backward-in-time (BIT) CTMC model for discrete state reconstructions");
                 writer.writeOpenTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
@@ -316,12 +316,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
 
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                writer.writeComment("asymmetric forward-in-time CTMC model for discrete state reconstructions");
+                writer.writeComment("asymmetric forward-in-time (FIT) CTMC model for discrete state reconstructions");
                 writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
                         new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
             } else {
-                writer.writeComment("asymmetric backward-in-time CTMC model for discrete state reconstructions");
+                writer.writeComment("asymmetric backward-in-time (BIT) CTMC model for discrete state reconstructions");
                 writer.writeOpenTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
@@ -809,6 +809,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
                     writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
                     writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                }
+
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
+                            "." + StructuredCoalescentLikelihoodParser.POPSIZES);
                 }
             }
         }

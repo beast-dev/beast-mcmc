@@ -597,8 +597,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPSIZES);
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
-            writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
-                    stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+            if (substModel.isSharedCoalescentModel()) {
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+            } else {
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+            }
         } else {
             throw new IllegalArgumentException("Unknown BASTAModelType");
         }

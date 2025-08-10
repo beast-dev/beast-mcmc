@@ -404,8 +404,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 "\nNew routes to phylogeography: a Bayesian structured" +
                 "\ncoalescent approximation." +
                 "\nPLOS Genetics 11(8): e1005421.\n";
-        bitText += "Y. Shao, M.A. Suchard, A. Rambaut, T. Vasylyeva, G. Baele (2025)" +
-                "\nMany-core algorithms for phylogenetic inference" +
+        bitText += "Y. Shao, M.A. Suchard, A. Rambaut, P. Lemey, T. Vasylyeva, G. Baele (2025)" +
+                "\nParallel algorithms for phylogenetic inference" +
                 "\nunder a structured coalescent approximation" +
                 "\n(in preparation)";
         JTextArea bitTextArea = new JTextArea(bitText);

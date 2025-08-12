@@ -28,6 +28,7 @@ package dr.evomodel.substmodel.geneconversion;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PairedDataType;
 import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.eigen.Eigen3EigenSystem;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -50,6 +51,10 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
     private final ActionEnabledSubstitution baseSubstitutionModel;
     private final Parameter igcRateParameter;
     protected PairedDataType dataType;
+
+    private Eigen3EigenSystem eigenSystem = null;
+    private double[] flatQCache;
+    private double[][] squareQCache;
 
     private final RateCase rateCase;
     private final NumberParalog numberParalog;
@@ -128,7 +133,23 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
     @Override
     public EigenDecomposition getEigenDecomposition() {
-        throw new RuntimeException("Not yet implemented!");
+
+        final int stateCount = frequencyModel.getFrequencyCount();
+
+        if (eigenSystem == null) {
+            eigenSystem = new Eigen3EigenSystem(stateCount);
+            flatQCache = new double[stateCount * stateCount];
+            squareQCache = new double[stateCount][stateCount];
+        }
+
+        numberParalog.setupQMatrix(baseSubstitutionModel, frequencyModel, dataType, flatQCache, rateCase, igcRateParameter);
+
+        for (int state = 0; state < frequencyModel.getFrequencyCount(); state++) {
+            System.arraycopy(flatQCache,state * stateCount, squareQCache[state], 0, stateCount);
+        }
+
+        return eigenSystem.decomposeMatrix(squareQCache);
+
     }
 
     @Override

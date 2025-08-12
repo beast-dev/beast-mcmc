@@ -159,7 +159,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     public List<Citation> getCitations() {
-        return List.of();
+        return null;
     }
 
     @Override

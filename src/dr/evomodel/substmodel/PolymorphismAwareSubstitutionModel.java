@@ -28,6 +28,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.PolymorphismAwareDataType;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -45,11 +46,15 @@ import java.util.List;
 public class PolymorphismAwareSubstitutionModel extends AbstractModel implements ActionEnabledSubstitution, Citable {
 
     private final SubstitutionModel baseSubstitutionModel;
+    private final PolymorphismAwareFrequencyModel frequencyModel;
     private final int virtualPopSize;
 
-    public PolymorphismAwareSubstitutionModel(SubstitutionModel baseSubstitutionModel, int virtualPopSize) {
+    public PolymorphismAwareSubstitutionModel(SubstitutionModel baseSubstitutionModel,
+                                              PolymorphismAwareDataType dataType,
+                                              int virtualPopSize) {
         super("PoMoSubstitutionModel");
         this.baseSubstitutionModel = baseSubstitutionModel;
+        this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter());
         this.virtualPopSize = virtualPopSize;
         addModel(baseSubstitutionModel);
     }

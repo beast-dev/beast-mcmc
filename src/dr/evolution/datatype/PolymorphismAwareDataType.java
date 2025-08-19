@@ -1,5 +1,5 @@
 /*
- * PairedDataType.java
+ * PolymorphismAwareDataType.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -57,6 +57,14 @@ public class PolymorphismAwareDataType extends DataType {
         buildSequenceStateMap();
     }
 
+    public static String getDataTypeDescription(DataType baseDataType, int virtualPopSize) {
+        return DESCRIPTION + "." + baseDataType.getDescription() + ".K" + virtualPopSize;
+    }
+
+    public int getVirtualPopSize() {
+        return virtualPopSize;
+    }
+
     private void buildSequenceStateMap() {
 
         for (int i = 0; i < baseDataType.getStateCount(); i++) {
@@ -79,7 +87,7 @@ public class PolymorphismAwareDataType extends DataType {
 
     @Override
     public char[] getValidChars() {
-        return new char[0];
+        return null;
     }
 
     public final int getState(int[] states, int[] counts) {

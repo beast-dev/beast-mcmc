@@ -166,6 +166,10 @@ public class UncertainSequence extends Sequence {
         return pattern;
     }
 
+    public UncertainCharacterList getUncertainCharacterList(int siteIndex) {
+        return characters.get(siteIndex);
+    }
+
     private class UncertainCharacter {
         char character;
         double weight;
@@ -197,5 +201,5 @@ public class UncertainSequence extends Sequence {
 
     private List<UncertainCharacterList> characters;
 
-    private boolean isParsed = false;
+    protected boolean isParsed = false;
 }

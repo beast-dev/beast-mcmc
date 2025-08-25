@@ -46,23 +46,28 @@ import java.util.List;
 public class PolymorphismAwareSubstitutionModel extends AbstractModel implements ActionEnabledSubstitution, Citable {
 
     private final SubstitutionModel baseSubstitutionModel;
+    private final PolymorphismAwareDataType dataType;
     private final PolymorphismAwareFrequencyModel frequencyModel;
     private final int virtualPopSize;
 
     public PolymorphismAwareSubstitutionModel(SubstitutionModel baseSubstitutionModel,
-                                              PolymorphismAwareDataType dataType,
-                                              int virtualPopSize) {
+                                              PolymorphismAwareDataType dataType) {
         super("PoMoSubstitutionModel");
         this.baseSubstitutionModel = baseSubstitutionModel;
+
         this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter());
-        this.virtualPopSize = virtualPopSize;
+        this.virtualPopSize = dataType.getVirtualPopSize();
+        this.dataType = dataType;
         addModel(baseSubstitutionModel);
     }
 
 
     @Override
     public int getNonZeroEntryCount() {
-        return 0;
+        final int baseStateCount = dataType.getBaseDataType().getStateCount();
+        final int originalNonZeros = baseStateCount + (baseStateCount - 1) * (virtualPopSize - 1) * baseStateCount;
+        final int polymorphismNonZeros = (dataType.getStateCount() - baseStateCount) * 3;
+        return originalNonZeros + polymorphismNonZeros;
     }
 
     @Override
@@ -82,42 +87,22 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     public FrequencyModel getFrequencyModel() {
-        return null;
+        return frequencyModel;
     }
 
     @Override
     public void getInfinitesimalMatrix(double[] matrix) {
-
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
     public DataType getDataType() {
-        return null;
+        return dataType;
     }
 
     @Override
     public boolean canReturnComplexDiagonalization() {
         return false;
-    }
-
-    @Override
-    public void addModelListener(ModelListener listener) {
-
-    }
-
-    @Override
-    public void removeModelListener(ModelListener listener) {
-
-    }
-
-    @Override
-    public boolean isValidState() {
-        return false;
-    }
-
-    @Override
-    public int getModelCount() {
-        return 0;
     }
 
 
@@ -148,11 +133,6 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     }
 
     @Override
-    public boolean isUsed() {
-        return false;
-    }
-
-    @Override
     public Citation.Category getCategory() {
         return null;
     }
@@ -167,13 +147,4 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         return null;
     }
 
-    @Override
-    public String getId() {
-        return "";
-    }
-
-    @Override
-    public void setId(String id) {
-
-    }
 }

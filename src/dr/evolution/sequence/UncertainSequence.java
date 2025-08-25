@@ -170,7 +170,7 @@ public class UncertainSequence extends Sequence {
         return characters.get(siteIndex);
     }
 
-    private class UncertainCharacter {
+    public class UncertainCharacter {
         char character;
         double weight;
 
@@ -197,7 +197,7 @@ public class UncertainSequence extends Sequence {
         }
     }
 
-    private class UncertainCharacterList extends ArrayList<UncertainCharacter> { }
+    public class UncertainCharacterList extends ArrayList<UncertainCharacter> { }
 
     private List<UncertainCharacterList> characters;
 

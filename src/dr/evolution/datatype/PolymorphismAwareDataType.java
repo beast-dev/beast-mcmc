@@ -27,6 +27,7 @@
 
 package dr.evolution.datatype;
 
+import dr.evolution.sequence.UncertainSequence;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightToRatiosTransformDelegate;
 
 import java.util.HashMap;
@@ -63,6 +64,21 @@ public class PolymorphismAwareDataType extends DataType {
 
     public int getVirtualPopSize() {
         return virtualPopSize;
+    }
+
+    public int getState(UncertainSequence.UncertainCharacterList characters) {
+        assert(characters.size() < 3);
+        if (characters.size() == 1) {
+            return baseDataType.getState(characters.get(0).getCharacter());
+        } else if (characters.size() == 2) {
+            final int firstState = baseDataType.getState(characters.get(0).getCharacter());
+            final int secondState = baseDataType.getState(characters.get(1).getCharacter());
+            final int firstCount = (int) characters.get(0).getWeight();
+            final int secondCount = (int) characters.get(1).getWeight();
+            return getState(new int[]{firstState, secondState}, new int[]{firstCount, secondCount});
+        } else {
+            throw new RuntimeException("Unexpected more than 3 characters in sequence");
+        }
     }
 
     private void buildSequenceStateMap() {

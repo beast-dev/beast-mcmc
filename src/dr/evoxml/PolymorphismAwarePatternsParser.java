@@ -27,16 +27,17 @@
 
 package dr.evoxml;
 
-import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.alignment.SitePatterns;
+import dr.evolution.alignment.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PolymorphismAwareDataType;
+import dr.evolution.sequence.Sequence;
+import dr.evolution.sequence.UncertainSequence;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.List;
 
 import static dr.evoxml.SitePatternsParser.STRIP;
 import static dr.evoxml.SitePatternsParser.FROM;
@@ -61,7 +62,7 @@ public class PolymorphismAwarePatternsParser extends AbstractXMLObjectParser {
         SimpleAlignment alignment = (SimpleAlignment) xo.getChild(SimpleAlignment.class);
         DataType baseDataType = alignment.getDataType();
         int virtualPopSize = xo.getIntegerAttribute(VIRTUAL_POP_SIZE);
-        TaxonList taxa = (TaxonList) xo.getChild(TaxonList.class);
+        Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
         PolymorphismAwareDataType dataType = new PolymorphismAwareDataType(baseDataType, virtualPopSize);
         DataType.registerDataType(dataType.getDataTypeDescription(baseDataType, virtualPopSize), dataType);
@@ -85,31 +86,40 @@ public class PolymorphismAwarePatternsParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal 'to' attribute in patterns element");
         }
 
-        SitePatterns patterns = new SitePatterns(alignment, from, to, every, strip);
+        SimpleSiteList patterns = new SimpleSiteList(dataType, taxa);
 
-        double[][] polymorphismAwarePattern = new double[taxa.getTaxonCount()][];
+        int[][] polymorphismAwarePattern = new int[taxa.getTaxonCount()][];
 
-        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-            Taxon taxon = taxa.getTaxon(i);
+        for (int taxonIndex = 0; taxonIndex < taxa.getTaxonCount(); taxonIndex++) {
+            UncertainSequence sequence = (UncertainSequence) alignment.getSequence(taxonIndex);
+            polymorphismAwarePattern[taxonIndex] = new int[alignment.getSiteCount()];
+            for (int siteIndex = 0; siteIndex < alignment.getSiteCount(); siteIndex++) {
+                UncertainSequence.UncertainCharacterList characters = sequence.getUncertainCharacterList(siteIndex);
+                polymorphismAwarePattern[taxonIndex][siteIndex] = dataType.getState(characters);
+            }
+            patterns.addPattern(polymorphismAwarePattern[taxonIndex]);
         }
 
-
-        return null;
+        return patterns;
     }
 
     @Override
-    public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
-    }
+    public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+
+    private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+            new ElementRule(SimpleAlignment.class),
+            AttributeRule.newIntegerRule(VIRTUAL_POP_SIZE),
+            new ElementRule(Taxa.class, "The taxon set")
+    };
 
     @Override
     public String getParserDescription() {
-        return "";
+        return "A PoMo site pattern";
     }
 
     @Override
     public Class getReturnType() {
-        return null;
+        return PatternList.class;
     }
 
     @Override

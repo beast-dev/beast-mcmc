@@ -76,7 +76,7 @@ public class PolymorphismAwareFrequencyModel extends FrequencyModel {
         for (int i = 0; i < baseStateCount; i++) {
             for (int j = 0; j < baseStateCount; j++) {
                 if (i != j)
-                    m += frequencyParameter.getParameterValue(i) * frequencyParameter.getParameterValue(j) * baseQ[i * baseStateCount + j];
+                    m += frequencyParameter.getParameterValue(i) * baseQ[i * baseStateCount + j];
             }
         }
         return m;

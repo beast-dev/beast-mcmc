@@ -425,7 +425,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             treeLogFileName += ".txt";
         }
 
-
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));
         attributes.add(new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"));

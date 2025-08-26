@@ -71,6 +71,8 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
+    private boolean enableInsertionPointBIT = false;
+
     public DiscreteTraitsComponentGenerator(final BeautiOptions options) {
         super(options);
     }
@@ -103,16 +105,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             return false;
         }
 
-        //boolean to indicate whether the partition employs a structured coalescent approximation (SCA)
-        boolean isSCA = false;
+        boolean useSCA = false;
         boolean hasGLM = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
             }
-            /*if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                isSCA = true;
-            }*/
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                useSCA = true;
+            }
         }
 
         switch (point) {
@@ -127,7 +128,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS(); // || isSCA;
+                return hasGLM || hasBSSVS() || (enableInsertionPointBIT && useSCA);
             default:
                 return false;
         }
@@ -609,7 +610,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
         writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
 
-        //getCallingGenerator().generateInsertionPoint(InsertionPoint.IN_MCMC_PRIOR, partition, writer);
+        getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, partition, writer);
+        this.enableInsertionPointBIT = true;
 
         writer.writeCloseTag(treeLikelihoodTag);
     }

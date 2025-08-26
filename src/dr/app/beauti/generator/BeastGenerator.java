@@ -549,7 +549,6 @@ public class BeastGenerator extends Generator {
                         options.otherPartitions.add(partition);
                     }
 
-
                 }
             }
 

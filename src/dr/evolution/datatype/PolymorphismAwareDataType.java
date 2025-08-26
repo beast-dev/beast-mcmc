@@ -92,8 +92,8 @@ public class PolymorphismAwareDataType extends DataType {
             for (int j = i + 1; j < baseDataType.getStateCount(); j++) {
                 String seq2 = baseDataType.getCode(j);
                 for (int k = 1; k < virtualPopSize; k++) {
-                    String seq = seq1 + ":" + Integer.toString(virtualPopSize - k)
-                            + "|" + seq2 + ":" + Integer.toString(k);
+                    String seq = seq1 + ":" + Integer.toString(k)
+                            + "|" + seq2 + ":" + Integer.toString(virtualPopSize - k);
                     sequenceStateMap.put(seq, state);
                     state++;
                 }
@@ -111,16 +111,23 @@ public class PolymorphismAwareDataType extends DataType {
             return states[0];
         } else {
             if (states.length != 2 || counts.length != 2
-                    || counts[0] + counts[1] != virtualPopSize || counts[0] < 1 || counts[1] < 1) {
+                    || counts[0] + counts[1] != virtualPopSize || counts[0] < 0 || counts[1] < 0) {
                 throw new RuntimeException("Illegal states or counts.");
+            }
+            if (counts[0] == 0) {
+                return states[1];
+            }
+            if (counts[1] == 0) {
+                return states[0];
             }
             final int firstState = states[0] < states[1] ? states[0] : states[1];
             final int secondState = states[0] < states[1] ? states[1] : states[0];
-//            final int firstCount = states[0] < states[1] ? counts[0] : counts[1];
-            final int secondCount = states[0] < states[1] ? counts[1] : counts[0];
+            final int firstCount = states[0] < states[1] ? counts[0] : counts[1];
+//            final int secondCount = states[0] < states[1] ? counts[1] : counts[0];
 
-            return baseDataType.getStateCount() + (virtualPopSize - 1) * (secondState - firstState - 1 + (2 * baseDataType.getStateCount() - firstState - 1) * firstState / 2)
-                    + secondCount - 1;
+            final int state = baseDataType.getStateCount() + ((2 * baseDataType.getStateCount() - firstState - 1) * firstState / 2 + secondState - firstState - 1) * (virtualPopSize - 1) + firstCount - 1;
+
+            return state;
         }
     }
 

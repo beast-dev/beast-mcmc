@@ -49,6 +49,8 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     private final PolymorphismAwareDataType dataType;
     private final PolymorphismAwareFrequencyModel frequencyModel;
     private final int virtualPopSize;
+    private final double[] baseInfinitesimalMatrix;
+    private boolean baseSubstitutionKnown = false;
 
     public PolymorphismAwareSubstitutionModel(SubstitutionModel baseSubstitutionModel,
                                               PolymorphismAwareDataType dataType) {
@@ -58,6 +60,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter());
         this.virtualPopSize = dataType.getVirtualPopSize();
         this.dataType = dataType;
+        this.baseInfinitesimalMatrix = new double[baseSubstitutionModel.getFrequencyModel().getFrequencyCount() * baseSubstitutionModel.getFrequencyModel().getFrequencyCount()];
         addModel(baseSubstitutionModel);
     }
 
@@ -65,14 +68,67 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     @Override
     public int getNonZeroEntryCount() {
         final int baseStateCount = dataType.getBaseDataType().getStateCount();
-        final int originalNonZeros = baseStateCount + (baseStateCount - 1) * (virtualPopSize - 1) * baseStateCount;
+        final int originalNonZeros = baseStateCount;
         final int polymorphismNonZeros = (dataType.getStateCount() - baseStateCount) * 3;
         return originalNonZeros + polymorphismNonZeros;
     }
 
     @Override
     public void getNonZeroEntries(int[] rowIndices, int[] colIndices, double[] values) {
+        syncBaseSubstitutionModel();
+        final int baseStateCount = dataType.getBaseDataType().getStateCount();
+        double[] diagonal = new double[dataType.getStateCount()];
+        int index = 0;
+        for (int i = 0; i < baseStateCount; i++) {
+            for (int j = 0; j < baseStateCount; j++) {
+                if (i != j) {
+                    rowIndices[index] = i;
+                    final int colIndex = dataType.getState(new int[]{i, j}, new int[]{virtualPopSize - 1, 1});
+                    colIndices[index] = colIndex;
+                    values[index] = baseInfinitesimalMatrix[i * baseStateCount + j];
+                    diagonal[i] -= values[index];
+                    index++;
+                }
+            }
+        }
 
+        for (int i = 0; i < baseStateCount - 1; i++) {
+            for (int j = i + 1; j < baseStateCount; j++) {
+                for (int k = 1; k < virtualPopSize; k++) {
+                    final double rate = getDriftRate(k);
+                    final int rowIndex = dataType.getState(new int[]{i, j}, new int[]{k, virtualPopSize - k});
+                    final int plusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k + 1, virtualPopSize - k - 1});
+                    final int minusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k - 1, virtualPopSize - k + 1});
+                    rowIndices[index] = rowIndex;
+                    colIndices[index] = plusOneColIndex;
+                    values[index] = rate;
+                    index++;
+                    rowIndices[index] = rowIndex;
+                    colIndices[index] = minusOneColIndex;
+                    values[index] = rate;
+                    index++;
+                    diagonal[i] -= 2 * rate;
+                }
+            }
+        }
+
+        for (int i = 0; i < dataType.getStateCount(); i++) {
+            rowIndices[index] = i;
+            colIndices[index] = i;
+            values[index] = diagonal[i];
+            index++;
+        }
+    }
+
+    private double getDriftRate(int k) {
+        return ((double) k * (virtualPopSize - k)) / (double) virtualPopSize;
+    }
+
+    private void syncBaseSubstitutionModel() {
+        if (!baseSubstitutionKnown) {
+            baseSubstitutionModel.getInfinitesimalMatrix(baseInfinitesimalMatrix);
+            baseSubstitutionKnown = true;
+        }
     }
 
     @Override
@@ -108,7 +164,9 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        if (model == baseSubstitutionModel) {
+            baseSubstitutionKnown = false;
+        }
     }
 
     @Override

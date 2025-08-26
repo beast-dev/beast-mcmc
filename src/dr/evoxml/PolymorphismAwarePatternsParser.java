@@ -88,16 +88,21 @@ public class PolymorphismAwarePatternsParser extends AbstractXMLObjectParser {
 
         SimpleSiteList patterns = new SimpleSiteList(dataType, taxa);
 
-        int[][] polymorphismAwarePattern = new int[taxa.getTaxonCount()][];
+        int[][] polymorphismAwarePattern = new int[alignment.getSiteCount()][];
+        for (int i = 0; i < alignment.getSiteCount(); i++) {
+            polymorphismAwarePattern[i] = new int[taxa.getTaxonCount()];
+        }
 
         for (int taxonIndex = 0; taxonIndex < taxa.getTaxonCount(); taxonIndex++) {
             UncertainSequence sequence = (UncertainSequence) alignment.getSequence(taxonIndex);
-            polymorphismAwarePattern[taxonIndex] = new int[alignment.getSiteCount()];
             for (int siteIndex = 0; siteIndex < alignment.getSiteCount(); siteIndex++) {
                 UncertainSequence.UncertainCharacterList characters = sequence.getUncertainCharacterList(siteIndex);
-                polymorphismAwarePattern[taxonIndex][siteIndex] = dataType.getState(characters);
+                polymorphismAwarePattern[siteIndex][taxonIndex] = dataType.getState(characters);
             }
-            patterns.addPattern(polymorphismAwarePattern[taxonIndex]);
+        }
+
+        for (int i = 0; i < alignment.getSiteCount(); i++) {
+            patterns.addPattern(polymorphismAwarePattern[i]);
         }
 
         return patterns;

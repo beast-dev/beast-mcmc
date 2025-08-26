@@ -41,19 +41,80 @@ import dr.inference.model.Parameter;
  */
 public class PolymorphismAwareFrequencyModel extends FrequencyModel {
 
-    PolymorphismAwareDataType dataType;
+    final PolymorphismAwareDataType dataType;
+    final SubstitutionModel baseSubstitution;
+    double[] baseQ;
 
-    public PolymorphismAwareFrequencyModel(PolymorphismAwareDataType dataType, Parameter frequencyParameter) {
+    public PolymorphismAwareFrequencyModel(PolymorphismAwareDataType dataType,
+                                           Parameter frequencyParameter,
+                                           SubstitutionModel substitutionModel) {
         super(dataType, frequencyParameter);
         this.dataType = dataType;
+        this.baseSubstitution = substitutionModel;
+        this.baseQ = new double[frequencyParameter.getDimension() * frequencyParameter.getDimension()];
+        addModel(substitutionModel);
     }
 
+    public int getFrequencyCount() {
+        return dataType.getStateCount();
+    }
+
+    private double getWattersonConstant() {
+        final int virtualPopSize = dataType.getVirtualPopSize();
+        double w = 0;
+        for (int i = 1; i < virtualPopSize; i++) {
+            w += 1.0 / (double) i;
+        }
+        return w;
+    }
+
+    private double getExpectedNumberMutations() {
+        final int baseStateCount = baseSubstitution.getFrequencyModel().getFrequencyCount();
+
+        baseSubstitution.getInfinitesimalMatrix(baseQ);
+        double m = 0;
+        for (int i = 0; i < baseStateCount; i++) {
+            for (int j = 0; j < baseStateCount; j++) {
+                if (i != j)
+                    m += frequencyParameter.getParameterValue(i) * frequencyParameter.getParameterValue(j) * baseQ[i * baseStateCount + j];
+            }
+        }
+        return m;
+    }
 
     public double[] getFrequencies() {
 
         final double[] frequencies = new double[dataType.getStateCount()];
+        final int virtualPopSize = dataType.getVirtualPopSize();
+        final double normalizingConstant = 1.0 / (1.0 + getWattersonConstant() * getExpectedNumberMutations());
+        baseSubstitution.getInfinitesimalMatrix(baseQ);
+        final int baseStateCount = baseSubstitution.getFrequencyModel().getFrequencyCount();
 
+        for (int i = 0; i < baseStateCount; i++) {
+            frequencies[i] = normalizingConstant * frequencyParameter.getParameterValue(i);
+        }
 
+        for (int i = 0; i < baseStateCount; i++) {
+            for (int j = 0; j < baseStateCount; j++) {
+                if (i != j) {
+                    for (int k = 1; k < virtualPopSize; k++) {
+                        final int stateIndex = dataType.getState(new int[]{i, j}, new int[]{k, virtualPopSize - k});
+                        final double q = ((double) k * (virtualPopSize - k)) / (double) virtualPopSize;
+                        frequencies[stateIndex] = normalizingConstant * frequencyParameter.getParameterValue(i)
+                                * frequencyParameter.getParameterValue(j) * baseQ[i * baseStateCount + j] / q;
+                    }
+                }
+            }
+        }
+
+        double sum = 0;
+        for (int i = 0; i < frequencies.length; i++) {
+            sum += frequencies[i];
+        }
+
+        for (int i = 0; i < frequencies.length; i++) {
+            frequencies[i] /= sum;
+        }
 
         return frequencies;
     }

@@ -43,7 +43,7 @@ import java.util.List;
  * @author Ben Redelings
  * @author Marc A. Suchard
  */
-public class PolymorphismAwareSubstitutionModel extends AbstractModel implements ActionEnabledSubstitution, Citable {
+public class PolymorphismAwareSubstitutionModel extends AbstractModel implements ActionEnabledSubstitution {
 
     private final SubstitutionModel baseSubstitutionModel;
     private final PolymorphismAwareDataType dataType;
@@ -57,7 +57,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         super("PoMoSubstitutionModel");
         this.baseSubstitutionModel = baseSubstitutionModel;
 
-        this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter());
+        this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter(), baseSubstitutionModel);
         this.virtualPopSize = dataType.getVirtualPopSize();
         this.dataType = dataType;
         this.baseInfinitesimalMatrix = new double[baseSubstitutionModel.getFrequencyModel().getFrequencyCount() * baseSubstitutionModel.getFrequencyModel().getFrequencyCount()];
@@ -68,7 +68,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     @Override
     public int getNonZeroEntryCount() {
         final int baseStateCount = dataType.getBaseDataType().getStateCount();
-        final int originalNonZeros = baseStateCount;
+        final int originalNonZeros = baseStateCount * baseStateCount;
         final int polymorphismNonZeros = (dataType.getStateCount() - baseStateCount) * 3;
         return originalNonZeros + polymorphismNonZeros;
     }
@@ -188,21 +188,6 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     @Override
     protected void acceptState() {
 
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return null;
-    }
-
-    @Override
-    public String getDescription() {
-        return "";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return null;
     }
 
 }

@@ -49,13 +49,10 @@ public class PolymorphismAwareDataType extends DataType {
 
     public static final String DESCRIPTION = "polymorphismAware";
 
-    private final Map<String, Integer> sequenceStateMap;
-
     public PolymorphismAwareDataType(DataType baseDataType, int virtualPopSize) {
         this.baseDataType = baseDataType;
         this.virtualPopSize = virtualPopSize;
-        this.sequenceStateMap = new HashMap<>();
-        buildSequenceStateMap();
+        this.stateCount = getStateCount();
     }
 
     public static String getDataTypeDescription(DataType baseDataType, int virtualPopSize) {
@@ -78,26 +75,6 @@ public class PolymorphismAwareDataType extends DataType {
             return getState(new int[]{firstState, secondState}, new int[]{firstCount, secondCount});
         } else {
             throw new RuntimeException("Unexpected more than 3 characters in sequence");
-        }
-    }
-
-    private void buildSequenceStateMap() {
-
-        for (int i = 0; i < baseDataType.getStateCount(); i++) {
-            sequenceStateMap.put(baseDataType.getCode(i), i);
-        }
-        int state = baseDataType.getStateCount();
-        for (int i = 0; i < baseDataType.getStateCount() - 1; i++) {
-            String seq1 = baseDataType.getCode(i);
-            for (int j = i + 1; j < baseDataType.getStateCount(); j++) {
-                String seq2 = baseDataType.getCode(j);
-                for (int k = 1; k < virtualPopSize; k++) {
-                    String seq = seq1 + ":" + Integer.toString(k)
-                            + "|" + seq2 + ":" + Integer.toString(virtualPopSize - k);
-                    sequenceStateMap.put(seq, state);
-                    state++;
-                }
-            }
         }
     }
 

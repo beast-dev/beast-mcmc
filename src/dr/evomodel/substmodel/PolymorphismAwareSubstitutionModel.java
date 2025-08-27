@@ -27,7 +27,9 @@
 
 package dr.evomodel.substmodel;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.PolymorphismAwareDataType;
 import dr.inference.model.*;
 import dr.util.Citable;
@@ -60,7 +62,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         this.frequencyModel = new PolymorphismAwareFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter(), baseSubstitutionModel);
         this.virtualPopSize = dataType.getVirtualPopSize();
         this.dataType = dataType;
-        this.baseInfinitesimalMatrix = new double[baseSubstitutionModel.getFrequencyModel().getFrequencyCount() * baseSubstitutionModel.getFrequencyModel().getFrequencyCount()];
+        this.baseInfinitesimalMatrix = new double[dataType.getBaseDataType().getStateCount() * dataType.getBaseDataType().getStateCount()];
         syncBaseSubstitutionModel();
         addModel(baseSubstitutionModel);
     }
@@ -68,9 +70,18 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     public int getNonZeroEntryCount() {
+        int numberNucleotides;
+        if (dataType.getBaseDataType() instanceof Nucleotides) {
+            numberNucleotides = 1;
+        } else if (dataType.getBaseDataType() instanceof Codons) {
+            numberNucleotides = 3;
+        } else {
+            throw new RuntimeException("(PolymorphismAwareSubstitutionModel) Unsupported base data type: " + dataType.getBaseDataType().getClass().getName());
+        }
+
         final int baseStateCount = dataType.getBaseDataType().getStateCount();
-        final int originalNonZeros = baseStateCount * baseStateCount;
-        final int polymorphismNonZeros = (dataType.getStateCount() - baseStateCount) * 3;
+        final int originalNonZeros = baseStateCount * (3 * numberNucleotides + 1);
+        final int polymorphismNonZeros = (baseStateCount * 3 * numberNucleotides + 1) / 2  * (virtualPopSize - 1) * 3;
         return originalNonZeros + polymorphismNonZeros;
     }
 
@@ -105,12 +116,13 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         int index = 0;
         for (int i = 0; i < baseStateCount; i++) {
             for (int j = 0; j < baseStateCount; j++) {
-                if (i != j) {
+                final double baseRate = baseInfinitesimalMatrix[i * baseStateCount + j];
+                if (i != j && baseRate != 0) {
                     rowIndices[index] = i;
                     final int colIndex = dataType.getState(new int[]{i, j}, new int[]{virtualPopSize - 1, 1});
                     colIndices[index] = colIndex;
-                    values[index] = baseInfinitesimalMatrix[i * baseStateCount + j];
-                    diagonal[i] -= values[index];
+                    values[index] = baseRate;
+                    diagonal[i] -= baseRate;
                     index++;
                 }
             }
@@ -118,29 +130,34 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
         for (int i = 0; i < baseStateCount - 1; i++) {
             for (int j = i + 1; j < baseStateCount; j++) {
-                for (int k = 1; k < virtualPopSize; k++) {
-                    final double rate = getDriftRate(k);
-                    final int rowIndex = dataType.getState(new int[]{i, j}, new int[]{k, virtualPopSize - k});
-                    final int plusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k + 1, virtualPopSize - k - 1});
-                    final int minusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k - 1, virtualPopSize - k + 1});
-                    rowIndices[index] = rowIndex;
-                    colIndices[index] = plusOneColIndex;
-                    values[index] = rate;
-                    index++;
-                    rowIndices[index] = rowIndex;
-                    colIndices[index] = minusOneColIndex;
-                    values[index] = rate;
-                    index++;
-                    diagonal[rowIndex] -= 2 * rate;
+                final double baseRate = baseInfinitesimalMatrix[i * baseStateCount + j];
+                if (baseRate != 0) {
+                    for (int k = 1; k < virtualPopSize; k++) {
+                        final double rate = getDriftRate(k);
+                        final int rowIndex = dataType.getState(new int[]{i, j}, new int[]{k, virtualPopSize - k});
+                        final int plusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k + 1, virtualPopSize - k - 1});
+                        final int minusOneColIndex = dataType.getState(new int[]{i, j}, new int[]{k - 1, virtualPopSize - k + 1});
+                        rowIndices[index] = rowIndex;
+                        colIndices[index] = plusOneColIndex;
+                        values[index] = rate;
+                        index++;
+                        rowIndices[index] = rowIndex;
+                        colIndices[index] = minusOneColIndex;
+                        values[index] = rate;
+                        index++;
+                        diagonal[rowIndex] -= 2 * rate;
+                    }
                 }
             }
         }
 
         for (int i = 0; i < dataType.getStateCount(); i++) {
-            rowIndices[index] = i;
-            colIndices[index] = i;
-            values[index] = diagonal[i];
-            index++;
+            if (diagonal[i] != 0) {
+                rowIndices[index] = i;
+                colIndices[index] = i;
+                values[index] = diagonal[i];
+                index++;
+            }
         }
     }
 

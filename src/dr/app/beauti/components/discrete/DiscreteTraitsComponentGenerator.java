@@ -610,6 +610,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
         writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
 
+        this.enableInsertionPointBIT = false;
         getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, partition, writer);
         this.enableInsertionPointBIT = true;
 

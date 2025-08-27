@@ -29,6 +29,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PolymorphismAwareDataType;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 /**
@@ -80,6 +81,10 @@ public class PolymorphismAwareFrequencyModel extends FrequencyModel {
             }
         }
         return m;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
     }
 
     public double[] getFrequencies() {

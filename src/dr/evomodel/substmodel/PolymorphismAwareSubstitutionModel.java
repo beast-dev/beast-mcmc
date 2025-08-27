@@ -61,6 +61,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
         this.virtualPopSize = dataType.getVirtualPopSize();
         this.dataType = dataType;
         this.baseInfinitesimalMatrix = new double[baseSubstitutionModel.getFrequencyModel().getFrequencyCount() * baseSubstitutionModel.getFrequencyModel().getFrequencyCount()];
+        syncBaseSubstitutionModel();
         addModel(baseSubstitutionModel);
     }
 
@@ -166,6 +167,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == baseSubstitutionModel) {
             baseSubstitutionKnown = false;
+            fireModelChanged();
         }
     }
 
@@ -182,7 +184,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     protected void restoreState() {
-
+        baseSubstitutionKnown = false;
     }
 
     @Override

@@ -75,6 +75,29 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
     }
 
     @Override
+    public EigenDecomposition getEigenDecomposition() {
+        final int stateCount = dataType.getStateCount();
+
+        if (eigenSystem == null) {
+            eigenSystem = new ColtEigenSystem(stateCount);
+        }
+
+        double[][] infinitesimalMatrix = new double[stateCount][stateCount];
+        int[] rowIndices = new int[getNonZeroEntryCount()];
+        int[] colIndices = new int[getNonZeroEntryCount()];
+        double[] values = new double[getNonZeroEntryCount()];
+        getNonZeroEntries(rowIndices, colIndices, values);
+
+        for (int i = 0; i < getNonZeroEntryCount(); i++) {
+            infinitesimalMatrix[rowIndices[i]][colIndices[i]] = values[i];
+        }
+
+        return eigenSystem.decomposeMatrix(infinitesimalMatrix);
+    }
+
+    private EigenSystem eigenSystem = null;
+
+    @Override
     public void getNonZeroEntries(int[] rowIndices, int[] colIndices, double[] values) {
         syncBaseSubstitutionModel();
         final int baseStateCount = dataType.getBaseDataType().getStateCount();
@@ -108,7 +131,7 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
                     colIndices[index] = minusOneColIndex;
                     values[index] = rate;
                     index++;
-                    diagonal[i] -= 2 * rate;
+                    diagonal[rowIndex] -= 2 * rate;
                 }
             }
         }
@@ -134,11 +157,6 @@ public class PolymorphismAwareSubstitutionModel extends AbstractModel implements
 
     @Override
     public void getTransitionProbabilities(double distance, double[] matrix) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public EigenDecomposition getEigenDecomposition() {
         throw new RuntimeException("Not yet implemented!");
     }
 

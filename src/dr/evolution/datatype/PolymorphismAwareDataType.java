@@ -63,13 +63,23 @@ public class PolymorphismAwareDataType extends DataType {
         return virtualPopSize;
     }
 
+    private int getBaseState(String stateString) {
+        if (stateString.length() == 1) {
+            return baseDataType.getState(stateString.charAt(0));
+        } else if (baseDataType instanceof Codons) {
+            return ((Codons) baseDataType).getState(stateString.charAt(0), stateString.charAt(1), stateString.charAt(2));
+        } else {
+            throw new RuntimeException("Unsupported data type: " + baseDataType);
+        }
+    }
+
     public int getState(UncertainSequence.UncertainCharacterList characters) {
         assert(characters.size() < 3);
         if (characters.size() == 1) {
-            return baseDataType.getState(characters.get(0).getCharacter());
+            return getBaseState(characters.get(0).getSequenceString());
         } else if (characters.size() == 2) {
-            final int firstState = baseDataType.getState(characters.get(0).getCharacter());
-            final int secondState = baseDataType.getState(characters.get(1).getCharacter());
+            final int firstState = getBaseState(characters.get(0).getSequenceString());
+            final int secondState = getBaseState(characters.get(1).getSequenceString());
             final int firstCount = (int) characters.get(0).getWeight();
             final int secondCount = (int) characters.get(1).getWeight();
             return getState(new int[]{firstState, secondState}, new int[]{firstCount, secondCount});

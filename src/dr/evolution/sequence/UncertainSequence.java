@@ -27,6 +27,7 @@
 
 package dr.evolution.sequence;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 
 import java.util.ArrayList;
@@ -65,11 +66,18 @@ public class UncertainSequence extends Sequence {
 
         checkParsed();
         UncertainCharacterList list = characters.get(index);
-        if (list.size() == 1) {
-            return dataType.getState(list.get(0).getCharacter());
+
+        if (dataType instanceof Codons) {
+            return ((Codons) dataType).getState(list.get(0).getSequenceString().charAt(0),
+                    list.get(0).getSequenceString().charAt(1), list.get(0).getSequenceString().charAt(2));
         } else {
-            return dataType.getState(defaultAmbiguousChar);
+            if (list.size() == 1) {
+                return dataType.getState(list.get(0).getCharacter());
+            } else {
+                return dataType.getState(defaultAmbiguousChar);
+            }
         }
+
     }
 
 
@@ -138,7 +146,11 @@ public class UncertainSequence extends Sequence {
                     String charString = traits.nextToken();
                     String weightString = traits.nextToken();
 
-                    list.add(new UncertainCharacter(charString.charAt(0), Double.valueOf(weightString)));
+                    if (charString.length() > 1 && dataType instanceof Codons) {
+                        list.add(new UncertainString(charString, Double.valueOf(weightString)));
+                    } else {
+                        list.add(new UncertainCharacter(charString.charAt(0), Double.valueOf(weightString)));
+                    }
                 }
                 bufferIndex = end + 1;
 
@@ -192,9 +204,34 @@ public class UncertainSequence extends Sequence {
             return character;
         }
 
+        public String getSequenceString() {
+            return String.valueOf(character);
+        }
+
         public double getWeight() {
             return weight;
         }
+    }
+
+    public class UncertainString extends UncertainCharacter {
+
+        String sequenceString;
+        double weight;
+
+        UncertainString(String sequenceString, double weight) {
+            super(sequenceString.charAt(0), weight);
+            this.sequenceString = sequenceString;
+            this.weight = weight;
+        }
+
+        public boolean isValidCharacter(String validSet) {
+            throw new RuntimeException("Not implemented");
+        }
+
+        public String getSequenceString() {
+            return sequenceString;
+        }
+
     }
 
     public class UncertainCharacterList extends ArrayList<UncertainCharacter> { }

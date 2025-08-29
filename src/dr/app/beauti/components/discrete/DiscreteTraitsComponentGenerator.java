@@ -43,6 +43,7 @@ import dr.inference.model.DesignMatrix;
 import dr.inference.operators.MultivariateNormalOperator;
 import dr.inferencexml.distribution.BinomialLikelihoodParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
+import dr.inferencexml.model.DuplicatedParameterParser;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
@@ -68,9 +69,11 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
 
 /**
  * @author Andrew Rambaut
+ * @author Guy Baele
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
+    //avoid writing a reference to self in the structured coalescent likelihood
     private boolean enableInsertionPointBIT = false;
 
     public DiscreteTraitsComponentGenerator(final BeautiOptions options) {
@@ -105,14 +108,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             return false;
         }
 
-        boolean useSCA = false;
         boolean hasGLM = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
-            }
-            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                useSCA = true;
             }
         }
 
@@ -128,7 +127,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS() || (enableInsertionPointBIT && useSCA);
+                return hasGLM || hasBSSVS();
             default:
                 return false;
         }
@@ -160,19 +159,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                         writeGLMBinomialLikelihood(model, writer);
                     }
-                    if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                        writeTreeLikelihoodReference(model, writer);
-                    }
                 }
                 writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_MCMC_LIKELIHOOD:
-                writeTreeLikelihoodReferences(writer, true);
+                writeTreeLikelihoodReferences(writer);
                 break;
 
             case IN_FILE_LOG_LIKELIHOODS:
-                writeTreeLikelihoodReferences(writer, false);
+                writeTreeLikelihoodReferences(writer);
                 break;
 
             case IN_SCREEN_LOG:
@@ -507,13 +503,37 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
-        writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+            writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
+            writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+            writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
+            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+            writeParameter("rateCopyNumber",2, writer);
+            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+            writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+        } else {
+            //asymmetric
+            writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
+        }
 
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
+            } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
+                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+                writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
+                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+                writeParameter("indicatorCopyNumber",2, writer);
+                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+                writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+            } else {
+                //asymmetric
+                writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
+            }
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }
     }
@@ -611,7 +631,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
 
         this.enableInsertionPointBIT = false;
-        getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, partition, writer);
+        getCallingGenerator().generateInsertionPoint(InsertionPoint.IN_MCMC_LIKELIHOOD, partition, writer);
         this.enableInsertionPointBIT = true;
 
         writer.writeCloseTag(treeLikelihoodTag);
@@ -695,21 +715,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    /**
-     *
-     * @param writer XMLWriter
-     * @param onlyFIT boolean that indicates whether references to Backward-In-Time likelihoods also need to be written
-     */
-    private void writeTreeLikelihoodReferences(XMLWriter writer, boolean onlyFIT) {
+    private void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
                 AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
                 String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
                     treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
-                    if (onlyFIT) {
-                        continue;
-                    }
+                }
+                if (!enableInsertionPointBIT) {
+                    continue;
                 }
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;

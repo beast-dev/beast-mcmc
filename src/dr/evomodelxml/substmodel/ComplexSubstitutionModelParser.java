@@ -101,7 +101,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("No rates parameter found in " + getParserName());
             }
         } else if (ratesParameter.getDimension() != rateCount) {
-            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions.");
+            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions, but has " + ratesParameter.getDimension());
         }
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);

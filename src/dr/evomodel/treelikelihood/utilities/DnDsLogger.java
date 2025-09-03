@@ -41,8 +41,7 @@ import dr.math.EmpiricalBayesPoissonSmoother;
  * @author Marc A. Suchard
  */
 public class DnDsLogger implements Loggable {
-
-    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs, boolean counts, boolean synonymous) {
+    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs, boolean counts, boolean synonymous, String prefix) {
         this.tree = tree;
         this.traits = traits;
         numberSites = getNumberSites();
@@ -51,12 +50,17 @@ public class DnDsLogger implements Loggable {
         this.useDnMinusDs = useDnMinusDs;
         this.counts = counts;
         this.synonymous = synonymous;
+        this.prefix = (prefix != null ? prefix : "");
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
                 throw new IllegalArgumentException("Only whole tree traits are currently supported in DnDsLogger");
             }
         }
+    }
+
+    public String getPrefix() {
+        return prefix;
     }
 
 //    public LogColumn[] getColumns() {
@@ -220,6 +224,7 @@ public class DnDsLogger implements Loggable {
     private final boolean useDnMinusDs;
     private final boolean counts;
     private final boolean synonymous;
+    private final String prefix;
 
     private final static int NUM_TRAITS = 4;
     private final static int CS = 0;
@@ -229,12 +234,17 @@ public class DnDsLogger implements Loggable {
 
     private double[][] cachedValues;
 
-    public static String[] traitNames = new String[] {
-            CodonPartitionedRobustCounting.SITE_SPECIFIC_PREFIX + CodonLabeling.SYN.getText(),
-            CodonPartitionedRobustCounting.UNCONDITIONED_PREFIX + CodonLabeling.SYN.getText(),
-            CodonPartitionedRobustCounting.SITE_SPECIFIC_PREFIX + CodonLabeling.NON_SYN.getText(),
-            CodonPartitionedRobustCounting.UNCONDITIONED_PREFIX + CodonLabeling.NON_SYN.getText()
-    };
+    public static String[] buildTraitNames(String prefix) {
+        if (prefix == null) {
+            prefix = "";
+        }
+        return new String[] {
+                prefix + CodonPartitionedRobustCounting.SITE_SPECIFIC_PREFIX + CodonLabeling.SYN.getText(),
+                prefix + CodonPartitionedRobustCounting.UNCONDITIONED_PREFIX + CodonLabeling.SYN.getText(),
+                prefix + CodonPartitionedRobustCounting.SITE_SPECIFIC_PREFIX + CodonLabeling.NON_SYN.getText(),
+                prefix + CodonPartitionedRobustCounting.UNCONDITIONED_PREFIX + CodonLabeling.NON_SYN.getText()
+        };
+    }
 }
 
 

@@ -287,8 +287,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeOpenTag(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
-                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, false),
-                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, false)
+                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, true),
+                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, true)
                     });
             }
 
@@ -619,8 +619,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
             if (substModel.isSharedCoalescentModel()) {
-                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
-                        1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES)
+                });
+                writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+                writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
+                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+                writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
                 writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
                         stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);

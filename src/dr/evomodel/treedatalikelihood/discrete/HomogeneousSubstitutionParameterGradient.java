@@ -58,6 +58,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     private final List<TreeTrait> treeTraitProviderList = new ArrayList<>();
     private final Tree tree;
     private final Mode mode;
+    private final Integer dim;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
@@ -77,6 +78,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.mode = mode;
+        this.dim = dim;
 
         final String name = BranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -138,7 +140,11 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
 
     @Override
     public int getDimension() {
-        return 1;
+        if (dim == null) {
+            return parameter.getDimension();
+        } else {
+            return 1;
+        }
     }
 
     @Override

@@ -27,11 +27,13 @@
 
 package dr.evolution.datatype;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
 public class HiddenCodons extends Codons implements HiddenDataType {
-    public static final String DESCRIPTION = "hiddenCodon";
+    public static final String DESCRIPTION = HiddenDataType.DESCRIPTION + "Codon";
 
     public static final HiddenCodons UNIVERSAL_HIDDEN_2 = new HiddenCodons(GeneticCode.UNIVERSAL, 2);
     public static final HiddenCodons UNIVERSAL_HIDDEN_3 = new HiddenCodons(GeneticCode.UNIVERSAL, 3);
@@ -83,6 +85,13 @@ public class HiddenCodons extends Codons implements HiddenDataType {
 
     public String getCodeWithoutHiddenState(int state) {
         return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    static public void registerHiddenDataType(GeneticCode geneticCode, int hiddenClassCount) {
+        String registeredName = DESCRIPTION + hiddenClassCount + "-" + geneticCode.getName();
+        if (!Arrays.asList(DataType.getRegisteredDataTypeNames()).contains(registeredName)) {
+            DataType.registerDataType(registeredName, new HiddenCodons(geneticCode, hiddenClassCount));
+        }
     }
 
     public int getStateCount() {

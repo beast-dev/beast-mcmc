@@ -74,7 +74,7 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
         return convert;
     }
 
-    private void processHiddenDataType(String dataTypeName) {
+    private void processHiddenDataType(String dataTypeName) throws XMLParseException {
         Pattern pattern = Pattern.compile("^" + HiddenDataType.DESCRIPTION + "([A-Za-z]+)(\\d+)$");
         Matcher matcher = pattern.matcher(dataTypeName);
 
@@ -88,7 +88,7 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
             } else if (hiddenClassName.equals(HiddenCodons.DESCRIPTION)) {
                 HiddenCodons.registerHiddenDataType(GeneticCode.UNIVERSAL, hiddenCount);
             } else {
-                throw new RuntimeException("Unknown hidden data type: " + dataTypeName);
+                throw new XMLParseException("Unknown hidden data type: " + dataTypeName);
             }
         }
     }

@@ -146,6 +146,13 @@ public class PairedParalogGeneConversionSubstitutionModel extends AbstractModel 
 
         for (int state = 0; state < frequencyModel.getFrequencyCount(); state++) {
             System.arraycopy(flatQCache,state * stateCount, squareQCache[state], 0, stateCount);
+            double sum = 0;
+            for (int i = 0; i < stateCount; i++) {
+                if (i != state) {
+                    sum -= squareQCache[state][i];
+                }
+            }
+            squareQCache[state][state] = sum;
         }
 
         return eigenSystem.decomposeMatrix(squareQCache);

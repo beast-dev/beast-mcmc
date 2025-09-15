@@ -27,10 +27,15 @@
 
 package dr.util;
 
+import dr.evomodel.substmodel.InfinitesimalRatesLogger;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
+import org.apache.commons.math.stat.descriptive.moment.Mean;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
 
@@ -75,23 +80,46 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
         // This is a transformation of an n-dimensional vector to another n-dimensional vector but what comes _out_ is a
         // simplex of one greater dimension. The weights parameter has dimension n+1.
 
-        double[] out = new double[values.length + 1];
+        BigDecimal[] bigOut = new BigDecimal[values.length + 1];
 
-        double denominator = 0;
-
-        for(int i=0; i<dim; i++){
-            denominator +=  values[i]*weights.getParameterValue(i);
-        }
-
-        denominator += weights.getParameterValue(dim);
+        BigDecimal denominator = BigDecimal.valueOf(0);
 
         for(int i=0; i<dim; i++){
+            denominator = denominator.add(BigDecimal.valueOf(values[i]).multiply(BigDecimal.valueOf(weights.getParameterValue(i))));
+        }
 
-            out[i] = values[i]/denominator;
+        denominator = denominator.add(BigDecimal.valueOf(weights.getParameterValue(dim)));
+
+        for(int i=0; i<dim; i++){
+            bigOut[i] = BigDecimal.valueOf(values[i]).divide(denominator, 12, RoundingMode.HALF_UP);
+        }
+
+        bigOut[dim] = BigDecimal.valueOf(1).divide(denominator, 12, RoundingMode.HALF_UP);
+        double[] out = new double[dim+1];
+
+        for(int i=0; i<=dim; i++){
+            out[i] = bigOut[i].doubleValue();
+        }
+
+        // just testing the reverse works!
+
+        BigDecimal[] bigIn = new BigDecimal[values.length];
+
+        BigDecimal reverseDenominatorTemp = BigDecimal.valueOf(1);
+
+        for(int i=0; i<dim; i++){
+            reverseDenominatorTemp = reverseDenominatorTemp.subtract(bigOut[i].multiply(BigDecimal.valueOf(weights.getParameterValue(i))));
+        }
+
+        for(int i=0; i<dim; i++){
+            bigIn[i] = bigOut[i].multiply(BigDecimal.valueOf(weights.getParameterValue(dim))).divide(reverseDenominatorTemp, 12, RoundingMode.HALF_UP);
 
         }
 
-        out[dim] = 1/denominator;
+        for(int i=0; i<dim; i++){
+            BigDecimal tmp = BigDecimal.valueOf(values[i]);
+        }
+
         return(out);
 
     }
@@ -105,7 +133,7 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
     protected double getLogJacobian(double[] values) {
         Matrix partialsMatrix = new Matrix(dim, dim);
 
-        double sqrtDenominator;
+        double logSqrtDenominator;
 
         // reminder: dim is one less than the dimension of the simplex
 
@@ -114,26 +142,24 @@ public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
         for(int i=0; i<dim; i++){
             tempSum += weights.getParameterValue(i)*values[i];
         }
+        logSqrtDenominator =  Math.log1p(-tempSum);
 
-        sqrtDenominator = 1-tempSum;
-
-        assert sqrtDenominator > 0;
-
-        double denominator = sqrtDenominator * sqrtDenominator;
+        assert logSqrtDenominator > -Double.NEGATIVE_INFINITY;
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
                 if (j == i) {
-                    partialsMatrix.set(i, j, weights.getParameterValue(dim)*(sqrtDenominator + values[i]*weights.getParameterValue(i)) / denominator);
+                    partialsMatrix.set(i, j, ((1-tempSum) + values[i]*weights.getParameterValue(i)));
                 } else {
-                    partialsMatrix.set(i, j, (values[i]*weights.getParameterValue(j)*weights.getParameterValue(dim)) / denominator);
+                    partialsMatrix.set(i, j, (values[i]*weights.getParameterValue(j)));
                 }
             }
         }
 
         double logJacobian = 0;
         try {
-            logJacobian = Math.log(Math.abs(partialsMatrix.determinant()));
+
+            logJacobian =  dim*Math.log(weights.getParameterValue(dim)) + Math.log(Math.abs(partialsMatrix.determinant())) - dim*2*logSqrtDenominator;
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }

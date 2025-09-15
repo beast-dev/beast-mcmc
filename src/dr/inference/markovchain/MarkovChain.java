@@ -181,7 +181,6 @@ public final class MarkovChain implements Serializable {
         Map<String, Double> diagnosticDensities = null;
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
-
             // periodically log states
             fireCurrentModel(currentState, currentModel);
 

@@ -33,7 +33,10 @@ import dr.evolution.datatype.*;
 import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Alexei Drummond
@@ -49,6 +52,11 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Alignment alignment = (Alignment)xo.getChild(Alignment.class);
+
+        String dataTypeName = xo.getStringAttribute(DataType.DATA_TYPE);
+        if (dataTypeName.contains(HiddenDataType.DESCRIPTION)) {
+            processHiddenDataType(dataTypeName);
+        }
 
 	    // Old parser always returned UNIVERSAL type for codon conversion
 	    DataType dataType = DataTypeUtils.getDataType(xo);
@@ -66,6 +74,25 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
         return convert;
     }
 
+    private void processHiddenDataType(String dataTypeName) throws XMLParseException {
+        Pattern pattern = Pattern.compile("^" + HiddenDataType.DESCRIPTION + "([A-Za-z]+)(\\d+)$");
+        Matcher matcher = pattern.matcher(dataTypeName);
+
+        if (matcher.matches()) {
+            int hiddenCount = Integer.valueOf(matcher.group(2));
+            String hiddenClassName = HiddenDataType.DESCRIPTION + matcher.group(1);
+            if (hiddenClassName.equals(HiddenNucleotides.DESCRIPTION)) {
+                HiddenNucleotides.registerHiddenDataType(null, hiddenCount);
+            } else if (hiddenClassName.equals(HiddenAminoAcids.DESCRIPTION)) {
+                HiddenAminoAcids.registerHiddenDataType(null, hiddenCount);
+            } else if (hiddenClassName.equals(HiddenCodons.DESCRIPTION)) {
+                HiddenCodons.registerHiddenDataType(GeneticCode.UNIVERSAL, hiddenCount);
+            } else {
+                throw new XMLParseException("Unknown hidden data type: " + dataTypeName);
+            }
+        }
+    }
+
     public String getParserDescription() {
         return "Converts an alignment to the given data type.";
     }
@@ -78,8 +105,9 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
         new ElementRule(Alignment.class),
         new StringAttributeRule(DataType.DATA_TYPE,
             "The type of sequence data",
-            new String[] {Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
-		            HiddenCodons.DESCRIPTION+"2",HiddenCodons.DESCRIPTION+"3",HiddenCodons.DESCRIPTION+"4",HiddenCodons.DESCRIPTION+"5"},
+            "Examples include " +
+            String.join(", ", new String[] {Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
+		            HiddenCodons.DESCRIPTION+"2",HiddenCodons.DESCRIPTION+"3",HiddenCodons.DESCRIPTION+"4",HiddenCodons.DESCRIPTION+"5"}) + " and arbitrary number of hidden classes.",
             false )
     };
 }

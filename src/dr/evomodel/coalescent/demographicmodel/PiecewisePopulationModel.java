@@ -178,19 +178,25 @@ public class PiecewisePopulationModel extends DemographicModel implements Rescal
         double[] scaledIntervals = new double[intervals.length];
 
         int currentEpochIndex = 0;
+        double currentEpochBound = piecewiseConstantPopulation.getEpochDuration(0);
+        double currentHeight = 0;
         for (int i = 0; i < intervals.length; i++) {
             if (intervals[i] == 0) {
                 scaledIntervals[i] = 0;
             } else {
                 double accumulatedProduct = 0;
                 double accumulatedIntervalLength = 0;
-                while(accumulatedProduct + piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex) < targetIntensityIntervalProducts[i]) {
-                    accumulatedProduct += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
-                    accumulatedIntervalLength += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex);
+
+                while(accumulatedProduct + (currentEpochBound - currentHeight) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex) < targetIntensityIntervalProducts[i]) {
+                    accumulatedProduct += (currentEpochBound - currentHeight) / piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                    accumulatedIntervalLength += currentEpochBound - currentHeight;
+                    currentHeight = currentEpochBound;
                     currentEpochIndex++;
+                    currentEpochBound += piecewiseConstantPopulation.getEpochDuration(currentEpochIndex);
                 }
-                final double remainingProduct = targetIntensityIntervalProducts[i] - accumulatedProduct;
-                accumulatedIntervalLength += remainingProduct * piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                final double remainingHeight = (targetIntensityIntervalProducts[i] - accumulatedProduct) * piecewiseConstantPopulation.getEpochDemographic(currentEpochIndex);
+                accumulatedIntervalLength += remainingHeight;
+                currentHeight += remainingHeight;
                 scaledIntervals[i] = accumulatedIntervalLength;
             }
         }

@@ -41,6 +41,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
     public static final String EPSILON = "epsilon";
+    public static final String EXCLUDE_ROOT = "excludeRoot";
 
 
     public String getParserName() {
@@ -52,6 +53,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         Parameter latentTransitionRateParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_RATE);
         Parameter latentTransitionFrequencyParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_FREQUENCY);
+        boolean excludeRoot = xo.getAttribute("excludeRoot", false);
 
         CountableBranchCategoryProvider branchCategoryProvider = (CountableBranchCategoryProvider)xo.getChild(CountableBranchCategoryProvider.class);
 
@@ -69,7 +71,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                tree, nonLatentRateModel,
                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-               latentStateProportionParameter, branchCategoryProvider,epsilon);
+               latentStateProportionParameter, branchCategoryProvider,epsilon,excludeRoot);
     }
 
     //************************************************************************

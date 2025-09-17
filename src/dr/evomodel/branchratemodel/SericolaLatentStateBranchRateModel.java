@@ -190,7 +190,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 //        MarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
 //                createReward(), 2);
         // MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
-        MarkovReward series = new TwoStateSericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),createReward(),2);
+        MarkovReward series = new TwoStateSericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),createReward(),2,epsilon);
         return series;
     }
 

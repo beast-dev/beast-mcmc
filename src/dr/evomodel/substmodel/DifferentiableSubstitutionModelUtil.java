@@ -208,8 +208,8 @@ public class DifferentiableSubstitutionModelUtil {
         return differential;
     }
 
-    private static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,
-                                         double[] differentialFrequencies, double[][] differentialMassMatrix) {
+    protected static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,
+                                           double[] differentialFrequencies, double[][] differentialMassMatrix) {
         if (substitutionModel instanceof ComplexSubstitutionModel) {
             int i, j, k = 0;
             final int stateCount = differentialFrequencies.length;

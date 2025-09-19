@@ -47,6 +47,10 @@ import java.util.*;
 
 public class LogRateSubstitutionModel extends ComplexSubstitutionModel implements DifferentiableSubstitutionModel { // implements ParameterReplaceableSubstitutionModel
 
+    double[] Q = new double[stateCount * stateCount];
+    double normalizingConstant;
+    boolean Qknown = false;
+
     public LogRateSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                     LogAdditiveCtmcRateProvider lrm) {
 
@@ -75,6 +79,7 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == lrm) {
             updateMatrix = true;
+            Qknown = false;
             fireModelChanged();
         } else {
             super.handleModelChangedEvent(model, object, index);
@@ -120,9 +125,46 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
         return lrm.getTransform();
     }
 
+//    @Override
+//    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
+//        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+//    }
+    private void cachingQMatrix() {
+        if (!Qknown) {
+            normalizingConstant = this.setupMatrix();
+            this.getInfinitesimalMatrix(Q);
+            Qknown = true;
+        }
+    }
     @Override
-    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
-        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) { // TODO this is duplicated code from DifferentialMassProvider
+
+        cachingQMatrix();
+
+        final double[] differentialRates = new double[rateCount];
+        ((DifferentiableSubstitutionModel) this).setupDifferentialRates(wrt, differentialRates, normalizingConstant);
+
+        final double[] differentialFrequencies = new double[stateCount];
+        ((DifferentiableSubstitutionModel) this).setupDifferentialFrequency(wrt, differentialFrequencies);
+
+        double[][] differentialMassMatrix = new double[stateCount][stateCount];
+        DifferentiableSubstitutionModelUtil.setupQDerivative(this, differentialRates, differentialFrequencies, differentialMassMatrix);
+        this.makeValid(differentialMassMatrix, stateCount);
+
+        final double weightedNormalizationGradient
+                = ((DifferentiableSubstitutionModel) this).getWeightedNormalizationGradient(
+                wrt, differentialMassMatrix, differentialFrequencies);
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+            }
+        }
+
+        WrappedMatrix differential = new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
+        return differential;
+//        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
     }
 
     public class WrtLogRate implements DifferentialMassProvider.DifferentialWrapper.WrtParameter {
@@ -191,8 +233,9 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
     @Override
     public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt,
                                        double[] differentialRates, double normalizingConstant) {
-        final double[] Q = new double[stateCount * stateCount];
-        getInfinitesimalMatrix(Q); // TODO These are large; should cache
+        cachingQMatrix();
+//        final double[] Q = new double[stateCount * stateCount];
+//        getInfinitesimalMatrix(Q); // TODO These are large; should cache
         wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
     }
 

@@ -262,7 +262,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         double w = 0.0;
 
         final double premult = Math.exp(
-                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
         );
 
         // TODO Make factorial/choose static look-up tables
@@ -278,7 +278,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
 //        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
         double inc = 0.0;
         for (int k = 0; k <= n; k++) {
-            final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+            final double binomialCoef = choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
 //                 for (int uv = 0; uv < dim2; ++uv) {
             inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
 //                 }
@@ -471,7 +471,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         while (Math.abs(sum2 - tolerance2) > epsilon && sum2 < 1.0) {
 //        while (sum2 < tolerance2) {
             i++;
-            double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(i + 1);
+            double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) -getLnGamma(i + 1);
             sum2 += Math.exp(logDensity);
 //            sum2 = LogTricks.logSum(sum2, logDensity);
             if (DEBUG2) {
@@ -485,6 +485,25 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
 //        System.exit(-1);
 
         return i;
+    }
+
+    private double choose(int n, int k){
+        if (k < 0 || k > n) return 0;
+		double lchoose = getLnGamma(n + 1.0) -
+		getLnGamma(k + 1.0) - getLnGamma(n - k + 1.0);
+
+		return Math.floor(Math.exp(lchoose) + 0.5);
+    }
+    // should be the same as calling GammaFunction.lnGamma
+    private double getLnGamma(double n){
+        n = Math.floor(n + 0.5);
+        if (lnGamma == null || lnGamma.length <= n ) { // fill it up!
+            lnGamma = new double[(int) (n+50)];
+            for (int i = 0; i < (n+50); ++i) {
+                lnGamma[i] = GammaFunction.lnGamma(i);
+            }
+        }
+        return lnGamma[(int) n];
     }
 
     public String toString() {
@@ -527,6 +546,9 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
     private final int phi;
     private final int dim;
     private final double epsilon;
+
+    private double[][] binomialCoefficients;
+    private double[] lnGamma;
 
     private final EigenSystem eigenSystem;
 

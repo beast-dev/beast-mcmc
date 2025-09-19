@@ -145,8 +145,18 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         double w = 0.0;
 
         final int N = getNfromC() - 1;
+
+        // moving these caluculations out of the loop
+        final double premultFactor = (Math.log(lambda) + Math.log(time));
+        final int h = 1;
+        final double factor = lambda / (r[h] - r[h - 1]);
+        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+
         for (int n = 0; n <= N; ++n) {
-            w += accumulatePdf(x, n, time, uv);
+            final double premult = Math.exp(
+                    -lambda * time + n * premultFactor - getLnGamma(n + 1.0)
+            );
+            w += accumulatePdf(x, n, time, uv,premult,xh,factor);
         }
 
 //        if (DEBUG2) {
@@ -257,32 +267,45 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         }
     }
 
-    private double accumulatePdf(double x, int n, double time, int uv) {
+    
+    private double accumulatePdf(double x, int n, double time, int uv, double premult, double xh,double factor) {
 
         double w = 0.0;
 
-        final double premult = Math.exp(
-                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
-        );
+        // final double premult = Math.exp(
+        //         // -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
+        //         -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
+        // );
 
         // TODO Make factorial/choose static look-up tables
 
 //         for (int t = 0; t < X.length; ++t) { // For each time point
         int h = 1;
 
-        final double factor = lambda / (r[h] - r[h - 1]);
+        // final double factor = lambda / (r[h] - r[h - 1]);
 
-        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+        // double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
 
 //        final int dim2 = dim * dim;
 //        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
         double inc = 0.0;
+        double xhPow = 1.0;
+        double oneMinusXhPow = Math.pow(1.0 - xh, n);
         for (int k = 0; k <= n; k++) {
-            final double binomialCoef = choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
-//                 for (int uv = 0; uv < dim2; ++uv) {
-            inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
-//                 }
+            double binomialCoef = choose(n, k) * xhPow * oneMinusXhPow;
+              inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+            // update powers for next iteration
+            xhPow *= xh;
+            oneMinusXhPow /= (1.0 - xh);
         }
+
+
+//         for (int k = 0; k <= n; k++) {
+//             final double binomialCoef = choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+// //                 for (int uv = 0; uv < dim2; ++uv) {
+//             inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+// //                 }
+//         }
 
 //             for (int uv = 0; uv < dim2; ++uv) {
         w += factor * premult * inc;

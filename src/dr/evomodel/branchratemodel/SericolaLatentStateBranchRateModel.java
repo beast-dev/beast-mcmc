@@ -420,12 +420,24 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
 //        double joint = series.computePdf(reward, branchLength)[state];
+        double rate = latentTransitionRateParameter.getParameterValue(0);
+        double prop = latentTransitionFrequencyParameter.getParameterValue(0);
+        double noJump = Math.exp(-1 * rate * prop * branchLength); // no jump
 
         double joint;
 
-        if(reward==0){
-            joint = series.computeCdf(reward, branchLength, 0, 0);
-        }else{
+        if (reward == 0) {
+            // joint = series.computeCdf(reward, branchLength, 0, 0);
+            // no jump.
+            joint = noJump;
+            // series.computeCdf(reward, branchLength, 0, 0)- is no jumps using the series
+            // machinery
+            assert Math.abs(series.computeCdf(reward, branchLength, 0, 0) - joint) < epsilon
+                    : "0 jumps not calculated correctly: "
+                            + Math.abs(series.computeCdf(reward, branchLength, 0, 0) - joint) + "epsilon: " + epsilon
+                            + " rate: " + rate + " prop: " + prop + " bl: " + branchLength;
+            // System.out.println(joint + " = " + noJump);
+        } else {
             joint = series.computePdf(reward, branchLength, 0, 0);
         }
         

@@ -677,7 +677,7 @@
  -->
 
     <property name="AppleSignerApplication" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
-    <property name="AppleSignerInstaller" value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
+    <property name="AppleSignerInstaller" value="Developer ID Installer: Marc Suchard (LC992Z5R7E)"/>
 
     
     <!--

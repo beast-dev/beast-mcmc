@@ -40,6 +40,7 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
     private static final String TYPE = "type";
     private static final String SCALE = "scale";
     private static final String LENGTH = "length";
+    private static final String UNITARY_VARIANCE = "unitaryVariance";
 
     public String getParserName() { return PARSER_NAME; }
 
@@ -49,6 +50,7 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
         List<Parameter> parameters = new ArrayList<>();
 
+        boolean unitaryVariance = xo.getBooleanAttribute(UNITARY_VARIANCE, false);
         Parameter scale = xo.hasChildNamed(SCALE) ?
                 (Parameter) xo.getElementFirstChild(SCALE) :
                 new Parameter.Default(1.0);
@@ -62,7 +64,7 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
         final GaussianProcessKernel kernel;
         try {
-            kernel = GaussianProcessKernel.factory(xo.getStringAttribute(TYPE), id, parameters);
+            kernel = GaussianProcessKernel.factory(xo.getStringAttribute(TYPE), id, parameters, unitaryVariance);
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }
@@ -74,6 +76,7 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TYPE),
+            AttributeRule.newStringRule(UNITARY_VARIANCE, true),
             new ElementRule(SCALE, Parameter.class, "",  true),
             new ElementRule(LENGTH, Parameter.class, "", true),
     };

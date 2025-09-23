@@ -652,13 +652,17 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             final DesignMatrix design2 = basis.getDesignMatrix2();
             final WeightFunction weightFunction = basis.getWeightFunction();
 
-            final double scale = kernel.getScale();
+            double scale = kernel.getScale();
+            double normConstant  = 1;
+            if (kernel.isUnitaryVariance()) {
+                normConstant = kernel.getNormalizationFactor(design1.getColumnValues(0));
+            }
 
             for (int i = 0; i < rowDim; ++i) {
                 for (int j = 0; j < colDim; ++j) {
                     double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
                     double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
-                    double value = scale * kernel.getUnscaledCovariance(xi, xj);
+                    double value = scale * kernel.getUnscaledCovariance(xi, xj) / normConstant;
                     if (weightFunction != null) {
                         final double weightXi = weightFunction.getWeight(xi);
                         final double weightXj = weightFunction.getWeight(xj);

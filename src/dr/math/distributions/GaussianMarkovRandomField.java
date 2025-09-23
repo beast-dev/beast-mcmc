@@ -152,9 +152,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             }
             if (lambdaParameter != null) {
                 double lambda = lambdaParameter.getParameterValue(0);
-                double theta = 1/(1 + Math.exp(-lambda));
                 for (int i = 0; i < dim - 1; ++i) {
-                    Q.offDiagonal[i] = Q.offDiagonal[i] * theta;
+                    Q.offDiagonal[i] = Q.offDiagonal[i] * lambda;
                 }
             }
 

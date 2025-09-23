@@ -95,10 +95,6 @@ public interface GaussianProcessKernel {
             return product;
         }
 
-        public double normalizeByAverageNorm(double[] x) {
-            return 1.0;
-        }
-
         private static final String TYPE = "DotProduct";
 
         public double getUnscaledFirstDerivative(double x, double y) {
@@ -110,8 +106,13 @@ public interface GaussianProcessKernel {
 
         @Override
         public double getNormalizationFactor(double[] x) {
-            return 1.0;
+            double normalizationConstant = 0.0;
+            for (int i = 0; i < x.length; i++) {
+                normalizationConstant += x[i] * x[i];
+            }
+            return normalizationConstant / x.length;
         }
+
         @Override
         public double computeGradientWrtLength(double a, double b, double l) {
             throw new RuntimeException("The linear kernel does not have a length parameter");

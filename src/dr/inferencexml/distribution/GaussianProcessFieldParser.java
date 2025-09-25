@@ -28,19 +28,14 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
-import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.xml.*;
-import org.w3c.dom.NamedNodeMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
+import dr.math.distributions.gp.BasisDimension;
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
 
 public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
@@ -49,7 +44,6 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
     private static final String DIMENSION = "dim";
     private static final String ORDER_VARIANCE = "orderVariance";
     private static final String MEAN = "mean";
-    private static final String BASIS = "basis";
     private static final String NOISE = "gaussianNoise";
     private static final String FIELD = "field";
 
@@ -68,7 +62,10 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
 
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        List<BasisDimension> bases = parseBases(xo);
+        List<BasisDimension> bases = new ArrayList<>();
+        for (BasisDimension basis : xo.getAllChildren(BasisDimension.class)) {
+            bases.add(basis);
+        }
 
         AdditiveGaussianProcessDistribution distribution = new AdditiveGaussianProcessDistribution(id, dim, orderVariance, mean, noise, bases);
 
@@ -76,51 +73,6 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
         distribution.passParameter(field);
 
         return distribution;
-    }
-    public static final String WEIGHTFUNCTION = "weightFunction";
-    public static final String TYPE = "type";
-    
-    private List<BasisDimension> parseBases(XMLObject xo) {
-        List<BasisDimension> bases = new ArrayList<>();
-        for (XMLObject cxo : xo.getAllChildren(BASIS)) {
-            GaussianProcessKernel kernel = (GaussianProcessKernel) cxo.getChild(GaussianProcessKernel.class);
-
-            DesignMatrix design = (DesignMatrix) cxo.getChild(DesignMatrix.class);
-
-            if (design != null) {
-                XMLObject wfElement = cxo.getChild(WEIGHTFUNCTION);
-                if (wfElement != null) {
-                    AdditiveGaussianProcessDistribution.WeightFunction weightFunction = null;
-                    String type;
-                    try {
-                        type = (String) wfElement.getAttribute(TYPE);
-                    } catch (XMLParseException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    Map<String, Double> params = new HashMap<>();
-                    NamedNodeMap attributeList = wfElement.getAttributes();
-                    for (int i = 0; i < attributeList.getLength(); i++) {
-                        String attrName = attributeList.item(i).getNodeName();
-                        if (!attrName.equalsIgnoreCase(TYPE)) {
-                            params.put(attrName, Double.parseDouble(attributeList.item(i).getNodeValue()));
-                        }
-                    }
-
-                    weightFunction = AdditiveGaussianProcessDistribution.WeightFunction.WeightFunctionFactory.create(type, params);
-                    bases.add(new BasisDimension(kernel, design, design, weightFunction));
-                } else {
-                    bases.add(new BasisDimension(kernel, design));
-                }
-            } else {
-                RandomField.WeightProvider weights = (RandomField.WeightProvider)
-                        cxo.getChild(RandomField.WeightProvider.class);
-
-                bases.add(new BasisDimension(kernel, weights));
-            }
-        }
-
-        return bases;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
@@ -131,12 +83,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             new ElementRule(FIELD, Parameter.class, "Field Parameter", true),
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(BASIS, new XMLSyntaxRule[] {
-                    new XORRule(
-                            new ElementRule(DesignMatrix.class),
-                            new ElementRule(RandomField.WeightProvider.class)),
-                    new ElementRule(GaussianProcessKernel.class),
-                    }, 1, Integer.MAX_VALUE),
+            new ElementRule(BasisDimension.class, 1, Integer.MAX_VALUE),
             new ElementRule(NOISE, Parameter.class, "", true),
             WEIGHTS_RULE,
     };

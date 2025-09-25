@@ -64,7 +64,7 @@ public class GaussianProcessKernelParser extends AbstractXMLObjectParser {
 
         final GaussianProcessKernel kernel;
         try {
-            kernel = GaussianProcessKernel.factory(xo.getStringAttribute(TYPE), id, parameters, unitaryVariance);
+            kernel = GaussianProcessKernel.factory(xo.getStringAttribute(TYPE), id, parameters);
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }

@@ -48,14 +48,12 @@ public interface GaussianProcessKernel {
 
     double getUnscaledFirstDerivative(double x, double y);
     double getUnscaledSecondDerivative(double x, double y);
-    double getNormalizationFactor(double[] x);
-    default boolean isUnitaryVariance() { return false; }
 
     class KernelDerivatives extends Base {
         GaussianProcessKernel kernel;
         boolean doSecondDerivative = false;
         public KernelDerivatives(GaussianProcessKernel kernel, boolean doSecondDerivative) {
-            super("KernelFirstDerivative", kernel.getParameters(), kernel.isUnitaryVariance());
+            super("KernelFirstDerivative", kernel.getParameters());
             this.kernel = kernel;
             this.doSecondDerivative = doSecondDerivative;
         }
@@ -76,8 +74,8 @@ public interface GaussianProcessKernel {
 
     class Linear extends Base {
 
-        public Linear(String name, List<Parameter> parameters, boolean unitaryVariance) {
-            super(name, parameters, unitaryVariance);
+        public Linear(String name, List<Parameter> parameters) {
+            super(name, parameters);
         }
 
         public double getUnscaledCovariance(double x, double y) {
@@ -101,16 +99,7 @@ public interface GaussianProcessKernel {
             return y;
         }
         public double getUnscaledSecondDerivative(double x, double y) {
-           return 1;
-        }
-
-        @Override
-        public double getNormalizationFactor(double[] x) {
-            double normalizationConstant = 0.0;
-            for (int i = 0; i < x.length; i++) {
-                normalizationConstant += x[i] * x[i];
-            }
-            return normalizationConstant / x.length;
+            return 1;
         }
 
         @Override
@@ -121,8 +110,8 @@ public interface GaussianProcessKernel {
     }
     class NeuralNet extends Base {
         private static final String TYPE = "NeuralNet";
-        public NeuralNet(String name, List<Parameter> parameters, boolean unitaryVariance) {
-            super(name, parameters, unitaryVariance);
+        public NeuralNet(String name, List<Parameter> parameters) {
+            super(name, parameters);
         }
 
         @Override
@@ -164,8 +153,8 @@ public interface GaussianProcessKernel {
 
     class SquaredExponential extends Base {
 
-        public SquaredExponential(String name, List<Parameter> parameters, boolean unitaryVariance) {
-            super(name, parameters, unitaryVariance);
+        public SquaredExponential(String name, List<Parameter> parameters) {
+            super(name, parameters);
         }
 
         private double functionalForm(double normSquared) {
@@ -208,23 +197,19 @@ public interface GaussianProcessKernel {
 
     class OrnsteinUhlenbeck extends NormedBase {
 
-        public OrnsteinUhlenbeck(String name, List<Parameter> parameters, boolean unitaryVariance) { 
-            super(name, parameters, unitaryVariance); 
-        }
+        public OrnsteinUhlenbeck(String name, List<Parameter> parameters) { super(name, parameters); }
 
         double functionalForm(double norm) {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-        
+
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
     class MaternFiveHalves extends NormedBase {
 
-        public MaternFiveHalves(String name, List<Parameter> parameters, boolean unitaryVariance) { 
-            super(name, parameters, unitaryVariance); 
-        }
+        public MaternFiveHalves(String name, List<Parameter> parameters) { super(name, parameters); }
 
         double functionalForm(double norm) {
             double length = getLength();
@@ -240,8 +225,7 @@ public interface GaussianProcessKernel {
 
     class MaternThreeHalves extends NormedBase {
 
-        public MaternThreeHalves(String name, List<Parameter> parameters, boolean unitaryVariance) { 
-            super(name, parameters, unitaryVariance); }
+        public MaternThreeHalves(String name, List<Parameter> parameters) { super(name, parameters); }
 
         double functionalForm(double norm) {
             double length = getLength();
@@ -256,9 +240,7 @@ public interface GaussianProcessKernel {
 
     abstract class NormedBase extends Base {
 
-        public NormedBase(String name, List<Parameter> parameters, boolean unitaryVariance) { 
-            super(name, parameters, unitaryVariance); 
-        }
+        public NormedBase(String name, List<Parameter> parameters) { super(name, parameters); }
 
         abstract double functionalForm(double norm);
 
@@ -272,50 +254,51 @@ public interface GaussianProcessKernel {
             return functionalForm(norm);
         }
     }
-    
+
     enum AllKernels {
         LINEAR(Linear.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new Linear(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new Linear(name, parameters);
             }
         },
         NEURAL_NET(NeuralNet.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new NeuralNet(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new NeuralNet(name, parameters);
             }
         },
         OU(OrnsteinUhlenbeck.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new OrnsteinUhlenbeck(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new OrnsteinUhlenbeck(name, parameters);
             }
         },
         SE(SquaredExponential.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new SquaredExponential(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new SquaredExponential(name, parameters);
             }
         },
         MATERN32(MaternThreeHalves.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new MaternThreeHalves(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new MaternThreeHalves(name, parameters);
             }
         },
         MATERN52(MaternFiveHalves.TYPE) {
-            GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance) {
-                return new MaternFiveHalves(name, parameters, unitaryVariance); 
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new MaternFiveHalves(name, parameters);
             }
         };
 
         AllKernels(String name) { this.name = name; }
-
-        abstract GaussianProcessKernel factory(String name, List<Parameter> parameters, boolean unitaryVariance); 
+        abstract GaussianProcessKernel factory(String name, List<Parameter> parameters);
         public String toString() { return name; }
         private final String name;
     }
-    static GaussianProcessKernel factory(String type, String name, List<Parameter> parameters, boolean unitaryVariance)
+
+    static GaussianProcessKernel factory(String type, String name, List<Parameter> parameters)
             throws IllegalArgumentException {
+
         for (AllKernels kernel : AllKernels.values()) {
             if (type.equalsIgnoreCase(kernel.toString())) {
-                return kernel.factory(name, parameters, unitaryVariance); 
+                return kernel.factory(name, parameters);
             }
         }
         throw new IllegalArgumentException("Unknown kernel type");
@@ -329,14 +312,12 @@ public interface GaussianProcessKernel {
     abstract class Base extends AbstractModel implements GaussianProcessKernel {
 
         final List<Parameter> parameters;
-        final boolean unitaryVariance;
 
         public Base(String name,
-                    List<Parameter> parameters,
-                    boolean unitaryVariance) {
+                    List<Parameter> parameters) {
+
             super(name);
             this.parameters = parameters;
-            this.unitaryVariance = unitaryVariance;
 
             for (Parameter p : parameters) {
                 addVariable(p);
@@ -353,15 +334,6 @@ public interface GaussianProcessKernel {
             }
 
             return normSquared;
-        }
-        // this is a normalization factor necessary to get variance 1  for non-stationary kernels
-        public double getNormalizationFactor(double[] x) {
-            return 1.0;
-        }
-        
-        @Override
-        public boolean isUnitaryVariance() {
-            return unitaryVariance;
         }
 
         @Override

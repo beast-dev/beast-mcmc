@@ -23,10 +23,10 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
     private final double[] matrix;
 
     private final boolean DEBUG = false;
-    private  final AdditiveGaussianProcessDistribution.BasisDimension basis;
+    private  final BasisDimension basis;
 
     public GaussianProcessKernelGradient(RandomField randomField,
-                                         AdditiveGaussianProcessDistribution.BasisDimension basis,
+                                         BasisDimension basis,
                                          List<Parameter> parametersList) {
         this.randomField = randomField;
         this.field = randomField.getField();

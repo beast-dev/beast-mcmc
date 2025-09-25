@@ -31,7 +31,6 @@ import dr.inference.model.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 
 /**
  * @author Marc Suchard

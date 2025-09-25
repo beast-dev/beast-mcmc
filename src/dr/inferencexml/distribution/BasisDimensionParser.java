@@ -76,7 +76,7 @@ public class BasisDimensionParser extends AbstractXMLObjectParser {
             if (xo.getAttribute(NORMALIZED, false)) {
                 return new NormalizedBasisDimension(kernel, design, design, weightFunction);
             } else if (xo.getAttribute(UNITARY_VARIANCE, false)) {
-                return new UnitaryVarianceBasisDimension(kernel, design, design, weightFunction);
+                return new UnitaryVarianceLinearBasisDimension(kernel, design, design, weightFunction);
             } else {
                 return new BasisDimension(kernel, design, design, weightFunction);
             }

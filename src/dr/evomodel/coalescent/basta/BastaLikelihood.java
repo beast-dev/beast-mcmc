@@ -888,13 +888,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         double[] conditionalProbabilities = new double[stateCount];
 
         for (int j = 0; j < patternCount; j++) {
-            int parentIndex = parentState[j] * stateCount;
+            int parentIndex = parentState[j];
             for (int i = 0; i < stateCount; i++) {
                 if (conditionalProbabilitiesInLogSpace) {
-                    conditionalProbabilities[i] = Math.log(transitionMatrix[parentIndex + i]) +
+                    conditionalProbabilities[i] = Math.log(transitionMatrix[i * stateCount + parentIndex]) +
                             Math.log(nodeLikelihoods[i]);
                 } else {
-                    conditionalProbabilities[i] = transitionMatrix[parentIndex + i] *
+                    conditionalProbabilities[i] = transitionMatrix[i * stateCount + parentIndex] *
                             nodeLikelihoods[i];
                 }
             }
@@ -994,7 +994,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
                     if (isAmbiguous) {
                         int parentState = reconstructedStates[parentNum][j];
-                        int parentIndex = parentState * stateCount;
+                        int parentIndex = parentState;
                         double branchLength = tree.getNodeHeight(node) - tree.getNodeHeight(child);
                         double[] transitionMatrix = new double[stateCount * stateCount];
                         substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
@@ -1002,10 +1002,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                         double[] conditionalProbabilities = new double[stateCount];
                         for (int k = 0; k < stateCount; k++) {
                             if (conditionalProbabilitiesInLogSpace) {
-                                conditionalProbabilities[k] = Math.log(transitionMatrix[parentIndex + k]) +
+                                conditionalProbabilities[k] = Math.log(transitionMatrix[k * stateCount + parentIndex]) +
                                         Math.log(partials[k] > 0 ? partials[k] : Double.MIN_VALUE);
                             } else {
-                                conditionalProbabilities[k] = transitionMatrix[parentIndex + k] * partials[k];
+                                conditionalProbabilities[k] = transitionMatrix[k * stateCount + parentIndex] * partials[k];
                             }
                         }
                         reconstructedStates[childNum][j] = drawChoice(conditionalProbabilities);

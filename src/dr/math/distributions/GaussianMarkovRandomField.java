@@ -26,15 +26,11 @@
  */
 
 package dr.math.distributions;
-import dr.inference.distribution.Weights;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
-import dr.evolution.tree.Tree;
 import java.util.Arrays;
 
 /**
@@ -52,12 +48,10 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected final Parameter lambdaParameter;
     protected final RandomField.WeightProvider weightProvider;
 
-
     private final double[] mean;
 
     final SymmetricTriDiagonalMatrix Q;
     private final SymmetricTriDiagonalMatrix savedQ;
-
 
     private boolean meanKnown;
     protected boolean qKnown;
@@ -80,7 +74,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         this.lambdaParameter = lambda;
         this.weightProvider = weightProvider;
 
-
         addVariable(meanParameter);
         addVariable(precisionParameter);
 
@@ -92,20 +85,15 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             addModel(weightProvider);
         }
 
-
         this.mean = new double[dim];
 
         this.Q = new SymmetricTriDiagonalMatrix(dim);
         this.savedQ = new SymmetricTriDiagonalMatrix(dim);
 
-
         this.logMatchTerm = matchPseudoDeterminant ? matchPseudoDeterminantTerm(dim) : 0.0;
-
 
         meanKnown = false;
         qKnown = false;
-
-
     }
 
     @Override
@@ -125,8 +113,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
         return mean;
     }
-
-
 
     protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
@@ -154,16 +140,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                 double lambda = lambdaParameter.getParameterValue(0);
                 for (int i = 0; i < dim - 1; ++i) {
                     Q.offDiagonal[i] = Q.offDiagonal[i] * lambda;
+                    // TODO what about correction to Q.diagonal?
                 }
             }
-
 
             qKnown = true;
         }
         return Q;
     }
 
-    private static double[][] makePrecisionMatrix(SymmetricTriDiagonalMatrix Q) {
+    private static double[][] makePrecisionMatrix(SymmetricTriDiagonalMatrix Q, double scalar) {
 
         final int dim = Q.diagonal.length;
         double[][] precision = new double[dim][dim];
@@ -242,7 +228,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private double matchPseudoDeterminantTerm(int dim) {
         double term = 0.0;
-        if (isImproper() && weightProvider==null) {
+        if (isImproper() && weightProvider == null) {
             for (int i = 1; i < dim; ++i) {
                 double x = (2 - 2 * Math.cos(i * Math.PI / dim));
                 term += Math.log(x);
@@ -256,8 +242,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
-        if (!isImproper() || weightProvider!= null) {
-            double[][] precision = makePrecisionMatrix(Q);
+        if (!isImproper() || weightProvider != null) {
+            double[][] precision = makePrecisionMatrix(Q, 1.0);
             RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
             DoubleMatrix1D values = ed.getRealEigenvalues();
             for (int i = 0; i < values.size(); ++i) {
@@ -268,23 +254,23 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             }
         }
 
-//        if (CHECK_DETERMINANT) {
-//
-//            double[][] precision = makePrecisionMatrix(Q);
-//            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-//            DoubleMatrix1D values = ed.getRealEigenvalues();
-//            double sum = 0.0;
-//            for (int i = 0; i < values.size(); ++i) {
-//                double v = values.get(i);
-//                if (Math.abs(v) > 1E-6) {
-//                    sum += Math.log(v);
-//                }
-//            }
-//
-//            if (Math.abs(sum - logDet) > 1E-6) {
-//                throw new RuntimeException("Incorrect (pseudo-) determinant");
-//            }
-//        }
+        if (CHECK_DETERMINANT) {
+
+            double[][] precision = makePrecisionMatrix(Q, 1.0);
+            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+            DoubleMatrix1D values = ed.getRealEigenvalues();
+            double sum = 0.0;
+            for (int i = 0; i < values.size(); ++i) {
+                double v = values.get(i);
+                if (Math.abs(v) > 1E-6) {
+                    sum += Math.log(v);
+                }
+            }
+
+            if (Math.abs(sum - logDet) > 1E-6) {
+                throw new RuntimeException("Incorrect (pseudo-) determinant");
+            }
+        }
 
         return logDet;
     }
@@ -293,7 +279,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     public double[][] getScaleMatrix() {
-        return makePrecisionMatrix(getQ());
+        return makePrecisionMatrix(getQ(), precisionParameter.getParameterValue(0));
     }
 
     @Override

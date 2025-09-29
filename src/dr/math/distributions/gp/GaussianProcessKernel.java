@@ -99,7 +99,7 @@ public interface GaussianProcessKernel {
             return y;
         }
         public double getUnscaledSecondDerivative(double x, double y) {
-           return 1;
+            return 1;
         }
 
         @Override
@@ -203,7 +203,7 @@ public interface GaussianProcessKernel {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-        
+
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
@@ -319,7 +319,7 @@ public interface GaussianProcessKernel {
             super(name);
             this.parameters = parameters;
 
-            for (Parameter p :parameters) {
+            for (Parameter p : parameters) {
                 addVariable(p);
             }
         }

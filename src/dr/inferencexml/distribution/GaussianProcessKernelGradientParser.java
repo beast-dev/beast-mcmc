@@ -30,6 +30,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
 import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.BasisDimension;
 import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.math.distributions.gp.GaussianProcessKernelGradient;
 import dr.xml.*;
@@ -48,7 +49,7 @@ public class GaussianProcessKernelGradientParser extends AbstractXMLObjectParser
         List<Parameter> parameters;
 
         if (randomField.getDistribution() instanceof AdditiveGaussianProcessDistribution) {
-            AdditiveGaussianProcessDistribution.BasisDimension basis = null;
+            BasisDimension basis = null;
             AdditiveGaussianProcessDistribution distribution = (AdditiveGaussianProcessDistribution) randomField.getDistribution();
             if (xo.getChild(GaussianProcessKernel.class) != null) {
                 GaussianProcessKernel kernel = (GaussianProcessKernel) xo.getChild(GaussianProcessKernel.class);
@@ -56,7 +57,7 @@ public class GaussianProcessKernelGradientParser extends AbstractXMLObjectParser
                     throw new XMLParseException("The kernel has no parameters");
                 }
                 parameters = kernel.getParameters();
-                for (AdditiveGaussianProcessDistribution.BasisDimension b : distribution.getBases()) {
+                for (BasisDimension b : distribution.getBases()) {
                     if (b.getKernel() == kernel) {
                         basis = b;
                         break;
@@ -70,7 +71,7 @@ public class GaussianProcessKernelGradientParser extends AbstractXMLObjectParser
                 if (parameters.isEmpty()) {
                     throw new XMLParseException("No parameters are specified");
                 } else {
-                    for (AdditiveGaussianProcessDistribution.BasisDimension b : distribution.getBases()) {
+                    for (BasisDimension b : distribution.getBases()) {
                         if (b.getKernel().getParameters().containsAll(parameters)) {
                             basis = b;
                             List<Parameter> kernelParameters = basis.getKernel().getParameters();

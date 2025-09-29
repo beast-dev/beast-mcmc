@@ -68,7 +68,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
 
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
+        dim = diffusionModel.getDimension(); // getPrecisionParameter().getColumnDimension();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);

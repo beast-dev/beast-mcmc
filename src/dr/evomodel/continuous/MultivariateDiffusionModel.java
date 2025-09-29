@@ -33,8 +33,6 @@ import dr.inference.model.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
@@ -42,7 +40,6 @@ import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatt
 /**
  * @author Marc Suchard
  */
-
 
 public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
 
@@ -70,9 +67,9 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         super(DIFFUSION_PROCESS);
     }
 
-
-//    public void randomize(Parameter trait) {
-//    }
+    public int getDimension() {
+        return diffusionPrecisionMatrixParameter.getColumnDimension();
+    }
 
     public void check(Parameter trait) throws XMLParseException {
         assert trait != null;
@@ -191,21 +188,25 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             return new String[]{diffusionPrecisionMatrixParameter.toSymmetricString()};
         }
 
-        diffusionPrecisionMatrixParameter.toString();
         return new String[]{"null"};
-    }
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
     }
 
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
+
+    public static void checkIsPositiveDefinite(double[][] matrix) throws XMLParseException {
+        CholeskyDecomposition chol;
+        try {
+            chol = new CholeskyDecomposition(matrix);
+        } catch (IllegalDimension illegalDimension) {
+            throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
+        }
+
+        if (!chol.isSPD()) {
+            throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
+        }
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -219,16 +220,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
 
-            CholeskyDecomposition chol;
-            try {
-                chol = new CholeskyDecomposition(diffusionParam.getParameterAsMatrix());
-            } catch (IllegalDimension illegalDimension) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
-            }
-
-            if (!chol.isSPD()) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
-            }
+            checkIsPositiveDefinite(diffusionParam.getParameterAsMatrix());
 
             return new MultivariateDiffusionModel(diffusionParam);
         }

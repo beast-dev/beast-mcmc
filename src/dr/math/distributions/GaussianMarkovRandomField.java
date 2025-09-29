@@ -74,7 +74,10 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         this.lambdaParameter = lambda;
         this.weightProvider = weightProvider;
 
-        addVariable(meanParameter);
+        if (meanParameter != null) {
+            addVariable(meanParameter);
+        }
+
         addVariable(precisionParameter);
 
         if (lambda != null) {
@@ -155,18 +158,18 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         double[][] precision = new double[dim][dim];
 
         for (int i = 0; i < dim; ++i) {
-            precision[i][i] = Q.diagonal[i];
+            precision[i][i] = Q.diagonal[i] * scalar;
         }
 
         for (int i = 0; i < dim - 1; ++i) {
-            precision[i][i + 1] = Q.offDiagonal[i];
-            precision[i + 1][i] = Q.offDiagonal[i];
+            precision[i][i + 1] = Q.offDiagonal[i] * scalar;
+            precision[i + 1][i] = Q.offDiagonal[i] * scalar;
         }
 
         return precision;
     }
 
-    protected boolean isImproper() {
+    public boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
 
@@ -237,7 +240,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return term;
     }
 
-    protected double getLogDeterminant() {
+    public double getLogDeterminant() {
+
+        // TODO cache this value
 
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;

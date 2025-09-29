@@ -27,15 +27,13 @@
 
 package dr.evomodel.continuous;
 
+import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeAttributeProvider;
 import dr.inference.model.*;
+import dr.math.distributions.GaussianMarkovRandomField;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
@@ -43,82 +41,132 @@ import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatt
  * @author Marc Suchard
  */
 
+public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusionModel {
+//        AbstractModel implements TreeAttributeProvider {
 
-public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
+    // TODO create interface for `MultivariateDIffusion`
 
-    public static final String DIFFUSION_PROCESS = "multivariateDiffusionModel";
-    public static final String DIFFUSION_CONSTANT = "precisionMatrix";
-    public static final String PRECISION_TREE_ATTRIBUTE = "precision";
+    private final GaussianMarkovRandomField field;
+    private final int precisionDim;
+    private final int blockDim;
 
-    public static final double LOG2PI = Math.log(2 * Math.PI);
-
-    /**
-     * Construct a diffusion model.
-     */
-
-    public MultivariateDiffusionModel(MatrixParameterInterface diffusionPrecisionMatrixParameter) {
-
-        super(DIFFUSION_PROCESS);
-
-        this.diffusionPrecisionMatrixParameter = diffusionPrecisionMatrixParameter;
-        calculatePrecisionInfo();
-        addVariable(diffusionPrecisionMatrixParameter);
-
+    public DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block,
+                                                 GaussianMarkovRandomField field) {
+        this(block, field.getDimension(), field);
     }
 
-    public MultivariateDiffusionModel() {
-        super(DIFFUSION_PROCESS);
+    public DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates) {
+        this(block, replicates, null);
     }
 
+    private DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates,
+                                                  GaussianMarkovRandomField field) {
+        super();
 
-//    public void randomize(Parameter trait) {
-//    }
+        this.block = block;
+        this.field = field;
+        this.replicates = replicates;
+        this.blockDim = block.getRowDimension();
+        this.precisionDim = blockDim * replicates;
 
-    public void check(Parameter trait) throws XMLParseException {
-        assert trait != null;
+        variableChanged = true;
+
+        addVariable(block);
+
+        if (field != null) {
+            addModel(field);
+        }
     }
 
     public MatrixParameterInterface getPrecisionParameter() {
-        checkVariableChanged();
-        return diffusionPrecisionMatrixParameter;
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    public int getDimension() {
+        return precisionDim;
     }
 
     public double[][] getPrecisionmatrix() {
-        if (diffusionPrecisionMatrixParameter != null) {
-            checkVariableChanged();
-            return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
+        checkVariableChanged();
+        precisionMatrix = new double[precisionDim][precisionDim];
+
+        // TODO delegate this work
+        if (field != null) {
+            double[][] gmrf = field.getScaleMatrix();
+
+            assert replicates == gmrf.length;
+
+            // TODO do O(replicates) loops instead of O(replicates^2) here
+            for (int k = 0; k < replicates; ++k) {
+                for (int l = 0; l < replicates; ++l) {
+                    double scalar = gmrf[k][l];
+                    if (scalar != 0.0) {
+                        fillSquareBlock(
+                                precisionMatrix, k * blockDim, l * blockDim,
+                                block, scalar);
+                    }
+                }
+            }
+        } else {
+            for (int r = 0; r < replicates; ++r) {
+                int offset = r * blockDim;
+                fillSquareBlock(precisionMatrix, offset, offset, block, 1.0);
+            }
         }
-        return null;
+        return precisionMatrix;
+    }
+
+    private void fillSquareBlock(double[][] destination, int rowOffset, int columnOffset,
+                                 MatrixParameterInterface source,
+                                 double scalar) {
+        assert source.getRowDimension() == source.getColumnDimension();
+
+        final int dim = source.getRowDimension();
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                destination[rowOffset + i][columnOffset + j] = scalar * source.getParameterValue(i, j);
+            }
+        }
     }
 
     public double[] getPrecisionmatrixAsVector() {
         return(flatten(getPrecisionmatrix()));
     }
 
+    private static final boolean CHECK_DETERMINANT = true;
+
     public double getDeterminantPrecisionMatrix() {
         checkVariableChanged();
-        return determinatePrecisionMatrix;
-    }
 
-    /**
-     * @return the log likelihood of going from start to stop in the given time
-     */
-    public double getLogLikelihood(double[] start, double[] stop, double time) {
+        double logDet;
 
-        if (time == 0) {
-            boolean equal = true;
-            for (int i = 0; i < start.length; i++) {
-                if (start[i] != stop[i]) {
-                    equal = false;
-                    break;
-                }
-            }
-            if (equal)
-                return 0.0;
-            return Double.NEGATIVE_INFINITY;
+        // TODO delegate
+        if (field != null) {
+            int effectiveDim = field.isImproper() ? replicates - 1 : replicates;
+            logDet = blockDim * field.getLogDeterminant() + effectiveDim * logDeterminateBlockMatrix;
+        } else {
+            logDet = replicates * logDeterminateBlockMatrix;
         }
 
-        return calculateLogDensity(start, stop, time);
+        if (CHECK_DETERMINANT) {
+
+            double[][] precision = getPrecisionmatrix();
+            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+            DoubleMatrix1D values = ed.getRealEigenvalues();
+            double sum = 0.0;
+            for (int i = 0; i < values.size(); ++i) {
+                double v = values.get(i);
+                if (Math.abs(v) > 1E-6) {
+                    sum += Math.log(v);
+                }
+            }
+
+            if (Math.abs(sum - logDet) > 1E-6) {
+                throw new RuntimeException("Incorrect (pseudo-) determinant");
+            }
+        }
+
+        return Math.exp(logDet);
     }
 
     protected void checkVariableChanged() {
@@ -128,54 +176,29 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         }
     }
 
-    protected double calculateLogDensity(double[] start, double[] stop, double time) {
-        checkVariableChanged();
-        final double logDet = Math.log(determinatePrecisionMatrix);
-        return MultivariateNormalDistribution.logPdf(stop, start, diffusionPrecisionMatrix, logDet, time);
-    }
-
-    // todo should be a test, no?
-    public static void main(String[] args) {
-        double[] start = {1, 2};
-        double[] stop = {0, 0};
-        double[][] precision = {{2, 0.5}, {0.5, 1}};
-        double scale = 0.2;
-        MatrixParameter precMatrix = new MatrixParameter("Hello");
-        precMatrix.addParameter(new Parameter.Default(precision[0]));
-        precMatrix.addParameter(new Parameter.Default(precision[1]));
-        MultivariateDiffusionModel model = new MultivariateDiffusionModel(precMatrix);
-        System.err.println("logPDF = " + model.calculateLogDensity(start, stop, scale));
-        System.err.println("Should be -19.948");
-    }
-
     protected void calculatePrecisionInfo() {
-        diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
-        determinatePrecisionMatrix =
-                Math.exp(MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(
-                        diffusionPrecisionMatrix));
+        blockMatrix = block.getParameterAsMatrix();
+        logDeterminateBlockMatrix = MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(
+                        blockMatrix);
     }
 
-    // *****************************************************************
-    // Interface Model
-    // *****************************************************************
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        // no intermediates need to be recalculated...
+        variableChanged = true;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         variableChanged = true;
-//        calculatePrecisionInfo();
     }
 
     protected void storeState() {
-        savedDeterminatePrecisionMatrix = determinatePrecisionMatrix;
-        savedDiffusionPrecisionMatrix = diffusionPrecisionMatrix;
+        logSavedDeterminateBlockMatrix = logDeterminateBlockMatrix;
+        savedBlockMatrix = blockMatrix;
         storedVariableChanged = variableChanged;
     }
 
     protected void restoreState() {
-        determinatePrecisionMatrix = savedDeterminatePrecisionMatrix;
-        diffusionPrecisionMatrix = savedDiffusionPrecisionMatrix;
+        logDeterminateBlockMatrix = logSavedDeterminateBlockMatrix;
+        blockMatrix = savedBlockMatrix;
         variableChanged = storedVariableChanged;
     }
 
@@ -187,85 +210,26 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     public String[] getAttributeForTree(Tree tree) {
-        if (diffusionPrecisionMatrixParameter != null) {
-            return new String[]{diffusionPrecisionMatrixParameter.toSymmetricString()};
+        if (block != null) {
+            return new String[]{block.toSymmetricString()};
+        } else {
+            return new String[]{"null"};
         }
-
-        diffusionPrecisionMatrixParameter.toString();
-        return new String[]{"null"};
     }
 
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
+    final protected MatrixParameterInterface block;
+    final int replicates;
 
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
+    private double logDeterminateBlockMatrix;
+    private double logSavedDeterminateBlockMatrix;
 
-    // **************************************************************
-    // XMLObjectParser
-    // **************************************************************
+    private double[][] blockMatrix;
+    private double[][] savedBlockMatrix;
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    private double[][] precisionMatrix;
+    private double[][] savedPrecisionMatrix;
 
-        public String getParserName() {
-            return DIFFUSION_PROCESS;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
-            MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
-                    cxo.getChild(MatrixParameterInterface.class);
-
-            CholeskyDecomposition chol;
-            try {
-                chol = new CholeskyDecomposition(diffusionParam.getParameterAsMatrix());
-            } catch (IllegalDimension illegalDimension) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
-            }
-
-            if (!chol.isSPD()) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
-            }
-
-            return new MultivariateDiffusionModel(diffusionParam);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "Describes a multivariate normal diffusion process.";
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(DIFFUSION_CONSTANT,
-                        new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
-        };
-
-        public Class getReturnType() {
-            return MultivariateDiffusionModel.class;
-        }
-    };
-
-    // **************************************************************
-    // Private instance variables
-    // **************************************************************
-
-    protected MatrixParameterInterface diffusionPrecisionMatrixParameter;
-    private double determinatePrecisionMatrix;
-    private double savedDeterminatePrecisionMatrix;
-    private double[][] diffusionPrecisionMatrix;
-    private double[][] savedDiffusionPrecisionMatrix;
-
-    private boolean variableChanged = true;
+    private boolean variableChanged;
     private boolean storedVariableChanged;
 
 }

@@ -41,6 +41,7 @@ public class GriddedWeights extends AbstractModel implements RandomField.WeightP
     private final List<TreeModel> treeModelList;
     private final boolean rescaleByRootHeight;
     private final Parameter gridPoints;
+    private final double gridAverage;
 
 
     public GriddedWeights(List<TreeModel> treeModelList, Parameter gridPoints,
@@ -49,7 +50,8 @@ public class GriddedWeights extends AbstractModel implements RandomField.WeightP
         this.treeModelList = treeModelList;
         this.rescaleByRootHeight = rescaleByRootHeight;
         this.gridPoints = gridPoints;
-//        addModel(tree);
+        int dim = gridPoints.getDimension();
+        this.gridAverage = (gridPoints.getParameterValue(dim - 1) - gridPoints.getParameterValue(0)) / dim;
 //        addVariable(gridPoints);
     }
 
@@ -58,41 +60,31 @@ public class GriddedWeights extends AbstractModel implements RandomField.WeightP
         if (Math.abs(index1 - index2) != 1) {
             return 0.0;
         } else {
-            double higherEnd;
             double lowerEnd;
             int maxIndex = Math.max(index1, index2);
-            if (maxIndex >= gridPoints.getDimension()) {
-                TreeModel tree = treeModelList.get(0);
-                if (treeModelList.size() == 1 && gridPoints.getParameterValue(maxIndex - 1) < tree.getNodeHeight(tree.getRoot())) {
-                    higherEnd = tree.getNodeHeight(tree.getRoot());
-                } else {
-                    higherEnd = gridPoints.getParameterValue(maxIndex - 1) +
-                            (gridPoints.getParameterValue(maxIndex - 1) - gridPoints.getParameterValue(maxIndex - 2)) / 2.0;
-                }
-            } else {
-                higherEnd = gridPoints.getParameterValue(maxIndex);
-            }
+            double higherEnd = gridPoints.getParameterValue(maxIndex);
             if (maxIndex == 1) {
                 lowerEnd = 0.0; // TODO what if the first grid point is actually 0? This should not be in the first place
             } else {
                 lowerEnd = gridPoints.getParameterValue(maxIndex - 2);
             }
-            return 2/(higherEnd - lowerEnd) * getFieldScalar();
+            return 2/(higherEnd - lowerEnd) * gridAverage * getFieldScalar();
         }
 
     }
 
     private double getFieldScalar() {
         if (rescaleByRootHeight) {
-            if (treeModelList.size() > 1) {
-                double sumRootsHeight = 0.0;
-                for(TreeModel tree : treeModelList) {
-                    sumRootsHeight += tree.getNodeHeight(tree.getRoot());
-                }
-                return sumRootsHeight / treeModelList.size();
-            } else {
-                return treeModelList.get(0).getNodeHeight(treeModelList.get(0).getRoot());
-            }
+            throw new IllegalArgumentException("Rescaling by root not yet implemented");
+//            if (treeModelList.size() > 1) {
+//                double sumRootsHeight = 0.0;
+//                for(TreeModel tree : treeModelList) {
+//                    sumRootsHeight += tree.getNodeHeight(tree.getRoot());
+//                }
+//                return sumRootsHeight / treeModelList.size();
+//            } else {
+//                return treeModelList.get(0).getNodeHeight(treeModelList.get(0).getRoot());
+//            }
         }
         return 1.0;
     }

@@ -8,15 +8,15 @@ import org.ejml.data.DenseMatrix64F;
  * //
  * This class orthogonalizes the kernel against the linear subspace
  */
-public class NormalizedBasisDimension extends BasisDimension {
+public class OrthogonalComplementProjectedBasisDimension extends BasisDimension {
 
-    public NormalizedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2, WeightFunction weightFunction) {
+    public OrthogonalComplementProjectedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2, WeightFunction weightFunction) {
         super(kernel, design1, design2, weightFunction);
     }
-    public NormalizedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
+    public OrthogonalComplementProjectedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
         this(kernel, design1, design2, null);
     }
-    public NormalizedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
+    public OrthogonalComplementProjectedBasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
         this(kernel, design, design);
     }
 
@@ -28,6 +28,12 @@ public class NormalizedBasisDimension extends BasisDimension {
         final double[] v = new double[n]; // scratch
         // Adding the orthogonalized contribution of inK into 'out'
         computeKPerpAddInto(inK, out, x1, v);
+//        DenseMatrix64F kPerp = computeKPerp(inK, x1); // slower approach
+//        for(int i=0;i<n;i++) {
+//            for (int j = 0; j < n; j++) {
+//                out.add(i, j, kPerp.get(i, j));
+//            }
+//        }
     }
 
     /**
@@ -80,5 +86,51 @@ public class NormalizedBasisDimension extends BasisDimension {
         //   double a = 0.5*(out.get(i,j)+out.get(j,i));
         //   out.set(i,j,a); out.set(j,i,a);
         // }
+    }
+
+
+    private static DenseMatrix64F computeKPerp(DenseMatrix64F K, double[] h) {
+        final int n = K.numRows;
+        if (K.numCols != n) throw new IllegalArgumentException("K must be square");
+        if (h.length != n)   throw new IllegalArgumentException("h length must match K dimension");
+
+        // s = h^T h
+        double s = 0.0;
+        for (double hi : h) s += hi * hi;
+        if (s <= 0.0) throw new IllegalArgumentException("h must be non-zero (h^T h > 0)");
+
+        // v = K h
+        final double[] v = new double[n];
+        for (int i = 0; i < n; i++) {
+            double sum = 0.0;
+            int rowStart = i * n;
+            for (int j = 0; j < n; j++) {
+                sum += K.data[rowStart + j] * h[j];
+            }
+            v[i] = sum;
+        }
+
+        // hv = h^T v
+        double hv = 0.0;
+        for (int i = 0; i < n; i++) hv += h[i] * v[i];
+
+        final double alpha = 1.0 / s;           // for (v h^T + h v^T)/s
+        final double beta  = hv / (s * s);      // for (hv/s^2) h h^T
+
+        // K_perp = K - alpha*(v h^T) - alpha*(h v^T) + beta*(h h^T)
+        DenseMatrix64F Kperp = K.copy();
+        double[] kd = Kperp.data;
+
+        for (int i = 0; i < n; i++) {
+            final double vi = v[i];
+            final double hi = h[i];
+            int rowStart = i * n;
+            for (int j = 0; j < n; j++) {
+                kd[rowStart + j] += -alpha * (vi * h[j] + hi * v[j]) + beta * (hi * h[j]);
+            }
+        }
+
+        // TODO symmetrize to counter tiny round-off (since K should be symmetric)
+        return Kperp;
     }
 }

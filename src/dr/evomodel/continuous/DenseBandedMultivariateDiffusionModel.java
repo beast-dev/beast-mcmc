@@ -79,7 +79,12 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
     }
 
     public MatrixParameterInterface getPrecisionParameter() {
-        throw new RuntimeException("Not yet implemented");
+        // TODO Delegate
+        if (field != null) {
+            return block;
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
     }
 
     public int getDimension() {

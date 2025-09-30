@@ -49,7 +49,7 @@ public class BasisDimension {
 
         // Decide target: write directly to gramian unless subclass needs a preimage K
         final boolean needsPost = needsPostProcess();
-        final DenseMatrix64F target = needsPost ? scratchK : gramian;
+        final DenseMatrix64F target = needsPost ? getScratchK() : gramian;
 
         fillScaledKernel(target, x1, x2, nR, nC, useWeights);
 
@@ -57,6 +57,11 @@ public class BasisDimension {
         if (needsPost) {
             postProcess(target, gramian, x1, nR); // pass x1 as default h-source
         }
+    }
+
+    public DenseMatrix64F getScratchK() {
+        scratchK.zero();
+        return scratchK;
     }
 
     private void fillScaledKernel(DenseMatrix64F out, double[] x1, double[] x2,

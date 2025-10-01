@@ -901,7 +901,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
             subIntervalStates[nodeNumber][j] = drawChoice(conditionalProbabilities);
             if (!returnMarginalLogLikelihood) {
-                double contrib = transitionMatrix[parentIndex + subIntervalStates[nodeNumber][j]];
+                double contrib = transitionMatrix[subIntervalStates[nodeNumber][j] * stateCount + parentIndex];
                 jointLogLikelihood += Math.log(contrib);
             }
         }
@@ -1043,10 +1043,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         for (int j = 0; j < patternCount; j++) {
             int parentState = reconstructedStates[parentNumber][j];
-            int parentIndex = parentState * stateCount;
+            int parentIndex = parentState;
 
             for (int i = 0; i < stateCount; i++) {
-                double transProb = transitionMatrix[parentIndex + i];
+                double transProb = transitionMatrix[i * stateCount + parentIndex];
                 double likelihood = childPartials[i];
 
                 conditionalProbabilities[i] = conditionalProbabilitiesInLogSpace ?
@@ -1057,16 +1057,42 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             reconstructedStates[childNumber][j] = drawChoice(conditionalProbabilities);
 
             if (!returnMarginalLogLikelihood) {
-                double contrib = transitionMatrix[parentIndex + reconstructedStates[childNumber][j]];
+                double contrib = transitionMatrix[reconstructedStates[childNumber][j] * stateCount + parentIndex];
                 jointLogLikelihood += Math.log(contrib);
             }
         }
     }
 
 
+//    private int drawChoice(double[] measure) {
+//        if (useMAP) {
+//            // Use Maximum A Posteriori
+//            double max = measure[0];
+//            int choice = 0;
+//            for (int i = 1; i < measure.length; i++) {
+//                if (measure[i] > max) {
+//                    max = measure[i];
+//                    choice = i;
+//                }
+//            }
+//            return choice;
+//        } else {
+//            if (conditionalProbabilitiesInLogSpace) {
+//                return MathUtils.randomChoiceLogPDF(measure);
+//            }
+//            return MathUtils.randomChoicePDF(measure);
+//        }
+//    }
+
+
     private int drawChoice(double[] measure) {
-        if (useMAP) {
-            // Use Maximum A Posteriori
+        double sum = 0.0;
+        for (int i = 0; i < measure.length; i++) {
+            sum += measure[i];
+        }
+
+        if (sum < 0.0000000001) {
+            System.out.println("Warning: Probability sum is extremely small: " + sum);
             double max = measure[0];
             int choice = 0;
             for (int i = 1; i < measure.length; i++) {
@@ -1076,13 +1102,25 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                 }
             }
             return choice;
-        } else {
-            if (conditionalProbabilitiesInLogSpace) {
-                return MathUtils.randomChoiceLogPDF(measure);
-            }
-            return MathUtils.randomChoicePDF(measure);
         }
+
+        double[] normalizedMeasure = new double[measure.length];
+        for (int i = 0; i < measure.length; i++) {
+            normalizedMeasure[i] = measure[i] / sum;
+        }
+
+        double x = MathUtils.nextDouble();
+        sum = 0.0;
+        for (int i = 0; i < normalizedMeasure.length; i++) {
+            sum += normalizedMeasure[i];
+            if (x < sum) {
+                return i;
+            }
+        }
+
+        return normalizedMeasure.length - 1;
     }
+
 
     private static String formattedState(int[] state, CodeFormatter formatter) {
         StringBuffer sb = new StringBuffer();

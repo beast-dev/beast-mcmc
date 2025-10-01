@@ -41,7 +41,7 @@ public class BasisDimensionParser extends AbstractXMLObjectParser {
     private static final String PARSER_NAME = "basis";
     public static final String WEIGHTFUNCTION = "weightFunction";
     public static final String TYPE = "type";
-    public static final String NORMALIZED = "normalized";
+    public static final String NORMALIZED = "orthogonalProjection";
     public static final String UNITARY_VARIANCE = "unitaryVariance";
 
     public String getParserName() { return PARSER_NAME; }
@@ -74,7 +74,7 @@ public class BasisDimensionParser extends AbstractXMLObjectParser {
                 weightFunction = WeightFunction.WeightFunctionFactory.create(type, params);
             }
             if (xo.getAttribute(NORMALIZED, false)) {
-                return new NormalizedBasisDimension(kernel, design, design, weightFunction);
+                return new OrthogonalComplementProjectedBasisDimension(kernel, design, design, weightFunction);
             } else if (xo.getAttribute(UNITARY_VARIANCE, false)) {
                 return new UnitaryVarianceLinearBasisDimension(kernel, design, design, weightFunction);
             } else {
@@ -96,7 +96,7 @@ public class BasisDimensionParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(NORMALIZED, true),
+            AttributeRule.newBooleanRule(NORMALIZED, true),
             AttributeRule.newBooleanRule(UNITARY_VARIANCE, true),
             new XORRule(
                 new ElementRule(DesignMatrix.class),

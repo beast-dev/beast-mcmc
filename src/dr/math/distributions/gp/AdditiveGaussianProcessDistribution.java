@@ -550,20 +550,21 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         final double[] precisionDiff = getPrecisionDiff(new double[dim]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("predictionDiff:");
+        sb.append("predictionDiff: [");
         for (double value : precisionDiff) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("mean:");
+        sb.append(" ]\n");
+        sb.append("mean: [");
         for (double value : mean) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("precision:");
+        sb.append(" ]\n");
+        sb.append("precision: [");
         for (double value : precision) {
             sb.append(" ").append(value);
         }
+        sb.append(" ]\n");
         return sb.toString();
     }
     

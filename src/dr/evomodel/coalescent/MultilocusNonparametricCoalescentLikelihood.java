@@ -274,7 +274,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
         for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
             for (int i = 0; i < dim; ++i) {
-                gradLogDens[i] = -numCoalEvents[treeIndex][i] + sufficientStatistics[treeIndex][i]
+                gradLogDens[i] += -numCoalEvents[treeIndex][i] + sufficientStatistics[treeIndex][i]
                         * Math.exp(-field[i]);
             }
         }

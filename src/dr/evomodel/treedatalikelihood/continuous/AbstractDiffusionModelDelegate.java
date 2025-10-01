@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.DenseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
@@ -124,11 +125,16 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
             eigenBufferHelper.flipOffset(0);
         }
 
-        cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionmatrixAsVector(),
-                Math.log(diffusionModel.getDeterminantPrecisionMatrix())
+        if (diffusionModel instanceof DenseBandedMultivariateDiffusionModel) {
+            cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                    ((DenseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                    Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+        } else {
+            cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                    diffusionModel.getPrecisionmatrixAsVector(),
+                    Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+        }
 
-        );
     }
 
     @Override

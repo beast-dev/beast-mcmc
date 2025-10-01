@@ -44,6 +44,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.continuous.DenseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
@@ -171,14 +172,31 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             ContinuousDiffusionIntegrator base;
             if (precisionType == PrecisionType.SCALAR) {
 
-                base = new ContinuousDiffusionIntegrator.Basic(
-                        precisionType,
-                        numTraits,
-                        dimTrait,
-                        dimTrait,
-                        partialBufferCount,
-                        matrixBufferCount
-                );
+                if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
+                        diffusionProcessDelegate.getDiffusionModel(0)
+                        instanceof DenseBandedMultivariateDiffusionModel) {
+
+                    base =
+//                            new ContinuousDiffusionIntegrator.Basic(
+                            new SparseIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                } else {
+
+                    base = new ContinuousDiffusionIntegrator.Basic(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                }
 
             } else if (precisionType == PrecisionType.FULL) {
 

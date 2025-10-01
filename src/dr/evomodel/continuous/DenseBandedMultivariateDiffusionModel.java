@@ -34,6 +34,7 @@ import dr.inference.model.*;
 import dr.math.distributions.GaussianMarkovRandomField;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.matrix.SparseCompressedMatrix;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
@@ -48,7 +49,11 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
     private final GaussianMarkovRandomField field;
     private final int precisionDim;
+//    private final int fieldDim;
     private final int blockDim;
+
+    private SparseCompressedMatrix sparseMatrix;
+    private SparseCompressedMatrix savedSparseMatrix;
 
     public DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block,
                                                  GaussianMarkovRandomField field) {
@@ -73,9 +78,44 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
         addVariable(block);
 
+        sparseMatrix = makeSparseMatrix();
+
         if (field != null) {
             addModel(field);
         }
+    }
+
+    private SparseCompressedMatrix makeSparseMatrix() {
+
+        if (field == null) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        int nonZeroEntryCount = field.getNonZeroEntryCount() * blockDim * blockDim;
+
+        int[] columnIndices = new int[nonZeroEntryCount];
+        double[] values = new double[nonZeroEntryCount];
+
+        int[] rowStarts = new int[precisionDim + 1];
+        for (int i = 0; i < replicates; ++i) { // outer-loop over rows of field
+            for (int k = 0; k < blockDim; ++k) { // inner-loop over rows of block
+
+                final int finalK = k;
+                final int startsIndex = i * blockDim + k + 1;
+                rowStarts[startsIndex] = rowStarts[startsIndex - 1];
+
+                field.mapOverNonZeroEntriesInRow((fieldI, fieldJ, fieldValue) -> { // outer-loop over columns of field
+                    for (int l = 0; l < blockDim; ++l) { // inner-loop over columns of block
+                        final int index = rowStarts[startsIndex];
+                        columnIndices[index] = fieldJ * blockDim + l;
+                        values[index] = fieldValue * block.getParameterValue(finalK, l);
+                        ++rowStarts[startsIndex];
+                    }
+                }, i);
+            }
+        }
+
+        return new SparseCompressedMatrix(rowStarts, columnIndices, values, precisionDim, precisionDim);
     }
 
     public MatrixParameterInterface getPrecisionParameter() {
@@ -97,21 +137,10 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
         // TODO delegate this work
         if (field != null) {
-            double[][] gmrf = field.getScaleMatrix();
-
-            assert replicates == gmrf.length;
-
-            // TODO do O(replicates) loops instead of O(replicates^2) here
-            for (int k = 0; k < replicates; ++k) {
-                for (int l = 0; l < replicates; ++l) {
-                    double scalar = gmrf[k][l];
-                    if (scalar != 0.0) {
-                        fillSquareBlock(
-                                precisionMatrix, k * blockDim, l * blockDim,
-                                block, scalar);
-                    }
-                }
-            }
+            field.mapOverAllNonZeroEntries((fieldI, fieldJ, fieldValue) ->
+                    fillSquareBlock(
+                            precisionMatrix, fieldI * blockDim, fieldJ * blockDim,
+                            block, fieldValue));
         } else {
             for (int r = 0; r < replicates; ++r) {
                 int offset = r * blockDim;
@@ -134,11 +163,16 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
         }
     }
 
+    public SparseCompressedMatrix getSparsePrecisionMatrix() {
+        checkVariableChanged();
+        return makeSparseMatrix(); // TODO cache!!!
+    }
+
     public double[] getPrecisionmatrixAsVector() {
         return(flatten(getPrecisionmatrix()));
     }
 
-    private static final boolean CHECK_DETERMINANT = true;
+    private static final boolean CHECK_DETERMINANT = false;
 
     public double getDeterminantPrecisionMatrix() {
         checkVariableChanged();
@@ -197,14 +231,26 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
     protected void storeState() {
         logSavedDeterminateBlockMatrix = logDeterminateBlockMatrix;
-        savedBlockMatrix = blockMatrix;
+        savedBlockMatrix = blockMatrix; // TODO This is WRONG! need to make copy
         storedVariableChanged = variableChanged;
+
+        if (sparseMatrix != null) {
+            if (savedSparseMatrix == null) {
+                savedSparseMatrix = sparseMatrix.clone();
+            } else {
+                sparseMatrix.copyTo(savedSparseMatrix);
+            }
+        }
     }
 
     protected void restoreState() {
         logDeterminateBlockMatrix = logSavedDeterminateBlockMatrix;
-        blockMatrix = savedBlockMatrix;
+        blockMatrix = savedBlockMatrix; // TODO This is WRONG! need to sway pointers
         variableChanged = storedVariableChanged;
+
+        SparseCompressedMatrix swap = sparseMatrix;
+        sparseMatrix = savedSparseMatrix;
+        savedSparseMatrix = swap;
     }
 
     protected void acceptState() {

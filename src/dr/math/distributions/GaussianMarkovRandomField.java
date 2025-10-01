@@ -32,6 +32,7 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import java.util.Arrays;
+import java.util.function.BinaryOperator;
 
 /**
  * @author Marc Suchard
@@ -59,6 +60,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private final double logMatchTerm;
 
+    private final int bandWidth;
+    private int nonZeroEntryCount = -1;
+
     public GaussianMarkovRandomField(String name,
                                      int dim,
                                      Parameter precision,
@@ -69,6 +73,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         super(name);
 
         this.dim = dim;
+        this.bandWidth = 1;
         this.meanParameter = mean;
         this.precisionParameter = precision;
         this.lambdaParameter = lambda;
@@ -168,6 +173,81 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
         return precision;
     }
+
+    public double getFieldValue(int i, int j) {
+
+        SymmetricTriDiagonalMatrix q = getQ();
+
+        int whichDiagonal = Math.abs(i - j);
+        if (whichDiagonal == 0) {
+            return q.diagonal[i];
+        } else if (whichDiagonal == 1) {
+            return q.offDiagonal[Math.min(i, j)];
+        } else {
+            return 0.0;
+        }
+    }
+
+    public int getNonZeroEntryCount() {
+        if (nonZeroEntryCount == -1) {
+            int[] count = new int[]{ 0 };
+            internalMapAll((i, j, value) -> {
+                ++count[0];
+            });
+            nonZeroEntryCount = count[0];
+        }
+        return nonZeroEntryCount;
+    }
+
+    @FunctionalInterface
+    public interface ReduceBlockFunction<R> {
+        R apply(int i, int j, double fieldValue);
+    }
+
+    @FunctionalInterface
+    public interface BlockFunction {
+        void apply(int i, int j, double fieldValue);
+    }
+
+    @SuppressWarnings("unused")
+    public void mapOverAllNonZeroEntries(BlockFunction map) {
+        internalMapAll(map::apply);
+    }
+
+    @SuppressWarnings("unused")
+    public void mapOverNonZeroEntriesInRow(BlockFunction map, int row) {
+        internalMapRow(map::apply, row);
+    }
+
+    @SuppressWarnings({"unused", "unchecked"})
+    public <R> R mapReduceOverAllNonZeroEntries(ReduceBlockFunction<R> map,
+                                                BinaryOperator<R> reduce, R initial) {
+
+        final R[] sum = (R[]) new Object[]{initial};
+        internalMapAll((i, j, fieldValue) -> sum[0] = reduce.apply(sum[0], map.apply(i, j, fieldValue)));
+        return sum[0];
+    }
+
+    @FunctionalInterface
+    public interface InternalFunction {
+        void apply(int i, int j, double value);
+    }
+
+    private void internalMapAll(InternalFunction function) {
+        for (int i = 0; i < dim; ++i) {
+            internalMapRow(function, i);
+        }
+    }
+
+    private void internalMapRow(InternalFunction function, int row) {
+        final int begin = Math.max(0, row - bandWidth);
+        final int end = Math.min(dim, row + bandWidth + 1);
+        for (int j = begin; j < end; ++j) {
+            function.apply(row, j, getFieldValue(row, j));
+        }
+    }
+
+
 
     public boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;

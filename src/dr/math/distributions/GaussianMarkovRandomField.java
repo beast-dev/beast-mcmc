@@ -191,9 +191,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     public int getNonZeroEntryCount() {
         if (nonZeroEntryCount == -1) {
             int[] count = new int[]{ 0 };
-            internalMapAll((i, j, value) -> {
-                ++count[0];
-            });
+            internalMapAll((i, j, value) -> ++count[0]);
             nonZeroEntryCount = count[0];
         }
         return nonZeroEntryCount;

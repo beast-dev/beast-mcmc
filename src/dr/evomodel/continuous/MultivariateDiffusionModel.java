@@ -97,6 +97,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return determinatePrecisionMatrix;
     }
 
+    public double getLogDeterminantPrecisionMatrix() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     /**
      * @return the log likelihood of going from start to stop in the given time
      */

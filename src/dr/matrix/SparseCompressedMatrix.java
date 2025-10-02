@@ -68,7 +68,7 @@ public class SparseCompressedMatrix {
                 .toArray();
     }
 
-    public SparseCompressedMatrix clone() {
+    public SparseCompressedMatrix makeCopy() {
         return new SparseCompressedMatrix(
                 majorStarts.clone(), minorIndices.clone(), values.clone(),
                 nMajor, nMinor);

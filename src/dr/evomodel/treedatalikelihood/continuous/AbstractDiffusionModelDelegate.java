@@ -128,13 +128,12 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         if (diffusionModel instanceof DenseBandedMultivariateDiffusionModel) {
             cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
                     ((DenseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
-                    Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+                    diffusionModel.getLogDeterminantPrecisionMatrix());
         } else {
             cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
                     diffusionModel.getPrecisionmatrixAsVector(),
-                    Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+                    Math.log(diffusionModel.getDeterminantPrecisionMatrix())); // TODO change to getLogDeterminant
         }
-
     }
 
     @Override

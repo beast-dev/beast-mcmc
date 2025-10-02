@@ -174,7 +174,13 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
     private static final boolean CHECK_DETERMINANT = false;
 
+    @Override
     public double getDeterminantPrecisionMatrix() {
+        return Math.exp(getLogDeterminantPrecisionMatrix());
+    }
+
+    @Override
+    public double getLogDeterminantPrecisionMatrix() {
         checkVariableChanged();
 
         double logDet;
@@ -205,7 +211,7 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
             }
         }
 
-        return Math.exp(logDet);
+        return logDet;
     }
 
     protected void checkVariableChanged() {
@@ -236,7 +242,7 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
         if (sparseMatrix != null) {
             if (savedSparseMatrix == null) {
-                savedSparseMatrix = sparseMatrix.clone();
+                savedSparseMatrix = sparseMatrix.makeCopy();
             } else {
                 sparseMatrix.copyTo(savedSparseMatrix);
             }

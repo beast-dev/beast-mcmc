@@ -35,6 +35,7 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 
+import static dr.evomodel.continuous.MultivariateDiffusionModel.PreferredSimulationSpace.VARIANCE;
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
@@ -99,6 +100,15 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 
     public double getLogDeterminantPrecisionMatrix() {
         throw new RuntimeException("Not yet implemented");
+    }
+
+    public enum PreferredSimulationSpace {
+        VARIANCE,
+        PRECISION
+    }
+
+    public PreferredSimulationSpace getPreferredSimulationSpace() {
+        return VARIANCE;
     }
 
     /**

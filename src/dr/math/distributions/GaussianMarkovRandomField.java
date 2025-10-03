@@ -31,8 +31,12 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import no.uib.cipr.matrix.*;
+
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
+
+import static no.uib.cipr.matrix.BandCholesky.factorize;
 
 /**
  * @author Marc Suchard
@@ -356,6 +360,45 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
 
         return logDet;
+    }
+
+    public UpperTriangBandMatrix getCholeskyDecomposition() {
+
+        SymmetricTriDiagonalMatrix Q = getQ();
+
+        UpperSPDBandMatrix A = new UpperSPDBandMatrix(dim, 1);
+        double precision = precisionParameter.getParameterValue(0);
+        for (int i = 0; i < dim; ++i) {
+            A.set(i, i, precision * Q.diagonal[i]);
+        }
+
+        for (int i = 0; i < dim - 1; ++i) {
+            A.set(i, i + 1, precision * Q.offDiagonal[i]);
+        }
+
+        BandCholesky chol = BandCholesky.factorize(A);
+        UpperTriangBandMatrix band = chol.getU();
+
+        double[][] test = testCholeskyUpper(band, dim);
+
+        return band;
+    }
+
+
+    public static double[][] testCholeskyUpper(Matrix band, int dim) {
+        double[][] result = new double[dim][dim];
+
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += band.get(k, i) * band.get(k, j); // U^t U
+                }
+                result[i][j] = sum;
+            }
+        }
+
+        return result;
     }
 
     private static final boolean CHECK_DETERMINANT = false;

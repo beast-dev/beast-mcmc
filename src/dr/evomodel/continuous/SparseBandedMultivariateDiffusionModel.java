@@ -33,8 +33,11 @@ import dr.evolution.tree.Tree;
 import dr.inference.model.*;
 import dr.math.distributions.GaussianMarkovRandomField;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.matrix.SparseCompressedMatrix;
+import no.uib.cipr.matrix.*;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
@@ -42,7 +45,7 @@ import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatt
  * @author Marc Suchard
  */
 
-public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusionModel {
+public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusionModel {
 //        AbstractModel implements TreeAttributeProvider {
 
     // TODO create interface for `MultivariateDIffusion`
@@ -55,17 +58,17 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
     private SparseCompressedMatrix sparseMatrix;
     private SparseCompressedMatrix savedSparseMatrix;
 
-    public DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block,
-                                                 GaussianMarkovRandomField field) {
+    public SparseBandedMultivariateDiffusionModel(MatrixParameterInterface block,
+                                                  GaussianMarkovRandomField field) {
         this(block, field.getDimension(), field);
     }
 
-    public DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates) {
+    public SparseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates) {
         this(block, replicates, null);
     }
 
-    private DenseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates,
-                                                  GaussianMarkovRandomField field) {
+    private SparseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates,
+                                                   GaussianMarkovRandomField field) {
         super();
 
         this.block = block;
@@ -118,6 +121,44 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
         return new SparseCompressedMatrix(rowStarts, columnIndices, values, precisionDim, precisionDim);
     }
 
+    private SparseCompressedMatrix makeSparseUpperTriangularMatrix(UpperTriangBandMatrix fieldCholesky,
+                                                                   UpperTriangDenseMatrix blockCholesky) {
+
+        if (field == null) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        int bandWidth = fieldCholesky.numSuperDiagonals();
+
+        int nonZeroEntryCount = (field.getNonZeroEntryCount() * blockDim * blockDim + precisionDim) / 2;
+
+        int[] columnIndices = new int[nonZeroEntryCount];
+        double[] values = new double[nonZeroEntryCount];
+        int[] rowStarts = new int[precisionDim + 1];
+
+        for (int i = 0; i < replicates; ++i) { // outer-loop over rows of field
+            for (int k = 0; k < blockDim; ++k) { // inner-loop over rows of block
+
+                final int startsIndex = i * blockDim + k + 1;
+                rowStarts[startsIndex] = rowStarts[startsIndex - 1];
+
+                for (int j = i; j < Math.min(i + bandWidth + 1, replicates); ++j) { // outer-loop over columns of field
+                    for (int l = k; l < blockDim; ++l) { // inner-loop over columns of block
+                        int index = rowStarts[startsIndex];
+                        columnIndices[index] = j * blockDim + l;
+                        values[index] = fieldCholesky.get(i, j) * blockCholesky.get(k, l);
+                        ++rowStarts[startsIndex];
+                    }
+                }
+            }
+        }
+
+        SparseCompressedMatrix matrix = new SparseCompressedMatrix(
+                rowStarts, columnIndices, values, precisionDim, precisionDim);
+
+        return matrix;
+    }
+
     public MatrixParameterInterface getPrecisionParameter() {
         // TODO Delegate
         if (field != null) {
@@ -165,8 +206,11 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
 
     public SparseCompressedMatrix getSparsePrecisionMatrix() {
         checkVariableChanged();
+//        getPrecisionCholeskyDecomposition();
         return makeSparseMatrix(); // TODO cache!!!
-    }
+     }
+
+//    public SparseCompressedMatrix
 
     public double[] getPrecisionmatrixAsVector() {
         return(flatten(getPrecisionmatrix()));
@@ -178,6 +222,88 @@ public class DenseBandedMultivariateDiffusionModel extends MultivariateDiffusion
     public double getDeterminantPrecisionMatrix() {
         return Math.exp(getLogDeterminantPrecisionMatrix());
     }
+
+    private SparseCompressedMatrix getPrecisionCholeskyDecomposition() {
+
+        checkVariableChanged();
+        UpperTriangBandMatrix fieldCholeskyU = field.getCholeskyDecomposition();
+
+        // TODO returns different decomposition when matrix is not PD
+//        UpperSymmDenseMatrix prec = new UpperSymmDenseMatrix(blockDim);
+//        for (int i = 0; i < blockDim; ++i) {
+//            for (int j = i; j < blockDim; ++j) {
+//                prec.set(i, j, blockMatrix[i][j]);
+//            }
+//        }
+//        DenseCholesky chol = DenseCholesky.factorize(prec);
+//        UpperTriangDenseMatrix blockCholeskyU = chol.getU();
+
+        double[][] L;
+        try {
+            CholeskyDecomposition cd = new CholeskyDecomposition(blockMatrix);
+            L = cd.getL();
+        } catch (IllegalDimension e) {
+            L = new double[0][];
+        }
+
+        boolean isPD = true;
+        for (int i = 0; i < blockDim && isPD; ++i) {
+            if (L[i][i] == 0.0) {
+                isPD = false;
+            }
+        }
+
+        UpperTriangDenseMatrix blockCholeskyU = new UpperTriangDenseMatrix(blockDim);
+        for (int i = 0; i < blockDim; ++i) {
+            for (int j = i; j < blockDim; ++j) {
+                blockCholeskyU.set(i, j, L[j][i]);
+            }
+        }
+
+        if (TEST_CHOLESKY && isPD) {
+            double[][] test = GaussianMarkovRandomField.testCholeskyUpper(blockCholeskyU, blockDim);
+            for (int i = 0; i < blockDim; ++i) {
+                for (int j = 0; j < blockDim; ++j) {
+                    if (Math.abs(blockMatrix[i][j] - test[i][j]) > 1E-8) {
+                        throw new RuntimeException("Bad Cholesky decomposition in block matrix");
+                    }
+                }
+            }
+        }
+
+        // Need to Kronecker product
+        SparseCompressedMatrix kronecker = makeSparseUpperTriangularMatrix(fieldCholeskyU, blockCholeskyU);
+
+        if (TEST_CHOLESKY && isPD) {
+
+            double[][] dense = kronecker.makeDense();
+            double[][] UtU = new double[precisionDim][precisionDim];
+
+            for (int i = 0; i < precisionDim; ++i) {
+                for (int j = 0; j < precisionDim; ++j) {
+                    for (int k = 0; k < precisionDim; ++k) {
+                        double Ut = dense[k][i];
+                        double U = dense[k][j];
+                        UtU[i][j] += Ut * U;
+                    }
+                }
+            }
+
+            double[][] check = getPrecisionmatrix();
+
+            for (int i = 0; i < precisionDim; ++i) {
+                for (int j = 0; j < precisionDim; ++j) {
+                    if (Math.abs(check[i][j] - UtU[i][j]) > 1E-8) {
+                        throw new RuntimeException("Bad Cholesky decomposition in whole precision");
+                    }
+                }
+            }
+        }
+
+        return kronecker;
+    }
+
+    private static final boolean TEST_CHOLESKY = false;
 
     @Override
     public double getLogDeterminantPrecisionMatrix() {

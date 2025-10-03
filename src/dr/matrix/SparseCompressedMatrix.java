@@ -104,6 +104,20 @@ public class SparseCompressedMatrix {
         this.nMinor = minor;
     }
 
+    public double[][] makeDense() {
+        double[][] result = new double[nMajor][nMinor];
+
+        for (int i = 0; i < nMajor; ++i) {
+            int begin = majorStarts[i];
+            int end = majorStarts[i + 1];
+            for (int j = begin; j < end; ++j) {
+                result[i][minorIndices[j]] = values[j];
+            }
+        }
+
+        return result;
+    }
+
     public void multiplyInPlaceMatrixVector(double[] vector, int vectorOffset,
                                             double[] result, int resultOffset) {
 
@@ -160,6 +174,57 @@ public class SparseCompressedMatrix {
         }
 
         return outer;
+    }
+
+
+    public class SquareUpperTriangular extends SparseCompressedMatrix {
+
+        public SquareUpperTriangular(int[] majorStarts, int[] minorIndices, double[] values,
+                                     int nMajor) {
+            super(majorStarts, minorIndices, values, nMajor, nMajor);
+            for (int i = 0; i < nMajor; ++i) {
+                if (minorIndices[majorStarts[i]] < i) {
+                    throw new IllegalArgumentException("Not upper triangular");
+                } else if (minorIndices[majorStarts[i]] > i) {
+                    throw new IllegalArgumentException("Rank deficient");
+                }
+            }
+        }
+
+        @SuppressWarnings("unused")
+        public double[] backSolveMatrixVector(double[] b, int bOffset) {
+            double[] x = new double[nMajor];
+            backSolveInPlaceMatrixVector(x, 0, b, bOffset);
+            return x;
+        }
+
+        public void backSolveInPlaceMatrixVector(double[] x, int xOffset,
+                                                 double[] b, int bOffset) {
+
+            for (int i = nMajor - 1; i >= 0; --i) {
+
+                double sum = 0.0;
+                for (int j = majorStarts[i] + 1; j < majorStarts[i + 1]; ++j) {
+                    sum += values[j] * x[minorIndices[j] + xOffset];
+                }
+
+                x[i  + xOffset] = (b[i + bOffset] - sum) / values[minorIndices[majorStarts[i]]];
+            }
+
+            // Back-solve L'x = b
+//        double[] bd = ((DenseVector)b).getData();
+//        double[] xd = ((DenseVector)x).getData();
+//
+//        for(int i = this.numRows - 1; i >= 0; --i) {
+//            double sum = 0.0D;
+//
+//            for(int j = this.diagind[i] + 1; j < this.rowptr[i + 1]; ++j) {
+//                sum += this.data[j] * xd[this.colind[j]];
+//            }
+//
+//            xd[i] = (bd[i] - sum) / this.data[this.diagind[i]];
+//        }
+        }
     }
 
     public double multiplyVecDiffTransposeMatrixVecDiff(double[] left, int leftOffset,

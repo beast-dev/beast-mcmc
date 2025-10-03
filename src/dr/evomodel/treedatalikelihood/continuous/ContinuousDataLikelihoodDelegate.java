@@ -44,7 +44,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.continuous.DenseBandedMultivariateDiffusionModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
@@ -174,7 +174,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
                 if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
                         diffusionProcessDelegate.getDiffusionModel(0)
-                        instanceof DenseBandedMultivariateDiffusionModel) {
+                        instanceof SparseBandedMultivariateDiffusionModel) {
 
                     base =
 //                            new ContinuousDiffusionIntegrator.Basic(

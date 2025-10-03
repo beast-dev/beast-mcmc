@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.LogDeterminantProvider;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
@@ -130,9 +131,15 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
                     ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
                     diffusionModel.getLogDeterminantPrecisionMatrix());
         } else {
-            cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                    diffusionModel.getPrecisionmatrixAsVector(),
-                    Math.log(diffusionModel.getDeterminantPrecisionMatrix())); // TODO change to getLogDeterminant
+            if (diffusionModel instanceof LogDeterminantProvider) {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        ((LogDeterminantProvider) diffusionModel).getLogDeterminantPrecisionMatrix());
+            } else {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+            }
         }
     }
 

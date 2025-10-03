@@ -364,14 +364,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     public double[][] getTraitVariance() {
-        Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
+        Matrix variance = new Matrix(getDiffusionModel().getPrecisionMatrix()).inverse();
         return variance.toComponents();
     }
 
     public double[][] getTreeTraitPrecision() {
         return KroneckerOperation.product(
                 getTreePrecision(),
-                getDiffusionModel().getPrecisionmatrix());
+                getDiffusionModel().getPrecisionMatrix());
     }
 
     public double[][] getTreeTraitVariance() {
@@ -407,7 +407,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 rateTransformation.getNormalization(), Double.POSITIVE_INFINITY);
 
         double[][] treeVariance = getTreeVariance();
-        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = getDiffusionModel().getPrecisionMatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());

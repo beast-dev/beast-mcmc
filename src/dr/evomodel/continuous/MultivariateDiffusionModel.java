@@ -81,7 +81,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return diffusionPrecisionMatrixParameter;
     }
 
-    public double[][] getPrecisionmatrix() {
+    public double[][] getPrecisionMatrix() {
         if (diffusionPrecisionMatrixParameter != null) {
             checkVariableChanged();
             return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
@@ -89,8 +89,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return null;
     }
 
-    public double[] getPrecisionmatrixAsVector() {
-        return(flatten(getPrecisionmatrix()));
+    public double[] getPrecisionMatrixAsVector() {
+        return(flatten(getPrecisionMatrix()));
     }
 
     public double getDeterminantPrecisionMatrix() {

@@ -228,7 +228,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         protected void setupStatistics() {
             if (diffusionVariance == null) {
-                double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
+                double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
                 diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
                 Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
                 Pd = new DenseMatrix64F(diffusionPrecision);

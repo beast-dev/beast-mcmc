@@ -52,7 +52,7 @@ public class DenseBandedMultivariateDiffusionModel extends AbstractBandedMultiva
         throw new RuntimeException("Unsupported");
     }
 
-    public double[][] getPrecisionmatrix() {
+    public double[][] getPrecisionMatrix() {
         checkVariableChanged();
         double[][] precisionMatrix = new double[precisionDim][precisionDim];
 
@@ -95,8 +95,8 @@ public class DenseBandedMultivariateDiffusionModel extends AbstractBandedMultiva
         }
     }
 
-    public double[] getPrecisionmatrixAsVector() {
-        return(flatten(getPrecisionmatrix()));
+    public double[] getPrecisionMatrixAsVector() {
+        return(flatten(getPrecisionMatrix()));
     }
 }
 

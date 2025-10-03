@@ -45,7 +45,8 @@ import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatt
  * @author Marc Suchard
  */
 
-public abstract class AbstractBandedMultivariateDiffusionModel extends MultivariateDiffusionModel {
+public abstract class AbstractBandedMultivariateDiffusionModel extends MultivariateDiffusionModel
+    implements LogDeterminantProvider {
 
     final GaussianMarkovRandomField field;
     final int precisionDim;
@@ -84,19 +85,20 @@ public abstract class AbstractBandedMultivariateDiffusionModel extends Multivari
         return precisionDim;
     }
 
-    public abstract double[][] getPrecisionmatrix();
+    public abstract double[][] getPrecisionMatrix();
 
     public abstract SparseCompressedMatrix getSparsePrecisionMatrix();
 
-    public double[] getPrecisionmatrixAsVector() {
-        return(flatten(getPrecisionmatrix()));
+    public double[] getPrecisionMatrixAsVector() {
+        return(flatten(getPrecisionMatrix()));
     }
 
     private static final boolean CHECK_DETERMINANT = false;
 
     @Override
     public double getDeterminantPrecisionMatrix() {
-        return Math.exp(getLogDeterminantPrecisionMatrix());
+        throw new RuntimeException("Should not call");
+//        return Math.exp(getLogDeterminantPrecisionMatrix());
     }
 
     @Override
@@ -115,7 +117,7 @@ public abstract class AbstractBandedMultivariateDiffusionModel extends Multivari
 
         if (CHECK_DETERMINANT) {
 
-            double[][] precision = getPrecisionmatrix();
+            double[][] precision = getPrecisionMatrix();
             RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
             DoubleMatrix1D values = ed.getRealEigenvalues();
             double sum = 0.0;

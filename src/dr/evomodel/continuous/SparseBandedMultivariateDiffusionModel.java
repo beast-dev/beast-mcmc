@@ -127,7 +127,7 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
     }
 
     @Override
-    public double[][] getPrecisionmatrix() {
+    public double[][] getPrecisionMatrix() {
         checkVariableChanged();
         precisionMatrix = new double[precisionDim][precisionDim];
 
@@ -233,7 +233,7 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
                 }
             }
 
-            double[][] check = getPrecisionmatrix();
+            double[][] check = getPrecisionMatrix();
 
             for (int i = 0; i < precisionDim; ++i) {
                 for (int j = 0; j < precisionDim; ++j) {

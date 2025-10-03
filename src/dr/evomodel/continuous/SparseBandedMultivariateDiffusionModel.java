@@ -27,33 +27,18 @@
 
 package dr.evomodel.continuous;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import dr.evolution.tree.Tree;
 import dr.inference.model.*;
 import dr.math.distributions.GaussianMarkovRandomField;
-import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.matrix.SparseCompressedMatrix;
 import no.uib.cipr.matrix.*;
-
-import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
  * @author Marc Suchard
  */
 
-public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusionModel {
-//        AbstractModel implements TreeAttributeProvider {
-
-    // TODO create interface for `MultivariateDIffusion`
-
-    private final GaussianMarkovRandomField field;
-    private final int precisionDim;
-//    private final int fieldDim;
-    private final int blockDim;
+public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultivariateDiffusionModel {
 
     private SparseCompressedMatrix sparseMatrix;
     private SparseCompressedMatrix savedSparseMatrix;
@@ -69,23 +54,8 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
 
     private SparseBandedMultivariateDiffusionModel(MatrixParameterInterface block, int replicates,
                                                    GaussianMarkovRandomField field) {
-        super();
-
-        this.block = block;
-        this.field = field;
-        this.replicates = replicates;
-        this.blockDim = block.getRowDimension();
-        this.precisionDim = blockDim * replicates;
-
-        variableChanged = true;
-
-        addVariable(block);
-
+        super(block, replicates, field);
         sparseMatrix = makeSparseMatrix();
-
-        if (field != null) {
-            addModel(field);
-        }
     }
 
     private SparseCompressedMatrix makeSparseMatrix() {
@@ -153,25 +123,10 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
             }
         }
 
-        SparseCompressedMatrix matrix = new SparseCompressedMatrix(
-                rowStarts, columnIndices, values, precisionDim, precisionDim);
-
-        return matrix;
+        return new SparseCompressedMatrix(rowStarts, columnIndices, values, precisionDim, precisionDim);
     }
 
-    public MatrixParameterInterface getPrecisionParameter() {
-        // TODO Delegate
-        if (field != null) {
-            return block;
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
-    }
-
-    public int getDimension() {
-        return precisionDim;
-    }
-
+    @Override
     public double[][] getPrecisionmatrix() {
         checkVariableChanged();
         precisionMatrix = new double[precisionDim][precisionDim];
@@ -208,21 +163,9 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
         checkVariableChanged();
 //        getPrecisionCholeskyDecomposition();
         return makeSparseMatrix(); // TODO cache!!!
-     }
-
-//    public SparseCompressedMatrix
-
-    public double[] getPrecisionmatrixAsVector() {
-        return(flatten(getPrecisionmatrix()));
     }
 
-    private static final boolean CHECK_DETERMINANT = false;
-
-    @Override
-    public double getDeterminantPrecisionMatrix() {
-        return Math.exp(getLogDeterminantPrecisionMatrix());
-    }
-
+    @SuppressWarnings("unused")
     private SparseCompressedMatrix getPrecisionCholeskyDecomposition() {
 
         checkVariableChanged();
@@ -247,9 +190,10 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
         }
 
         boolean isPD = true;
-        for (int i = 0; i < blockDim && isPD; ++i) {
+        for (int i = 0; i < blockDim; ++i) {
             if (L[i][i] == 0.0) {
                 isPD = false;
+                break;
             }
         }
 
@@ -305,67 +249,8 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
 
     private static final boolean TEST_CHOLESKY = false;
 
-    @Override
-    public double getLogDeterminantPrecisionMatrix() {
-        checkVariableChanged();
-
-        double logDet;
-
-        // TODO delegate
-        if (field != null) {
-            int effectiveDim = field.isImproper() ? replicates - 1 : replicates;
-            logDet = blockDim * field.getLogDeterminant() + effectiveDim * logDeterminateBlockMatrix;
-        } else {
-            logDet = replicates * logDeterminateBlockMatrix;
-        }
-
-        if (CHECK_DETERMINANT) {
-
-            double[][] precision = getPrecisionmatrix();
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-            DoubleMatrix1D values = ed.getRealEigenvalues();
-            double sum = 0.0;
-            for (int i = 0; i < values.size(); ++i) {
-                double v = values.get(i);
-                if (Math.abs(v) > 1E-6) {
-                    sum += Math.log(v);
-                }
-            }
-
-            if (Math.abs(sum - logDet) > 1E-6) {
-                throw new RuntimeException("Incorrect (pseudo-) determinant");
-            }
-        }
-
-        return logDet;
-    }
-
-    protected void checkVariableChanged() {
-        if (variableChanged) {
-            calculatePrecisionInfo();
-            variableChanged = false;
-        }
-    }
-
-    protected void calculatePrecisionInfo() {
-        blockMatrix = block.getParameterAsMatrix();
-        logDeterminateBlockMatrix = MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(
-                        blockMatrix);
-    }
-
-    public void handleModelChangedEvent(Model model, Object object, int index) {
-        variableChanged = true;
-    }
-
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        variableChanged = true;
-    }
-
     protected void storeState() {
-        logSavedDeterminateBlockMatrix = logDeterminateBlockMatrix;
-        savedBlockMatrix = blockMatrix; // TODO This is WRONG! need to make copy
-        storedVariableChanged = variableChanged;
-
+        super.storeState();
         if (sparseMatrix != null) {
             if (savedSparseMatrix == null) {
                 savedSparseMatrix = sparseMatrix.makeCopy();
@@ -376,44 +261,12 @@ public class SparseBandedMultivariateDiffusionModel extends MultivariateDiffusio
     }
 
     protected void restoreState() {
-        logDeterminateBlockMatrix = logSavedDeterminateBlockMatrix;
-        blockMatrix = savedBlockMatrix; // TODO This is WRONG! need to sway pointers
-        variableChanged = storedVariableChanged;
-
+        super.restoreState();
         SparseCompressedMatrix swap = sparseMatrix;
         sparseMatrix = savedSparseMatrix;
         savedSparseMatrix = swap;
     }
 
-    protected void acceptState() {
-    } // no additional state needs accepting
-
-    public String[] getTreeAttributeLabel() {
-        return new String[]{PRECISION_TREE_ATTRIBUTE};
-    }
-
-    public String[] getAttributeForTree(Tree tree) {
-        if (block != null) {
-            return new String[]{block.toSymmetricString()};
-        } else {
-            return new String[]{"null"};
-        }
-    }
-
-    final protected MatrixParameterInterface block;
-    final int replicates;
-
-    private double logDeterminateBlockMatrix;
-    private double logSavedDeterminateBlockMatrix;
-
-    private double[][] blockMatrix;
-    private double[][] savedBlockMatrix;
-
     private double[][] precisionMatrix;
-    private double[][] savedPrecisionMatrix;
-
-    private boolean variableChanged;
-    private boolean storedVariableChanged;
-
 }
 

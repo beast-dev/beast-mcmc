@@ -118,11 +118,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         Arrays.fill(storage.coalescent, 0.0);
         vectorizeBranchIntervalOperations(branchIntervalOperations);
         updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
+        intervalEnd = 0;
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
             // TODO try grouping by executionOrder (unclear if more efficient, same total #)
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
-
+            intervalEnd += branchIntervalOperations.get(start).intervalLength;
             computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations, start, end, mode);
         }
 
@@ -136,10 +137,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                         int start, int end,
                                                         Mode mode) {
 
-        intervalEnd = 0;
+
         for (int i = start; i < end; ++i) {
             BranchIntervalOperation operation = branchIntervalOperations.get(i);
-            intervalEnd += operation.intervalLength;
             if (mode == Mode.LIKELIHOOD) {
                 peelPartials(
                         storage.partials, operation.outputBuffer,

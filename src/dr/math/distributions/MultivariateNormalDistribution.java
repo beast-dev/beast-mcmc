@@ -33,7 +33,6 @@ import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
-import dr.matrix.SparseCompressedMatrix;
 import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.alg.dense.decomposition.TriangularSolver;
 import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionInner_D64;
@@ -137,8 +136,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
-    public double[] nextMultivariateNormal(double[] x) {
-        return nextMultivariateNormalCholesky(x, getCholeskyDecomposition(), 1.0);
+    @SuppressWarnings("unused")
+    public double[] nextMultivariateNormal(double[] mean) {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
     // Scale lives in variance-space
@@ -531,7 +531,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         System.err.println("TRUE: [ 1 2 ]\n");
         System.err.println("MVar: " + new Vector(var));
         System.err.println("TRUE: [ 0.571 1.14 ]\n");
-        System.err.println("Covv: " + ZZ);
+        System.err.println("CovV: " + ZZ);
         System.err.println("TRUE: -0.286");
     }
 

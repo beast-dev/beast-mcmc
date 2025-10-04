@@ -118,7 +118,7 @@ public class MultivariateNormalSamplingTest extends MathTestCase {
 
     public void testSampling() {
 
-        double[][] precision = new double[][] { {1.0, -0.5, 0.0}, {-0.5, 1.0, -0.5}, {0.0, -0.5, 1} };
+        double[][] precision = new double[][] { {1.0, -0.5, 0.0}, {-0.5, 1.0, -0.5}, {0.0, -0.5, 2} };
         SparseSquareUpperTriangular U = getU(precision);
 
         double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();

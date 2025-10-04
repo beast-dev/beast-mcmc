@@ -169,46 +169,56 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
 
     public SparseCompressedMatrix getSparsePrecisionMatrix() {
         checkVariableChanged();
-//        getPrecisionCholeskyDecomposition();
         return makeSparseMatrix(); // TODO cache!!!
     }
 
-    @SuppressWarnings("unused")
-    public SparseSquareUpperTriangular getPrecisionCholeskyDecomposition() {
+    private static final boolean NEW_CODE = true;
 
+    public SparseSquareUpperTriangular getPrecisionCholeskyDecomposition() {
         checkVariableChanged();
+
+        // TODO cache!!!
         UpperTriangBandMatrix fieldCholeskyU = field.getCholeskyDecomposition();
 
-        // TODO returns different decomposition when matrix is not PD
-//        UpperSymmDenseMatrix prec = new UpperSymmDenseMatrix(blockDim);
-//        for (int i = 0; i < blockDim; ++i) {
-//            for (int j = i; j < blockDim; ++j) {
-//                prec.set(i, j, blockMatrix[i][j]);
-//            }
-//        }
-//        DenseCholesky chol = DenseCholesky.factorize(prec);
-//        UpperTriangDenseMatrix blockCholeskyU = chol.getU();
+        final UpperTriangDenseMatrix blockCholeskyU;
+        boolean isPD;
 
-        double[][] L;
-        try {
-            CholeskyDecomposition cd = new CholeskyDecomposition(blockMatrix);
-            L = cd.getL();
-        } catch (IllegalDimension e) {
-            L = new double[0][];
-        }
-
-        boolean isPD = true;
-        for (int i = 0; i < blockDim; ++i) {
-            if (L[i][i] == 0.0) {
-                isPD = false;
-                break;
+        if (!NEW_CODE) {
+            // TODO returns different decomposition when matrix is not PD
+            UpperSymmDenseMatrix prec = new UpperSymmDenseMatrix(blockDim);
+            for (int i = 0; i < blockDim; ++i) {
+                for (int j = i; j < blockDim; ++j) {
+                    prec.set(i, j, blockMatrix[i][j]);
+                }
             }
-        }
+            DenseCholesky chol = DenseCholesky.factorize(prec);
+            blockCholeskyU = chol.getU();
+            isPD = true;
 
-        UpperTriangDenseMatrix blockCholeskyU = new UpperTriangDenseMatrix(blockDim);
-        for (int i = 0; i < blockDim; ++i) {
-            for (int j = i; j < blockDim; ++j) {
-                blockCholeskyU.set(i, j, L[j][i]);
+        } else {
+
+            double[][] L;
+            try {
+                CholeskyDecomposition cd = new CholeskyDecomposition(blockMatrix);
+                L = cd.getL();
+            } catch (IllegalDimension e) {
+                L = new double[0][];
+            }
+
+            isPD = true;
+            for (int i = 0; i < blockDim; ++i) {
+                if (L[i][i] == 0.0) {
+                    isPD = false;
+                    break;
+                }
+            }
+
+            blockCholeskyU = new UpperTriangDenseMatrix(blockDim);
+
+            for (int i = 0; i < blockDim; ++i) {
+                for (int j = i; j < blockDim; ++j) {
+                    blockCholeskyU.set(i, j, L[j][i]);
+                }
             }
         }
 

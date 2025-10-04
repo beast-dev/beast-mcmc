@@ -190,10 +190,6 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             System.err.println("Simulate for node " + nodeNumber);
         }
 
-//        if (!hasNoDrift) {
-//            cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer, actualizationBuffer);
-//        }
-
         if (hasDrift) {
             ((SafeMultivariateIntegrator) cdi).getBranchPrecision(nodeMatrix, precisionBuffer);
             cdi.getBranchDisplacement(nodeMatrix, displacementBuffer);

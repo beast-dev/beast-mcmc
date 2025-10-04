@@ -43,19 +43,5 @@ public class SparseSquareUpperTriangular extends SparseCompressedMatrix {
 
             x[i  + xOffset] = (b[i + bOffset] - sum) / values[majorStarts[i]];
         }
-
-        // Back-solve L'x = b
-//        double[] bd = ((DenseVector)b).getData();
-//        double[] xd = ((DenseVector)x).getData();
-//
-//        for(int i = this.numRows - 1; i >= 0; --i) {
-//            double sum = 0.0D;
-//
-//            for(int j = this.diagind[i] + 1; j < this.rowptr[i + 1]; ++j) {
-//                sum += this.data[j] * xd[this.colind[j]];
-//            }
-//
-//            xd[i] = (bd[i] - sum) / this.data[this.diagind[i]];
-//        }
     }
 }

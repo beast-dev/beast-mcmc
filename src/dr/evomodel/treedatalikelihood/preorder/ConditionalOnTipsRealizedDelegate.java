@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
@@ -149,11 +150,19 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrec);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    tmpMean, 0, // input mean
-                    cholesky, sqrtScale, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+                        tmpMean, 0,
+                        choleskyPrecision, sqrtScale,
+                        sample, offsetSample,
+                        tmpEpsilon);
+            } else {
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        tmpMean, 0, // input mean
+                        cholesky, sqrtScale, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
+            }
 
             if (DEBUG) {
                 System.err.println("\tsample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
@@ -241,11 +250,19 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    tmpMean, 0, // input mean
-                    cholesky, sqrtScale, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+                        tmpMean, 0,
+                        choleskyPrecision, sqrtScale,
+                        sample, offsetSample,
+                        tmpEpsilon);
+            } else {
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        tmpMean, 0, // input mean
+                        cholesky, sqrtScale, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
+            }
         }
 
         if (DEBUG) {

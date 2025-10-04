@@ -32,7 +32,10 @@ import dr.math.distributions.GaussianMarkovRandomField;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.matrix.SparseCompressedMatrix;
+import dr.matrix.SparseSquareUpperTriangular;
 import no.uib.cipr.matrix.*;
+
+import static dr.evomodel.continuous.MultivariateDiffusionModel.PreferredSimulationSpace.PRECISION;
 
 /**
  * @author Marc Suchard
@@ -91,8 +94,13 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
         return new SparseCompressedMatrix(rowStarts, columnIndices, values, precisionDim, precisionDim);
     }
 
-    private SparseCompressedMatrix makeSparseUpperTriangularMatrix(UpperTriangBandMatrix fieldCholesky,
-                                                                   UpperTriangDenseMatrix blockCholesky) {
+    public PreferredSimulationSpace getPreferredSimulationSpace() {
+        return PRECISION;
+    }
+
+    private SparseSquareUpperTriangular makeSparseUpperTriangularMatrix(
+            UpperTriangBandMatrix fieldCholesky,
+            UpperTriangDenseMatrix blockCholesky) {
 
         if (field == null) {
             throw new RuntimeException("Not yet implemented");
@@ -123,7 +131,7 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
             }
         }
 
-        return new SparseCompressedMatrix(rowStarts, columnIndices, values, precisionDim, precisionDim);
+        return new SparseSquareUpperTriangular(rowStarts, columnIndices, values, precisionDim);
     }
 
     @Override
@@ -166,7 +174,7 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
     }
 
     @SuppressWarnings("unused")
-    private SparseCompressedMatrix getPrecisionCholeskyDecomposition() {
+    public SparseSquareUpperTriangular getPrecisionCholeskyDecomposition() {
 
         checkVariableChanged();
         UpperTriangBandMatrix fieldCholeskyU = field.getCholeskyDecomposition();
@@ -216,7 +224,7 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
         }
 
         // Need to Kronecker product
-        SparseCompressedMatrix kronecker = makeSparseUpperTriangularMatrix(fieldCholeskyU, blockCholeskyU);
+        SparseSquareUpperTriangular kronecker = makeSparseUpperTriangularMatrix(fieldCholeskyU, blockCholeskyU);
 
         if (TEST_CHOLESKY && isPD) {
 

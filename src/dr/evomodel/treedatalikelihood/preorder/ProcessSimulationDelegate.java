@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
@@ -38,6 +39,8 @@ import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.matrix.SparseCompressedMatrix;
+import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 
@@ -170,6 +173,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         DenseMatrix64F Pd;
 
         double[][] cholesky;
+        SparseSquareUpperTriangular choleskyPrecision;
+
         Map<PartiallyMissingInformation.HashedIntArray,
                 ConditionalVarianceAndTransform> conditionalMap;
 
@@ -227,14 +232,23 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         @Override
         protected void setupStatistics() {
-            if (diffusionVariance == null) {
-                double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
-                diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
-                Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
-                Pd = new DenseMatrix64F(diffusionPrecision);
-            }
-            if (cholesky == null) {
-                cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                if (diffusionVariance == null) {
+                    // TODO
+                }
+                if (cholesky == null) {
+                    choleskyPrecision = ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition();
+                }
+            } else {
+                if (diffusionVariance == null) {
+                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
+                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
+                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+                    Pd = new DenseMatrix64F(diffusionPrecision);
+                }
+                if (cholesky == null) {
+                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+                }
             }
         }
 

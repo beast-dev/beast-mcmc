@@ -90,6 +90,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private final boolean useMAP;
     private final boolean returnMarginalLogLikelihood;
     private final boolean conditionalProbabilitiesInLogSpace;
+    private final boolean useOriginalDrawChoice;
 
     private int[][] reconstructedStates;
     private int[][] storedReconstructedStates;
@@ -188,6 +189,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnMarginalLogLikelihood;
         this.conditionalProbabilitiesInLogSpace = conditionalProbabilitiesInLogSpace;
+        this.useOriginalDrawChoice = true;
 
         // Initialize state storage arrays
         reconstructedStates = new int[treeModel.getNodeCount()][patternList.getPatternCount()];
@@ -1065,25 +1067,60 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
 
     private int drawChoice(double[] measure) {
-        if (useMAP) {
-            // Use Maximum A Posteriori
-            double max = measure[0];
-            int choice = 0;
-            for (int i = 1; i < measure.length; i++) {
-                if (measure[i] > max) {
-                    max = measure[i];
-                    choice = i;
+        if (useOriginalDrawChoice) {
+            if (useMAP) {
+                // Use Maximum A Posteriori
+                double max = measure[0];
+                int choice = 0;
+                for (int i = 1; i < measure.length; i++) {
+                    if (measure[i] > max) {
+                        max = measure[i];
+                        choice = i;
+                    }
+                }
+                return choice;
+            } else {
+                if (conditionalProbabilitiesInLogSpace) {
+                    return MathUtils.randomChoiceLogPDF(measure);
+                }
+                return MathUtils.randomChoicePDF(measure);
+            }
+        } else {
+            double sum = 0.0;
+            for (int i = 0; i < measure.length; i++) {
+                sum += measure[i];
+            }
+
+            if (sum < 0.0000000001) {
+                //System.out.println("Warning: Probability sum is extremely small: " + sum);
+                double max = measure[0];
+                int choice = 0;
+                for (int i = 1; i < measure.length; i++) {
+                    if (measure[i] > max) {
+                        max = measure[i];
+                        choice = i;
+                    }
+                }
+                return choice;
+            }
+
+            double[] normalizedMeasure = new double[measure.length];
+            for (int i = 0; i < measure.length; i++) {
+                normalizedMeasure[i] = measure[i] / sum;
+            }
+
+            double x = MathUtils.nextDouble();
+            sum = 0.0;
+            for (int i = 0; i < normalizedMeasure.length; i++) {
+                sum += normalizedMeasure[i];
+                if (x < sum) {
+                    return i;
                 }
             }
-            return choice;
-        } else {
-            if (conditionalProbabilitiesInLogSpace) {
-                return MathUtils.randomChoiceLogPDF(measure);
-            }
-            return MathUtils.randomChoicePDF(measure);
+
+            return normalizedMeasure.length - 1;
         }
     }
-
 
     private static String formattedState(int[] state, CodeFormatter formatter) {
         StringBuffer sb = new StringBuffer();

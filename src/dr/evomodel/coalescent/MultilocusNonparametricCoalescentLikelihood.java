@@ -153,15 +153,15 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
             for (int gridIndex = i; gridIndex < numGridPoints; gridIndex++) {
                 while (i <= gridIndices[gridIndex]) {
                     if (!skipFirstSamplingTime) {
-                            interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
-                            sufficientStatistics[treeIndex][gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
-                                    interval * ploidyFactor;
-                            ploidySums[treeIndex][gridIndex] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][gridIndex];
+                        interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
+                        sufficientStatistics[treeIndex][gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
+                                interval * ploidyFactor;
                     } else {
                         skipFirstSamplingTime = false;
                     }
                     i++;
                 }
+                ploidySums[treeIndex][gridIndex] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][gridIndex];
             }
             // manage events after last grid point
             if (i < fullTimeLine.length) {
@@ -169,9 +169,9 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
                     interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
                     sufficientStatistics[treeIndex][numGridPoints] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
                             interval * ploidyFactor;
-                    ploidySums[treeIndex][numGridPoints] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][numGridPoints];
                     i++;
                 }
+                ploidySums[treeIndex][numGridPoints] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][numGridPoints];
             }
         }
     }
@@ -227,10 +227,12 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     protected int getPopSizeDimension() { return logPopSizes.getDimension(); }
 
     protected void storeState() {
-        System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
-        System.arraycopy(ploidySums, 0, storedPloidySums, 0, ploidySums.length);
-        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0,
-                sufficientStatistics.length);
+        for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            System.arraycopy(numCoalEvents[treeIndex], 0, storedNumCoalEvents[treeIndex], 0, numCoalEvents[treeIndex].length);
+            System.arraycopy(ploidySums[treeIndex], 0, storedPloidySums[treeIndex], 0, ploidySums[treeIndex].length);
+            System.arraycopy(sufficientStatistics[treeIndex], 0, storedSufficientStatistics[treeIndex], 0, sufficientStatistics[treeIndex].length);
+        }
+
 
         storedIntervalsKnown = intervalsKnown;
         storedLogLikelihood = logLikelihood;

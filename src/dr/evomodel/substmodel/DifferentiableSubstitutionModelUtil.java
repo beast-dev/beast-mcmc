@@ -66,8 +66,8 @@ public class DifferentiableSubstitutionModelUtil {
 
         int[] complexIndices = new int[stateCount];
         int[] realIndices = new int[stateCount];
-        int numComplexPairs = getComplexEigenValueFirstIndices(eigenValues, complexIndices);
-        int numRealEigenValues = getRealEigenValueIndices(eigenValues, realIndices);
+        int numComplexPairs = getComplexEigenValueFirstIndices(eigenValues, complexIndices, stateCount);
+        int numRealEigenValues = getRealEigenValueIndices(eigenValues, realIndices, stateCount);
 
         getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
@@ -171,32 +171,41 @@ public class DifferentiableSubstitutionModelUtil {
         return outputArray;
     }
 
-    private static int getComplexEigenValueFirstIndices(double[] eigenValues, int[] indices) {
-        final int stateCount = eigenValues.length / 2;
+    private static int getComplexEigenValueFirstIndices(double[] eigenValues, int[] indices, int stateCount) {
         Arrays.fill(indices, -1);
-        int currentIndex = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            final double imagEigenValue = eigenValues[i + stateCount];
-            if (imagEigenValue != 0) {
-                indices[currentIndex++] = i;
-                assert(eigenValues[i + 1 + stateCount] == -imagEigenValue);
-                i++;
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue != 0) {
+                    indices[currentIndex++] = i;
+                    assert(eigenValues[i + 1 + stateCount] == -imagEigenValue);
+                    i++;
+                }
             }
+            return currentIndex;
+        } else {
+            return 0;
         }
-        return currentIndex;
     }
 
-    private static int getRealEigenValueIndices(double[] eigenValues, int[] indices) {
-        final int stateCount = eigenValues.length / 2;
+    private static int getRealEigenValueIndices(double[] eigenValues, int[] indices, int stateCount) {
         Arrays.fill(indices, -1);
-        int currentIndex = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            final double imagEigenValue = eigenValues[i + stateCount];
-            if (imagEigenValue == 0) {
-                indices[currentIndex++] = i;
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue == 0) {
+                    indices[currentIndex++] = i;
+                }
             }
+            return currentIndex;
+        } else {
+            for (int i = 0; i < stateCount; ++i) {
+                indices[i] = i;
+            }
+            return stateCount;
         }
-        return currentIndex;
     }
 
     private static double getExpCosineIntegral(double time, double expRate, double cosRate) {

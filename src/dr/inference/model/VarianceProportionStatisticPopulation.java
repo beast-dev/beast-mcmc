@@ -111,7 +111,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         if (!varianceKnown) {
 
             samplingVariance = MissingOps.wrap(dataModel.getSamplingVariance().toArrayComponents(), 0, dimTrait, dimTrait);
-            diffusionVariance = MissingOps.wrap(diffusionModel.getPrecisionmatrixAsVector(), 0, dimTrait, dimTrait);
+            diffusionVariance = MissingOps.wrap(diffusionModel.getPrecisionMatrixAsVector(), 0, dimTrait, dimTrait);
             CommonOps.invert(diffusionVariance);
 
             varianceKnown = true;

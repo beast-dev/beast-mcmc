@@ -82,7 +82,7 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
 
         final double[][] allMeans = treeLikelihood.getConditionalMeans();
         final double[] allScalars = treeLikelihood.getPrecisionFactors();
-        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionmatrix();
+        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionMatrix();
 
         for (int i = 0; i < nTaxa; ++i) {
 

@@ -39,7 +39,6 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.computeAdditiveGramian;
 
 import java.util.ArrayList;

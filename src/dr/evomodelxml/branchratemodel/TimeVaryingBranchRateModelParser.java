@@ -44,6 +44,7 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     private static final String GRID_POINTS = GMRFSkyrideLikelihoodParser.GRID_POINTS;
     private static final String NUM_GRID_POINTS = GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS;
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
+    private static final String SLOPE = "slope";
 
     private static final String FUNCTIONAL_FORM = "functionalForm";
 
@@ -53,6 +54,8 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
         Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
         Parameter gridPoints = getGridPoints(xo);
+        Parameter slope = xo.hasChildNamed(SLOPE) ?
+                (Parameter) xo.getElementFirstChild(SLOPE) : null;
 
         if (rates.getDimension() != gridPoints.getDimension() + 1) {
             throw new XMLParseException("Rates dimension != gridPoints dimension + 1");
@@ -60,7 +63,7 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
 
         Type type = Type.parse(xo.getAttribute(FUNCTIONAL_FORM, Type.PIECEWISE_CONSTANT.getName()));
 
-        return new TimeVaryingBranchRateModel(type, tree, rates, gridPoints);
+        return new TimeVaryingBranchRateModel(type, tree, rates, gridPoints, slope);
     }
 
     @Override
@@ -88,6 +91,8 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
             new ElementRule(RATES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
+            new ElementRule(SLOPE,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new XORRule(
                     new ElementRule(GRID_POINTS, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

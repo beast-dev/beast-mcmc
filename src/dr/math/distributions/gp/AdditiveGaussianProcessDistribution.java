@@ -27,7 +27,6 @@
 
 package dr.math.distributions.gp;
 
-import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
 import dr.xml.Reportable;
@@ -37,10 +36,7 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 
 import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
 import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDeterminant;
@@ -554,119 +550,32 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         final double[] precisionDiff = getPrecisionDiff(new double[dim]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("predictionDiff:");
+        sb.append("predictionDiff: [");
         for (double value : precisionDiff) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("mean:");
+        sb.append(" ]\n");
+        sb.append("mean: [");
         for (double value : mean) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("precision:");
+        sb.append(" ]\n");
+        sb.append("precision: [");
         for (double value : precision) {
             sb.append(" ").append(value);
         }
+        sb.append(" ]\n");
         return sb.toString();
     }
-
-    public static class BasisDimension {
-
-        private final GaussianProcessKernel kernel;
-        private final DesignMatrix design1;
-        private final DesignMatrix design2;
-        private final WeightFunction weightFunction;
-
-        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
-            this(kernel, design1, design2, null);
-        }
-
-        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2, WeightFunction weightFunction) {
-            this.kernel = kernel;
-            this.design1 = design1;
-            this.design2 = design2;
-            this.weightFunction = weightFunction;
-        }
-
-        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
-            this(kernel, design, design);
-        }
-
-        public BasisDimension(GaussianProcessKernel kernel, RandomField.WeightProvider weights) {
-            this(kernel, makeDesignMatrixFromWeights(weights));
-        }
-
-        public GaussianProcessKernel getKernel() { return kernel; }
-
-        DesignMatrix getDesignMatrix1() { return design1; }
-
-        DesignMatrix getDesignMatrix2() { return design2; }
-
-        WeightFunction getWeightFunction() {return weightFunction;}
-
-        private static DesignMatrix makeDesignMatrixFromWeights(RandomField.WeightProvider weights) {
-
-            return new DesignMatrix("weights", false) {
-
-                @Override
-                public double getParameterValue(int row, int col) {
-                    throw new RuntimeException("Not yet implemented");
-                }
-
-                @Override
-                public int getDimension() {
-                    return weights.getDimension();
-                }
-
-                @Override
-                public int getRowDimension() {
-                    return weights.getDimension();
-                }
-
-                @Override
-                public int getColumnDimension() {
-                    return 1;
-                }
-
-                @Override
-                public Parameter getParameter(int column) {
-                    throw new IllegalArgumentException("Not allowed");
-                }
-            };
-        }
-    }
-
+    
     public static void computeAdditiveGramian(DenseMatrix64F gramian,
                                               List<BasisDimension> bases,
                                               Parameter orderVariance) {
+
         gramian.zero();
-
-        final int rowDim = gramian.getNumRows();
-        final int colDim = gramian.getNumCols();
-
         // 1st order contribution
         for (BasisDimension basis : bases) {
-            final GaussianProcessKernel kernel = basis.getKernel();
-            final DesignMatrix design1 = basis.getDesignMatrix1();
-            final DesignMatrix design2 = basis.getDesignMatrix2();
-            final WeightFunction weightFunction = basis.getWeightFunction();
-
-            final double scale = kernel.getScale();
-
-            for (int i = 0; i < rowDim; ++i) {
-                for (int j = 0; j < colDim; ++j) {
-                    double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
-                    double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
-                    double value = scale * kernel.getUnscaledCovariance(xi, xj);
-                    if (weightFunction != null) {
-                        final double weightXi = weightFunction.getWeight(xi);
-                        final double weightXj = weightFunction.getWeight(xj);
-                        value *= weightXi * weightXj;
-                    }
-                    gramian.add(i, j, value);
-                }
-            }
+            basis.addFirstOrderKernelComponent(gramian);
         }
 
         // TODO higher-order terms via Newton-Girard formula
@@ -675,104 +584,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 //        for (int n = 1; n < order; ++n) { }
     }
 
-    public interface WeightFunction {
-        double getWeight(double x);
-        void configure(Map<String, Double> params);
-
-        class SigmoidWeightFunction implements WeightFunction {
-            private double location = 0.0; // default
-            private double scale = 1.0; // default
-
-            @Override
-            public void configure(Map<String, Double> params) {
-                if (params.containsKey("scale")) {
-                    scale = params.get("scale");
-                }
-                if (params.containsKey("location")) {
-                    location = params.get("location");
-                }
-            }
-
-            @Override
-            public double getWeight(double x) {
-                return 1.0 / (1.0 + Math.exp(- scale * ( x - location)));
-            }
-        }
-
-        class SigmoidComplementWeightFunction implements WeightFunction {
-            private double location = 0.0; // default
-            private double scale = 1.0; // default
-
-            @Override
-            public void configure(Map<String, Double> params) {
-                if (params.containsKey("scale")) {
-                    scale = params.get("scale");
-                }
-                if (params.containsKey("location")) {
-                    location = params.get("location");
-                }
-            }
-
-            @Override
-            public double getWeight(double x) {
-                return 1.0 - 1.0 / (1.0 + Math.exp(- scale * (x - location)));
-            }
-        }
-
-        class IdentityWeightFunction implements WeightFunction {
-            @Override
-            public void configure(Map<String, Double> params) {
-                // No parameters needed.
-            }
-
-            @Override
-            public double getWeight(double x) {
-                return 1.0;
-            }
-        }
-
-        class LinearWeightFunction implements WeightFunction {
-            private double slope = 1.0;
-            private double intercept = 0.0;
-
-            @Override
-            public void configure(Map<String, Double> params) {
-                if (params.containsKey("slope")) slope = params.get("slope");
-                if (params.containsKey("intercept")) intercept = params.get("intercept");
-            }
-
-            @Override
-            public double getWeight(double x) {
-                return slope * x + intercept;
-            }
-        }
-
-        class WeightFunctionFactory {
-
-            private static final Map<String, Supplier<WeightFunction>> registry = new HashMap<>();
-
-            static {
-                register("sigmoid", SigmoidWeightFunction::new);
-                register("sigmoidComplement", SigmoidComplementWeightFunction::new);
-                register("identity", IdentityWeightFunction::new);
-                register("linear", LinearWeightFunction::new);
-            }
-
-            public static void register(String name, Supplier<WeightFunction> constructor) {
-                registry.put(name.toLowerCase(), constructor);
-            }
-
-            public static WeightFunction create(String type, Map<String, Double> params) {
-                Supplier<WeightFunction> constructor = registry.get(type.toLowerCase());
-                if (constructor == null) {
-                    throw new IllegalArgumentException("Unknown weight function: " + type);
-                }
-                WeightFunction wf = constructor.get();
-                wf.configure(params);
-                return wf;
-            }
-        }
-    }
 }
 
 

@@ -117,7 +117,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
         if (!varianceKnown) {
 
             samplingVariance = repeatedMeasuresTraitDataModel.getSamplingVariance();
-            diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+            diffusionVariance = new Matrix(diffusionModel.getPrecisionMatrix()).inverse();
 
             varianceKnown = true;
 

@@ -36,8 +36,6 @@ import no.uib.cipr.matrix.*;
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
 
-import static no.uib.cipr.matrix.BandCholesky.factorize;
-
 /**
  * @author Marc Suchard
  * @author Pratyusa Data
@@ -377,11 +375,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
 
         BandCholesky chol = BandCholesky.factorize(A);
-        UpperTriangBandMatrix band = chol.getU();
-
-        double[][] test = testCholeskyUpper(band, dim);
-
-        return band;
+        return chol.getU();
     }
 
 

@@ -32,6 +32,8 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -62,17 +64,99 @@ public class DifferentiableSubstitutionModelUtil {
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
         WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
 
+        int[] complexIndices = new int[stateCount];
+        int[] realIndices = new int[stateCount];
+        int numComplexPairs = getComplexEigenValueFirstIndices(eigenValues, complexIndices, stateCount);
+        int numRealEigenValues = getRealEigenValueIndices(eigenValues, realIndices, stateCount);
+
         getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
         setZeros(differentialMassMatrix);
 
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                if (i == j || eigenValues[i] == eigenValues[j]) {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
+        for (int i = 0; i < numRealEigenValues; i++) {
+            final double eigenValueI = eigenValues[realIndices[i]];
+            for (int j = 0; j < numRealEigenValues; j++) {
+                final double eigenValueJ = eigenValues[realIndices[j]];
+                if (i == j || Math.abs(eigenValueI - eigenValueJ) < threshold) {
+                    differentialMassMatrix.set(realIndices[i], realIndices[j], differentialMassMatrix.get(realIndices[i], realIndices[j]) * time);
                 } else {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) == 0 ? 0 : differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+                    differentialMassMatrix.set(realIndices[i], realIndices[j], differentialMassMatrix.get(realIndices[i], realIndices[j]) == 0 ? 0 : differentialMassMatrix.get(realIndices[i], realIndices[j]) * (1.0 - Math.exp((eigenValueJ - eigenValueI) * time)) / (eigenValueI - eigenValueJ));
                 }
+            }
+        }
+
+        for (int i = 0; i < numRealEigenValues; i++) {
+            final double eigenValueI = eigenValues[realIndices[i]];
+            final int iIndex = realIndices[i];
+            for (int j = 0; j < numComplexPairs; j++) {
+                final int jIndex = complexIndices[j];
+                final double realEigenValue = eigenValues[jIndex];
+                final double imagEigenValue = eigenValues[jIndex + stateCount];
+                final double Vij = differentialMassMatrix.get(iIndex, jIndex);
+                final double Vijp1 = differentialMassMatrix.get(iIndex, jIndex + 1);
+                final double expSineIntegral = getExpSineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+                final double expCosineIntegral = getExpCosineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+
+                final double outij = Vij * expCosineIntegral - Vijp1 * expSineIntegral;
+                final double outijp1 = Vij * expSineIntegral + Vijp1 * expCosineIntegral;
+
+                differentialMassMatrix.set(iIndex, jIndex, outij);
+                differentialMassMatrix.set(iIndex, jIndex + 1, outijp1);
+            }
+        }
+
+        for (int i = 0; i < numComplexPairs; i++) {
+            final int iIndex = complexIndices[i];
+            final double realEigenValueI = eigenValues[iIndex];
+            final double imagEigenValueI = eigenValues[iIndex + stateCount];
+            final double cosineBt = Math.cos(imagEigenValueI * time);
+            final double sineBt = Math.sin(imagEigenValueI * time);
+            for (int j = 0; j < numRealEigenValues; j++) {
+                final int jIndex = realIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+
+                final double Vij = differentialMassMatrix.get(iIndex, jIndex);
+                final double Vip1j = differentialMassMatrix.get(iIndex + 1, jIndex);
+
+                final double expCosineConvolution = getExpCosineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI, imagEigenValueI * time);
+                final double expSineConvolution = getExpSineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI, imagEigenValueI * time);
+
+                final double tmpIj = Vij * expCosineConvolution + Vip1j * expSineConvolution;
+                final double tmpIp1j = - Vij * expSineConvolution + Vip1j * expCosineConvolution;
+
+                differentialMassMatrix.set(iIndex, jIndex, cosineBt * tmpIj - sineBt * tmpIp1j);
+                differentialMassMatrix.set(iIndex + 1, jIndex, sineBt * tmpIj + cosineBt * tmpIp1j);
+            }
+
+            for (int j = 0; j < numComplexPairs; j++) {
+                final int jIndex = complexIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+                final double imagEigenValueJ = eigenValues[jIndex + stateCount];
+
+                final double Vij = differentialMassMatrix.get(iIndex, jIndex);
+                final double Vijp1 = differentialMassMatrix.get(iIndex, jIndex + 1);
+                final double Vip1j = differentialMassMatrix.get(iIndex + 1, jIndex);
+                final double Vip1jp1 = differentialMassMatrix.get(iIndex + 1, jIndex + 1);
+
+                final double expCosineXPlusY = i == j ? time * Math.cos(imagEigenValueI * time) : getExpCosineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ, imagEigenValueI * time);
+                final double expCosineXMinusY = i == j ? Math.sin(imagEigenValueI * time) / imagEigenValueI : getExpCosineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ, imagEigenValueI * time);
+                final double expSineXPlusY = i == j ? time * Math.sin(imagEigenValueI * time) : getExpSineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ, imagEigenValueI * time);
+                final double expSineXMinusY = i == j ? 0 : getExpSineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ, imagEigenValueI * time);
+
+                final double tmpIJ = (Vij + Vip1jp1) * expCosineXPlusY + (Vij - Vip1jp1) * expCosineXMinusY + (Vip1j - Vijp1) * expSineXPlusY + (Vip1j + Vijp1) * expSineXMinusY;
+                final double tmpIJp1 = (Vijp1 - Vip1j) * expCosineXPlusY + (Vijp1 + Vip1j) * expCosineXMinusY + (Vip1jp1 + Vij) * expSineXPlusY + (Vip1jp1 - Vij) * expSineXMinusY;
+                final double tmpIp1J = (Vip1j - Vijp1) * expCosineXPlusY + (Vip1j + Vijp1) * expCosineXMinusY - (Vip1jp1 + Vij) * expSineXPlusY + (Vip1jp1 - Vij) * expSineXMinusY;
+                final double tmpIp1Jp1 = (Vij + Vip1jp1) * expCosineXPlusY - (Vij - Vip1jp1) * expCosineXMinusY + (Vip1j - Vijp1) * expSineXPlusY - (Vip1j + Vijp1) * expSineXMinusY;
+
+                final double outIJ = 0.5 * (cosineBt * tmpIJ - sineBt * tmpIp1J);
+                final double outIJp1 = 0.5 * (cosineBt * tmpIJp1 - sineBt * tmpIp1Jp1);
+                final double outIp1J = 0.5 * (sineBt * tmpIJ + cosineBt * tmpIp1J);
+                final double outIp1Jp1 = 0.5 * (sineBt * tmpIJp1 + cosineBt * tmpIp1Jp1);
+
+                differentialMassMatrix.set(iIndex, jIndex, outIJ);
+                differentialMassMatrix.set(iIndex + 1, jIndex, outIp1J);
+                differentialMassMatrix.set(iIndex, jIndex + 1, outIJp1);
+                differentialMassMatrix.set(iIndex + 1, jIndex + 1, outIp1Jp1);
             }
         }
 
@@ -85,6 +169,65 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return outputArray;
+    }
+
+    private static int getComplexEigenValueFirstIndices(double[] eigenValues, int[] indices, int stateCount) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue != 0) {
+                    indices[currentIndex++] = i;
+                    assert(eigenValues[i + 1 + stateCount] == -imagEigenValue);
+                    i++;
+                }
+            }
+            return currentIndex;
+        } else {
+            return 0;
+        }
+    }
+
+    private static int getRealEigenValueIndices(double[] eigenValues, int[] indices, int stateCount) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue == 0) {
+                    indices[currentIndex++] = i;
+                }
+            }
+            return currentIndex;
+        } else {
+            for (int i = 0; i < stateCount; ++i) {
+                indices[i] = i;
+            }
+            return stateCount;
+        }
+    }
+
+    private static double getExpCosineIntegral(double time, double expRate, double cosRate) {
+        final double denominator = expRate * expRate + cosRate * cosRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = cosRate * expProduct * Math.sin(cosRate * time) + expRate * expProduct * Math.cos(cosRate * time) - expRate;
+        return numerator / denominator;
+    }
+
+    private static double getExpSineIntegral(double time, double expRate, double sinRate) {
+        final double denominator = expRate * expRate + sinRate * sinRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = expRate * expProduct * Math.sin(sinRate * time) - sinRate * expProduct * Math.cos(sinRate * time) + sinRate;
+        return numerator / denominator;
+    }
+
+    private static double getExpCosineConvolution(double time, double expRate, double cosRate, double convolveConst) {
+        return Math.cos(convolveConst) * getExpCosineIntegral(time, expRate, cosRate) - Math.sin(convolveConst) * getExpSineIntegral(time, expRate, cosRate);
+    }
+
+    private static double getExpSineConvolution(double time, double expRate, double sinRate, double convolveConst) {
+        return Math.sin(convolveConst) * getExpCosineIntegral(time, expRate, sinRate) - Math.cos(convolveConst) * getExpSineIntegral(time, expRate, sinRate);
     }
 
     static double[] getAffineDifferentialMassMatrix(double time,

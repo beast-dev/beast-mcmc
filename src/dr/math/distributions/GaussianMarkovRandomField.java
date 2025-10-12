@@ -253,8 +253,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
     }
 
-
-
     public boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
@@ -389,8 +387,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         BandCholesky chol = BandCholesky.factorize(A);
         return chol.getU();
     }
-
-
+    
     public static double[][] testCholeskyUpper(Matrix band, int dim) {
         double[][] result = new double[dim][dim];
 
@@ -568,7 +565,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        throw new IllegalArgumentException("Unknown model");
+        if (model == weightProvider) {
+            qKnown = false;
+            fieldDeterminantKnown = false;
+        } else {
+            throw new IllegalArgumentException("Unknown model");
+        }
     }
 
     @Override

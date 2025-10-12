@@ -65,6 +65,11 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     private final int bandWidth;
     private int nonZeroEntryCount = -1;
 
+    private boolean fieldDeterminantKnown;
+    private boolean savedFieldDeterminantKnown;
+    private double logFieldDeterminant;
+    private double savedLogFieldDeterminant;
+
     public GaussianMarkovRandomField(String name,
                                      int dim,
                                      Parameter precision,
@@ -104,6 +109,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
         meanKnown = false;
         qKnown = false;
+        fieldDeterminantKnown = false;
     }
 
     @Override
@@ -322,22 +328,28 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     public double getLogDeterminant() {
 
-        // TODO cache this value
-
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
-        if (!isImproper() || weightProvider != null) {
-            double[][] precision = makePrecisionMatrix(Q, 1.0);
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-            DoubleMatrix1D values = ed.getRealEigenvalues();
-            for (int i = 0; i < values.size(); ++i) {
-                double v = values.get(i);
-                if (Math.abs(v) > 1E-6) {
-                    logDet += Math.log(v);
+        if (!fieldDeterminantKnown) {
+            double logFieldDet = 0.0;
+            if (!isImproper() || weightProvider != null) {
+                double[][] precision = makePrecisionMatrix(Q, 1.0);
+                RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+                DoubleMatrix1D values = ed.getRealEigenvalues();
+                for (int i = 0; i < values.size(); ++i) {
+                    double v = values.get(i);
+                    if (Math.abs(v) > 1E-6) {
+                        logFieldDet += Math.log(v);
+                    }
                 }
             }
+
+            logFieldDeterminant = logFieldDet;
+            fieldDeterminantKnown = true;
         }
+
+        logDet += logFieldDeterminant;
 
         if (CHECK_DETERMINANT) {
 
@@ -565,6 +577,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             meanKnown = false;
         } else if (variable == precisionParameter || variable == lambdaParameter) {
             qKnown = false;
+            if (variable == lambdaParameter) {
+                fieldDeterminantKnown = false;
+            }
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }
@@ -576,6 +591,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             Q.copyTo(savedQ);
         }
         savedQKnown = qKnown;
+
+        savedLogFieldDeterminant = logFieldDeterminant;
+        savedFieldDeterminantKnown = fieldDeterminantKnown;
     }
 
     @Override
@@ -586,6 +604,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         if (qKnown) {
             savedQ.swap(Q);
         }
+
+        logFieldDeterminant = savedLogFieldDeterminant;
+        fieldDeterminantKnown = savedFieldDeterminantKnown;
     }
 
     @Override

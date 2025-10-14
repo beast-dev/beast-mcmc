@@ -25,11 +25,13 @@
  *
  */
 
-package dr.evomodel.branchratemodel;
+package dr.evomodel.branchratemodel.latentStateBranchRate;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;

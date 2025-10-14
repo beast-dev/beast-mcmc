@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodelxml.branchratemodel;
+package dr.evomodelxml.branchratemodel.latentStateBranchRate;
 
 import dr.evomodel.branchratemodel.*;
 import dr.evomodel.tree.TreeModel;

@@ -149,10 +149,9 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
     }
 
     // ************************************************************************* //
-    // Computation of the jacobian matrix
+    // Computation of the Jacobian matrix
     // ************************************************************************* //
 
-    // Returns the *transpose* of the Jacobian matrix: jacobian[posStrict(k, l)][posStrict(i, j)] = d R_{ij} / d V_{kl}
     public double[][] computeJacobianMatrixInverse(double[] valuesOnReals) {
 
         double[] valuesOnSimplex = inverse(valuesOnReals); // also computes z[]
@@ -161,20 +160,25 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
         double[] accumulativeDifferential = new double[dim];
 
         double stickRemainder = 1.0;
-        for (int i = 0; i < dim - 1; ++i) {
-            accumulativeDifferential[i] = 1.0;
+        for (int i = 0; i < dim; ++i) {
+
+            double zz = (i != dim - 1) ? z[i] : 1.0;
+
             for (int j = 0; j < i; ++j) {
-                jacobian[i][j] = -z[i] * accumulativeDifferential[i];
-                accumulativeDifferential[i] += jacobian[i][j];
+                jacobian[i][j] = -zz * accumulativeDifferential[j];
             }
-            jacobian[i][i] = stickRemainder;
+            jacobian[i][i] = stickRemainder * z[i] * (1.0 - z[i]);
+
+            for (int j = 0; j <= i; ++j) {
+                accumulativeDifferential[j] += jacobian[i][j];
+            }
+
             stickRemainder -= valuesOnSimplex[i];
         }
 
+        // TODO insert 1 as last element?
+
         return jacobian;
-
-
-//        throw new RuntimeException("Not yet implemented");
     }
 
     private static double logit(double x) {

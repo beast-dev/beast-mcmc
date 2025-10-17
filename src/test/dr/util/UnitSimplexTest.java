@@ -27,6 +27,8 @@
 
 package test.dr.util;
 
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.util.*;
 import test.dr.math.MathTestCase;
 
@@ -48,7 +50,52 @@ public class UnitSimplexTest extends MathTestCase {
 
         assertEquals(result1, valuesOnSimplex, 1E-10);
 
-        double[] result2 = transform.transform(valuesOnSimplex, 0, valuesOnSimplex.length);
+//        double[] result2 = transform.transform(valuesOnSimplex, 0, valuesOnSimplex.length);
+
+        System.out.println("Success");
+    }
+
+    public void testJacobianMatrix() {
+
+        System.out.println("\nTest Jacobian matrix");
+
+        double[] valuesOnReals = new double[]{ 1.0, 2.0, 3.0, 4.0 };
+        int dim = valuesOnReals.length;
+
+        UnitSimplexToRealsTransform transform = new UnitSimplexToRealsTransform(dim);
+
+        double[][] numericalJacobian = new double[dim][];
+        for (int i = 0; i < dim; ++i) {
+
+            final int index = i;
+            numericalJacobian[i] = NumericalDerivative.gradient(new MultivariateFunction() {
+                @Override
+                public double evaluate(double[] argument) {
+                    return transform.inverse(argument, 0, argument.length)[index];
+                }
+
+                @Override
+                public int getNumArguments() {
+                    return valuesOnReals.length;
+                }
+
+                @Override
+                public double getLowerBound(int n) {
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                @Override
+                public double getUpperBound(int n) {
+                    return Double.POSITIVE_INFINITY;
+                }
+            }, valuesOnReals);
+        }
+
+        double[][] jacobian = transform.computeJacobianMatrixInverse(valuesOnReals);
+
+        for (int i = 0; i < dim; ++i) {
+            assertEquals(jacobian[i], numericalJacobian[i], 1E-5);
+        }
 
         System.out.println("Success");
     }

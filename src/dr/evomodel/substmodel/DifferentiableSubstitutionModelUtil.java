@@ -109,8 +109,6 @@ public class DifferentiableSubstitutionModelUtil {
             final int iIndex = complexIndices[i];
             final double realEigenValueI = eigenValues[iIndex];
             final double imagEigenValueI = eigenValues[iIndex + stateCount];
-            final double cosineBt = Math.cos(imagEigenValueI * time);
-            final double sineBt = Math.sin(imagEigenValueI * time);
             for (int j = 0; j < numRealEigenValues; j++) {
                 final int jIndex = realIndices[j];
                 final double realEigenValueJ = eigenValues[jIndex];
@@ -138,30 +136,16 @@ public class DifferentiableSubstitutionModelUtil {
                 final double Vip1j = differentialMassMatrix.get(iIndex + 1, jIndex);
                 final double Vip1jp1 = differentialMassMatrix.get(iIndex + 1, jIndex + 1);
 
-//                final double expCosineXPlusY = i == j ? time * Math.cos(imagEigenValueI * time) : getExpCosineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ, imagEigenValueI * time);
-//                final double expCosineXMinusY = i == j ? Math.sin(imagEigenValueI * time) / imagEigenValueI : getExpCosineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ, imagEigenValueI * time);
-//                final double expSineXPlusY = i == j ? time * Math.sin(imagEigenValueI * time) : getExpSineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ, imagEigenValueI * time);
-//                final double expSineXMinusY = i == j ? 0 : getExpSineConvolution(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ, imagEigenValueI * time);
-
-//                final double tmpIJ = (Vij + Vip1jp1) * expCosineXPlusY + (Vij - Vip1jp1) * expCosineXMinusY + (Vip1j - Vijp1) * expSineXPlusY + (Vip1j + Vijp1) * expSineXMinusY;
-//                final double tmpIJp1 = (Vijp1 - Vip1j) * expCosineXPlusY + (Vijp1 + Vip1j) * expCosineXMinusY + (Vip1jp1 + Vij) * expSineXPlusY + (Vip1jp1 - Vij) * expSineXMinusY;
-//                final double tmpIp1J = (Vip1j - Vijp1) * expCosineXPlusY + (Vip1j + Vijp1) * expCosineXMinusY - (Vip1jp1 + Vij) * expSineXPlusY + (Vip1jp1 - Vij) * expSineXMinusY;
-//                final double tmpIp1Jp1 = (Vij + Vip1jp1) * expCosineXPlusY - (Vij - Vip1jp1) * expCosineXMinusY + (Vip1j - Vijp1) * expSineXPlusY - (Vip1j + Vijp1) * expSineXMinusY;
-
-                final double expCosineXPlusY2 = (realEigenValueI == realEigenValueJ && imagEigenValueI == imagEigenValueJ) ?
+                final boolean specialCase = Math.abs(realEigenValueI - realEigenValueJ) < threshold  && Math.abs(imagEigenValueI - imagEigenValueJ) < threshold;
+                final double expCosineXPlusY2 = specialCase ?
                         Math.sin(2 * imagEigenValueI * time) / 2 / imagEigenValueI : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
-                final double expCosineXMinusY2 = (realEigenValueI == realEigenValueJ && imagEigenValueI == imagEigenValueJ) ?
+                final double expCosineXMinusY2 = specialCase ?
                         time : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
-                final double expSineXPlusY2 = (realEigenValueI == realEigenValueJ && imagEigenValueI == imagEigenValueJ) ?
+                final double expSineXPlusY2 = specialCase ?
                         (1 - Math.cos(2 * imagEigenValueI * time)) / 2 / imagEigenValueI : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
-                final double expSineXMinusY2 = (realEigenValueI == realEigenValueJ && imagEigenValueI == imagEigenValueJ) ?
+                final double expSineXMinusY2 = specialCase ?
                         0 : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
 
-
-//                final double outIJ = 0.5 * (cosineBt * tmpIJ - sineBt * tmpIp1J);
-//                final double outIJp1 = 0.5 * (cosineBt * tmpIJp1 - sineBt * tmpIp1Jp1);
-//                final double outIp1J = 0.5 * (sineBt * tmpIJ + cosineBt * tmpIp1J);
-//                final double outIp1Jp1 = 0.5 * (sineBt * tmpIJp1 + cosineBt * tmpIp1Jp1);
 
                 final double outIJ = 0.5 * ((Vij - Vip1jp1) * expCosineXPlusY2 + (Vij + Vip1jp1) * expCosineXMinusY2 - (Vip1j + Vijp1) * expSineXPlusY2 + (Vijp1 - Vip1j) * expSineXMinusY2);
                 final double outIJp1 = 0.5 * ((Vijp1 + Vip1j) * expCosineXPlusY2 + (Vijp1 - Vip1j) * expCosineXMinusY2 + (Vij - Vip1jp1) * expSineXPlusY2 - (Vij + Vip1jp1) * expSineXMinusY2);

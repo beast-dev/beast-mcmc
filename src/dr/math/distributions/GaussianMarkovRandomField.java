@@ -32,11 +32,10 @@ import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import no.uib.cipr.matrix.*;
+import org.apache.commons.math.linear.EigenDecompositionImpl;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
-
-import static no.uib.cipr.matrix.BandCholesky.factorize;
 
 /**
  * @author Marc Suchard
@@ -66,6 +65,11 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private final int bandWidth;
     private int nonZeroEntryCount = -1;
+
+    private boolean fieldDeterminantKnown;
+    private boolean savedFieldDeterminantKnown;
+    private double logFieldDeterminant;
+    private double savedLogFieldDeterminant;
 
     public GaussianMarkovRandomField(String name,
                                      int dim,
@@ -106,6 +110,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
         meanKnown = false;
         qKnown = false;
+        fieldDeterminantKnown = false;
     }
 
     @Override
@@ -249,8 +254,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
     }
 
-
-
     public boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
@@ -324,42 +327,82 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     public double getLogDeterminant() {
 
-        // TODO cache this value
-
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
-        if (!isImproper() || weightProvider != null) {
-            double[][] precision = makePrecisionMatrix(Q, 1.0);
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-            DoubleMatrix1D values = ed.getRealEigenvalues();
-            for (int i = 0; i < values.size(); ++i) {
-                double v = values.get(i);
-                if (Math.abs(v) > 1E-6) {
-                    logDet += Math.log(v);
-                }
+        if (!fieldDeterminantKnown) {
+            double logFieldDet = 0.0;
+            if (!isImproper()) {
+                 logFieldDet = getLogDeterminantViaRecursion(Q);
+            } else if (weightProvider != null) {
+                logFieldDet = getLogPseudoDeterminantViaTriangularEigenDecomposition(Q);
             }
+
+            logFieldDeterminant = logFieldDet;
+            fieldDeterminantKnown = true;
         }
 
+        logDet += logFieldDeterminant;
+
         if (CHECK_DETERMINANT) {
-
-            double[][] precision = makePrecisionMatrix(Q, 1.0);
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-            DoubleMatrix1D values = ed.getRealEigenvalues();
-            double sum = 0.0;
-            for (int i = 0; i < values.size(); ++i) {
-                double v = values.get(i);
-                if (Math.abs(v) > 1E-6) {
-                    sum += Math.log(v);
-                }
-            }
-
+            double sum = getLogPseudoDeterminantViaDenseEigendecomposition(Q);
             if (Math.abs(sum - logDet) > 1E-6) {
                 throw new RuntimeException("Incorrect (pseudo-) determinant");
             }
         }
 
         return logDet;
+    }
+
+    @SuppressWarnings("unused")
+    public static double getLogDeterminantViaRecursion(SymmetricTriDiagonalMatrix q) {
+        double fnMinus2;
+        double fnMinus1 = 1.0;
+
+        double fn = q.diagonal[0];
+
+        // Use linear recursion expression at https://en.wikipedia.org/wiki/Tridiagonal_matrix
+        for (int n = 2; n <= q.diagonal.length; ++n) {
+            fnMinus2 = fnMinus1;
+            fnMinus1 = fn;
+
+            double an = q.diagonal[n - 1];
+            double bnMinus1 = q.offDiagonal[n - 2];
+
+            fn = an * fnMinus1 - bnMinus1 * bnMinus1 * fnMinus2;
+        }
+
+        return Math.log(fn);
+    }
+
+    public static double getLogPseudoDeterminantViaDenseEigendecomposition(SymmetricTriDiagonalMatrix q) {
+        double[][] precision = makePrecisionMatrix(q, 1.0);
+        RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+        DoubleMatrix1D values = ed.getRealEigenvalues();
+        double sum = 0.0;
+        for (int i = 0; i < values.size(); ++i) {
+            double v = values.get(i);
+            if (Math.abs(v) > 1E-6) {
+                sum += Math.log(v);
+            }
+        }
+
+        return sum;
+    }
+
+    public static double getLogPseudoDeterminantViaTriangularEigenDecomposition(SymmetricTriDiagonalMatrix q) {
+
+        EigenDecompositionImpl ed = new EigenDecompositionImpl(q.diagonal, q.offDiagonal, 1E-8);
+        double[] eigenValues = ed.getRealEigenvalues();
+
+        double logSum = 0;
+        for (double eigenValue : eigenValues) {
+            if (eigenValue != 0.0) {
+                logSum += Math.log(eigenValue);
+            }
+        }
+
+        return logSum;
     }
 
     public UpperTriangBandMatrix getCholeskyDecomposition() {
@@ -377,13 +420,8 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
 
         BandCholesky chol = BandCholesky.factorize(A);
-        UpperTriangBandMatrix band = chol.getU();
-
-        double[][] test = testCholeskyUpper(band, dim);
-
-        return band;
+        return chol.getU();
     }
-
 
     public static double[][] testCholeskyUpper(Matrix band, int dim) {
         double[][] result = new double[dim][dim];
@@ -500,16 +538,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return SSE * precision;
     }
 
-    protected static class SymmetricTriDiagonalMatrix {
+    public static class SymmetricTriDiagonalMatrix {
 
         public double[] diagonal;
         public double[] offDiagonal;
 
-        SymmetricTriDiagonalMatrix(int dim) {
+        public SymmetricTriDiagonalMatrix(int dim) {
             this(new double[dim], new double[dim - 1]);
         }
 
-        SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {
+        public SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {
             this.diagonal = diagonal;
             this.offDiagonal = offDiagonal;
         }
@@ -562,7 +600,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        throw new IllegalArgumentException("Unknown model");
+        if (model == weightProvider) {
+            qKnown = false;
+            fieldDeterminantKnown = false;
+        } else {
+            throw new IllegalArgumentException("Unknown model");
+        }
     }
 
     @Override
@@ -571,6 +614,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             meanKnown = false;
         } else if (variable == precisionParameter || variable == lambdaParameter) {
             qKnown = false;
+            if (variable == lambdaParameter) {
+                fieldDeterminantKnown = false;
+            }
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }
@@ -582,6 +628,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             Q.copyTo(savedQ);
         }
         savedQKnown = qKnown;
+
+        savedLogFieldDeterminant = logFieldDeterminant;
+        savedFieldDeterminantKnown = fieldDeterminantKnown;
     }
 
     @Override
@@ -592,6 +641,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         if (qKnown) {
             savedQ.swap(Q);
         }
+
+        logFieldDeterminant = savedLogFieldDeterminant;
+        fieldDeterminantKnown = savedFieldDeterminantKnown;
     }
 
     @Override

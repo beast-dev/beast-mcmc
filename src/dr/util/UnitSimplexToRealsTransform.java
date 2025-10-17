@@ -160,12 +160,10 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
         double[] accumulativeDifferential = new double[dim];
 
         double stickRemainder = 1.0;
-        for (int i = 0; i < dim; ++i) {
-
-            double zz = (i != dim - 1) ? z[i] : 1.0;
+        for (int i = 0; i < dim - 1; ++i) {
 
             for (int j = 0; j < i; ++j) {
-                jacobian[i][j] = -zz * accumulativeDifferential[j];
+                jacobian[i][j] = -z[i] * accumulativeDifferential[j];
             }
             jacobian[i][i] = stickRemainder * z[i] * (1.0 - z[i]);
 
@@ -174,6 +172,10 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
             }
 
             stickRemainder -= valuesOnSimplex[i];
+        }
+
+        for (int j = 0; j < dim - 1; ++j) {
+            jacobian[dim - 1][j] = -accumulativeDifferential[j];
         }
 
         // TODO insert 1 as last element?

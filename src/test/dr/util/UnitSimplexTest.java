@@ -90,7 +90,7 @@ public class UnitSimplexTest extends MathTestCase {
                 }
             }, valuesOnReals);
         }
-        UnitSimplexToRealsTransform.transpose(numericalJacobian);
+        transpose(numericalJacobian);
 
         double[][] jacobian = transform.computeJacobianMatrixInverse(valuesOnReals);
 
@@ -99,6 +99,18 @@ public class UnitSimplexTest extends MathTestCase {
         }
 
         System.out.println("Success");
+    }
+
+    private static void transpose(double[][] matrix) {
+        assert matrix.length == matrix[0].length;
+
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = 0; j < i; ++j) {
+                double tmp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = tmp;
+            }
+        }
     }
 
     public void testGetGradientLogDetJacobian() {
@@ -111,7 +123,7 @@ public class UnitSimplexTest extends MathTestCase {
         double[] numericalGradient = NumericalDerivative.gradient(new MultivariateFunction() {
             @Override
             public double evaluate(double[] argument) {
-                return transform.getLogJacobian(transform.inverse(valuesOnReals, 0, dim));
+                return -transform.getLogJacobian(transform.inverse(valuesOnReals, 0, dim));
             }
 
             @Override
@@ -124,6 +136,8 @@ public class UnitSimplexTest extends MathTestCase {
             public double getUpperBound(int n) { return Double.POSITIVE_INFINITY; }
         }, valuesOnReals);
         double[] gradient = transform.getGradientLogJacobianInverse(valuesOnReals);
+
+        assertEquals(gradient, numericalGradient, 1E-6);
 
         System.out.println("Success");
     }
@@ -164,7 +178,4 @@ public class UnitSimplexTest extends MathTestCase {
 
         System.out.println("Success");
     }
-
-
-
 }

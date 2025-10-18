@@ -113,10 +113,7 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
             }
             total += v;
         }
-        if (Math.abs(total - 1) > 1E-6) {
-            return false;
-        }
-        return true;
+        return Math.abs(total - 1.0) < 1E-6;
     }
 
     public String getTransformName() {
@@ -146,11 +143,7 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
             stickRemainder -= valuesOnSimplex[i];
         }
 
-        if (NEGATE_JACOBIAN) {
-            logDet *= -1;
-        }
-
-        return logDet;
+        return -logDet;
     }
 
     @Override
@@ -170,20 +163,16 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
             stickRemainder -= valuesOSimplex[i];
 
             for (int j = 0; j <= i; ++j) {
-                double element = TRANSPOSE_JACOBIAN ?
-                        jacobian[j][i] : jacobian[i][j];
-                acc[j] += element;
+                acc[j] += jacobian[j][i];
                 gradient[j] -= acc[j] / stickRemainder;
             }
         }
-
-//        negate(gradient);
 
         return gradient;
     }
 
     // ************************************************************************* //
-    // Computation of the Jacobian matrix
+    // Computation of the (transposed) Jacobian matrix
     // ************************************************************************* //
 
     public double[][] computeJacobianMatrixInverse(double[] valuesOnReals) {
@@ -197,60 +186,22 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
         for (int i = 0; i < dim - 1; ++i) {
 
             for (int j = 0; j < i; ++j) {
-                jacobian[i][j] = -z[i] * accumulativeDifferential[j];
+                jacobian[j][i] = -z[i] * accumulativeDifferential[j];
             }
             jacobian[i][i] = stickRemainder * z[i] * (1.0 - z[i]);
 
             for (int j = 0; j <= i; ++j) {
-                accumulativeDifferential[j] += jacobian[i][j];
+                accumulativeDifferential[j] += jacobian[j][i];
             }
 
             stickRemainder -= valuesOnSimplex[i];
         }
 
-        for (int j = 0; j < dim - 1; ++j) {
-            jacobian[dim - 1][j] = -accumulativeDifferential[j];
+        for (int i = 0; i < dim - 1; ++i) {
+            jacobian[i][dim - 1] = -accumulativeDifferential[i];
         }
-
-        // TODO insert 1 as last element?
-//        jacobian[dim - 1][dim - 1] = 1;
-
-        if (TRANSPOSE_JACOBIAN) {
-            transpose(jacobian);
-        }
-
-//        if (NEGATE_JACOBIAN) {
-//            negate(jacobian);
-//        }
 
         return jacobian;
-    }
-
-    public final static boolean TRANSPOSE_JACOBIAN = true;
-    public final static boolean NEGATE_JACOBIAN = true;
-
-    public static void transpose(double[][] matrix) { // TODO move to unit-test
-        assert matrix.length == matrix[0].length;
-
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < i; ++j) {
-                double tmp = matrix[i][j];
-                matrix[i][j] = matrix[j][i];
-                matrix[j][i] = tmp;
-            }
-        }
-    }
-
-    private static void negate(double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            negate(matrix[i]);
-        }
-    }
-
-    private static void negate(double[] vector) {
-        for (int i = 0; i < vector.length; ++i) {
-            vector[i] *= -1;
-        }
     }
 
     private static double logit(double x) {

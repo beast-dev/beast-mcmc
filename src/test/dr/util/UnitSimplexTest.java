@@ -90,12 +90,62 @@ public class UnitSimplexTest extends MathTestCase {
                 }
             }, valuesOnReals);
         }
+        UnitSimplexToRealsTransform.transpose(numericalJacobian);
 
         double[][] jacobian = transform.computeJacobianMatrixInverse(valuesOnReals);
 
         for (int i = 0; i < dim; ++i) {
             assertEquals(jacobian[i], numericalJacobian[i], 1E-5);
         }
+
+        System.out.println("Success");
+    }
+
+    public void testGetGradientLogDetJacobian() {
+
+        System.out.println("\nTest gradient of log-det Jacobian");
+        double[] valuesOnReals = new double[] { -1.0, 1.0, 3.0, 2.0 };
+        int dim = valuesOnReals.length;
+
+        UnitSimplexToRealsTransform transform = new UnitSimplexToRealsTransform(dim);
+        double[] numericalGradient = NumericalDerivative.gradient(new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+                return transform.getLogJacobian(transform.inverse(valuesOnReals, 0, dim));
+            }
+
+            @Override
+            public int getNumArguments() { return dim; }
+
+            @Override
+            public double getLowerBound(int n) { return Double.NEGATIVE_INFINITY; }
+
+            @Override
+            public double getUpperBound(int n) { return Double.POSITIVE_INFINITY; }
+        }, valuesOnReals);
+        double[] gradient = transform.getGradientLogJacobianInverse(valuesOnReals);
+
+        System.out.println("Success");
+    }
+
+    public void testGetLogDetJacobian() {
+
+        System.out.println("\nTest log-det Jacobian");
+        double[] valuesOnReals = new double[] { -5.0, 1.0, 3.0, 2.0 };
+        int dim = valuesOnReals.length;
+
+        UnitSimplexToRealsTransform transform = new UnitSimplexToRealsTransform(dim);
+        double[] valuesOSimplex = transform.inverse(valuesOnReals, 0, dim);
+
+        double logDet1 = transform.getLogJacobian(valuesOSimplex);
+        double[][] jacobian = transform.computeJacobianMatrixInverse(valuesOnReals);
+
+        double logDet2 = 0.0;
+        for (int i = 0; i < dim - 1; ++i) {
+            logDet2 -= Math.log(jacobian[i][i]);
+        }
+
+        assertEquals(logDet1, logDet2, 1E-5);
 
         System.out.println("Success");
     }
@@ -111,6 +161,8 @@ public class UnitSimplexTest extends MathTestCase {
         double[] result1 = transform.inverse(valuesOnReals, 0, valuesOnReals.length);
 
         assertEquals(result1, valuesOnSimplex, 1E-10);
+
+        System.out.println("Success");
     }
 
 

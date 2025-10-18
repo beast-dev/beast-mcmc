@@ -32,6 +32,8 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  * @author Xinghua Tao
+ *
+ * @notes <a href="https://mc-stan.org/docs/2_19/reference-manual/simplex-transform-section.html"/>
  */
 
 public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform {
@@ -104,7 +106,17 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
 
     @Override
     public boolean isInInteriorDomain(double[] values) {
-        throw new RuntimeException("Not yet implemented");
+        double total = 0.0;
+        for (double v : values) {
+            if (v < 0.0 || v > 1.0) {
+                return false;
+            }
+            total += v;
+        }
+        if (Math.abs(total - 1) > 1E-6) {
+            return false;
+        }
+        return true;
     }
 
     public String getTransformName() {
@@ -122,7 +134,7 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
     }
 
     @Override
-    protected double getLogJacobian(double[] valuesOnSimplex) {
+    public double getLogJacobian(double[] valuesOnSimplex) {
 
         computeZFromValuesOnSimplex(valuesOnSimplex);
 
@@ -130,22 +142,44 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
 
         double stickRemainder = 1.0;
         for (int i = 0; i < dim - 1; ++i) {
-            logDet += Math.log(z[i]) + Math.log(1.0 - z[i]) + stickRemainder;
+            logDet += Math.log(z[i]) + Math.log(1.0 - z[i]) + Math.log(stickRemainder);
             stickRemainder -= valuesOnSimplex[i];
+        }
+
+        if (NEGATE_JACOBIAN) {
+            logDet *= -1;
         }
 
         return logDet;
     }
 
     @Override
-    protected double[] getGradientLogJacobianInverse(double[] valuesOnReals) {
+    public double[] getGradientLogJacobianInverse(double[] valuesOnReals) {
 
         double[] valuesOSimplex = inverse(valuesOnReals); // also computes z[]
+        double[][] jacobian = computeJacobianMatrixInverse(valuesOnReals);
 
-        
+        double[] gradient = new double[dim];
+        for (int i = 0; i < dim - 1; ++i) {
+            gradient[i] = 1 - 2 * z[i];
+        }
 
+        double stickRemainder = 1.0;
+        double[] acc = new double[dim];
+        for (int i = 0; i < dim - 2; ++i) {
+            stickRemainder -= valuesOSimplex[i];
 
-        throw new RuntimeException("Not yet implemented");
+            for (int j = 0; j <= i; ++j) {
+                double element = TRANSPOSE_JACOBIAN ?
+                        jacobian[j][i] : jacobian[i][j];
+                acc[j] += element;
+                gradient[j] -= acc[j] / stickRemainder;
+            }
+        }
+
+//        negate(gradient);
+
+        return gradient;
     }
 
     // ************************************************************************* //
@@ -179,8 +213,44 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
         }
 
         // TODO insert 1 as last element?
+//        jacobian[dim - 1][dim - 1] = 1;
+
+        if (TRANSPOSE_JACOBIAN) {
+            transpose(jacobian);
+        }
+
+//        if (NEGATE_JACOBIAN) {
+//            negate(jacobian);
+//        }
 
         return jacobian;
+    }
+
+    public final static boolean TRANSPOSE_JACOBIAN = true;
+    public final static boolean NEGATE_JACOBIAN = true;
+
+    public static void transpose(double[][] matrix) { // TODO move to unit-test
+        assert matrix.length == matrix[0].length;
+
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = 0; j < i; ++j) {
+                double tmp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = tmp;
+            }
+        }
+    }
+
+    private static void negate(double[][] matrix) {
+        for (int i = 0; i < matrix.length; ++i) {
+            negate(matrix[i]);
+        }
+    }
+
+    private static void negate(double[] vector) {
+        for (int i = 0; i < vector.length; ++i) {
+            vector[i] *= -1;
+        }
     }
 
     private static double logit(double x) {

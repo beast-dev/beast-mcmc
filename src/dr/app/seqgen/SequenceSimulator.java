@@ -31,15 +31,20 @@ package dr.app.seqgen;
 import dr.app.bss.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
 import dr.oldevomodel.substmodel.SubstitutionEpochModel;
@@ -63,13 +68,15 @@ public class SequenceSimulator {
 	/** tree used for generating samples **/
     protected Tree m_tree;
 	/** site model used for generating samples **/
-    protected SiteModel m_siteModel;
+//    protected SiteModel m_siteModel;
 	/** branch rate model used for generating samples **/
     protected BranchRateModel m_branchRateModel;
     /** nr of categories in site model **/
     int m_categoryCount;
     /** nr of states in site model **/
     int m_stateCount;
+
+	private SiteRateBranchModelProvider siteRateBranchModelProvider;
 
 	static boolean has_ancestralSequence = false;
 	protected Sequence ancestralSequence;
@@ -88,13 +95,24 @@ public class SequenceSimulator {
      */
     SequenceSimulator(Tree tree, SiteModel siteModel, BranchRateModel branchRateModel, int sequenceLength) {
     	m_tree = tree;
-    	m_siteModel = siteModel;
+//    	m_siteModel = siteModel;
     	m_branchRateModel = branchRateModel;
     	m_sequenceLength = sequenceLength;
-    	m_stateCount = m_siteModel.getFrequencyModel().getDataType().getStateCount();
-        m_categoryCount = m_siteModel.getCategoryCount();
-        m_probabilities = new double[m_categoryCount][m_stateCount * m_stateCount];
-    } // c'tor
+		siteRateBranchModelProvider = new SiteRateBranchModelProvider.OLD(siteModel);
+		m_stateCount = siteRateBranchModelProvider.getStateCount();
+		m_categoryCount = siteRateBranchModelProvider.getCategoryCount();
+		m_probabilities = new double[m_categoryCount][m_stateCount * m_stateCount];
+	} // c'tor
+
+	SequenceSimulator(Tree tree, SiteRateModel siteRateModel, BranchModel branchModel, BranchRateModel branchRateModel, int sequenceLength) {
+		m_tree = tree;
+		m_branchRateModel = branchRateModel;
+		m_sequenceLength = sequenceLength;
+		siteRateBranchModelProvider = new SiteRateBranchModelProvider.BranchSpecific(branchModel, siteRateModel);
+		m_stateCount = siteRateBranchModelProvider.getStateCount();
+		m_categoryCount = siteRateBranchModelProvider.getCategoryCount();
+		m_probabilities = new double[m_categoryCount][m_stateCount * m_stateCount];
+	}
 
     /**
      * Convert integer representation of sequence into a Sequence
@@ -105,7 +123,7 @@ public class SequenceSimulator {
 	Sequence intArray2Sequence(int [] seq, NodeRef node) {
     	StringBuilder sSeq = new StringBuilder();
     	for (int i  = 0; i < m_sequenceLength; i++) {
-    		sSeq.append(m_siteModel.getFrequencyModel().getDataType().getCode(seq[i]));
+    		sSeq.append(siteRateBranchModelProvider.getDataType().getCode(seq[i]));
     	}
 		return new Sequence(m_tree.getNodeTaxon(node), sSeq.toString());
     } // intArray2Sequence
@@ -127,7 +145,7 @@ public class SequenceSimulator {
 		
 		int array[] = new int[m_sequenceLength];
 		for (int i = 0; i < m_sequenceLength; i++) {
-			array[i] = m_siteModel.getFrequencyModel().getDataType().getState(
+			array[i] = siteRateBranchModelProvider.getDataType().getState(
 					seq.getChar(i));
 		}
 		return array;
@@ -141,7 +159,7 @@ public class SequenceSimulator {
 	public Alignment simulate() {
 		NodeRef root = m_tree.getRoot();
 
-		double[] categoryProbs = m_siteModel.getCategoryProportions();
+		double[] categoryProbs = siteRateBranchModelProvider.getCategoryProportions();
 		int[] category = new int[m_sequenceLength];
 		for (int i = 0; i < m_sequenceLength; i++) {
 			category[i] = MathUtils.randomChoicePDF(categoryProbs);
@@ -155,10 +173,9 @@ public class SequenceSimulator {
 			
 		} else {
 
-			FrequencyModel frequencyModel = m_siteModel.getFrequencyModel();
+			double[] frequencies = siteRateBranchModelProvider.getFrequencies();
 			for (int i = 0; i < m_sequenceLength; i++) {
-				seq[i] = MathUtils.randomChoicePDF(frequencyModel
-						.getFrequencies());
+				seq[i] = MathUtils.randomChoicePDF(frequencies);
 			}
 
 		}
@@ -173,7 +190,7 @@ public class SequenceSimulator {
 		
 		SimpleAlignment alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(false);
-		alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
+		alignment.setDataType(siteRateBranchModelProvider.getDataType());
 
 		traverse(root, seq, category, alignment);
 
@@ -201,7 +218,9 @@ public class SequenceSimulator {
 			NodeRef child = m_tree.getChild(node, iChild);
 			
             for (int i = 0; i < m_categoryCount; i++) {
-            	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
+				final double branchRate = m_branchRateModel.getBranchRate(m_tree, child);
+				siteRateBranchModelProvider.getTransitionProbabilities(m_tree, child, i, branchRate, m_probabilities[i]);
+//            	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
             }
 
 			if (DEBUG) {
@@ -251,28 +270,148 @@ public class SequenceSimulator {
 		
 	} // traverse
 
-    void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probs) {
+//    void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probs) {
+//
+//        NodeRef parent = tree.getParent(node);
+//
+//        final double branchRate = m_branchRateModel.getBranchRate(tree, node);
+//
+//        // Get the operational time of the branch
+//        final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+//
+//        if (branchTime < 0.0) {
+//            throw new RuntimeException("Negative branch length: " + branchTime);
+//        }
+//
+//        double branchLength = m_siteModel.getRateForCategory(rateCategory) * branchTime;
+//
+//        if (m_siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+//            ((SubstitutionEpochModel)m_siteModel.getSubstitutionModel()).getTransitionProbabilities(tree.getNodeHeight(node),
+//                    tree.getNodeHeight(parent),branchLength, probs);
+//            return;
+//        }
+//        m_siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
+//    } // getTransitionProbabilities
 
-        NodeRef parent = tree.getParent(node);
 
-        final double branchRate = m_branchRateModel.getBranchRate(tree, node);
+	private interface SiteRateBranchModelProvider {
+		int getStateCount();
+		int getCategoryCount();
+		DataType getDataType();
+		double[] getCategoryProportions();
+		double[] getFrequencies();
+		double getRateForCategory(int category);
+		void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double branchRate, double[] probs);
 
-        // Get the operational time of the branch
-        final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+		class OLD implements SiteRateBranchModelProvider {
 
-        if (branchTime < 0.0) {
-            throw new RuntimeException("Negative branch length: " + branchTime);
-        }
+			private SiteModel siteModel;
 
-        double branchLength = m_siteModel.getRateForCategory(rateCategory) * branchTime;
+			OLD(SiteModel siteModel) {
+				this.siteModel = siteModel;
+			}
 
-        if (m_siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
-            ((SubstitutionEpochModel)m_siteModel.getSubstitutionModel()).getTransitionProbabilities(tree.getNodeHeight(node),
-                    tree.getNodeHeight(parent),branchLength, probs);
-            return;
-        }
-        m_siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
-    } // getTransitionProbabilities
+			@Override
+			public int getStateCount() {
+				return siteModel.getFrequencyModel().getDataType().getStateCount();
+			}
+
+			@Override
+			public int getCategoryCount() {
+				return siteModel.getCategoryCount();
+			}
+
+			@Override
+			public DataType getDataType() {
+				return siteModel.getFrequencyModel().getDataType();
+			}
+
+			@Override
+			public double[] getCategoryProportions() {
+				return siteModel.getCategoryProportions();
+			}
+
+			@Override
+			public double[] getFrequencies() {
+				return siteModel.getFrequencyModel().getFrequencies();
+			}
+
+			@Override
+			public double getRateForCategory(int category) {
+				return siteModel.getRateForCategory(category);
+			}
+
+			@Override
+			public void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double branchRate, double[] probs) {
+				NodeRef parent = tree.getParent(node);
+				final double branchTime = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
+				if (branchTime < 0.0) {
+					throw new RuntimeException("Negative branch length: " + branchTime);
+				}
+
+				final double branchLength = getRateForCategory(rateCategory) * branchRate * branchTime;
+				if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+					((SubstitutionEpochModel)siteModel.getSubstitutionModel()).getTransitionProbabilities(tree.getNodeHeight(node),
+							tree.getNodeHeight(parent), branchLength, probs);
+					return;
+				}
+				siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
+			}
+		}
+
+		class BranchSpecific implements SiteRateBranchModelProvider {
+
+			private BranchModel branchModel;
+			private SiteRateModel siteRateModel;
+
+			BranchSpecific(BranchModel branchModel, SiteRateModel siteRateModel) {
+				this.branchModel = branchModel;
+				this.siteRateModel = siteRateModel;
+			}
+
+			@Override
+			public int getStateCount() {
+				return getDataType().getStateCount();
+			}
+
+			@Override
+			public int getCategoryCount() {
+				return siteRateModel.getCategoryCount();
+			}
+
+			@Override
+			public DataType getDataType() {
+				return branchModel.getRootFrequencyModel().getDataType();
+			}
+
+			@Override
+			public double[] getCategoryProportions() {
+				return siteRateModel.getCategoryProportions();
+			}
+
+			@Override
+			public double[] getFrequencies() {
+				return branchModel.getRootFrequencyModel().getFrequencies();
+			}
+
+			@Override
+			public double getRateForCategory(int category) {
+				return siteRateModel.getRateForCategory(category);
+			}
+
+			@Override
+			public void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double branchRate, double[] probs) {
+				int[] substitutionModelIndices = branchModel.getBranchModelMapping(node).getOrder();
+				if (substitutionModelIndices.length > 1) {
+					throw new RuntimeException("Not yet implemented");
+				}
+				final double branchLength = getRateForCategory(rateCategory) * branchRate * (tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node));
+				branchModel.getSubstitutionModels().get(substitutionModelIndices[0]).getTransitionProbabilities(branchLength, probs);
+			}
+		}
+	}
+
+
 
     /** helper method **/
     public static void printUsageAndExit() {
@@ -306,7 +445,14 @@ public class SequenceSimulator {
             if (rateModel == null)
             	rateModel = new DefaultBranchRateModel();
 
-            SequenceSimulator s = new SequenceSimulator(tree, siteModel, rateModel, nReplications);
+			SequenceSimulator s;
+			if (siteModel == null) {
+				BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
+				SiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+				s = new SequenceSimulator(tree, siteRateModel, branchModel, rateModel, nReplications);
+			} else {
+				s = new SequenceSimulator(tree, siteModel, rateModel, nReplications);
+			}
 
             if(ancestralSequence != null) {
                 s.setAncestralSequence(ancestralSequence);
@@ -333,7 +479,8 @@ public class SequenceSimulator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
-                new ElementRule(SiteModel.class),
+				new XORRule(new ElementRule(SiteModel.class),
+						new AndRule(new ElementRule(GammaSiteRateModel.class), new ElementRule(BranchModel.class))),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(Sequence.class, true),
                 AttributeRule.newIntegerRule(REPLICATIONS)

@@ -1,4 +1,4 @@
-package dr.evomodel.stuff;
+package dr.evomodel.mixturemodels;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.Tree;
@@ -10,7 +10,7 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodelxml.stuff.HDPDataSquashingOperatorParser;
+import dr.evomodelxml.mixturemodels.HDPDataSquashingOperatorParser;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;

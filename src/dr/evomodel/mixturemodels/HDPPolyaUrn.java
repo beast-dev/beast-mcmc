@@ -1,4 +1,4 @@
-package dr.evomodel.stuff;
+package dr.evomodel.mixturemodels;
 
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;

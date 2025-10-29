@@ -43,8 +43,7 @@ public class BSplines extends RandomFieldDistribution{
     private final Parameter coefficientParameter;
     private final Parameter precisionParameter;
 
-
-
+    private MatrixParameter basisMatrixParameter;
     private final double[][] basisMatrix;
     private final double[] mean;
     private final double[] coefficient;
@@ -78,7 +77,7 @@ public class BSplines extends RandomFieldDistribution{
         addVariable(coefficientParameter);
         addVariable(precisionParameter);
 
-
+        this.basisMatrixParameter = null;
         this.coefficient = new double[knots.length + degree - 1];
         this.expandedKnots = new double[2 * degree + knots.length];
         this.mean = new double[times.length];
@@ -86,6 +85,7 @@ public class BSplines extends RandomFieldDistribution{
         meanKnown = false;
         basisMatrixKnown = false;
         expandedKnotsKnown = false;
+        precisionKnown = false;
     }
 
 
@@ -192,7 +192,31 @@ public class BSplines extends RandomFieldDistribution{
         }
     }
 
+    public MatrixParameterInterface getBasisMatrixParameter() {
 
+        getBasisMatrix();
+
+        final int nRow = times.length;
+        final int nCol = knots.length + degree - 1;
+
+        if (basisMatrixParameter != null &&
+                basisMatrixParameter.getRowDimension() == nRow &&
+                basisMatrixParameter.getColumnDimension() == nCol) {
+            return basisMatrixParameter;
+        }
+
+        basisMatrixParameter = new MatrixParameter("basisMatrix");
+        basisMatrixParameter.setDimensions(nRow, nCol);
+
+        for (int i = 0; i < nRow; i++) {
+            for (int j = 0; j < nCol; j++) {
+                basisMatrixParameter.setParameterValueQuietly(i, j, basisMatrix[i][j]);
+            }
+        }
+
+
+        return basisMatrixParameter;
+    }
 
     @Override
     public GradientProvider getGradientWrt(Parameter parameter) {
@@ -328,7 +352,9 @@ public class BSplines extends RandomFieldDistribution{
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == coefficientParameter) {
             meanKnown = false;
-        } else {
+        } else if (variable == precisionParameter) {
+            precisionKnown = false;}
+        else {
             throw new IllegalArgumentException("Unknown variable");
         }
     }
@@ -339,7 +365,7 @@ public class BSplines extends RandomFieldDistribution{
     @Override
     protected void restoreState() { // TODO cache mean
         meanKnown = false;
-        basisMatrixKnown = false;
+        precisionKnown = false;
     }
 
     @Override

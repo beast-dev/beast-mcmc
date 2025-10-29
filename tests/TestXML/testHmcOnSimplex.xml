@@ -14,7 +14,6 @@
 		</data>
 		<countsParameter>
 			<parameter value="2 6 2"/>
-<!-- 			<parameter value="1 1 1"/> -->
 		</countsParameter>
 	</dirichletParameterPrior>
 	
@@ -33,9 +32,11 @@
   
     <operators id="operators" optimizationSchedule="log">
 	
+<!-- 
 		<deltaExchange weight="1" delta="0.1">
 			<parameter idref="simplex"/>
 		</deltaExchange>
+ -->
 		
       <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.01" mode="vanilla"
                                        drawVariance="1.0" 
@@ -43,32 +44,15 @@
                                        gradientCheckTolerance="0.5">
 
 			<gradient idref="gradient"/>
-<!-- 
-            <compoundParameter id="simTrait.compound.parameter">
-                <parameter idref="simTrait.variance.diagonal"/>
-                <parameter idref="simTrait.variance.offDiagonal"/>
-				<parameter idref="simTrait.attenuation.values"/>
-                <parameter idref="simTrait.meanParameter"/>
-				<parameter idref="simTrait.sampling.variance.diagonal"/>
-            </compoundParameter>
-            <multivariateCompoundTransform id="simTrait.compound.transform">
-                <transform type="log" dim="2"/>
-                <LKJTransform dimension="2"/>
-				<transform type="log" dim="2"/>
-                <transform type="none" dim="2"/>
-				<transform type="log" dim="2"/>
-            </multivariateCompoundTransform>
- -->
  			<parameter idref="simplex"/>
  			<UnitSimplexTransform dimension="3"/>
         </hamiltonianMonteCarloOperator>
- -->
 	</operators>
 
 	<mcmc id="mcmc" chainLength="10000" autoOptimize="true"> 
 		<joint id="joint">
 			<dirichletParameterPrior idref="likelihood"/>
-<!-- 			<dummyModel idref="dummy"/> -->
+			<dummyModel idref="dummy"/>
 		</joint>
 
 		<operators idref="operators"/>

@@ -64,8 +64,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private final double[] temp;
     private int currentOutputBuffer;
     private int maxOutputBuffer;
-    private double intervalEnd;
-    private boolean isExponentialGrowth;
+    private AbstractPopulationSizeModel.PopulationSizeModelType populationSizeModelType;
+    private AbstractPopulationSizeModel populationSizeModel;
+    private boolean populationSizesKnown = false;
+    private boolean storedPopulationSizesKnown = false;
+    
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
                                           int stateCount,
@@ -74,12 +77,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         this.storage = new BastaInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
         this.gradientStorage = null; //new GradientInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
-        this.intervalEnd = 0.0;
         this.temp = new double[stateCount * stateCount];
 
         final Logger logger = Logger.getLogger("dr.evomodel");
         logger.info("\nCreating GenericBastaLikelihoodDelegate");
-        this.isExponentialGrowth = false;
     }
 
     public BastaInternalStorage getInternalStorage() {
@@ -105,8 +106,40 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     }
 
     @Override
-    public void updateIsExponentialGrowth(boolean isExponentialGrowth) {
-        this.isExponentialGrowth = isExponentialGrowth;
+    public void updatePopulationSizeModel(AbstractPopulationSizeModel.PopulationSizeModelType modelType) {
+        this.populationSizeModelType = modelType;
+    }
+    
+    @Override
+    public void setPopulationSizeModel(AbstractPopulationSizeModel model) {
+        this.populationSizeModel = model;
+        this.populationSizeModelType = model.getModelType();
+        this.populationSizesKnown = false;
+    }
+
+    public void markPopulationSizesDirty() {
+        this.populationSizesKnown = false;
+    }
+
+
+    private void precalculatePopulationSizesAndIntegrals(List<Integer> intervalStarts, 
+                                                         List<BranchIntervalOperation> branchIntervalOperations) {
+        
+        if (populationSizeModel == null) {
+            throw new RuntimeException("Population size model not set");
+        }
+
+        if (!populationSizesKnown) {
+            int numIntervals = intervalStarts.size() - 1;
+            storage.resize(0, 0, null, populationSizeModel, numIntervals);
+            
+            // Flip buffers before recalculating
+            storage.flip();
+            
+            populationSizeModel.precalculatePopulationSizesAndIntegrals(
+                    intervalStarts, branchIntervalOperations, storage, stateCount);
+            populationSizesKnown = true;
+        }
     }
 
     @Override
@@ -118,12 +151,13 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         Arrays.fill(storage.coalescent, 0.0);
         vectorizeBranchIntervalOperations(branchIntervalOperations);
         updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
-        intervalEnd = 0;
+
+        precalculatePopulationSizesAndIntegrals(intervalStarts, branchIntervalOperations);
+        
         for (int interval = 0; interval < intervalStarts.size() - 1; ++interval) { // execute in series by intervalNumber
             // TODO try grouping by executionOrder (unclear if more efficient, same total #)
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
-            intervalEnd += branchIntervalOperations.get(start).intervalLength;
             computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations, start, end, mode);
         }
 
@@ -137,10 +171,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                         int start, int end,
                                                         Mode mode) {
 
-
         for (int i = start; i < end; ++i) {
             BranchIntervalOperation operation = branchIntervalOperations.get(i);
             if (mode == Mode.LIKELIHOOD) {
+
+                int sizesOffset = storage.getCurrentSizesOffset();
+                
                 peelPartials(
                         storage.partials, operation.outputBuffer,
                         operation.inputBuffer1, operation.inputBuffer2,
@@ -148,14 +184,13 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, 0,
-                        storage.rates,
-                        intervalEnd, isExponentialGrowth,
+                        storage.sizes, sizesOffset + operation.populationSizeIndex,
                         stateCount);
 
             } else if (mode == Mode.GRADIENT) {
 
                 TransitionMatrixOperation matrixOperation = matrixOperations.get(operation.intervalNumber);
+                int sizesOffset = storage.getCurrentSizesOffset();
 
                 peelPartials(
                         storage.partials, operation.outputBuffer,
@@ -164,9 +199,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, 0,
-                        storage.rates,
-                        intervalEnd, isExponentialGrowth,
+                        storage.sizes, sizesOffset + operation.populationSizeIndex,
                         stateCount);
 
                 peelPartialsGrad(
@@ -176,7 +209,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, 0,
+                        storage.sizes, sizesOffset + operation.populationSizeIndex,
                         stateCount);
 
                 peelPopSizeSGrad(
@@ -186,7 +219,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, 0,
+                        storage.sizes, sizesOffset + operation.populationSizeIndex,
                         stateCount);
             }
 
@@ -262,9 +295,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            GenericBastaLikelihoodDelegate.reduceAcrossIntervals(storage.e, storage.f, storage.g, storage.h,
+            int integralsOffset = storage.getCurrentIntegralsOffset();
+            
+            GenericBastaLikelihoodDelegate.reduceAcrossIntervalsWithOffset(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.sizes, storage.rates, storage.coalescent, out, intervalEnd, stateCount, isExponentialGrowth);
+                    storage.integrals, operation.populationSizeIndex, integralsOffset, 
+                    storage.coalescent, out, stateCount);
         }
     }
 
@@ -286,7 +322,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
             reduceAcrossIntervalsGrad(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.sizes, storage.coalescent, stateCount, out);
+                    storage.integrals, operation.populationSizeIndex, storage.coalescent, stateCount, out);
         }
     }
 
@@ -311,9 +347,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            reduceAcrossIntervalsGradPopSize(storage.e, storage.f, storage.g, storage.h,
+            // Get the current buffer offsets
+            int integralsOffset = storage.getCurrentIntegralsOffset();
+            int sizesOffset = storage.getCurrentSizesOffset();
+            
+            reduceAcrossIntervalsGradPopSizeWithOffset(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.sizes, storage.coalescent, out, stateCount);
+                    storage.integrals, integralsOffset, 
+                    storage.sizes, sizesOffset,
+                    operation.populationSizeIndex,
+                    storage.coalescent, out, stateCount);
         }
     }
 
@@ -361,10 +404,8 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             }
         }
 
-        intervalEnd = 0;
         for (int i = 0; i < intervalStarts.size() - 1; ++i) { // TODO execute in parallel
             BranchIntervalOperation operation = branchIntervalOperations.get(intervalStarts.get(i));
-            intervalEnd += operation.intervalLength;
             dispatch.reduceAcrossIntervals(operation, out);
         }
     }
@@ -447,7 +488,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                   int leftMatrixOffset, int rightMatrixOffset,
                                   int leftAccOffset, int rightAccOffset,
                                   double[] probability, int probabilityOffset,
-                                  double[] sizes, int sizesOffset,
+                                  double[] sizes, int populationSizeIndex,
                                   int stateCount) {
 
         resultOffset *= stateCount;
@@ -493,7 +534,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             rightMatrixOffset *= stateCount * stateCount;
             rightAccOffset *= stateCount;
 
-            sizesOffset *= sizesOffset * stateCount;
+            int sizesOffset = populationSizeIndex;
 
             for (int a = 0; a < stateCount; ++a) {
                 for (int b = 0; b < stateCount; ++b) {
@@ -540,7 +581,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                   int leftMatrixOffset, int rightMatrixOffset,
                                   int leftAccOffset, int rightAccOffset,
                                   double[] probability, int probabilityOffset,
-                                  double[] sizes, int sizesOffset,
+                                  double[] sizes, int populationSizeIndex,
                                   int stateCount) {
 
         resultOffset *= stateCount;
@@ -566,8 +607,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             rightMatrixOffset *= stateCount * stateCount;
 
             rightAccOffset *= stateCount;
-            // TODO: check bug?
-            sizesOffset *= sizesOffset * stateCount;
+            int sizesOffset = populationSizeIndex;
 
             for (int a = 0; a < stateCount; ++a) {
                 double J = probability[probabilityOffset];
@@ -621,7 +661,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     private void reduceAcrossIntervalsGrad(double[] e, double[] f, double[] g, double[] h,
                                            int interval, double length,
-                                           double[] sizes, double[] coalescent,
+                                           double[] integrals, int populationSizeIndex, double[] coalescent,
                                            int stateCount, double[] out) {
 
         int offset = interval * stateCount;
@@ -629,12 +669,20 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         for (int a = 0; a < stateCount; a++) {
             for (int b = 0; b < stateCount; b++) {
                 double sum = 0.0;
+                
                 for (int k = 0; k < stateCount; ++k) {
+                    double integralValue;
+                    if (populationSizeIndex == 0) {
+                        integralValue = integrals[k] * length;
+                    } else {
+                        integralValue = integrals[populationSizeIndex + k];
+                    }
+                    
                     sum += (2 * e[offset + k] * gradientStorage.e[a][b][offset + k] - gradientStorage.f[a][b][offset + k] +
-                            2 * g[offset + k] * gradientStorage.g[a][b][offset + k] - gradientStorage.h[a][b][offset + k]) / sizes[k];
+                            2 * g[offset + k] * gradientStorage.g[a][b][offset + k] - gradientStorage.h[a][b][offset + k]) * integralValue;
                 }
 
-                double element = -length * sum / 4;
+                double element = -sum / 4;
 
                 double J = coalescent[interval];
                 if (J != 0.0) {
@@ -648,25 +696,41 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     private void reduceAcrossIntervalsGradPopSize(double[] e, double[] f, double[] g, double[] h,
                                                  int interval, double length,
-                                                 double[] sizes, double[] coalescent,
+                                                 double[] integrals, double[] sizes, int populationSizeIndex, double[] coalescent,
                                                  double[] out,
                                                  int stateCount) {
 
         int offset = interval * stateCount;
-//        double[] grad = new double[stateCount];
 
         for (int a = 0; a < stateCount; a++) {
                 double sum = 0.0;
+                
                 for (int k = 0; k < stateCount; ++k) {
+                    double integralValue;
+                    if (populationSizeIndex == 0) {
+                        integralValue = integrals[k] * length;
+                    } else {
+                        integralValue = integrals[populationSizeIndex + k];
+                    }
+                    
+
                     sum += (2 * e[offset + k] * gradientStorage.eGradPopSize[a][offset + k] - gradientStorage.fGradPopSize[a][offset + k] +
-                            2 * g[offset + k] * gradientStorage.gGradPopSize[a][offset + k] - gradientStorage.hGradPopSize[a][offset + k]) / sizes[k];
+                            2 * g[offset + k] * gradientStorage.gGradPopSize[a][offset + k] - gradientStorage.hGradPopSize[a][offset + k]) * integralValue;
+
                     if (k == a) {
-                        sum += (e[offset + k] * e[offset + k]) - f[offset + k] +
-                                (g[offset + k] * g[offset + k]) - h[offset + k];
+                        double integralDerivative;
+                        if (populationSizeIndex == 0) {
+                            integralDerivative = -length * integrals[k] * integrals[k];
+                        } else {
+                            double constantPopSize = sizes[k];
+                            integralDerivative = -integrals[populationSizeIndex + k] / constantPopSize;
+                        }
+                        sum += ((e[offset + k] * e[offset + k]) - f[offset + k] +
+                                (g[offset + k] * g[offset + k]) - h[offset + k]) * integralDerivative;
                     }
                 }
 
-                double element = -length * sum / 4;
+                double element = -sum / 4;
 
                 double J = coalescent[interval];
                 if (J != 0.0) {
@@ -788,26 +852,26 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void updatePopulationSizes(int index, double[] sizes, boolean flip) {
-        assert sizes.length == stateCount;
-
-        System.arraycopy(sizes, 0, storage.sizes, index * stateCount, stateCount);
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public void updateGrowthRates(int index, double[] rates, boolean flip) {
         assert rates.length == stateCount;
 
-        System.arraycopy(rates, 0, storage.rates, index * stateCount, stateCount);
+        System.arraycopy(rates, 0, storage.rates, 0, stateCount);
     }
 
     @Override
     public void storeState() {
-//        storage.storeState();
+        storage.storeState();
+        storedPopulationSizesKnown = populationSizesKnown;
     }
 
     @Override
     public void restoreState() {
-//        storage.restoreState();
+        storage.restoreState();
+        populationSizesKnown = storedPopulationSizesKnown;
     }
 
     private static void peelPartials(double[] partials,
@@ -817,9 +881,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                      int leftMatrixOffset, int rightMatrixOffset,
                                      int leftAccOffset, int rightAccOffset,
                                      double[] probability, int probabilityOffset,
-                                     double[] sizes, int sizesOffset,
-                                     double[] rates,
-                                     double intervalEnd, boolean isExponentialGrowth,
+                                     double[] sizes, int populationSizeIndex,
                                      int stateCount) {
 
         resultOffset *= stateCount;
@@ -842,9 +904,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
             leftAccOffset *= stateCount;
             rightAccOffset *= stateCount;
-
-            sizesOffset *= sizesOffset * stateCount;
-
+            int sizesOffset = populationSizeIndex;
             double prob = 0.0;
             for (int i = 0; i < stateCount; ++i) {
                 double right = 0.0;
@@ -854,11 +914,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                 // entry = left * right * size
                 double left = partials[resultOffset + i];
                 double entry = left * right / sizes[sizesOffset + i];
-
-                if (isExponentialGrowth){
-                    entry *= Math.exp(rates[sizesOffset + i] * intervalEnd);
-                }
-
                 partials[resultOffset + i] = entry;
                 partials[leftAccOffset + i] = left;
                 partials[rightAccOffset + i] = right;
@@ -934,29 +989,24 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     private static void reduceAcrossIntervals(double[] e, double[] f, double[] g, double[] h,
                                               int interval, double length,
-                                              double[] sizes, double[] rates, double[] coalescent,
-                                              double[] out, double intervalEnd,
-                                              int stateCount, boolean isExponentialGrowth) {
+                                              double[] integrals, int populationSizeIndex, double[] coalescent,
+                                              double[] out,
+                                              int stateCount) {
 
         int offset = interval * stateCount;
 
         double sum = 0.0;
-        double logL = 0.0;
-        if (!isExponentialGrowth) {
-            for (int k = 0; k < stateCount; ++k) {
-                sum += (e[offset + k] * e[offset + k] - f[offset + k] +
-                        g[offset + k] * g[offset + k] - h[offset + k]) / sizes[k];
-            }
+        for (int k = 0; k < stateCount; ++k) {
+            double baseIntegral = integrals[populationSizeIndex + k];
 
-            logL = -length * sum / 4;
-        } else {
-            for (int k = 0; k < stateCount; ++k) {
-                sum += ((e[offset + k] * e[offset + k] - f[offset + k] +
-                        g[offset + k] * g[offset + k] - h[offset + k]) / sizes[k]) * (Math.exp(rates[k] *
-                        intervalEnd) - Math.exp(rates[k] * (intervalEnd-length))) / rates[k];
-            }
-             logL = - sum / 4;
+            double integralMultiplier = (populationSizeIndex == 0) ? length : 1.0;
+            double integralValue = baseIntegral * integralMultiplier;
+            
+            sum += (e[offset + k] * e[offset + k] - f[offset + k] +
+                    g[offset + k] * g[offset + k] - h[offset + k]) * integralValue;
         }
+
+        double logL = -sum / 4;
 
         double prob = coalescent[interval];
 
@@ -965,6 +1015,89 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         }
 
         out[0] += logL;
+    }
+    
+    // Wrapper method that handles buffer offsets
+    private static void reduceAcrossIntervalsWithOffset(double[] e, double[] f, double[] g, double[] h,
+                                                        int interval, double length,
+                                                        double[] integrals, int populationSizeIndex, int integralsOffset,
+                                                        double[] coalescent,
+                                                        double[] out,
+                                                        int stateCount) {
+        
+        int offset = interval * stateCount;
+
+        double sum = 0.0;
+        for (int k = 0; k < stateCount; ++k) {
+            // Apply buffer offset when accessing integrals
+            double baseIntegral = integrals[integralsOffset + populationSizeIndex + k];
+
+            double integralMultiplier = (populationSizeIndex == 0) ? length : 1.0;
+            double integralValue = baseIntegral * integralMultiplier;
+            
+            sum += (e[offset + k] * e[offset + k] - f[offset + k] +
+                    g[offset + k] * g[offset + k] - h[offset + k]) * integralValue;
+        }
+
+        double logL = -sum / 4;
+
+        double prob = coalescent[interval];
+
+        if (prob != 0.0) {
+            logL += Math.log(prob);
+        }
+
+        out[0] += logL;
+    }
+    
+    // Wrapper method for gradient with population size that handles buffer offsets
+    private void reduceAcrossIntervalsGradPopSizeWithOffset(double[] e, double[] f, double[] g, double[] h,
+                                                            int interval, double length,
+                                                            double[] integrals, int integralsOffset,
+                                                            double[] sizes, int sizesOffset,
+                                                            int populationSizeIndex,
+                                                            double[] coalescent,
+                                                            double[] out,
+                                                            int stateCount) {
+        
+        int offset = interval * stateCount;
+
+        for (int a = 0; a < stateCount; a++) {
+            double sum = 0.0;
+            
+            for (int k = 0; k < stateCount; ++k) {
+                double integralValue;
+                if (populationSizeIndex == 0) {
+                    integralValue = integrals[integralsOffset + k] * length;
+                } else {
+                    integralValue = integrals[integralsOffset + populationSizeIndex + k];
+                }
+                
+                sum += (2 * e[offset + k] * gradientStorage.eGradPopSize[a][offset + k] - gradientStorage.fGradPopSize[a][offset + k] +
+                        2 * g[offset + k] * gradientStorage.gGradPopSize[a][offset + k] - gradientStorage.hGradPopSize[a][offset + k]) * integralValue;
+
+                if (k == a) {
+                    double integralDerivative;
+                    if (populationSizeIndex == 0) {
+                        integralDerivative = -length * integrals[integralsOffset + k] * integrals[integralsOffset + k];
+                    } else {
+                        double constantPopSize = sizes[sizesOffset + k];
+                        integralDerivative = -integrals[integralsOffset + populationSizeIndex + k] / constantPopSize;
+                    }
+                    sum += ((e[offset + k] * e[offset + k]) - f[offset + k] +
+                            (g[offset + k] * g[offset + k]) - h[offset + k]) * integralDerivative;
+                }
+            }
+
+            double element = -sum / 4;
+
+            double J = coalescent[interval];
+            if (J != 0.0) {
+                element += gradientStorage.coalescentGradPopSize[a][interval] / J;
+            }
+
+            out[a] += element;
+        }
     }
 
     private static void reduceWithinInterval(double[] e, double[] f, double[] g, double[] h,

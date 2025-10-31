@@ -91,7 +91,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             throw new XMLParseException("The number of sub-intervals currently has to be set to 1.");
         }
 
-        // Ancestral state reconstruction parameters
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
         boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
@@ -145,8 +144,19 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                                     new GenericBastaLikelihoodDelegate("name", treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
+
+                        int stateCount = generalSubstitutionModel.getDataType().getStateCount();
+                        AbstractPopulationSizeModel populationSizeModel;
+                        if (r != null) {
+                            populationSizeModel = new ExponentialGrowthPopulationSizeModel(
+                                "exponentialGrowth", popSizes, r, stateCount, -1);
+                        } else {
+                            populationSizeModel = new ConstantPopulationSizeModel(
+                                "constant", popSizes, stateCount, -1);
+                        }
+                        
                         return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
-                                popSizes, r, branchRateModel, delegate, subIntervals, useAmbiguities,
+                                populationSizeModel, branchRateModel, delegate, subIntervals, useAmbiguities,
                                 dataType, tag, useMAP, useMarginalLikelihood, conditionalProbabilitiesInLogSpace);
                     } else {
                         return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,

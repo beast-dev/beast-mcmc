@@ -90,7 +90,16 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
-    default void updateIsExponentialGrowth(boolean isExponentialGrowth) {
+    
+    default void updatePopulationSizeModel(AbstractPopulationSizeModel.PopulationSizeModelType modelType) {
+        throw new RuntimeException("Not yet implemented");
+    }
+    
+    default void setPopulationSizeModel(AbstractPopulationSizeModel model) {
+        throw new RuntimeException("Not yet implemented");
+    }
+    
+    default void markPopulationSizesDirty() {
         throw new RuntimeException("Not yet implemented");
     }
 

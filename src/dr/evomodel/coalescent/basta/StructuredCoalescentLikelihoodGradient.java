@@ -174,7 +174,13 @@ public class StructuredCoalescentLikelihoodGradient implements
         POPULATION_SIZE("populationSize") {
             @Override
             Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
-                return structuredCoalescentLikelihood.getPopSizes();
+                AbstractPopulationSizeModel popModel = structuredCoalescentLikelihood.getPopulationSizeModel();
+                if (popModel instanceof ConstantPopulationSizeModel) {
+                    return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
+                    return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                }
+                throw new RuntimeException("Unknown population size model type");
             }
 
             @Override
@@ -202,7 +208,13 @@ public class StructuredCoalescentLikelihoodGradient implements
             @Override
             public Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
                                                    SubstitutionModel substitutionModel) {
-                return structuredCoalescentLikelihood.getPopSizes();
+                AbstractPopulationSizeModel popModel = structuredCoalescentLikelihood.getPopulationSizeModel();
+                if (popModel instanceof ConstantPopulationSizeModel) {
+                    return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
+                    return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                }
+                throw new RuntimeException("Unknown population size model type");
             }
         };
 

@@ -152,6 +152,7 @@ public interface ProcessOnCoalescentIntervalDelegate {
             this.intervalLength = intervalLength;
             this.executionOrder = executionOrder;
             this.intervalNumber = intervalNumber;
+            this.populationSizeIndex = 0;
         }
 
         public String toString() {
@@ -204,6 +205,7 @@ public interface ProcessOnCoalescentIntervalDelegate {
         public final double intervalLength;
         public final int executionOrder;
         public final int intervalNumber;
+        public int populationSizeIndex;
     }
 
     final class TransitionMatrixOperation {

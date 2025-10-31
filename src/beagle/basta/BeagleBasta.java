@@ -31,7 +31,7 @@ import beagle.Beagle;
 
 public interface BeagleBasta extends Beagle {
 
-    int BASTA_OPERATION_SIZE = 8;
+    int BASTA_OPERATION_SIZE = 9;
 
     void updateBastaPartials(final int[] operations,
                              int operationCount,
@@ -50,6 +50,8 @@ public interface BeagleBasta extends Beagle {
                                  double[] result);
 
     void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial, int threadCount);
+
+    void setBastaPopulationSizes(double[] combinedSizesIntegrals, int requiredStorageSize);
 
     void getBastaBuffer(int index, double[] buffer);
 

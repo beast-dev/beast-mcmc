@@ -40,6 +40,10 @@ public class BastaJNIWrapper {
                                                 int initial,
                                                 int threadCount); // TODO buffers have different sizes
 
+    public native int setBastaPopulationSizes(int instance,
+                                              double[] combinedSizesIntegrals,
+                                              int requiredStorageSize);
+
     public native int getBastaBuffer(int instance,
                                      int index,
                                      double[] buffer);
@@ -66,8 +70,8 @@ public class BastaJNIWrapper {
         String osName = System.getProperty("os.name").toLowerCase();
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.startsWith("windows")) {
-            if (osArch.equals("x86") || osArch.equals("i386")) return "hmsbeagle-bit32";
-            if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return "hmsbeagle-bit64";
+            if (osArch.equals("x86") || osArch.equals("i386")) return "hmsbeagle-jni-bit32";
+            if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return "hmsbeagle-jni-bit64";
         }
         return "hmsbeagle-jni-bit";
     }

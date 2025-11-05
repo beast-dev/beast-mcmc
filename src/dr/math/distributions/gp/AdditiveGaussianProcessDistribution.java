@@ -27,7 +27,6 @@
 
 package dr.math.distributions.gp;
 
-import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.distributions.RandomFieldDistribution;
 import dr.xml.Reportable;
@@ -247,7 +246,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return variance;
     }
 
-    private double getNugget(int i) {
+    protected double getNugget(int i) {
         return nuggetParameter.getDimension() == 1 ?
                 nuggetParameter.getParameterValue(0) :
                 nuggetParameter.getParameterValue(i);
@@ -294,32 +293,6 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     public int getDimension() {
         return dim;
     }
-
-//    @Override
-//    public double[] getGradientLogDensity(Object x) {
-//        double[] grad = gradLogPdf((double[]) x, getMean(), getPrecision());
-//        if(DEBUG) System.out.println("GradientLogDensity: "+ Arrays.toString(Arrays.copyOfRange(grad, 0, Math.min(3, grad.length))));
-//        return grad;
-//    }
-
-//    @Override
-//    public double logPdf(double[] x) {
-//        final double[] mean = getMean();
-//        final double[] diff = tmp;
-//        final double[] precision = getPrecision();
-//
-//        for (int i = 0; i < dim; ++i) {
-//            diff[i] = x[i] - mean[i];
-//        }
-//
-//        double exponent = 0.0;
-//        for (int i = 0; i < dim; ++i) {
-//            for (int j = 0; j < dim; ++j) {
-//                exponent += diff[i] * precision[i * dim + j] * diff[j];
-//            }
-//        }
-//        return -0.5 * (dim * Math.log(2 * Math.PI) + getLogDeterminant()) - 0.5 * exponent;
-//    }
 
     @Override
     public double logPdf(double[] x) {
@@ -434,6 +407,16 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
             if(DEBUG) System.out.println("Field changed event"); //TODO this is called for every entry wit compound parameter inside HMC
             fieldUpdated = true;
             precisionDiffKnown = false;
+        } else {
+            for (BasisDimension basis : bases) {
+                if (variable == basis.getDesignMatrix1() || variable == basis.getDesignMatrix2()) {
+                    gramianAndVarianceKnown = false;
+                    precisionAndDeterminantKnown = false;
+                    precisionDiffKnown = false;
+                    fireModelChanged();
+                    return;
+                }
+            }
         }
     }
 
@@ -567,103 +550,32 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         final double[] precisionDiff = getPrecisionDiff(new double[dim]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("predictionDiff:");
+        sb.append("predictionDiff: [");
         for (double value : precisionDiff) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("mean:");
+        sb.append(" ]\n");
+        sb.append("mean: [");
         for (double value : mean) {
             sb.append(" ").append(value);
         }
-        sb.append("\n");
-        sb.append("precision:");
+        sb.append(" ]\n");
+        sb.append("precision: [");
         for (double value : precision) {
             sb.append(" ").append(value);
         }
+        sb.append(" ]\n");
         return sb.toString();
     }
-
-    public static class BasisDimension {
-
-        private final GaussianProcessKernel kernel;
-        private final DesignMatrix design1;
-        private final DesignMatrix design2;
-
-        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design1, DesignMatrix design2) {
-            this.kernel = kernel;
-            this.design1 = design1;
-            this.design2 = design2;
-        }
-
-        public BasisDimension(GaussianProcessKernel kernel, DesignMatrix design) {
-            this(kernel, design, design);
-        }
-
-        public BasisDimension(GaussianProcessKernel kernel, RandomField.WeightProvider weights) {
-            this(kernel, makeDesignMatrixFromWeights(weights));
-        }
-
-        public GaussianProcessKernel getKernel() { return kernel; }
-
-        DesignMatrix getDesignMatrix1() { return design1; }
-
-        DesignMatrix getDesignMatrix2() { return design2; }
-
-        private static DesignMatrix makeDesignMatrixFromWeights(RandomField.WeightProvider weights) {
-
-            return new DesignMatrix("weights", false) {
-
-                @Override
-                public double getParameterValue(int row, int col) {
-                    throw new RuntimeException("Not yet implemented");
-                }
-
-                @Override
-                public int getDimension() {
-                    return weights.getDimension();
-                }
-
-                @Override
-                public int getRowDimension() {
-                    return weights.getDimension();
-                }
-
-                @Override
-                public int getColumnDimension() {
-                    return 1;
-                }
-
-                @Override
-                public Parameter getParameter(int column) {
-                    throw new IllegalArgumentException("Not allowed");
-                }
-            };
-        }
-    }
-
+    
     public static void computeAdditiveGramian(DenseMatrix64F gramian,
                                               List<BasisDimension> bases,
                                               Parameter orderVariance) {
+
         gramian.zero();
-
-        final int rowDim = gramian.getNumRows();
-        final int colDim = gramian.getNumCols();
-
         // 1st order contribution
         for (BasisDimension basis : bases) {
-            final GaussianProcessKernel kernel = basis.getKernel();
-            final DesignMatrix design1 = basis.getDesignMatrix1();
-            final DesignMatrix design2 = basis.getDesignMatrix2();
-            final double scale = kernel.getScale();
-
-            for (int i = 0; i < rowDim; ++i) {
-                for (int j = 0; j < colDim; ++j) {
-                    double xi = design1.getParameterValue(i, 0); // TODO make generic dimension
-                    double xj = design2.getParameterValue(j, 0); // TODO make generic dimension
-                    gramian.add(i, j, scale * kernel.getUnscaledCovariance(xi, xj));
-                }
-            }
+            basis.addFirstOrderKernelComponent(gramian);
         }
 
         // TODO higher-order terms via Newton-Girard formula
@@ -671,6 +583,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         final int order = orderVariance.getDimension();
 //        for (int n = 1; n < order; ++n) { }
     }
+
 }
 
 

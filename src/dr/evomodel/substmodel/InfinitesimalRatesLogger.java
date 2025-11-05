@@ -31,10 +31,11 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.util.Transform;
+import dr.xml.Reportable;
 
-public class InfinitesimalRatesLogger implements Loggable {
+public class InfinitesimalRatesLogger implements Loggable, Reportable {
 
-    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel,  Transform transform,
+    public InfinitesimalRatesLogger(SubstitutionModel substitutionModel, Transform transform,
                                     boolean diagonalElements, String order, Integer subset) {
         this.substitutionModel = substitutionModel;
         this.diagonalElements = diagonalElements;
@@ -51,6 +52,13 @@ public class InfinitesimalRatesLogger implements Loggable {
 
     @Override
     public LogColumn[] getColumns() {
+        if (columns == null) {
+            columns = make();
+        }
+        return columns;
+    }
+
+    private LogColumn[] make() {
         int nOutputs;
 
         if (subset != null) {
@@ -117,6 +125,17 @@ public class InfinitesimalRatesLogger implements Loggable {
         return k;
     }
 
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        for (LogColumn column : getColumns()) {
+            sb.append(column.getFormatted() + " ");
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+
+    private LogColumn[] columns;
     private final int stateCount;
     private final Transform transform;
     private final SubstitutionModel substitutionModel;

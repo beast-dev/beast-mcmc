@@ -44,15 +44,15 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     private final int numGridPoints;
 
-    private int[] numCoalEvents;
-    private int[] storedNumCoalEvents;
-    private double[] sufficientStatistics;
-    private double[] storedSufficientStatistics;
+    private int[][] numCoalEvents;
+    private int[][] storedNumCoalEvents;
+    private double[][] sufficientStatistics;
+    private double[][] storedSufficientStatistics;
 
     private final Parameter ploidyFactors;
 
-    private double[] ploidySums;
-    private double[] storedPloidySums;
+    private double[][] ploidySums;
+    private double[][] storedPloidySums;
 
     private final List<BigFastTreeIntervals> intervalsList;
 
@@ -66,9 +66,6 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private boolean storedIntervalsKnown;
     private boolean likelihoodKnown;
 
-    double[] fullTimeLine;
-    int[] gridIndices;
-    int[] numLineages;
 
     public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
                                                        Parameter logPopSizes,
@@ -104,12 +101,13 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
         int fieldLength = logPopSizes.getDimension();
 
-        this.sufficientStatistics = new double[fieldLength];
-        this.storedSufficientStatistics = new double[fieldLength];
-        this.numCoalEvents = new int[fieldLength];
-        this.storedNumCoalEvents = new int[fieldLength];
-        this.ploidySums = new double[fieldLength];
-        this.storedPloidySums = new double[fieldLength];
+        int nTrees = intervalLists.size();
+        this.sufficientStatistics = new double[nTrees][fieldLength];
+        this.storedSufficientStatistics = new double[nTrees][fieldLength];
+        this.numCoalEvents = new int[nTrees][fieldLength];
+        this.storedNumCoalEvents = new int[nTrees][fieldLength];
+        this.ploidySums = new double[nTrees][fieldLength];
+        this.storedPloidySums = new double[nTrees][fieldLength];
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -133,21 +131,18 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     private void setupSufficientStatistics() {
-        Arrays.fill(sufficientStatistics, 0);
-        Arrays.fill(ploidySums, 0.0);
-        Arrays.fill(numCoalEvents, 0);
 
         for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            Arrays.fill(sufficientStatistics[treeIndex], 0.0);
+            Arrays.fill(ploidySums[treeIndex], 0.0);
             double ploidyFactor = 1 / getPopulationFactor(treeIndex);
 
             SingleTreeGriddedNodesTimeline singleTreeNodesTimeLine = new
                     SingleTreeGriddedNodesTimeline(intervalsList.get(treeIndex), gridPoints);
-            fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
-            numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
-            gridIndices = singleTreeNodesTimeLine.getGridIndices();
-
-            int[] tempNumCoalEvents = singleTreeNodesTimeLine.getNumCoalEvents();
-            for (int j = 0; j < numCoalEvents.length; j++)  numCoalEvents[j] += tempNumCoalEvents[j];
+            final double[] fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
+            final int[] numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
+            final int[] gridIndices = singleTreeNodesTimeLine.getGridIndices();
+            numCoalEvents[treeIndex] = singleTreeNodesTimeLine.getNumCoalEvents();
 
             int i = 0; // index for the fullTimeLine
             while (gridIndices[i] == i) i++; // choose the first grid point bigger than the most recent sampling time
@@ -158,25 +153,25 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
             for (int gridIndex = i; gridIndex < numGridPoints; gridIndex++) {
                 while (i <= gridIndices[gridIndex]) {
                     if (!skipFirstSamplingTime) {
-                            interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
-                            sufficientStatistics[gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
-                                    interval * ploidyFactor;
-                            ploidySums[gridIndex] += Math.log(ploidyFactor) * tempNumCoalEvents[gridIndex];
+                        interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
+                        sufficientStatistics[treeIndex][gridIndex] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
+                                interval * ploidyFactor;
                     } else {
                         skipFirstSamplingTime = false;
                     }
                     i++;
                 }
+                ploidySums[treeIndex][gridIndex] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][gridIndex];
             }
             // manage events after last grid point
             if (i < fullTimeLine.length) {
                 while (i < fullTimeLine.length) {
                     interval = (fullTimeLine[i] - fullTimeLine[i - 1]);
-                    sufficientStatistics[numGridPoints] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
+                    sufficientStatistics[treeIndex][numGridPoints] += 0.5 * numLineages[i - 1] * (numLineages[i - 1] - 1) *
                             interval * ploidyFactor;
-                    ploidySums[numGridPoints] += Math.log(ploidyFactor) * tempNumCoalEvents[numGridPoints];
                     i++;
                 }
+                ploidySums[treeIndex][numGridPoints] += Math.log(ploidyFactor) * numCoalEvents[treeIndex][numGridPoints];
             }
         }
     }
@@ -187,13 +182,14 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         computeSufficientStatistics();
 
         double currentLike = 0;
-        for (int i = 0; i < logPopSizes.getDimension(); i++) {
-            double currentGamma = logPopSizes.getParameterValue(i);
-            currentLike += - numCoalEvents[i] * currentGamma
-                    + ploidySums[i]
-                    - sufficientStatistics[i] * Math.exp(-currentGamma);
+        for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            for (int i = 0; i < logPopSizes.getDimension(); i++) {
+                double currentGamma = logPopSizes.getParameterValue(i);
+                currentLike += - numCoalEvents[treeIndex][i] * currentGamma
+                        + ploidySums[treeIndex][i]
+                        - sufficientStatistics[treeIndex][i] * Math.exp(-currentGamma);
+            }
         }
-
         return currentLike;
     }
 
@@ -231,10 +227,12 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     protected int getPopSizeDimension() { return logPopSizes.getDimension(); }
 
     protected void storeState() {
-        System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
-        System.arraycopy(ploidySums, 0, storedPloidySums, 0, ploidySums.length);
-        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0,
-                sufficientStatistics.length);
+        for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            System.arraycopy(numCoalEvents[treeIndex], 0, storedNumCoalEvents[treeIndex], 0, numCoalEvents[treeIndex].length);
+            System.arraycopy(ploidySums[treeIndex], 0, storedPloidySums[treeIndex], 0, ploidySums[treeIndex].length);
+            System.arraycopy(sufficientStatistics[treeIndex], 0, storedSufficientStatistics[treeIndex], 0, sufficientStatistics[treeIndex].length);
+        }
+
 
         storedIntervalsKnown = intervalsKnown;
         storedLogLikelihood = logLikelihood;
@@ -242,15 +240,15 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
 
     protected void restoreState() {
         // Swap pointers
-        int[] tmp = numCoalEvents;
+        int[][] tmp = numCoalEvents;
         numCoalEvents = storedNumCoalEvents;
         storedNumCoalEvents = tmp;
 
-        double[] tmp2 = ploidySums;
+        double[][] tmp2 = ploidySums;
         ploidySums = storedPloidySums;
         storedPloidySums = tmp2;
 
-        double[] tmp3 = sufficientStatistics;
+        double[][] tmp3 = sufficientStatistics;
         sufficientStatistics = storedSufficientStatistics;
         storedSufficientStatistics = tmp3;
 
@@ -276,9 +274,11 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         final int dim = field.length;
         double[] gradLogDens = new double[dim];
 
-        for (int i = 0; i < dim; ++i) {
-            gradLogDens[i] = -numCoalEvents[i] + sufficientStatistics[i]
-                    * Math.exp(-field[i]);
+        for (int treeIndex = 0; treeIndex < intervalsList.size(); treeIndex++) {
+            for (int i = 0; i < dim; ++i) {
+                gradLogDens[i] += -numCoalEvents[treeIndex][i] + sufficientStatistics[treeIndex][i]
+                        * Math.exp(-field[i]);
+            }
         }
 
         return gradLogDens;
@@ -294,11 +294,11 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     @Override
     public String getReport() {
         return "Non-parametric Coalescent LogLikelihood: " + getLogLikelihood() + "\n" +
-                "Sufficient statistics: " + Arrays.toString(sufficientStatistics) + "\n" +
+//                "Sufficient statistics: " + Arrays.toString(sufficientStatistics) + "\n" +
                 "Ploidy factors: " + Arrays.toString(ploidyFactors.getParameterValues()) + "\n" +
                 "Grid points: " + Arrays.toString(gridPoints.getParameterValues()) + "\n" +
-                "Log population sizes: " + Arrays.toString(logPopSizes.getParameterValues()) + "\n" +
-                "Full time line: " + Arrays.toString(fullTimeLine) + "\n";
+                "Log population sizes: " + Arrays.toString(logPopSizes.getParameterValues()) + "\n";
+//                "Full time line: " + Arrays.toString(fullTimeLine) + "\n";
     }
 
     @Override

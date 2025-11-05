@@ -137,7 +137,7 @@ public class TaxonEffectVarianceProportionStatistic extends AbstractVarianceProp
 
             effectsVariance = getEffectsVariance();
 //            samplingVariance = taxonEffectTraitDataModel.getSamplingVariance();
-            diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+            diffusionVariance = new Matrix(diffusionModel.getPrecisionMatrix()).inverse();
 
             varianceKnown = true;
 

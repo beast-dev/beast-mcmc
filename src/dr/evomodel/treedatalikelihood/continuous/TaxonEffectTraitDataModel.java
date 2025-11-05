@@ -93,6 +93,8 @@ public class TaxonEffectTraitDataModel extends
         return map.getEffects();
     }
 
+    private static final boolean DEBUG = false;
+
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
@@ -102,6 +104,16 @@ public class TaxonEffectTraitDataModel extends
         final double effect = effects.getParameterValue(index);
         final int sign = map.getSign();
         partial[0] -= sign * effect;
+
+        if (DEBUG) {
+            if (effects.getParameterName().equals("effects.HA")) {
+                System.err.println("debug");
+            }
+
+            if (effects.getParameterName().equals("effects.NA")) {
+                System.err.println("debug");
+            }
+        }
 
         return partial;
     }
@@ -144,6 +156,7 @@ public class TaxonEffectTraitDataModel extends
         private final Parameter parameter;
         private final Parameter sign;
         private final Map<String,Integer> taxonNameToIndex;
+        private final Map<Integer, String> indexToTaxonName;
         private final int[] map;
         private final int[] inverseMap;
         private final int dim;
@@ -158,13 +171,15 @@ public class TaxonEffectTraitDataModel extends
             this.sign = sign;
             this.dim = dim;
             this.taxonNameToIndex = new HashMap<>();
+            this.indexToTaxonName = new HashMap<>();
 
             String base = parameter.getParameterName();
 
-            String[] names = new String[tree.getExternalNodeCount()];
+            String[] names = new String[tree.getExternalNodeCount() * dim];
             for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
                 String taxonName = tree.getTaxonId(i);
                 taxonNameToIndex.put(taxonName, i);
+                indexToTaxonName.put(i, taxonName);
                 for (int j = 0; j < dim; ++j) {
                     names[dim * i + j] = makeName(base, taxonName, j + 1);
                 }
@@ -176,11 +191,40 @@ public class TaxonEffectTraitDataModel extends
             this.inverseMap = makeInverseMap(map);
         }
 
+        // For adopting map, but not effects
+        public EffectMap(Tree tree, Parameter parameter, Parameter sign, int dim, EffectMap original) {
+
+            if (tree.getExternalNodeCount() != parameter.getDimension() * dim) {
+                throw new IllegalArgumentException("Invalid effect dimension");
+            }
+
+            this.parameter = parameter;
+            this.sign = sign;
+            this.dim = dim;
+
+            this.taxonNameToIndex = original.taxonNameToIndex;
+            this.indexToTaxonName = original.indexToTaxonName;
+
+            String base = parameter.getParameterName();
+
+            String[] names = new String[tree.getExternalNodeCount() * dim];
+            for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    names[dim * i + j] = makeName(base, indexToTaxonName.get(i), j + 1);
+                }
+            }
+            parameter.setDimensionNames(names);
+
+            this.map = makeMap(tree, taxonNameToIndex);
+            this.inverseMap = makeInverseMap(map);
+        }
+
         public EffectMap(Tree tree, EffectMap original) {
 
             this.parameter = original.parameter;
             this.sign = original.sign;
             this.taxonNameToIndex = original.taxonNameToIndex;
+            this.indexToTaxonName = original.indexToTaxonName;
             this.dim = original.dim;
 
             this.map = makeMap(tree, taxonNameToIndex);

@@ -1,7 +1,7 @@
 /*
- * GaussianMarkovRandomField.java
+ * GaussianProcessBasisApproximation.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2025 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,11 +24,8 @@
  */
 
 package dr.math.distributions;
-import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
-import java.util.Arrays;
-import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
-import static dr.math.distributions.MultivariateNormalDistribution.logPdf;
+
 /**
  * @author Marc Suchard
  * @author Pratyusa Data
@@ -49,8 +46,7 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
     private final Parameter coefficientParameter;
     private final Parameter precisionParameter;
 
-    private double precisionValue;
-
+    private final double precisionValue;
 
     private final double[][] basisMatrix;
     private final double[] mean;
@@ -479,8 +475,6 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
 //        return currentLike;
 //    }
 
-
-
     @Override
     public int getDimension() { return dim; }
 
@@ -514,23 +508,17 @@ public class GaussianProcessBasisApproximation extends RandomFieldDistribution {
         if (variable == lengthScaleParameter || variable == marginalVarianceParameter) {
             basisMatrixKnown = false;
             meanKnown = false;
-        }
-        else if (variable == coefficientParameter || variable == meanParameter) {
+        } else if (variable == coefficientParameter || variable == meanParameter) {
             meanKnown = false;
-        }
-        else if (variable == precisionParameter) {
+        } else if (variable == precisionParameter) {
             precisionKnown = false;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Unknown variable");
         }
     }
 
     @Override
-    protected void storeState() {
-
-    }
-
+    protected void storeState() { }
 
     @Override
     protected void restoreState() { // TODO cache mean

@@ -27,7 +27,6 @@
 
 package dr.math.distributions.gp;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 
 import java.util.List;
@@ -46,6 +45,32 @@ public interface GaussianProcessKernel {
     double getScale();
 
     List<Parameter> getParameters();
+
+    double getUnscaledFirstDerivative(double x, double y);
+    double getUnscaledSecondDerivative(double x, double y);
+
+    class KernelDerivatives extends Base {
+        GaussianProcessKernel kernel;
+        boolean doSecondDerivative = false;
+        public KernelDerivatives(GaussianProcessKernel kernel, boolean doSecondDerivative) {
+            super("KernelFirstDerivative", kernel.getParameters());
+            this.kernel = kernel;
+            this.doSecondDerivative = doSecondDerivative;
+        }
+        @Override
+        public double getUnscaledCovariance(double x, double y) {
+            if (!doSecondDerivative) {
+                return kernel.getUnscaledFirstDerivative(x, y);
+            } else {
+                return kernel.getUnscaledSecondDerivative(x, y);
+            }
+        }
+
+        @Override
+        public double getUnscaledCovariance(double[] x, double[] y) {
+            throw new RuntimeException("Method not yet implemented");
+        }
+    }
 
     class Linear extends Base {
 
@@ -70,11 +95,60 @@ public interface GaussianProcessKernel {
 
         private static final String TYPE = "DotProduct";
 
+        public double getUnscaledFirstDerivative(double x, double y) {
+            return y;
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+            return 1;
+        }
+
         @Override
         public double computeGradientWrtLength(double a, double b, double l) {
             throw new RuntimeException("The linear kernel does not have a length parameter");
         }
 
+    }
+    class NeuralNet extends Base {
+        private static final String TYPE = "NeuralNet";
+        public NeuralNet(String name, List<Parameter> parameters) {
+            super(name, parameters);
+        }
+
+        @Override
+        public double getUnscaledCovariance(double x, double y) {
+            return getUnscaledCovariance(new double[]{x}, new double[]{y});
+        }
+
+        @Override
+        public double getUnscaledCovariance(double[] x, double[] y) {
+            if (x.length != y.length) {
+                throw new IllegalArgumentException("Input vectors must have the same length.");
+            }
+
+            double dot = 0.0;
+            double normX = 0.0;
+            double normY = 0.0;
+
+            for (int i = 0; i < x.length; i++) {
+                dot += x[i] * y[i];
+                normX += x[i] * x[i];
+                normY += y[i] * y[i];
+            }
+
+            double numerator = 2 * dot;
+            double denominator = Math.sqrt((1 + 2 * normX) * (1 + 2 * normY));
+            double argument = numerator / denominator;
+
+            // Clamp to [-1, 1] for numerical safety
+            argument = Math.max(-1.0, Math.min(1.0, argument));
+
+            return (2.0 / Math.PI) * Math.asin(argument);
+        }
+
+        @Override
+        public double computeGradientWrtLength(double a, double b, double l) {
+            throw new RuntimeException("The linear kernel does not have a length parameter");
+        }
     }
 
     class SquaredExponential extends Base {
@@ -99,6 +173,19 @@ public interface GaussianProcessKernel {
 
         private static final String TYPE = "SquaredExponential";
 
+        public double getUnscaledFirstDerivative(double x, double y) { //wrt x
+            double diff = x - y;
+            double length = getLength();
+            return - diff / (length * length) * getUnscaledCovariance(x, y);
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+            double diff = x - y;
+            double norm = diff * diff;
+            double length = getLength();
+            double lengthSquared = length * length;
+            return (1/lengthSquared -  norm / (lengthSquared * lengthSquared)) * getUnscaledCovariance(x, y);
+        }
+
         @Override
         public double computeGradientWrtLength(double a, double b, double l) {
             double normSquared = (a - b) * (a - b);
@@ -116,12 +203,7 @@ public interface GaussianProcessKernel {
             double length = getLength();
             return Math.exp(-norm / length);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
+
         private static final String TYPE = "OrnsteinUhlenbeck";
     }
 
@@ -137,12 +219,7 @@ public interface GaussianProcessKernel {
 
             return (1 + argument1 + argument2) * Math.exp(-argument1);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
+
         private static final String TYPE = "Matern5/2";
     }
 
@@ -157,12 +234,6 @@ public interface GaussianProcessKernel {
 
             return (1 + argument) * Math.exp(-argument);
         }
-//        @Override
-//        public double[] getGradientHyperParameter(Parameter parameter, double[] field,
-//                                                  double[] alpha, double[] P, double[] matrix, int dim,
-//                                                  DesignMatrix designMatrix1, DesignMatrix designMatrix2) {
-//            return new double[0];
-//        }
 
         private static final String TYPE = "Matern3/2";
     }
@@ -188,6 +259,11 @@ public interface GaussianProcessKernel {
         LINEAR(Linear.TYPE) {
             GaussianProcessKernel factory(String name, List<Parameter> parameters) {
                 return new Linear(name, parameters);
+            }
+        },
+        NEURAL_NET(NeuralNet.TYPE) {
+            GaussianProcessKernel factory(String name, List<Parameter> parameters) {
+                return new NeuralNet(name, parameters);
             }
         },
         OU(OrnsteinUhlenbeck.TYPE) {
@@ -243,7 +319,7 @@ public interface GaussianProcessKernel {
             super(name);
             this.parameters = parameters;
 
-            for (Parameter p :parameters) {
+            for (Parameter p : parameters) {
                 addVariable(p);
             }
         }
@@ -275,10 +351,17 @@ public interface GaussianProcessKernel {
             return (a, b, hyperValue) -> getUnscaledCovariance(a, b);
         }
         public HyperparameterGradientFunction getLengthGradientFunction() {
-            return (a, b, hyperValue) -> computeGradientWrtLength(a, b, hyperValue);
+            return this::computeGradientWrtLength;
         }
 
-        public double computeGradientWrtLength(double a, double b, double hypervalue) {
+        public double getUnscaledFirstDerivative(double x, double y) {
+            throw new RuntimeException("Method implemented in the subclasses");
+        }
+        public double getUnscaledSecondDerivative(double x, double y) {
+            throw new RuntimeException("Method implemented in the subclasses");
+        }
+
+        public double computeGradientWrtLength(double a, double b, double hyperValue) {
             throw new RuntimeException("Method implemented in the subclasses");
         }
 

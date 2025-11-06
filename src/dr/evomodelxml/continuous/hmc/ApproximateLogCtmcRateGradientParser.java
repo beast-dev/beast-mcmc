@@ -29,6 +29,7 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.LogRateSubstitutionModel;
+import dr.evomodel.substmodel.StronglyLumpableCtmcRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -89,8 +90,11 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
             new XORRule(
-                    new ElementRule(GlmSubstitutionModel.class),
-                    new ElementRule(LogRateSubstitutionModel.class)),
+                    new XMLSyntaxRule[]{
+                            new ElementRule(GlmSubstitutionModel.class),
+                            new ElementRule(LogRateSubstitutionModel.class),
+                            new ElementRule(StronglyLumpableCtmcRates.class),
+                    }),
     };
 
     @Override

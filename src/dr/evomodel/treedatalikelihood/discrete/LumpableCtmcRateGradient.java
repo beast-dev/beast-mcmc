@@ -27,10 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.evomodel.substmodel.GlmSubstitutionModel;
-import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
-import dr.evomodel.substmodel.LogRateSubstitutionModel;
+import dr.evomodel.substmodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -55,7 +52,7 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
     public LumpableCtmcRateGradient(String traitName,
                                     TreeDataLikelihood treeDataLikelihood,
                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    GlmSubstitutionModel substitutionModel) {
+                                    ComplexSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
         this.rateProvider = extractRateProvider(substitutionModel);

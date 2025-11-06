@@ -84,7 +84,7 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     Double getReportTolerance() {
-        return 0.01; // TODO Change back to null
+        return null;
     }
 
     @Override

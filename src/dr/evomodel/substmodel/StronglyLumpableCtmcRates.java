@@ -40,7 +40,8 @@ import java.util.List;
  * @author Xinghua Tao
  * @author Marc Suchard
  */
-public class StronglyLumpableCtmcRates extends AbstractModel implements LogAdditiveCtmcRateProvider, Reportable {
+
+public class StronglyLumpableCtmcRates extends AbstractModel implements LogAdditiveCtmcRateProvider.DataAugmented, Reportable {
 
     // Stores SuperInfo objects, which hold transition rate information between lumped states.
     private final SuperInfo[] map;
@@ -99,18 +100,18 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
 //    Uses SuperInfo to determine if the transition is within the same lump.
 //    If within, retrieves the rate from the lump.
 //    If not within, assigns a rate of 0 (no transition).
-    private double getRate(int map_index) {
-        SuperInfo info = map[map_index];
-        final double rate;
-        if (info.within) {
-            rate = info.withinRateParameter.getParameterValue(info.withinRateIndex);
-        } else {
-            double prop = info.acrossProportionParameter.getParameterValue(info.acrossProportionIndex);
-            double across_rate = acrossRates.getParameterValue(info.acrossRateIndex);
-            rate = info.acrossProportionParameter.getParameterValue(info.acrossProportionIndex) * acrossRates.getParameterValue(info.acrossRateIndex);
-        }
-
-        return rate;
+    private double getRate(int index) {
+//        SuperInfo info = map[index];
+//        final double rate;
+//        if (info.within) {
+//            rate = info.withinRateParameter.getParameterValue(info.withinRateIndex);
+//        } else {
+//            rate = info.acrossProportionParameter.getParameterValue(info.acrossProportionIndex) *
+//                    acrossRates.getParameterValue(info.acrossRateIndex);
+//        }
+//
+//        return rate;
+        return map[index].getRate();
     }
 
     // Compute all rates
@@ -118,6 +119,10 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
         for (int i = 0; i < dim; ++i) {
             rates[i] = getRate(i);
         }
+    }
+
+    public SuperInfo getSuperInfo(int index) {
+        return map[index];
     }
 
     private SuperInfo[] buildSuperMap() {
@@ -261,6 +266,11 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
         return new WrappedVector.Raw(rates).toString();
     }
 
+    @Override
+    public Parameter getLogRateParameter() {
+        return null;
+    }
+
 
     public static class Proportion {
         final int source;
@@ -324,7 +334,7 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
 
     }
 
-    private class SuperInfo {
+    public class SuperInfo {
 
         final LumpIndex i;
         final LumpIndex j;
@@ -335,8 +345,7 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
         final Parameter withinRateParameter;
         // TX added
         final Parameter acrossProportionParameter;
-
-
+        
         SuperInfo(LumpIndex i, LumpIndex j) {
             // in superinfo,just set all null values to -1
             this.i = i;
@@ -372,6 +381,18 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
             this.acrossProportionParameter = !within ?
                     lump.proportions.get(i.originalIndex* (lumps.size()-1)+ propIndex-1).parameter : null;
 
+        }
+
+        public double getRate() {
+            final double rate;
+            if (within) {
+                rate = withinRateParameter.getParameterValue(withinRateIndex);
+            } else {
+                rate = acrossProportionParameter.getParameterValue(acrossProportionIndex) *
+                        acrossRates.getParameterValue(acrossRateIndex);
+            }
+
+            return rate;
         }
     }
 

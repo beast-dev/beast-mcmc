@@ -31,6 +31,7 @@ import dr.evomodel.substmodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -46,32 +47,43 @@ import java.util.List;
 
 public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGradient {
 
-    private final LogAdditiveCtmcRateProvider.DataAugmented rateProvider;
+    private final StronglyLumpableCtmcRates rateProvider;
+    private final CompoundParameter parameter;
     private final int[][] mapEffectToIndices;
 
-    public LumpableCtmcRateGradient(String traitName,
-                                    TreeDataLikelihood treeDataLikelihood,
-                                    BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    ComplexSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
-                ApproximationMode.FIRST_ORDER);
-        this.rateProvider = extractRateProvider(substitutionModel);
-        this.mapEffectToIndices = makeAsymmetricMap();
-    }
+    private final ParameterDimensionLink[] link;
 
     public LumpableCtmcRateGradient(String traitName,
                                     TreeDataLikelihood treeDataLikelihood,
                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    LogRateSubstitutionModel substitutionModel) {
+                                    ComplexSubstitutionModel substitutionModel,
+                                    CompoundParameter compoundParameter) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
         this.rateProvider = extractRateProvider(substitutionModel);
+        this.parameter = compoundParameter;
+
         this.mapEffectToIndices = makeAsymmetricMap();
+        this.link = createLink(compoundParameter);
+
     }
 
-    private LogAdditiveCtmcRateProvider.DataAugmented extractRateProvider(ComplexSubstitutionModel substitutionModel) {
-        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented) {
-            return (LogAdditiveCtmcRateProvider.DataAugmented) substitutionModel.getRateProvider();
+    private ParameterDimensionLink[] createLink(CompoundParameter compoundParameter) {
+        ParameterDimensionLink[] link = new ParameterDimensionLink[compoundParameter.getDimension()];
+        int index = 0;
+        for (int i = 0; i < compoundParameter.getParameterCount(); ++i) {
+            Parameter parameter = compoundParameter.getParameter(i);
+            for (int j = 0; j < parameter.getDimension(); ++j) {
+                link[index] = new ParameterDimensionLink(parameter, j);
+                ++index;
+            }
+        }
+        return link;
+    }
+
+    private StronglyLumpableCtmcRates extractRateProvider(ComplexSubstitutionModel substitutionModel) {
+        if (substitutionModel.getRateProvider() instanceof StronglyLumpableCtmcRates) {
+            return (StronglyLumpableCtmcRates) substitutionModel.getRateProvider();
         } else {
             throw new IllegalArgumentException("Invalid substitution model");
         }
@@ -146,7 +158,7 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     @Override
     public Parameter getParameter() {
-        return rateProvider.getLogRateParameter();
+        return parameter;
     }
 
     @Override
@@ -168,5 +180,21 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
     public List<Citation> getCitations() {
         // TODO Update
         return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
+    }
+
+    static class ParameterDimensionLink {
+
+        private final Parameter parameter;
+        private final int index;
+
+        ParameterDimensionLink(Parameter parameter, int index) {
+            this.parameter = parameter;
+            this.index = index;
+        }
+
+        public double getDifferential(double element, StronglyLumpableCtmcRates.SuperInfo info) {
+            return element / parameter.getParameterValue(index);
+//            return info.getRate() / parameter.getParameterValue(index);
+        }
     }
 }

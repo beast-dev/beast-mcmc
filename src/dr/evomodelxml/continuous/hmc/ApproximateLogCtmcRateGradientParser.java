@@ -28,6 +28,7 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.substmodel.GlmSubstitutionModel;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.StronglyLumpableCtmcRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -35,7 +36,10 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractGlmSubstitutionModelGradient;
 import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
+import dr.evomodel.treedatalikelihood.discrete.LumpableCtmcRateGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -74,8 +78,20 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
                         (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
             } else if (child instanceof LogRateSubstitutionModel) {
                 final LogRateSubstitutionModel substitutionModel = (LogRateSubstitutionModel) child;
-                return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+                LogAdditiveCtmcRateProvider rates = substitutionModel.getRateProvider();
+                if (rates instanceof StronglyLumpableCtmcRates) {
+
+                    CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+                    if (parameter == null) {
+                        throw new XMLParseException("Must provide a compound-parameter");
+                    }
+
+                    return new LumpableCtmcRateGradient(traitName, treeDataLikelihood,
+                            (BeagleDataLikelihoodDelegate) delegate, substitutionModel, parameter);
+                } else {
+                    return new LogCtmcRateGradient(traitName, treeDataLikelihood,
+                            (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+                }
             }
         }
         throw new XMLParseException("No valid substitution model found"); // TODO ugly (!?)
@@ -89,6 +105,7 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
+            new ElementRule(CompoundParameter.class, true),
             new XORRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(GlmSubstitutionModel.class),

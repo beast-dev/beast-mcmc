@@ -147,12 +147,23 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
                         int stateCount = generalSubstitutionModel.getDataType().getStateCount();
                         AbstractPopulationSizeModel populationSizeModel;
+
+                        int popSizesDim = popSizes.getDimension();
+                        
                         if (r != null) {
                             populationSizeModel = new ExponentialGrowthPopulationSizeModel(
                                 "exponentialGrowth", popSizes, r, stateCount, -1);
-                        } else {
+                        } else if (popSizesDim == stateCount) {
                             populationSizeModel = new ConstantPopulationSizeModel(
                                 "constant", popSizes, stateCount, -1);
+                        } else if (popSizesDim % stateCount == 0 && popSizesDim > stateCount) {
+                            populationSizeModel = new PiecewiseConstantPopulationSizeModel(
+                                "piecewiseConstant", popSizes, stateCount, -1);
+                        } else {
+                            throw new XMLParseException(
+                                "Unable to auto-detect population model. Parameter dimension " + popSizesDim + 
+                                " should be " + stateCount + " (constant) or a multiple of " + stateCount + 
+                                " (piecewise constant).");
                         }
                         
                         return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,

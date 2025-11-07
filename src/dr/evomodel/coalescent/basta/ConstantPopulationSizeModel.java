@@ -86,8 +86,8 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
         storage.flip();
         for (int k = 0; k < stateCount; ++k) {
             double popSize = populationSizeParameter.getParameterValue(k);
-            storage.setCurrentSize(k, popSize);
-            storage.setCurrentIntegral(k, 1.0 / popSize);
+            setCurrentSize(storage, k, popSize);
+            setCurrentIntegral(storage, k, 1.0 / popSize);
         }
 
         for (BranchIntervalOperation operation : branchIntervalOperations) {

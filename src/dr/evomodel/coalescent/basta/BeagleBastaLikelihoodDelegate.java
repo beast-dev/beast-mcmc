@@ -196,6 +196,12 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
 
+    private void ensureStorageInitialized() {
+        if (storage == null) {
+            storage = new BastaInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
+        }
+    }
+
     public void resize(int newNumPartials, int newNumCoalescentIntervals) {
         updateStorage = false;
         if (newNumPartials > currentPartialsCount) {
@@ -215,9 +221,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                 threadCount = Integer.parseInt(tc);
             }
 
-            if (storage == null) {
-                storage = new BastaInternalStorage(maxNumCoalescentIntervals, tree.getNodeCount(), stateCount);
-            }
+            ensureStorageInitialized();
             
             storage.resize(currentPartialsCount, currentIntervalsCount, null);
             beagle.allocateCoalescentBuffers(5, currentIntervalsCount, currentPartialsCount, 0, threadCount);
@@ -261,13 +265,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             int requiredStorageSize = populationSizeModel.getRequiredPopulationSizeStorageSize();
             double[] combinedSizesIntegrals = new double[requiredStorageSize * 2];
 
-            for (int i = 0; i < requiredStorageSize; i++) {
-                combinedSizesIntegrals[i] = storage.getCurrentSize(i);
-            }
-
-            for (int i = 0; i < requiredStorageSize; i++) {
-                combinedSizesIntegrals[requiredStorageSize + i] = storage.getCurrentIntegral(i);
-            }
+            populationSizeModel.extractCombinedSizesAndIntegrals(storage, combinedSizesIntegrals);
             
             beagle.setBastaPopulationSizes(combinedSizesIntegrals, requiredStorageSize);
             populationSizesKnown = true;
@@ -280,14 +278,15 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                                                    List<TransitionMatrixOperation> matrixOperations,
                                                    Mode mode, BastaLikelihood likelihood) {
 
+        ensureStorageInitialized();
+        
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
+        precalculatePopulationSizesAndIntegrals(intervalStarts, branchIntervalOperations);
         vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
         updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
-        precalculatePopulationSizesAndIntegrals(intervalStarts, branchIntervalOperations);
-        addPopulationSizeIndicesToOperations(branchIntervalOperations, operations);
         
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
@@ -363,7 +362,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
         vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
-        addPopulationSizeIndicesToOperations(branchIntervalOperations, operations);
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
@@ -508,15 +506,6 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
 
-    private void addPopulationSizeIndicesToOperations(List<BranchIntervalOperation> branchIntervalOperations, 
-                                                       int[] operations) {
-        int k = 0;
-        for (BranchIntervalOperation op : branchIntervalOperations) {
-            operations[k + 8] = op.populationSizeIndex;
-            k += BASTA_OPERATION_SIZE;
-        }
-    }
-
    public void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    int[] operations,
@@ -546,7 +535,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                 operations[k + 5] = map(op.accBuffer1);
                 operations[k + 6] = map(op.accBuffer2);
                 operations[k + 7] = op.intervalNumber;
-                operations[k + 8] = 0;
+                operations[k + 8] = op.populationSizeIndex;
             } else {
                 operations[k] = op.outputBuffer;
                 operations[k + 1] = op.inputBuffer1;
@@ -556,7 +545,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                 operations[k + 5] = op.accBuffer1;
                 operations[k + 6] = op.accBuffer2;
                 operations[k + 7] = op.intervalNumber;
-                operations[k + 8] = 0;
+                operations[k + 8] = op.populationSizeIndex;
             }
             currentOutputBuffer = operations[k + 6];
 

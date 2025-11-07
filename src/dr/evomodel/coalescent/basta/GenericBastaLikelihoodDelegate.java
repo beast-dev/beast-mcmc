@@ -175,7 +175,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             BranchIntervalOperation operation = branchIntervalOperations.get(i);
             if (mode == Mode.LIKELIHOOD) {
 
-                int sizesOffset = storage.getCurrentSizesOffset();
+                int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
                 
                 peelPartials(
                         storage.partials, operation.outputBuffer,
@@ -190,7 +190,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             } else if (mode == Mode.GRADIENT) {
 
                 TransitionMatrixOperation matrixOperation = matrixOperations.get(operation.intervalNumber);
-                int sizesOffset = storage.getCurrentSizesOffset();
+                int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
 
                 peelPartials(
                         storage.partials, operation.outputBuffer,
@@ -295,7 +295,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            int integralsOffset = storage.getCurrentIntegralsOffset();
+            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
             
             GenericBastaLikelihoodDelegate.reduceAcrossIntervalsWithOffset(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
@@ -347,9 +347,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            // Get the current buffer offsets
-            int integralsOffset = storage.getCurrentIntegralsOffset();
-            int sizesOffset = storage.getCurrentSizesOffset();
+            // Get the current buffer offsets from population model
+            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
+            int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
             
             reduceAcrossIntervalsGradPopSizeWithOffset(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,

@@ -24,9 +24,9 @@ public class BastaInternalStorage {
     double[] sizes;
     double[] integrals;
     final double[] rates;
-    
-    private final BufferIndexHelper sizesBufferHelper;
-    private final BufferIndexHelper integralsBufferHelper;
+
+    final BufferIndexHelper sizesBufferHelper;
+    final BufferIndexHelper integralsBufferHelper;
 
     final EigenDecomposition[] decompositions; // TODO flatten?
 
@@ -125,64 +125,9 @@ public class BastaInternalStorage {
         integralsBufferHelper.restoreState();
     }
 
-    public int getCurrentSizesBuffer() {
-        int bufferSize = sizes.length / 2;
-        int offset = sizesBufferHelper.getOffsetIndex(0) * bufferSize;
-        return offset;
-    }
-
-    public double getCurrentSize(int index) {
-        int bufferSize = sizes.length / 2;
-        int offset = sizesBufferHelper.getOffsetIndex(0) * bufferSize;
-        return sizes[offset + index];
-    }
-    
-    public void setCurrentSize(int index, double value) {
-        int bufferSize = sizes.length / 2;
-        int offset = sizesBufferHelper.getOffsetIndex(0) * bufferSize;
-        sizes[offset + index] = value;
-    }
-    
-    public double getCurrentIntegral(int index) {
-        int bufferSize = integrals.length / 2;
-        int offset = integralsBufferHelper.getOffsetIndex(0) * bufferSize;
-        return integrals[offset + index];
-    }
-    
-    public void setCurrentIntegral(int index, double value) {
-        int bufferSize = integrals.length / 2;
-        int offset = integralsBufferHelper.getOffsetIndex(0) * bufferSize;
-        if (offset + index >= integrals.length) {
-            throw new ArrayIndexOutOfBoundsException("Index " + (offset + index) + 
-                " out of bounds for length " + integrals.length + 
-                " (buffer offset=" + offset + ", index=" + index + ", bufferSize=" + bufferSize + ")");
-        }
-        integrals[offset + index] = value;
-    }
-    
-    public int getActualStorageSize() {
-        return sizes.length / 2;
-    }
-
     public void flip() {
         sizesBufferHelper.flipOffset(0);
         integralsBufferHelper.flipOffset(0);
-    }
-    
-
-    public int getCurrentSizesOffset() {
-        int bufferSize = sizes.length / 2;
-        return sizesBufferHelper.getOffsetIndex(0) * bufferSize;
-    }
-    
-
-    public double[] getCurrentIntegralsArray() {
-        return integrals;
-    }
-
-    public int getCurrentIntegralsOffset() {
-        int bufferSize = integrals.length / 2;
-        return integralsBufferHelper.getOffsetIndex(0) * bufferSize;
     }
 
     private static class SimpleBufferIndexHelper extends BufferIndexHelper {

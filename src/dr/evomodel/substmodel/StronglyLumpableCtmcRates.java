@@ -33,6 +33,7 @@ import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -119,10 +120,6 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
         for (int i = 0; i < dim; ++i) {
             rates[i] = getRate(i);
         }
-    }
-
-    public SuperInfo getSuperInfo(int index) {
-        return map[index];
     }
 
     private SuperInfo[] buildSuperMap() {
@@ -304,11 +301,10 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
 //            this(id, states, (Parameter) null, proportions);
 //        }
 
-        public Lump(String id, List<Integer> states,
-                    Parameter rates, List<Proportion> proportions) {
-            this(id, states.stream().mapToInt(i->i).toArray(), rates, proportions);
-        }
-
+//        public Lump(String id, List<Integer> states,
+//                    Parameter rates, List<Proportion> proportions) {
+//            this(id, states.stream().mapToInt(i->i).toArray(), rates, proportions);
+//        }
 
         public Lump(String id, int[] states,
                     Parameter rates, List<Proportion> proportions) {
@@ -334,6 +330,43 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
 
     }
 
+    private void matchInfo(SuperInfo info, int i, int j, List<int[]> matches,
+                      Parameter parameter, int dimension) {
+        if (info.within) {
+            if (parameter == info.withinRateParameter && dimension == info.withinRateIndex) {
+                matches.add(new int[]{ i, j });
+            }
+        } else {
+            if (parameter == info.acrossProportionParameter && dimension == info.acrossProportionIndex) {
+                matches.add(new int[]{ i, j});
+            } else if (parameter == acrossRates && dimension == info.acrossRateIndex) {
+                matches.add(new int[]{ i, j });
+            }
+        }
+    }
+
+    public List<int[]> searchForParameterAndDimension(Parameter parameter, int dimension) {
+
+        List<int[]> matches = new ArrayList<>();
+
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+                matchInfo(map[k], i, j, matches, parameter, dimension);
+                ++k;
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+                matchInfo(map[k], i, j, matches, parameter, dimension);
+                ++k;
+            }
+        }
+
+        return matches;
+    }
+
     public class SuperInfo {
 
         final LumpIndex i;
@@ -345,7 +378,7 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
         final Parameter withinRateParameter;
         // TX added
         final Parameter acrossProportionParameter;
-        
+
         SuperInfo(LumpIndex i, LumpIndex j) {
             // in superinfo,just set all null values to -1
             this.i = i;
@@ -388,8 +421,9 @@ public class StronglyLumpableCtmcRates extends AbstractModel implements LogAddit
             if (within) {
                 rate = withinRateParameter.getParameterValue(withinRateIndex);
             } else {
-                rate = acrossProportionParameter.getParameterValue(acrossProportionIndex) *
-                        acrossRates.getParameterValue(acrossRateIndex);
+                double proportion = acrossProportionParameter.getParameterValue(acrossProportionIndex);
+                double across = acrossRates.getParameterValue(acrossRateIndex);
+                rate = across * proportion;
             }
 
             return rate;

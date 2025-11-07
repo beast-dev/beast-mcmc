@@ -49,7 +49,6 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     private final StronglyLumpableCtmcRates rateProvider;
     private final CompoundParameter parameter;
-    private final int[][] mapEffectToIndices;
 
     private final ParameterDimensionLink[] link;
 
@@ -62,10 +61,7 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
                 ApproximationMode.FIRST_ORDER);
         this.rateProvider = extractRateProvider(substitutionModel);
         this.parameter = compoundParameter;
-
-        this.mapEffectToIndices = makeAsymmetricMap();
         this.link = createLink(compoundParameter);
-
     }
 
     private ParameterDimensionLink[] createLink(CompoundParameter compoundParameter) {
@@ -74,7 +70,8 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
         for (int i = 0; i < compoundParameter.getParameterCount(); ++i) {
             Parameter parameter = compoundParameter.getParameter(i);
             for (int j = 0; j < parameter.getDimension(); ++j) {
-                link[index] = new ParameterDimensionLink(parameter, j);
+                link[index] = new ParameterDimensionLink(parameter, j,
+                        rateProvider.searchForParameterAndDimension(parameter, j));
                 ++index;
             }
         }
@@ -103,25 +100,6 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
         }
         return total;
     }
-    
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
-    }
 
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
@@ -129,28 +107,28 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
                                           double normalizationScalar,
                                           Transform transform, boolean scaleByFrequencies) {
 
-        final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
-        final int ii = i * stateCount + i;
-        final int ij = i * stateCount + j;
+        ParameterDimensionLink lk = link[k];
 
-        double element;
-        if (transform == null) {
-            element = generator[ij]; // Default is exp()
-        } else {
-            final Parameter transformedParameter = rateProvider.getLogRateParameter();
-            element = transform.gradient(transformedParameter.getParameterValue(k));
-            if (normalize) {
-                element *= normalizationScalar;
-            }
-            if (scaleByFrequencies) {
-                element *= pi[i];
-            }
+        if (lk.entries.size() == 0) {
+            throw new RuntimeException("Should not get here");
         }
 
-        double total = (differentials[ij]  - differentials[ii]) * element;
+        double total = 0;
+        for (int[] index : lk.entries) {
 
-        if (normalize) {
-            total -= element * pi[i] * normalizationGradientContribution;
+            final int i = index[0], j = index[1];
+            final int ii = i * stateCount + i;
+            final int ij = i * stateCount + j;
+
+            double chain = lk.getDifferential(generator[ij]);
+
+            double partial = (differentials[ij] - differentials[ii]) * chain;
+
+            if (normalize) {
+                partial -= chain * pi[i] * normalizationGradientContribution;
+            }
+
+            total += partial;
         }
 
         return total;
@@ -186,15 +164,16 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
         private final Parameter parameter;
         private final int index;
+        final List<int[]> entries;
 
-        ParameterDimensionLink(Parameter parameter, int index) {
+        ParameterDimensionLink(Parameter parameter, int index, List<int[]> entries) {
             this.parameter = parameter;
             this.index = index;
+            this.entries = entries;
         }
 
-        public double getDifferential(double element, StronglyLumpableCtmcRates.SuperInfo info) {
+        public double getDifferential(double element) {
             return element / parameter.getParameterValue(index);
-//            return info.getRate() / parameter.getParameterValue(index);
         }
     }
 }

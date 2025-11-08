@@ -49,7 +49,6 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     private final StronglyLumpableCtmcRates rateProvider;
     private final CompoundParameter parameter;
-
     private final ParameterDimensionLink[] link;
 
     public LumpableCtmcRateGradient(String traitName,
@@ -84,21 +83,6 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
         } else {
             throw new IllegalArgumentException("Invalid substitution model");
         }
-    }
-
-    @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    final int ij = i * stateCount + j;
-                    total += differentials[ij] * generator[ij];
-                }
-            }
-        }
-        return total;
     }
 
     @Override
@@ -156,15 +140,14 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     @Override
     public List<Citation> getCitations() {
-        // TODO Update
-        return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
+        return Collections.singletonList(CommonCitations.TAO_LUMPING_2025);
     }
 
-    static class ParameterDimensionLink {
+    private static class ParameterDimensionLink {
 
         private final Parameter parameter;
         private final int index;
-        final List<int[]> entries;
+        private final List<int[]> entries;
 
         ParameterDimensionLink(Parameter parameter, int index, List<int[]> entries) {
             this.parameter = parameter;

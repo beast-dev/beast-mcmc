@@ -1,7 +1,7 @@
 /*
- * LogCtmcRateGradient.java
+ * LumpableCtmcRateGradient.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -47,9 +47,8 @@ import java.util.List;
 
 public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGradient {
 
-    private final StronglyLumpableCtmcRates rateProvider;
     private final CompoundParameter parameter;
-    private final ParameterDimensionLink[] link;
+    private final ParameterDimensionLink[] links;
 
     public LumpableCtmcRateGradient(String traitName,
                                     TreeDataLikelihood treeDataLikelihood,
@@ -58,12 +57,13 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
                                     CompoundParameter compoundParameter) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
-        this.rateProvider = extractRateProvider(substitutionModel);
         this.parameter = compoundParameter;
-        this.link = createLink(compoundParameter);
+        this.links = createLinks(compoundParameter,
+                (StronglyLumpableCtmcRates) substitutionModel.getRateProvider());
     }
 
-    private ParameterDimensionLink[] createLink(CompoundParameter compoundParameter) {
+    private static ParameterDimensionLink[] createLinks(CompoundParameter compoundParameter,
+                                                 StronglyLumpableCtmcRates rateProvider) {
         ParameterDimensionLink[] link = new ParameterDimensionLink[compoundParameter.getDimension()];
         int index = 0;
         for (int i = 0; i < compoundParameter.getParameterCount(); ++i) {
@@ -77,21 +77,13 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
         return link;
     }
 
-    private StronglyLumpableCtmcRates extractRateProvider(ComplexSubstitutionModel substitutionModel) {
-        if (substitutionModel.getRateProvider() instanceof StronglyLumpableCtmcRates) {
-            return (StronglyLumpableCtmcRates) substitutionModel.getRateProvider();
-        } else {
-            throw new IllegalArgumentException("Invalid substitution model");
-        }
-    }
-
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationGradientContribution,
                                           double normalizationScalar,
                                           Transform transform, boolean scaleByFrequencies) {
 
-        ParameterDimensionLink lk = link[k];
+        ParameterDimensionLink lk = links[k];
 
         if (lk.entries.size() == 0) {
             throw new RuntimeException("Should not get here");
@@ -126,11 +118,6 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
     @Override
     public LogColumn[] getColumns() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

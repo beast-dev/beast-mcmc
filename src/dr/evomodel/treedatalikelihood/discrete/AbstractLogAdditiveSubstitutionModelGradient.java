@@ -42,6 +42,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Transform;
 import dr.xml.Reportable;
 
@@ -424,6 +425,11 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             map.clear();
             qQPlus = null;
         }
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     private final CorrectionTermCache correctionTermCache;

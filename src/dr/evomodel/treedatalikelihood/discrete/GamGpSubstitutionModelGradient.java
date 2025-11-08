@@ -99,11 +99,6 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
     }
 
     @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.SUBSTITUTION_MODELS;
-    }
-
-    @Override
     public String getDescription() {
         return null; // TODO
     }

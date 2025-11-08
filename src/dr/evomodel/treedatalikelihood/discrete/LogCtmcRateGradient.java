@@ -76,7 +76,7 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
             throw new IllegalArgumentException("Invalid substitution model");
         }
     }
-    
+
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationGradientContribution,
@@ -118,11 +118,6 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
     @Override
     public LogColumn[] getColumns() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

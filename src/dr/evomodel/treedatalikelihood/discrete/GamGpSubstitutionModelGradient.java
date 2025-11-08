@@ -69,25 +69,6 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
         this.mapEffectToIndices = makeAsymmetricMap();
     }
 
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
-    }
-
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
                                           boolean normalize, double normalizationConstant,

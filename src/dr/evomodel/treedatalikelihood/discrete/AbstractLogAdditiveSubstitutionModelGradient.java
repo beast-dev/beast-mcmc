@@ -197,6 +197,25 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                 "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
     }
 
+    protected int[][] makeAsymmetricMap() {
+        int[][] map = new int[stateCount * (stateCount - 1)][];
+
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        return map;
+    }
+
     protected double preProcessNormalization(double[] differentials, double[] generator,
                                              boolean normalize) {
         double total = 0.0;

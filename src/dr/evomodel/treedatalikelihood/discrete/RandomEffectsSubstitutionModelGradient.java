@@ -87,26 +87,7 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
         
         return total;
     }
-
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
-    }
-
+    
     private int indexIJ(int k) {
         final int[] indices = mapEffectToIndices[k];
         return indices[0] * stateCount + indices[1];

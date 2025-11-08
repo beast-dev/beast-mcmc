@@ -87,7 +87,7 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
         
         return total;
     }
-    
+
     private int indexIJ(int k) {
         final int[] indices = mapEffectToIndices[k];
         return indices[0] * stateCount + indices[1];

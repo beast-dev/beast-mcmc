@@ -1,7 +1,7 @@
 /*
- * LogCtmcRateGradient.java
+ * LumpableCtmcRateGradient.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -31,6 +31,7 @@ import dr.evomodel.substmodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -46,69 +47,34 @@ import java.util.List;
 
 public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGradient {
 
-    private final LogAdditiveCtmcRateProvider.DataAugmented rateProvider;
-    private final int[][] mapEffectToIndices;
+    private final CompoundParameter parameter;
+    private final ParameterDimensionLink[] links;
 
     public LumpableCtmcRateGradient(String traitName,
                                     TreeDataLikelihood treeDataLikelihood,
                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    ComplexSubstitutionModel substitutionModel) {
+                                    ComplexSubstitutionModel substitutionModel,
+                                    CompoundParameter compoundParameter) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
-        this.rateProvider = extractRateProvider(substitutionModel);
-        this.mapEffectToIndices = makeAsymmetricMap();
+        this.parameter = compoundParameter;
+        this.links = createLinks(compoundParameter,
+                (StronglyLumpableCtmcRates) substitutionModel.getRateProvider());
     }
 
-    public LumpableCtmcRateGradient(String traitName,
-                                    TreeDataLikelihood treeDataLikelihood,
-                                    BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    LogRateSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
-                ApproximationMode.FIRST_ORDER);
-        this.rateProvider = extractRateProvider(substitutionModel);
-        this.mapEffectToIndices = makeAsymmetricMap();
-    }
-
-    private LogAdditiveCtmcRateProvider.DataAugmented extractRateProvider(ComplexSubstitutionModel substitutionModel) {
-        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented) {
-            return (LogAdditiveCtmcRateProvider.DataAugmented) substitutionModel.getRateProvider();
-        } else {
-            throw new IllegalArgumentException("Invalid substitution model");
-        }
-    }
-
-    @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    final int ij = i * stateCount + j;
-                    total += differentials[ij] * generator[ij];
-                }
+    private static ParameterDimensionLink[] createLinks(CompoundParameter compoundParameter,
+                                                 StronglyLumpableCtmcRates rateProvider) {
+        ParameterDimensionLink[] link = new ParameterDimensionLink[compoundParameter.getDimension()];
+        int index = 0;
+        for (int i = 0; i < compoundParameter.getParameterCount(); ++i) {
+            Parameter parameter = compoundParameter.getParameter(i);
+            for (int j = 0; j < parameter.getDimension(); ++j) {
+                link[index] = new ParameterDimensionLink(parameter, j,
+                        rateProvider.searchForParameterAndDimension(parameter, j));
+                ++index;
             }
         }
-        return total;
-    }
-    
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
+        return link;
     }
 
     @Override
@@ -117,28 +83,28 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
                                           double normalizationScalar,
                                           Transform transform, boolean scaleByFrequencies) {
 
-        final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
-        final int ii = i * stateCount + i;
-        final int ij = i * stateCount + j;
+        ParameterDimensionLink lk = links[k];
 
-        double element;
-        if (transform == null) {
-            element = generator[ij]; // Default is exp()
-        } else {
-            final Parameter transformedParameter = rateProvider.getLogRateParameter();
-            element = transform.gradient(transformedParameter.getParameterValue(k));
-            if (normalize) {
-                element *= normalizationScalar;
-            }
-            if (scaleByFrequencies) {
-                element *= pi[i];
-            }
+        if (lk.entries.size() == 0) {
+            throw new RuntimeException("Should not get here");
         }
 
-        double total = (differentials[ij]  - differentials[ii]) * element;
+        double total = 0;
+        for (int[] index : lk.entries) {
 
-        if (normalize) {
-            total -= element * pi[i] * normalizationGradientContribution;
+            final int i = index[0], j = index[1];
+            final int ii = i * stateCount + i;
+            final int ij = i * stateCount + j;
+
+            double chain = lk.getDifferential(generator[ij]);
+
+            double partial = (differentials[ij] - differentials[ii]) * chain;
+
+            if (normalize) {
+                partial -= chain * pi[i] * normalizationGradientContribution;
+            }
+
+            total += partial;
         }
 
         return total;
@@ -146,17 +112,12 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     @Override
     public Parameter getParameter() {
-        return rateProvider.getLogRateParameter();
+        return parameter;
     }
 
     @Override
     public LogColumn[] getColumns() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override
@@ -166,7 +127,23 @@ public class LumpableCtmcRateGradient extends AbstractLogAdditiveSubstitutionMod
 
     @Override
     public List<Citation> getCitations() {
-        // TODO Update
-        return Collections.singletonList(CommonCitations.MONTI_GENERIC_RATES_2024);
+        return Collections.singletonList(CommonCitations.TAO_LUMPING_2025);
+    }
+
+    private static class ParameterDimensionLink {
+
+        private final Parameter parameter;
+        private final int index;
+        private final List<int[]> entries;
+
+        ParameterDimensionLink(Parameter parameter, int index, List<int[]> entries) {
+            this.parameter = parameter;
+            this.index = index;
+            this.entries = entries;
+        }
+
+        public double getDifferential(double element) {
+            return element / parameter.getParameterValue(index);
+        }
     }
 }

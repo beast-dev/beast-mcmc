@@ -27,12 +27,12 @@ package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -60,7 +60,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String POPSIZES = "popSizes";
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
-    private static final boolean USE_BEAGLE = true;
+    private static final boolean USE_BEAGLE = false;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     private static final boolean TRANSPOSE = true;
 
@@ -106,7 +106,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             throw new XMLParseException("Ancestral state reconstruction cannot be used with compressed (unique) patterns.");
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPSIZES);
@@ -209,7 +209,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),
-            new ElementRule(TreeModel.class),
+            new ElementRule(MutableTreeModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(Parameter.class, true)

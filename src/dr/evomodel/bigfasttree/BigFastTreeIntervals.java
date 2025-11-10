@@ -29,6 +29,7 @@ package dr.evomodel.bigfasttree;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -67,6 +68,29 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         onlyUpdateTimes = false;
         calculateIntervals();
         addModel(tree);
+    }
+
+    public BigFastTreeIntervals(MutableTreeModel tree) {
+        this("bigFastIntervals",tree);
+    }
+
+    public BigFastTreeIntervals(String name, MutableTreeModel tree) {
+        super(name);
+        int maxEventCount = tree.getNodeCount();
+
+        this.tree = tree;
+        intervalsKnown = false;
+
+        updatedNodes = new ArrayList<>(maxEventCount);
+        storedUpdatedNodes = new ArrayList<>(maxEventCount);
+
+        events = new Events(maxEventCount);
+        storedEvents = new Events(maxEventCount);
+
+        dirty = true;
+        onlyUpdateTimes = false;
+        calculateIntervals();
+        addModel((Model) tree);
     }
 
 
@@ -306,7 +330,18 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             // will this update the tree nodes?
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
-            System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+            if (tree instanceof TreeModel) {
+                System.arraycopy(((TreeModel) tree).getNodes(), 0, nodes, 0, tree.getNodeCount());
+            } else {
+                int idx = 0;
+                for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                    nodes[idx++] = tree.getExternalNode(i);
+                }
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    nodes[idx++] = tree.getInternalNode(i);
+                }
+            }
+
             Arrays.parallelSort(nodes, (a, b) -> {
                 if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
                 else
@@ -697,7 +732,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected boolean onlyUpdateTimes;
     private boolean storedOnlyUpdateTimes;
 
-    private final TreeModel tree;
+    private final Tree tree;
     protected boolean dirty;
     private int intervalCount = 0;
 

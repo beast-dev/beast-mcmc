@@ -147,9 +147,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
-        if (tree instanceof TreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+        boolean isAncestralTraitTree = false;
+
+        if (tree instanceof dr.evomodel.tree.TreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals((dr.evomodel.tree.TreeModel) treeModel);
             addModel(treeIntervals);
+        } else if (tree instanceof dr.evolution.tree.MutableTreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (dr.evolution.tree.MutableTreeModel) treeModel);
+            addModel(treeIntervals);
+            isAncestralTraitTree = true;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
@@ -159,7 +165,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         addModel(populationSizeModel);
         this.likelihoodDelegate.setPopulationSizeModel(populationSizeModel);
 
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, 
+                numberSubIntervals, !isAncestralTraitTree);
 
         // Initialize ancestral state reconstruction settings
         this.dataType = dataType;

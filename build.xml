@@ -198,7 +198,6 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-            <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
@@ -414,11 +413,11 @@
     <property name="version" value="1.9"/>
      -->
     <property name="version" value="10.5.0"/>
-    <property name="extra_release_tag" value="-beta4"/>
+    <property name="extra_release_tag" value=""/> <!-- "-beta7" -->
     <property name="jvm_version" value="1.8+"/>
 
     <property name="version_number" value="10.5.0"/>
-    <property name="copyright" value="Copyright 2002-2024"/>
+    <property name="copyright" value="Copyright 2002-2025"/>
 
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
@@ -724,7 +723,9 @@
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
         <copy todir="${Mac_package_dir}/lib">
 <!--         	<fileset dir="${Mac_dir}/lib"/> -->
-        	<fileset dir="lib"/>
+        	<fileset dir="lib">
+        		<include name="*.jar"/>
+        	</fileset>
         </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>

@@ -1,8 +1,7 @@
 /*
  * ComplexSubstitutionModelParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
+ * Copyright (c) 2002-2025 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -22,7 +21,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.evomodelxml.substmodel;
@@ -105,7 +103,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
-        
+
         ComplexSubstitutionModel model;
 
         if (!xo.hasChildNamed(INDICATOR)) {
@@ -138,8 +136,14 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(INDICATOR);
 
             Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
-            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
+            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension()) {
                 throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
+            }
+            for (double value : indicatorParameter.getValues()) {
+                if (value != 0 && value != 1) {
+                    throw new XMLParseException("Indicator parameter " + indicatorParameter + " has an invalid value: " + value);
+                }
+            }
 
             if (xo.hasAttribute(BSSVS_TOLERANCE)) {
                 double tolerance = xo.getAttribute(BSSVS_TOLERANCE,

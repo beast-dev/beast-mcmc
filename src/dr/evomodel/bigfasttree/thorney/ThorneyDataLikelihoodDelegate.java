@@ -32,11 +32,9 @@ import java.util.List;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.RateRescalingScheme;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.TreeTraversal;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.TreeTraversal.TraversalType;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
@@ -222,6 +220,15 @@ public class ThorneyDataLikelihoodDelegate extends AbstractModel implements Data
     @Override
     public boolean providesPostOrderStatisticsOnly() { return false;    }
 
+    public int getPartitionCat(){
+        // not meaningful right now, need to update
+        return 0;
+    };
+
+    public double[] getSiteLogLikelihoods(){
+        throw new RuntimeException("getSiteLogLikelihoods() not implemented");
+    }
+
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) { // substitution model here
         // TODO Auto-generated method stub
@@ -239,6 +246,26 @@ public class ThorneyDataLikelihoodDelegate extends AbstractModel implements Data
         // nada
     }
 
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    @Override
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    public boolean getUseAmbiguities() {
+        return true;
+    }
+
+    public PartialsRescalingScheme getRescalingScheme() {
+        return null;
+    }
+
+    public boolean getDelayRescalingUntilUnderflow() {
+        return true;
+    }
     // get the mutation map
     protected MutationBranchMap getMutationMap() {
         return mutationMap;

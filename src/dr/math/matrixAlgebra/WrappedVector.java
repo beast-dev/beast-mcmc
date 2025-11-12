@@ -86,6 +86,18 @@ public interface WrappedVector extends ReadableVector, WritableVector {
             this(buffer, 0, buffer.length);
         }
 
+        public Raw(int[] in) {
+            this(convert(in), 0, in.length);
+        }
+
+        private static double[] convert(int[] in) {
+            double[] buffer = new double[in.length];
+            for (int i = 0; i < in.length; ++i) {
+                buffer[i] = in[i];
+            }
+            return buffer;
+        }
+
         @Override
         final public double get(final int i) {
             return buffer[offset + i];

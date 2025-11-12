@@ -61,14 +61,14 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 	    // Old parser always returned UNIVERSAL type for codon conversion
 	    DataType dataType = DataTypeUtils.getDataType(xo);
 
-	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
-	    if (dataType instanceof Codons) {
-		    geneticCode = ((Codons)dataType).getGeneticCode();
-	    }
+        GeneticCode geneticCode = GeneticCode.UNIVERSAL;
+        if (dataType instanceof Codons) {
+            geneticCode = ((Codons)dataType).getGeneticCode();
+        }
 
         ConvertAlignment convert = new ConvertAlignment(dataType, geneticCode, alignment);
-	    Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
-	            alignment.getDataType().getDescription() + " to " + dataType.getDescription());
+        Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
+                alignment.getDataType().getDescription() + " to " + dataType.getDescription());
 
 
         return convert;

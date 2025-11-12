@@ -188,6 +188,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
     }
 
+    public int getPatternIndex(int siteIndex){
+        // Not implemented yet
+        return -1;
+    }
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if(!(model instanceof AbstractPeriodPriorDistribution)) {
             fireModelChanged(object);

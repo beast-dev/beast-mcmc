@@ -420,6 +420,11 @@ public class BeastGenerator extends Generator {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 treePriorGenerator.writeTreePriorModel(prior, writer);
                 writer.writeText("");
+
+                if (prior.getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorModel(prior, writer);
+                    writer.writeText("");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -465,6 +470,10 @@ public class BeastGenerator extends Generator {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 treePriorGenerator.writePriorLikelihood(model, writer);
                 writer.writeText("");
+                if (model.getPartitionTreePrior().getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorLikelihood(model, writer);
+                    writer.writeText("");
+                }
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
@@ -768,6 +777,10 @@ public class BeastGenerator extends Generator {
             PartitionTreePrior prior = model.getPartitionTreePrior();
             treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
             writer.writeText("");
+            if (prior.getSubtreeTaxonSet() != null) {
+                treePriorGenerator.writeSubtreePriorLikelihoodReference(prior, model, writer);
+                writer.writeText("");
+            }
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

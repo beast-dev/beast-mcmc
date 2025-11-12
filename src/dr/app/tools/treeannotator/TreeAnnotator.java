@@ -1038,6 +1038,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 heights = HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
+            } else if (value.equalsIgnoreCase("keep")) {
+                heights = HeightsSummary.KEEP_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
                 printUsage(arguments);
@@ -1100,6 +1102,12 @@ public class TreeAnnotator extends BaseTreeTool {
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
+        }
+
+        if (target != Target.MAX_CLADE_CREDIBILITY && target != Target.USER_TARGET_TREE && heights == HeightsSummary.KEEP_HEIGHTS) {
+            progressStream.println("Keep original heights is only valid for MCC or user target trees");
+            printUsage(arguments);
+            System.exit(1);
         }
 
         if (arguments.hasOption("reference")) {

@@ -1,7 +1,7 @@
 /*
- * GMRFSkyrideLikelihoodParser.java
+ * MultilocusNonParametricCoalescentLikelihoodParser.java
  *
- * Copyright (c) 2002-2024 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2025 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,11 +25,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
-import dr.evomodel.coalescent.NewMultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.coalescent.TreeIntervals;
-import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;
@@ -44,10 +41,7 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
     private static final String PARSER_NAME = "multiLocusNPCoalescentLikelihood";
     private static final String POPULATION_TREE = GMRFSkyrideLikelihoodParser.POPULATION_TREE;
     private static final String POPULATION_PARAMETER = GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER;
-    //    public static final String PRECISION_PARAMETER = "precisionParameter";
-
-    public static final String PLOIDY = "ploidy";
-
+    private static final String PLOIDY = "ploidy";
     private static final String GRID_POINTS = GMRFSkyrideLikelihoodParser.GRID_POINTS;
     private static final String NUM_GRID_POINTS = GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS;
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
@@ -74,29 +68,15 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
             trees.add((TreeModel) cxo.getChild(i));
         }
 
-        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
+        List<TreeIntervals> intervalLists = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
+            TreeIntervals treeIntervals = new TreeIntervals(trees.get(i));
             intervalLists.add(treeIntervals);
         }
 
         Parameter ploidyFactors = parsePloidyFactors(xo, trees, nGridPoints);
 
         MultilocusNonparametricCoalescentLikelihood likelihood = new MultilocusNonparametricCoalescentLikelihood(intervalLists, logPopSizes, gridPoints, ploidyFactors);
-
-        List<TreeIntervals> newIntervalLists = new ArrayList<>();
-        for (int i = 0; i < trees.size(); ++i) {
-            TreeIntervals treeIntervals = new TreeIntervals(trees.get(i));
-            newIntervalLists.add(treeIntervals);
-        }
-
-        NewMultilocusNonparametricCoalescentLikelihood newLikelihood = new NewMultilocusNonparametricCoalescentLikelihood(
-                newIntervalLists,logPopSizes, gridPoints, ploidyFactors);
-
-
-        System.err.println("old: " + likelihood.getLogLikelihood());
-        System.err.println("new: " + newLikelihood.getLogLikelihood());
-        System.exit(-1);
 
         return likelihood;
     }
@@ -128,7 +108,7 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return rules;
     }
 
     private final XMLSyntaxRule[] rules = {

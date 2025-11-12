@@ -24,7 +24,7 @@
  */
 
 package dr.evomodel.coalescent;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -54,7 +54,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double[][] ploidySums;
     private double[][] storedPloidySums;
 
-    private final List<BigFastTreeIntervals> intervalsList;
+    private final List<TreeIntervals> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -67,7 +67,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private boolean likelihoodKnown;
 
 
-    public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
+    public MultilocusNonparametricCoalescentLikelihood(List<TreeIntervals> intervalLists,
                                                        Parameter logPopSizes,
                                                        Parameter gridPoints,
                                                        Parameter ploidyFactors) {
@@ -91,7 +91,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
-        for (BigFastTreeIntervals intervals : intervalLists) {
+        for (TreeIntervals intervals : intervalLists) {
             addModel(intervals);
         }
 
@@ -111,8 +111,8 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof BigFastTreeIntervals) {
-            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
+        if (model instanceof TreeIntervals) {
+            TreeIntervals treeModel = (TreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model

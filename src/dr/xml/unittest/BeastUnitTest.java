@@ -56,6 +56,11 @@ public class BeastUnitTest implements Reportable {
     private final boolean equalMode;
 
     public BeastUnitTest(String message, String[] actual, String expected,
+                         AssertType assertType, int[] indices) {
+        this(message, actual, expected, assertType, indices, true);
+    }
+
+    public BeastUnitTest(String message, String[] actual, String expected,
                          AssertType assertType, int[] indices, boolean equalMode) {
         this.message = message;
         this.actual = actual;
@@ -67,9 +72,7 @@ public class BeastUnitTest implements Reportable {
 
     public void execute() {
         for (int i = 0; i < actual.length; i++) {
-            boolean result = equalMode
-                    ? assertType.equivalent(actual[i], indices, expected)
-                    : !assertType.equivalent(actual[i], indices, expected);
+            boolean result = equalMode == assertType.equivalent(actual[i], indices, expected);
             if (!result) {
                 failCheck(i);
             }
@@ -217,7 +220,10 @@ public class BeastUnitTest implements Reportable {
             if (xo.getChild(EXPECTED).hasAttribute(CHECKPOINT_FILENAME)) {
                 fileName = xo.getChild(EXPECTED).getStringAttribute(CHECKPOINT_FILENAME);
             }
-            String expected = null;
+
+            boolean equal = xo.getAttribute(EQUAL, true);
+
+            String expected;
             if (fileName != null) {
                 //if there is an attribute, go look for the checkpointed log joint density
                 try (FileReader fr = new FileReader(fileName); BufferedReader br = new BufferedReader(fr)) {
@@ -226,7 +232,7 @@ public class BeastUnitTest implements Reportable {
                     String line = br.readLine();
                     StringTokenizer st = new StringTokenizer(line);
                     if (st.countTokens() != 2) {
-                        throw new XMLParseException("Line with checkpointed log joint density should only have two tokens.");
+                        throw new XMLParseException("Line with check-pointed log joint density should only have two tokens.");
                     }
                     st.nextToken();
                     expected = st.nextToken();

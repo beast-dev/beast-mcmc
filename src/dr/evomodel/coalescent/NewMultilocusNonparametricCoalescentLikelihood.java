@@ -24,8 +24,12 @@
  */
 
 package dr.evomodel.coalescent;
+
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -40,7 +44,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLikelihood implements Citable, Reportable {
+public class NewMultilocusNonparametricCoalescentLikelihood extends AbstractModelLikelihood implements Citable, Reportable {
 
     private final int numGridPoints;
 
@@ -54,7 +58,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double[][] ploidySums;
     private double[][] storedPloidySums;
 
-    private final List<BigFastTreeIntervals> intervalsList;
+    private final List<TreeIntervals> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -67,10 +71,10 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private boolean likelihoodKnown;
 
 
-    public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
-                                                       Parameter logPopSizes,
-                                                       Parameter gridPoints,
-                                                       Parameter ploidyFactors) {
+    public NewMultilocusNonparametricCoalescentLikelihood(List<TreeIntervals> intervalLists,
+                                                          Parameter logPopSizes,
+                                                          Parameter gridPoints,
+                                                          Parameter ploidyFactors) {
 
         super("Multilocus Nonparametric Coalescent Likelihood");
 
@@ -91,7 +95,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
-        for (BigFastTreeIntervals intervals : intervalLists) {
+        for (TreeIntervals intervals : intervalLists) {
             addModel(intervals);
         }
 
@@ -111,8 +115,8 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof BigFastTreeIntervals) {
-            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
+        if (model instanceof TreeIntervals) {
+            TreeIntervals treeModel = (TreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model
@@ -137,8 +141,9 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
             Arrays.fill(ploidySums[treeIndex], 0.0);
             double ploidyFactor = 1 / getPopulationFactor(treeIndex);
 
-            SingleTreeGriddedNodesTimeline singleTreeNodesTimeLine = new
-                    SingleTreeGriddedNodesTimeline(intervalsList.get(treeIndex), gridPoints);
+            NewSingleTreeGriddedNodesTimeline singleTreeNodesTimeLine = new
+                    NewSingleTreeGriddedNodesTimeline(intervalsList.get(treeIndex), gridPoints);
+
             final double[] fullTimeLine = singleTreeNodesTimeLine.getMergedTimeLine();
             final int[] numLineages = singleTreeNodesTimeLine.getMergedNumLineages();
             final int[] gridIndices = singleTreeNodesTimeLine.getGridIndices();
@@ -260,9 +265,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     @Override
-    protected void acceptState() {
-
-    }
+    protected void acceptState() { }
 
     @SuppressWarnings("unused")
     private double[] getGradientLogDensity() {

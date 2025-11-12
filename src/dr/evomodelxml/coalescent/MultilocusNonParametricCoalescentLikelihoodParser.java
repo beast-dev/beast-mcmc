@@ -25,9 +25,10 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.NewMultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
@@ -78,15 +79,25 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
             BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
             intervalLists.add(treeIntervals);
         }
-        //        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
-        //        for (int i = 0; i < trees.size(); i++) {
-        //            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
-        //            intervalLists.add((BigFastTreeIntervals) treeIntervals);
-        //        }
 
         Parameter ploidyFactors = parsePloidyFactors(xo, trees, nGridPoints);
 
         MultilocusNonparametricCoalescentLikelihood likelihood = new MultilocusNonparametricCoalescentLikelihood(intervalLists, logPopSizes, gridPoints, ploidyFactors);
+
+        List<TreeIntervals> newIntervalLists = new ArrayList<>();
+        for (int i = 0; i < trees.size(); ++i) {
+            TreeIntervals treeIntervals = new TreeIntervals(trees.get(i));
+            newIntervalLists.add(treeIntervals);
+        }
+
+        NewMultilocusNonparametricCoalescentLikelihood newLikelihood = new NewMultilocusNonparametricCoalescentLikelihood(
+                newIntervalLists,logPopSizes, gridPoints, ploidyFactors);
+
+
+        System.err.println("old: " + likelihood.getLogLikelihood());
+        System.err.println("new: " + newLikelihood.getLogLikelihood());
+        System.exit(-1);
+
         return likelihood;
     }
 

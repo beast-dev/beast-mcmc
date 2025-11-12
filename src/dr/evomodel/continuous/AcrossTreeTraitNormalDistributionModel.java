@@ -217,6 +217,11 @@ public class AcrossTreeTraitNormalDistributionModel extends AbstractModel implem
         return distribution.nextMultivariateNormal();
     }
 
+    @Override
+    public int getDimension() {
+        return dim;
+    }
+
     public double logPdf(Object x) {
         checkDistribution();
         return distribution.logPdf(x);

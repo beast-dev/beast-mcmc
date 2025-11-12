@@ -31,12 +31,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
 import dr.stats.DiscreteStatistics;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * @author Andrew Rambaut
@@ -44,15 +41,18 @@ import java.util.concurrent.*;
  */
 public final class CladeSystem {
     private final boolean keepSubClades;
+    private final boolean keepParents;
     private double treeCount = 0;
+    private boolean storeTipHeights = false;
 
     /**
      * Constructor starting with an empty clade system
      *
      * @param keepSubClades whether to keep all subtrees in each clade
      */
-    public CladeSystem(boolean keepSubClades) {
+    public CladeSystem(boolean keepSubClades, boolean keepParents) {
         this.keepSubClades = keepSubClades;
+        this.keepParents = keepParents;
     }
 
     /**
@@ -60,6 +60,7 @@ public final class CladeSystem {
      */
     public CladeSystem(Tree targetTree) {
         this.keepSubClades = false;
+        this.keepParents = false;
         add(targetTree);
     }
 
@@ -123,8 +124,8 @@ public final class CladeSystem {
     /**
      * recursively add all the clades in a tree
      */
-    private Clade addClades(Tree tree, NodeRef node) {
-        Clade clade;
+    private BiClade addClades(Tree tree, NodeRef node) {
+        BiClade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
             int index = node.getNumber();
@@ -136,10 +137,15 @@ public final class CladeSystem {
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
-            Clade clade1 = addClades(tree, tree.getChild(node, 0));
-            Clade clade2 = addClades(tree, tree.getChild(node, 1));
+            BiClade clade1 = addClades(tree, tree.getChild(node, 0));
+            BiClade clade2 = addClades(tree, tree.getChild(node, 1));
             synchronized (cladeMap) {
                 clade = getOrAddClade(clade1, clade2);
+            }
+
+            if (keepParents) {
+                clade1.addParent(clade);
+                clade2.addParent(clade);
             }
         }
         assert clade != null;
@@ -154,9 +160,9 @@ public final class CladeSystem {
     /**
      * see if a clade exists otherwise create it
      */
-    private Clade getOrAddClade(Clade child1, Clade child2) {
+    private BiClade getOrAddClade(Clade child1, Clade child2) {
         Object key = BiClade.makeKey(child1.getKey(), child2.getKey());
-        BiClade clade = (BiClade) cladeMap.get(key);
+        BiClade clade = cladeMap.get(key);
         if (clade == null) {
             if (keepSubClades) {
                 clade = new BiClade(child1, child2);
@@ -170,6 +176,7 @@ public final class CladeSystem {
                     clade.addSubClades(child1, child2);
                 }
             }
+//            }
         }
 
         return clade;
@@ -213,6 +220,81 @@ public final class CladeSystem {
 
         return key;
     }
+
+    public void traverseNonBinaryTree(Tree tree, CladeAction action) {
+        traverseNonBinaryTree(tree, tree.getRoot(), action);
+    }
+
+    private Object traverseNonBinaryTree(Tree tree, NodeRef node, CladeAction action) {
+
+        Object key;
+
+        if (tree.isExternal(node)) {
+//            key = node.getNumber();
+            key = taxonNumberMap.get(tree.getNodeTaxon(node));
+        } else {
+            List<Object> keys = new ArrayList<>();
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                keys.add(traverseNonBinaryTree(tree, tree.getChild(node, i), action));
+            }
+            key = BiClade.makeKey(keys.toArray());
+        }
+
+        Clade clade = getClade(key);
+        if (clade != null) {
+            action.actOnClade(clade, tree, node);
+        } else {
+            assert action.expectAllClades();
+        }
+
+        return key;
+    }
+
+    public void collectCladeHeights(Tree tree) {
+        collectCladeHeights(tree, tree.getRoot());
+    }
+
+    private Object collectCladeHeights(Tree tree, NodeRef node) {
+
+        Object key;
+
+        if (tree.isExternal(node)) {
+            key = node.getNumber();
+            if (taxonNumberMap != null) {
+                key = taxonNumberMap.get(tree.getNodeTaxon(node));
+            }
+
+            if (storeTipHeights) {
+                BiClade tip = (BiClade) getClade(key);
+                tip.addHeightValue(tree.getNodeHeight(node));
+            }
+        } else {
+            assert tree.getChildCount(node) == 2;
+
+            Object key1 = collectCladeHeights(tree, tree.getChild(node, 0));
+            Object key2 = collectCladeHeights(tree, tree.getChild(node, 1));
+
+            Clade child1 = getClade(key1);
+            Clade child2 = getClade(key2);
+
+            key = BiClade.makeKey(key1, key2);
+
+            BiClade clade = (BiClade)getClade(key);
+
+            if (clade.getBestLeft() == child1 && clade.getBestRight() == child2) {
+                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
+                clade.addHeightValue(tree.getNodeHeight(node));
+            } else if (clade.getBestLeft() == child2 && clade.getBestRight() == child1) {
+                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 1)), tree.getNodeHeight(tree.getChild(node, 0)));
+                clade.addHeightValue(tree.getNodeHeight(node));
+            } else {
+                clade.addHeightValue(tree.getNodeHeight(node));
+            }
+        }
+
+        return key;
+    }
+
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (Clade clade : cladeMap.values()) {
@@ -309,7 +391,7 @@ public final class CladeSystem {
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
+                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
                     count[0] += 1;
                 }
             }
@@ -329,13 +411,13 @@ public final class CladeSystem {
      * @param threshold
      * @return
      */
-    public Set<Clade> getTopClades(Tree tree, double threshold) {
-        Set<Clade> clades = new HashSet<>();
+    public Set<BiClade> getTopClades(Tree tree, double threshold) {
+        Set<BiClade> clades = new HashSet<>();
         traverseTree(tree, new CladeAction() {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() >= threshold) {
-                    clades.add(clade);
+                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
+                    clades.add((BiClade)clade);
                 }
             }
 
@@ -356,7 +438,7 @@ public final class CladeSystem {
     public int getTopCladeCount(double threshold) {
         int count = 0;
         for (Clade clade : cladeMap.values()) {
-            if (clade.getCredibility() >= threshold) {
+            if (clade.getCredibility() > threshold) {
                 count += 1;
             }
         }
@@ -379,10 +461,20 @@ public final class CladeSystem {
      * @param threshold
      * @return
      */
-    public Set<Clade> getTopClades(double threshold) {
-        Set<Clade> clades = new HashSet<>();
-        for (Clade clade : cladeMap.values()) {
-            if (clade.getCredibility() >= threshold) {
+    public Set<BiClade> getTopClades(double threshold) {
+        Set<BiClade> clades = new HashSet<>();
+        for (BiClade clade : cladeMap.values()) {
+            if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
+                clades.add(clade);
+            }
+        }
+        return clades;
+    }
+
+    public List<BiClade> getTopCladeList(double threshold) {
+        List<BiClade> clades = new ArrayList<>();
+        for (BiClade clade : cladeMap.values()) {
+            if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
                 clades.add(clade);
             }
         }

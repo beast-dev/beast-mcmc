@@ -36,8 +36,12 @@ import dr.inference.model.Variable;
 /**
  * @author Marc Suchard
  * @author Pratyusa Data
+ *
+ * https://journals.sagepub.com/doi/full/10.1177/09622802221129040
  */
 public interface GmrfStructureDelegate  {
+
+    // Add nugget regression (pIDDT scores)
 
     GaussianMarkovRandomField.SymmetricTriDiagonalMatrix getQ();
 
@@ -165,5 +169,21 @@ public interface GmrfStructureDelegate  {
             // c * Q(1) + (1 - c) * I
 //            return q;
         }
+    }
+
+    class DiagonalNugget extends Abstract {
+
+        public DiagonalNugget(String name, int dim, Parameter lambda, Parameter siteSpecificNugget) {
+            super(name, dim, lambda);
+
+            addVariable(siteSpecificNugget);
+        }
+
+        @Override
+        void computeQ(GaussianMarkovRandomField.SymmetricTriDiagonalMatrix q) {
+
+        }
+    }
+
     }
 }

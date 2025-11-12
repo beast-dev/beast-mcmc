@@ -31,13 +31,14 @@ import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class LinkedParameter {
+public class LinkedParameter implements Serializable {
 
     private String name;
     final private Parameter argumentParameter;

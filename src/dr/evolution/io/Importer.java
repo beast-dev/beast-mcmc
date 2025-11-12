@@ -114,13 +114,21 @@ public abstract class Importer {
 		public UnknownTaxonException(String message) { super(message); }
 	}
 
-    /**
+	/**
 	 * Constructor
 	 */
 	public Importer(Reader reader) {
+		this(reader, true);
+	}
+
+	/**
+	 * Constructor
+	 */
+	public Importer(Reader reader, boolean processComments) {
 //		this.reader = new LineNumberReader(reader);
 		this.reader = reader;
 		this.commentWriter = null;
+		this.processComments = processComments;
 		isEOF = false;
 	}
 
@@ -278,7 +286,7 @@ public abstract class Importer {
 	public String readLineStart(String delimiters) throws IOException {
 
 		StringBuilder line = new StringBuilder();
-		
+
 		try {
 			char ch = read();
 
@@ -709,46 +717,61 @@ public abstract class Importer {
 		boolean write = false;
 		StringBuilder meta = null;
 
-		if (nextCharacter() == writeComment) {
-			read();
-			write = true;
-		} else if (nextCharacter() == metaComment) {
-			read();
-            // combine two consecutive meta comments
-            meta = lastMetaComment!= null ? new StringBuilder(lastMetaComment + ";") : new StringBuilder();
-		}
+		if (processComments) {
+			if (nextCharacter() == writeComment) {
+				read();
+				write = true;
+			} else if (nextCharacter() == metaComment) {
+				read();
+				// combine two consecutive meta comments
+				meta = lastMetaComment != null ? new StringBuilder(lastMetaComment + ";") : new StringBuilder();
+			}
 
-        lastMetaComment = null;
+			lastMetaComment = null;
 
-		if (delimiter == lineComment) {
-			String line = readLine();
-			if (write && commentWriter != null) {
-				commentWriter.write(line, 0, line.length());
-				commentWriter.newLine();
-			} else if (meta != null) {
-				meta.append(line);
+			if (delimiter == lineComment) {
+				String line = readLine();
+				if (write && commentWriter != null) {
+					commentWriter.write(line, 0, line.length());
+					commentWriter.newLine();
+				} else if (meta != null) {
+					meta.append(line);
+				}
+			} else {
+				do {
+					ch = read();
+					if (ch == startComment) {
+						n++;
+					} else if (ch == stopComment) {
+						if (write && commentWriter != null) {
+							commentWriter.newLine();
+						}
+						n--;
+					} else if (write && commentWriter != null) {
+						commentWriter.write(ch);
+					} else if (meta != null) {
+						meta.append(ch);
+					}
+				} while (n > 0);
+			}
+
+			if (meta != null) {
+				lastMetaComment = meta.toString();
 			}
 		} else {
-			do {
-				ch = read();
-				if (ch == startComment) {
-					n++;
-				} else if (ch == stopComment) {
-					if (write && commentWriter != null) {
-						commentWriter.newLine();
+			if (delimiter == lineComment) {
+				skipToEndOfLine(true);
+			} else {
+				do {
+					ch = read();
+					if (ch == startComment) {
+						n++;
+					} else if (ch == stopComment) {
+						n--;
 					}
-					n--;
-				} else if (write && commentWriter != null) {
-					commentWriter.write(ch);
-				} else if (meta != null) {
-					meta.append(ch);
-				}
-			} while (n > 0);
+				} while (n > 0);
+			}
 		}
-
-        if (meta != null) {
-            lastMetaComment = meta.toString();
-        }
 	}
 
 	/**
@@ -862,6 +885,7 @@ public abstract class Importer {
 	private int lastDelimiter = '\0';
 
 	private boolean hasComments = false;
+	private boolean processComments = true;
 	private char startComment = (char)-1;
 	private char stopComment = (char)-1;
 	private char lineComment = (char)-1;

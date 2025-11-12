@@ -82,6 +82,7 @@ public class Parameter implements Serializable {
 
     public PriorScaleType scaleType;
     public boolean isPriorFixed;
+    public boolean isPriorParametersFixed;
     public PriorType priorType;
 
     private Parameter parent;
@@ -96,9 +97,18 @@ public class Parameter implements Serializable {
         this.initial = initial;
     }
 
+    public boolean isInitialSet() {
+        return isInitialSet;
+    }
+
+    public void setInitialSet(boolean isInitialSet) {
+        this.isInitialSet = isInitialSet;
+    }
+
     // Editable fields
     private boolean isFixed;
     private double initial;
+    private boolean isInitialSet = false;
     public double maintainedSum;
     public double dimension;
     public boolean isTruncated;
@@ -142,6 +152,7 @@ public class Parameter implements Serializable {
 
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
+        private boolean isPriorParametersFixed = false;
 
         private boolean isAdaptiveMultivariateCompatible = false;
 
@@ -188,6 +199,7 @@ public class Parameter implements Serializable {
             options = source.options;
             priorType = source.priorType;
             isPriorFixed = source.isPriorFixed;
+            isPriorParametersFixed = source.isPriorParametersFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
             dimension = source.dimension;
@@ -314,6 +326,11 @@ public class Parameter implements Serializable {
 
         public Builder isPriorFixed(boolean priorFixed) {
             this.isPriorFixed = priorFixed;
+            return this;
+        }
+
+        public Builder isPriorParametersFixed(boolean priorParametersFixed) {
+            this.isPriorParametersFixed = priorParametersFixed;
             return this;
         }
 

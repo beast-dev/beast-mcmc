@@ -236,12 +236,14 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     protected void addField(String name, double initialValue, double min, boolean includeMin, double max, boolean includeMax) {
         RealNumberField field = new RealNumberField(min, includeMin, max, includeMax, name);
         field.setValue(initialValue);
+        field.setAllowEmpty(true);
         addField(name, field);
     }
 
     protected void addField(String name, double initialValue, double min, double max) {
         RealNumberField field = new RealNumberField(min, max, name);
         field.setValue(initialValue);
+        field.setAllowEmpty(true);
         addField(name, field);
     }
 
@@ -249,6 +251,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         argumentNames.add(name);
 
         field.setColumns(10);
+        field.setAllowEmpty(true);
         argumentFields.add(field);
         setupComponents();
     }
@@ -267,7 +270,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     protected Double getValue(int i) {
-        return ((RealNumberField) argumentFields.get(i)).getValue();
+        if (argumentFields.get(i) instanceof RealNumberField) {
+            return ((RealNumberField) argumentFields.get(i)).getValue();
+        }
+        return null;
     }
 
     protected Double getValue(String fieldName) {
@@ -367,7 +373,13 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void getArguments(Parameter parameter, PriorType priorType) {
         if (priorType.isInitializable && !parameter.isStatistic && !parameter.isNodeHeight) {
+            double original = parameter.getInitial();
             parameter.setInitial(initialField.getValue());
+            // if the initial value has changed flag it as having changed so
+            // it does get changed else where.
+            if (original != parameter.getInitial()) {
+                parameter.setInitialSet(true);
+            }
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {
@@ -384,7 +396,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     abstract void setArguments(Parameter parameter);
 
-    abstract void getArguments(Parameter parameter);
+    abstract boolean getArguments(Parameter parameter);
 
     abstract boolean isInputValid();
 
@@ -401,7 +413,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         void setArguments(Parameter parameter) {
         }
 
-        void getArguments(Parameter parameter) {
+        boolean getArguments(Parameter parameter) {
+            return true;
         }
 
         @Override
@@ -434,14 +447,22 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
-        void getArguments(Parameter parameter) {
+        boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ) {
+                return false;
+            }
             parameter.isTruncated = false;
             parameter.uniformUpper = getValue(0);
             parameter.uniformLower = getValue(1);
+            return true;
         }
 
         @Override
         boolean isInputValid() {
+            if (getValue(0) == null || getValue(1) == null) {
+                return false;
+            }
             return getValue(0) > getValue(1);
         }
     };
@@ -467,9 +488,14 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ) {
+                return false;
+            }
             parameter.mean = getValue(0);
             parameter.offset = getValue(1);
+            return true;
         }
 
         @Override
@@ -497,9 +523,14 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null) {
+                return false;
+            }
             parameter.mean = getValue(0);
             parameter.scale = getValue(1);
+            return true;
         }
 
         @Override
@@ -527,9 +558,14 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ) {
+                return false;
+            }
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
+            return true;
         }
 
         @Override
@@ -607,11 +643,17 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(3).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ||
+                    getValue(2) == null ) {
+                return false;
+            }
             parameter.mean = getValue(1);
             parameter.stdev = getValue(2);
             parameter.offset = getValue(3);
             parameter.setMeanInRealSpace(parametersInRealSpaceCheck.isSelected());
+            return true;
         }
 
         @Override
@@ -644,10 +686,16 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ||
+                    getValue(2) == null ) {
+                return false;
+            }
             parameter.shape = getValue(0);
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
+            return true;
         }
 
         @Override
@@ -679,10 +727,16 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ||
+                    getValue(2) == null ) {
+                return false;
+            }
             parameter.shape = getValue(0);
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
+            return true;
         }
 
         @Override
@@ -737,10 +791,17 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             getField(2).setLabel(parameter.getName() + " " + getArgumentName(2).toLowerCase());
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null ||
+                    getValue(1) == null ||
+                    getValue(2) == null ) {
+                return false;
+            }
+
             parameter.shape = getValue(0);
             parameter.shapeB = getValue(1);
             parameter.offset = getValue(2);
+            return true;
         }
 
         @Override
@@ -761,7 +822,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         public void setArguments(Parameter parameter) {
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            return true;
         }
 
         @Override
@@ -782,7 +844,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         public void setArguments(Parameter parameter) {
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            return true;
         }
 
         @Override

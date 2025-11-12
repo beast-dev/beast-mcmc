@@ -28,7 +28,9 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 
@@ -44,14 +46,26 @@ public class PartitionData extends AbstractPartitionData {
     private static final long serialVersionUID = 1642891822797102561L;
 
     private final Alignment alignment;
-    private Patterns patterns = null;
-    private int fromSite;
-    private int toSite;
-    private int every = 1;
+    private PatternList patterns;
+    private final int fromSite;
+    private final int toSite;
+    private final int every;
 
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
-        this(options, name, fileName, alignment, -1, -1, 1);
+    public PartitionData(BeautiOptions options, String name, String fileName, PatternList patterns) {
+        super(options, name, fileName);
+        this.alignment = null;
+        this.patterns = patterns;
+
+        this.fromSite = -1;
+        this.toSite = -1;
+        this.every = 1;
+
+        this.traits = null;
+
+        // This is too slow to be done at data loading.
+        // calculateMeanDistance(patterns);
+        calculateMeanDistance(null);
     }
 
     public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
@@ -81,6 +95,11 @@ public class PartitionData extends AbstractPartitionData {
 
         calculateMeanDistance(null);
     }
+
+    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
+        this(options, name, fileName, alignment, -1, -1, 1);
+    }
+
 
     public Alignment getAlignment() {
         return alignment;
@@ -124,12 +143,20 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
+    public void compressPatterns(SitePatterns.CompressionType compressionType) {
+        assert alignment != null;
+
+        patterns = new SitePatterns(alignment, alignment, compressionType);
+    }
+
+
     public int getPatternCount() {
-        if (patterns == null && alignment != null) {
-            patterns = new Patterns(alignment);
-        }
         if (alignment == null) {
             return traits.size();
+        }
+        if (patterns == null) {
+            return -1;
+//            patterns = new SitePatterns(alignment);
         }
         return patterns.getPatternCount();
     }

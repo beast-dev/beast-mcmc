@@ -479,7 +479,7 @@ public class LogCombiner {
 
     private void writeTree(long state, Tree tree, boolean convertToDecimal, PrintWriter writer) {
 
-        StringBuffer buffer = new StringBuffer("tree STATE_");
+        StringBuilder buffer = new StringBuilder("tree STATE_");
         buffer.append(state);
 //        Double lnP = (Double) tree.getAttribute("lnP");
 //        if (lnP != null) {
@@ -528,7 +528,7 @@ public class LogCombiner {
         return value.toString();
     }
 
-    private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuffer buffer) {
+    private void writeTree(Tree tree, NodeRef node, Map taxonMap, boolean convertToDecimal, StringBuilder buffer) {
 
         NodeRef parent = tree.getParent(node);
 
@@ -584,7 +584,7 @@ public class LogCombiner {
     private static final DecimalFormat scientificFormatter = new DecimalFormat("#.############E0", new DecimalFormatSymbols(Locale.US));
 
     private String reformatNumbers(String line, boolean convertDecimal, boolean useScale, double scale) {
-        StringBuffer outLine = new StringBuffer();
+        StringBuilder outLine = new StringBuilder();
 
         Pattern pattern = Pattern.compile("\\d+\\.\\d+(E[\\-\\d\\.]+)?");
         Matcher matcher = pattern.matcher(line);

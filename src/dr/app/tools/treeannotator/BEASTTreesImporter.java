@@ -1,5 +1,5 @@
 /*
- * NewickImporter.java
+ * BEASTTreesImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -29,17 +29,23 @@ package dr.app.tools.treeannotator;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.*;
+import dr.evolution.tree.FlexibleNode;
+import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Class for importing Newick-type tree file format with numbered tips
+ * Class for importing Newick-type trees embedded in a NEXUS file format with numbered tips
  * This is intended only for reading BEAST trees files quickly.
  *
  * @author Andrew Rambaut
@@ -48,14 +54,23 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
     public static final String COMMENT = "comment";
     private String treeName = null;
 
+    private TaxonList taxonList = null;
+    Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+
     /**
      * @param reader A reader to a source containing a tree in Newick format
      */
-    public BEASTTreesImporter(Reader reader, boolean hasComments) {
-        super(reader);
-        if (hasComments) {
-            setCommentDelimiters('[', ']', '\0', '\0', '&');
-        }
+    public BEASTTreesImporter(Reader reader) {
+        super(reader, false);
+        setCommentDelimiters('[', ']', '\0', '\0', '&');
+    }
+
+    /**
+     * @param reader A reader to a source containing a tree in Newick format
+     */
+    public BEASTTreesImporter(Reader reader, boolean processComments) {
+        super(reader, processComments);
+        setCommentDelimiters('[', ']', '\0', '\0', '&');
     }
 
     /**
@@ -65,6 +80,14 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
         throw new UnsupportedOperationException("this method is not available");
     }
 
+    public void setTaxonList(TaxonList taxonList) {
+        this.taxonList = taxonList;
+        // create a map so that tip numbers are in the same order as the taxon list
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        }
+
+    }
     /**
      * countTrees.
      * Counts the number of trees in the file without importing them
@@ -76,7 +99,7 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
         BufferedReader br = (BufferedReader)getReader();
         do {
             line = br.readLine();
-            if (line != null && line.trim().startsWith("tree STATE")) {
+            if (line != null && line.trim().startsWith("tree ")) {
                 count++;
             }
 
@@ -91,6 +114,7 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
     public List<Tree> importTrees(TaxonList taxonList) throws IOException, ImportException {
         boolean done = false;
         List<Tree> trees = new ArrayList<>();
+        setTaxonList(taxonList);
 
         do {
 
@@ -100,7 +124,7 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
                 unreadCharacter('(');
 
                 FlexibleNode root = readInternalNode();
-                FlexibleTree tree = new FlexibleTree(root);
+                FlexibleTree tree = new FlexibleTree(root, taxonNumberMap);
                 trees.add(tree);
 
                 if (taxonList == null) {
@@ -154,7 +178,12 @@ public class BEASTTreesImporter extends Importer implements TreeImporter {
 
             FlexibleNode root = readInternalNode();
 
-            tree = new FlexibleTree(root);
+            if (taxonList == null) {
+                tree = new FlexibleTree(root);
+                setTaxonList(tree);
+            } else {
+                tree = new FlexibleTree(root, taxonNumberMap);
+            }
 
         } catch (EOFException e) {
             //

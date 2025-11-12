@@ -27,6 +27,7 @@
 
 package dr.evomodel.branchmodel.lineagespecific;
 
+import dr.math.matrixAlgebra.WrappedVector;
 import org.apache.commons.math.MathException;
 
 import dr.inference.model.CompoundLikelihood;
@@ -244,7 +245,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 			if (DEBUG) {
 				System.out.println("N[-index]: ");
-				dr.app.bss.Utils.printArray(occupancy);
+				System.out.println(new WrappedVector.Raw(occupancy));
 			}
 
 			Likelihood clusterLikelihood = (Likelihood) likelihood.getLikelihood(index);
@@ -288,11 +289,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				clusterProbs[i] = logprob;
 			}// END: i loop
 
-			dr.app.bss.Utils.exponentiate(clusterProbs);
+			exponentiate(clusterProbs);
 
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
-				dr.app.bss.Utils.printArray(clusterProbs);
+				System.out.println(new WrappedVector.Raw(clusterProbs));
 			}
 
 			// sample
@@ -307,6 +308,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		}// END: index loop
 
 	}// END: doOperate
+
+	public static void exponentiate(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = Math.exp(array[i]);
+		}
+	}// END: exponentiate
 
 	@Override
 	public String getOperatorName() {

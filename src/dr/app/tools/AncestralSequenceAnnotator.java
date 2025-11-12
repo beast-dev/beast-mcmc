@@ -809,7 +809,7 @@ public class AncestralSequenceAnnotator {
 
             //System.out.println("alpha and pinv parameters: " + alphaParameter.getParameterValue(0) + "\t" + pInvParameter.getParameterValue(0));
             //GammaSiteRateModelParser siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
-            GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL, new Parameter.Default(1.0), 1.0, alphaParameter, categories, GammaSiteRateModel.DiscretizationType.EQUAL, pInvParameter);
+            GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL, new Parameter.Default(1.0), 1.0, alphaParameter, categories, pInvParameter);
             siteModel.setSubstitutionModel(sml.getSubstitutionModel());
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), new Parameter.Default(1.0), 1, new Parameter.Default(0.5));
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), null, null, 0, null);

@@ -124,6 +124,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         }
         if (range_check) {
             try {
+                if (getValue() == null) {
+                    return false;
+                }
                 double value = getValue();
                 if (value < min || value > max) {
                     return false;
@@ -242,7 +245,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return Double.NaN;
             } else {
 //                System.out.println("=" + getText() + "=");
-                return new Double(getText());
+                return Double.parseDouble(getText());
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null, "Unable to parse number correctly",

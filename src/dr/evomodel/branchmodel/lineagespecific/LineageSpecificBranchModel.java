@@ -40,8 +40,8 @@ import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
+//import dr.app.beagle.tools.BeagleSequenceSimulator;
+//import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.Codons;
@@ -204,111 +204,111 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 		//
 	}// END: acceptState
 
-    public static void main(String[] args) {
-
-        try {
-
-            // the seed of the BEAST
-            MathUtils.setSeed(666);
-
-            // create tree
-            NewickImporter importer = new NewickImporter(
-                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            TreeModel tree = new DefaultTreeModel(importer.importTree(null));
-
-            // create site model
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-                    "siteModel");
-
-            // create branch rate model
-            BranchRateModel branchRateModel = new DefaultBranchRateModel();
-
-            int sequenceLength = 10;
-            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-            // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[]{
-                    0.0163936, //
-                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 //
-            });
-            FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
-                    freqs);
-
-            // create substitution model
-            Parameter alpha = new Parameter.Default(1, 10);
-            Parameter beta = new Parameter.Default(1, 5);
-            MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel, new CodonOptions());
-
-            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
-
-            // create partition
-            Partition partition1 = new Partition(tree, //
-                    substitutionModel,//
-                    siteRateModel, //
-                    branchRateModel, //
-                    freqModel, //
-                    0, // from
-                    sequenceLength - 1, // to
-                    1 // every
-            );
-
-            partitionsList.add(partition1);
-
-            // feed to sequence simulator and generate data
-            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
-                    partitionsList);
-
-            Alignment alignment = simulator.simulate(false, false);
-
-            ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE,
-                    GeneticCode.UNIVERSAL, alignment);
-
-
-			List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>();
-			for (int i = 0; i < 2; i++) {
-//				alpha = new Parameter.Default(1, 10 );
-//				beta = new Parameter.Default(1, 5 );
-//				mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta,
-//						freqModel);
-				substModels.add(mg94);
-			}
-            
-			Parameter uCategories = new Parameter.Default(2, 0);
-//            CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
-			
-            LineageSpecificBranchModel branchSpecific = new LineageSpecificBranchModel(tree, freqModel, substModels, //provider, 
-            		uCategories);
-
-            BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
-                    tree, //
-                    branchSpecific, //
-                    siteRateModel, //
-                    branchRateModel, //
-                    null, //
-                    false, //
-                    PartialsRescalingScheme.DEFAULT, true);
-
-            BeagleTreeLikelihood gold = new BeagleTreeLikelihood(convert, //
-                    tree, //
-                    substitutionModel, //
-                    siteRateModel, //
-                    branchRateModel, //
-                    null, //
-                    false, //
-                    PartialsRescalingScheme.DEFAULT, true);
-            
-            System.out.println("likelihood (gold) = " + gold.getLogLikelihood());
-            System.out.println("likelihood = " + like.getLogLikelihood());
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }// END: main
+//    public static void main(String[] args) {
+//
+//        try {
+//
+//            // the seed of the BEAST
+//            MathUtils.setSeed(666);
+//
+//            // create tree
+//            NewickImporter importer = new NewickImporter(
+//                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+//            TreeModel tree = new DefaultTreeModel(importer.importTree(null));
+//
+//            // create site model
+//            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//                    "siteModel");
+//
+//            // create branch rate model
+//            BranchRateModel branchRateModel = new DefaultBranchRateModel();
+//
+//            int sequenceLength = 10;
+//            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+//
+//            // create Frequency Model
+//            Parameter freqs = new Parameter.Default(new double[]{
+//                    0.0163936, //
+//                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+//                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+//                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+//                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+//                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 //
+//            });
+//            FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
+//                    freqs);
+//
+//            // create substitution model
+//            Parameter alpha = new Parameter.Default(1, 10);
+//            Parameter beta = new Parameter.Default(1, 5);
+//            MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel, new CodonOptions());
+//
+//            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
+//
+//            // create partition
+//            Partition partition1 = new Partition(tree, //
+//                    substitutionModel,//
+//                    siteRateModel, //
+//                    branchRateModel, //
+//                    freqModel, //
+//                    0, // from
+//                    sequenceLength - 1, // to
+//                    1 // every
+//            );
+//
+//            partitionsList.add(partition1);
+//
+//            // feed to sequence simulator and generate data
+//            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+//                    partitionsList);
+//
+//            Alignment alignment = simulator.simulate(false, false);
+//
+//            ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE,
+//                    GeneticCode.UNIVERSAL, alignment);
+//
+//
+//			List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>();
+//			for (int i = 0; i < 2; i++) {
+////				alpha = new Parameter.Default(1, 10 );
+////				beta = new Parameter.Default(1, 5 );
+////				mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta,
+////						freqModel);
+//				substModels.add(mg94);
+//			}
+//
+//			Parameter uCategories = new Parameter.Default(2, 0);
+////            CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
+//
+//            LineageSpecificBranchModel branchSpecific = new LineageSpecificBranchModel(tree, freqModel, substModels, //provider,
+//            		uCategories);
+//
+//            BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
+//                    tree, //
+//                    branchSpecific, //
+//                    siteRateModel, //
+//                    branchRateModel, //
+//                    null, //
+//                    false, //
+//                    PartialsRescalingScheme.DEFAULT, true);
+//
+//            BeagleTreeLikelihood gold = new BeagleTreeLikelihood(convert, //
+//                    tree, //
+//                    substitutionModel, //
+//                    siteRateModel, //
+//                    branchRateModel, //
+//                    null, //
+//                    false, //
+//                    PartialsRescalingScheme.DEFAULT, true);
+//
+//            System.out.println("likelihood (gold) = " + gold.getLogLikelihood());
+//            System.out.println("likelihood = " + like.getLogLikelihood());
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//    }// END: main
 
 	@Override
 	public Citation.Category getCategory() {

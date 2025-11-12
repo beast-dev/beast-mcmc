@@ -218,7 +218,7 @@ public class TimeScale implements Units {
 	protected boolean backwards;
 	
 	protected static double MILLIS_PER_DAY = 86400000.0;
-	protected static double DAYS_PER_YEAR = 365.25;
+	public static double DAYS_PER_YEAR = 365.25;
 	protected static double MONTHS_PER_YEAR = 12.0;
 	protected static double DAYS_PER_MONTH = DAYS_PER_YEAR / MONTHS_PER_YEAR;
 }

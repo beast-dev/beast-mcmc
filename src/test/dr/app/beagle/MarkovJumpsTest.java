@@ -79,7 +79,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
         Parameter mu = new Parameter.Default(MUTATION_RATE, 0.5, 0, Double.POSITIVE_INFINITY);
 //        Parameter pInv = new Parameter.Default("pInv", 0.5, 0, 1);
         Parameter pInv = null;
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu, 1.0, null, -1, null, pInv);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu, 1.0, null, -1, pInv);
         siteRateModel.setSubstitutionModel(hky);
 
         //treeLikelihood

@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -29,9 +29,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
-import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
-import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
@@ -40,11 +38,7 @@ import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
-import dr.util.CitationLogHandler;
-import dr.util.ErrorLogHandler;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
-import dr.xml.XMLObjectParser;
+import dr.util.*;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
@@ -54,8 +48,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -66,6 +62,12 @@ public class BeastMain {
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
     private static final String CITATION_FILE_SUFFIX = ".citations.txt";
+
+    private static final String CHKPT_OVERRULE = "checkpointOverrule";
+
+    private final Logger citationLogger;
+    private final Logger infoLogger;
+    private final Logger errorLogger;
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -102,7 +104,8 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
+        infoLogger = Logger.getLogger("dr.apps.beast");
+
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -137,19 +140,24 @@ public class BeastMain {
                     }
                 }
             });
+
             infoLogger.addHandler(errorHandler);
 
+            citationLogger = Logger.getLogger("dr.util.citations");
+
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
-                FileOutputStream citationStream = null;
+                String fileNamePrefix = (System.getProperty("file.name.prefix") != null ? System.getProperty("file.name.prefix") : "");
+                String citationFileName;
                 if (System.getProperty("citations.filename") != null) {
-                    citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                    citationFileName = fileNamePrefix + System.getProperty("citations.filename");
                 } else {
-                    citationStream = new FileOutputStream(fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX);
+                    citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
+
+                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
-                //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
-                Logger.getLogger("dr.util").addHandler(citationHandler);
+                citationLogger.addHandler(citationHandler);
             }
 
             logger.setUseParentHandlers(false);
@@ -160,7 +168,7 @@ public class BeastMain {
             // This is a special logger that is for logging numerical and statistical errors
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
-            Logger errorLogger = Logger.getLogger("error");
+            errorLogger = Logger.getLogger("error");
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
@@ -169,15 +177,24 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            //new BeastCheckpointer();
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
+            // new BeastCheckpointer();
+
+            // if any of these properties is not null, overrule XML checkpointing settings
+            if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
+                System.setProperty(CHKPT_OVERRULE, "true");
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
-                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+                infoLogger.info("Overriding checkpointing settings in the provided XML file");
             }
 
             if (mc3Options == null) {
-                // just parse the file running all threads...
 
+                // just parse the file running all threads...
                 parser.parse(fileReader, true);
 
             } else {
@@ -188,12 +205,12 @@ public class BeastMain {
                 MCMC[] chains = new MCMC[chainCount];
 //                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
-                Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
+                infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
-                    Logger.getLogger("dr.apps.beast").info("Hot Chain " + i + ": " + chainTemperatures[i]);
+                    infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
                 }
 
-                Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+                infoLogger.info("Parsing XML file: " + fileName);
 
                 // parse the file for the initial cold chain returning the MCMC object
                 chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);
@@ -215,7 +232,7 @@ public class BeastMain {
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     PluginLoader.loadPlugins(parser);
-                    
+
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -324,7 +341,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -379,7 +396,8 @@ public class BeastMain {
                         new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
                         new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
-                                false, "Site pattern compression mode (default unique)"),
+                                false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
+                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
 
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
@@ -533,6 +551,9 @@ public class BeastMain {
 
             if (arguments.hasOption("pattern_compression")) {
                 System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
+            }
+            if (arguments.hasOption("ambiguous_threshold")) {
+                System.setProperty("patterns.threshold", String.valueOf(arguments.getRealOption("ambiguous_threshold")));
             }
 
             // ============= MC^3 settings =============
@@ -764,8 +785,8 @@ public class BeastMain {
             }
 
             if (arguments.hasOption("citations_file")) {
-                String debugStateFile = arguments.getStringOption("citations_file");
-                System.setProperty("citations.filename", debugStateFile);
+                String citationsFile = arguments.getStringOption("citations_file");
+                System.setProperty("citations.filename", citationsFile);
             }
 
             if (useMPI) {
@@ -797,7 +818,8 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST X " + version.getVersionString();
+        // don't include the pre-release commit in the window title bar
+        String nameString = "BEAST X v" + version.getVersion();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -833,8 +855,8 @@ public class BeastMain {
         if (options && !beagleShowInfo) {
 
             String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST X</div>" +
+                    "<div style=\"font-family: HelveticaNeue-Light, Helvetica, Arial, sans-serif\">" +
+                    "<div style=\"font-family: HelveticaNeue-Thin; font-weight: 80; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
@@ -984,7 +1006,7 @@ public class BeastMain {
 //            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
-                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                System.out.println("BEAST X has terminated with an error. Please select QUIT from the menu.");
                 // logger.severe will throw a RTE but we want to keep the console visible
             } else {
                 System.out.flush();

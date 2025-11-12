@@ -106,6 +106,8 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     private void yuleTester(TreeModel treeModel, OperatorSchedule schedule) {
 
+        MathUtils.setSeed(666);
+
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions(1000000);
 

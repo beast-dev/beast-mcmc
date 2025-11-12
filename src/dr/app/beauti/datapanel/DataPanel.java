@@ -38,6 +38,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.DummyDataType;
 import dr.evolution.util.Taxa;
@@ -53,10 +54,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -89,6 +88,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
     CreateTreePartitionAction createTreePartitionAction = new CreateTreePartitionAction();
+    CompressPatternsAction compressPatternsAction = new CompressPatternsAction();
+
 
     private final Action removePartitionAction;
 
@@ -102,6 +103,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     CreateTraitPartitionDialog selectTraitDialog = null;
     CreateTreePartitionDialog createTreeDialog = null;
+    CompressPatternsDialog compressPatternsDialog = null;
     BeautiFrame frame = null;
 
     BeautiOptions options = null;
@@ -193,10 +195,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(importDataAction);
-//        actionPanel1.setRemoveAction(removeDataAction);
+        toolBar1.addSeparator();
 
+//        button = new JButton(compressPatternsAction);
+//        //button.setEnabled(false);
+//        compressPatternsAction.setEnabled(false);
+//        PanelUtils.setupComponent(button);
+//        toolBar1.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -225,6 +230,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
+
 
         button = new JButton(viewPartitionAction);
         controlPanel1.add(new JLabel("   "));
@@ -335,6 +341,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
 
+        boolean canCompress = hasSelection;
+
         boolean canUnlink = options.dataPartitions.size() > 1 && hasSelection;
         boolean canLink = options.dataPartitions.size() > 1 && hasSelection && selRows.length > 1;
 
@@ -343,6 +351,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 if (options.dataPartitions.get(selRow) instanceof TreePartitionData) {
                     canUnlink = false;
                     canLink = false;
+                    break;
+                }
+            }
+            for (int selRow : selRows) {
+                if (!(options.dataPartitions.get(selRow) instanceof PartitionData)) {
+                    canCompress = false;
                     break;
                 }
             }
@@ -356,10 +370,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
+        compressPatternsAction.setEnabled(canCompress);
 
         removePartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
         viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
-
     }
 
     public void setOptions(BeautiOptions options) {
@@ -456,7 +470,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 continue;
             }
 
-            selectedTraits = selectTraitDialog.getTraits();
+            if (selectTraits) {
+                selectedTraits = selectTraitDialog.getTraits();
+            }
             done = true;
         }
 
@@ -583,6 +599,100 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (selRow != -1) {
             dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
+
+        frame.setAllOptions();
+
+        fireDataChanged();
+        repaint();
+
+    }
+
+    public void compressSitePatterns() {
+        int[] selRows = dataTable.getSelectedRows();
+
+        if (compressPatternsDialog == null) {
+            compressPatternsDialog = new CompressPatternsDialog(frame);
+        }
+
+        int result = compressPatternsDialog.showDialog(this);
+        if (result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+        SitePatterns.CompressionType compressionType = compressPatternsDialog.getCompressionType();
+
+//        compressPatternsAction.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        for (int row : selRows) {
+            PartitionData partition = (PartitionData)options.dataPartitions.get(row);
+            partition.compressPatterns(compressionType);
+        }
+        setCursor(null);
+
+//        SwingWorker task = new SwingWorker() {
+//            @Override
+//            protected Object doInBackground() throws Exception {
+////                for (int row : selRows) {
+////                    PartitionData partition = (PartitionData)options.dataPartitions.get(row);
+////                    partition.compressPatterns();
+////                }
+//                Random random = new Random();
+//                int progress = 0;
+//                //Initialize progress property.
+//                setProgress(0);
+//                while (progress < 100) {
+//                    //Sleep for up to one second.
+//                    try {
+//                        Thread.sleep(random.nextInt(1000));
+//                    } catch (InterruptedException ignore) {}
+//                    //Make random progress.
+//                    progress += random.nextInt(10);
+//                    setProgress(Math.min(progress, 100));
+//                }
+//                return null;
+//            }
+//
+//            @Override
+//            protected void done() {
+//                setCursor(null);
+//            }
+//
+//        };
+
+//        ProgressMonitor progressMonitor = new ProgressMonitor(frame,
+//                "Running a Long Task",
+//                "", 0, 100);
+//        int progress = task.getProgress();
+//        String message = String.format("Completed %d%%.\n", progress);
+//        progressMonitor.setNote(message);
+//        progressMonitor.setProgress(progress);
+//        taskOutput.append(message);
+
+        //task.addPropertyChangeListener(this);
+//        task.execute();
+
+//        if (progressMonitor.isCanceled() || task.isDone()) {
+//            progressMonitor.close();
+//            Toolkit.getDefaultToolkit().beep();
+//            if (progressMonitor.isCanceled()) {
+//                task.cancel(true);
+////                taskOutput.append("Task canceled.\n");
+//            } else {
+////                taskOutput.append("Task completed.\n");
+//            }
+////            startButton.setEnabled(true);
+//        }
+//
+//        compressPatternsAction.setEnabled(true);
+
+
+        modelsChanged();
+
+        fireDataChanged();
+        repaint();
+
+        modelsChanged();
+        dataTableModel.fireTableDataChanged();
 
         frame.setAllOptions();
 
@@ -859,13 +969,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case SITE_COLUMN:
                     return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
                 case PATTERN_COLUMN:
-                    return "" + (partition.getSiteCount() >= 0 ? partition.getPatternCount() : "-");
+                    return "" + (partition.getPatternCount() >= 0 ? partition.getPatternCount() : "-");
                 case DATATYPE_COLUMN:
                     return partition.getDataDescription();
                 case SUBSTITUTION_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionSubstitutionModel().getName() : "-");
                 case CLOCK_COLUMN:
-                    return "" + (!(isTreePartition || isTraitPartition) ? partition.getPartitionClockModel().getName() : "-");
+                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
                 case TREE_COLUMN:
                     return "" + (!isTreePartition ? partition.getPartitionTreeModel().getName() : "-");
                 default:
@@ -1088,6 +1198,19 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     }
 
+    public class CompressPatternsAction extends AbstractAction {
+        public CompressPatternsAction() {
+            super("Compress patterns...");
+            setToolTipText("Compress an alignment into a weighted set of unique site patterns.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            compressSitePatterns();
+
+            selectDataPanel();
+        }
+
+    }
 
     private void selectDataPanel() {
         frame.tabbedPane.setSelectedComponent(this);

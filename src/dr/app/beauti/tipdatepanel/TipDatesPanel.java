@@ -73,6 +73,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     private JScrollPane scrollPane = new JScrollPane();
     private JTable dataTable = null;
+    private TableSorter dataTableSorter = null;
     private DataTableModel dataTableModel = null;
 
     private SetDatesAction setDatesAction = new SetDatesAction();
@@ -112,16 +113,17 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private GuessDatesDialog guessDatesDialog = null;
     private SetValueDialog dateValueDialog = null;
     private SetValueDialog precisionValueDialog = null;
+    private boolean shownTipDateSamplingDialog = false;
 
     public TipDatesPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
         dataTableModel = new DataTableModel();
-        TableSorter sorter = new TableSorter(dataTableModel);
-        dataTable = new JTable(sorter);
+        dataTableSorter = new TableSorter(dataTableModel);
+        dataTable = new JTable(dataTableSorter);
 
-        sorter.setTableHeader(dataTable.getTableHeader());
+        dataTableSorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
 //        dataTable.getTableHeader().setDefaultRenderer(
@@ -431,8 +433,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                     hasVariableUncertainty = true;
                 }
             }
-            if (hasVariableUncertainty && tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING)) {
-                tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+            if (hasVariableUncertainty &&
+                    tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING) &&
+                    !shownTipDateSamplingDialog) {
+                int result = JOptionPane.showConfirmDialog(this.frame, "Some dates have less precision than others:\n" +
+                                "Switch on \"Sampling uniformly from precision\" option for these tips?",
+                        "Tip date precision", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+                }
+                shownTipDateSamplingDialog = true;
             }
         }
 
@@ -491,18 +501,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 return;
             }
 
-//            currentTrait.guessTrait = true; // ?? no use?
             String value = dateValueDialog.getValue();
 
-            java.util.Date origin = new java.util.Date(0);
             double d = Double.parseDouble(value);
-            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-
             if (selRows.length > 0) {
                 for (int row : selRows) {
-                    options.taxonList.getTaxon(row).setAttribute("date", date);
+                    dataTableSorter.setValueAt(d, row, 1);
                 }
             } else {
+                java.util.Date origin = new java.util.Date(0);
+                Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
                 for (Taxon taxon : options.taxonList) {
                     taxon.setAttribute("date", date);
                 }
@@ -527,7 +535,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
 
             int[] selRows = dataTable.getSelectedRows();
-
             if (selRows.length == 1) {
                 precisionValueDialog.setDescription("Set precision value for selected taxon");
             } else if (selRows.length > 1) {
@@ -554,7 +561,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             if (selRows.length > 0) {
                 for (int row : selRows) {
-                    options.taxonList.getTaxon(row).getDate().setUncertainty(value);
+                    dataTableSorter.setValueAt(value, row, 2);
                 }
             } else {
                 for (Taxon taxon : options.taxonList) {
@@ -608,16 +615,23 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        if (selRows.length > 0) {
-            Taxa selectedTaxa = new Taxa();
+        try {
+            if (selRows.length > 0) {
+                Taxa selectedTaxa = new Taxa();
 
-            for (int row : selRows) {
-                Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
-                selectedTaxa.addTaxon(taxon);
+                for (int row : selRows) {
+                    Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                    selectedTaxa.addTaxon(taxon);
+                }
+                guesser.guessDates(selectedTaxa);
+            } else {
+                guesser.guessDates(options.taxonList);
             }
-            guesser.guessDates(selectedTaxa);
-        } else {
-            guesser.guessDates(options.taxonList);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // adjust the dates to the current timescale...
@@ -737,7 +751,14 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        guesser.guessDates(options.taxonList, taxonDateMap);
+        try {
+            guesser.guessDates(options.taxonList, taxonDateMap);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

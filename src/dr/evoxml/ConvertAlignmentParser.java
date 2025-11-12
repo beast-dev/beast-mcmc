@@ -50,17 +50,19 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
         Alignment alignment = (Alignment)xo.getChild(Alignment.class);
 
-	    // Old parser always returned UNIVERSAL type for codon conversion
-	    DataType dataType = DataTypeUtils.getDataType(xo);
+        DataType dataType = (DataType)xo.getChild(DataType.class);
+        if (dataType == null) {
+            dataType = DataTypeUtils.getDataType(xo);
+        }
 
-	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
-	    if (dataType instanceof Codons) {
-		    geneticCode = ((Codons)dataType).getGeneticCode();
-	    }
+        GeneticCode geneticCode = GeneticCode.UNIVERSAL;
+        if (dataType instanceof Codons) {
+            geneticCode = ((Codons)dataType).getGeneticCode();
+        }
 
         ConvertAlignment convert = new ConvertAlignment(dataType, geneticCode, alignment);
-	    Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
-	            alignment.getDataType().getDescription() + " to " + dataType.getDescription());
+        Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
+                alignment.getDataType().getDescription() + " to " + dataType.getDescription());
 
 
         return convert;
@@ -75,11 +77,14 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        new ElementRule(Alignment.class),
-        new StringAttributeRule(DataType.DATA_TYPE,
-            "The type of sequence data",
-            new String[] {Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
-		            HiddenCodons.DESCRIPTION+"2",HiddenCodons.DESCRIPTION+"3",HiddenCodons.DESCRIPTION+"4",HiddenCodons.DESCRIPTION+"5"},
-            false )
+            new ElementRule(Alignment.class),
+            new XORRule(new XMLSyntaxRule[]{
+                    new ElementRule(DataType.class),
+                    new StringAttributeRule(DataType.DATA_TYPE,
+                            "The type of sequence data",
+                            new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
+                                    HiddenCodons.DESCRIPTION + "2", HiddenCodons.DESCRIPTION + "3", HiddenCodons.DESCRIPTION + "4",
+                                    HiddenCodons.DESCRIPTION + "5"}, false)
+            })
     };
 }

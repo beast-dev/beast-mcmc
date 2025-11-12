@@ -145,7 +145,11 @@ public class NexusExporter implements TreeExporter {
     public void exportTree(Tree tree) {
         Map<String, Integer> idMap = writeNexusHeader(tree);
         out.println("\t\t;");
-        writeNexusTree(tree, treePrefix + 1, true, idMap);
+        String name = treePrefix + 1;
+        if (tree.getId() != null) {
+            name = tree.getId();
+        }
+        writeNexusTree(tree, name, true, idMap);
         out.println("End;");
     }
 
@@ -278,6 +282,7 @@ public class NexusExporter implements TreeExporter {
                     String name = (String) iter.next();
                     out.print(name + "=");
                     Object value = tree.getNodeAttribute(node, name);
+                    assert value != null : "Node attribute " + name + " is null for node " + node.getNumber();
                     printValue(value);
                 }
                 out.print("]");
@@ -311,7 +316,7 @@ public class NexusExporter implements TreeExporter {
             out.print("}");
         } else if (value instanceof String) {
             out.print("\"" + value.toString() + "\"");
-        } else {
+        } else if (value != null) {
             out.print(value.toString());
         }
     }

@@ -76,7 +76,7 @@ public class PartitionModelPanel extends OptionsPanel {
             .values());
 
     private JComboBox heteroCombo = new JComboBox(new String[]{"None",
-            /*"Gamma (Felsenstein weights)", */ "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
+            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
 
     private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
             "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});

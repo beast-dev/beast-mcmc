@@ -32,6 +32,7 @@ import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -231,9 +232,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
-    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
-        // nothing done this is done by default with this tree model
+    public boolean isBuildIntervalNodeMapping() {
+        return true;
     }
+
+//    @Override
+//    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
+//        // nothing done this is done by default with this tree model
+//    }
 
     @Override
     public NodeRef getCoalescentNode(int interval) {
@@ -304,8 +310,19 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             // will this update the tree nodes?
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
-            System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
-            Arrays.parallelSort(nodes, (a, b) -> Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b)));
+
+            if (tree instanceof EmpiricalTreeDistributionModel) {
+                for (int i = 0; i < tree.getNodeCount(); ++i) {
+                    nodes[i] = tree.getNode(i);
+                }
+            } else {
+                System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+            }
+            Arrays.parallelSort(nodes, (a, b) -> {
+                if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
+                else
+                    return Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b));
+            });
 
             intervalCount = nodes.length - 1;
 

@@ -120,9 +120,11 @@ public class CreateTraitPartitionDialog {
                 traitModel.addElement(model);
             }
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait(s)."));
-            optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
+            optionPanel.addComponentWithLabel("Trait(s):", scrollPane, true);
             optionPanel.addComponents(renameCheck, nameField);
             nameField.setEnabled(renameCheck.isSelected());
+
+            traitList.setSelectionInterval(0, traits.size()-1);
         }
 
         if (traits.size() > 1) {

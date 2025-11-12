@@ -161,7 +161,8 @@ public class GeneralDataType extends DataType implements Identifiable {
             return getUnknownState();
         }
         if (!stateMap.containsKey(code)) {
-            return -1;
+            throw new IllegalArgumentException("Unknown state code, " + code + " for GeneralDataType with id=" + getId());
+//            return -1;
         }
         return stateMap.get(code).number;
     }

@@ -1,7 +1,7 @@
-package dr.evomodelxml.stuff;
+package dr.evomodelxml.mixturemodels;
 
 import dr.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
-import dr.evomodel.stuff.HMMPolyaUrn;
+import dr.evomodel.mixturemodels.HMMPolyaUrn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;

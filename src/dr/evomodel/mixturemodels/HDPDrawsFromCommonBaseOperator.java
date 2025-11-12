@@ -1,4 +1,4 @@
-package dr.evomodel.stuff;
+package dr.evomodel.mixturemodels;
 
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;

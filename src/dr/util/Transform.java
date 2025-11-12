@@ -753,6 +753,64 @@ public interface Transform {
         public double logJacobian(double x) { return Math.log(2 * x); }
     }
 
+    // y = abs(x)
+    class AbsTransform extends UnivariableTransform {
+
+        @Override
+        public Transform inverseTransform() {
+            throw new RuntimeException("Not defined");
+        }
+
+        public double transform(double x) {
+            return Math.abs(x);
+        }
+
+        public double inverse(double y) {
+            throw new RuntimeException("Not defined");
+        }
+
+        public boolean isInInteriorDomain(double x) {
+            return !Double.isInfinite(x);
+        }
+
+        public double gradientInverse(double y) { throw new RuntimeException("Not defined"); }
+
+        public double updateGradientLogDensity(double gradientWrtX, double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double gradientLogJacobianInverse(double y) {
+            throw new RuntimeException("Mot yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transfomationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            if (value > 0.0) {
+                return 1.0;
+            } else if (value < 0.0) {
+                return -1.0;
+            } else {
+                return Double.NaN;
+            }
+        }
+
+        public String getTransformName() { return "abs"; }
+
+        public double logJacobian(double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
     // y = log(x)
     class LogTransform extends UnivariableTransform {
 
@@ -1494,6 +1552,82 @@ public interface Transform {
         }
     }
 
+    class AffineTransform extends UnivariableTransform{
+        private final double location;
+        private final double scale;
+
+        AffineTransform(){
+            this.location = 0.0;
+            this.scale = 1.0;
+        }
+
+        public AffineTransform(double location, double scale){
+            this.location = location;
+            this.scale = scale;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "Location Scale Transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return (value - location) / scale;
+        }
+
+        @Override
+        public double inverse(double value) {
+            return value * scale + location;
+        }
+
+        @Override
+        public boolean isInInteriorDomain(double value) {
+            if (scale == 0.0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        public double gradientInverse(double value) {
+            return scale;
+        }
+        public double logGradientInverse(double value) { return Math.log(scale); }
+
+        public double logJacobian(double value) {
+            return -Math.log(scale);
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+//            gradient * gradientInverse(transform(value)) + gradientLogJacobianInverse(transform(value));
+            return gradient * scale; // + 0.0
+        } // TODO check this
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        public double gradientLogJacobianInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
     class NoTransform extends UnivariableTransform {
 
         @Override
@@ -1781,7 +1915,11 @@ public interface Transform {
 
         @Override
         public boolean isInInteriorDomain(double[] values, int from, int to) {
-            return inner.isInInteriorDomain(values, from, to);
+            if (inner.isInInteriorDomain(values, from, to)) {
+                return outer.isInInteriorDomain(inner.transform(values, from, to), from, to); //TODO this does a computation (.transform)
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -2739,11 +2877,13 @@ public interface Transform {
     ExpTransform EXP = new ExpTransform();
     NegateTransform NEGATE = new NegateTransform();
     SquaredTransform SQUARED = new SquaredTransform();
+    AbsTransform ABS = new AbsTransform();
     Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
     SigmoidTransform SIGMOID = new SigmoidTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
+    AffineTransform AFFINE = new AffineTransform();
 
     enum Type {
         NONE("none", new NoTransform()),
@@ -2757,7 +2897,9 @@ public interface Transform {
         FISHER_Z("fisherZ",new FisherZTransform()),
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
         SQUARED("squared", new SquaredTransform()),
-        POWER("power", new PowerTransform());
+        ABS("abs", new AbsTransform()),
+        POWER("power", new PowerTransform()),
+        AFFINE("affine", new AffineTransform());
 
         Type(String name, Transform transform) {
             this.name = name;

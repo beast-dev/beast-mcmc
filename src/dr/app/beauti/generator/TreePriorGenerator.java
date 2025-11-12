@@ -37,12 +37,14 @@ import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.TreeIntervalsParser;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
@@ -63,6 +65,8 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import static dr.evomodelxml.coalescent.CoalescentLikelihoodParser.INTERVALS;
 
 /**
  * @author Alexei Drummond
@@ -379,51 +383,72 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
             writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
         }
+    }
 
-//        if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-//            writer.writeComment("R0 = b/(b*d+s*r)");
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.RPN_STATISTIC,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "R0")
-//                    });
-//
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "b")
-//                    });
-//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-//
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "d")
-//                    });
-//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-//
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "s")
-//                    });
-//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, writer);
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-//
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "r")
-//                    });
-//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, writer);
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-//
-//            writer.writeOpenTag(RPNcalculatorStatisticParser.EXPRESSION,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "R0")
-//                    });
-//            writer.writeText(modelPrefix + "b " + modelPrefix + "b " + modelPrefix + "d " + "* " + modelPrefix + "s " + modelPrefix + "r " + "* + /");
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.EXPRESSION);
-//
-//            writer.writeCloseTag(RPNcalculatorStatisticParser.RPN_STATISTIC);
-//        }
+    /**
+     * Write a tree prior (coalescent or speciational) model
+     *
+     * @param prior  the partition tree prior
+     * @param writer the writer
+     */
+    void writeSubtreePriorModel(PartitionTreePrior prior, XMLWriter writer) {
+
+        String prefix = prior.getPrefix();
+        TreePriorType nodeHeightPrior = prior.getSubtreePrior();
+
+        Taxa taxonSet = prior.getSubtreeTaxonSet();
+        if (taxonSet == null) {
+            return;
+        }
+
+        switch (nodeHeightPrior) {
+            case CONSTANT:
+                writer.writeComment("For subtree defined by taxon set, " + taxonSet.getId() + ": coalescent prior with constant population size.");
+                writer.writeOpenTag(
+                        ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + "subtree.constant"),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                        }
+                );
+
+                writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
+                writeParameter("subtree.constant.popSize", prior, writer);
+                writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
+                writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
+
+                break;
+
+            case EXPONENTIAL:
+                // generate an exponential prior tree
+
+                writer.writeComment("For subtree defined by taxon set, " + taxonSet.getId() + ": coalescent prior with exponential size.");
+
+                writer.writeOpenTag(
+                        ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + "subtree.exponential"),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                        }
+                );
+
+                // write pop size socket
+                writer.writeOpenTag(ExponentialGrowthModelParser.POPULATION_SIZE);
+                writeParameter("subtree.exponential.popSize", prior, writer);
+                writer.writeCloseTag(ExponentialGrowthModelParser.POPULATION_SIZE);
+
+                // write growth rate socket
+                writer.writeOpenTag(ExponentialGrowthModelParser.GROWTH_RATE);
+                writeParameter("subtree.exponential.growthRate", prior, writer);
+                writer.writeCloseTag(ExponentialGrowthModelParser.GROWTH_RATE);
+
+                writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
+
+                break;
+
+            default:
+                throw new UnsupportedOperationException("Unsupported Tree Prior type for subtree");
+        }
     }
 
     /**
@@ -440,7 +465,7 @@ public class TreePriorGenerator extends Generator {
         PartitionTreePrior prior = model.getPartitionTreePrior();
         TreePriorType treePrior = prior.getNodeHeightPrior();
 
-//        String priorPrefix = prior.getPrefix();
+        Taxa subtreeTaxonSet = prior.getSubtreeTaxonSet();
 
         switch (treePrior) {
             case YULE:
@@ -603,11 +628,51 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
-                writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                writer.writeOpenTag(INTERVALS);
+                writer.writeOpenTag(TreeIntervalsParser.TREE_INTERVALS);
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
-                writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+                if (subtreeTaxonSet != null) {
+                    writer.writeOpenTag(CoalescentLikelihoodParser.EXCLUDE);
+                    writer.writeIDref(TaxaParser.TAXA, subtreeTaxonSet.getId());
+                    writer.writeCloseTag(CoalescentLikelihoodParser.EXCLUDE);
+                }
+                writer.writeCloseTag(TreeIntervalsParser.TREE_INTERVALS);
+                writer.writeCloseTag(INTERVALS);
+//                    writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+//                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+//                    writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                 writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         }
+    }
+
+    void writeSubtreePriorLikelihood(PartitionTreeModel model, XMLWriter writer) {
+
+        //tree model prefix
+        String prefix = model.getPrefix();
+
+        PartitionTreePrior prior = model.getPartitionTreePrior();
+        Taxa taxonSet = prior.getSubtreeTaxonSet();
+
+        if (taxonSet == null) {
+            return;
+        }
+
+        // generate a coalescent process
+        writer.writeComment("Generate a coalescent likelihood for the subtree defined by taxon set, " + taxonSet.getId());
+        writer.writeOpenTag(
+                CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD,
+                new Attribute[]{new Attribute.Default<>(XMLParser.ID, prefix + "subtree." + COALESCENT)}
+        );
+        writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
+        writeSubtreePriorModelRef(prior, writer);
+        writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
+        writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+        writer.writeOpenTag(CoalescentLikelihoodParser.INCLUDE);
+        writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
+        writer.writeCloseTag(CoalescentLikelihoodParser.INCLUDE);
+        writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
     }
 
     void writeNodeHeightPriorModelRef(PartitionTreePrior prior, XMLWriter writer) {
@@ -659,6 +724,22 @@ public class TreePriorGenerator extends Generator {
                 break;
             default:
                 throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
+        }
+    }
+
+    void writeSubtreePriorModelRef(PartitionTreePrior prior, XMLWriter writer) {
+        TreePriorType treePrior = prior.getSubtreePrior();
+        String priorPrefix = prior.getPrefix();
+
+        switch (treePrior) {
+            case CONSTANT:
+                writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, priorPrefix + "subtree." + "constant");
+                break;
+            case EXPONENTIAL:
+                writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, priorPrefix + "subtree." + "exponential");
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported tree prior for subtree");
         }
     }
 
@@ -872,6 +953,20 @@ public class TreePriorGenerator extends Generator {
                 throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
         }
 
+        if (prior.getSubtreeTaxonSet() != null) {
+            switch (prior.getSubtreePrior()) {
+                case CONSTANT:
+                    writeParameterRef(priorPrefix + "subtree.constant.popSize", writer);
+                    break;
+                case EXPONENTIAL:
+                    writeParameterRef(priorPrefix + "subtree.exponential.popSize", writer);
+                    writeParameterRef(priorPrefix + "subtree.exponential.growthRate", writer);
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported tree prior type for subtree");
+            }
+        }
     }
 
     public static void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
@@ -910,6 +1005,10 @@ public class TreePriorGenerator extends Generator {
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
         }
+
+        if (prior.getSubtreeTaxonSet() != null) {
+            writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + "subtree." + COALESCENT);
+        }
     }
 
     // id is written in writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer)
@@ -945,6 +1044,11 @@ public class TreePriorGenerator extends Generator {
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
         }
+    }
+
+    public void writeSubtreePriorLikelihoodReference(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+        writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + "subtree." + COALESCENT);
     }
 
     public void writeMultiLociLikelihoodReference(PartitionTreePrior prior, XMLWriter writer) {

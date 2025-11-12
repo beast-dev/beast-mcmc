@@ -49,6 +49,7 @@ import dr.evolution.util.Units;
 import dr.util.DataTable;
 import org.jdom.JDOMException;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -522,7 +523,11 @@ public class DataModelImporter {
         }
 
         if (guesser != null) {
-            guesser.guessDates(taxonList);
+           try {
+               guesser.guessDates(taxonList);
+           } catch (GuessDatesException gde) {
+               throw new ImportException("Error parsing dates: " + gde.getMessage());
+           }
         } else {
             // make sure they all have dates...
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {

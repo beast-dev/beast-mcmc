@@ -897,7 +897,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="1000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="5000" autoOptimize="false">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -945,7 +945,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="100" fileName="rabiesskygrid_hmc.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testHMC.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -962,29 +962,15 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="rabiesskygrid_hmc.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testHMC.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<discretizedBranchRates idref="branchRates"/>
 			</trait>
 			<posterior idref="posterior"/>
 		</logTree>
+
+		<!-- write state of Markov chain to checkpoint file                          -->
+		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testHMC.chkpt" overwrite="true"/>
 	</mcmc>
-
-	<assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true">
-		<message>
-			Check log joint density after 1000 iterations, having resumed from testCheckpointHMC.chkpt
-		</message>
-		<actual regex="posterior log-likelihood = (.*)\n">
-			<posterior idref="posterior"/>
-		</actual>
-		<expected>
-			-13218.081104785917
-<!-- 	THESE SHOULD NOT BE HARD-CODED; RUN TWO XMLS  -->
-<!--	CURRENTLT THIS IS NOT A TEST  -->
-			
-<!-- 			-12951.78928007183 -->
-		</expected>
-	</assertEqual>
-
 </beast>

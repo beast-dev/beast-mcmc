@@ -585,7 +585,7 @@ public class BEAUTiImporter {
                          boolean allowEmpty) throws ImportException, IllegalArgumentException {
 
         String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
+                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT", "TSV"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }
@@ -657,7 +657,15 @@ public class BEAUTiImporter {
 
         }
 
-        Set<String> attributeNames = new HashSet<>();
+        List<String> attributeNames = new ArrayList<>();
+
+        // first add them in the order they come in the imported trait file (the taxon attributes
+        // may be out of order by using a Set).
+        if (traits != null) {
+            for (TraitData trait : traits) {
+                attributeNames.add(trait.getName());
+            }
+        }
 
         for (Taxon taxon : taxonList) {
             if (taxon.getDate() != null) {
@@ -665,7 +673,8 @@ public class BEAUTiImporter {
             }
             for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
                 String name = it.next();
-                if (!name.equalsIgnoreCase("Date") && !name.equals("_height")) {
+                if (!name.equalsIgnoreCase("Date") && !name.equals("_height") &&
+                        !attributeNames.contains(name)) {
                     // "_height" is a magic value used by BEAUti
                     attributeNames.add(name);
                 }

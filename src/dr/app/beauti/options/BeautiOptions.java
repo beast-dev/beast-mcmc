@@ -1207,7 +1207,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Data
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
-    public List<TraitData> traits = new ArrayList<TraitData>();
+    public List<TraitData> traits = new ArrayList<>();
 
     public List<List<PartitionData>> multiPartitionLists = new ArrayList<List<PartitionData>>();
     public List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();

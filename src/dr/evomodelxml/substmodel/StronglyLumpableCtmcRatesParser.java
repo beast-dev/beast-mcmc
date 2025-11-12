@@ -38,7 +38,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.StateSet;
+//import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.StateSet;
+import dr.inference.model.StateSet;
 import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.Proportion;
 import static dr.evomodel.substmodel.StronglyLumpableCtmcRates.Lump;
 
@@ -56,30 +57,35 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
     private static final String LUMP = "lump";
     private static final String RATES = "rates";
     private static final String PROPORTIONS = "proportions";
+    public static final String NORMALIZE = "normalize";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         List<Lump> lumps = new ArrayList<>();
 
         DataType dataType = (DataType) xo.getChild(DataType.class);
+        Boolean normalize_choice = xo.getAttribute(NORMALIZE, false);
 
         for (XMLObject cxo : xo.getAllChildren(LUMP)) {
-            lumps.add(parseLump(cxo, dataType));
+            lumps.add(parseLump(cxo, dataType, normalize_choice));
         }
 
         if (lumps.size() < 2) {
             throw new XMLParseException("Must specify at least 2 lumps");
         }
 
-        Parameter rates = (Parameter) xo.getChild(Parameter.class);
+        //Parameter rates = (Parameter) xo.getChild(Parameter.class);
+        // TODO check with Marc: XT changed
+        Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
 
         String name = xo.hasId() ? xo.getId() : LUMPABLE_MODEL;
 
-        // TODO Check (and set) dimensions
+        // TODO Check (and set) dimensions // XT did this in generator code: validateStateSets(states, dataType);
         return new StronglyLumpableCtmcRates(name, lumps, rates, dataType);
     }
 
-    private Lump parseLump(XMLObject xo, DataType dataType) throws XMLParseException {
+    // XT added boolean
+    private Lump parseLump(XMLObject xo, DataType dataType, Boolean normalize_choice) throws XMLParseException {
 
         String id = xo.getId();
 
@@ -102,20 +108,52 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
             StateSet destination = (StateSet) cxo.getChild(StateSet.class);
             Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
 
-            int size = destination.size();
-            parameter.setDimension(size);
-            for (int i = 0; i < size; ++i) {
-                parameter.setParameterValue(i, 1.0 / (double) size); // TODO remove magic values
+//            // XT removed this set proportions code since have already done this in generator code. Note: just two decimals in generator code: 0.33, instead of 0.3333333
+//            int size = destination.size();
+//            parameter.setDimension(size);
+//            for (int i = 0; i < size; ++i) {
+//                parameter.setParameterValue(i, 1.0 / (double) size); // TODO remove magic values // comments added in generator code to explain why 1/size was set as default
+//            }
+
+            // TODO NORMALIZE ATTRIBUTE;// done by XT
+
+            if (normalize_choice == true) {
+                double sum = 0;
+
+                for (int j = 0; j < parameter.getDimension(); j++)
+                    sum += parameter.getParameterValue(j);
+
+                for (int j = 0; j < parameter.getDimension(); j++) {
+                    if (sum != 0)
+                        parameter.setParameterValue(j,
+                                parameter.getParameterValue(j) / sum);
+                    else
+                        parameter.setParameterValue(j,
+                                1.0 / parameter.getDimension());
+                }
             }
+
+//
+//            // TODO BEAST class for this
+//            if (sum != 1.0) {
+//                System.out.println("Warning: Proportion from "+string+ " to"+ set.getId()+" sum is not 1. Sum = " + sum + ". Adjusting proportions.");
+//                System.out.print("New Proportions: ");
+//                for (double val : parameter.getValues()) {
+//                    System.out.print(val + " ");
+//                }
+//                System.out.println();
+//            }
+
+
 
             proportions.add(new Proportion(source, destination, parameter));
         }
 
-        // TODO Add in destination proportions of size == 1 automatically
+        // TODO Add in destination proportions of size == 1 automatically // XT did this in generator code
 
 
 
-        return new Lump(id, set.states(), rates, proportions);
+        return new Lump(id, set.states(), rates, proportions); // rates and proportions are set to null by constructor
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -125,15 +163,22 @@ public class StronglyLumpableCtmcRatesParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(LUMP, new XMLSyntaxRule[]{
                     new ElementRule(Identifiable.class, 0, Integer.MAX_VALUE),
-                    new ContentRule("<state code=\"X\"/>"),
+//                    new ContentRule("<state code=\"X\"/>"),
+                    new ElementRule(StateSet.class),
                     new ElementRule(RATES, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }, true),
                     new ElementRule(PROPORTIONS, new XMLSyntaxRule[]{
+                            new ContentRule("<state code=\"X\"/>"),// XT added
+                            new ElementRule(StateSet.class),// XT added
                             new ElementRule(Parameter.class),
-                    }, true),
+                    },  0, Integer.MAX_VALUE), // XT changed the number of proportions from (0 or 1) to (0 to inf)
             }, 1, Integer.MAX_VALUE),
-            new ElementRule(Parameter.class),
+            //new ElementRule(Parameter.class),
+            // one block of <rates>
+            new ElementRule(RATES, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+            }),
     };
 
     public String getParserDescription() {

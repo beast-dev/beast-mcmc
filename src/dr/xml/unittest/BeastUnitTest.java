@@ -1,7 +1,7 @@
 /*
  * BeastUnitTest.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -29,6 +29,11 @@ package dr.xml.unittest;
 
 import dr.xml.*;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +41,9 @@ import java.util.regex.Pattern;
 /**
  * @author Gabriel Hassler
  * @author Marc A. Suchard
+ * @author Xinghua Tao
  */
+
 
 public class BeastUnitTest implements Reportable {
 
@@ -44,27 +51,29 @@ public class BeastUnitTest implements Reportable {
     private final String[] actual;
     private final String expected;
     private final int[] indices;
-
     private Boolean pass;
-
     private final AssertType assertType;
+    private final boolean equalMode;
 
     public BeastUnitTest(String message, String[] actual, String expected,
-                         AssertType assertType, int[] indices) {
+                         AssertType assertType, int[] indices, boolean equalMode) {
         this.message = message;
         this.actual = actual;
         this.expected = expected;
         this.assertType = assertType;
         this.indices = indices;
+        this.equalMode = equalMode;
     }
 
     public void execute() {
         for (int i = 0; i < actual.length; i++) {
-            if (!assertType.equivalent(actual[i], indices, expected)) {
+            boolean result = equalMode
+                    ? assertType.equivalent(actual[i], indices, expected)
+                    : !assertType.equivalent(actual[i], indices, expected);
+            if (!result) {
                 failCheck(i);
             }
         }
-
         pass = true;
     }
 
@@ -95,7 +104,6 @@ public class BeastUnitTest implements Reportable {
         boolean equivalent(String a, int[] aIndices, String b);
 
         class StringAssert implements AssertType {
-
             @Override
             public boolean equivalent(String a, int[] aIndices, String b) {
                 return a.compareTo(b) == 0;
@@ -144,14 +152,14 @@ public class BeastUnitTest implements Reportable {
                     reals = new double[strings.length];
 
                     for (int i = 0; i < strings.length; ++i) {
-                        reals[i] = Double.valueOf(strings[i]);
+                        reals[i] = Double.parseDouble(strings[i]);
                     }
                 } else {
                     reals = new double[indices.length];
 
                     int dim = 0;
                     for (int i : indices) {
-                        reals[dim] = Double.valueOf(strings[i]);
+                        reals[dim] = Double.parseDouble(strings[i]);
                         dim++;
                     }
                 }
@@ -176,14 +184,14 @@ public class BeastUnitTest implements Reportable {
 
                 abstract boolean close(double lhs, double rhs, double tolerance);
             }
-
         }
     }
 
-
     private static final String CHECK = "assertEqual";
+    private static final String EQUAL = "equal";
     private static final String MESSAGE = "message";
     private static final String EXPECTED = "expected";
+    private static final String CHECKPOINT_FILENAME = "checkpointFileName";
     private static final String ACTUAL = "actual";
     private static final String REGEX = "regex";
     private static final String TOLERANCE_STRING = "tolerance";
@@ -204,11 +212,36 @@ public class BeastUnitTest implements Reportable {
                 message = xo.getChild(MESSAGE).getStringChild(0);
             }
 
-            String[] expectedArray = parseValues(xo.getChild(EXPECTED));
-            if (expectedArray.length != 1) {
-                throw new XMLParseException("There should only be one '" + EXPECTED + "' value.");
+            //first check if there is an attribute for EXPECTED
+            String fileName = null;
+            if (xo.getChild(EXPECTED).hasAttribute(CHECKPOINT_FILENAME)) {
+                fileName = xo.getChild(EXPECTED).getStringAttribute(CHECKPOINT_FILENAME);
             }
-            String expected = expectedArray[0];
+            String expected = null;
+            if (fileName != null) {
+                //if there is an attribute, go look for the checkpointed log joint density
+                try (FileReader fr = new FileReader(fileName); BufferedReader br = new BufferedReader(fr)) {
+                    br.readLine();
+                    br.readLine();
+                    String line = br.readLine();
+                    StringTokenizer st = new StringTokenizer(line);
+                    if (st.countTokens() != 2) {
+                        throw new XMLParseException("Line with checkpointed log joint density should only have two tokens.");
+                    }
+                    st.nextToken();
+                    expected = st.nextToken();
+                } catch (FileNotFoundException fnf) {
+                    throw new XMLParseException("File not found: " + fnf.getMessage());
+                } catch (IOException io) {
+                    throw new XMLParseException("I/O exception: " + io.getMessage());
+                }
+            } else {
+                String[] expectedArray = parseValues(xo.getChild(EXPECTED));
+                if (expectedArray.length != 1) {
+                    throw new XMLParseException("There should only be one '" + EXPECTED + "' value.");
+                }
+                expected = expectedArray[0];
+            }
 
             String[] actual = parseValues(xo.getChild(ACTUAL));
             String stripChars = xo.getAttribute(STRIP_CHARACTERS, ",");
@@ -240,7 +273,7 @@ public class BeastUnitTest implements Reportable {
             int[] indices = null;
             if (xo.hasAttribute(INDICES)) indices = xo.getIntegerArrayAttribute(INDICES);
 
-            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType, indices);
+            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType, indices, equal);
             unitTest.execute();
 
             if (xo.getAttribute(VERBOSE, false)) {
@@ -253,7 +286,6 @@ public class BeastUnitTest implements Reportable {
         private String[] parseValues(XMLObject xo) throws XMLParseException {
             int nChildren = xo.getChildCount();
             String[] rawStrings = new String[nChildren];
-
 
             for (int i = 0; i < nChildren; i++) {
                 if (xo.getChild(i) instanceof Reportable) {
@@ -282,7 +314,6 @@ public class BeastUnitTest implements Reportable {
             return rules;
         }
 
-
         @Override
         public String getParserDescription() {
             return null;
@@ -300,12 +331,14 @@ public class BeastUnitTest implements Reportable {
     };
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            AttributeRule.newBooleanRule(EQUAL, true),
             new ElementRule(EXPECTED, new XMLSyntaxRule[]{
                     new XORRule(
                             new ElementRule(Reportable.class),
-                            new ElementRule(String.class)
+                            new ElementRule(String.class), true
                     ),
                     AttributeRule.newStringRule(REGEX, true),
+                    AttributeRule.newStringRule(CHECKPOINT_FILENAME, true)
             }),
             new ElementRule(ACTUAL, new XMLSyntaxRule[]{
                     new XORRule(
@@ -316,7 +349,6 @@ public class BeastUnitTest implements Reportable {
             }),
             new ElementRule(MESSAGE, new XMLSyntaxRule[]{
                     new ElementRule(String.class),
-
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
             AttributeRule.newBooleanRule(VERBOSE, true),

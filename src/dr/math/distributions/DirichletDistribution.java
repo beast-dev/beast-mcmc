@@ -27,13 +27,14 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
  */
-public class DirichletDistribution implements MultivariateDistribution {
+public class DirichletDistribution implements MultivariateDistribution, GradientProvider {
 
     public static final String TYPE = "dirichletDistribution";
     public static final boolean DEBUG = false;
@@ -119,6 +120,24 @@ public class DirichletDistribution implements MultivariateDistribution {
         }
 
         return logPDF;
+    }
+
+    @Override
+    public int getDimension() {
+        return dim;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object input) {
+        double[] x = (double[]) input;
+
+        double[] gradient = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            gradient[i] = (counts[i] - 1) / x[i];
+        }
+
+        return gradient;
     }
 
     public double[][] getScaleMatrix() {

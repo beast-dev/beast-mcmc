@@ -470,7 +470,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 continue;
             }
 
-            selectedTraits = selectTraitDialog.getTraits();
+            if (selectTraits) {
+                selectedTraits = selectTraitDialog.getTraits();
+            }
             done = true;
         }
 

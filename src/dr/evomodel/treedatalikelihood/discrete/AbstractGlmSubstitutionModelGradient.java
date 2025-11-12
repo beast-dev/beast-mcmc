@@ -186,11 +186,6 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
     }
 
     @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
     public String getDescription() {
         return "Using linear-time differential calculations for all substitution generator elements";
     }

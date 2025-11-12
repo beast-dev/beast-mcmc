@@ -42,6 +42,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Transform;
 import dr.xml.Reportable;
 
@@ -197,8 +198,38 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                 "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
     }
 
-    protected abstract double preProcessNormalization(double[] differentials, double[] generator, boolean normalize);
+    protected int[][] makeAsymmetricMap() {
+        int[][] map = new int[stateCount * (stateCount - 1)][];
 
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        return map;
+    }
+
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
+        double total = 0.0;
+        if (normalize) {
+            for (int i = 0; i < stateCount; ++i) {
+                for (int j = 0; j < stateCount; ++j) {
+                    final int ij = i * stateCount + j;
+                    total += differentials[ij] * generator[ij];
+                }
+            }
+        }
+        return total;
+    }
     abstract double processSingleGradientDimension(int dim,
                                                    double[] differentials, double[] generator, double[] pi,
                                                    boolean normalize, double normalizationConstant, double rateScalar,
@@ -394,6 +425,11 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             map.clear();
             qQPlus = null;
         }
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     private final CorrectionTermCache correctionTermCache;

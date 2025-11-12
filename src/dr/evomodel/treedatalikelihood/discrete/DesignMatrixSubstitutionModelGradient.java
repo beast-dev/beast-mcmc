@@ -84,7 +84,7 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     Double getReportTolerance() {
-        return 0.01; // TODO Change back to null
+        return null;
     }
 
     @Override
@@ -94,21 +94,6 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
 
     ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
         return null;
-    }
-
-    @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        // TODO Code duplication with RandomEffectsGlmSubstitutionModel
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    total += differentials[index(i, j)] * generator[index(i, j)];
-                }
-            }
-        }
-        return total;
     }
 
     @Override

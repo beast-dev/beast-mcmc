@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.matrix.SparseCompressedMatrix;
 import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -83,6 +84,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void getWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
     void setDiffusionPrecision(int diffusionIndex, final double[] matrix, double logDeterminant);
+
+    default void setDiffusionPrecision(int diffusionIndex, SparseCompressedMatrix matrix, double logDeterminant) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
     void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
@@ -542,6 +547,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             throw new RuntimeException("Not yet implemented");
         }
 
+        void resetSumOfSquares() {
+            // Do nothing
+        }
+
         @Override
         public void updatePostOrderPartials(final int[] operations, int operationCount,
                                             int precisionIndex,
@@ -552,6 +561,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             }
 
             updatePrecisionOffsetAndDeterminant(precisionIndex);
+
+            resetSumOfSquares();
 
             int offset = 0;
             for (int op = 0; op < operationCount; ++op) {
@@ -978,7 +989,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             }
         }
 
-        private static void updateMean(final double[] partials,
+        protected static void updateMean(final double[] partials,
                                        final int kob,
                                        final int iob,
                                        final int job,

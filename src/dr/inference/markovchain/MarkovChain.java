@@ -196,7 +196,7 @@ public final class MarkovChain implements Serializable {
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
-                diagnosticDensities = new HashMap<String, Double>();
+                diagnosticDensities = new HashMap<>();
                 fillDensities(likelihood, diagnosticDensities);
             }
 
@@ -253,7 +253,7 @@ public final class MarkovChain implements Serializable {
                 long elapsedTime = 0;
                 long calculationCount = 0;
                 if (PROFILE) {
-                    elapsedTime = System.currentTimeMillis();
+                    elapsedTime = System.nanoTime();
                     if (likelihood instanceof Profileable) {
                         calculationCount = ((Profileable) likelihood).getTotalCalculationCount();
                     }
@@ -263,20 +263,20 @@ public final class MarkovChain implements Serializable {
                 score = evaluate(likelihood);
 
                 if (PROFILE) {
-                    long duration = System.currentTimeMillis() - elapsedTime;
+                    long duration = System.nanoTime() - elapsedTime;
                     mcmcOperator.addEvaluationTime(duration);
                     long newCalculationCount = (likelihood instanceof Profileable) ?
                             ((Profileable) likelihood).getTotalCalculationCount() : 1;
                     mcmcOperator.addCalculationCount(newCalculationCount - calculationCount);
 
                     if (DEBUG) {
-                        System.out.println("Time: " + duration);
+                        System.out.println("Time: " + duration + "ns");
                     }
                 }
 
                 Map<String, Double> diagnosticOperatorDensities = null;
-                if (usingFullEvaluation) {
-                    diagnosticOperatorDensities = new HashMap<String, Double>();
+                if (usingFullEvaluation && !Double.isInfinite(score) && !Double.isNaN(score)) {
+                    diagnosticOperatorDensities = new HashMap<>();
                     fillDensities(likelihood, diagnosticOperatorDensities);
                 }
 
@@ -345,7 +345,9 @@ public final class MarkovChain implements Serializable {
                     final double testScore = evaluate(likelihood);
 
                     Map<String, Double> densitiesAfter = new HashMap<String, Double>();
-                    fillDensities(likelihood, densitiesAfter);
+                    if (!Double.isInfinite(testScore) && !Double.isNaN(testScore)) {
+                        fillDensities(likelihood, densitiesAfter);
+                    }
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();

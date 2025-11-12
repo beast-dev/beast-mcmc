@@ -148,7 +148,7 @@ public class TraitData implements Serializable {
 
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
-            String attr = (String) taxon.getAttribute(traitName);
+            String attr = taxon.getAttribute(traitName).toString();
 
             // ? is used to denote missing data so is not a state...
             if (attr != null && !attr.equals("?")) {

@@ -240,6 +240,15 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
+    public static Citation TAO_LUMPING_2025 = new Citation(
+            new Author[]{
+                    new Author("X", "Tao"),
+                    new Author("NS", "Trovao"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
+
     public static Citation MONTI_GENERIC_RATES_2024 = new Citation(
             new Author[]{
                     new Author("F", "Monti"),

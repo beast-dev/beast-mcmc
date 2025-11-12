@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -29,9 +29,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
-import dr.app.beauti.BeautiMenuBarFactory;
 import dr.app.checkpoint.BeastCheckpointer;
-import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
@@ -41,7 +39,6 @@ import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.*;
-import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
 
@@ -51,8 +48,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -63,6 +62,12 @@ public class BeastMain {
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
     private static final String CITATION_FILE_SUFFIX = ".citations.txt";
+
+    private static final String CHKPT_OVERRULE = "checkpointOverrule";
+
+    private final Logger citationLogger;
+    private final Logger infoLogger;
+    private final Logger errorLogger;
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -99,7 +104,8 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.apps.beast");
+        infoLogger = Logger.getLogger("dr.apps.beast");
+
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -134,20 +140,24 @@ public class BeastMain {
                     }
                 }
             });
+
             infoLogger.addHandler(errorHandler);
 
+            citationLogger = Logger.getLogger("dr.util.citations");
+
             if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
+                String fileNamePrefix = (System.getProperty("file.name.prefix") != null ? System.getProperty("file.name.prefix") : "");
                 String citationFileName;
                 if (System.getProperty("citations.filename") != null) {
-                    citationFileName = System.getProperty("citations.filename");
+                    citationFileName = fileNamePrefix + System.getProperty("citations.filename");
                 } else {
-                    citationFileName = fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
+                    citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
+
                 FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
-                //Logger.getLogger("dr.app.beast").addHandler(citationHandler);
-                Logger.getLogger("dr.util").addHandler(citationHandler);
+                citationLogger.addHandler(citationHandler);
             }
 
             logger.setUseParentHandlers(false);
@@ -158,7 +168,7 @@ public class BeastMain {
             // This is a special logger that is for logging numerical and statistical errors
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
-            Logger errorLogger = Logger.getLogger("error");
+            errorLogger = Logger.getLogger("error");
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
@@ -167,10 +177,19 @@ public class BeastMain {
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            //new BeastCheckpointer();
-            if (Boolean.parseBoolean(System.getProperty("checkpointOverrule", "true"))) {
+            // new BeastCheckpointer();
+
+            // if any of these properties is not null, overrule XML checkpointing settings
+            if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
+                System.setProperty(CHKPT_OVERRULE, "true");
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
                 BeastCheckpointer.getInstance(null, -1, -1, false);
-                Logger.getLogger("dr.apps.beast").info("Overriding checkpointing settings in the provided XML file");
+                infoLogger.info("Overriding checkpointing settings in the provided XML file");
             }
 
             if (mc3Options == null) {
@@ -186,12 +205,12 @@ public class BeastMain {
                 MCMC[] chains = new MCMC[chainCount];
 //                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
-                Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
+                infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
-                    Logger.getLogger("dr.apps.beast").info("Hot Chain " + i + ": " + chainTemperatures[i]);
+                    infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
                 }
 
-                Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+                infoLogger.info("Parsing XML file: " + fileName);
 
                 // parse the file for the initial cold chain returning the MCMC object
                 chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);
@@ -213,7 +232,7 @@ public class BeastMain {
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     PluginLoader.loadPlugins(parser);
-                    
+
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
                         throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
@@ -322,7 +341,7 @@ public class BeastMain {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAST X " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
         for (String creditLine : version.getCredits()) {
             centreLine(creditLine, 60);
@@ -355,83 +374,80 @@ public class BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
-                        new Arguments.Option("verbose", "Give verbose XML parsing messages"),
-                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("strict", "Fail on non-conforming BEAST XML file"),
-                        new Arguments.Option("window", "Provide a console window"),
-                        new Arguments.Option("options", "Display an options dialog"),
-                        new Arguments.Option("working", "Change working directory to input file's directory"),
-                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
-                        new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
-                        new Arguments.Option("overwrite", "Allow overwriting of log files"),
-                        new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        new Arguments.IntegerOption("threads", "The maximum number of computational threads to use (default auto)"),
-                        new Arguments.Option("fail_threads", "Exit with error on uncaught exception in thread"),
-                        new Arguments.Option("ignore_versions", "Ignore mismatches between XML and BEAST versions"),
-                        new Arguments.Option("java", "Use Java only, no native implementations"),
-                        new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
-                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
-                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "Print transition kernel performance to file"),
+                        new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
+                        new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
+                        new Arguments.Option("strict", "s", "Fail on non-conforming BEAST XML file"),
+                        new Arguments.Option("window", "w", "Provide a console window"),
+                        new Arguments.Option("options", "o", "Display an options dialog"),
+                        new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
+                        new Arguments.LongOption("seed", "s", "Specify a random number generator seed"),
+                        new Arguments.StringOption("prefix","p",  "PREFIX", "Specify a prefix for all output log filenames"),
+                        new Arguments.Option("overwrite", "ow", "Allow overwriting of log files"),
+                        new Arguments.IntegerOption("errors", "e", "Specify maximum number of numerical errors before stopping"),
+                        new Arguments.IntegerOption("threads", "nt", "The maximum number of computational threads to use (default auto)"),
+                        new Arguments.Option("fail_threads", "ft", "Exit with error on uncaught exception in thread"),
+                        new Arguments.Option("ignore_versions", "i", "Ignore mismatches between XML and BEAST versions"),
+                        new Arguments.Option("java", null, "Use Java only, no native implementations"),
+                        new Arguments.LongOption("tests", null, "The number of full evaluation tests to perform (default 1000)"),
+                        new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
-                        new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
-                        new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
+                        new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
+                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
-                        new Arguments.StringOption("pattern_compression", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                        new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
-                        new Arguments.RealOption("ambiguous_threshold", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
+                        new Arguments.RealOption("ambiguous_threshold", "at", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
 
-                        new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
-                        new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
-                        new Arguments.Option("beagle_auto", "BEAGLE: automatically select fastest resource for analysis"),
-                        new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
-                        new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
-                        new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
+                        new Arguments.Option("beagle", "b", "Use BEAGLE library if available (default on)"),
+                        new Arguments.Option("beagle_info", "bi", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "ba", "BEAGLE: automatically select fastest resource for analysis"),
+                        new Arguments.StringOption("beagle_order", "bo", "order", "BEAGLE: set order of resource use"),
+                        new Arguments.IntegerOption("beagle_instances", null, "BEAGLE: divide site patterns amongst instances"),
+                        new Arguments.StringOption("beagle_multipartition", "bm", new String[]{"auto", "on", "off"},
                                 false, "BEAGLE: use multipartition extensions if available (default auto)"),
-                        new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
-                        new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
-                        new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
-                        new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off multi-threading for a CPU instance"),
-                        new Arguments.StringOption("beagle_threading", new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
-                        new Arguments.IntegerOption("beagle_threads", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
-                        new Arguments.Option("beagle_basta_threading_off", "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_basta_threads", 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
-                        new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
-                        new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
-                        new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
-                        new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
-                        new Arguments.Option("beagle_low_memory", "BEAGLE: use lower memory pre-order traversal kernels"),
-                        new Arguments.StringOption("beagle_extra_buffer_count", "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
-                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
+                        new Arguments.Option("beagle_CPU", "bc", "BEAGLE: use CPU instance"),
+                        new Arguments.Option("beagle_GPU", "bg", "BEAGLE: use GPU instance if available"),
+                        new Arguments.Option("beagle_SSE", null, "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_SSE_off", null, "BEAGLE: turn off use of SSE extensions"),
+                        new Arguments.Option("beagle_threading_off", null, "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_threads", "bt", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_cuda", null, "BEAGLE: use CUDA parallization if available"),
+                        new Arguments.Option("beagle_opencl", null, "BEAGLE: use OpenCL parallization if available"),
+                        new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
+                        new Arguments.Option("beagle_double", null, "BEAGLE: use double precision if available"),
+                        new Arguments.Option("beagle_async", null, "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.StringOption("beagle_extra_buffer_count", null, "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
+                        new Arguments.StringOption("beagle_scaling", "bs", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
-                        new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
-                        new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
-                        new Arguments.Option("mpi", "Use MPI rank to label output"),
+                        new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
+                        new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.Option("mpi", null, "Use MPI rank to label output"),
 
-                        new Arguments.StringOption("particles", "FOLDER", "Specify a folder of particle start states"),
+                        new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
-                        new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
-                        new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
-                        new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
-                        new Arguments.StringOption("mc3_scheme", "NAME", "Specify parallel tempering swap scheme"),
+                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
+                        new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
+                        new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),
+                        new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("mc3_scheme", null, "NAME", "Specify parallel tempering swap scheme"),
 
-                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
-                        new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
-                        new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
-                        new Arguments.StringOption("save_time", "HH:mm:ss", "Specify a length of time after which to save a state file"),
-                        new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
-                        new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
-                        new Arguments.Option("full_checkpoint_precision", "Use hex-encoded doubles in checkpoint files"),
-                        new Arguments.Option("force_resume", "Force resuming from a saved state"),
+                        new Arguments.StringOption("load_state", null, "FILENAME", "Specify a filename to load a saved state from"),
+                        new Arguments.StringOption("save_stem", null, "FILENAME", "Specify a stem for the filenames to save states to"),
+                        new Arguments.LongOption("save_at", null, "Specify a state at which to save a state file"),
+                        new Arguments.StringOption("save_time", null, "HH:mm:ss", "Specify a length of time after which to save a state file"),
+                        new Arguments.LongOption("save_every", null, "Specify a frequency to save the state file"),
+                        new Arguments.StringOption("save_state", null, "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.Option("full_checkpoint_precision", null, "Use hex-encoded doubles in checkpoint files"),
+                        new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
 
-                        new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
-                        new Arguments.Option("citations_off", "Turn off writing citations to file"),
-                        new Arguments.StringOption("plugins_dir", "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
+                        new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
+                        new Arguments.StringOption("plugins_dir",null,  "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
-                        new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.Option("version", "v", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "h", "Print this information and stop"),
                 });
 
         int argumentCount = 0;
@@ -996,7 +1012,7 @@ public class BeastMain {
 //            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
-                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                System.out.println("BEAST X has terminated with an error. Please select QUIT from the menu.");
                 // logger.severe will throw a RTE but we want to keep the console visible
             } else {
                 System.out.flush();

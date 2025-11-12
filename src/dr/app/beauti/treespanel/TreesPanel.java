@@ -297,8 +297,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
             if (ptpp != null) {
-                ptpp.setTreePriorChoices(options.getPartitionTreeModels().size() > 1,
-                        options.useTipDates);
+                ptpp.setTreePriorChoices(options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
                 ptpp.repaint();

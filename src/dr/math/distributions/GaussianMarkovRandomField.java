@@ -26,16 +26,16 @@
  */
 
 package dr.math.distributions;
-import dr.inference.distribution.Weights;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
-import dr.evolution.tree.Tree;
+import no.uib.cipr.matrix.*;
+import org.apache.commons.math.linear.EigenDecompositionImpl;
+
 import java.util.Arrays;
+import java.util.function.BinaryOperator;
 
 /**
  * @author Marc Suchard
@@ -52,18 +52,24 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
     protected final Parameter lambdaParameter;
     protected final RandomField.WeightProvider weightProvider;
 
-
     private final double[] mean;
 
     final SymmetricTriDiagonalMatrix Q;
     private final SymmetricTriDiagonalMatrix savedQ;
-
 
     private boolean meanKnown;
     protected boolean qKnown;
     private boolean savedQKnown;
 
     private final double logMatchTerm;
+
+    private final int bandWidth;
+    private int nonZeroEntryCount = -1;
+
+    private boolean fieldDeterminantKnown;
+    private boolean savedFieldDeterminantKnown;
+    private double logFieldDeterminant;
+    private double savedLogFieldDeterminant;
 
     public GaussianMarkovRandomField(String name,
                                      int dim,
@@ -75,13 +81,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         super(name);
 
         this.dim = dim;
+        this.bandWidth = 1;
         this.meanParameter = mean;
         this.precisionParameter = precision;
         this.lambdaParameter = lambda;
         this.weightProvider = weightProvider;
 
+        if (meanParameter != null) {
+            addVariable(meanParameter);
+        }
 
-        addVariable(meanParameter);
         addVariable(precisionParameter);
 
         if (lambda != null) {
@@ -92,20 +101,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             addModel(weightProvider);
         }
 
-
         this.mean = new double[dim];
 
         this.Q = new SymmetricTriDiagonalMatrix(dim);
         this.savedQ = new SymmetricTriDiagonalMatrix(dim);
 
-
         this.logMatchTerm = matchPseudoDeterminant ? matchPseudoDeterminantTerm(dim) : 0.0;
-
 
         meanKnown = false;
         qKnown = false;
-
-
+        fieldDeterminantKnown = false;
     }
 
     @Override
@@ -125,8 +130,6 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         }
         return mean;
     }
-
-
 
     protected SymmetricTriDiagonalMatrix getQ() {
         if (!qKnown) {
@@ -154,33 +157,104 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
                 double lambda = lambdaParameter.getParameterValue(0);
                 for (int i = 0; i < dim - 1; ++i) {
                     Q.offDiagonal[i] = Q.offDiagonal[i] * lambda;
+                    // TODO what about correction to Q.diagonal?
                 }
             }
-
 
             qKnown = true;
         }
         return Q;
     }
 
-    private static double[][] makePrecisionMatrix(SymmetricTriDiagonalMatrix Q) {
+    private static double[][] makePrecisionMatrix(SymmetricTriDiagonalMatrix Q, double scalar) {
 
         final int dim = Q.diagonal.length;
         double[][] precision = new double[dim][dim];
 
         for (int i = 0; i < dim; ++i) {
-            precision[i][i] = Q.diagonal[i];
+            precision[i][i] = Q.diagonal[i] * scalar;
         }
 
         for (int i = 0; i < dim - 1; ++i) {
-            precision[i][i + 1] = Q.offDiagonal[i];
-            precision[i + 1][i] = Q.offDiagonal[i];
+            precision[i][i + 1] = Q.offDiagonal[i] * scalar;
+            precision[i + 1][i] = Q.offDiagonal[i] * scalar;
         }
 
         return precision;
     }
 
-    protected boolean isImproper() {
+    public double getFieldValue(int i, int j) {
+
+        SymmetricTriDiagonalMatrix q = getQ();
+
+        int whichDiagonal = Math.abs(i - j);
+        if (whichDiagonal == 0) {
+            return q.diagonal[i];
+        } else if (whichDiagonal == 1) {
+            return q.offDiagonal[Math.min(i, j)];
+        } else {
+            return 0.0;
+        }
+    }
+
+    public int getNonZeroEntryCount() {
+        if (nonZeroEntryCount == -1) {
+            int[] count = new int[]{ 0 };
+            internalMapAll((i, j, value) -> ++count[0]);
+            nonZeroEntryCount = count[0];
+        }
+        return nonZeroEntryCount;
+    }
+
+    @FunctionalInterface
+    public interface ReduceBlockFunction<R> {
+        R apply(int i, int j, double fieldValue);
+    }
+
+    @FunctionalInterface
+    public interface BlockFunction {
+        void apply(int i, int j, double fieldValue);
+    }
+
+    @SuppressWarnings("unused")
+    public void mapOverAllNonZeroEntries(BlockFunction map) {
+        internalMapAll(map::apply);
+    }
+
+    @SuppressWarnings("unused")
+    public void mapOverNonZeroEntriesInRow(BlockFunction map, int row) {
+        internalMapRow(map::apply, row);
+    }
+
+    @SuppressWarnings({"unused", "unchecked"})
+    public <R> R mapReduceOverAllNonZeroEntries(ReduceBlockFunction<R> map,
+                                                BinaryOperator<R> reduce, R initial) {
+
+        final R[] sum = (R[]) new Object[]{initial};
+        internalMapAll((i, j, fieldValue) -> sum[0] = reduce.apply(sum[0], map.apply(i, j, fieldValue)));
+        return sum[0];
+    }
+
+    @FunctionalInterface
+    public interface InternalFunction {
+        void apply(int i, int j, double value);
+    }
+
+    private void internalMapAll(InternalFunction function) {
+        for (int i = 0; i < dim; ++i) {
+            internalMapRow(function, i);
+        }
+    }
+
+    private void internalMapRow(InternalFunction function, int row) {
+        final int begin = Math.max(0, row - bandWidth);
+        final int end = Math.min(dim, row + bandWidth + 1);
+        for (int j = begin; j < end; ++j) {
+            function.apply(row, j, getFieldValue(row, j));
+        }
+    }
+
+    public boolean isImproper() {
         return lambdaParameter == null || lambdaParameter.getParameterValue(0) == 1.0;
     }
 
@@ -242,7 +316,7 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     private double matchPseudoDeterminantTerm(int dim) {
         double term = 0.0;
-        if (isImproper() && weightProvider==null) {
+        if (isImproper() && weightProvider == null) {
             for (int i = 1; i < dim; ++i) {
                 double x = (2 - 2 * Math.cos(i * Math.PI / dim));
                 term += Math.log(x);
@@ -251,49 +325,125 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return term;
     }
 
-    protected double getLogDeterminant() {
+    public double getLogDeterminant() {
 
         int effectiveDim = isImproper() ? dim - 1 : dim;
         double logDet = effectiveDim * Math.log(precisionParameter.getParameterValue(0)) + logMatchTerm;
 
-        if (!isImproper() || weightProvider!= null) {
-            double[][] precision = makePrecisionMatrix(Q);
-            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-            DoubleMatrix1D values = ed.getRealEigenvalues();
-            for (int i = 0; i < values.size(); ++i) {
-                double v = values.get(i);
-                if (Math.abs(v) > 1E-6) {
-                    logDet += Math.log(v);
-                }
+        if (!fieldDeterminantKnown) {
+            double logFieldDet = 0.0;
+            if (!isImproper()) {
+                 logFieldDet = getLogDeterminantViaRecursion(Q);
+            } else if (weightProvider != null) {
+                logFieldDet = getLogPseudoDeterminantViaTriangularEigenDecomposition(Q);
+            }
+
+            logFieldDeterminant = logFieldDet;
+            fieldDeterminantKnown = true;
+        }
+
+        logDet += logFieldDeterminant;
+
+        if (CHECK_DETERMINANT) {
+            double sum = getLogPseudoDeterminantViaDenseEigendecomposition(Q);
+            if (Math.abs(sum - logDet) > 1E-6) {
+                throw new RuntimeException("Incorrect (pseudo-) determinant");
             }
         }
 
-//        if (CHECK_DETERMINANT) {
-//
-//            double[][] precision = makePrecisionMatrix(Q);
-//            RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
-//            DoubleMatrix1D values = ed.getRealEigenvalues();
-//            double sum = 0.0;
-//            for (int i = 0; i < values.size(); ++i) {
-//                double v = values.get(i);
-//                if (Math.abs(v) > 1E-6) {
-//                    sum += Math.log(v);
-//                }
-//            }
-//
-//            if (Math.abs(sum - logDet) > 1E-6) {
-//                throw new RuntimeException("Incorrect (pseudo-) determinant");
-//            }
-//        }
-
         return logDet;
+    }
+
+    @SuppressWarnings("unused")
+    public static double getLogDeterminantViaRecursion(SymmetricTriDiagonalMatrix q) {
+        double fnMinus2;
+        double fnMinus1 = 1.0;
+
+        double fn = q.diagonal[0];
+
+        // Use linear recursion expression at https://en.wikipedia.org/wiki/Tridiagonal_matrix
+        for (int n = 2; n <= q.diagonal.length; ++n) {
+            fnMinus2 = fnMinus1;
+            fnMinus1 = fn;
+
+            double an = q.diagonal[n - 1];
+            double bnMinus1 = q.offDiagonal[n - 2];
+
+            fn = an * fnMinus1 - bnMinus1 * bnMinus1 * fnMinus2;
+        }
+
+        return Math.log(fn);
+    }
+
+    public static double getLogPseudoDeterminantViaDenseEigendecomposition(SymmetricTriDiagonalMatrix q) {
+        double[][] precision = makePrecisionMatrix(q, 1.0);
+        RobustEigenDecomposition ed = new RobustEigenDecomposition(new DenseDoubleMatrix2D(precision));
+        DoubleMatrix1D values = ed.getRealEigenvalues();
+        double sum = 0.0;
+        for (int i = 0; i < values.size(); ++i) {
+            double v = values.get(i);
+            if (Math.abs(v) > 1E-6) {
+                sum += Math.log(v);
+            }
+        }
+
+        return sum;
+    }
+
+    public static double getLogPseudoDeterminantViaTriangularEigenDecomposition(SymmetricTriDiagonalMatrix q) {
+
+        EigenDecompositionImpl ed = new EigenDecompositionImpl(q.diagonal, q.offDiagonal, 1E-8);
+        double[] eigenValues = ed.getRealEigenvalues();
+
+        double logSum = 0;
+        for (double eigenValue : eigenValues) {
+            if (eigenValue != 0.0) {
+                logSum += Math.log(eigenValue);
+            }
+        }
+
+        return logSum;
+    }
+
+    public UpperTriangBandMatrix getCholeskyDecomposition() {
+
+        SymmetricTriDiagonalMatrix Q = getQ();
+
+        UpperSPDBandMatrix A = new UpperSPDBandMatrix(dim, 1);
+        double precision = precisionParameter.getParameterValue(0);
+        for (int i = 0; i < dim; ++i) {
+            A.set(i, i, precision * Q.diagonal[i]);
+        }
+
+        for (int i = 0; i < dim - 1; ++i) {
+            A.set(i, i + 1, precision * Q.offDiagonal[i]);
+        }
+
+        BandCholesky chol = BandCholesky.factorize(A);
+        return chol.getU();
+    }
+
+    public static double[][] testCholeskyUpper(Matrix band, int dim) {
+        double[][] result = new double[dim][dim];
+
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += band.get(k, i) * band.get(k, j); // U^t U
+                }
+                result[i][j] = sum;
+            }
+        }
+
+        return result;
     }
 
     private static final boolean CHECK_DETERMINANT = false;
 
     @Override
     public double[][] getScaleMatrix() {
-        return makePrecisionMatrix(getQ());
+        return makePrecisionMatrix(getQ(), precisionParameter.getParameterValue(0));
     }
 
     @Override
@@ -388,16 +538,16 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         return SSE * precision;
     }
 
-    protected static class SymmetricTriDiagonalMatrix {
+    public static class SymmetricTriDiagonalMatrix {
 
         public double[] diagonal;
         public double[] offDiagonal;
 
-        SymmetricTriDiagonalMatrix(int dim) {
+        public SymmetricTriDiagonalMatrix(int dim) {
             this(new double[dim], new double[dim - 1]);
         }
 
-        SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {
+        public SymmetricTriDiagonalMatrix(double[] diagonal, double[] offDiagonal) {
             this.diagonal = diagonal;
             this.offDiagonal = offDiagonal;
         }
@@ -450,7 +600,12 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        throw new IllegalArgumentException("Unknown model");
+        if (model == weightProvider) {
+            qKnown = false;
+            fieldDeterminantKnown = false;
+        } else {
+            throw new IllegalArgumentException("Unknown model");
+        }
     }
 
     @Override
@@ -459,6 +614,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             meanKnown = false;
         } else if (variable == precisionParameter || variable == lambdaParameter) {
             qKnown = false;
+            if (variable == lambdaParameter) {
+                fieldDeterminantKnown = false;
+            }
         } else {
             throw new IllegalArgumentException("Unknown variable");
         }
@@ -470,6 +628,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
             Q.copyTo(savedQ);
         }
         savedQKnown = qKnown;
+
+        savedLogFieldDeterminant = logFieldDeterminant;
+        savedFieldDeterminantKnown = fieldDeterminantKnown;
     }
 
     @Override
@@ -480,6 +641,9 @@ public class GaussianMarkovRandomField extends RandomFieldDistribution {
         if (qKnown) {
             savedQ.swap(Q);
         }
+
+        logFieldDeterminant = savedLogFieldDeterminant;
+        fieldDeterminantKnown = savedFieldDeterminantKnown;
     }
 
     @Override

@@ -615,16 +615,23 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        if (selRows.length > 0) {
-            Taxa selectedTaxa = new Taxa();
+        try {
+            if (selRows.length > 0) {
+                Taxa selectedTaxa = new Taxa();
 
-            for (int row : selRows) {
-                Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
-                selectedTaxa.addTaxon(taxon);
+                for (int row : selRows) {
+                    Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                    selectedTaxa.addTaxon(taxon);
+                }
+                guesser.guessDates(selectedTaxa);
+            } else {
+                guesser.guessDates(options.taxonList);
             }
-            guesser.guessDates(selectedTaxa);
-        } else {
-            guesser.guessDates(options.taxonList);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // adjust the dates to the current timescale...
@@ -744,7 +751,14 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        guesser.guessDates(options.taxonList, taxonDateMap);
+        try {
+            guesser.guessDates(options.taxonList, taxonDateMap);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

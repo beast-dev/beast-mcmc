@@ -106,7 +106,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         }
 
 //        diffusionModel.diffusionPrecisionMatrixParameter.setParameterValue(0,2); // For debugging non-1 values
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+        double[][] traitPrecision = diffusionModel.getPrecisionMatrix();
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
 
         double lengthToRoot = getRescaledLengthToRoot(tip);
@@ -374,7 +374,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
 
 
-        double[][] precisionParam =diffusionModel.getPrecisionmatrix();
+        double[][] precisionParam =diffusionModel.getPrecisionMatrix();
 //        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
         double p = getPrecisionFactor(taxa);
 
@@ -396,7 +396,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     private void setup(){
         if (!PostPreKnown) {
-            double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+            double[][] traitPrecision = diffusionModel.getPrecisionMatrix();
             double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
 
             final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
@@ -622,7 +622,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         sb.append("\n\n");
 
         double[][] treeVariance = computeTreeVariance();
-        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = getDiffusionModel().getPrecisionMatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
         double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());

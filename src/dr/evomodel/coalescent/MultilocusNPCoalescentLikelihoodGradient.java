@@ -72,25 +72,25 @@ public class MultilocusNPCoalescentLikelihoodGradient extends AbstractModel impl
 
     @Override
     public double[] getGradientLogDensity() {
-        if(!gradientKnown) {
-            gradient = provider.getGradientLogDensity(likelihood.getLogPopSizes().getParameterValues());
-            gradientKnown = true;
-        }
+//        if(!gradientKnown) {
+            gradient = provider.getGradientLogDensity(parameter.getParameterValues());
+//            gradientKnown = true;
+//        }
         return gradient;
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof MultilocusNonparametricCoalescentLikelihood) {
-            gradientKnown = false;
-        } else {
-            throw new RuntimeException("Unknown object");
-        }
+//        if (model instanceof MultilocusNonparametricCoalescentLikelihood) {
+//            gradientKnown = false;
+//        } else {
+//            throw new RuntimeException("Unknown object");
+//        }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        gradientKnown = false;
+//        gradientKnown = false;
     }
 
     @Override

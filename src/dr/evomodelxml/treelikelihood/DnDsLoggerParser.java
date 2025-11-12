@@ -44,11 +44,16 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
     public static final String USE_DNMINUSDS = "dn-ds";
     public static final String COUNTS = "counts";
     public static final String SYNONYMOUS = "synonymous";
+    public static final String PREFIX = "prefix";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String[] names = DnDsLogger.traitNames;
+        // read prefix first
+        String prefix = xo.hasAttribute(PREFIX) ? xo.getStringAttribute(PREFIX) : null;
+
+        // now build names with the prefix
+        String[] names = DnDsLogger.buildTraitNames(prefix);
         TreeTrait[] foundTraits = new TreeTrait[names.length];
 
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -73,13 +78,13 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
 
         // Use AttributeRules for options here
-
         boolean useSmoothing = xo.getAttribute(USE_SMOOTHING, true);
         boolean useDnMinusDs = xo.getAttribute(USE_DNMINUSDS, false);
         boolean conditionalCounts = xo.getAttribute(COUNTS, false);
         boolean synonymous = xo.getAttribute(SYNONYMOUS, false);
 
-        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing, useDnMinusDs, conditionalCounts, synonymous);
+        return new DnDsLogger(xo.getId(), tree, foundTraits,
+                useSmoothing, useDnMinusDs, conditionalCounts, synonymous, prefix);
     }
 
     @Override
@@ -94,6 +99,7 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(COUNTS, true),
             AttributeRule.newBooleanRule(SYNONYMOUS, true),
             AttributeRule.newBooleanRule(USE_DNMINUSDS, true),
+            AttributeRule.newStringRule(PREFIX, true),
     };
 
     @Override

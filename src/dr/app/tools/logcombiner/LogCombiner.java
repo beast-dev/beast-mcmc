@@ -735,15 +735,15 @@ public class LogCombiner {
 
             Arguments arguments = new Arguments(
                     new Arguments.Option[]{
-                            new Arguments.Option("trees", "use this option to combine tree log files"),
-                            new Arguments.Option("decimal", "this option converts numbers from scientific to decimal notation"),
-                            new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
-                            new Arguments.LongOption("resample", "resample the log files to this frequency " +
+                            new Arguments.Option("trees", "t", "use this option to combine tree log files"),
+                            new Arguments.Option("decimal", "d","this option converts numbers from scientific to decimal notation"),
+                            new Arguments.LongOption("burnin", "b",  "the number of states to be considered as 'burn-in'"),
+                            new Arguments.LongOption("resample", "r", "resample the log files to this frequency " +
                                     "(the original sampling frequency must be a factor of this value)"),
-                            new Arguments.RealOption("scale", "a scaling factor that will multiply any time units by this value"),
-                            new Arguments.Option("strip", "strip out all annotations (trees only)"),
-                            new Arguments.Option("renumber", "this option renumbers output states consecutively"),
-                            new Arguments.Option("help", "option to print this message")
+                            new Arguments.RealOption("scale", "s", "a scaling factor that will multiply any time units by this value"),
+                            new Arguments.Option("strip", null, "strip out all annotations (trees only)"),
+                            new Arguments.Option("renumber", "r", "this option renumbers output states consecutively"),
+                            new Arguments.Option("help", "h", "option to print this message")
                     });
 
             try {

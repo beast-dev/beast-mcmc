@@ -344,7 +344,7 @@
 			<frequencyModel id="state.frequencyModel" normalize="true">
 				<generalDataType idref="state.dataType"/>
 				<frequencies>
-					<parameter id="state.frequencies" dimension="37"/>
+					<parameter id="state.frequencies" dimension="3"/>
 				</frequencies>
 			</frequencyModel>
 		</frequencies>
@@ -365,42 +365,29 @@
 	</siteModel>
 
 	<!-- Likelihood for tree given discrete trait data                           -->
-	<ancestralTreeLikelihood id="state.treeLikelihood" stateTagName="state.states" useUniformization="true" saveCompleteHistory="false" logCompleteHistory="false">
-		<attributePatterns idref="state.pattern"/>
+	<treeDataLikelihood id="state.treeLikelihood" useAmbiguities="true" usePreOrder="true"
+						branchInfinitesimalDerivative="true"
+						scalingScheme="never" delayScaling="false">
+		<patterns idref="state.pattern"/>
 		<treeModel idref="treeModel"/>
 		<siteModel idref="state.siteModel"/>
-		<generalSubstitutionModel idref="state.model"/>
-		<generalSubstitutionModel idref="state.model"/>
 		<strictClockBranchRates idref="state.branchRates"/>
-
-		<!-- The root state frequencies                                              -->
-		<frequencyModel id="state.root.frequencyModel" normalize="true">
-			<generalDataType idref="state.dataType"/>
-			<frequencies>
-				<parameter id="state.root.frequencies" dimension="3"/>
-			</frequencies>
-		</frequencyModel>
-	</ancestralTreeLikelihood>
+	</treeDataLikelihood>
 
 	<report>
-		<ancestralTreeLikelihood idref="state.treeLikelihood"/>
+		<treeDataLikelihood idref="state.treeLikelihood"/>
 	</report>
 
 	<!-- END Discrete Traits Model                                               -->
 
 <!-- gradient part -->
     <approximateLogCtmcRateGradient id="gradient" traitName="state">
-<!--     parser need to be modified to read ancestralTreeLikelihood and stronglyLumpableCtmcRates -->
-        <ancestralTreeLikelihood idref="state.treeLikelihood"/>
-        <stronglyLumpableCtmcRates idref="lumpableRates"/>
-<!-- 
-        <treeDataLikelihood idref="treeLikelihood"/>
-        <logRateSubstitutionModel idref="loc.model"/>               
- -->
+		<treeDataLikelihood idref="state.treeLikelihood"/>
+		<logRateSubstitutionModel idref="state.model"/>
     </approximateLogCtmcRateGradient>
 
-    <report>       	
-       	<approximateLogCtmcRateGradient idref="gradient"/>       
+    <report>
+       	<approximateLogCtmcRateGradient idref="gradient"/>
     </report>
 
 	<!-- Define operators                                                        -->
@@ -460,11 +447,11 @@
 <!--		<scaleOperator scaleFactor="0.75" weight="15" scaleAllIndependently="true">-->
 <!--			<parameter idref="state.rates"/>-->
 <!--		</scaleOperator>-->
-		<deltaExchange delta="0.75" weight="1">
-			<parameter idref="state.root.frequencies"/>
-		</deltaExchange>
+<!--		<deltaExchange delta="0.75" weight="1">-->
+<!--			<parameter idref="state.root.frequencies"/>-->
+<!--		</deltaExchange>-->
 
-		
+
 		<scaleOperator scaleFactor="0.75" weight="3">
 			<parameter idref="lump.across.rates"/>
 		</scaleOperator>
@@ -474,19 +461,19 @@
 		<deltaExchange delta="0.1" weight="2">
 			<parameter idref="Cafornia.l2.proportions"/>
 		</deltaExchange>
-<!-- 
+<!--
 		<deltaExchange delta="1" weight="1">
 			<parameter idref="Michigan.l1.proportions"/>
 		</deltaExchange>
  -->
-<!-- 
+<!--
 		<deltaExchange delta="1" weight="1">
 			<parameter idref="Texas.l1.proportions"/>
 		</deltaExchange>
  -->
 
 	</operators>
-	
+
 
 	<!-- Define MCMC                                                             -->
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
@@ -525,9 +512,9 @@
 					</gammaPrior>
 					<parameter idref="state.rates"/>
 				</cachedPrior>   -->
-				<uniformPrior lower="0.0" upper="1.0">
-					<parameter idref="state.root.frequencies"/>
-				</uniformPrior>
+<!--				<uniformPrior lower="0.0" upper="1.0">-->
+<!--					<parameter idref="state.root.frequencies"/>-->
+<!--				</uniformPrior>-->
 				<coalescentLikelihood idref="coalescent"/>						
 				<strictClockBranchRates idref="default.branchRates"/>
 				<strictClockBranchRates idref="state.branchRates"/>

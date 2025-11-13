@@ -47,7 +47,7 @@ public class AnnotationAction implements CladeAction {
     private double posteriorLimit;
     private double countLimit;
     double[] hpd2D = {0.80};
-    Set<String> attributeNames = new HashSet<String>();
+    Set<String> attributeNames = new LinkedHashSet<>();
     private boolean forceIntegerToDiscrete = false;
     private boolean computeESS;
 

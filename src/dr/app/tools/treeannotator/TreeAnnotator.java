@@ -43,6 +43,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.util.Author;
+import dr.util.Citation;
+import dr.util.CitationLogHandler;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 
@@ -1160,9 +1163,11 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Found Maximum Clade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
-            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION.toString());
         } else if (target == Target.MRHIPSTR) {
-            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION);
         } else if (target == Target.MAJORITY_RULE) {
             progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {

@@ -281,6 +281,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
             this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+            this.useAmbiguities = useAmbiguities;
 
             int[] resourceList = null;
             long preferenceFlags = 0;
@@ -1136,11 +1137,14 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                         if (rescalingMessageCount > 0) {
                             Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
                         } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            if (getId() != null) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            }
                         }
                     }
                     rescalingMessageCount += 1;
-
                 }
 
                 for (int i = 0; i < updatedPartitionCount; i++) {
@@ -1211,6 +1215,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /*private void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }*/
+
+    public int getPartitionCat(){
+        // not meaningfull for now, need to update
+        return 0;
+    };
+
+    public double[] getSiteLogLikelihoods(){
+        double[] patternLogLikelihoods = new double[totalPatternCount];
+        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+        return patternLogLikelihoods;
+    }
 
     @Override
     public void makeDirty() {
@@ -1312,6 +1327,26 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     protected void acceptState() {
     }
 
+    @Override
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    public boolean getUseAmbiguities() {
+        return useAmbiguities;
+    }
+
+    public PartialsRescalingScheme getRescalingScheme() {
+        return rescalingScheme;
+    }
+
+    public boolean getDelayRescalingUntilUnderflow() {
+        return delayRescalingUntilUnderflow;
+    }
     // **************************************************************
     // INSTANCE PROFILEABLE
     // **************************************************************
@@ -1349,6 +1384,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
 
+    private boolean useAmbiguities;
     private int threadCount = -1;
 
     //allow per partition rescaling

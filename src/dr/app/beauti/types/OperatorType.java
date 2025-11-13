@@ -28,7 +28,6 @@
 package dr.app.beauti.types;
 
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.operators.ScaleOperatorParser;
 
@@ -66,12 +65,13 @@ public enum OperatorType {
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     EMPIRICAL_TREE_SWAP("empiricalSwap"),
-    GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
-    SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
+    GMRF_BLOCKUPDATE_OPERATOR("gmrfBlockUpdateOperator"),
+    SKY_GRID_BLOCKUPDATE_OPERATOR("gmrfBlockUpdateOperator"),
     SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
     WILSON_BALDING("wilsonBalding"),
-    RELAXED_CLOCK_HMC_OPERATOR("relaxedClockHMCOperator"),
+    RELAXED_CLOCK_HMC_RATE_OPERATOR("relaxedClockHMCRateOperator"),
+    RELAXED_CLOCK_HMC_SCALE_OPERATOR("relaxedClockHMCScaleOperator"),
     SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
     SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
 

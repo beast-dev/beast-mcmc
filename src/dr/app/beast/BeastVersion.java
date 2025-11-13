@@ -60,11 +60,11 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "10.5.0-beta2";
+    private static final String VERSION = "10.5.0";
 
-    private static final String DATE_STRING = "2002-2024";
+    private static final String DATE_STRING = "2002-2025";
 
-    private static final boolean IS_PRERELEASE = true;
+    private static final boolean IS_PRERELEASE = false;
 
     public String getVersion() {
         return VERSION;
@@ -159,18 +159,23 @@ public class BeastVersion implements Version, Citable {
     public static Citation[] CITATIONS = new Citation[] {
             new Citation(
                     new Author[]{
-                            new Author("MA", "Suchard"),
-                            new Author("P", "Lemey"),
                             new Author("G", "Baele"),
-                            new Author("DL", "Ayres"),
+                            new Author("X", "Ji"),
+                            new Author("GW", "Hassler"),
+                            new Author("JT", "McCrone"),
+                            new Author("Y", "Shao"),
+                            new Author("Z", "Zhang"),
+                            new Author("AJ", "Holbrook"),
+                            new Author("P", "Lemey"),
                             new Author("AJ", "Drummond"),
-                            new Author("A", "Rambaut")
+                            new Author("A", "Rambaut"),
+                            new Author("MA", "Suchard"),
                     },
-                    "Bayesian phylogenetic and phylodynamic data integration using BEAST 1.10",
-                    2018,
-                    "Virus Evolution",
-                    4, "vey016",
-                    "10.1093/ve/vey016"),
+                    "BEAST X for Bayesian phylogenetic, phylogeographic and phylodynamic inference",
+                    2025,
+                    "Nature Methods",
+                    "",
+                    "10.1038/s41592-025-02751-x"),
     };
     public static void main(String[] args) {
         System.out.println(getRevision());

@@ -48,6 +48,7 @@ public interface BranchSpecificFixedEffects {
     String RATES_PRIOR = "ratesPrior";
     String SCALE_PRIOR = "scalePrior";
     String INTERCEPT_PRIOR = "interceptPrior";
+    String LOCATION_PRIOR = "locationPrior";
 
     double getEffect(final Tree tree, final NodeRef node);
 

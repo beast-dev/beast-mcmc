@@ -55,12 +55,16 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "locationScaleGradient";
-    private static final String LOCATION = "location";
-    private static final String SCALE = "scale";
+    public static final String NAME = "locationScaleGradient";
+    public static final String USE_HESSIAN = "useHessian";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    //declaring String constants for use in BEAUti
+    public static final String LOCATION_SCALE = "locationScale";
+    public static final String LOCATION_SCALE_JOINT_GRADIENT = "locationScaleJointGradient";
+    public static final String LOCATION_SCALE_PRIOR_GRADIENT = "locationScalePriorGradient";
 
     public String getParserName(){ return NAME; }
 
@@ -98,7 +102,6 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
     private GradientWrtParameterProvider parseTreeDataLikelihood(XMLObject xo, TreeDataLikelihood treeDataLikelihood,
                                                                  String traitName,
                                                                  boolean useHessian) throws XMLParseException {
-
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 

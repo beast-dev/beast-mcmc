@@ -245,6 +245,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
 
     public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
+        assert scaleFactor > 0.0;
     }
 
     public double getRawParameter() {

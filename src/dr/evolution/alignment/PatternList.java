@@ -63,6 +63,8 @@ public interface PatternList extends TaxonList, Identifiable {
      */
     int[] getPattern(int patternIndex);
 
+    int getPatternIndex(int siteIndex);
+
     /**
      * Gets the pattern as an array of state frequency vectors (one per sequence)
      *

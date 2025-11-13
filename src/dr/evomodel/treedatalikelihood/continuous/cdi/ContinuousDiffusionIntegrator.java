@@ -978,7 +978,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             }
         }
 
-        private static void updateMean(final double[] partials,
+        protected static void updateMean(final double[] partials,
                                        final int kob,
                                        final int iob,
                                        final int job,

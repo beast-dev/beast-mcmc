@@ -183,6 +183,9 @@ public class FastIntervals implements MutableIntervalList {
     }
 
     public double getStartTime() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return startTime;
     }
 
@@ -193,6 +196,9 @@ public class FastIntervals implements MutableIntervalList {
         return intervalTypes[i];
     }
     public double getTotalDuration() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return finishTime - startTime;
     }
 

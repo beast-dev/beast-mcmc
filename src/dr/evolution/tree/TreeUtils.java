@@ -49,14 +49,21 @@ public class TreeUtils {
      */
     public static int getLeafCount(Tree tree, NodeRef node) {
 
-        int childCount = tree.getChildCount(node);
-        if (childCount == 0) return 1;
+        if (tree.isExternal(node)) return 1;
 
         int leafCount = 0;
-        for (int i = 0; i < childCount; i++) {
+        for (int i = 0; i < tree.getChildCount(node); i++) {
             leafCount += getLeafCount(tree, tree.getChild(node, i));
         }
         return leafCount;
+    }
+
+    public static double getTreeLength(Tree tree) {
+        double length = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            length += tree.getBranchLength(tree.getNode(i));
+        }
+        return length;
     }
 
     public static double getTreeLength(Tree tree, NodeRef node) {

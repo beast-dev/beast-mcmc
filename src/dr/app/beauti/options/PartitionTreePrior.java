@@ -28,8 +28,9 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evolution.util.Taxa;
 import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.BirthDeathEpidemiologyModelParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
@@ -57,6 +58,8 @@ public class PartitionTreePrior extends PartitionOptions {
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
     private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
     private boolean fixedTree = false;
+    private Taxa subtreeTaxonSet = null;
+    private TreePriorType subtreePrior = null;
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
@@ -170,9 +173,9 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, false);
 
-        createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
+        createParameterUniformPrior(GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE, "GMRF Bayesian SkyGrid population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
-        createParameterGammaPrior("skygrid.precision", "GMRF Bayesian SkyGrid precision",
+        createParameterGammaPrior(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "GMRF Bayesian SkyGrid precision",
                 PriorScaleType.NONE, 0.1, 0.001, 1000, true, false);
         createParameterUniformPrior("skygrid.numGridPoints", "GMRF Bayesian SkyGrid number of grid points)",
                 PriorScaleType.NONE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
@@ -270,12 +273,12 @@ public class PartitionTreePrior extends PartitionOptions {
 //                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
-                "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, -1, 2);
+                "skyride.precision", OperatorType.GMRF_BLOCKUPDATE_OPERATOR, 1, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, -1, 2);
-        createScaleOperator("skygrid.precision", "skygrid precision", 0.75, 1.0);
+                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_BLOCKUPDATE_OPERATOR, 1, 2);
+        createScaleOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "skygrid precision", 0.75, 1.0);
         createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
-                "skygrid.precision", OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
+                GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -291,7 +294,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU, OperatorType.RANDOM_WALK_LOGIT, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random worl op ?
+                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random walk op ?
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN, demoTuning, 1);
 //        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -306,6 +309,17 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator(BirthDeathEpidemiologyModelParser.R0, demoTuning, 1);
         createScaleOperator(BirthDeathEpidemiologyModelParser.RECOVERY_RATE, demoTuning, 1);
         createScaleOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, demoTuning, 1);
+
+        // priors and operators for the optional subtree tree prior (currently only constant or exponential coalescent)
+        createParameterGammaPrior("subtree.constant.popSize", "coalescent population size parameter for subtree",
+                PriorScaleType.NONE, 1.0, 0.001, 1000, false);
+        createParameterGammaPrior("subtree.exponential.popSize", "coalescent population size parameter for subtree",
+                PriorScaleType.NONE, 1.0, 0.001, 1000, false);
+        createParameterLaplacePrior("subtree.exponential.growthRate", "coalescent growth rate parameter for subtree",
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 100.0);
+        createScaleOperator("subtree.constant.popSize", demoTuning, demoWeights);
+        createScaleOperator("subtree.exponential.popSize", demoTuning, demoWeights);
+        createOperator("subtree.exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
     }
 
     @Override
@@ -347,7 +361,7 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("skyride.precision"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID || nodeHeightPrior == TreePriorType.SKYGRID_HMC) {
             // params.add(getParameter("skygrid.logPopSize")); // force user to use GMRF prior, not allowed to change
-            params.add(getParameter("skygrid.precision"));
+            params.add(getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
@@ -379,8 +393,18 @@ public class PartitionTreePrior extends PartitionOptions {
 //            params.add(getParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
 
         }
+
+        if (subtreeTaxonSet != null) {
+            if (subtreePrior == TreePriorType.CONSTANT) {
+                params.add(getParameter("subtree.constant.popSize"));
+            } else if (subtreePrior == TreePriorType.EXPONENTIAL) {
+                params.add(getParameter("subtree.exponential.popSize"));
+                params.add(getParameter("subtree.exponential.growthRate"));
+            }
+        }
+
         return params;
-    }
+}
 
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
@@ -419,7 +443,7 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
             ops.add(getOperator("gmrfSkyGridGibbsOperator"));
-            ops.add(getOperator("skygrid.precision"));
+            ops.add(getOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID_HMC) {
             ops.add(getOperator("gmrfSkyGridHMCOperator"));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
@@ -459,6 +483,15 @@ public class PartitionTreePrior extends PartitionOptions {
 
             for (int i = originalOps; i < ops.size(); i++) {
                 ops.get(i).setUsed(useOps);
+            }
+        }
+
+        if (subtreeTaxonSet != null) {
+            if (subtreePrior == TreePriorType.CONSTANT) {
+                ops.add(getOperator("subtree.constant.popSize"));
+            } else if (subtreePrior == TreePriorType.EXPONENTIAL) {
+                ops.add(getOperator("subtree.exponential.popSize"));
+                ops.add(getOperator("subtree.exponential.growthRate"));
             }
         }
 
@@ -570,4 +603,19 @@ public class PartitionTreePrior extends PartitionOptions {
         return options;
     }
 
+    public void setSubtreeTaxonSet(Taxa subtreeTaxonSet) {
+        this.subtreeTaxonSet = subtreeTaxonSet;
+    }
+
+    public Taxa getSubtreeTaxonSet() {
+        return subtreeTaxonSet;
+    }
+
+    public void setSubtreePrior(TreePriorType subtreePrior) {
+        this.subtreePrior = subtreePrior;
+    }
+
+    public TreePriorType getSubtreePrior() {
+        return subtreePrior;
+    }
 }

@@ -27,17 +27,11 @@
 
 package dr.evomodel.coalescent;
 
-import java.util.ArrayList;
-import java.util.logging.Logger;
-
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.Binomial;
 
 public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 
@@ -77,7 +71,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		System.out.println(like.getLogLikelihood());*/
 	}
 	
-	public GMRFFixedGridLikelihood(TreeIntervalList intervalList, Parameter data, Parameter times, int tips){
+	public GMRFFixedGridLikelihood(NodeMappedTreeIntervalList intervalList, Parameter data, Parameter times, int tips){
 		super(intervalList, new Parameter.Default(tips), null, new Parameter.Default(5.0),
 				new Parameter.Default(1.0), null, null,false, true);
 				
@@ -96,9 +90,9 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		
 	}
 
-	public GMRFFixedGridLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
-	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-	                                      Parameter data, Parameter times) {
+	public GMRFFixedGridLikelihood(NodeMappedTreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
+								   Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+								   Parameter data, Parameter times) {
 		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;

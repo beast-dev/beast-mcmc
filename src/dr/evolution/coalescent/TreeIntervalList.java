@@ -33,55 +33,70 @@ import dr.evolution.tree.Tree;
 /**
  * This is interface for an Interval list that wraps a tree and provides
  * a mapping between nodes in the tree and intervals
- * @author jtmccrone
+ * @author arambaut
  */
-public interface TreeIntervalList extends IntervalList{
-//	void setIntervalStartIndices(int intervalCount);
-//	void initializeMaps();
+public interface TreeIntervalList extends IntervalList {
 
     /**
-     *
-      * @param nodeNumber the node number
-     * @return int[] of interval indices for which the node is a member
+     * Has the interval changed since the last tree update?
+     * @param i the interval
      */
-    int[] getIntervalsForNode(int nodeNumber);
+    boolean hasIntervalChanged(int i);
+
+        /**
+         * Returns the type of event at the start of interval.
+         */
+    IntervalType getIntervalStartType(int i);
 
     /**
-     *
-     * @param interval the index of interval
-     * @return int[] of node numbers that make up the interval
+     * Returns the type of event at the end of the interval.
      */
-    int[] getNodeNumbersForInterval(int interval);
-
-    // This option is set in the constructor as final
-//    /**
-//     * Set the flag that determines whether or not the interval node mapping should be built.
-//     * In some cases building the mapping comes with overhead that is best to pass up if the mapping is not needed.
-//     * @param buildIntervalNodeMapping boolean
-//     */
-//    void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping);
-    boolean isBuildIntervalNodeMapping();
+    IntervalType getIntervalEndType(int i);
 
     /**
-     * Return the node that ends a coalescent interval. Throws error if the interval is not a coalescent interval
-     * @param interval the index of the interval in question
-     * @return the node that ends the interval if it is a coalescent interval
+     * Returns the time of the start of an interval
      */
-    NodeRef getCoalescentNode(int interval);
+    double getIntervalStartTime(int i);
 
     /**
-     * I think this returns an array with an entry for each internal node sorted
-     * by node number. Assuming the array was sorted by height.
-     * @param unSortedNodeHeightGradient double[]
-     * @return
+     * Returns the time of the end of an interval
      */
-    double[] sortByNodeNumbers(double[] unSortedNodeHeightGradient);
+    double getIntervalEndTime(int i);
+    /**
+     * Returns the node number at the end of the interval.
+     */
+    int getIntervalNodeNumber(int i);
 
     /**
-     * Get the durations of all intervals that end in a coalescent event.
-     * @return array of the coalescent interval durations
+     * Returns the node number at the end of the interval.
      */
-    double[] getCoalescentIntervals();
+    int getIntervalEndNodeNumber(int i);
+
+    /**
+     * Returns the node number at the start of the interval.
+     */
+    int getIntervalStartNodeNumber(int i);
+
+    /**
+     * Gets the node ref for the node at the end of the interval
+     * @param interval the interval index
+     * @return the node ref
+     */
+    NodeRef getIntervalNode(int interval);
+
+    /**
+     * Gets the node ref for the node at the start of the interval
+     * @param interval the interval index
+     * @return the node ref
+     */
+    NodeRef getIntervalStartNode(int interval);
+
+    /**
+     * Gets the node ref for the node at the end of the interval
+     * @param interval the interval index
+     * @return the node ref
+     */
+    NodeRef getIntervalEndNode(int interval);
 
     /**
      * gets the tree

@@ -30,7 +30,7 @@ package dr.evomodel.coalescent.basta;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
@@ -45,14 +45,14 @@ import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*
  */
 public class CoalescentIntervalTraversal extends TreeTraversal {
 
-    private final BigFastTreeIntervals treeIntervals;
+    private final BigFastNodeMappedTreeIntervals treeIntervals;
     private final int numberSubIntervals;
 
     private int currentMatrixNumber;
     private int currentLikelihoodInterval;
 
     protected CoalescentIntervalTraversal(final Tree tree,
-                                          final BigFastTreeIntervals treeIntervals,
+                                          final BigFastNodeMappedTreeIntervals treeIntervals,
                                           final BranchRateModel branchRateModel,
                                           final int numberSubIntervals) {
         super(tree, branchRateModel, TraversalType.REVERSE_LEVEL_ORDER);

@@ -28,7 +28,6 @@
 package dr.evomodel.coalescent;
 
 import jebl.math.Binomial;
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 
@@ -72,7 +71,7 @@ public class CoalescentConstantLikelihood extends Likelihood.Abstract {
         	//System.err.println("Interval time " + i + ": " + intervals.getIntervalTime(i));
         	//System.err.println("Coalescent event " + i + ": " + intervals.getCoalescentEvents(i));
         	if (COALESCENT_EVENTS_ONLY) {
-        		if (intervals.getCoalescentEvents(i) > 0) {
+        		if (intervals.getCoalescentEventCount(i) > 0) {
         			logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
         		}
         	} else if (intervals.getLineageCount(i) > 2) {

@@ -31,18 +31,17 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Timer;
-import dr.xml.Reportable;
 
 class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]> {
 
     private final SpeciationModelGradientProvider provider;
-    private final BigFastTreeIntervals treeIntervals;
+    private final BigFastNodeMappedTreeIntervals treeIntervals;
     private final SpeciationModel speciationModel;
 
     public static final boolean MEASURE_RUN_TIME = false;

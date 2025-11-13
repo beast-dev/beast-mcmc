@@ -30,14 +30,12 @@ package dr.evomodel.speciation;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
-import dr.math.distributions.BetaDistribution;
 import dr.util.Timer;
 
 import java.util.Set;
@@ -49,7 +47,7 @@ import java.util.Set;
  */
 public class EfficientSpeciationLikelihood extends SpeciationLikelihood implements TreeTraitProvider {
 
-    private final BigFastTreeIntervals treeIntervals;
+    private final BigFastNodeMappedTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
     public static final boolean MEASURE_RUN_TIME = false;
@@ -74,7 +72,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             fixTimes();
         }
 
-        treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
+        treeIntervals = new BigFastNodeMappedTreeIntervals((TreeModel)tree);
 
         addModel(treeIntervals);
     }
@@ -91,7 +89,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         return (TreeModel) tree;
     }
 
-    final BigFastTreeIntervals getTreeIntervals() {
+    final BigFastNodeMappedTreeIntervals getTreeIntervals() {
         return treeIntervals;
     }
 

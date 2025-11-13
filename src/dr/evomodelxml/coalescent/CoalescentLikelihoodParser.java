@@ -39,8 +39,6 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodelxml.coalescent.TreeIntervalsParser.USE_FAST_INTERVALS;
-
 /**
  */
 public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
@@ -125,7 +123,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
             try {
                 if (intervalList == null) {
-                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, false);
+                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees);
                 }
                 // TreeIntervals now deals with all the interval stuff
 //                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);

@@ -28,8 +28,9 @@
 package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervals;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -109,8 +110,8 @@ public class OldSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         }
     }
 
-    private List<TreeIntervals> debugIntervalList;
-    public void setDebugIntervalList(List<TreeIntervals> intervals) {
+    private List<TreeIntervalList> debugIntervalList;
+    public void setDebugIntervalList(List<TreeIntervalList> intervals) {
         debugIntervalList = intervals;
     }
 

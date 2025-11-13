@@ -29,12 +29,9 @@ package dr.evolution.coalescent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Units;
-import dr.util.HeapSort;
-
-import java.util.List;
 
 /**
- * An interface for a set of coalescent intevals.
+ * An interface for a set of coalescent intervals.
  *
  *
  * @author Andrew Rambaut
@@ -77,7 +74,7 @@ public interface IntervalList extends Units {
 	/**
 	 * Returns the number coalescent events in an interval
 	 */
-	int getCoalescentEvents(int i);
+	int getCoalescentEventCount(int i);
 
 	/**
 	 * Returns the type of interval observed.
@@ -85,8 +82,8 @@ public interface IntervalList extends Units {
 	IntervalType getIntervalType(int i);
 
 	/**
-	 * get the total duration of these intervals. 
-	 */
+         * get the total duration of these intervals.
+         */
 	double getTotalDuration();
 
 	/**

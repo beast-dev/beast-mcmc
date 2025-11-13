@@ -28,7 +28,7 @@
 package dr.evomodel.bigfasttree;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -50,11 +50,11 @@ import java.util.List;
  * Smart intervals that don't need a full recalculation. 
  * author: JT
  */
-public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
-    public BigFastTreeIntervals(TreeModel tree) {
+public class BigFastNodeMappedTreeIntervals extends AbstractModel implements Units, NodeMappedTreeIntervalList {
+    public BigFastNodeMappedTreeIntervals(TreeModel tree) {
         this("bigFastIntervals",tree);
     }
-    public BigFastTreeIntervals(String name, TreeModel tree) {
+    public BigFastNodeMappedTreeIntervals(String name, TreeModel tree) {
         super(name);
         int maxEventCount = tree.getNodeCount();
 
@@ -133,7 +133,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     @Override
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }

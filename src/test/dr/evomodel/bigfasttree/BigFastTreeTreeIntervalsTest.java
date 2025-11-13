@@ -29,12 +29,12 @@ package test.dr.evomodel.bigfasttree;
 
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ScaleNodeHeightOperator;
@@ -54,13 +54,13 @@ import java.util.List;
 
 public class BigFastTreeTreeIntervalsTest extends TestCase {
 
-    private TreeIntervalList treeIntervals;
+    private NodeMappedTreeIntervalList treeIntervals;
 
     public void setUp() throws Exception {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         MathUtils.setSeed(7);
         tree = new BigFastTreeModel(importer.importTree(null));
-        treeIntervals = new BigFastTreeIntervals(tree);
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
         treeIntervals.calculateIntervals();
 
     }
@@ -218,7 +218,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
     public void testOrderChange() throws TreeUtils.MissingTaxonException, IOException, Importer.ImportException {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         tree = new BigFastTreeModel(importer.importTree(null));
-        IntervalList bigFastIntervals = new BigFastTreeIntervals(tree);
+        IntervalList bigFastIntervals = new BigFastNodeMappedTreeIntervals(tree);
         IntervalList intervals = new TreeIntervals(tree, null, null);
 
 
@@ -268,7 +268,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         tree = new DefaultTreeModel(importer.importTree(null));
 
         IntervalList intervals = new TreeIntervals(tree, null, null);
-        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        BigFastNodeMappedTreeIntervals bigFastTreeIntervals = new BigFastNodeMappedTreeIntervals(tree);
 
         SubtreeLeapOperator op = new SubtreeLeapOperator (tree,1,0.0001,SubtreeLeapOperator.DistanceKernelType.NORMAL,AdaptationMode.ADAPTATION_OFF,0.2);
         UniformNodeHeightOperator nh = new UniformNodeHeightOperator(tree,1);

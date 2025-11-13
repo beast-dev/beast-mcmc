@@ -29,7 +29,6 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 
 import java.util.ArrayList;
@@ -164,8 +163,6 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
             ti[nt] = new TreeIntervals(trees[nt]);
 
             TreeIntervals nti = ti[nt];
-            // make sure we get each coalescent event individually
-            nti.setMultifurcationLimit(0);
             // code probably incorrect for serial samples
             final int nLineages = nti.getIntervalCount();
             assert nLineages >= ttimes[nt].length : nLineages + " " + ttimes[nt].length;

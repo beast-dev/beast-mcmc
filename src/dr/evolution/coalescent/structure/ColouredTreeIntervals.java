@@ -152,7 +152,7 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     /**
      * Returns the number coalescent events in an interval
      */
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (getEvent(i).getType() == IntervalType.COALESCENT) return 1;
         return 0;
     }

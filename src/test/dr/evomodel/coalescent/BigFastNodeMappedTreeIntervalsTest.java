@@ -27,11 +27,8 @@
 
 package test.dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evolution.io.NewickImporter;
-
-import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -41,9 +38,9 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 
-public class TreeIntervalsTest extends TestCase {
+public class BigFastNodeMappedTreeIntervalsTest extends TestCase {
 
-    private TreeIntervals treeIntervals;
+    private NodeMappedTreeIntervalList treeIntervals;
 
     public void setUp() throws Exception {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
@@ -67,7 +64,7 @@ public class TreeIntervalsTest extends TestCase {
 //          +-----------------------------|(9) & [2.5]     1.51
 //                                        +-------------------------------------------- 5 & [0.99]
     public void testSmallTree() {
-        treeIntervals = new TreeIntervals(tree);
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
         treeIntervals.calculateIntervals();
 
         double[] intervals = {0, 0.5, 0.49, 0.01, 0.5, 0, 0.5, 0.5, 0.5, 1.0};
@@ -83,26 +80,17 @@ public class TreeIntervalsTest extends TestCase {
         }
         assertTrue(pass);
     }
-    public void testIntervalNode(){
-        treeIntervals = new TreeIntervals(tree);
+    public void testCoalescentNode(){
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
         treeIntervals.calculateIntervals();
 
         int[] coalIntervals = {3,6,7,8,9};
-        int[] nodeNumbers  ={6,7,8,9,10};
+        int[] nodeNumbers  ={6,7,9,8,10};
         boolean pass = true;
         for (int i=0;i<coalIntervals.length;i++) {
-            IntervalType type = treeIntervals.getIntervalType(coalIntervals[i]);
-            if (type != IntervalType.COALESCENT) {
-                System.out.print("Interval " + i + " not a coalescent interval event");
-                pass=false;
-                break;
-
-            }
-            int nodeNumber = treeIntervals.getIntervalNodeNumber(coalIntervals[i]);
-            if(nodeNumber != nodeNumbers[i]){
-                System.out.print("Interval " + i + ": ");
+            if(treeIntervals.getCoalescentNode(coalIntervals[i]).getNumber()!=nodeNumbers[i]){
                 System.out.print(coalIntervals[i]);
-                System.out.print(" != ");
+                System.out.print("!=");
                 System.out.println(nodeNumbers[i]);
                 pass=false;
                 break;
@@ -112,32 +100,92 @@ public class TreeIntervalsTest extends TestCase {
     }
 
     public void testCoalscentIntervals(){
-        treeIntervals = new TreeIntervals(tree);
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
         treeIntervals.calculateIntervals();
 
-        double[] trueIntervals = {0.0, 0.5, 0.49, 0.01, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0};
+        double[] trueIntervals = {0.01,0.5,0.5,0.5,1.0};
+        double[] calcIntervals = treeIntervals.getCoalescentIntervals();
         boolean pass = true;
         double epsilon = 1e-9;
 
-        double[] intervals = new double[treeIntervals.getIntervalCount()];
-        for (int i=0; i<treeIntervals.getIntervalCount(); i++) {
-            intervals[i] = treeIntervals.getInterval(i);
-        }
-
-        for (int i=0; i<treeIntervals.getIntervalCount(); i++) {
-            if (intervals[i] < trueIntervals[i]-epsilon ||
-                    intervals[i] > trueIntervals[i]+epsilon) {
-                System.out.println("Interval " + i + ": " + intervals[i] + " != " + Arrays.toString(trueIntervals));
+        assertEquals(trueIntervals.length,calcIntervals.length);
+        for (int i=0;i<trueIntervals.length;i++) {
+            if (calcIntervals[i] < trueIntervals[i]-epsilon || calcIntervals[i]>trueIntervals[i]+epsilon) {
+                System.out.println(Arrays.toString(trueIntervals));
+                System.out.println(Arrays.toString(calcIntervals));
                 pass=false;
                 break;
             }
         }
         assertTrue(pass);
     }
-    public void testHandleHeightChange(){
-        treeIntervals = new TreeIntervals(tree);
+    public void testNodeNumbersForInterval() {
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
         treeIntervals.calculateIntervals();
-        treeIntervals.testStoreState();
+
+        int[][] intervalNodes= {{1,2},{2, 4} ,{4 , 5},{5, 6},{6  , 0}  ,{0, 3},{3, 7} ,{7 , 9},{9  , 8},{8 , 10}};
+        boolean pass = true;
+        for (int j = 0; j < treeIntervals.getIntervalCount(); j++) {
+            int[] treeIntervalNodes = treeIntervals.getNodeNumbersForInterval(j);
+            if (intervalNodes[j][0] != treeIntervalNodes[0] || intervalNodes[j][1] != treeIntervalNodes[1]) {
+                System.out.println(Arrays.toString(intervalNodes));
+                System.out.println(Arrays.toString(treeIntervalNodes));
+                pass = false;
+                break;
+            }
+        }
+        assertTrue(pass);
+    }
+
+    public void testIntervalsForNode(){
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
+        treeIntervals.calculateIntervals();
+
+        int[][] intervalNodeIntervals= {{4,5},{0} ,{0 , 1},{5, 6},{1 , 2} ,{2, 3},{3, 4} ,{6 , 7},{8, 9},{7, 8},{9}};
+        boolean pass =true;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            int[] treeIntervalNodeIntervals = treeIntervals.getIntervalsForNode(i);
+            for (int j = 0; j < intervalNodeIntervals[i].length; j++) {
+                if (intervalNodeIntervals[i][j] != treeIntervalNodeIntervals[j]) {
+                    System.out.println(Arrays.toString(intervalNodeIntervals[i]));
+                    System.out.println(Arrays.toString(treeIntervalNodeIntervals));
+                    pass = false;
+                    break;
+                }
+            }
+        }
+        assertTrue(pass);
+    }
+
+    /**
+     * This test the internal node order sorting. It takes an array sorted by interval and
+     * returns the same array sorted by node number where the node is the node that starts the
+     * interval.
+     */
+    public void testSortByNodeNumber(){
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
+        treeIntervals.calculateIntervals();
+
+        //                    these are also the node indices for internal nodes
+        double[] intervalOrder = {6, 7, 9, 8, 10};
+        double[] nodeOrder = {6,7,8,9,10};
+
+        double[] sorted = treeIntervals.sortByNodeNumbers(intervalOrder);
+        double epsilon = 1e-9;
+        boolean pass=true;
+        for (int i = 1; i < sorted.length; i++) {
+            if (sorted[i] < nodeOrder[i]-epsilon || sorted[i]>nodeOrder[i]+epsilon) {
+                System.out.println(Arrays.toString(sorted));
+                System.out.println(Arrays.toString(nodeOrder));
+                pass = false;
+                break;
+            }
+        }
+        assertTrue(pass);
+    }
+    public void testHandleHeightChange(){
+        treeIntervals = new BigFastNodeMappedTreeIntervals(tree);
+        treeIntervals.calculateIntervals();
 
         // index              0  1     2    3    4     5   6    7   8    9
         double[] intervals = {0, 0.5, 0.49, 0.01, 0.5, 0, 0.5, 0.5, 0.5, 1.5};
@@ -148,16 +196,6 @@ public class TreeIntervalsTest extends TestCase {
         tree.endTreeEdit();
         treeIntervals.calculateIntervals();
         for (int j = 0; j < treeIntervals.getIntervalCount(); j++) {
-            boolean hasChanged = treeIntervals.hasIntervalChanged(j);
-            int nodeNumber = treeIntervals.getIntervalNodeNumber(j);
-            if (!hasChanged && (nodeNumber == 10)) {
-                System.out.println("expected: interval " + j + " hasChanged");
-                pass = false;
-            }
-            if (hasChanged && (nodeNumber != 10)) {
-                System.out.println("expected: interval " + j + " hasNotChanged");
-                pass = false;
-            }
             if (Math.abs(treeIntervals.getInterval(j) - intervals[j]) > 1E-3) {
                 System.out.println(treeIntervals.getInterval(j) - intervals[j]);
                 System.out.println("expected: " + intervals[j] + " got: " + treeIntervals.getInterval(j));

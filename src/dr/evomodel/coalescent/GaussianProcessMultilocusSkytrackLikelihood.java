@@ -28,7 +28,6 @@
 package dr.evomodel.coalescent;
 
 //import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 //import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;

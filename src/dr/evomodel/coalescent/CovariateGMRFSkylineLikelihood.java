@@ -27,15 +27,9 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
-import java.util.logging.Logger;
 
 /**
  * @author Erik Bloomquist
@@ -51,7 +45,7 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 
-	public CovariateGMRFSkylineLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
+	public CovariateGMRFSkylineLikelihood(NodeMappedTreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
 										  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 										  Parameter data, Parameter times) {
 		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);

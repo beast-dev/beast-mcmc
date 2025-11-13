@@ -29,7 +29,6 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.Tree;
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
@@ -109,7 +108,6 @@ public interface MultiLociTreeSet {
         public TreeIntervals getTreeIntervals(int nt) {
             if( dirty[nt] ) {
                 intervals[nt] = new TreeIntervals(trees.get(nt));
-                intervals[nt].setMultifurcationLimit(0);
                 dirty[nt] = false;
             }
             return intervals[nt];

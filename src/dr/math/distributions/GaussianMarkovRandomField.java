@@ -26,15 +26,12 @@
  */
 
 package dr.math.distributions;
-import dr.inference.distribution.Weights;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
-import dr.evolution.tree.Tree;
+
 import java.util.Arrays;
 
 /**

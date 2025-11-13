@@ -29,7 +29,7 @@ package dr.evolution.coalescent;
 
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
@@ -123,7 +123,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         }
 
         IntervalList intervals = likelihood.getIntervalList();
-        BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
+        BigFastNodeMappedTreeIntervals bigFastTreeIntervals = (BigFastNodeMappedTreeIntervals) intervals;
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 

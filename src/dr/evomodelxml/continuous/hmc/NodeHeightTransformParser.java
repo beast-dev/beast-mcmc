@@ -29,7 +29,7 @@ package dr.evomodelxml.continuous.hmc;
 
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
@@ -123,7 +123,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
 
         IntervalList intervalList = likelihood.getIntervalList();
-        if (!(intervalList instanceof TreeIntervalList)) {
+        if (!(intervalList instanceof NodeMappedTreeIntervalList)) {
             throw new IllegalArgumentException("Skyride likelihood does not have intervals which map to " +
                     "the underlying tree. This is needed for gradient calculations");
         }

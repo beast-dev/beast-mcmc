@@ -27,18 +27,14 @@
 
 package dr.inference.distribution;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-
-import java.util.Arrays;
 
 public class Weights extends AbstractModel implements RandomField.WeightProvider {
 
     private final TreeModel tree;
-    private BigFastTreeIntervals intervals;
+    private BigFastNodeMappedTreeIntervals intervals;
 
     private boolean indicesKnown;
 
@@ -47,7 +43,7 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
     public Weights(TreeModel tree) {
         super("just work");
         this.tree = tree;
-        intervals = new BigFastTreeIntervals((TreeModel) tree);
+        intervals = new BigFastNodeMappedTreeIntervals((TreeModel) tree);
         addModel(intervals);
 
         indicesKnown = false;

@@ -32,7 +32,7 @@ public interface MutableIntervalList extends IntervalList {
 
     void addSampleEvent(double time);
 
-    void addSampleEvent(double time,int nodeNumber);
+    void addSampleEvent(double time, int nodeNumber);
 
     void addCoalescentEvent(double time);
 
@@ -43,6 +43,4 @@ public interface MutableIntervalList extends IntervalList {
     void addNothingEvent(double time);
 
     void copyIntervals(MutableIntervalList intervalList);
-
-    int getNodeForEvent(int i);
 }

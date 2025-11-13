@@ -27,8 +27,8 @@
 
 package dr.app.treestat.statistics;
 
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.TreeIntervals;
 
 /**
  * Returns the total time in the genealogy in which exactly k lineages are present.

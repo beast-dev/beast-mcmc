@@ -46,8 +46,6 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
-    public static final boolean USE_FAST_INTERVALS = true;
-
     public String getParserName() {
         return TREE_INTERVALS;
     }
@@ -71,13 +69,8 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
             }
         }
 
-        boolean useFastIntervals = USE_FAST_INTERVALS;
-        if (xo.hasAttribute("fastIntervals")) {
-            useFastIntervals = xo.getBooleanAttribute("fastIntervals");
-        }
-
         try {
-            TreeIntervals intervals = new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
+            TreeIntervals intervals = new TreeIntervals(tree, includeSubtree, excludeSubtrees);
             if (!intervals.isMonophyly()) {
                 throw new XMLParseException("The included or excluded clades in TreeLineages with id, " + xo.getId() + ", are not monophyletic..");
             }

@@ -148,7 +148,7 @@ public class Intervals implements MutableIntervalList {
         return intervals[i];
     }
 
-    public double getIntervalTime(int i){
+    public double getIntervalTime(int i) {
         if (!intervalsKnown){
             calculateIntervals();
         }
@@ -162,7 +162,7 @@ public class Intervals implements MutableIntervalList {
         return lineageCounts[i];
     }
 
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }
@@ -186,13 +186,7 @@ public class Intervals implements MutableIntervalList {
         }
         return intervalTypes[i];
     }
-    //Return the node that triggers the event
-    public int getNodeForEvent(int i){
-        if (!intervalsKnown){
-            calculateIntervals();
-        }
-        return events[i].nodeNumber;
-    }
+
     public double getTotalDuration() {
 
         if (!intervalsKnown) {

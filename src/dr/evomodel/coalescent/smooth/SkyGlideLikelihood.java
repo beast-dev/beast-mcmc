@@ -29,7 +29,7 @@ package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -53,7 +53,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     private final List<TreeModel> trees;
 
-    private final List<BigFastTreeIntervals> intervals;
+    private final List<BigFastNodeMappedTreeIntervals> intervals;
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
 
@@ -70,7 +70,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         this.gridPointParameter = gridPointParameter;
         this.intervals = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
+            BigFastNodeMappedTreeIntervals treeIntervals = new BigFastNodeMappedTreeIntervals(trees.get(i));
             this.intervals.add(treeIntervals);
             addModel(treeIntervals);
         }
@@ -81,7 +81,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         return trees;
     }
 
-    public BigFastTreeIntervals getIntervals(int treeIndex) {
+    public BigFastNodeMappedTreeIntervals getIntervals(int treeIndex) {
         return intervals.get(treeIndex);
     }
 
@@ -145,7 +145,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         double[] gradient = new double[logPopSizeParameter.getDimension()];
 
         for (int index = 0; index < trees.size(); index++) {
-            BigFastTreeIntervals interval = intervals.get(index);
+            BigFastNodeMappedTreeIntervals interval = intervals.get(index);
             Tree thisTree = trees.get(index);
             int currentGridIndex = 0;
             for (int i = 0; i < interval.getIntervalCount(); i++) {
@@ -184,7 +184,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         double[] diagonalHessian = new double[logPopSizeParameter.getDimension()];
 
         for (int index = 0; index < trees.size(); index++) {
-            BigFastTreeIntervals interval = intervals.get(index);
+            BigFastNodeMappedTreeIntervals interval = intervals.get(index);
             Tree thisTree = trees.get(index);
             int currentGridIndex = 0;
             for (int i = 0; i < interval.getIntervalCount(); i++) {
@@ -270,7 +270,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
             void updateSingleTreePopulationInverseGradientWrtNodeHeight(SkyGlideLikelihood likelihood, int treeIndex, double[] derivatives) {
 
                 int currentGridIndex = 0;
-                BigFastTreeIntervals interval = likelihood.getIntervals(treeIndex);
+                BigFastNodeMappedTreeIntervals interval = likelihood.getIntervals(treeIndex);
                 TreeModel tree = likelihood.getTree(treeIndex);
 
                 for (int i = 0; i < interval.getIntervalCount(); i++) {
@@ -309,7 +309,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     public double[] getDerivativeWrtNodeHeight(int treeIndex, NodeHeightDerivativeType derivativeType) {
 
-        BigFastTreeIntervals interval = intervals.get(treeIndex);
+        BigFastNodeMappedTreeIntervals interval = intervals.get(treeIndex);
         Tree thisTree = trees.get(treeIndex);
         double[] gradient = new double[thisTree.getInternalNodeCount()];
 
@@ -380,7 +380,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
 
     public double getSingleTreeLogLikelihood(int index) {
-        BigFastTreeIntervals interval = intervals.get(index);
+        BigFastNodeMappedTreeIntervals interval = intervals.get(index);
         Tree thisTree = trees.get(index);
         int currentGridIndex = 0;
         double lnL = 0;
@@ -418,7 +418,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
     private double getSingleTreePopulationInverseLogLikelihood(int index) {
         int currentGridIndex = 0;
         double lnL = 0;
-        BigFastTreeIntervals interval = intervals.get(index);
+        BigFastNodeMappedTreeIntervals interval = intervals.get(index);
 
         for (int i = 0; i < interval.getIntervalCount(); i++) {
             if (interval.getIntervalType(i) == IntervalType.COALESCENT) {
@@ -433,7 +433,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
 
     private void updateSingleTreePopulationInverseGradientWrtLogPopSize(int index, double[] gradient) {
         int currentGridIndex = 0;
-        BigFastTreeIntervals interval = intervals.get(index);
+        BigFastNodeMappedTreeIntervals interval = intervals.get(index);
 
         for (int i = 0; i < interval.getIntervalCount(); i++) {
             if (interval.getIntervalType(i) == IntervalType.COALESCENT) {

@@ -35,11 +35,8 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-import dr.util.ComparableDouble;
-import dr.util.HeapSort;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 
 /**
@@ -54,13 +51,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
 
     public TreeIntervals(Tree tree) {
-            this(tree, true);
-    }
-    public TreeIntervals(Tree tree, boolean buildIntervalNodeMapping) {
         super("TreeIntervals");
-
-        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
-
         setup(tree);
     }
 
@@ -69,18 +60,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             TaxonList includeSubtree,
             List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
-        this(tree, includeSubtree, excludeSubtrees, false);
-    }
-
-    public TreeIntervals(
-            Tree tree,
-            TaxonList includeSubtree,
-            List<TaxonList> excludeSubtrees,
-            boolean buildIntervalNodeMapping) throws TreeUtils.MissingTaxonException {
-
         super("TreeIntervals");
-
-        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
 
         if (includeSubtree != null) {
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
@@ -108,33 +88,27 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         sampleCount = tree.getExternalNodeCount();
         coalescentCount = tree.getInternalNodeCount();
 
-        if (this.buildIntervalNodeMapping) {
-            intervals = new Intervals(tree.getNodeCount());
-            storedIntervals = new Intervals(tree.getNodeCount());
-        } else {
 //            intervals = new Intervals(tree.getNodeCount());
 //            storedIntervals = new Intervals(tree.getNodeCount());
-            // unlike the Intervals class, FastIntervals needs the exact number of sample and coalescent
-            // events at construction to create fixed size arrays.
-            if (excludedLeafSets != null) {
-                for (Set excludedLeafSet : excludedLeafSets) {
-                    // remove all the tip sample events but add one back for
-                    // where the excluded subtree joins the full tree
-                    sampleCount = sampleCount - excludedLeafSet.size() + 1;
-                    // remove all the coalescent events in the excluded subtree
-                    coalescentCount = coalescentCount - (excludedLeafSet.size() - 1);
-                }
+        // unlike the Intervals class, FastIntervals needs the exact number of sample and coalescent
+        // events at construction to create fixed size arrays.
+        if (excludedLeafSets != null) {
+            for (Set excludedLeafSet : excludedLeafSets) {
+                // remove all the tip sample events but add one back for
+                // where the excluded subtree joins the full tree
+                sampleCount = sampleCount - excludedLeafSet.size() + 1;
+                // remove all the coalescent events in the excluded subtree
+                coalescentCount = coalescentCount - (excludedLeafSet.size() - 1);
             }
-            if (includedLeafSet != null) {
-                sampleCount = includedLeafSet.size();
-                coalescentCount = includedLeafSet.size() - 1;
-            }
-            intervals = new FastIntervals(sampleCount, coalescentCount);
-            storedIntervals = new FastIntervals(sampleCount, coalescentCount);
         }
+        if (includedLeafSet != null) {
+            sampleCount = includedLeafSet.size();
+            coalescentCount = includedLeafSet.size() - 1;
+        }
+        intervals = new FastIntervals(sampleCount, coalescentCount);
+        storedIntervals = new FastIntervals(sampleCount, coalescentCount);
 
         eventsKnown = false;
-        this.intervalNodeMapping = buildIntervalNodeMapping ?new IntervalNodeMapping.Default(tree.getNodeCount(), tree):new IntervalNodeMapping.None();
 
         addStatistic(new DeltaStatistic());
     }
@@ -188,13 +162,20 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     // **************************************************************
 
     /**
+     * public method for unit tests
+     */
+    public void testStoreState() {
+        storeState();
+    }
+
+
+    /**
      * Stores the precalculated state: in this case the intervals
      */
     protected void storeState() {
         // copy the intervals into the storedIntervals
         storedIntervals.copyIntervals(intervals);
         storedEventsKnown = eventsKnown;
-        this.intervalNodeMapping.storeMapping();
     }
 
     /**
@@ -202,12 +183,11 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     protected void restoreState() {
         // swap the intervals back
-        MutableIntervalList tmp = storedIntervals;
+        FastIntervals tmp = storedIntervals;
         storedIntervals = intervals;
         intervals = tmp;
 
         eventsKnown = storedEventsKnown;
-        this.intervalNodeMapping.restoreMapping();
 
         assert isMonophyly();
     }
@@ -279,16 +259,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         // force a calculation of the intervals...
         intervals.getIntervalCount();
 
-        if (buildIntervalNodeMapping){
-            this.intervalNodeMapping.initializeMaps();
-            for(int i=0; i<intervals.getIntervalCount()+1;i++){
-                intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
-                if(i>0 && i<intervals.getIntervalCount()){ //If the event is not the first but not the last add it again for the start of the next interval
-                    intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
-                }
-            }
-            intervalNodeMapping.setIntervalStartIndices(intervals.getIntervalCount());
-        }
         eventsKnown = true;
     }
 
@@ -357,6 +327,18 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         return intervals.getSampleCount();
     }
 
+    public boolean hasIntervalChanged(int i) {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        boolean intervalChanged = intervals.getIntervalEndTime(i) != storedIntervals.getIntervalEndTime(i) ||
+                intervals.getIntervalType(i) != storedIntervals.getIntervalType(i) ||
+                intervals.getLineageCount(i) != storedIntervals.getLineageCount(i) ||
+                intervals.getIntervalNodeNumber(i) != storedIntervals.getIntervalNodeNumber(i);
+
+        return intervalChanged;
+    }
+
     @Override
     public double getInterval(int i) {
         if (!eventsKnown) {
@@ -367,10 +349,23 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     @Override
     public double getIntervalTime(int i) {
+        return getIntervalEndTime(i);
+    }
+
+    @Override
+    public double getIntervalStartTime(int i) {
         if (!eventsKnown) {
             calculateIntervals();
         }
-        return intervals.getIntervalTime(i);
+        return intervals.getIntervalStartTime(i);
+    }
+
+    @Override
+    public double getIntervalEndTime(int i) {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        return intervals.getIntervalEndTime(i);
     }
 
     @Override
@@ -383,20 +378,64 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     }
 
     @Override
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (!eventsKnown) {
             calculateIntervals();
         }
-        return intervals.getCoalescentEvents(i);
+        return intervals.getCoalescentEventCount(i);
     }
 
     @Override
     public IntervalType getIntervalType(int i) {
+        return getIntervalEndType(i);
+    }
+
+    @Override
+    public IntervalType getIntervalStartType(int i) {
         if (!eventsKnown) {
             calculateIntervals();
         }
-        return intervals.getIntervalType(i);
+        return intervals.getIntervalStartType(i);
     }
+
+    @Override
+    public IntervalType getIntervalEndType(int i) {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        return intervals.getIntervalEndType(i);
+    }
+
+    @Override
+    public int getIntervalNodeNumber(int interval) {
+        return intervals.getIntervalNodeNumber(interval);
+    }
+
+    @Override
+    public int getIntervalStartNodeNumber(int interval) {
+        return intervals.getIntervalStartNodeNumber(interval);
+    }
+
+    @Override
+    public int getIntervalEndNodeNumber(int interval) {
+        return intervals.getIntervalEndNodeNumber(interval);
+    }
+
+    @Override
+    public NodeRef getIntervalNode(int interval) {
+        return tree.getNode(intervals.getIntervalStartNodeNumber(interval));
+    }
+
+    @Override
+    public NodeRef getIntervalStartNode(int interval) {
+        return tree.getNode(intervals.getIntervalStartNodeNumber(interval));
+    }
+
+    @Override
+    public NodeRef getIntervalEndNode(int interval) {
+        return tree.getNode(intervals.getIntervalStartNodeNumber(interval));
+    }
+
 
     @Override
     public double getTotalDuration() {
@@ -422,6 +461,19 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         return intervals.isCoalescentOnly();
     }
 
+//    @Override
+//    public double[] getCoalescentIntervals() {
+//        double[] coalIntervals = new double[tree.getInternalNodeCount()];
+//        int currentIndex = 0;
+//        for (int i = 0; i < this.intervals.getIntervalCount(); i++) {
+//            if (this.getIntervalEndType(i)==IntervalType.COALESCENT) {
+//                coalIntervals[currentIndex] = this.getInterval(i);
+//                currentIndex+=1;
+//            }
+//        }
+//        return coalIntervals;
+//    }
+
     @Override
     public Type getUnits() {
         return intervals.getUnits();
@@ -432,58 +484,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         intervals.setUnits(units);
     }
 
-    // Interval Node mapping
-
-
-    @Override
-    public int[] getIntervalsForNode(int nodeNumber) {
-        if (!eventsKnown) {
-            calculateIntervals();
-        }
-        return this.intervalNodeMapping.getIntervalsForNode(nodeNumber);
-    }
-
-    @Override
-    public int[] getNodeNumbersForInterval(int interval) {
-        if (!eventsKnown) {
-            calculateIntervals();
-        }
-        return this.intervalNodeMapping.getNodeNumbersForInterval(interval);
-    }
-
-    @Override
-    public boolean isBuildIntervalNodeMapping() {
-        return buildIntervalNodeMapping;
-    }
-
-    @Override
-    public NodeRef getCoalescentNode(int interval) {
-        if (!eventsKnown) {
-            calculateIntervals();
-        }
-        if(getIntervalType(interval)!=IntervalType.COALESCENT) throw new IllegalArgumentException("Not a coalescent interval");
-        return tree.getNode(this.intervalNodeMapping.getNodeNumbersForInterval(interval)[1]); //TODO verify index;
-    }
-
-    @Override
-    public double[] sortByNodeNumbers(double[] unSortedNodeHeightGradient) {
-        if (!eventsKnown) {
-            calculateIntervals();
-        }
-        return this.intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
-    }
-
-    @Override
-    public double[] getCoalescentIntervals() {
-        double[] coalIntervals = new double[tree.getInternalNodeCount()];
-        int currentIndex = 0;
-        for (int i = 0; i < this.intervals.getIntervalCount(); i++) {
-            if (this.getIntervalType(i)==IntervalType.COALESCENT) {
-                coalIntervals[currentIndex] = this.getInterval(i);
-                currentIndex+=1;
-            }
-        }
-        return coalIntervals;
+    public void setIntervalsUnknown() {
+        eventsKnown = false;
     }
 
     // ****************************************************************
@@ -504,269 +506,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             throw new RuntimeException("Not implemented");
 //			return IntervalList.Utils.getDelta(intervals);
         }
-
     }
-    public interface IntervalNodeMapping {
-
-        void addNode(int nodeNumber);
-        void setIntervalStartIndices(int intervalCount);
-        void initializeMaps();
-
-        void mapNodeInterval(int nodeNumber, int intervalNumber);
-        //could put this in store restore model
-        void storeMapping();
-        void restoreMapping();
-        int[] getIntervalsForNode(int nodeNumber);
-        int[] getNodeNumbersForInterval(int interval);
-        double[] sortByNodeNumbers(double[] byIntervalOrder);
-
-        class Default implements IntervalNodeMapping  {
-            private int[] nodeNumbersInIntervals;
-            private int[] intervalStartIndices;
-            private int[] intervalNumberOfNodes;
-
-            private int[] storedNodeNumbersInIntervals;
-            private int[] storedIntervalStartIndices;
-            private int[] storedIntervalNumberOfNodes;
-
-            private int nextIndex = 0;
-            private int nIntervals;
-            private Tree tree;
-
-            private final int maxIndicesPerNode = 3;
-
-            public Default (int maxIntervalCount, Tree tree) {
-                nodeNumbersInIntervals = new int[maxIndicesPerNode * maxIntervalCount];
-                storedNodeNumbersInIntervals = new int[maxIndicesPerNode * maxIntervalCount];
-
-                intervalStartIndices = new int[maxIntervalCount];
-                storedIntervalStartIndices = new int[maxIntervalCount];
-
-                intervalNumberOfNodes = new int[maxIndicesPerNode * maxIntervalCount];
-                storedIntervalNumberOfNodes = new int[maxIndicesPerNode * maxIntervalCount];
-
-                this.tree = tree;
-
-            }
-
-            public void addNode(int nodeNumber) {
-                if (nextIndex > 500) {
-//                    System.err.println("why"); //Why not? -JT
-                }
-                nodeNumbersInIntervals[nextIndex] = nodeNumber;
-                nextIndex++;
-            }
-
-            public void mapNodeInterval(int nodeNumber, int intervalNumber) {
-                int index = 0;
-                while(index < maxIndicesPerNode) {
-                    if (intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + index] == -1) {
-                        intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + index] = intervalNumber;
-                        break;
-                    } else {
-                        index++;
-                    }
-                }
-                if (index == maxIndicesPerNode) {
-                    throw new RuntimeException("The node appears in more than" + maxIndicesPerNode + " intervals!");
-                }
-//                if (intervalNumberOfNodes[maxIndicesPerNode * nodeNumber] == -1 || intervalNumberOfNodes[maxIndicesPerNode * nodeNumber] == intervalNumber) {
-//                    intervalNumberOfNodes[3 * nodeNumber] = intervalNumber;
-//                } else if (intervalNumberOfNodes[2 * nodeNumber + 1] == -1) {
-//                    intervalNumberOfNodes[3 * nodeNumber + 1] = intervalNumber;
-//                } else {
-//                    double[] testIntervals = new double[nIntervals];
-//                    for (int i = 0; i < nIntervals - 1; i++) {
-//                        testIntervals[i] = tree.getNodeHeight(tree.getNode(nodeNumbersInIntervals[intervalStartIndices[i + 1]]))
-//                                - tree.getNodeHeight(tree.getNode(nodeNumbersInIntervals[intervalStartIndices[i]]));
-//                    }
-//                    throw new RuntimeException("The node appears in more than two intervals!");
-//                }
-            }
-
-            public void setIntervalStartIndices(int intervalCount) {
-
-                if (nodeNumbersInIntervals[nextIndex - 1] == nodeNumbersInIntervals[nextIndex - 2]) {
-                    nodeNumbersInIntervals[nextIndex - 1] = 0;
-                    nextIndex--;
-                }
-
-                int index = 1;
-                mapNodeInterval(nodeNumbersInIntervals[0], 0);
-
-                for (int i = 1; i < intervalCount; i++) {
-
-                    while(nodeNumbersInIntervals[index] != nodeNumbersInIntervals[index - 1]) {
-                        mapNodeInterval(nodeNumbersInIntervals[index], i - 1);
-                        index++;
-                    }
-
-                    intervalStartIndices[i] = index;
-                    mapNodeInterval(nodeNumbersInIntervals[index], i);
-                    index++;
-
-                }
-
-                while(index < nextIndex) {
-                    mapNodeInterval(nodeNumbersInIntervals[index], intervalCount - 1);
-                    index++;
-                }
-
-                nIntervals = intervalCount;
-            }
-
-            public void initializeMaps() {
-                Arrays.fill(intervalNumberOfNodes, -1);
-                Arrays.fill(intervalStartIndices, 0);
-                Arrays.fill(nodeNumbersInIntervals, 0);
-                nextIndex = 0;
-            }
-
-            @Override
-            public int[] getIntervalsForNode(int nodeNumber) {
-                int nonZeros = 0;
-                while(intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + nonZeros] != -1) {
-                    nonZeros++;
-                }
-                int[] result = new int[nonZeros];
-                for(int i = 0; i < nonZeros; i++) {
-                    result[i] = intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + i];
-                }
-                return result;
-//                if(intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + 1] == -1) {
-//                    return new int[]{intervalNumberOfNodes[maxIndicesPerNode * nodeNumber]};
-//                } else {
-//                    return new int[]{intervalNumberOfNodes[maxIndicesPerNode * nodeNumber], intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + 1]};
-//                }
-            }
-
-            @Override
-            public int[] getNodeNumbersForInterval(int interval) {
-                assert(interval < nIntervals);
-
-                final int startIndex = intervalStartIndices[interval];
-                int endIndex;
-                if (interval == nIntervals - 1) {
-                    endIndex = nextIndex - 1;
-                } else {
-                    endIndex = intervalStartIndices[interval + 1] - 1;
-                }
-
-                int[] nodeNumbers = new int[endIndex - startIndex + 1];
-
-                for (int i = 0; i < endIndex - startIndex + 1; i++) {
-                    nodeNumbers[i] = nodeNumbersInIntervals[startIndex + i];
-                }
-                return nodeNumbers;
-            }
-
-            @Override
-            public double[] sortByNodeNumbers(double[] byIntervalOrder) {
-                double[] sortedValues = new double[byIntervalOrder.length];
-                int[] nodeIndices = new int[byIntervalOrder.length];
-                ArrayList<ComparableDouble> mappedIntervals = new ArrayList<ComparableDouble>();
-                for (int i = 0; i < nodeIndices.length; i++) {
-                    mappedIntervals.add(new ComparableDouble(getIntervalsForNode(i + tree.getExternalNodeCount())[0]));
-                }
-                HeapSort.sort(mappedIntervals, nodeIndices);
-                for (int i = 0; i < nodeIndices.length; i++) {
-                    sortedValues[nodeIndices[i]] = byIntervalOrder[i];
-                }
-                return sortedValues;
-            }
-
-
-
-
-            /**
-             * Additional state information, outside of the sub-model is stored by this call.
-             */
-            public void storeMapping() {
-                System.arraycopy(nodeNumbersInIntervals,0,storedNodeNumbersInIntervals,0,nodeNumbersInIntervals.length);
-                System.arraycopy(intervalNumberOfNodes,0,storedIntervalNumberOfNodes,0,intervalNumberOfNodes.length);
-                System.arraycopy(intervalStartIndices,0,storedIntervalStartIndices,0,intervalStartIndices.length);
-            }
-
-            /**
-             * After this call the model is guaranteed to have returned its extra state information to
-             * the values coinciding with the last storeState call.
-             * Sub-models are handled automatically and do not need to be considered in this method.
-             */
-             public void restoreMapping() {
-                int[] tmp = storedNodeNumbersInIntervals;
-                storedNodeNumbersInIntervals = nodeNumbersInIntervals;
-                nodeNumbersInIntervals = tmp;
-
-                int[] tmp2 = storedIntervalNumberOfNodes;
-                storedIntervalNumberOfNodes=intervalNumberOfNodes;
-                intervalNumberOfNodes = tmp2;
-
-                int[] tmp3= storedIntervalStartIndices;
-                storedIntervalStartIndices = intervalStartIndices;
-                intervalStartIndices =tmp3;
-            }
-
-
-        }
-
-        class None implements IntervalNodeMapping {
-
-            @Override
-            public void addNode(int nodeNumber) {
-                // Do nothing
-            }
-
-            @Override
-            public void setIntervalStartIndices(int intervalCount) {
-                // Do nothing
-            }
-
-            @Override
-            public void initializeMaps() {
-                // Do nothing
-            }
-
-            @Override
-            public void mapNodeInterval(int nodeNumber, int intervalNumber) {
-                // Do nothing
-
-            }
-
-            @Override
-            public int[] getIntervalsForNode(int nodeNumber) {
-                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
-            }
-
-            @Override
-            public int[] getNodeNumbersForInterval(int interval) {
-                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
-            }
-
-            @Override
-            public double[] sortByNodeNumbers(double[] byIntervalOrder) {
-                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
-            }
-
-            /**
-             * Additional state information, outside of the sub-model is stored by this call.
-             */
-            public void storeMapping() {
-                //nothing
-            }
-
-            /**
-             * After this call the model is guaranteed to have returned its extra state information to
-             * the values coinciding with the last storeState call.
-             * Sub-models are handled automatically and do not need to be considered in this method.
-             */
-            public void restoreMapping() {
-               //Nothing
-            }
-
-
-        }
-    }
-
 
     // ****************************************************************
     // Private and protected stuff
@@ -778,7 +518,6 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set<String>[] excludedLeafSets = null;
-    private final boolean buildIntervalNodeMapping;
 
     private int sampleCount;
     private int coalescentCount;
@@ -790,12 +529,11 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     /**
      * The intervals.
      */
-    private MutableIntervalList intervals = null;
-    private IntervalNodeMapping intervalNodeMapping;
+    private FastIntervals intervals = null;
     /**
      * The stored values for intervals.
      */
-    private MutableIntervalList storedIntervals = null;
+    private FastIntervals storedIntervals = null;
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;

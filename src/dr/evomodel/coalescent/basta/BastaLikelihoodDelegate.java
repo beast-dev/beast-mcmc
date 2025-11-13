@@ -29,11 +29,10 @@ package dr.evomodel.coalescent.basta;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -114,7 +113,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         private int getMaxNumberOfCoalescentIntervals(Tree tree) {
-            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
+            BigFastNodeMappedTreeIntervals intervals = new BigFastNodeMappedTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
                 if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {

@@ -562,7 +562,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
                     //check to see if interval ends with coalescent event
                     //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                    if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
                         numCoalEvents[currentGridIndex]++;
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime - currentTime) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
@@ -602,7 +602,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
                         //check to see if interval ends with coalescent event
                         //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                        if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                        if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
                             numCoalEvents[currentGridIndex]++;
                         }
                         currentTime = nextTime;
@@ -621,7 +621,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
                         while (nextTime < gridPoints[currentGridIndex]) {
                             //check to see if interval is coalescent interval or sampling interval
                             //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                            if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                            if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
 
                                 numCoalEvents[currentGridIndex]++;
                             }
@@ -654,7 +654,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
                 //check to see if interval ends with coalescent event
                 // if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
 
                     numCoalEvents[currentGridIndex]++;
                 }
@@ -681,7 +681,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
 
 
                     //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                    if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
                         numCoalEvents[currentGridIndex]++;
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime - currentTime) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
@@ -696,7 +696,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
                     //check to see if interval is coalescent interval or sampling interval
                     //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                    if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                    if (intervalsList.get(i).getCoalescentEventCount(currentTimeIndex) > 0) {
 
                         numCoalEvents[currentGridIndex]++;
                     }

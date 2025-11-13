@@ -150,11 +150,11 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Returns the number coalescent events in an interval
      */
     @Override
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (!eventsKnown) {
             calculateIntervals();
         }
-        return intervals.getCoalescentEvents(i);
+        return intervals.getCoalescentEventCount(i);
     }
 
     /**

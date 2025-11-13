@@ -28,13 +28,12 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
-import dr.util.Timer;
 import dr.xml.Reportable;
 
 import static dr.evomodel.speciation.CachedGradientDelegate.MEASURE_RUN_TIME;
@@ -54,7 +53,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     private final SpeciationLikelihoodGradient.WrtParameter wrtParameter;
     private final TreeModel tree;
     private final SpeciationModel speciationModel;
-    private final BigFastTreeIntervals treeIntervals;
+    private final BigFastNodeMappedTreeIntervals treeIntervals;
     private final SpeciationModelGradientProvider provider;
 
     private final TreeTrait gradientProvider;

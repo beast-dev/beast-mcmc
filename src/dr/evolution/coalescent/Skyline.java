@@ -29,6 +29,7 @@ package dr.evolution.coalescent;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.math.Binomial;
 
 /**

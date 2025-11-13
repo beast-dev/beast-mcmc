@@ -31,13 +31,14 @@ import dr.math.MathUtils;
 
 import java.util.Arrays;
 
+import static dr.evolution.coalescent.IntervalType.SAMPLE;
+
 /**
  * A concrete class for a set of coalescent intervals.
  *
  * @author Andrew Rambaut
  */
 public class FastIntervals implements MutableIntervalList {
-
 
     public FastIntervals(int sampleCount, int coalescentCount) {
         startTime = Double.POSITIVE_INFINITY;
@@ -49,12 +50,15 @@ public class FastIntervals implements MutableIntervalList {
         intervalCount = eventCount - 1;
 
         sampleTimes = new double[sampleCount];
+        sampleNodeNumbers = new int[sampleCount];
         coalescentTimes = new double[coalescentCount];
+        coalescentNodeNumbers = new int[coalescentCount];
         eventTimes = new double[eventCount];
 
         intervals = new double[intervalCount];
         intervalTypes = new IntervalType[intervalCount];
         lineageCounts = new int[intervalCount];
+        intervalNodeNumbers = new int[intervalCount];
 
         cumulativeSampleCount = 0;
         cumulativeCoalescentCount = 0;
@@ -77,6 +81,7 @@ public class FastIntervals implements MutableIntervalList {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);
             System.arraycopy(source.intervalTypes, 0, intervalTypes, 0, intervals.length);
             System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, intervals.length);
+            System.arraycopy(source.intervalNodeNumbers, 0, intervalNodeNumbers, 0, intervals.length);
         }
     }
 
@@ -103,7 +108,7 @@ public class FastIntervals implements MutableIntervalList {
 
     @Override
     public void addSampleEvent(double time, int nodeNumber) {
-        // ignores the node number
+        sampleNodeNumbers[cumulativeSampleCount] = nodeNumber;
         addSampleEvent(time);
     }
 
@@ -120,7 +125,7 @@ public class FastIntervals implements MutableIntervalList {
 
     @Override
     public void addCoalescentEvent(double time, int nodeNumber) {
-        // ignores the node number
+        coalescentNodeNumbers[cumulativeCoalescentCount] = nodeNumber;
         addCoalescentEvent(time);
     }
 
@@ -131,11 +136,6 @@ public class FastIntervals implements MutableIntervalList {
 
     @Override
     public void addNothingEvent(double time) {
-        throw new UnsupportedOperationException("not supported in FastIntervals");
-    }
-
-    @Override
-    public int getNodeForEvent(int i) {
         throw new UnsupportedOperationException("not supported in FastIntervals");
     }
 
@@ -157,11 +157,25 @@ public class FastIntervals implements MutableIntervalList {
         return intervals[i];
     }
 
-    public double getIntervalTime(int i){
-        if (!intervalsKnown){
+    public double getIntervalStartTime(int i) {
+        if (!intervalsKnown) {
             calculateIntervals();
         }
-        return eventTimes[i];
+        if (i == 0) {
+            return startTime;
+        }
+        return intervals[i - 1];
+    }
+
+    public double getIntervalEndTime(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return intervals[i];
+    }
+
+    public double getIntervalTime(int i){
+        return getIntervalEndTime(i);
     }
 
     public int getLineageCount(int i) {
@@ -171,7 +185,7 @@ public class FastIntervals implements MutableIntervalList {
         return lineageCounts[i];
     }
 
-    public int getCoalescentEvents(int i) {
+    public int getCoalescentEventCount(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }
@@ -190,11 +204,46 @@ public class FastIntervals implements MutableIntervalList {
     }
 
     public IntervalType getIntervalType(int i) {
+        return getIntervalEndType(i);
+    }
+
+    public IntervalType getIntervalStartType(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i == 0) {
+            return SAMPLE;
+        }
+        return intervalTypes[i - 1];
+    }
+
+    public IntervalType getIntervalEndType(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
         }
         return intervalTypes[i];
     }
+
+    public int getIntervalNodeNumber(int i) {
+        return getIntervalEndNodeNumber(i);
+    }
+    public int getIntervalEndNodeNumber(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return intervalNodeNumbers[i];
+    }
+
+    public int getIntervalStartNodeNumber(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i == 0) {
+            return startNodeNumber;
+        }
+        return intervalNodeNumbers[i - 1];
+    }
+
     public double getTotalDuration() {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -233,8 +282,9 @@ public class FastIntervals implements MutableIntervalList {
             if (s < sampleCount && sampleTimes[s] <= coalescentTimes[c]) {
                 intervals[i] = sampleTimes[s] - lastTime;
                 eventTimes[i] = sampleTimes[s];
-                intervalTypes[i] = IntervalType.SAMPLE;
+                intervalTypes[i] = SAMPLE;
                 lineageCounts[i] = lineages;
+                intervalNodeNumbers[i] = sampleNodeNumbers[s];
                 lastTime = sampleTimes[s];
                 lineages++;
                 s++;
@@ -243,6 +293,7 @@ public class FastIntervals implements MutableIntervalList {
                 eventTimes[i] = coalescentTimes[c];
                 intervalTypes[i] = IntervalType.COALESCENT;
                 lineageCounts[i] = lineages;
+                intervalNodeNumbers[i] = coalescentNodeNumbers[c];
                 lastTime = coalescentTimes[c];
                 lineages--;
                 c++;
@@ -265,11 +316,15 @@ public class FastIntervals implements MutableIntervalList {
 
     private double startTime;
     private double finishTime;
+
+    private int startNodeNumber;
     private int cumulativeSampleCount;
     private int cumulativeCoalescentCount;
     private boolean intervalsKnown;
     private final double[] sampleTimes;
+    private final int[] sampleNodeNumbers;
     private final double[] coalescentTimes;
+    private final int[] coalescentNodeNumbers;
     private final double[] eventTimes;
     private final int eventCount;
     private final int sampleCount;
@@ -279,6 +334,8 @@ public class FastIntervals implements MutableIntervalList {
     private final double[] intervals;
     private final int[] lineageCounts;
     private final IntervalType[] intervalTypes;
+
+    private final int[] intervalNodeNumbers;
 
     /**
      * Testing speed of sorting using Arrays.sort()

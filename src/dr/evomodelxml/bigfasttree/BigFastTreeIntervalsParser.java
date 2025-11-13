@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.bigfasttree;
 
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastNodeMappedTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
@@ -43,7 +43,7 @@ public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new BigFastTreeIntervals( tree);
+        return new BigFastNodeMappedTreeIntervals( tree);
 
     }
 
@@ -56,7 +56,7 @@ public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return BigFastTreeIntervals.class;
+        return BigFastNodeMappedTreeIntervals.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

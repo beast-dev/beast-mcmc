@@ -27,7 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.coalescent.NodeMappedTreeIntervalList;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
@@ -44,7 +44,7 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
 
     private GMRFSkyrideLikelihood skyrideLikelihood;
     private Parameter coalescentIntervals;
-    private TreeIntervalList intervalNodeMapping;
+    private NodeMappedTreeIntervalList intervalNodeMapping;
 
     public NodeHeightToCoalescentIntervalsDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
@@ -54,7 +54,7 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
 
         this.skyrideLikelihood = skyrideLikelihood;
         //Casting guaranteed by parser
-        TreeIntervalList intervalList = (TreeIntervalList)skyrideLikelihood.getIntervalList();
+        NodeMappedTreeIntervalList intervalList = (NodeMappedTreeIntervalList)skyrideLikelihood.getIntervalList();
         assert intervalList.isBuildIntervalNodeMapping();
 //        intervalList.setBuildIntervalNodeMapping(true);
         this.intervalNodeMapping = intervalList;

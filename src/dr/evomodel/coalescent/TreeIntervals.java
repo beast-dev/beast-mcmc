@@ -456,12 +456,34 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         return buildIntervalNodeMapping;
     }
 
+    public NodeRef getLowerSamplingNode(int interval) {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        if (getIntervalType(interval) != IntervalType.SAMPLE) {
+            throw new IllegalArgumentException("interval is not a sampling interval");
+        }
+        return tree.getNode(this.intervalNodeMapping.getNodeNumbersForInterval(interval)[0]);
+    }
+
+    public NodeRef getSamplingNode(int interval) {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        if (getIntervalType(interval) != IntervalType.SAMPLE) {
+            throw new IllegalArgumentException("interval is not a sampling interval");
+        }
+        return tree.getNode(this.intervalNodeMapping.getNodeNumbersForInterval(interval)[1]);
+    }
+
     @Override
     public NodeRef getCoalescentNode(int interval) {
         if (!eventsKnown) {
             calculateIntervals();
         }
-        if(getIntervalType(interval)!=IntervalType.COALESCENT) throw new IllegalArgumentException("Not a coalescent interval");
+        if (getIntervalType(interval)!=IntervalType.COALESCENT) {
+            throw new IllegalArgumentException("Not a coalescent interval");
+        }
         return tree.getNode(this.intervalNodeMapping.getNodeNumbersForInterval(interval)[1]); //TODO verify index;
     }
 

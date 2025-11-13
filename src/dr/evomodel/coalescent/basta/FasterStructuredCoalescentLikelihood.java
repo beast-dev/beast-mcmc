@@ -35,10 +35,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.bigfasttree.IntervalChangedEvent;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -86,10 +86,8 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
 
         if (tree instanceof TreeModel) {
             //System.out.println("initial tree = " + (TreeModel) tree);
-            //this.intervals = new BigFastTreeIntervals((TreeModel) tree);
-            this.intervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) tree);
+            this.intervals = new TreeIntervals(tree);
             addModel(intervals);
-            //addModel((TreeModel) tree);
         } else {
             throw new IllegalArgumentException("Please provide a TreeModel for the structured coalescent model.");
         }
@@ -368,7 +366,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
         this.activeNodeNumbers.clear();
 
         //first sampling event is not considered so take this into account
-        NodeRef node = intervals.getSamplingNode(-1);
+        NodeRef node = intervals.getLowerSamplingNode(0);
         //System.out.println("sampling node: "+ treeModel.getNodeTaxon(node).getId());
 
         int offset = node.getNumber() * demes;
@@ -908,8 +906,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
     protected boolean areStatesRedrawn = false;
     protected boolean storedAreStatesRedrawn = false;
 
-    //private BigFastTreeIntervals intervals;
-    private BestSignalsFromBigFastTreeIntervals intervals;
+    private TreeIntervals intervals;
 
     //probability densities at the start and end of each coalescent interval
     //first index is the number of the coalescent interval

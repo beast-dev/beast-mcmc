@@ -184,6 +184,4 @@ public interface GmrfStructureDelegate  {
 
         }
     }
-
-    }
 }

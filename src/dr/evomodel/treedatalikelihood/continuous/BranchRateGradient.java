@@ -469,14 +469,16 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                                                                                 int dim) {
 
                 return new NormalSufficientStatistics(
-                        below.getRawMean(), below.getRawPrecision(), new DenseMatrix64F(dim, dim));
+                        below.getRawMean(), below.getRawPrecision(), new DenseMatrix64F(dim, dim),
+                        below.getSparseCholeskyPrecision());
             }
 
             private static NormalSufficientStatistics computeJointFullyMissing(NormalSufficientStatistics above,
                                                                                int dim) {
 
                 return new NormalSufficientStatistics(
-                        above.getRawMean(), above.getRawPrecision(), above.getRawVariance());
+                        above.getRawMean(), above.getRawPrecision(), above.getRawVariance(),
+                        above.getSparseCholeskyPrecision());
             }
 
             private static NormalSufficientStatistics computeJointLatent(NormalSufficientStatistics below,
@@ -499,7 +501,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                         variance,
                         dim);
 
-                return new NormalSufficientStatistics(mean, precision, variance);
+                return new NormalSufficientStatistics(mean, precision, variance, null);
             }
 
             private static NormalSufficientStatistics computeJointPartiallyMissing(NormalSufficientStatistics below,
@@ -541,7 +543,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     precision.unsafe_set(infinite, infinite, Double.POSITIVE_INFINITY);
                 }
 
-                return new NormalSufficientStatistics(mean, precision, variance);
+                return new NormalSufficientStatistics(mean, precision, variance, null);
             }
 
             public void makeGradientMatrices0(DenseMatrix64F matrix1, DenseMatrix64F logDetComponent,

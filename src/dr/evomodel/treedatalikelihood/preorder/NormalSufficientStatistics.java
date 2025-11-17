@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
@@ -38,110 +39,258 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
  */
 public class NormalSufficientStatistics {
 
-    private final DenseMatrix64F mean;
-    private final DenseMatrix64F precision;
+    public interface Precision {
 
-    private DenseMatrix64F variance = null;
+        double getPrecision(int row, int col);
 
-    NormalSufficientStatistics(double[] buffer,
-                                      int index,
-                                      int dim,
-                                      DenseMatrix64F Pd,
-                                      PrecisionType precisionType) {
+        double getVariance(int row, int col);
 
-        int partialOffset = (precisionType.getPartialsDimension(dim)) * index;
-        this.mean = MissingOps.wrap(buffer, partialOffset, dim, 1);
-        this.precision = DenseMatrix64F.wrap(dim, dim,
-                precisionType.getScaledPrecision(buffer, partialOffset, Pd.data, dim));
+        DenseMatrix64F getRawPrecision();
 
+        DenseMatrix64F getRawVariance();
+
+        DenseMatrix64F getRawPrecisionCopy();
+
+        DenseMatrix64F getRawVarianceCopy();
+
+        String toVectorizedString();
+
+        class Dense implements Precision {
+
+            final DenseMatrix64F precision;
+            DenseMatrix64F variance = null;
+
+            public Dense(double[] buffer,
+                         int index,
+                         int dim,
+                         Precision Pd,
+                         PrecisionType precisionType) {
+                this(DenseMatrix64F.wrap(dim, dim,
+                        precisionType.getScaledPrecision(buffer,
+                                (precisionType.getPartialsDimension(dim)) * index,
+                                Pd.getRawPrecision().data, dim)));
+            }
+
+            public Dense(double[] buffer,
+                         int index,
+                         int dim,
+                         DenseMatrix64F Pd,
+                         PrecisionType precisionType) {
+                this(DenseMatrix64F.wrap(dim, dim,
+                        precisionType.getScaledPrecision(buffer,
+                                (precisionType.getPartialsDimension(dim)) * index,
+                                Pd.data, dim)));
+            }
+
+            public Dense(double[] matrices,
+                         int index,
+                         int dim) {
+                this(MissingOps.wrap(matrices,  (dim * dim) * index, dim, dim));
+            }
+
+            public Dense(DenseMatrix64F precision) {
+                this.precision = precision;
+            }
+
+            public Dense(DenseMatrix64F precision, DenseMatrix64F variance) {
+                this.precision = precision;
+                this.variance = variance;
+            }
+
+            @Override
+            public String toVectorizedString() {
+                String string = NormalSufficientStatistics.toVectorizedString(precision);
+                if (variance != null) {
+                    string += " " + NormalSufficientStatistics.toVectorizedString(variance);
+                }
+                return string;
+            }
+
+            @Override
+            public double getPrecision(int row, int col) {
+                return precision.unsafe_get(row, col);
+            }
+
+            @Override
+            public double getVariance(int row, int col) {
+                computeVariance();
+                return variance.unsafe_get(row, col);
+            }
+
+            @Override
+            public DenseMatrix64F getRawPrecision() { return precision; }
+
+            @Override
+            public DenseMatrix64F getRawVariance() {
+                computeVariance();
+                return variance;
+            }
+
+            @Override
+            public DenseMatrix64F getRawPrecisionCopy() {
+                return precision.copy();
+            }
+
+            public DenseMatrix64F getRawVarianceCopy() {
+                computeVariance();
+                return variance.copy();
+            }
+
+            private void computeVariance() {
+                if (variance == null) {
+                    variance = new DenseMatrix64F(precision.numRows, precision.numCols);
+                    safeInvert2(precision, variance, false);
+                }
+            }
+        }
+
+        class Sparse implements Precision {
+
+            @Override
+            public double getPrecision(int row, int col) {
+                throw new RuntimeException("Not implemented");
+            }
+
+            @Override
+            public double getVariance(int row, int col) {
+                throw new RuntimeException("Not implemented");
+            }
+
+            @Override
+            public DenseMatrix64F getRawPrecision() {
+                return null;
+            }
+
+            @Override
+            public DenseMatrix64F getRawVariance() {
+                return null;
+            }
+
+            @Override
+            public DenseMatrix64F getRawPrecisionCopy() {
+                return null;
+            }
+
+            @Override
+            public DenseMatrix64F getRawVarianceCopy() {
+                return null;
+            }
+
+            @Override
+            public String toVectorizedString() {
+                return null;
+            }
+        }
     }
 
-    @SuppressWarnings("unused")
+    private final DenseMatrix64F mean;
+    private final Precision precision;
+
+    NormalSufficientStatistics(double[] buffer,
+                               int index,
+                               int dim,
+                               Precision precision,
+                               PrecisionType precisionType) {
+        int partialOffset = (precisionType.getPartialsDimension(dim)) * index;
+        this.mean = MissingOps.wrap(buffer, partialOffset, dim, 1);
+        this.precision = new Precision.Dense(buffer, index, dim, precision, precisionType);
+    }
+
+//    NormalSufficientStatistics(double[] buffer,
+//                               int index,
+//                               int dim,
+//                               DenseMatrix64F Pd,
+//                               SparseSquareUpperTriangular cPd,
+//                               PrecisionType precisionType) {
+//
+//        int partialOffset = (precisionType.getPartialsDimension(dim)) * index;
+//        this.mean = MissingOps.wrap(buffer, partialOffset, dim, 1);
+//        if (Pd != null) {
+//            this.precision = new Precision.Dense(buffer, index, dim, Pd, precisionType);
+//        } else if (cPd != null) {
+//            this.precision = new Precision.Sparse();
+//        } else {
+//            throw new RuntimeException("Not yet implemented");
+//        }
+//    }
+
     NormalSufficientStatistics(double[] mean,
-                                      double[] precision,
-                                      int index,
-                                      int dim,
-                                      DenseMatrix64F Pd,
-                                      PrecisionType precisionType) {
+                               double[] precision,
+                               int index,
+                               int dim,
+                               DenseMatrix64F Pd,
+                               SparseSquareUpperTriangular cPd,
+                               PrecisionType precisionType) {
 
         int meanOffset = dim * index;
         this.mean = MissingOps.wrap(mean, meanOffset, dim, 1);
-
-        int precisionOffset = (dim * dim) * index;
-//        this.precision = new DenseMatrix64F(dim, dim);
-        this.precision = MissingOps.wrap(precision, precisionOffset, dim, dim);
-//                DenseMatrix64F.wrap(dim, dim,
-//                        precisionType.getScaledPrecision(precision, precisionOffset, Pd.data, dim));
-
+        this.precision = new Precision.Dense(precision, index, dim);
     }
 
-    @SuppressWarnings("unused")
     public NormalSufficientStatistics(DenseMatrix64F mean,
-                                      DenseMatrix64F precision) {
+                                      DenseMatrix64F precision,
+                                      SparseSquareUpperTriangular cPd) {
         this.mean = mean;
-        this.precision = precision;
+        this.precision = new Precision.Dense(precision);
     }
 
-    public NormalSufficientStatistics(DenseMatrix64F mean, DenseMatrix64F precision, DenseMatrix64F variance) {
+    public NormalSufficientStatistics(DenseMatrix64F mean, DenseMatrix64F precision, DenseMatrix64F variance,
+                                      SparseSquareUpperTriangular cPd) {
         this.mean = mean;
-        this.precision = precision;
-        this.variance = variance;
+        this.precision = new Precision.Dense(precision, variance);
+//        this.precision = precision;
+//        this.variance = variance;
+//        this.cPd = null;
     }
 
     public double getMean(int row) {
         return mean.get(row);
     }
 
-    public double getPrecision(int row, int col) {
-        return precision.unsafe_get(row, col);
-    }
+//    public double getPrecision(int row, int col) {
+//        return precision.unsafe_get(row, col);
+//    }
 
-    public double getVariance(int row, int col) {
-        computeVariance();
-        return variance.unsafe_get(row, col);
-    }
+//    public double getVariance(int row, int col) {
+//        computeVariance();
+//        return variance.unsafe_get(row, col);
+//    }
+
+    public SparseSquareUpperTriangular getSparseCholeskyPrecision() { return null; } //cPd.getMatrix(); }
+
+    public double getSparseCholeskyPrecisionScalar() { return 0.0; } //cPd.getScalar(); }
 
     @Deprecated
-    public DenseMatrix64F getRawPrecision() { return precision; }
+    public DenseMatrix64F getRawPrecision() { return precision.getRawPrecision(); }
 
     @Deprecated
     public DenseMatrix64F getRawMean() { return mean; }
 
     @Deprecated
-    public DenseMatrix64F getRawVariance() {
-        computeVariance();
-        return variance;
-    }
+    public DenseMatrix64F getRawVariance() { return precision.getRawVariance(); }
 
-    public DenseMatrix64F getRawPrecisionCopy() {
-        return precision.copy();
-    }
+    public DenseMatrix64F getRawPrecisionCopy() { return precision.getRawPrecisionCopy(); }
 
     public DenseMatrix64F getRawMeanCopy() { return mean.copy(); }
 
-    public DenseMatrix64F getRawVarianceCopy() {
-        computeVariance();
-        return variance.copy();
-    }
+    public DenseMatrix64F getRawVarianceCopy() { return precision.getRawVarianceCopy(); }
 
-    private void computeVariance() {
-        if (variance == null) {
-            variance = new DenseMatrix64F(precision.numRows, precision.numCols);
-            safeInvert2(precision, variance, false);
-        }
-    }
     public String toString() {
-        return mean + " " + precision;
+        return mean + " " + precision.toString();
     }
 
     String toVectorizedString() {
-        StringBuilder sb = new StringBuilder();
-        sb. append(toVectorizedString(mean.getData())).append(" ").append(toVectorizedString(precision.getData()));
-        if (variance != null) {
-            sb.append(" ").append(toVectorizedString(variance.getData()));
-        }
-        return sb.toString();
+        return toVectorizedString(mean.getData()) + " " + precision.toVectorizedString();
     }
+
+//    String toVectorizedString() {
+//        StringBuilder sb = new StringBuilder();
+//        sb. append(toVectorizedString(mean.getData())).append(" ").append(toVectorizedString(precision.getData()));
+//        if (variance != null) {
+//            sb.append(" ").append(toVectorizedString(variance.getData()));
+//        }
+//        return sb.toString();
+//    }
 
     public static String toVectorizedString(DenseMatrix64F matrix) {
         return toVectorizedString(matrix.getData());

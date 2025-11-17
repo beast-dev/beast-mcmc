@@ -159,7 +159,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             } else {
                 MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                         tmpMean, 0, // input mean
-                        cholesky, sqrtScale, // input variance
+                        diffusionRepresentation.getVarianceCholeskyDecomposition(0),
+                        sqrtScale, // input variance
                         sample, offsetSample, // output sample
                         tmpEpsilon);
             }
@@ -255,7 +256,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             } else {
                 MultivariateNormalDistribution.nextMultivariateNormalCholesky(
                         tmpMean, 0, // input mean
-                        cholesky, sqrtScale, // input variance
+                        diffusionRepresentation.getVarianceCholeskyDecomposition(0),
+                        sqrtScale, // input variance
                         sample, offsetSample, // output sample
                         tmpEpsilon);
             }

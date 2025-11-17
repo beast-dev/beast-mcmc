@@ -618,7 +618,8 @@ public interface ContinuousTraitGradientForBranch {
             final NormalSufficientStatistics aboveData = new NormalSufficientStatistics(
                     above.getRawMeanCopy(),
                     aboveDataPrecision,
-                    aboveDataVariance);
+                    aboveDataVariance,
+                    null);
             // Below data
             int[] missings = statistics.getMissing();
             DenseMatrix64F precisionData = new DenseMatrix64F(dim, dim);
@@ -630,7 +631,7 @@ public interface ContinuousTraitGradientForBranch {
             }
             final NormalSufficientStatistics belowData = new NormalSufficientStatistics(
                     below.getRawMeanCopy(),
-                    precisionData);
+                    precisionData, null);
 
             // Joint data
             NormalSufficientStatistics jointStatisticsData =

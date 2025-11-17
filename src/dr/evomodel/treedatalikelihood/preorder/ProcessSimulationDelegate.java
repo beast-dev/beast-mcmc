@@ -35,11 +35,11 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.matrix.SparseCompressedMatrix;
 import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -168,9 +168,10 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final RootProcessDelegate rootProcessDelegate;
         final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
-        double[] diffusionVariance;
+//        double[] diffusionVariance;
         DenseMatrix64F Vd;
         DenseMatrix64F Pd;
+        DiffusionRepresentation diffusionRepresentation;
 
         double[][] cholesky;
         SparseSquareUpperTriangular choleskyPrecision;
@@ -233,30 +234,36 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         protected void setupStatistics() {
             if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
-                if (diffusionVariance == null) {
-                    // TODO
-                }
-                if (cholesky == null) {
-                    choleskyPrecision = ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition();
-                }
+//                if (diffusionVariance == null) {
+//                    // TODO
+//                }
+//                if (cholesky == null) {
+//                    choleskyPrecision = ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition();
+//                }
             } else {
-                if (diffusionVariance == null) {
-                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
-                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
-                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
-                    Pd = new DenseMatrix64F(diffusionPrecision);
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Dense(
+                           diffusionModel.getPrecisionMatrixAsVector(), 1, diffusionModel.getDimension());
                 }
-                if (cholesky == null) {
-                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
-                }
+//                if (diffusionVariance == null) {
+//                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
+//                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
+//                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+//                    Pd = new DenseMatrix64F(diffusionPrecision);
+//                    this.diffusionRepresentation = new DiffusionRepresentation.Dense();
+//                }
+//                if (cholesky == null) {
+//                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+//                }
             }
         }
 
         void clearCache() {
-            diffusionVariance = null;
-            Vd = null;
-            Pd = null;
-            cholesky = null;
+//            diffusionVariance = null;
+//            Vd = null;
+//            Pd = null;
+//            cholesky = null;
+            diffusionRepresentation = null;
             conditionalMap = null;
         }
 
@@ -270,7 +277,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return cholesky;
         }
 
-        static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
+        public static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 

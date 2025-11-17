@@ -29,6 +29,8 @@ public class SparseCompressedMatrix {
         return values.length;
     }
 
+    public int getDimension() { return nMajor * nMajor; }
+
     public SparseCompressedMatrix(int[] majorStarts, int[] minorIndices, double[] values,
                                   int nMajor, int nMinor) {
         this.majorStarts = majorStarts;

@@ -137,7 +137,11 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
 
         // Pre stats
         final double[] fullConditionalPartial = super.getTraitForNode(node);
-        NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait, Pd, likelihoodDelegate.getPrecisionType());
+        NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait,
+                diffusionRepresentation.getPrecision(0),
+//                Pd,
+//                choleskyPrecision,
+                likelihoodDelegate.getPrecisionType());
         DenseMatrix64F precisionPre = statPre.getRawPrecisionCopy();
         DenseMatrix64F meanPre = statPre.getRawMeanCopy();
 

@@ -35,6 +35,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -153,7 +154,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
                 MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
                         tmpMean, 0,
-                        choleskyPrecision, sqrtScale,
+                        diffusionRepresentation.getPrecisionCholeskyDecomposition(0),
+                        sqrtScale,
                         sample, offsetSample,
                         tmpEpsilon);
             } else {
@@ -250,7 +252,8 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
             if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
                 MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
                         tmpMean, 0,
-                        choleskyPrecision, sqrtScale,
+                        diffusionRepresentation.getPrecisionCholeskyDecomposition(0),
+                        sqrtScale,
                         sample, offsetSample,
                         tmpEpsilon);
             } else {

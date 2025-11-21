@@ -42,6 +42,22 @@ public class MatrixSufficientStatistics extends NormalSufficientStatistics {
     private final DenseMatrix64F actualization;
 
     MatrixSufficientStatistics(double[] displacement,
+                               PreOrderPrecision precision,
+                               double[] actualization,
+                               int index,
+                               int dim,
+                               DenseMatrix64F Pd,
+                               SparseSquareUpperTriangular cPd,
+                               PrecisionType precisionType) {
+
+        super(displacement, precision, index, dim, precisionType);
+
+        int actualizationOffset = (dim * dim) * index;
+        this.actualization = MissingOps.wrap(actualization, actualizationOffset, dim, dim);
+
+    }
+
+    MatrixSufficientStatistics(double[] displacement,
                                double[] precision,
                                double[] actualization,
                                int index,

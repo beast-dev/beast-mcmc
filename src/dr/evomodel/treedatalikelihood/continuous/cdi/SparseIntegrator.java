@@ -287,7 +287,7 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
     @Override
     public DiffusionRepresentation diffusionFactory(int count) {
-        return new DiffusionRepresentation.Sparse(new SparseCompressedMatrix[count]);
+        return new DiffusionRepresentation.Sparse(count);
     }
 
     @Override

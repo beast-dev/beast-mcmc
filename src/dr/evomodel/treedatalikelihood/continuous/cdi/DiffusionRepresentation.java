@@ -27,10 +27,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.PreOrderPrecision;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.matrix.SparseCompressedMatrix;
+import dr.matrix.SparseSquareUpperTriangular;
 
 /**
  * @author Marc A. Suchard
@@ -48,15 +49,15 @@ public interface DiffusionRepresentation {
 
     double[][] getVarianceCholeskyDecomposition(int index);
 
+    SparseSquareUpperTriangular getPrecisionCholeskyDecomposition(int index);
+
     double[] getVariance(int index);
 
-    NormalSufficientStatistics.Precision getPrecision(int index);
+    PreOrderPrecision getPrecision(int index);
 
     void fill(double[] src, int denseOffset, int denseLength,
               SparseCompressedMatrix mat, int sparseIndex,
               double scalar);
-
-    double getScalar(int sparseIndex);
 
     class Dense implements DiffusionRepresentation {
 
@@ -87,6 +88,11 @@ public interface DiffusionRepresentation {
         }
 
         @Override
+        public SparseSquareUpperTriangular getPrecisionCholeskyDecomposition(int index) {
+            return null;
+        }
+
+        @Override
         public double[] getVariance(int index) {
             if (variances == null) {
                 variances = new double[count][];
@@ -100,11 +106,9 @@ public interface DiffusionRepresentation {
         }
 
         @Override
-        public NormalSufficientStatistics.Precision getPrecision(int index) {
-            NormalSufficientStatistics.Precision p = new NormalSufficientStatistics.Precision.Dense(
-                    matrix, index, dim
-            );
-            return p;
+        public PreOrderPrecision getPrecision(int index) {
+            return new PreOrderPrecision.Dense(
+                    matrix, index, dim);
         }
 
         private static double[] computeVarianceFromPrecision(double[] matrix, int index, int dim) {
@@ -134,9 +138,6 @@ public interface DiffusionRepresentation {
         }
 
         @Override
-        public double getScalar(int sparseIndex) { return 1.0; }
-
-        @Override
         public void fill(double[] src, int denseOffset, int denseLength,
                          SparseCompressedMatrix mat, int sparseIndex,
                          double scalar) {
@@ -148,12 +149,18 @@ public interface DiffusionRepresentation {
 
     class Sparse implements DiffusionRepresentation {
 
-        private final SparseCompressedMatrix[] matrices;
-        private final double[] scalars;
+        private final PreOrderPrecision.Sparse[] precisions;
 
-        public Sparse(SparseCompressedMatrix[] matrices) {
-            this.matrices = matrices;
-            this.scalars = new double[matrices.length];
+        public Sparse(int count) {
+            this.precisions = new PreOrderPrecision.Sparse[count];
+        }
+
+        public Sparse(SparseCompressedMatrix sparsePrecisionMatrix,
+                      SparseSquareUpperTriangular precisionCholeskyDecomposition,
+                      double scalar) {
+            this.precisions = new PreOrderPrecision.Sparse[] {
+                    new PreOrderPrecision.Sparse(sparsePrecisionMatrix, precisionCholeskyDecomposition, scalar)
+            };
         }
 
         @Override
@@ -163,33 +170,34 @@ public interface DiffusionRepresentation {
 
         @Override
         public int getDimension() {
-            return matrices[0].getDimension();
+            return -1;
         }
 
         @Override
         public double[][] getVarianceCholeskyDecomposition(int index) {
-            return new double[0][];
+            return null;
+        }
+
+        public SparseSquareUpperTriangular getPrecisionCholeskyDecomposition(int index) {
+            return precisions[index].getCholeskyDecomposition();
         }
 
         @Override
         public double[] getVariance(int index) {
-            return new double[0];
+            return null;
         }
 
         @Override
-        public NormalSufficientStatistics.Precision getPrecision(int index) {
-            return null;
+        public PreOrderPrecision getPrecision(int index) {
+            return precisions[index];
         }
 
         @Override
         public void fill(double[] src, int denseOffset, int denseLength,
                          SparseCompressedMatrix mat, int sparseIndex,
                          double scalar) {
-            matrices[sparseIndex] = mat;
-            scalars[sparseIndex] = scalar;
+            precisions[sparseIndex] = new PreOrderPrecision.Sparse(
+                    mat, null, scalar);
         }
-
-        @Override
-        public double getScalar(int sparseIndex) { return scalars[sparseIndex]; }
     }
 }

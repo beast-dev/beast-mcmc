@@ -121,7 +121,7 @@ public interface ContinuousTraitGradientForBranch {
             final NormalSufficientStatistics below = statistics.getBelow();
             final NormalSufficientStatistics above = statistics.getAbove();
             NormalSufficientStatistics jointStatistics =
-                    BranchRateGradient.ContinuousTraitGradientForBranch.Default.computeJointStatistics(
+                    BranchRateGradient.ContinuousTraitGradientForBranch.Dense.computeJointStatistics(
                             below, above, dim
                     );
 
@@ -635,7 +635,7 @@ public interface ContinuousTraitGradientForBranch {
 
             // Joint data
             NormalSufficientStatistics jointStatisticsData =
-                    BranchRateGradient.ContinuousTraitGradientForBranch.Default.computeJointStatistics(
+                    BranchRateGradient.ContinuousTraitGradientForBranch.Dense.computeJointStatistics(
                             belowData, aboveData, dim
                     );
 

@@ -37,8 +37,6 @@ import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
-
 /**
  * @author Marc A. Suchard
  */
@@ -69,11 +67,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
             subInds[i] = i + offset;
         }
 
-        if (offset != 0 || dimGradient != dimTrait) {
-            doSubset = true;
-        } else {
-            doSubset = false;
-        }
+        doSubset = offset != 0 || dimGradient != dimTrait;
     }
 
     public static String getName(String name) {

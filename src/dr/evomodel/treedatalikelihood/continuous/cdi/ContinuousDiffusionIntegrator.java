@@ -234,9 +234,6 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         @Override
         public void setPostOrderPartial(int bufferIndex, final double[] partial) {
 
-            if (partial.length != dimPartial) {
-                System.err.println("here");
-            }
             assert(partial.length == dimPartial);
             assert(partials != null);
 

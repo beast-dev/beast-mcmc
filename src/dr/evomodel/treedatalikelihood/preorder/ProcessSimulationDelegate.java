@@ -168,7 +168,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final RootProcessDelegate rootProcessDelegate;
         final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
-//        double[] diffusionVariance;
+        double[] diffusionVariance;
         DenseMatrix64F Vd;
         DenseMatrix64F Pd;
         DiffusionRepresentation diffusionRepresentation;
@@ -234,35 +234,35 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         protected void setupStatistics() {
             if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
-//                if (diffusionVariance == null) {
-//                    // TODO
-//                }
-//                if (cholesky == null) {
-//                    choleskyPrecision = ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition();
-//                }
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Sparse(
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition(),
+                            1.0);
+                }
             } else {
                 if (diffusionRepresentation == null) {
                     diffusionRepresentation = new DiffusionRepresentation.Dense(
                            diffusionModel.getPrecisionMatrixAsVector(), 1, diffusionModel.getDimension());
                 }
-//                if (diffusionVariance == null) {
-//                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
-//                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
-//                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
-//                    Pd = new DenseMatrix64F(diffusionPrecision);
-//                    this.diffusionRepresentation = new DiffusionRepresentation.Dense();
-//                }
-//                if (cholesky == null) {
-//                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
-//                }
+                // TODO check is below is necessary
+                if (diffusionVariance == null) {
+                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
+                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
+                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+                    Pd = new DenseMatrix64F(diffusionPrecision);
+                }
+                if (cholesky == null) {
+                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+                }
             }
         }
 
         void clearCache() {
-//            diffusionVariance = null;
-//            Vd = null;
-//            Pd = null;
-//            cholesky = null;
+            diffusionVariance = null;
+            Vd = null;
+            Pd = null;
+            cholesky = null;
             diffusionRepresentation = null;
             conditionalMap = null;
         }

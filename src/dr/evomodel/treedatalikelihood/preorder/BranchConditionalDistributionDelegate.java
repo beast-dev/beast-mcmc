@@ -165,25 +165,33 @@ public class BranchConditionalDistributionDelegate extends
         if (numTraits > 1) throw new IllegalArgumentException("Not yet implemented");
 
 //        for (int i = 0; i < numTraits; ++i) {  // TODO Enable for > 1 numTraits
-        statistics.add(
-                new BranchSufficientStatistics(
-                        new NormalSufficientStatistics(belowPartial, nodeIndex, dimTrait,
+
+        NormalSufficientStatistics below =
+                new NormalSufficientStatistics(belowPartial, nodeIndex, dimTrait,
 //                                Pd,
-                                diffusionRepresentation.getPrecision(0),
+                        diffusionRepresentation.getPrecision(0),
 //                                choleskyPrecision,
-                                likelihoodDelegate.getPrecisionType()),
-                        new MatrixSufficientStatistics(branchDisplacement,
-                                ((DiffusionRepresentation.Dense) branchPrecision).matrix, //null,
-//                                branchPrecision, // TODO here!
-                                branchActualization,
-                                branchIndex, dimTrait, Pd, choleskyPrecision, likelihoodDelegate.getPrecisionType()),
-                        new NormalSufficientStatistics(abovePartial, nodeIndex, dimTrait,
+                        likelihoodDelegate.getPrecisionType());
+
+        MatrixSufficientStatistics branch =
+                new MatrixSufficientStatistics(branchDisplacement,
+//                        ((DiffusionRepresentation.Dense) branchPrecision).matrix, //null,
+                                branchPrecision.getPrecision(0), // TODO here!
+                        branchActualization,
+                        branchIndex, dimTrait,
 //                                Pd,
-                                diffusionRepresentation.getPrecision(0),
+//                        ((PreOrderPrecision.Dense)
+//                                diffusionRepresentation.getPrecision(0)).precision,
+                        null,
+                        choleskyPrecision, likelihoodDelegate.getPrecisionType());
+
+        NormalSufficientStatistics above =
+                new NormalSufficientStatistics(abovePartial, nodeIndex, dimTrait,
+//                                Pd,
+                        diffusionRepresentation.getPrecision(0),
 //                                choleskyPrecision,
-                                likelihoodDelegate.getPrecisionType())
-                ));
-//            offset +=  dimPartial;
-//        }
+                        likelihoodDelegate.getPrecisionType());
+
+        statistics.add(new BranchSufficientStatistics(below, branch, above));
     }
 }

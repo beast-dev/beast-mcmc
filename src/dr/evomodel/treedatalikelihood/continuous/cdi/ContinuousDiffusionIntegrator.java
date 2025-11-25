@@ -147,7 +147,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     class Basic implements ContinuousDiffusionIntegrator {
 
 //        private int instance = -1;
-        private InstanceDetails details = new InstanceDetails();
+        private final InstanceDetails details = new InstanceDetails();
 
 //        private final PrecisionType precisionType;
         final int numTraits;
@@ -529,14 +529,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     for (int g = 0; g < dimTrait; ++g) {
                         System.err.print(" " + partials[rootOffset + g]);
                     }
-                    System.err.println("");
+                    System.err.println();
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
                     if (incrementOuterProducts) {
                         System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                     }
-                    System.err.println("");
+                    System.err.println();
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -598,7 +598,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             if (DEBUG) {
                 System.err.println("End");
-                System.err.println("");
+                System.err.println();
             }
         }
 
@@ -1050,7 +1050,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //            throw new RuntimeException("Not implemented for unsafe integrators.");
 //        }
 
-        private static boolean DEBUG = false;
+        private static final boolean DEBUG = false;
     }
 
 }

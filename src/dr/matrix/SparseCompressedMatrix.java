@@ -155,6 +155,44 @@ public class SparseCompressedMatrix {
         return result;
     }
 
+    public void multiplyInPlaceMatrixVectorDifference(double[] vectorA, int vectorAOffset,
+                                                      double[] vectorB, int vectorBOffset,
+                                                      double scale,
+                                                      double[] result, int resultOffset) {
+
+        assert vectorA.length - vectorAOffset >= nMajor;
+        assert vectorB.length - vectorBOffset >= nMajor;
+        assert result.length - resultOffset >= nMajor;
+
+        for (int i = 0; i < nMajor; ++i) {
+            final int begin = majorStarts[i];
+            final int end = majorStarts[i + 1];
+
+            double sum = 0.0;
+
+            for (int k = begin; k < end; ++k) {
+                final int j = minorIndices[k];
+                final double value = values[k];
+
+                sum += scale * value * (vectorA[vectorAOffset + j] - vectorB[vectorBOffset + j]);
+            }
+
+            result[resultOffset + i] = sum;
+        }
+    }
+
+    public double[] multiplyMatrixVectorDifference(double[] vectorA, int vectorAOffset,
+                                                   double[] vectorB, int vectorBOffset,
+                                                   double scale) {
+
+        double[] result = new double[nMajor];
+        multiplyInPlaceMatrixVectorDifference(vectorA, vectorAOffset, vectorB, vectorBOffset,
+                scale,
+                result, 0);
+
+        return result;
+    }
+
     public double multiplyVectorTransposeMatrixVector(double[] left, int leftOffset,
                                                       double[] right, int rightOffset) {
 

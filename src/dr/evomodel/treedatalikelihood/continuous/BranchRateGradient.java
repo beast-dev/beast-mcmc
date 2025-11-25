@@ -213,6 +213,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                                             double differentialScaling,
                                             double secondDifferentialScaling);
 
+        boolean supportsHessian();
+
         class Sparse implements ContinuousTraitGradientForBranch {
 
             private final double[] vector0;
@@ -322,7 +324,12 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
             @Override
             public double getDiagonalHessianLogDensity(BranchSufficientStatistics statistics, double differentialScaling, double secondDifferentialScaling) {
-                return 0;
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            public boolean supportsHessian() {
+                return false;
             }
 
             static NormalSufficientStatistics computeJointSparseStatistics(NormalSufficientStatistics below,
@@ -377,6 +384,11 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 matrix1 = new DenseMatrix64F(dim, dim);
                 matrix2 = new DenseMatrix64F(dim, dim);
                 vector0 = new DenseMatrix64F(dim, 1);
+            }
+
+            @Override
+            public boolean supportsHessian() {
+                return true;
             }
 
             public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
@@ -760,12 +772,14 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");
 
-        sb.append("Peeling diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
-        sb.append("\n");
-        sb.append("numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(NumericalDerivative.diagonalHessian(numeric1, getParameter().getParameterValues())));
-        sb.append("\n");
-        sb.append("Another numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(numericalHessianFromGradient.getDiagonalHessianLogDensity()));
-        sb.append("\n");
+        if (branchProvider.supportsHessian()) {
+            sb.append("Peeling diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+            sb.append("\n");
+            sb.append("numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(NumericalDerivative.diagonalHessian(numeric1, getParameter().getParameterValues())));
+            sb.append("\n");
+            sb.append("Another numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(numericalHessianFromGradient.getDiagonalHessianLogDensity()));
+            sb.append("\n");
+        }
 
         return sb.toString();
     }

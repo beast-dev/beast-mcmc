@@ -1,7 +1,7 @@
 /*
- * TreeTipGradient.java
+ * SubsetTreeTipGradient.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -53,7 +53,7 @@ public class SubsetTreeTipGradient extends TreeTipGradient {
         this.maskMapList = makeMaskMapList();
     }
 
-    class MaskMap {
+    private static class MaskMap {
         int nodeIndex;
         int[] dimIndices;
 
@@ -104,14 +104,6 @@ public class SubsetTreeTipGradient extends TreeTipGradient {
                 ++offsetOutput;
             }
         }
-
-
-//
-//        for (int taxon = 0; taxon < nTaxa; ++taxon) {
-//            double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-//            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, dimTrait);
-//            offsetOutput += dimTrait;
-//        }
 
         return gradient;
     }

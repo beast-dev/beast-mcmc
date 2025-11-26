@@ -272,10 +272,19 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             int index = patternList.getTaxonIndex(tree.getNodeTaxon(node).getId());
             int datum = data[index];
             double[] partials = new double[stateCount];
-            if (datum >= stateCount) {
-                int[] states = new int[1];
-                getTipStates(index, states);
-                partials[states[0]] = 1.0;
+
+            if (dataType.isAmbiguousState(datum)) {
+                boolean[] stateSet = dataType.getStateSet(datum);
+                int possibleStateCount = 0;
+                for (int j = 0; j < stateCount; j++) {
+                    if (stateSet[j]) {
+                        partials[j] = 1.0;
+                        possibleStateCount++;
+                    }
+                }
+                for (int j = 0; j < stateCount; j++) {
+                    partials[j] /= possibleStateCount;
+                }
             } else {
                 partials[datum] = 1.0;
             }

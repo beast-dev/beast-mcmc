@@ -1,4 +1,4 @@
-package dr.evomodelxml.continuous.dr.evomodel.continuous;
+package dr.evomodel.continuous;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -142,7 +142,13 @@ public class SampledCategoricalVarianceModel extends AbstractModelLikelihood
         };
     }
 
-    private abstract class Parametrization {
+    public Parameter getTraitsParameter() { return traits; }
+
+    public Parameter getMeansParameter() { return means; }
+
+    public Parametrization getParameterization() { return parametrization; }
+
+    abstract class Parametrization {
 
         abstract double getSd(int index);
 
@@ -275,7 +281,10 @@ public class SampledCategoricalVarianceModel extends AbstractModelLikelihood
         for (int i = 0; i < traits.getDimension(); ++i) {
 
             double sd = parametrization.getSd(i);
-            logLikelihood += NormalDistribution.logPdf(traits.getParameterValue(i), means.getParameterValue(i), sd);
+            double mean = means.getParameterValue(i);
+            if (Double.isFinite(mean)) {
+                logLikelihood += NormalDistribution.logPdf(traits.getParameterValue(i), mean, sd);
+            }
         }
 
         return logLikelihood;

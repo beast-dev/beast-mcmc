@@ -1,5 +1,5 @@
 /*
- * ContinuousTraitDataModelParser.java
+ * SampledCategoricalVarianceModelParser.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -28,8 +28,7 @@
 package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
-import dr.evomodelxml.continuous.dr.evomodel.continuous.SampledCategoricalVarianceModel;
+import dr.evomodel.continuous.SampledCategoricalVarianceModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -101,7 +100,7 @@ public class SampledCategoricalVarianceModelParser extends AbstractXMLObjectPars
 
     @Override
     public Class getReturnType() {
-        return ContinuousTraitDataModel.class;
+        return SampledCategoricalVarianceModel.class;
     }
 
     @Override

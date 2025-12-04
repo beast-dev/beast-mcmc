@@ -24,6 +24,8 @@
  */
 
 package dr.math;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.TrapezoidIntegrator;
 import dr.math.distributions.BSplines;
@@ -32,42 +34,40 @@ import dr.math.distributions.BSplines;
  * @author Pratyusa Datta
  * @author Marc A. Suchard
  */
-// TO DO: Pass GaussianProcessBasisApproximation as the parameter to remove code duplication
-// TO DO: Make IntegratedSquaredGPApproximation a Random Field
+
 public class IntegratedSquaredSplines {
 
 
     private final double[] coefficient;
     private final double[] knots;
     private final double[] expandedKnots;
-    private final double lowerBoundary;
-    private final double upperBoundary;
     private final int degree;
+    private boolean expandedKnotsKnown;
     public IntegratedSquaredSplines(double[] coefficient,
-                                        double[] knots,
-                                        double lowerBoundary,
-                                        double upperBoundary,
-                                        int degree) {
+                                    double[] knots,
+                                    int degree) {
 
 
         this.coefficient = coefficient;
         this.knots = knots;
-        this.lowerBoundary = lowerBoundary;
-        this.upperBoundary = upperBoundary;
         this.expandedKnots = new double[knots.length + 2 * degree];
         this.degree = degree;
+        this.expandedKnotsKnown = false;
     }
 
 
     public void getExpandedKnots() {
+        if(!expandedKnotsKnown) {
             for (int i = 0; i < degree; i++) {
-                expandedKnots[i] = lowerBoundary;
-                expandedKnots[degree + knots.length + i] = upperBoundary;
+                expandedKnots[i] = knots[0];
+                expandedKnots[degree + knots.length + i] = knots[knots.length - 1];
             }
             for (int i = 0; i < knots.length; i++) {
                 expandedKnots[degree + i] = knots[i];
             }
+        }
     }
+
 
     public double[] getQuadratic(int i) {
         double[] values = new double[3];
@@ -233,18 +233,21 @@ public class IntegratedSquaredSplines {
     }
 
     public double[][] getIntegratedSquaredBasisMatrix(double start, double end) {
-       int dim = coefficient.length;
-       double[][] mat = new double[dim][dim];
-       for (int i = 0; i < dim ; i++) {
-           mat[i][i] = getDiagonal(i, start, end);
-       }
-       for (int i = 0; i < dim - 1; i++) {
-           mat[i][i + 1] = getOffDiagonalOrder1(i, start, end);
-       }
-       for (int i = 0; i < dim - 2; i++) {
-           mat[i][i + 2] = getOffDiagonalOrder2(i, start, end);
-       }
-       return mat;
+        getExpandedKnots();
+        int dim = coefficient.length;
+        double[][] mat = new double[dim][dim];
+        for (int i = 0; i < dim ; i++) {
+            mat[i][i] = getDiagonal(i, start, end);
+        }
+        for (int i = 0; i < dim - 1; i++) {
+            mat[i][i + 1] = getOffDiagonalOrder1(i, start, end);
+            mat[i + 1][i] = getOffDiagonalOrder1(i, start, end);
+        }
+        for (int i = 0; i < dim - 2; i++) {
+            mat[i][i + 2] = getOffDiagonalOrder2(i, start, end);
+            mat[i + 2][i] = getOffDiagonalOrder2(i, start, end);
+        }
+        return mat;
     }
 
     public double getIntegral (double start, double end){
@@ -266,6 +269,52 @@ public class IntegratedSquaredSplines {
 
         return sum;
     }
+
+
+
+    public double[] getGradient (double start, double end){
+        getExpandedKnots();
+        int dim = coefficient.length;
+        double[][] mat = getIntegratedSquaredBasisMatrix(start, end);
+        double[] gradient = new double[dim];
+        if (end > start) {
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    gradient[i] += 2 * mat[i][j] * coefficient[i];
+                }
+            }
+        }
+        return gradient;
+    }
+
+
+    public double evaluateExpSpline(double x) {
+        double sum = 0.0;
+        getExpandedKnots();
+
+        for (int i = 0; i < coefficient.length; i++) {
+            sum += coefficient[i] * BSplines.getSplineBasis(i, degree, x, expandedKnots);
+        }
+
+        return Math.exp(sum);
+    }
+
+    public double integrateExpSpline(final double a, final double b)
+            throws org.apache.commons.math.FunctionEvaluationException,
+            org.apache.commons.math.MaxIterationsExceededException {
+
+        UnivariateRealFunction f = new UnivariateRealFunction() {
+            @Override
+            public double value(double x) {
+                return evaluateExpSpline(x);
+            }
+        };
+
+        TrapezoidIntegrator integrator = new TrapezoidIntegrator();
+        return integrator.integrate(f, a, b);
+    }
+
+
 
 }
 

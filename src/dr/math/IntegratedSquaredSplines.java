@@ -38,11 +38,12 @@ import dr.math.distributions.BSplines;
 public class IntegratedSquaredSplines {
 
 
-    private final double[] coefficient;
+    public final double[] coefficient;
     private final double[] knots;
     private final double[] expandedKnots;
     private final int degree;
     private boolean expandedKnotsKnown;
+
     public IntegratedSquaredSplines(double[] coefficient,
                                     double[] knots,
                                     int degree) {
@@ -57,7 +58,7 @@ public class IntegratedSquaredSplines {
 
 
     public void getExpandedKnots() {
-        if(!expandedKnotsKnown) {
+        if (!expandedKnotsKnown) {
             for (int i = 0; i < degree; i++) {
                 expandedKnots[i] = knots[0];
                 expandedKnots[degree + knots.length + i] = knots[knots.length - 1];
@@ -104,8 +105,6 @@ public class IntegratedSquaredSplines {
         } else {
             return 0;
         }
-
-
     }
 
     public double getQuadraticProductIntegral(double[] x, double[] y, double low, double up) {

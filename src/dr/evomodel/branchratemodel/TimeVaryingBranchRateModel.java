@@ -611,6 +611,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
             @Override
             public void incrementRate(int epochIndex, double startTime, double endTime, double[] times) {
                 IntegratedSquaredSplines spline = new IntegratedSquaredSplines(getCoefficients(), times, 2);
+                System.err.println("die");
+                System.exit(-1);
                 branchRateNumerator += spline.getIntegral(endTime, startTime);
             }
 

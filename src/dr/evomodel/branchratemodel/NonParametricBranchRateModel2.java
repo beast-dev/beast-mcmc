@@ -75,10 +75,13 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
     private boolean nodeRatesKnown;
     private boolean storedNodeRatesKnown;
+    private boolean coefficientsChanged;
+    private boolean restoreCache;
 
     private double[] nodeRates;
     private double[] storedNodeRates;
-    private static Map<IntegralCacheKey, Double> integralCache;
+    private Map<IntegralCacheKey, Double> integralCache;
+    private Map<IntegralCacheKey, Double> savedIntegralCache;
     private static final double CACHE_PRECISION = 1e-5;
 
     public NonParametricBranchRateModel2(String name,
@@ -102,8 +105,10 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
 
         nodeRatesKnown = false;
+        coefficientsChanged = true;
         nodeRates = new double[tree.getNodeCount() - 1];
         integralCache = new HashMap<>();
+        restoreCache = false;
 
     }
 
@@ -113,12 +118,21 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
         assert tree == this.tree;
 
+        if (coefficientsChanged) {
+            savedIntegralCache = integralCache;
+            integralCache = new HashMap<>();
+
+            coefficientsChanged = false;
+            restoreCache = true;
+        }
+
         if (!nodeRatesKnown) {
 
             NonParametricBranchRateModel2.TreeTraversal func =
                     new NonParametricBranchRateModel2.TreeTraversal.Rate(
                             nodeRates, new IntegratedSquaredSplines(
-                                    coefficients.getParameterValues(), knots, degree));
+                                    coefficients.getParameterValues(), knots, degree),
+                            integralCache);
 
             calculateNodeGeneric(func);
             nodeRatesKnown = true;
@@ -190,10 +204,12 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
             final private double[] nodeRates;
             final private IntegratedSquaredSplines approximation;
+            final private Map<IntegralCacheKey, Double> integralCache;
 
-            Rate(double[] nodeRates, IntegratedSquaredSplines approximation) {
+            Rate(double[] nodeRates, IntegratedSquaredSplines approximation, Map<IntegralCacheKey, Double> integralCache) {
                 this.nodeRates = nodeRates;
                 this.approximation = approximation;
+                this.integralCache = integralCache;
             }
 
             @Override
@@ -212,19 +228,42 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
                     double integral = approximation.getIntegral(start, end);
                     nodeRates[childIndex] = integral / branchLength;
                 } else {
-                    try {
-                        double integral = getOrComputeIntegral(null, start, end, approximation);
+//                    try {
+                        double integral = getOrComputeIntegral(null, start, end, approximation, integralCache);
                         nodeRates[childIndex] = integral / branchLength;
-                    } catch (FunctionEvaluationException e) {
-                        throw new RuntimeException(e);
-                    } catch (MaxIterationsExceededException e) {
-                        throw new RuntimeException(e);
-                    }
+//                    } catch (FunctionEvaluationException e) {
+//                        throw new RuntimeException(e);
+//                    } catch (MaxIterationsExceededException e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
 
             }
 
-            final private static boolean USE_CACHE = false;
+            private double getOrComputeIntegral(double[] dead_coeffValues, double start, double end,
+                                                IntegratedSquaredSplines approximation
+//    )
+                    , Map<IntegralCacheKey, Double> integralCache)
+//            throws FunctionEvaluationException, MaxIterationsExceededException
+            {
+
+                if (!(end > start)) {
+                    return 0.0;
+                }
+
+                IntegralCacheKey key = new IntegralCacheKey(approximation.coefficient, roundKey(start), roundKey(end));
+
+                Double cached = integralCache.get(key);
+                if (cached != null) {
+                    return cached;
+                }
+
+                double val = approximation.getIntegral(start, end);
+                integralCache.put(key, val);
+                return val;
+            }
+
+            final private static boolean USE_CACHE = true;
         }
     }
 
@@ -265,46 +304,35 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         }
     }
 
-    private static double getOrComputeIntegral(double[] dead_coeffValues, double start, double end,
-                                        IntegratedSquaredSplines approximation)
-            throws FunctionEvaluationException, MaxIterationsExceededException {
 
-        if (!(end > start)) {
-            return 0.0;
-        }
 
-        IntegralCacheKey key = new IntegralCacheKey(approximation.coefficient, roundKey(start), roundKey(end));
-
-        Double cached = integralCache.get(key);
-        if (cached != null) {
-            return cached;
-        }
-
-        double val = approximation.getIntegral(start, end);
-        integralCache.put(key, val);
-        return val;
-    }
-
+    private static final boolean ROUND = true;
 
     private static double roundKey(double x) {
-        if (Double.isNaN(x) || Double.isInfinite(x)) {
+        if (ROUND) {
+            if (Double.isNaN(x) || Double.isInfinite(x)) {
+                return x;
+            }
+            return Math.round(x / CACHE_PRECISION) * CACHE_PRECISION;
+        } else {
             return x;
         }
-        return Math.round(x / CACHE_PRECISION) * CACHE_PRECISION;
     }
 
 
-    private static final class IntegralCacheKey {
+    private final static class IntegralCacheKey {
         private final double[] coeffCopy;
         private final double lower;
         private final double upper;
         private final int coefHash;
 
-        IntegralCacheKey(double[] coefficients, double lower, double upper) {
-            this.coeffCopy = Arrays.copyOf(coefficients, coefficients.length);
+        IntegralCacheKey(double[] dead_coefficients, double lower, double upper) {
+//            this.coeffCopy = Arrays.copyOf(coefficients, coefficients.length);
+            this.coeffCopy = null;
             this.lower = lower;
             this.upper = upper;
-            this.coefHash = Arrays.hashCode(this.coeffCopy);
+//            this.coefHash = Arrays.hashCode(this.coeffCopy);
+            this.coefHash = -1;
         }
 
         @Override
@@ -313,13 +341,14 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
             if (!(o instanceof IntegralCacheKey)) return false;
             IntegralCacheKey other = (IntegralCacheKey) o;
             return Double.compare(lower, other.lower) == 0 &&
-                    Double.compare(upper, other.upper) == 0 &&
-                    Arrays.equals(coeffCopy, other.coeffCopy);
+                    Double.compare(upper, other.upper) == 0 //&&
+                    //Arrays.equals(coeffCopy, other.coeffCopy)
+                    ;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(coefHash, lower, upper);
+            return Objects.hash(lower, upper);
         }
     }
 
@@ -348,6 +377,11 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         nodeRatesKnown = false;
+
+        if (variable == coefficients) {
+            coefficientsChanged = true;
+        }
+
         fireModelChanged();
     }
 
@@ -369,10 +403,19 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         storedNodeRates = tmp;
 
         nodeRatesKnown = storedNodeRatesKnown;
+
+        if (restoreCache) {
+            integralCache = savedIntegralCache;
+            restoreCache = false;
+        }
+        restoreCache = false;
+        coefficientsChanged = false;
     }
 
     @Override
-    protected void acceptState() { }
+    protected void acceptState() {
+        restoreCache = false;
+    }
 
     @Override
     public Parameter getRateParameter() {

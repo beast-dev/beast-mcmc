@@ -43,6 +43,7 @@ public class IntegratedSquaredSplines {
     private final double[] expandedKnots;
     private final int degree;
     private boolean expandedKnotsKnown;
+    private double[][] temp;
 
     public IntegratedSquaredSplines(double[] coefficient,
                                     double[] knots,
@@ -54,6 +55,8 @@ public class IntegratedSquaredSplines {
         this.expandedKnots = new double[knots.length + 2 * degree];
         this.degree = degree;
         this.expandedKnotsKnown = false;
+
+        this.temp = new double[coefficient.length][coefficient.length];
     }
 
 
@@ -234,17 +237,20 @@ public class IntegratedSquaredSplines {
     public double[][] getIntegratedSquaredBasisMatrix(double start, double end) {
         getExpandedKnots();
         int dim = coefficient.length;
-        double[][] mat = new double[dim][dim];
+//        double[][] mat = new double[dim][dim];
+        double[][] mat = this.temp;
         for (int i = 0; i < dim ; i++) {
             mat[i][i] = getDiagonal(i, start, end);
         }
         for (int i = 0; i < dim - 1; i++) {
-            mat[i][i + 1] = getOffDiagonalOrder1(i, start, end);
-            mat[i + 1][i] = getOffDiagonalOrder1(i, start, end);
+            double order1 = getOffDiagonalOrder1(i, start, end);
+            mat[i][i + 1] = order1;
+            mat[i + 1][i] = order1;
         }
         for (int i = 0; i < dim - 2; i++) {
-            mat[i][i + 2] = getOffDiagonalOrder2(i, start, end);
-            mat[i + 2][i] = getOffDiagonalOrder2(i, start, end);
+            double order2 = getOffDiagonalOrder2(i, start, end);
+            mat[i][i + 2] = order2;
+            mat[i + 2][i] = order2;
         }
         return mat;
     }

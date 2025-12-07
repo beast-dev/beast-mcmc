@@ -95,6 +95,36 @@ public class IntegratedSquaredSplines {
         return values;
     }
 
+    // TODO check
+    public static double evaluatePolynomial(double x, double[] coefficients) {
+        int i = coefficients.length - 1;
+        double value = coefficients[i];
+        --i;
+
+        for ( ; i >= 0; --i) {
+            value = value * x + coefficients[i];
+        }
+
+        return value;
+    }
+
+    // TODO to integrate, could either
+    // 1. transform coefficients[] --> integratedCoefficients[] and call evaluatePolynamial(), or
+    // 2. fuse transformation and evaluation
+
+    // TODO check
+    public static double evaluatePolynomialIntegral(double x, double[] coefficients) {
+        int i = coefficients.length - 1;
+        double value = coefficients[i] / (i + 1);
+        --i;
+
+        for ( ; i >= 0; --i) {
+            value = value * x + coefficients[i] / (i + 1);
+        }
+
+        return value * x;
+    }
+
     public double getSquaredQuadraticIntegral(double[] coeff, double low, double up) {
         java.util.function.DoubleFunction<Double> F = x ->
                 (coeff[2] * coeff[2] / 5.0) * Math.pow(x, 5)

@@ -96,7 +96,7 @@ public class IntegratedSquaredSplines {
     }
 
     // TODO check
-    public static double evaluatePolynomial(double x, double[] coefficients) {
+    public static double evaluatePolynomial(double x, double... coefficients) {
         int i = coefficients.length - 1;
         double value = coefficients[i];
         --i;
@@ -113,7 +113,7 @@ public class IntegratedSquaredSplines {
     // 2. fuse transformation and evaluation
 
     // TODO check
-    public static double evaluatePolynomialIntegral(double x, double[] coefficients) {
+    public static double evaluatePolynomialIntegralEndPt(double x, double... coefficients) {
         int i = coefficients.length - 1;
         double value = coefficients[i] / (i + 1);
         --i;
@@ -123,6 +123,11 @@ public class IntegratedSquaredSplines {
         }
 
         return value * x;
+    }
+
+    public static double evaluatePolynomialIntegral(double start, double end, double... coefficients) {
+        return evaluatePolynomialIntegralEndPt(end, coefficients) -
+                evaluatePolynomialIntegralEndPt(start, coefficients);
     }
 
     public double getSquaredQuadraticIntegral(double[] coeff, double low, double up) {
@@ -140,6 +145,31 @@ public class IntegratedSquaredSplines {
         }
     }
 
+    private static final boolean TEST = false;
+
+    public static double[] polynomialProduct(double[] lhs, double[] rhs) {
+
+        double[] product = new double[lhs.length + rhs.length - 1]; // TODO pass buffer
+
+        for (int i = 0; i < lhs.length; ++i) {
+            for (int j = 0; j < rhs.length; ++j) {
+                product[i + j] += lhs[i] * rhs[j];
+            }
+        }
+
+        return product;
+    }
+
+//    int n = p.degree() + degree();
+//    double[] coef = new double[n + 1];
+//	for ( int i = 0; i <= n; i++)
+//    {
+//        coef[i] = 0;
+//        for ( int k = 0; k <= i; k++)
+//            coef[i] += p.coefficient(k) * coefficient(i-k);
+//    }
+//	return new PolynomialFunction( coef);
+
     public double getQuadraticProductIntegral(double[] x, double[] y, double low, double up) {
         double a0 = x[0]*y[0];
         double a1 = x[0]*y[1] + x[1]*y[0];
@@ -153,6 +183,19 @@ public class IntegratedSquaredSplines {
                         a2 * Math.pow(t, 3) / 3.0 +
                         a3 * Math.pow(t, 4) / 4.0 +
                         a4 * Math.pow(t, 5) / 5.0;
+
+        if (TEST) {
+
+            java.util.function.DoubleFunction<Double> FF = (t) -> evaluatePolynomialIntegralEndPt(t,
+                    a0, a1, a2, a3, a4);
+
+            double f1 = F.apply(up); double f0 = F.apply(low);
+            double ff1 = FF.apply(up); double ff0 = FF.apply(low);
+            System.err.println(f1 + " " + f0);
+            System.err.println(ff1 + " " + ff0);
+            System.err.println("test!");
+            System.exit(-1);
+        }
 
         if (low < up) {
             return F.apply(up) - F.apply(low);

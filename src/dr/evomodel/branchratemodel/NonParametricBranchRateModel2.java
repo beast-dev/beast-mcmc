@@ -346,9 +346,18 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
                     ;
         }
 
+        private static final boolean NEW_HASH = true;
+
         @Override
         public int hashCode() {
-            return Objects.hash(lower, upper);
+            if (NEW_HASH) {
+                long bits1 = Double.doubleToLongBits(lower);
+                long bits2 = Double.doubleToLongBits(upper);
+                long combined = bits1 ^ (bits2 << 1);
+                return (int)(combined ^ (combined >>> 32));
+            } else {
+                return Objects.hash(lower, upper);
+            }
         }
     }
 

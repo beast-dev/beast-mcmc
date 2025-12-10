@@ -191,7 +191,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
             public void calculate(int childIndex, double start, double end,
                                   IntegratedSquaredSplines dead_approximation, double[] coefficients) {
 
-                int dim = coefficients.length;
+                int dim = getCoefficients().length;
                 double branchLength = end - start;
                 double[] gradientBranchWrtCoeff = approximation.getGradient(start, end);
                 for (int i = 0; i < dim; i++) {

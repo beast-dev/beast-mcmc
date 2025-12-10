@@ -33,7 +33,6 @@ import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.math.IntegratedSquaredSplines;
-import dr.math.IntegratedSquaredCubicSplines;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;

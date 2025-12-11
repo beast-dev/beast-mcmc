@@ -183,6 +183,7 @@ public class BeastMain {
             if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.LOAD_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
                 System.setProperty(CHKPT_OVERRULE, "true");
             }

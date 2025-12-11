@@ -95,6 +95,8 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         fireModelChanged();
     }
 
+    public int getCurrentTreeIndex() { return currentTreeIndex; }
+
     protected void storeState() {
         storedCurrentTree = currentTree;
         storedCurrentTreeIndex = currentTreeIndex;

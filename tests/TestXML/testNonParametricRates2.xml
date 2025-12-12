@@ -32,27 +32,6 @@
 	</treeModel>
 
 
-
-	<nonparametricRates2 id="dummyRates" degree ="2" knots="0 1 2 3">
-		<treeModel idref="dummyTreeModel"/>
-		<coefficients>
-			<parameter id="coefficients" dimension="4" value="1"/>
-		</coefficients>
-	</nonparametricRates2>
-
-	<timeVaryingRates id="branchRates" functionalForm ="Integrable">
-		<treeModel idref="dummyTreeModel"/>
-		<rate>
-			<parameter id="rates" value="-1" dimension="4"/>
-		</rate>
-		<gridPoints>
-			<parameter id="gridPoints" value="1 2 3"/>
-		</gridPoints>
-		<coefficients>
-			<parameter id="coefficients2" dimension="5" value="1"/>
-		</coefficients>
-	</timeVaryingRates>
-
 	<alignment id="dummyAlignment" dataType="nucleotide">
 		<sequence>
 			<taxon idref="A"/>
@@ -91,35 +70,60 @@
 		</substitutionModel>
 	</siteModel>
 
+	<nonparametricRates2 id="dummyRatesQuadratic" degree ="2" knots="0 1 2 3">
+		<treeModel idref="dummyTreeModel"/>
+		<coefficients>
+			<parameter id="coefficients" dimension="4" value="1"/>
+		</coefficients>
+	</nonparametricRates2>
 
-	<treeDataLikelihood id="dummyTreeLikelihood" useAmbiguities="false" usePreOrder="true">
+	<treeDataLikelihood id="dummyTreeLikelihoodQuadratic" useAmbiguities="false" usePreOrder="true">
             <patterns idref="dummyPatterns"/>
             <treeModel idref="dummyTreeModel"/>
             <siteModel idref="dummySiteModel"/>
-            <nonParametricRates2 idref="dummyRates"/>
+            <nonParametricRates2 idref="dummyRatesQuadratic"/>
 	</treeDataLikelihood>
 
-	<treeDataLikelihood id="dummyTreeLikelihood2" useAmbiguities="false" usePreOrder="true">
-		<patterns idref="dummyPatterns"/>
-		<treeModel idref="dummyTreeModel"/>
-		<siteModel idref="dummySiteModel"/>
-		<timeVaryingRates idref="branchRates"/>
-	</treeDataLikelihood>
 
 	<report>
-		<nonParametricRates2 idref="dummyRates"/>
+		<nonParametricRates2 idref="dummyRatesQuadratic"/>
 	</report>
 
-	<report>
-		<timeVaryingRates idref="branchRates"/>
-	</report>
 
-	<branchRateGradient id="dummyGradient" traitName="Sequence" useHessian="false">
-		<treeDataLikelihood idref="dummyTreeLikelihood"/>
+	<branchRateGradient id="dummyGradientQuadratic" traitName="Sequence" useHessian="false">
+		<treeDataLikelihood idref="dummyTreeLikelihoodQuadratic"/>
 	</branchRateGradient>
 
 	<report>
-		<branchRateGradient idref="dummyGradient"/>
+		<branchRateGradient idref="dummyGradientQuadratic"/>
+	</report>
+
+	<nonparametricRates2 id="dummyRatesCubic" degree ="3" knots="0 1 2 3">
+		<treeModel idref="dummyTreeModel"/>
+		<coefficients>
+			<parameter id="coefficients2" dimension="5" value="1"/>
+		</coefficients>
+	</nonparametricRates2>
+
+	<treeDataLikelihood id="dummyTreeLikelihoodCubic" useAmbiguities="false" usePreOrder="true">
+		<patterns idref="dummyPatterns"/>
+		<treeModel idref="dummyTreeModel"/>
+		<siteModel idref="dummySiteModel"/>
+		<nonParametricRates2 idref="dummyRatesCubic"/>
+	</treeDataLikelihood>
+
+
+	<report>
+		<nonParametricRates2 idref="dummyRatesCubic"/>
+	</report>
+
+
+	<branchRateGradient id="dummyGradientCubic" traitName="Sequence" useHessian="false">
+		<treeDataLikelihood idref="dummyTreeLikelihoodCubic"/>
+	</branchRateGradient>
+
+	<report>
+		<branchRateGradient idref="dummyGradientCubic"/>
 	</report>
 
 

@@ -95,6 +95,14 @@ public class NumericalDerivative
 		return result;
 	}
 
+	public static double[] gradient4thOrder(MultivariateFunction f, double[] x) {
+		double[] result = new double[x.length];
+
+		gradient4thOrder(f, x, result);
+
+		return result;
+	}
+
 	/**
 	 * determine gradient
 	 *
@@ -106,7 +114,7 @@ public class NumericalDerivative
 	{	
 		for (int i = 0; i < f.getNumArguments(); i++)
 		{
-			double h = MachineAccuracy.SQRT_EPSILON*(Math.abs(x[i]) + 1.0);
+			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
 		
 			double oldx = x[i];
 			x[i] = oldx + h;
@@ -117,6 +125,25 @@ public class NumericalDerivative
 
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
+		}
+	}
+
+	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {
+		for (int i = 0; i < f.getNumArguments(); ++i) {
+			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
+
+			double oldX = x[i];
+			x[i] = oldX + 2 * h;
+			double fxPlus2H = f.evaluate(x);
+			x[i] = oldX + h;
+			double fxPlusH = f.evaluate(x);
+			x[i] = oldX - h;
+			double fxMinusH = f.evaluate(x);
+			x[i] = oldX - 2 * h;
+			double fxMinus2H = f.evaluate(x);
+			x[i] = oldX;
+
+			grad[i] = (-fxPlus2H + 8 * fxPlusH - 8 * fxMinusH + fxMinus2H) / (12 * h);
 		}
 	}
 

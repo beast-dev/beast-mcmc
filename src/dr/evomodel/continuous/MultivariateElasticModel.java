@@ -1,325 +1,317 @@
-/*
- * MultivariateElasticModel.java
- *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
- */
-
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeAttributeProvider;
-import dr.evomodel.substmodel.EigenDecomposition;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.missingData.MissingOps;
-import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.DecompositionFactory;
-import org.ejml.ops.EigenOps;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
- * @author Marc Suchard
+ * Multivariate OU "elastic" model:
+ *     dX_t = -A (X_t - μ) dt + Σ dW_t
+ *
+ * Encodes A (the strength-of-selection matrix) via a MatrixParameterInterface.
+ * Supports multiple parametrizations through a strategy pattern:
+ *   - Diagonal: A = diag(λ_i)
+ *   - Decomposed: A = R Λ R^{-1} from CompoundEigenMatrix
+ *   - General: A = R Λ R^{-1} via EJML eigen-decomposition
+ *   - Block Diagonal: A = R D R^{-1} with block structure
+ *
+ * @author Marc A. Suchard
  * @author Paul Bastide
  */
-
-
 public class MultivariateElasticModel extends AbstractModel implements TreeAttributeProvider {
 
-    private static final String ELASTIC_PROCESS = "multivariateElasticModel";
-    //    public static final String ELASTIC_CONSTANT = "strengthOfSelectionMatrix";
-    private static final String ELASTIC_TREE_ATTRIBUTE = "strengthOfSelection";
+    // ============================================================
+    // CONSTANTS
+    // ============================================================
 
+    private static final String ELASTIC_PROCESS = "multivariateElasticModel";
+    private static final String ELASTIC_TREE_ATTRIBUTE = "strengthOfSelection";
     public static final double LOG2PI = Math.log(2 * Math.PI);
 
+    // ============================================================
+    // CORE STATE
+    // ============================================================
+
+    private final int dim;
+    private final MatrixParameterInterface strengthOfSelectionParam;
+    private final SelectionMatrixStrategy strategy;
+
+    // Configuration flag
+    private boolean useApproximateExponentialGradient = false;
+
+    private BasisRepresentation currentBasis;
+    private BasisRepresentation savedBasis;
+    private boolean basisKnown = false;
+
+    // ============================================================
+    // CONSTRUCTION
+    // ============================================================
+
     /**
-     * Construct a diffusion model.
+     * Main constructor.
      */
-
     public MultivariateElasticModel(MatrixParameterInterface strengthOfSelectionMatrixParameter) {
-
         super(ELASTIC_PROCESS);
 
-        this.strengthOfSelectionMatrixParameter = strengthOfSelectionMatrixParameter;
-        dim = strengthOfSelectionMatrixParameter.getRowDimension();
-        assert dim == strengthOfSelectionMatrixParameter.getColumnDimension() : "Strength of Selection matrix should be square.";
+        this.strengthOfSelectionParam = strengthOfSelectionMatrixParameter;
+        this.dim = strengthOfSelectionMatrixParameter.getRowDimension();
 
-        if (strengthOfSelectionMatrixParameter instanceof DiagonalMatrix) {
-            this.parametrization = Parametrization.AS_DIAGONAL;
-        } else if (strengthOfSelectionMatrixParameter instanceof CompoundEigenMatrix) {
-            this.parametrization = Parametrization.AS_DECOMPOSED;
-        } else {
-            this.parametrization = Parametrization.GENERAL;
-        }
+        validateSquareMatrix(strengthOfSelectionMatrixParameter, dim);
 
-        isSymmetric = strengthOfSelectionMatrixParameter.isConstrainedSymmetric();
+        this.strategy = SelectionMatrixStrategyFactory.create(strengthOfSelectionMatrixParameter);
 
-        calculateSelectionInfo();
         addVariable(strengthOfSelectionMatrixParameter);
-
     }
 
+    /**
+     * Empty constructor for XML / BEAST-style instantiation.
+     */
     public MultivariateElasticModel() {
         super(ELASTIC_PROCESS);
+        this.dim = 0;
+        this.strengthOfSelectionParam = null;
+        this.strategy = null;
     }
 
-    private void calculateSelectionInfo() {
-//        strengthOfSelectionMatrix = strengthOfSelectionMatrixParameter.getParameterAsMatrix();
-        this.eigenDecompositionStrengthOfSelection
-                = parametrization.decomposeStrenghtOfSelection(strengthOfSelectionMatrixParameter, dim, isSymmetric);
+    private void validateSquareMatrix(MatrixParameterInterface param, int dim) {
+        if (dim != param.getColumnDimension()) {
+            throw new IllegalArgumentException(
+                    "Strength of Selection matrix must be square. Got " +
+                            dim + "x" + param.getColumnDimension());
+        }
+    }
+
+    // ============================================================
+    // PUBLIC API - Matrix Access
+    // ============================================================
+
+    public MatrixParameterInterface getMatrixParameterInterface() {
+        return strengthOfSelectionParam;
     }
 
     public MatrixParameterInterface getStrengthOfSelectionMatrixParameter() {
-        checkVariableChanged();
-        return strengthOfSelectionMatrixParameter;
+        return strengthOfSelectionParam;
     }
 
     public double[][] getStrengthOfSelectionMatrix() {
-        if (strengthOfSelectionMatrixParameter != null) {
-            checkVariableChanged();
-            return strengthOfSelectionMatrixParameter.getParameterAsMatrix();
+        if (strengthOfSelectionParam == null) {
+            return null;
         }
-        return null;
+        return strengthOfSelectionParam.getParameterAsMatrix();
     }
 
     public double[] getStrengthOfSelectionMatrixAsVector() {
         return flatten(getStrengthOfSelectionMatrix());
     }
 
-    public double[] getEigenValuesStrengthOfSelection() {
-        if (strengthOfSelectionMatrixParameter != null) {
-            checkVariableChanged();
-            return eigenDecompositionStrengthOfSelection.getEigenValues();
-        }
-        return null;
+    public int getDimension() {
+        return dim;
     }
 
-    public double[] getEigenVectorsStrengthOfSelection() {
-        if (strengthOfSelectionMatrixParameter != null) {
-            checkVariableChanged();
-            return eigenDecompositionStrengthOfSelection.getEigenVectors();
-        }
-        return null;
+    public int getNumberOfParameters() {
+        return strategy.getNumberOfParameters();
     }
 
-    private void checkVariableChanged() {
-        if (variableChanged) {
-            calculateSelectionInfo();
-            variableChanged = false;
-        }
+    // ============================================================
+    // PUBLIC API - Basis Representation
+    // ============================================================
+
+    /**
+     * Eigenvalues in the working basis.
+     * For block-diagonal, returns the diagonal elements of D.
+     */
+    public double[] getBasisEigenValues() {
+        return getBasis().getEigenvalues();
     }
+
+    /**
+     * Flattened basis matrix R (row-major).
+     */
+    public double[] getBasisEigenVectors() {
+        return getBasis().getEigenvectors();
+    }
+
+    public double[] getBasisRotations() {
+        return getBasis().getRotations();
+    }
+
+    public double[] getBasisD() {
+        return getBasis().getValuesD();
+    }
+
+    /**
+     * Basis matrix R used to represent A in (quasi-)diagonal form.
+     */
+    public DenseMatrix64F getBasisR() {
+        return getBasis().getR();
+    }
+
+    /**
+     * Inverse of basis matrix R.
+     */
+    public DenseMatrix64F getBasisRinv() {
+        return getBasis().getRinv();
+    }
+
+    // ============================================================
+    // PUBLIC API - Block-Diagonal Specific
+    // ============================================================
+
+    /**
+     * Starting indices of each block in the block-diagonal structure.
+     * Only available for block-diagonal parametrization.
+     *
+     * @throws IllegalStateException if not block-diagonal
+     */
+    public int[] getBlockStarts() {
+        return getBlockStructure().getBlockStarts();
+    }
+
+    /**
+     * Sizes (1 or 2) of each block in the block-diagonal structure.
+     * Only available for block-diagonal parametrization.
+     *
+     * @throws IllegalStateException if not block-diagonal
+     */
+    public int[] getBlockSizes() {
+        return getBlockStructure().getBlockSizes();
+    }
+
+    private BlockStructure getBlockStructure() {
+        BlockStructure blockStructure = getBasis().getBlockStructure();
+        if (blockStructure == null) {
+            throw new IllegalStateException(
+                    "Block structure only available for block-diagonal parametrization");
+        }
+        return blockStructure;
+    }
+
+    // ============================================================
+    // PUBLIC API - Type Queries
+    // ============================================================
 
     public boolean isDiagonal() {
-        return parametrization == Parametrization.AS_DIAGONAL;
+        return strategy != null && strategy.isDiagonal();
     }
 
     public boolean isSymmetric() {
-        return isSymmetric;
+        return strategy != null && strategy.isSymmetric();
     }
 
-    // *****************************************************************
-    // Parametrization
-    // *****************************************************************
-    enum Parametrization {
-        AS_DIAGONAL {
-            @Override
-            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
-                return new EigenDecomposition(identityVector(dim),
-                        null,
-                        ((DiagonalMatrix) AParam).getDiagonalParameter().getParameterValues());
-            }
-//            @Override
-//            public double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim) {
-//                return ((DiagonalMatrix) AParam).getDiagonalParameter().getParameterValues();
-//            }
-//            @Override
-//            public double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA) {
-//                return null;
-//            }
-        },
-        AS_DECOMPOSED {
-            @Override
-            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
-                return new EigenDecomposition(((CompoundEigenMatrix) AParam).getEigenVectors(),
-                        null,
-                        ((CompoundEigenMatrix) AParam).getEigenValues());
-            }
-//            @Override
-//            public double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim) {
-//                return ((CompoundEigenMatrix) AParam).getEigenValues();
-//            }
-//            @Override
-//            public double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA) {
-//                return ((CompoundEigenMatrix) AParam).getEigenVectors();
-//            }
-        },
-        GENERAL {
-            @Override
-            public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
-                DenseMatrix64F A = MissingOps.wrap(AParam);
-                org.ejml.interfaces.decomposition.EigenDecomposition eigA = DecompositionFactory.eig(dim, true, isSymmetric);
-                if (!eigA.decompose(A)) throw new RuntimeException("Eigen decomposition failed.");
-                return new EigenDecomposition(eigenVectorsMatrix(eigA),
-                        null,
-                        eigenValuesMatrix(eigA, dim));
-            }
-
-            private double[] eigenValuesMatrix(org.ejml.interfaces.decomposition.EigenDecomposition eigDecompA, int dim) {
-                assert eigDecompA != null : "The eigen decomposition should already be computed at this point.";
-                double[] eigA = new double[dim];
-                for (int p = 0; p < dim; ++p) {
-                    Complex64F ev = eigDecompA.getEigenvalue(p);
-                    assert ev.isReal() : "Selection strength A should only have real eigenvalues.";
-                    assert ev.real > 0 : "Selection strength A should only have positive real eigenvalues.";
-                    eigA[p] = ev.real;
-                }
-                return eigA;
-            }
-
-            private double[] eigenVectorsMatrix(org.ejml.interfaces.decomposition.EigenDecomposition eigDecompA) {
-                assert eigDecompA != null : "The eigen decomposition should already be computed at this point.";
-                return EigenOps.createMatrixV(eigDecompA).getData();
-            }
-        };
-
-        abstract EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric);
-//        abstract double[] eigenValuesMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA, int dim);
-//        abstract double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA);
+    public boolean isBlockDiag() {
+        return strategy != null && strategy.isBlockDiagonal();
     }
 
+    // ============================================================
+    // PUBLIC API - Configuration
+    // ============================================================
 
-    private static double[] identityVector(int dim){
-        double[] res = new double[dim * dim];
-        for (int i = 0; i < dim; i++) {
-            res[i * dim + i] = 1.0;
+    /**
+     * If true, delegates may use an approximate gradient of the matrix exponential
+     * (e.g. d exp ≈ -t exp * J) instead of exact differentiation.
+     */
+    public void setApproximateExponentialGradient(boolean approximate) {
+        this.useApproximateExponentialGradient = approximate;
+    }
+
+    public boolean isApproximateExponentialGradient() {
+        return useApproximateExponentialGradient;
+    }
+
+    // ============================================================
+    // INTERNAL - Basis Computation
+    // ============================================================
+
+    private BasisRepresentation getBasis() {
+        if (!basisKnown) {
+            currentBasis = strategy.computeBasis(strengthOfSelectionParam, dim);
+            basisKnown = true;
         }
-        return res;
-    }
-    // *****************************************************************
-    // Interface Model
-    // *****************************************************************
-    public void handleModelChangedEvent(Model model, Object object, int index) {
-        // no intermediates need to be recalculated...
+        return currentBasis;
     }
 
+    // ============================================================
+    // MODEL LIFECYCLE
+    // ============================================================
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        //nothing
+    }
+
+    @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        variableChanged = true;
+        basisKnown = false;
     }
 
+    @Override
     protected void storeState() {
-//        savedStrengthOfSelectionMatrix = strengthOfSelectionMatrix;
-        savedEigenDecompositionStrengthOfSelection = eigenDecompositionStrengthOfSelection;
-        storedVariableChanged = variableChanged;
+        savedBasis = currentBasis;
     }
 
+    @Override
     protected void restoreState() {
-//        strengthOfSelectionMatrix = savedStrengthOfSelectionMatrix;
-        eigenDecompositionStrengthOfSelection = savedEigenDecompositionStrengthOfSelection;
-        variableChanged = storedVariableChanged;
+        currentBasis = savedBasis;
+        basisKnown = (currentBasis != null);  // or just = true if we guarantee non-null
     }
 
+    @Override
     protected void acceptState() {
-    } // no additional state needs accepting
+        // Immutable basis representations don't need acceptance
+    }
 
+    // ============================================================
+    // TREE ATTRIBUTES
+    // ============================================================
+
+    @Override
     public String[] getTreeAttributeLabel() {
         return new String[]{ELASTIC_TREE_ATTRIBUTE};
     }
 
+    @Override
     public String[] getAttributeForTree(Tree tree) {
-        if (strengthOfSelectionMatrixParameter != null) {
-            return new String[]{strengthOfSelectionMatrixParameter.toString()};
+        if (strengthOfSelectionParam != null) {
+            return new String[]{strengthOfSelectionParam.toString()};
         }
-
-        strengthOfSelectionMatrixParameter.toString();
         return new String[]{"null"};
     }
 
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
+    // ============================================================
+    // INNER CLASSES - Strategy Pattern
+    // ============================================================
 
-//    public Element createElement(Document document) {
-//        throw new RuntimeException("Not implemented!");
-//    }
+    /**
+     * Strategy interface for computing basis representations from different
+     * matrix parametrizations.
+     */
+    interface SelectionMatrixStrategy {
+        BasisRepresentation computeBasis(MatrixParameterInterface param, int dim);
+        boolean isDiagonal();
+        boolean isSymmetric();
+        boolean isBlockDiagonal();
+        default int getNumberOfParameters() {
+            return -1; // Unknown
+        }
+    }
 
-//    // **************************************************************
-//    // XMLObjectParser
-//    // **************************************************************
-//
-//    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-//
-//        public String getParserName() {
-//            return ELASTIC_PROCESS;
-//        }
-//
-//        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//
-//            XMLObject cxo = xo.getChild(ELASTIC_CONSTANT);
-//            MatrixParameterInterface elasticParam = (MatrixParameterInterface)
-//                    cxo.getChild(MatrixParameterInterface.class);
-//
-//            return new MultivariateElasticModel(elasticParam);
-//        }
-//
-//        //************************************************************************
-//        // AbstractXMLObjectParser implementation
-//        //************************************************************************
-//
-//        public String getParserDescription() {
-//            return "Describes a multivariate elastic process.";
-//        }
-//
-//        public XMLSyntaxRule[] getSyntaxRules() {
-//            return rules;
-//        }
-//
-//        private final XMLSyntaxRule[] rules = {
-//                new ElementRule(ELASTIC_CONSTANT,
-//                        new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
-//        };
-//
-//        public Class getReturnType() {
-//            return dr.evomodel.continuous.MultivariateDiffusionModel.class;
-//        }
-//    };
-
-    // **************************************************************
-    // Private instance variables
-    // **************************************************************
-
-    private MatrixParameterInterface strengthOfSelectionMatrixParameter;
-//    private double[][] strengthOfSelectionMatrix;
-//    private double[][] savedStrengthOfSelectionMatrix;
-    private EigenDecomposition eigenDecompositionStrengthOfSelection = null;
-    private EigenDecomposition savedEigenDecompositionStrengthOfSelection = null;
-
-    private Parametrization parametrization;
-    private boolean isSymmetric;
-
-    private int dim;
-
-    private boolean variableChanged = true;
-    private boolean storedVariableChanged;
-
+    /**
+     * Factory for creating appropriate strategy based on parameter type.
+     */
+    static class SelectionMatrixStrategyFactory {
+        static SelectionMatrixStrategy create(MatrixParameterInterface param) {
+            if (param instanceof BlockDiagonalCosSinMatrixParameter) {
+                return new BlockDiagonalStrategy();
+            } else if (param instanceof DiagonalMatrix) {
+                return new DiagonalStrategy();
+            } else if (param instanceof CompoundEigenMatrix) {
+                return new DecomposedStrategy(param.isConstrainedSymmetric());
+            } else {
+                return new GeneralEigenStrategy(param.isConstrainedSymmetric());
+            }
+        }
+    }
 }

@@ -280,9 +280,7 @@ public class OUDiffusionModelDelegate
     }
 
     public boolean hasBlockDiagActualization() {
-        int[] blockStarts = elasticModel.getBlockStarts();
-        int[] blockSizes  = elasticModel.getBlockSizes();
-        return blockStarts != null && blockSizes != null && blockStarts.length > 0;
+        return elasticModel.hasBlockStructure();
     }
 
     public MultivariateDiffusionModel getDiffusionModel() {

@@ -180,7 +180,7 @@ public class ContinuousTraitBackpropGradient
         this.primitiveMapper = primitiveMapper;
 
         // Initialize backprop components
-        this.leafBackprop = new MessageBackprop(DEBUG);
+        this.leafBackprop = new MessageBackprop();
         this.primitiveStrategy = primitiveStrategy;
 //                new PrimitiveParameterBackprop(DEBUG, computeSigmaGradient);
 

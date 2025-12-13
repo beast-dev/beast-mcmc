@@ -29,7 +29,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.inference.model.Model;
 import org.ejml.data.DenseMatrix64F;
 
@@ -84,4 +85,60 @@ public interface DiffusionProcessDelegate extends Model {
     double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
 
     void getMeanTipVariances(final double priorSampleSize, final double[] treeLengths, final DenseMatrix64F traitVariance, final DenseMatrix64F varSum);
+
+    default ContinuousDiffusionIntegrator createIntegrator( //TODO create delegates for these
+            PrecisionType precisionType,
+            int numTraits,
+            int dimTrait,
+            int dimProcess,
+            int partialBufferCount,
+            int matrixBufferCount,
+            boolean allowSingular) {
+
+        if (precisionType == PrecisionType.SCALAR) {
+            if (getDiffusionModelCount() == 1 &&
+                    getDiffusionModel(0) instanceof SparseBandedMultivariateDiffusionModel) {
+
+                return new SparseIntegrator(
+                        precisionType,
+                        numTraits,
+                        dimTrait,
+                        dimProcess,
+                        partialBufferCount,
+                        matrixBufferCount
+                );
+            }
+            return new ContinuousDiffusionIntegrator.Basic(
+                    precisionType,
+                    numTraits,
+                    dimTrait,
+                    dimProcess,
+                    partialBufferCount,
+                    matrixBufferCount
+            );
+        }
+
+        // FULL precision, non-OU generic case
+        if (allowSingular) {
+            return new SafeMultivariateIntegrator(
+                    precisionType,
+                    numTraits,
+                    dimTrait,
+                    dimProcess,
+                    partialBufferCount,
+                    matrixBufferCount
+            );
+        } else {
+            return new MultivariateIntegrator(
+                    precisionType,
+                    numTraits,
+                    dimTrait,
+                    dimProcess,
+                    partialBufferCount,
+                    matrixBufferCount
+            );
+        }
+    }
+
 }
+

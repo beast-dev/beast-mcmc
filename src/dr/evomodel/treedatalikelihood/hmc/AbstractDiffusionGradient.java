@@ -30,10 +30,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -49,7 +46,7 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     private final double upperBound;
     protected int offset;
 
-    AbstractDiffusionGradient(Likelihood likelihood, double upperBound, double lowerBound) {
+    protected AbstractDiffusionGradient(Likelihood likelihood, double upperBound, double lowerBound) {
         this.likelihood = likelihood;
 //        this.parameter = parameter;
         this.lowerBound = lowerBound;
@@ -250,5 +247,34 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
                     (DiagonalMatrix) attenuation,
                     Double.POSITIVE_INFINITY, 0.0);
         }
+
+        public static ParameterDiffusionGradient createDecomposedAttenuationGradient(BranchSpecificGradient branchSpecificGradient,
+                                                                                      Likelihood likelihood,
+                                                                                      MatrixParameterInterface attenuation) {
+
+            assert (attenuation instanceof DiagonalMatrix)
+                    : "Wrong class used";
+            CompoundParameter p = new CompoundParameter(null);
+            if (attenuation instanceof CompoundEigenMatrix) {
+                p.addParameter(((CompoundEigenMatrix) attenuation).getDiagonalParameter());
+                p.addParameter(((CompoundEigenMatrix) attenuation).getOffDiagonalParameter());
+            } else if (attenuation instanceof BlockDiagonalCosSinMatrixParameter) {
+                throw new IllegalArgumentException("Use Backpropagatin for the block diagonal case");
+//                p = ((BlockDiagonalCosSinMatrixParameter) attenuation).getParameter();
+//                p.addParameter(((BlockDiagonalCosSinMatrixParameter) attenuation).getAParam());
+//                p.addParameter(((BlockDiagonalCosSinMatrixParameter) attenuation).getRBlockParam());
+//                p.addParameter(((BlockDiagonalCosSinMatrixParameter) attenuation).getThetaParam());
+//                p.addParameter(((BlockDiagonalCosSinMatrixParameter) attenuation).getRParam());
+            } else {
+                throw new IllegalArgumentException("Unsupported matrix parameter type for decomposed attenuation gradient: " + attenuation.getClass().getName());
+            }
+
+            return new ParameterDiffusionGradient(
+                    branchSpecificGradient, likelihood,
+                    p,
+                    p,
+                    Double.POSITIVE_INFINITY, 0.0);
+        }
+
     }
 }

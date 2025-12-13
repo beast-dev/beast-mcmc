@@ -69,6 +69,13 @@ public class CompoundEigenMatrix extends AbstractTransformedCompoundMatrix {
         compositionKnown = true;
     }
 
+    public Parameter getDiagonalParameter() {
+        return diagonalParameter;
+    }
+    public Parameter getOffDiagonalParameter() {
+        return offDiagonalParameter;
+    }
+
 
     @Override
     public double getParameterValue(int row, int col) {

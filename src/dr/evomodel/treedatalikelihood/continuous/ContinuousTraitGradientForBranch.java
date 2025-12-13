@@ -31,11 +31,14 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.hmc.MultivariateChainRule;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.inference.model.BlockDiagonalCosSinMatrixParameter;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -191,7 +194,7 @@ public interface ContinuousTraitGradientForBranch {
 
         }
 
-        static final boolean DEBUG = false;
+        static final boolean DEBUG = true;
     }
 
     class RateGradient extends Default {
@@ -474,12 +477,13 @@ public interface ContinuousTraitGradientForBranch {
 
                     DenseMatrix64F gradQInvDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientVarianceWrtAttenuation(node, cdi, statistics, gradQInv);
 
+//                    System.out.println("gradQInvDiag = " + Arrays.toString(gradQInvDiag.getData()));
                     if (DEBUG) {
                         System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQInv));
                     }
 
                     DenseMatrix64F gradNDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtAttenuation(node, cdi, statistics, gradN);
-
+//                    System.out.println("gradNDiagGOOD = " + Arrays.toString(gradNDiag.getData()));
                     CommonOps.addEquals(gradQInvDiag, gradNDiag);
 
                     return gradQInvDiag.getData();
@@ -499,7 +503,46 @@ public interface ContinuousTraitGradientForBranch {
                     return dim;
                 }
             },
+            WRT_GENERAL_SELECTION_STRENGTH {
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate ldl, BranchSufficientStatistics statistics, NodeRef node,
+                                          DenseMatrix64F dSigma, DenseMatrix64F dMu) {
+                    cdi.getRootMatrices(ldl.getRootProcessDelegate().getPriorBufferIndex(), 1,
+                            new double[4], new double[4], new double[4]);
 
+                    DenseMatrix64F gradQInvDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientVarianceWrtAttenuation(node, cdi, statistics, dSigma);
+                    if (DEBUG) {
+                        System.out.println("gradQInvDiag = " + Arrays.toString(gradQInvDiag.getData()));
+                        System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(dSigma));
+                    }
+
+                    DenseMatrix64F gradNDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtAttenuation(node, cdi, statistics, dMu);
+                    CommonOps.addEquals(gradQInvDiag, gradNDiag);
+                    System.out.println("dl/dS = " + Arrays.toString(gradQInvDiag.getData()));
+
+                    if (cdi instanceof SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator) {
+                        throw new RuntimeException("Use backpropagation for the block diagonal case");
+//                        MultivariateElasticModel elasticModel = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getElasticModel();
+//                        double [] gradient = new double[elasticModel.getNumberOfParameters()];
+//                        BlockDiagonalCosSinMatrixParameter parameter = (BlockDiagonalCosSinMatrixParameter) elasticModel.getMatrixParameterInterface();
+//                        parameter.chainGradient(gradQInvDiag.getData(), gradient);
+//                        System.out.println("gradientBranchSpecific = " + Arrays.toString(gradient));
+//                        return gradient;
+                    }
+                    return gradQInvDiag.getData();
+                }
+
+                @Override
+                double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                       DiffusionProcessDelegate diffusionProcessDelegate,
+                                       ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                       BranchSufficientStatistics statistics, NodeRef node,
+                                       final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    return new double[likelihoodDelegate.getTraitDim() * likelihoodDelegate.getTraitDim()];
+                }
+                @Override public int getDimension(int dim) { return 3*dim - 3; } // TODO this should be  taylored to BlockSchurMatrixParameter
+            },
             WRT_BRANCH_SPECIFIC_DRIFT {
 
                 @Override

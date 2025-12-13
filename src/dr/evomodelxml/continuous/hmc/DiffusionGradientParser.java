@@ -33,6 +33,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
+import dr.evomodel.treedatalikelihood.continuous.backprop.*;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiffusionParametersGradient;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
@@ -40,7 +42,10 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.BlockDiagonalCosSinMatrixParameter;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -58,6 +63,7 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class DiffusionGradientParser extends AbstractXMLObjectParser {
     private final static String DIFFUSION_GRADIENT = "diffusionGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String BACKPROP = "backpropagate";
 
     @Override
     public String getParserName() {
@@ -68,6 +74,80 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+        boolean hasBackpropGradient = xo.getBooleanAttribute(BACKPROP, false);
+        if (hasBackpropGradient) {
+            // 1. Collect all providers from child parsers
+            List<BackPropParameterProvider> providers = xo.getAllChildren(BackPropParameterProvider.class);
+
+            if (providers == null || providers.isEmpty()) {
+                throw new XMLParseException(
+                        "No diffusion backprop gradient(s) defined inside <backpropDiffusionGradient>."
+                );
+            }
+//            for (BackPropParameterProvider grad : backPropParameterProvider) {
+//                compoundParameter.addParameter(grad.getRawParameter());
+//                mapper.addMapper(grad.getMapper);
+//            }
+            Likelihood treeDataLikelihood = providers.get(0).getTreeDataLikelihood();
+            ContinuousDataLikelihoodDelegate delegate = providers.get(0).getContinuousDataLikelihoodDelegate();
+            int dim = delegate.getTraitDim();
+
+            for (BackPropParameterProvider p : providers) {
+                if (p.getTreeDataLikelihood() != treeDataLikelihood) {
+                    throw new XMLParseException(
+                            "All diffusion backprop gradient components must use the same TreeDataLikelihood."
+                    );
+                }
+                if (p.getContinuousDataLikelihoodDelegate() != delegate) {
+                    throw new XMLParseException(
+                            "All diffusion backprop gradient components must use the same ContinuousDataLikelihoodDelegate."
+                    );
+                }
+            }
+
+            CompoundParameter compoundParameter = new CompoundParameter(null);
+            MultiParameterOUPrimitiveGradientMapper multiMapper = new MultiParameterOUPrimitiveGradientMapper();
+            for (BackPropParameterProvider grad : providers) {
+                Parameter raw = grad.getRawParameter();
+//                parameterList.add(raw);
+                compoundParameter.addParameter(raw);
+                multiMapper.addMapper( grad.getMapper() );
+            }
+
+            Tree tree = ((TreeDataLikelihood) treeDataLikelihood).getTree();
+//            Likelihood treeDataLikelihood = backPropParameterProvider.get(0).getTreeDataLikelihood()
+//            Tree tree = ((TreeDataLikelihood) treeDataLikelihood).getTree();
+//            ContinuousDataLikelihoodDelegate delegate = backPropParameterProvider.get(0).getContinuousDataLikelihoodDelegate();
+
+            ContinuousTraitBackpropGradient.OUBranchCacheProvider cacheProvider =
+                    new OUBranchCacheProviderImpl(tree, (OUDiffusionModelDelegate) delegate.getDiffusionProcessDelegate(), delegate);
+
+            ContinuousTraitBackpropGradient.CanonicalAdjointProvider adjointProvider =
+                    new CanonicalAdjointProviderImpl(traitName, (TreeDataLikelihood) treeDataLikelihood, delegate, cacheProvider);
+
+            OUBackpropBuilder builder =
+                    new OUBackpropBuilder((OUDiffusionModelDelegate) delegate.getDiffusionProcessDelegate());
+            PrimitiveParameterBackpropStrategy primitiveStrategy = builder.buildPrimitiveStrategy();
+
+            ContinuousTraitBackpropGradient traitGradient =
+                        new ContinuousTraitBackpropGradient(
+                                dim,
+                                tree,
+                                cacheProvider,
+                                adjointProvider,
+                                multiMapper,
+                                primitiveStrategy,
+                                true ); // TODO make this adaptable so that it turns on only when necessary
+
+            BranchSpecificGradient branchSpecificGradient =
+                    new BranchSpecificGradient(traitName, (TreeDataLikelihood) treeDataLikelihood, delegate, traitGradient, compoundParameter);
+
+            return BackPropParameterDiffusionGradient.createBackpropGradient(
+                    branchSpecificGradient,
+                    treeDataLikelihood,
+                    compoundParameter
+            );
+        }
 
         List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> derivationParametersList
                 = new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>();
@@ -86,7 +166,9 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
 
         CompoundGradient parametersGradients = new CompoundDerivative(derivativeList);
 
-//        testSameModel(precisionGradient, attenuationGradient);
+        if (hasBackpropGradient) {
+            return parametersGradients;
+        }
 
         TreeDataLikelihood treeDataLikelihood = ((TreeDataLikelihood) diffGradients.get(0).getLikelihood());
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -111,7 +193,13 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(BACKPROP, true),
+            new OrRule(
+                    new ElementRule(BackPropParameterProvider.class, 1, Integer.MAX_VALUE),
+                    new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE)
+            ),
+//            new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE),
+
     };
 
     @Override

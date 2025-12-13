@@ -31,9 +31,14 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.backprop.BackPropParameterProvider;
+import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagCosSinPrimitiveGradientMapper;
+import dr.evomodel.treedatalikelihood.continuous.backprop.CompoundSymmetricCovariancePrimitiveMapper;
 import dr.evomodel.treedatalikelihood.hmc.*;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
@@ -60,6 +65,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_BOTH = "both";
     private final static String PRECISION_CORRELATION_DECOMPOSED = "decomposedCorrelation";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String BACKPROP = "backpropagate";
 
     @Override
     public String getParserName() {
@@ -147,6 +153,23 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                 traitGradient =
                         new ContinuousTraitGradientForBranch.SamplingVarianceGradient(dim, tree, continuousData, extensionProvider);
             } else {
+                boolean backpropagate = xo.getBooleanAttribute(BACKPROP, false);
+                if (backpropagate) {
+                    // TODO     IMPLEMENT MAPPERS FOR all parametrizations
+
+                    CompoundSymmetricMatrix csm = (CompoundSymmetricMatrix) parameter.getUniqueParameter(0);
+                    CompoundParameter compoundParameter = new CompoundParameter(null);
+//                    for (int i = 0; i < csm.getUniqueParameterCount(); i++) {
+//                        compoundParameter.addParameter( csm.getUniqueParameter(i) );
+//                    }
+                    compoundParameter.addParameter(csm.getDiagonalParameter());
+                    compoundParameter.addParameter(csm.getOffDiagonalParameter());
+                    CompoundSymmetricCovariancePrimitiveMapper primitiveMapper = new CompoundSymmetricCovariancePrimitiveMapper(csm);
+
+                    BackPropParameterProvider backPropParameterProvider = new BackPropParameterProvider.Default(treeDataLikelihood, continuousData, compoundParameter, primitiveMapper);
+
+                    return backPropParameterProvider;
+                }
                 traitGradient =
                         new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                                 dim, tree, continuousData,
@@ -170,6 +193,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(BACKPROP, true ),
             new ElementRule(WishartStatisticsWrapper.class, true),
             new ElementRule(BranchRateGradient.class, true),
             new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class, true),

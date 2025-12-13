@@ -1,47 +1,19 @@
-/*
- * AttenuationGradientParser.java
- *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
- */
-
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.backprop.*;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.*;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDecomposedAttenuationGradient;
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -58,6 +30,8 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     private final static String ATTENUATION_DIAGONAL = "diagonal";
     private final static String ATTENUATION_BOTH = "both";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String APPROXIMATE = "approximate";
+
 
     @Override
     public String getParserName() {
@@ -82,7 +56,17 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             public Object factory(BranchSpecificGradient branchSpecificGradient,
                                   TreeDataLikelihood treeDataLikelihood,
                                   MatrixParameterInterface parameter) {
-                throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
+                // Check if using BlockDiagonalCosSinMatrixParameter (backprop)
+                if (parameter instanceof BlockDiagonalCosSinMatrixParameter) {
+                    throw new RuntimeException("Gradient wrt full attenuation not yet implemented outside backpropagation.");
+//                    return BackPropParameterDiffusionGradient.createBackpropAttenuationGradient(
+//                            branchSpecificGradient,
+//                            treeDataLikelihood,
+//                            (BlockDiagonalCosSinMatrixParameter) parameter
+//                    );
+                }
+                return createDecomposedAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
+//                throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
             }
         },
         WRT_CORRELATION {
@@ -111,9 +95,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
-
-        MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
-
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -121,17 +102,66 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         Tree tree = treeDataLikelihood.getTree();
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
-                        dim, tree, continuousData,
-                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
-                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
-                        ));
-        BranchSpecificGradient branchSpecificGradient =
-                new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
+        ContinuousTraitGradientForBranch traitGradient;
 
-        ParameterMode parameterMode = parseParameterMode(xo);
-        return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, parameter);
+        CompoundEigenMatrix compoundEigenMatrix = (CompoundEigenMatrix) xo.getChild(CompoundEigenMatrix.class);
+        BlockDiagonalCosSinMatrixParameter blockDiagonalCosSinMatrixParameter = (BlockDiagonalCosSinMatrixParameter) xo.getChild(BlockDiagonalCosSinMatrixParameter.class);
+        if (compoundEigenMatrix != null) {
+//            Parameter parameter = compoundEigenMatrix.getDiagonalParameter();
+            traitGradient =
+                    new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                            dim, tree, continuousData,
+                            new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                    Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_GENERAL_SELECTION_STRENGTH)
+                            ));
+            BranchSpecificGradient branchSpecificGradient =
+                    new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, compoundEigenMatrix);
+
+            ParameterMode parameterMode = parseParameterMode(xo);
+            return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, compoundEigenMatrix);
+        } else if (blockDiagonalCosSinMatrixParameter != null) {
+            if (false) {
+                traitGradient =
+                        new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                                dim, tree, continuousData,
+                                new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                        Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_GENERAL_SELECTION_STRENGTH)
+                                ));
+            } else {
+                BlockDiagCosSinPrimitiveGradientMapper primitiveMapper =
+                        new BlockDiagCosSinPrimitiveGradientMapper(blockDiagonalCosSinMatrixParameter);
+                Parameter parameter = blockDiagonalCosSinMatrixParameter.getParameter();
+                BackPropParameterProvider backPropParameterProvider = new BackPropParameterProvider.Default(treeDataLikelihood, continuousData, parameter, primitiveMapper);
+
+                return backPropParameterProvider;
+            }
+
+            BranchSpecificGradient branchSpecificGradient =
+                    new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, blockDiagonalCosSinMatrixParameter);
+
+            ParameterMode parameterMode = parseParameterMode(xo);
+            return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, blockDiagonalCosSinMatrixParameter);
+//            return new AttenuationBackpropGradient(branchSpecificGradient, treeDataLikelihood, blockDiagonalCosSinMatrixParameter, 10.0, 0.0);
+        } else {
+
+            MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+            if (parameter instanceof DiagonalMatrix) {
+                traitGradient =
+                        new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                                dim, tree, continuousData,
+                                new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                        Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
+                                ));
+                BranchSpecificGradient branchSpecificGradient =
+                        new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
+
+                ParameterMode parameterMode = parseParameterMode(xo);
+                return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, parameter);
+            } else {
+                throw new XMLParseException("Unsupported matrix parameter type for attenuation gradient: " + parameter.getClass().getName());
+            }
+        }
+
     }
 
     @Override

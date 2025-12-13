@@ -18,7 +18,7 @@ import org.ejml.ops.CommonOps;
 
 public final class MessageBackprop {
 
-    private final boolean debug;
+    private final boolean debug = false;
 
     // Cached dimension and reusable workspaces (reallocated only when k changes)
     private int kCached = -1;
@@ -33,8 +33,7 @@ public final class MessageBackprop {
     private DenseMatrix64F Wk1_0;
     private DenseMatrix64F Wk1_1;
 
-    public MessageBackprop(boolean debug) {
-        this.debug = debug;
+    public MessageBackprop() {
     }
 
     /** Result of backprop through leaf message. */

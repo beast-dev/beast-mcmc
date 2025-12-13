@@ -168,109 +168,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         try {
+// Let the diffusion process delegate choose the integrator.
+            // It knows whether we are OU / integrated OU / Brownian / sparse banded / etc.
+            cdi = diffusionProcessDelegate.createIntegrator(
+                    precisionType,
+                    numTraits,
+                    dimTrait,
+                    dimTrait,          // or dimProcess if you differentiate; currently dimProcess = dimTrait or dimTrait/2 for integrated OU
+                    partialBufferCount,
+                    matrixBufferCount,
+                    allowSingular
+            );
 
-            ContinuousDiffusionIntegrator base;
-            if (precisionType == PrecisionType.SCALAR) {
-
-                if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
-                        diffusionProcessDelegate.getDiffusionModel(0)
-                        instanceof SparseBandedMultivariateDiffusionModel) {
-
-                    base =
-//                            new ContinuousDiffusionIntegrator.Basic(
-                            new SparseIntegrator(
-                            precisionType,
-                            numTraits,
-                            dimTrait,
-                            dimTrait,
-                            partialBufferCount,
-                            matrixBufferCount
-                    );
-                } else {
-
-                    base = new ContinuousDiffusionIntegrator.Basic(
-                            precisionType,
-                            numTraits,
-                            dimTrait,
-                            dimTrait,
-                            partialBufferCount,
-                            matrixBufferCount
-                    );
-                }
-
-            } else if (precisionType == PrecisionType.FULL) {
-
-                if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
-                    assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
-                    base = new SafeMultivariateActualizedWithDriftIntegrator(
-                            precisionType,
-                            numTraits,
-                            dimTrait,
-                            dimTrait / 2,
-                            partialBufferCount,
-                            matrixBufferCount,
-                            ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
-                    );
-                } else {
-                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
-                            base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
-                                    precisionType,
-                                    numTraits,
-                                    dimTrait,
-                                    dimTrait,
-                                    partialBufferCount,
-                                    matrixBufferCount
-                            );
-                        } else {
-                            base = new SafeMultivariateActualizedWithDriftIntegrator(
-                                    precisionType,
-                                    numTraits,
-                                    dimTrait,
-                                    dimTrait,
-                                    partialBufferCount,
-                                    matrixBufferCount,
-                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
-                            );
-                        }
-                    } else {
-                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                            base = new SafeMultivariateWithDriftIntegrator(
-                                    precisionType,
-                                    numTraits,
-                                    dimTrait,
-                                    dimTrait,
-                                    partialBufferCount,
-                                    matrixBufferCount
-                            );
-                        } else {
-                            if (allowSingular) {
-                                base = new SafeMultivariateIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            } else {
-                                base = new MultivariateIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            }
-                        }
-                    }
-                }
-            } else {
-                throw new RuntimeException("Not yet implemented");
-            }
-
-            cdi = base;
             System.err.println("Base CDI is " + cdi.getClass().getCanonicalName());
             this.dimProcess = cdi.getDimProcess();
 
@@ -786,7 +695,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                       int rootNodeNumber) {
 
         branchNormalization = rateTransformation.getNormalization();
-
+// TODO understand what this normalization does
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
@@ -1083,7 +992,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    void addBranchConditionalDensityTrait(String traitName) {
+    public void addBranchConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new BranchConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),

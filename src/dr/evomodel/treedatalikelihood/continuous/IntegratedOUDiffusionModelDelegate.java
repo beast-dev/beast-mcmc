@@ -33,6 +33,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -174,5 +176,27 @@ public class IntegratedOUDiffusionModelDelegate extends OUDiffusionModelDelegate
             }
         }
         return jointVariance;
+    }
+
+    @Override
+    public ContinuousDiffusionIntegrator createIntegrator(
+            PrecisionType precisionType,
+            int numTraits,
+            int dimTrait,
+            int dimProcess,
+            int partialBufferCount,
+            int matrixBufferCount,
+            boolean allowSingular) {
+        assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
+        return new SafeMultivariateActualizedWithDriftIntegrator(
+                precisionType,
+                numTraits,
+                dimTrait,
+                dimTrait / 2,
+                partialBufferCount,
+                matrixBufferCount,
+                isSymmetric()
+        );
+
     }
 }

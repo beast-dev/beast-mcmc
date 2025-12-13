@@ -566,9 +566,27 @@ public class IntegratedSquaredSplines {
     }
 
 
+    class Polynomial {
+
+        final double[] coefficients;
+        private final int degree;
+
+        Polynomial(int degree) {
+            this(new double[degree + 1], degree);
+        }
+
+        Polynomial(double[] coefficients, int degree) {
+
+            assert coefficients.length >= degree + 1;
+
+            this.coefficients = coefficients;
+            this.degree = degree;
+        }
+    }
+
     private static final boolean TEST = false;
 
-    public static double[] polynomialProduct(double[] lhs, double[] rhs) {
+    public static double[] polynomialProduct1(double[] lhs, double[] rhs) {
 
         double[] product = new double[lhs.length + rhs.length - 1]; // TODO pass buffer
 
@@ -581,18 +599,20 @@ public class IntegratedSquaredSplines {
         return product;
     }
 
-//    int n = p.degree() + degree();
-//    double[] coef = new double[n + 1];
-//	for ( int i = 0; i <= n; i++)
-//    {
-//        coef[i] = 0;
-//        for ( int k = 0; k <= i; k++)
-//            coef[i] += p.coefficient(k) * coefficient(i-k);
-//    }
-//	return new PolynomialFunction( coef);
+    public static double[] polynomialProduct2(double[] lhs, double[] rhs) {
 
+        double[] product = new double[lhs.length + rhs.length - 1]; // TODO pass buffer
 
+        for (int i = 0; i < product.length; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j <= i; ++j) {
+                sum += lhs[j] * rhs[i - j];
+            }
+            product[i] = sum;
+        }
 
+        return product;
+    }
 
     public double[][] getIntegratedSquaredBasisMatrix(double start, double end) {
         int dim = coefficient.length;

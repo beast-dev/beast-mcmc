@@ -77,8 +77,9 @@ public class OUDiffusionModelDelegate
         if (elasticModel.isDiagonal()) {
             this.actualizationStrategy = new OUActualizationStrategyDiagonal(this);
         } else if (elasticModel.isBlockDiag()) {
-            this.actualizationStrategy = new OUActualizationStrategyBlockDecomposition(this);
-            throw new RuntimeException("Use backpropagation for the block-diagonal case.");
+            this.actualizationStrategy = null; // Use backpropagation for the block-diagonal case
+//                    new OUActualizationStrategyBlockDecomposition(this);
+//            throw new RuntimeException("Use backpropagation for the block-diagonal case.");
         } else {
             this.actualizationStrategy = new OUHurwitzActualizationStrategy(this);
         }

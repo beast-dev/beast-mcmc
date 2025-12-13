@@ -194,7 +194,7 @@ public interface ContinuousTraitGradientForBranch {
 
         }
 
-        static final boolean DEBUG = true;
+        static final boolean DEBUG = false;
     }
 
     class RateGradient extends Default {

@@ -1,28 +1,10 @@
 /*
  * SafeMultivariateDiagonalActualizedWithDriftIntegrator.java
  *
+ * Diagonal specialisation of SafeMultivariateActualizedWithDriftIntegrator:
+ * Q(t) is diagonal in trait space.
+ *
  * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
@@ -39,227 +21,142 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  * @author Marc A. Suchard
  * @author Paul Bastide
  */
+public class SafeMultivariateDiagonalActualizedWithDriftIntegrator
+        extends SafeMultivariateActualizedWithDriftIntegrator {
 
-public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeMultivariateWithDriftIntegrator {
+    private static final boolean DEBUG = false;
 
-    private static boolean DEBUG = false;
+    /** (1 - exp(-λ_i t)) per trait and branch. */
+    private double[] diagonal1mActualizations; // dimTrait x bufferCount
 
-    public SafeMultivariateDiagonalActualizedWithDriftIntegrator(PrecisionType precisionType,
-                                                                 int numTraits, int dimTrait, int dimProcess,
-                                                                 int bufferCount, int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
+    /** Temporary vectors for tree traversal. */
+    private double[] vectorDiagQdi;
+    private double[] vectorDiagQdj;
 
-        allocateStorage();
+    public SafeMultivariateDiagonalActualizedWithDriftIntegrator(
+            PrecisionType precisionType,
+            int numTraits,
+            int dimTrait,
+            int dimProcess,
+            int bufferCount,
+            int diffusionCount) {
 
-        System.err.println("Trying SafeMultivariateDiagonalActualizedWithDriftIntegrator");
+        super(precisionType, numTraits, dimTrait, dimProcess,
+                bufferCount, diffusionCount,
+                true /* symmetric basis */);
+
+        allocateDiagonalStorage();
+        // System.err.println("Trying SafeMultivariateDiagonalActualizedWithDriftIntegrator");
     }
 
+    private void allocateDiagonalStorage() {
+        diagonal1mActualizations = new double[dimTrait * bufferCount];
+        vectorDiagQdi            = new double[dimTrait];
+        vectorDiagQdj            = new double[dimTrait];
+    }
+
+    /* **********************************************************************
+     * Branch accessors
+     * ******************************************************************* */
+
     @Override
-    public void getBranch1mActualization(int bufferIndex, double[] diagonal1mActualization) {
+    public void getBranch1mActualization(int bufferIndex,
+                                         double[] diagonal1mActualization) {
 
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
         }
 
-        assert (diagonal1mActualization != null);
-        assert (diagonal1mActualization.length >= dimTrait);
+        assert diagonal1mActualization != null;
+        assert diagonal1mActualization.length >= dimTrait;
 
-        System.arraycopy(diagonal1mActualizations, bufferIndex * dimTrait,
-                diagonal1mActualization, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations,
+                bufferIndex * dimTrait,
+                diagonal1mActualization, 0,
+                dimTrait);
     }
 
     @Override
-    public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
+    public void getBranchActualization(int bufferIndex,
+                                       double[] diagonalActualization) {
         getBranch1mActualization(bufferIndex, diagonalActualization);
         oneMinus(diagonalActualization);
     }
 
     @Override
-    public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+    public void getBranchExpectation(double[] actualization,
+                                     double[] parentValue,
+                                     double[] displacement,
                                      double[] expectation) {
 
-        assert (expectation != null);
-        assert (expectation.length >= dimTrait);
-
-        assert (actualization != null);
-        assert (actualization.length >= dimTrait);
-
-        assert (parentValue != null);
-        assert (parentValue.length >= dimTrait);
-
-        assert (displacement != null);
-        assert (displacement.length >= dimTrait);
+        assert expectation   != null && expectation.length   >= dimTrait;
+        assert actualization != null && actualization.length >= dimTrait;
+        assert parentValue   != null && parentValue.length   >= dimTrait;
+        assert displacement  != null && displacement.length  >= dimTrait;
 
         for (int i = 0; i < dimTrait; ++i) {
             expectation[i] = actualization[i] * parentValue[i] + displacement[i];
         }
     }
 
-    private static final boolean TIMING = false;
-
-    private void allocateStorage() {
-
-        diagonal1mActualizations = new double[dimTrait * bufferCount];
-        stationaryVariances = new double[dimProcess * dimProcess * diffusionCount];
-
-        vectorDiagQdi = new double[dimTrait];
-        vectorDiagQdj = new double[dimTrait];
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// Setting variances, displacement and actualization vectors
-    ///////////////////////////////////////////////////////////////////////////
+    /* **********************************************************************
+     * Stationary variance Σ – diagonal variant
+     * ******************************************************************* */
 
     @Override
     public void setDiffusionStationaryVariance(int precisionIndex,
-                                               final double[] diagonalAlpha, final double[] rotation) {
+                                               final double[] diagonalAlpha,
+                                               final double[] rotation) {
 
-        assert (stationaryVariances != null);
-
+        assert stationaryVariances != null;
         assert dimProcess == diagonalAlpha.length;
 
         final int matrixSize = dimProcess * dimProcess;
-        final int offset = matrixSize * precisionIndex;
+        final int offset     = matrixSize * precisionIndex;
 
         double[] scales = new double[matrixSize];
         scalingMatrix(diagonalAlpha, scales);
 
+        // In the diagonal case, the precision is already in the correct basis:
         setStationaryVariance(offset, scales, matrixSize, rotation);
     }
 
-    void setStationaryVariance(int offset, double[] scales, int matrixSize, double[] rotation) {
-        scaleInv(inverseDiffusions, offset, scales, stationaryVariances, offset, matrixSize);
+    @Override
+    void setStationaryVariance(int offset,
+                               double[] scales,
+                               int matrixSize,
+                               double[] rotation) {
+        // Σ = invDiffusion / (λ_i + λ_j) directly, no basis change.
+        scaleInv(inverseDiffusions, offset,
+                scales,
+                stationaryVariances, offset,
+                matrixSize);
     }
 
-    static void scaleInv(final double[] source,
-                         final int sourceOffset,
-                         final double[] scales,
-                         final double[] destination,
-                         final int destinationOffset,
-                         final int length) {
-        for (int i = 0; i < length; ++i) {
-            destination[destinationOffset + i] = source[sourceOffset + i] / scales[i];
-        }
-    }
-
-    private static void scalingMatrix(double[] eigAlpha, double[] scales) {
-        int nEig = eigAlpha.length;
-        for (int i = 0; i < nEig; ++i) {
-            for (int j = 0; j < nEig; ++j) {
-                scales[i * nEig + j] = eigAlpha[i] + eigAlpha[j];
-            }
-        }
-    }
+    /* **********************************************************************
+     * OU hooks – diagonal specialisation
+     * ******************************************************************* */
 
     @Override
-    public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                         final double[] edgeLengths, final double[] optimalRates,
-                                                         final double[] diagonalStrengthOfSelectionMatrix,
-                                                         final double[] rotation,
-                                                         int updateCount) {
-
-        assert (diffusions != null);
-        assert (probabilityIndices.length >= updateCount);
-        assert (edgeLengths.length >= updateCount);
-
-        super.updateOrnsteinUhlenbeckDiffusionMatrices(precisionIndex, probabilityIndices, edgeLengths, optimalRates,
-                diagonalStrengthOfSelectionMatrix, rotation, updateCount);
-
-        if (DEBUG) {
-            System.err.println("Matrices (safe with actualized drift):");
-        }
-
-        final int matrixTraitSize = dimTrait * dimTrait;
-        final int matrixProcessSize = dimProcess * dimProcess;
-        final int unscaledOffset = matrixProcessSize * precisionIndex;
-
-
-        if (TIMING) {
-            startTime("actualization");
-        }
-
-        for (int up = 0; up < updateCount; ++up) {
-
-            final double edgeLength = edgeLengths[up];
-
-            final int scaledOffsetDiagonal = dimTrait * probabilityIndices[up];
-            final int scaledOffset = dimTrait * scaledOffsetDiagonal;
-
-            computeOUActualization(diagonalStrengthOfSelectionMatrix, rotation, edgeLength,
-                    scaledOffsetDiagonal, scaledOffset);
-        }
-
-        if (TIMING) {
-            endTime("actualization");
-        }
-
-
-        if (TIMING) {
-            startTime("diffusion");
-        }
-
-        for (int up = 0; up < updateCount; ++up) {
-
-            final double edgeLength = edgeLengths[up];
-
-            final int scaledOffset = matrixTraitSize * probabilityIndices[up];
-            final int scaledOffsetDiagonal = dimTrait * probabilityIndices[up];
-
-            computeOUVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal, edgeLength);
-
-            invertVectorSymmPosDef(variances, precisions, scaledOffset, dimProcess);
-        }
-
-        if (TIMING) {
-            endTime("diffusion");
-        }
-
-        assert (optimalRates != null);
-        assert (displacements != null);
-        assert (optimalRates.length >= updateCount * dimProcess);
-
-        if (TIMING) {
-            startTime("drift1");
-        }
-
-        int offset = 0;
-        for (int up = 0; up < updateCount; ++up) {
-
-            final int pio = dimTrait * probabilityIndices[up];
-            final int scaledOffset = matrixTraitSize * probabilityIndices[up];
-
-            computeOUActualizedDisplacement(optimalRates, offset, scaledOffset, pio);
-            offset += dimProcess;
-        }
-
-        if (TIMING) {
-            endTime("drift1");
-        }
-    }
-
     void computeOUActualization(final double[] diagonalStrengthOfSelectionMatrix,
                                 final double[] rotation,
                                 final double edgeLength,
                                 final int scaledOffsetDiagonal,
                                 final int scaledOffset) {
-        computeOUDiagonal1mActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
-                diagonal1mActualizations, scaledOffsetDiagonal);
+
+        computeOUDiagonal1mActualization(diagonalStrengthOfSelectionMatrix,
+                edgeLength,
+                dimTrait,
+                diagonal1mActualizations,
+                scaledOffsetDiagonal);
     }
 
-    static void computeOUDiagonal1mActualization(final double[] source,
-                                               final double edgeLength,
-                                               final int dim,
-                                               final double[] destination,
-                                               final int destinationOffset) {
-        for (int i = 0; i < dim; ++i) {
-            destination[destinationOffset + i] = - Math.expm1(-source[i] * edgeLength);
-        }
-    }
-
+    @Override
     void computeOUVarianceBranch(final int unscaledOffset,
-                               final int scaledOffset,
-                               final int scaledOffsetDiagonal,
-                               final double edgeLength) {
+                                 final int scaledOffset,
+                                 final int scaledOffsetDiagonal,
+                                 final double edgeLength) {
+
         scalingActualizationMatrix(diagonal1mActualizations, scaledOffsetDiagonal,
                 stationaryVariances, unscaledOffset,
                 variances, scaledOffset,
@@ -267,6 +164,18 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                 edgeLength,
                 inverseDiffusions,
                 unscaledOffset);
+    }
+
+    @Override
+    void computeOUActualizedDisplacement(final double[] optimalRates,
+                                         final int offset,
+                                         final int actualizationOffset,
+                                         final int pio) {
+
+        for (int j = 0; j < dimTrait; ++j) {
+            displacements[pio + j] =
+                    optimalRates[offset + j] * diagonal1mActualizations[pio + j];
+        }
     }
 
     private static void scalingActualizationMatrix(final double[] diagonal1mActualizations,
@@ -282,94 +191,82 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
                 double var = stationaryVariances[offsetStationaryVariances + i * dim + j];
-                if (Double.isInfinite(var) || (diagonal1mActualizations[offsetActualization + i] + diagonal1mActualizations[offsetActualization + j] == 0.0)) {
-                    destination[destinationOffset + i * dim + j] = edgeLength * variance[varianceOffset + i * dim + j];
+                double qi  = diagonal1mActualizations[offsetActualization + i];
+                double qj  = diagonal1mActualizations[offsetActualization + j];
+
+                if (Double.isInfinite(var) || (qi + qj == 0.0)) {
+                    destination[destinationOffset + i * dim + j] =
+                            edgeLength * variance[varianceOffset + i * dim + j];
                 } else {
-                    destination[destinationOffset + i * dim + j] = var * (- diagonal1mActualizations[offsetActualization + i] * diagonal1mActualizations[offsetActualization + j] + diagonal1mActualizations[offsetActualization + i] + diagonal1mActualizations[offsetActualization + j]);
+                    destination[destinationOffset + i * dim + j] =
+                            var * (-qi * qj + qi + qj);
                 }
             }
         }
     }
 
-    private static void invertVectorSymmPosDef(final double[] source,
-                                               final double[] destination,
-                                               final int offset,
-                                               final int dim) {
-        DenseMatrix64F sourceMatrix = wrap(source, offset, dim, dim);
-        DenseMatrix64F destinationMatrix = new DenseMatrix64F(dim, dim);
-
-//        CommonOps.invert(sourceMatrix, destinationMatrix);
-        symmPosDefInvert(sourceMatrix, destinationMatrix);
-
-        unwrap(destinationMatrix, destination, offset);
-    }
-
-    void computeOUActualizedDisplacement(final double[] optimalRates,
-                                         final int offset,
-                                         final int actualizationOffset,
-                                         final int pio) {
-
-        for (int j = 0; j < dimTrait; ++j) {
-            displacements[pio + j] = optimalRates[offset + j] * diagonal1mActualizations[pio + j];
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// Tree-traversal functions
-    ///////////////////////////////////////////////////////////////////////////
+    /* **********************************************************************
+     * Tree traversal – diagonal case
+     * ******************************************************************* */
 
     @Override
-    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
-        final double[] diagQdj = vectorDiagQdj;
-        System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
-        oneMinus(diagQdj);
-        MissingOps.diagMult(diagQdj, Pjp, QjPjp);
-        MissingOps.diagMult(QjPjp, diagQdj, Pjp);
+    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp,
+                            int jbo, int jmo, int jdo) {
+
+        System.arraycopy(diagonal1mActualizations,
+                jdo,
+                vectorDiagQdj, 0,
+                dimTrait);
+        oneMinus(vectorDiagQdj);
+
+        MissingOps.diagMult(vectorDiagQdj, Pjp, QjPjp);
+        MissingOps.diagMult(QjPjp,       vectorDiagQdj, Pjp);
     }
 
     @Override
     void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
-        final double[] diagQdi = vectorDiagQdi;
-        System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
-        oneMinus(diagQdi);
-        diagonalDoubleProduct(Vip, diagQdi, Vip);
+
+        System.arraycopy(diagonal1mActualizations,
+                ido,
+                vectorDiagQdi, 0,
+                dimTrait);
+        oneMinus(vectorDiagQdi);
+
+        diagonalDoubleProduct(Vip, vectorDiagQdi, Vip);
     }
 
     @Override
     void scaleAndDriftMean(int ibo, int imo, int ido) {
         for (int g = 0; g < dimTrait; ++g) {
-            preOrderPartials[ibo + g] = (1.0 - diagonal1mActualizations[ido + g]) * preOrderPartials[ibo + g] + displacements[ido + g];
+            preOrderPartials[ibo + g] =
+                    (1.0 - diagonal1mActualizations[ido + g]) * preOrderPartials[ibo + g]
+                            + displacements[ido + g];
         }
-    }
-
-    public double[] getStationaryVariance(int precisionIndex) {
-
-        assert (stationaryVariances != null);
-
-        return getMatrixProcess(precisionIndex, stationaryVariances);
     }
 
     @Override
     void computePartialPrecision(int ido, int jdo, int imo, int jmo,
-                                 DenseMatrix64F Pip, DenseMatrix64F Pjp, DenseMatrix64F Pk) {
+                                 DenseMatrix64F Pip,
+                                 DenseMatrix64F Pjp,
+                                 DenseMatrix64F Pk) {
 
-        final double[] diagQdi = vectorDiagQdi;
-        System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
-        oneMinus(diagQdi);
-        final double[] diagQdj = vectorDiagQdj;
-        System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
-        oneMinus(diagQdj);
+        System.arraycopy(diagonal1mActualizations, ido, vectorDiagQdi, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, jdo, vectorDiagQdj, 0, dimTrait);
+
+        oneMinus(vectorDiagQdi);
+        oneMinus(vectorDiagQdj);
 
         final DenseMatrix64F QdiPipQdi = matrix0;
         final DenseMatrix64F QdjPjpQdj = matrix1;
-        diagonalDoubleProduct(Pip, diagQdi, QdiPipQdi);
-        diagonalDoubleProduct(Pjp, diagQdj, QdjPjpQdj);
+
+        diagonalDoubleProduct(Pip, vectorDiagQdi, QdiPipQdi);
+        diagonalDoubleProduct(Pjp, vectorDiagQdj, QdjPjpQdj);
         CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
 
         if (DEBUG) {
-            System.err.println("Qdi: " + Arrays.toString(diagQdi));
+            System.err.println("Qdi: " + Arrays.toString(vectorDiagQdi));
             System.err.println("\tQdiPipQdi: " + QdiPipQdi);
-            System.err.println("\tQdj: " + Arrays.toString(diagQdj));
+            System.err.println("\tQdj: " + Arrays.toString(vectorDiagQdj));
             System.err.println("\tQdjPjpQdj: " + QdjPjpQdj);
         }
     }
@@ -379,25 +276,16 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                             final double[] jpartial,
                             final int dimTrait,
                             final double[] out) {
+
         weightedSumActualized(ipartial, 0, matrixPip, vectorDiagQdi, 0,
                 jpartial, 0, matrixPjp, vectorDiagQdj, 0,
                 dimTrait, out);
     }
 
-    private static void diagonalDoubleProduct(DenseMatrix64F source, double[] diagonalScales,
+    private static void diagonalDoubleProduct(DenseMatrix64F source,
+                                              double[] diagonalScales,
                                               DenseMatrix64F destination) {
-        MissingOps.diagMult(source, diagonalScales, destination);
+        MissingOps.diagMult(source,         diagonalScales, destination);
         MissingOps.diagMult(diagonalScales, destination);
     }
-
-    static void oneMinus(double[] x) {
-        for (int i = 0; i < x.length; i++) {
-            x[i] = 1.0 - x[i];
-        }
-    }
-
-    private double[] diagonal1mActualizations;
-    double[] stationaryVariances;
-    private double[] vectorDiagQdi;
-    private double[] vectorDiagQdj;
 }

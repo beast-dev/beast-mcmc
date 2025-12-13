@@ -13,6 +13,7 @@ package dr.evomodel.treedatalikelihood.continuous.backprop;
  *  of the License, or (at your option) any later version.
  */
 
+import java.util.Arrays;
 import org.ejml.data.DenseMatrix64F;
 
 /**
@@ -23,6 +24,8 @@ import org.ejml.data.DenseMatrix64F;
  *   - Consistent formatting across all debug output
  *   - Null-safe printing
  *   - Statistics computation (range, norms)
+ *
+ * Java 8 compatible (no String.repeat()).
  */
 public class BackpropDebugPrinter {
 
@@ -258,6 +261,20 @@ public class BackpropDebugPrinter {
     }
 
     // ------------------------------------------------------------------------
+    // Java 8 helpers
+    // ------------------------------------------------------------------------
+
+    /**
+     * Java 8 replacement for String.repeat(int).
+     */
+    private static String repeat(char c, int n) {
+        if (n <= 0) return "";
+        char[] arr = new char[n];
+        Arrays.fill(arr, c);
+        return new String(arr);
+    }
+
+    // ------------------------------------------------------------------------
     // Specialized printing
     // ------------------------------------------------------------------------
 
@@ -265,13 +282,15 @@ public class BackpropDebugPrinter {
      * Print a section header.
      */
     public static void printSectionHeader(String title) {
-        int totalWidth = 60;
-        int padding = (totalWidth - title.length() - 2) / 2;
+        final int totalWidth = 60;
+
+        int inner = totalWidth - title.length() - 2; // account for single spaces around title line
+        int padding = inner > 0 ? inner / 2 : 0;
 
         System.err.println();
-        System.err.println("=".repeat(totalWidth));
-        System.err.println(" ".repeat(padding) + title);
-        System.err.println("=".repeat(totalWidth));
+        System.err.println(repeat('=', totalWidth));
+        System.err.println(repeat(' ', padding) + title);
+        System.err.println(repeat('=', totalWidth));
     }
 
     /**
@@ -345,7 +364,7 @@ public class BackpropDebugPrinter {
                 label2, stats2.min, stats2.max, stats2.frobeniusNorm);
         System.err.printf("Difference - Max abs: %.6e, RMS: %.6e\n",
                 Math.max(Math.abs(statsDiff.min), Math.abs(statsDiff.max)),
-                statsDiff.frobeniusNorm / Math.sqrt(diff.numRows * diff.numCols));
+                statsDiff.frobeniusNorm / Math.sqrt((double) diff.numRows * (double) diff.numCols));
     }
 
     /**
@@ -372,9 +391,9 @@ public class BackpropDebugPrinter {
         double sumSqDiff = 0.0;
 
         for (int i = 0; i < arr1.length; i++) {
-            double diff = Math.abs(arr1[i] - arr2[i]);
-            maxDiff = Math.max(maxDiff, diff);
-            sumSqDiff += diff * diff;
+            double d = Math.abs(arr1[i] - arr2[i]);
+            if (d > maxDiff) maxDiff = d;
+            sumSqDiff += d * d;
         }
 
         double rmsDiff = Math.sqrt(sumSqDiff / arr1.length);

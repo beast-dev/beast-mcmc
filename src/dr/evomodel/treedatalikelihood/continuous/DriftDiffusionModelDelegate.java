@@ -30,6 +30,9 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateWithDriftIntegrator;
 
 import java.util.List;
 
@@ -53,4 +56,36 @@ public final class DriftDiffusionModelDelegate extends AbstractDriftDiffusionMod
         super(tree, diffusionModel, branchRateModels, partitionNumber);
     }
 
+    @Override
+    public ContinuousDiffusionIntegrator createIntegrator(
+            PrecisionType precisionType,
+            int numTraits,
+            int dimTrait,
+            int dimProcess,
+            int partialBufferCount,
+            int matrixBufferCount,
+            boolean allowSingular) {
+
+        if (precisionType == PrecisionType.FULL) {
+            return new SafeMultivariateWithDriftIntegrator(
+                    precisionType,
+                    numTraits,
+                    dimTrait,
+                    dimProcess,
+                    partialBufferCount,
+                    matrixBufferCount
+            );
+        }
+
+        // fallback, e.g. scalar case:
+        return super.createIntegrator(
+                precisionType,
+                numTraits,
+                dimTrait,
+                dimProcess,
+                partialBufferCount,
+                matrixBufferCount,
+                allowSingular
+        );
+    }
 }

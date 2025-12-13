@@ -183,10 +183,12 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     private BlockStructure getBlockStructure() {
         BlockStructure blockStructure = getBasis().getBlockStructure();
         if (blockStructure == null) {
-            throw new IllegalStateException(
-                    "Block structure only available for block-diagonal parametrization");
+            return null;
         }
         return blockStructure;
+    }
+    public boolean hasBlockStructure() {
+        return getBlockStructure() != null;
     }
 
     // ============================================================

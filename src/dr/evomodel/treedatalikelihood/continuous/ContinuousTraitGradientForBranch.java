@@ -69,7 +69,7 @@ public interface ContinuousTraitGradientForBranch {
         DenseMatrix64F matrixV;
 
         final int dim;
-        final Tree tree;
+        protected final Tree tree;
 
         public Default(int dim, Tree tree) {
             this.dim = dim;
@@ -152,11 +152,11 @@ public interface ContinuousTraitGradientForBranch {
             }
         }
 
-        abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
-                                    DenseMatrix64F gradQInv, DenseMatrix64F gradN);
+        protected abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
+                                              DenseMatrix64F gradQInv, DenseMatrix64F gradN);
 
-        abstract double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
-                                        DenseMatrix64F gradQInv, DenseMatrix64F gradN);
+        protected abstract double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
+                                                  DenseMatrix64F gradQInv, DenseMatrix64F gradN);
 
         static void getGradientQInvForBranch(DenseMatrix64F Qi, DenseMatrix64F Wi,
                                              DenseMatrix64F Vi, DenseMatrix64F delta,

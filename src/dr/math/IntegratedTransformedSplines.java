@@ -24,6 +24,7 @@
  */
 
 package dr.math;
+import dr.inference.model.Parameter;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
@@ -37,34 +38,53 @@ import dr.math.distributions.BSplines;
 
 // still need to do Marc's TO DO'S
 
-public class IntegratedSquaredSplines {
+public class IntegratedTransformedSplines {
 
 
-    public final double[] coefficient;
+    private final Parameter coefficient;
+    private final Parameter intercept;
     private final double[] knots;
     private final double[] expandedKnots;
     private final int degree;
+    private final String transform;
     private boolean expandedKnotsKnown;
     private double[][] temp;
     private final SplinesIntegral splinesIntegral;
 
-    public IntegratedSquaredSplines(double[] coefficient,
+    public IntegratedTransformedSplines(Parameter coefficient,
+                                    Parameter intercept,
                                     double[] knots,
-                                    int degree) {
+                                    int degree,
+                                    String transform) {
 
         if (degree != 2 && degree != 3) {
             throw new IllegalArgumentException("Only degree 2 and 3 supported");
         }
         this.coefficient = coefficient;
+        this.intercept = intercept;
         this.knots = knots;
         this.expandedKnots = new double[knots.length + 2 * degree];
         this.degree = degree;
         this.expandedKnotsKnown = false;
+        this.transform = transform;
 
-        this.temp = new double[coefficient.length][coefficient.length];
+
+        this.temp = new double[coefficient.getDimension()][coefficient.getDimension()];
         this.splinesIntegral = (degree == 2) ? new Quadratic() : new Cubic();
     }
 
+    public Parameter getCoefficients() { return coefficient; }
+    public Parameter getIntercept() { return intercept; }
+    public int getCoefficientDim() {
+        return coefficient.getDimension();
+    }
+    public double[] getCoefficientValues() {
+        double[] values = new double[getCoefficientDim()];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = coefficient.getParameterValue(i);
+        }
+        return values;
+    }
 
     public void getExpandedKnots() {
         if (!expandedKnotsKnown) {
@@ -96,26 +116,17 @@ public class IntegratedSquaredSplines {
                 value += ((Math.pow(up - expandedKnots[i], 5) - Math.pow(low - expandedKnots[i], 5))/
                         (5 * Math.pow((expandedKnots[i + 2] - expandedKnots[i]) * (expandedKnots[i + 1] - expandedKnots[i]), 2)));
             }
-       /* System.out.println("low:" + low);
-        System.out.println("up:" + up);
-        System.out.println("value:" + value);*/
             low = Math.max(start, expandedKnots[i + 1]);
             up = Math.min(end, expandedKnots[i + 2]);
             if (low < up) {
                 value += getSquaredQuadraticIntegral(getQuadratic(i), low, up);
             }
-     /*   System.out.println("low:" + low);
-        System.out.println("up:" + up);
-        System.out.println("value:" + value);*/
             low = Math.max(start, expandedKnots[i + 2]);
             up = Math.min(end, expandedKnots[i + 3]);
             if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 2] && low < up) {
                 value += ((Math.pow(up - expandedKnots[i + 3], 5) - Math.pow(low - expandedKnots[i + 3], 5))/
                         (5 * Math.pow((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 2]), 2)));
             }
-        /*System.out.println("low:" + low);
-        System.out.println("up:" + up);
-        System.out.println("value:" + value);*/
             return value;
         }
 
@@ -268,6 +279,7 @@ public class IntegratedSquaredSplines {
 
 
     private class Cubic implements SplinesIntegral{
+
         private double getCubicProductIntegral(double[] x, double[] y, double low, double up) {
 
             double c0 = x[0] * y[0];
@@ -614,8 +626,10 @@ public class IntegratedSquaredSplines {
         return product;
     }
 
+
+
     public double[][] getIntegratedSquaredBasisMatrix(double start, double end) {
-        int dim = coefficient.length;
+        int dim = coefficient.getDimension();
 //        double[][] mat = new double[dim][dim];
         double[][] mat = this.temp;
         for (int i = 0; i < dim ; i++) {
@@ -639,59 +653,58 @@ public class IntegratedSquaredSplines {
         return mat;
     }
 
-    public double getIntegral (double start, double end){
+    public double getSquaredSplinesIntegral (double start, double end){
         getExpandedKnots();
-        int dim = coefficient.length;
+        int dim = coefficient.getDimension();
         double[][] mat = getIntegratedSquaredBasisMatrix(start, end);
         double sum = 0;
         if (end > start) {
             for (int i = 0; i < dim; i++) {
-                sum += mat[i][i] * coefficient[i] * coefficient[i];
+                sum += mat[i][i] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i);
             }
             for (int i = 0; i < dim - 1; i++) {
-                sum += 2 * mat[i][i + 1] * coefficient[i] * coefficient[i + 1];
+                sum += 2 * mat[i][i + 1] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 1);
             }
             for (int i = 0; i < dim - 2; i++) {
-                sum += 2 * mat[i][i + 2] * coefficient[i] * coefficient[i + 2];
+                sum += 2 * mat[i][i + 2] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 2);
             }
             for (int i = 0; i < dim - 3; i++) {
-                sum += 2 * mat[i][i + 3] * coefficient[i] * coefficient[i + 3];
+                sum += 2 * mat[i][i + 3] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 3);
             }
         }
 
-        return sum;
+        return sum + intercept.getParameterValue(0) * (end - start);
     }
 
 
 
-    public double[] getGradient (double start, double end){
+    public double[] getSquaredSplinesGradient (double start, double end){
         getExpandedKnots();
-        int dim = coefficient.length;
+        int dim = coefficient.getDimension();
         double[][] mat = getIntegratedSquaredBasisMatrix(start, end);
         double[] gradient = new double[dim];
         if (end > start) {
             for (int i = 0; i < dim; i++) {
                 for (int j = 0; j < dim; j++) {
-                    gradient[i] += 2 * mat[i][j] * coefficient[j];
+                    gradient[i] += 2 * mat[i][j] * coefficient.getParameterValue(j);
                 }
             }
         }
         return gradient;
     }
 
-
     public double evaluateExpSpline(double x) {
         double sum = 0.0;
         getExpandedKnots();
 
-        for (int i = 0; i < coefficient.length; i++) {
-            sum += coefficient[i] * BSplines.getSplineBasis(i, degree, x, expandedKnots);
+        for (int i = 0; i < coefficient.getDimension(); i++) {
+            sum += coefficient.getParameterValue(i) * BSplines.getSplineBasis(i, degree, x, expandedKnots);
         }
 
         return Math.exp(sum);
     }
 
-    public double integrateExpSpline(final double a, final double b)
+    public double getExponentialSplinesIntegral(final double a, final double b)
             throws org.apache.commons.math.FunctionEvaluationException,
             org.apache.commons.math.MaxIterationsExceededException {
 
@@ -703,9 +716,27 @@ public class IntegratedSquaredSplines {
         };
 
         TrapezoidIntegrator integrator = new TrapezoidIntegrator();
-        return integrator.integrate(f, a, b);
+        return integrator.integrate(f, a, b) + intercept.getParameterValue(0) * (b - a);
     }
 
+    public double getIntegral (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
+        if ("squared".equals(transform)) {
+            return getSquaredSplinesIntegral(start, end);
+        }
+        else if ("exponential".equals(transform)) {
+            return getExponentialSplinesIntegral(start, end);
+        } else {
+            throw new IllegalArgumentException("Only squared and exponential transforms supported");
+        }
+    }
+
+    public double[] getGradient (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
+        if ("squared".equals(transform)) {
+            return getSquaredSplinesGradient(start, end);
+        } else {
+            return new double[getCoefficientDim()];
+        }
+    }
 
 }
 

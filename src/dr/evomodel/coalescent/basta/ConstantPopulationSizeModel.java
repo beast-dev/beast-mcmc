@@ -83,7 +83,7 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
             BastaInternalStorage storage,
             int stateCount) {
 
-        storage.flip();
+        //storage.flip();
         for (int k = 0; k < stateCount; ++k) {
             double popSize = populationSizeParameter.getParameterValue(k);
             setCurrentSize(storage, k, popSize);
@@ -92,6 +92,7 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
 
         for (BranchIntervalOperation operation : branchIntervalOperations) {
             operation.populationSizeIndex = 0;
+            operation.integralIndex = 0;
         }
     }
 }

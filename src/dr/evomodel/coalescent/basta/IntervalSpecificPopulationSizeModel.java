@@ -13,10 +13,6 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
         super(name, stateCount, numIntervals);
         this.populationSizeParameter = populationSizeParameter;
         addVariable(populationSizeParameter);
-        
-        if (populationSizeParameter.getDimension() != stateCount) {
-            throw new IllegalArgumentException("Population size parameter dimension must equal state count");
-        }
     }
     
     @Override
@@ -47,13 +43,15 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
 
 
     protected abstract void storeBaseSizes(BastaInternalStorage storage);
-    
+
     @Override
-    public final void precalculatePopulationSizesAndIntegrals(
+    public void precalculatePopulationSizesAndIntegrals(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
             BastaInternalStorage storage,
             int stateCount) {
+
+        storage.flip();
         
         int numIntervals = intervalStarts.size() - 1;
 
@@ -68,21 +66,19 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
             double intervalEndTime = intervalStartTime + intervalLength;
             
             int intervalOffset = interval * stateCount;
+            int populationSizeIndex = stateCount + intervalOffset;
 
             for (int k = 0; k < stateCount; ++k) {
                 double popSizeAtEnd = calculatePopulationSizeAtTime(k, interval, 
                     intervalEndTime, intervalStartTime, intervalEndTime);
-                setCurrentSize(storage, stateCount + intervalOffset + k, popSizeAtEnd);
-
-                double integral = calculateIntervalIntegral(k, interval, 
-                    intervalStartTime, intervalLength);
-                int integralOffset = stateCount + intervalOffset;
-                setCurrentIntegral(storage, integralOffset + k, integral);
+                setCurrentSize(storage, populationSizeIndex + k, popSizeAtEnd);
+                double integral = calculateIntervalIntegral(k, interval, intervalStartTime, intervalLength);
+                setCurrentIntegral(storage, populationSizeIndex + k, integral);
             }
 
-            int populationSizeIndex = stateCount + interval * stateCount;
             for (int i = start; i < end; ++i) {
                 branchIntervalOperations.get(i).populationSizeIndex = populationSizeIndex;
+                branchIntervalOperations.get(i).integralIndex = populationSizeIndex;
             }
             
             intervalStartTime = intervalEndTime;

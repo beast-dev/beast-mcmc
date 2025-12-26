@@ -15,6 +15,11 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
         
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
+
+        if (populationSizeParameter.getDimension() != stateCount) {
+            throw new IllegalArgumentException("Population size parameter dimension must equal state count for exponential growth model, got " +
+                populationSizeParameter.getDimension() + " but expected " + stateCount);
+        }
         
         if (growthRateParameter.getDimension() != stateCount) {
             throw new IllegalArgumentException("Growth rate parameter dimension must equal state count");

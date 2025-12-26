@@ -97,4 +97,5 @@ public class SingleTreeGriddedNodesTimeline extends SingleTreeTimeline {
     public int[] getMergedNumLineages() {return mergedNumLineages;}
     public int[] getNumCoalEvents() {return numCoalEvents;}
     public int[] getGridIndices() {return gridIndices;}
+    public double[] getTreeEventTimes() { return timeLine; }
 }

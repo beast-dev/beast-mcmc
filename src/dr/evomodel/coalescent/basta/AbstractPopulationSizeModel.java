@@ -171,6 +171,23 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
         int bufferSize = storage.integrals.length / 2;
         return storage.integralsBufferHelper.getOffsetIndex(0) * bufferSize;
     }
+
+    protected int findGridSegmentIndex(Parameter gridPoints, double time) {
+        if (gridPoints == null) {
+            return 0;
+        }
+        
+        int gridSegmentIdx = 0;
+        for (int g = 0; g < gridPoints.getDimension(); g++) {
+            if (gridPoints.getParameterValue(g) < time) {
+                gridSegmentIdx = g + 1;
+            } else {
+                break;
+            }
+        }
+
+        return gridSegmentIdx;
+    }
     
     public void extractCombinedSizesAndIntegrals(BastaInternalStorage storage, double[] combinedArray) {
         int requiredStorageSize = getRequiredPopulationSizeStorageSize();

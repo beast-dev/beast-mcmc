@@ -58,9 +58,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String GROWTH_RATES = "growthRates";
     public static final String POPSIZES = "popSizes";
+    public static final String GRID_POINTS = "gridPoints";
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
-    private static final boolean USE_BEAGLE = false;
+    private static final boolean USE_BEAGLE = true;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     private static final boolean TRANSPOSE = true;
 
@@ -111,6 +112,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPSIZES);
         Parameter r = xo.hasChildNamed(GROWTH_RATES) ? (Parameter) xo.getElementFirstChild(GROWTH_RATES) : null;
+        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ? (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
 
         if (r != null) {
             if (popSizes.getDimension() != r.getDimension()) {
@@ -118,9 +120,19 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        int stateCount = generalSubstitutionModel.getDataType().getStateCount();
         if (popSizes.getDimension() != 1) {
-            if (generalSubstitutionModel.getDataType().getStateCount() != popSizes.getDimension()) {
-                throw new XMLParseException("Mismatch between rate matrix and deme count.");
+            if (gridPoints != null) {
+                int numGridSegments = gridPoints.getDimension() + 1;
+                int expectedDim = stateCount * numGridSegments;
+                if (popSizes.getDimension() != expectedDim) {
+                    throw new XMLParseException("With grid points, popSizes dimension must be " + 
+                        expectedDim + " (stateCount=" + stateCount + " × (numGridPoints+1)=" + 
+                        numGridSegments + "), but got " + popSizes.getDimension());
+                }
+            } else if (popSizes.getDimension() % stateCount != 0) {
+                throw new XMLParseException("popSizes dimension must be a multiple of stateCount (" + 
+                    stateCount + "), but got " + popSizes.getDimension());
             }
         }
 
@@ -145,7 +157,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                                             generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
 
-                        int stateCount = generalSubstitutionModel.getDataType().getStateCount();
                         AbstractPopulationSizeModel populationSizeModel;
 
                         int popSizesDim = popSizes.getDimension();
@@ -153,6 +164,9 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                         if (r != null) {
                             populationSizeModel = new ExponentialGrowthPopulationSizeModel(
                                 "exponentialGrowth", popSizes, r, stateCount, -1);
+                        } else if (gridPoints != null) {
+                            populationSizeModel = new PiecewiseConstantPopulationSizeModel(
+                                "piecewiseConstant", popSizes, gridPoints, stateCount, -1);
                         } else if (popSizesDim == stateCount) {
                             populationSizeModel = new ConstantPopulationSizeModel(
                                 "constant", popSizes, stateCount, -1);
@@ -212,7 +226,15 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             new ElementRule(MutableTreeModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
-            new ElementRule(Parameter.class, true)
+            new ElementRule(POPSIZES,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                    "Population sizes for each deme"),
+            new ElementRule(GROWTH_RATES,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                    "Growth rates (optional)", true),
+            new ElementRule(GRID_POINTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                    "Grid points for piecewise constant model (optional)", true)
     };
 
 }

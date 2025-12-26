@@ -165,6 +165,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         addModel(populationSizeModel);
         this.likelihoodDelegate.setPopulationSizeModel(populationSizeModel);
 
+        if (populationSizeModel instanceof PiecewiseConstantPopulationSizeModel) {
+            ((PiecewiseConstantPopulationSizeModel) populationSizeModel).setTreeIntervals(treeIntervals);
+        }
+
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, 
                 numberSubIntervals, !isAncestralTraitTree);
 
@@ -416,6 +420,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         likelihoodKnown = true;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
+        likelihoodDelegate.markPopulationSizesDirty();
         int[][] temp = reconstructedStates;
         reconstructedStates = storedReconstructedStates;
         storedReconstructedStates = temp;

@@ -55,6 +55,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String NORMALIZED = "normalized";
     public static final String COMPUTE_STATIONARY = "computeStationary";
     public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
+    private static final String EIGEN_METHOD = "eigenMethod";
 
     public static final int maxRandomizationTries = 100;
 
@@ -130,7 +131,14 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                 if (computeStationaryDistribution) {
                     model = new ComplexSubstitutionModelAtStationarity(COMPLEX_SUBSTITUTION_MODEL, dataType, ratesParameter);
                 } else {
-                    model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                    String eigenMethodString = xo.getAttribute(EIGEN_METHOD, "");
+                    if (eigenMethodString.compareToIgnoreCase("lapack") == 0) {
+                        model = new LapackSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+//                    } else if (eigenMethodString.compareToIgnoreCase("hipparchus") == 0) {
+//                        model = new HipparchusSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                    } else {
+                        model = new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
+                    }
                 }
             }
         } else {
@@ -239,5 +247,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(NORMALIZED, true),
             AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
             AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
+            AttributeRule.newStringRule(EIGEN_METHOD, true),
     };
 }

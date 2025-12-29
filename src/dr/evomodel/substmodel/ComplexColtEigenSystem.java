@@ -27,7 +27,6 @@
 
 package dr.evomodel.substmodel;
 
-import cern.colt.matrix.DoubleMatrix2D;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import java.util.Arrays;
@@ -58,10 +57,6 @@ public class ComplexColtEigenSystem extends ColtEigenSystem {
 
     protected double[] getEmptyAllEigenValues(int dim) {
         return new double[2 * dim];
-    }
-
-    protected boolean validDecomposition(DoubleMatrix2D eigenV) {
-        return true;
     }
 
     public double computeExponential(EigenDecomposition eigen, double distance, int i, int j) {
@@ -137,5 +132,4 @@ public class ComplexColtEigenSystem extends ColtEigenSystem {
             }
         }
     }
-
 }

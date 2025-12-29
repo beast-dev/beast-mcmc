@@ -44,19 +44,25 @@ public class LapackEigenSystem implements EigenSystem {
     }
 
     private static final boolean SORT = false;
+    private static final boolean USE_LEFT = false;
 
     class SortedEvd {
 
         private final double[] realEigenvalues;
         private final double[] imagEigenvalues;
+
         private final DenseMatrix rightEigenvectors;
+        private final DenseMatrix leftEigenvectors;
+
         private DenseMatrix inverseRightEigenvectors;
 
         SortedEvd(double[][] matrix) {
 
             EVD evd;
             try {
-                evd = EVD.factorize(new DenseMatrix(matrix));
+                evd = new EVD(matrix.length, USE_LEFT, true);
+                evd.factor(new DenseMatrix(matrix));
+
             } catch (Exception exc) {
                 throw new RuntimeException(exc.getMessage());
             }
@@ -65,6 +71,7 @@ public class LapackEigenSystem implements EigenSystem {
                 realEigenvalues = evd.getRealEigenvalues();
                 imagEigenvalues = evd.getImaginaryEigenvalues();
                 rightEigenvectors = evd.getRightEigenvectors();
+                leftEigenvectors = evd.getLeftEigenvectors();
             } else {
                 Integer[] indices = new Integer[stateCount];
                 for (int i = 0; i < stateCount; ++i) {
@@ -82,6 +89,7 @@ public class LapackEigenSystem implements EigenSystem {
                 realEigenvalues = new double[stateCount];
                 imagEigenvalues = new double[stateCount];
                 rightEigenvectors = new DenseMatrix(stateCount, stateCount);
+                leftEigenvectors = new DenseMatrix(stateCount, stateCount);
 
                 for (int i = 0; i < stateCount; ++i) {
                     realEigenvalues[i] = rev[indices[i]];
@@ -89,6 +97,9 @@ public class LapackEigenSystem implements EigenSystem {
 
                     for (int j = 0; j < stateCount; ++j) {
                         rightEigenvectors.set(i, j, evd.getRightEigenvectors().get(i, indices[j]));
+                        if (USE_LEFT) {
+                            leftEigenvectors.set(i, j, evd.getLeftEigenvectors().get(indices[i], j));
+                        }
                     }
                 }
             }
@@ -99,6 +110,9 @@ public class LapackEigenSystem implements EigenSystem {
         double[] getImaginaryEigenvalues() { return imagEigenvalues; }
 
         DenseMatrix getRightEigenvectors() { return rightEigenvectors; }
+
+        @SuppressWarnings("unused")
+        DenseMatrix getLeftEigenvectors() { return leftEigenvectors; }
 
         DenseMatrix getScaledInverseRightEigenvectors() {
 
@@ -166,7 +180,6 @@ public class LapackEigenSystem implements EigenSystem {
 
     @SuppressWarnings("comment")
 /*
-    @SuppressWarnings("unused")
     public static void computeExponential(ComplexMatrix v, ComplexMatrix vInverse, org.hipparchus.complex.Complex[] eigenvalues,
                                           double distance, double[] matrix, int stateCount) {
 

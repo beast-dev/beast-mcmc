@@ -454,8 +454,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     @Override
     public void storeState() {
-        storage.storeState();
-        storedPopulationSizesKnown = populationSizesKnown;
+        //storage.storeState();
+        //storedPopulationSizesKnown = populationSizesKnown;
         //populationSizesBufferHelper.storeState();
         //eigenBufferHelper.storeState();
         //storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
@@ -463,8 +463,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     @Override
     public void restoreState() {
-        storage.restoreState();
-        populationSizesKnown = storedPopulationSizesKnown;
+        //storage.restoreState();
+        //populationSizesKnown = storedPopulationSizesKnown;
         //populationSizesBufferHelper.restoreState();
        // eigenBufferHelper.restoreState();
         //currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;

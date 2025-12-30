@@ -861,14 +861,14 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void storeState() {
-        storage.storeState();
-        storedPopulationSizesKnown = populationSizesKnown;
+        //storage.storeState();
+        //storedPopulationSizesKnown = populationSizesKnown;
     }
 
     @Override
     public void restoreState() {
-        storage.restoreState();
-        populationSizesKnown = storedPopulationSizesKnown;
+        //storage.restoreState();
+        //populationSizesKnown = storedPopulationSizesKnown;
     }
 
     private static void peelPartials(double[] partials,

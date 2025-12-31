@@ -16,12 +16,14 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
 
-        if (populationSizeParameter.getDimension() != stateCount) {
+        int popSizesDim = populationSizeParameter.getDimension();
+        if (!(popSizesDim == 1 || popSizesDim == stateCount)) {
             throw new IllegalArgumentException("Population size parameter dimension must equal state count for exponential growth model, got " +
                 populationSizeParameter.getDimension() + " but expected " + stateCount);
         }
-        
-        if (growthRateParameter.getDimension() != stateCount) {
+
+        int growthRateDim = growthRateParameter.getDimension();
+        if (!(growthRateDim == 1 || growthRateDim == stateCount)) {
             throw new IllegalArgumentException("Growth rate parameter dimension must equal state count");
         }
     }
@@ -29,8 +31,9 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     @Override
     protected void storeBaseSizes(BastaInternalStorage storage) {
         for (int k = 0; k < stateCount; ++k) {
-            setCurrentSize(storage, k, populationSizeParameter.getParameterValue(k));
-            storage.rates[k] = growthRateParameter.getParameterValue(k);
+            int j = populationSizeParameter.getDimension() == 1 ? 0 : k;
+            setCurrentSize(storage, k, populationSizeParameter.getParameterValue(j));
+            storage.rates[k] = growthRateParameter.getParameterValue(j);
         }
     }
     
@@ -39,8 +42,9 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
                                                   double time,
                                                   double intervalStartTime,
                                                   double intervalEndTime) {
-        double N0 = populationSizeParameter.getParameterValue(state);
-        double r = growthRateParameter.getParameterValue(state);
+        int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
+        double N0 = populationSizeParameter.getParameterValue(j);
+        double r = growthRateParameter.getParameterValue(j);
         
         if (N0 <= 0.0) {
             throw new RuntimeException("Population size must be positive, got N0=" + N0);
@@ -54,8 +58,9 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     protected double calculateIntervalIntegral(int state, int interval,
                                               double intervalStartTime,
                                               double intervalLength) {
-        double N0 = populationSizeParameter.getParameterValue(state);
-        double r = growthRateParameter.getParameterValue(state);
+        int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
+        double N0 = populationSizeParameter.getParameterValue(j);
+        double r = growthRateParameter.getParameterValue(j);
         double intervalEndTime = intervalStartTime + intervalLength;
         
         if (Math.abs(r) > 1e-10) {
@@ -78,14 +83,18 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     @Override
     public void updatePopulationSizes() {
         for (int i = 0; i < stateCount; i++) {
-            populationSizes[i] = populationSizeParameter.getParameterValue(i);
+            int j = populationSizeParameter.getDimension() == 1 ? 0 : i;
+            populationSizes[i] = populationSizeParameter.getParameterValue(j);
         }
         
+
+        // HERE
 
         for (int interval = 0; interval < numIntervals; interval++) {
             for (int state = 0; state < stateCount; state++) {
                 int index = getPopulationSizeIndex(interval, state);
-                populationSizes[index] = populationSizeParameter.getParameterValue(state);
+                int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
+                populationSizes[index] = populationSizeParameter.getParameterValue(j);
             }
         }
     }

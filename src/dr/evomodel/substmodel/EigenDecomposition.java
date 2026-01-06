@@ -36,6 +36,8 @@ import java.io.Serializable;
  */
 public class EigenDecomposition implements Serializable {
 
+    protected static final boolean NEW_TRANSPOSE = true;
+
     public EigenDecomposition(double[] evec, double[] ievc, double[] eval) {
         Evec = evec;
         Ievc = ievc;
@@ -54,14 +56,34 @@ public class EigenDecomposition implements Serializable {
         // note: exchange e/ivec
         int dim = (int) Math.sqrt(Ievc.length);
         double[] evec = Ievc.clone();
+        rescale(evec, Eval, 0.5, dim);
         transposeInPlace(evec, dim);
+
         double[] ievc = Evec.clone();
         transposeInPlace(ievc, dim);
+        rescale(ievc, Eval, 2.0, dim);
+
         double[] eval = Eval.clone();
         return new EigenDecomposition(evec, ievc, eval);
     }
 
-    private static void transposeInPlace(double[] matrix, int n) {
+    protected static void rescale(double[] rowVectors, double[] eval, double scalar, int dim) {
+        if (!NEW_TRANSPOSE || eval.length != 2 * dim) {
+            return;
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            if (eval[dim + i] != 0.0) {
+                for (int j = 0; j < dim; ++j) {
+                    rowVectors[i * dim + j] = scalar * rowVectors[i * dim + j];
+                    rowVectors[(i + 1) * dim + j] = -scalar * rowVectors[(i + 1) * dim + j];
+                }
+                ++i;
+            }
+        }
+    }
+
+    protected static void transposeInPlace(double[] matrix, int n) {
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 int index1 = i * n + j;
@@ -117,8 +139,8 @@ public class EigenDecomposition implements Serializable {
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
-    private final double[] Evec;
-    private final double[] Ievc;
-    private final double[] Eval;
-    private double normalization = 1.0;
+    protected final double[] Evec;
+    protected final double[] Ievc;
+    protected final double[] Eval;
+    protected double normalization = 1.0;
 }

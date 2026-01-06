@@ -29,15 +29,6 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     }
     
     @Override
-    protected void storeBaseSizes(BastaInternalStorage storage) {
-        for (int k = 0; k < stateCount; ++k) {
-            int j = populationSizeParameter.getDimension() == 1 ? 0 : k;
-            setCurrentSize(storage, k, populationSizeParameter.getParameterValue(j));
-            storage.rates[k] = growthRateParameter.getParameterValue(j);
-        }
-    }
-    
-    @Override
     protected double calculatePopulationSizeAtTime(int state, int interval,
                                                   double time,
                                                   double intervalStartTime,

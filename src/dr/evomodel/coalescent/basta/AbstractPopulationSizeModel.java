@@ -26,6 +26,30 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
     }
     
 
+    public static class PopulationStatistics {
+        public final double[] sizes;
+        public final double[] integrals;
+        public final int[] populationSizeIndices;
+        public final int[] integralIndices;
+        public final int requiredStorageSize;
+        
+        public PopulationStatistics(double[] sizes, double[] integrals,
+                                   int[] populationSizeIndices, int[] integralIndices,
+                                   int requiredStorageSize) {
+            this.sizes = sizes;
+            this.integrals = integrals;
+            this.populationSizeIndices = populationSizeIndices;
+            this.integralIndices = integralIndices;
+            this.requiredStorageSize = requiredStorageSize;
+        }
+    }
+
+    public abstract PopulationStatistics calculatePopulationStatistics(
+            List<Integer> intervalStarts,
+            List<BranchIntervalOperation> branchIntervalOperations,
+            int stateCount);
+    
+
     protected abstract int calculateArrayLength();
     
 
@@ -62,11 +86,6 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
         }
     }
 
-    public abstract void precalculatePopulationSizesAndIntegrals(
-            List<Integer> intervalStarts,
-            List<BranchIntervalOperation> branchIntervalOperations,
-            BastaInternalStorage storage,
-            int stateCount);
     
 
     public double[] getPopulationSizes() {
@@ -137,17 +156,11 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
         return numIntervals;
     }
 
-    
+
     protected double getCurrentSize(BastaInternalStorage storage, int index) {
         int bufferSize = storage.sizes.length / 2;
         int offset = storage.sizesBufferHelper.getOffsetIndex(0) * bufferSize;
         return storage.sizes[offset + index];
-    }
-    
-    protected void setCurrentSize(BastaInternalStorage storage, int index, double value) {
-        int bufferSize = storage.sizes.length / 2;
-        int offset = storage.sizesBufferHelper.getOffsetIndex(0) * bufferSize;
-        storage.sizes[offset + index] = value;
     }
     
     protected double getCurrentIntegral(BastaInternalStorage storage, int index) {
@@ -155,19 +168,13 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
         int offset = storage.integralsBufferHelper.getOffsetIndex(0) * bufferSize;
         return storage.integrals[offset + index];
     }
-    
-    protected void setCurrentIntegral(BastaInternalStorage storage, int index, double value) {
-        int bufferSize = storage.integrals.length / 2;
-        int offset = storage.integralsBufferHelper.getOffsetIndex(0) * bufferSize;
-        storage.integrals[offset + index] = value;
-    }
-    
-    protected int getCurrentSizesOffset(BastaInternalStorage storage) {
+
+    public int getCurrentSizesOffset(BastaInternalStorage storage) {
         int bufferSize = storage.sizes.length / 2;
         return storage.sizesBufferHelper.getOffsetIndex(0) * bufferSize;
     }
     
-    protected int getCurrentIntegralsOffset(BastaInternalStorage storage) {
+    public int getCurrentIntegralsOffset(BastaInternalStorage storage) {
         int bufferSize = storage.integrals.length / 2;
         return storage.integralsBufferHelper.getOffsetIndex(0) * bufferSize;
     }

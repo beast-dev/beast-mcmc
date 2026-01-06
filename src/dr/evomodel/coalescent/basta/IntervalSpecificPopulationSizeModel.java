@@ -42,49 +42,55 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
                                                        double intervalLength);
 
 
-    protected abstract void storeBaseSizes(BastaInternalStorage storage);
+    protected void getBaseSizes(double[] baseSizes) {
+        for (int k = 0; k < stateCount; ++k) {
+            baseSizes[k] = populationSizeParameter.getParameterValue(k);
+        }
+    }
 
     @Override
-    public void precalculatePopulationSizesAndIntegrals(
+    public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
-            BastaInternalStorage storage,
             int stateCount) {
-
-        storage.flip();
         
         int numIntervals = intervalStarts.size() - 1;
+        int requiredStorageSize = stateCount + numIntervals * stateCount;
+        
+        double[] sizes = new double[requiredStorageSize];
+        double[] integrals = new double[requiredStorageSize];
+        int[] populationSizeIndices = new int[numIntervals];
+        int[] integralIndices = new int[numIntervals];
 
-        storeBaseSizes(storage);
-
+        getBaseSizes(sizes);
+        
         double intervalStartTime = 0.0;
         for (int interval = 0; interval < numIntervals; ++interval) {
             int start = intervalStarts.get(interval);
-            int end = intervalStarts.get(interval + 1);
             
             double intervalLength = branchIntervalOperations.get(start).intervalLength;
             double intervalEndTime = intervalStartTime + intervalLength;
             
-            int intervalOffset = interval * stateCount;
-            int populationSizeIndex = stateCount + intervalOffset;
-
+            int populationSizeIndex = stateCount + interval * stateCount;
+            
             for (int k = 0; k < stateCount; ++k) {
                 double popSizeAtEnd = calculatePopulationSizeAtTime(k, interval, 
                     intervalEndTime, intervalStartTime, intervalEndTime);
-                setCurrentSize(storage, populationSizeIndex + k, popSizeAtEnd);
+                sizes[populationSizeIndex + k] = popSizeAtEnd;
+                
                 double integral = calculateIntervalIntegral(k, interval, intervalStartTime, intervalLength);
-                setCurrentIntegral(storage, populationSizeIndex + k, integral);
+                integrals[populationSizeIndex + k] = integral;
             }
-
-            for (int i = start; i < end; ++i) {
-                branchIntervalOperations.get(i).populationSizeIndex = populationSizeIndex;
-                branchIntervalOperations.get(i).integralIndex = populationSizeIndex;
-            }
+            
+            populationSizeIndices[interval] = populationSizeIndex;
+            integralIndices[interval] = populationSizeIndex;
             
             intervalStartTime = intervalEndTime;
         }
+        
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, requiredStorageSize);
     }
-    
+
     public Parameter getPopulationSizeParameter() {
         return populationSizeParameter;
     }

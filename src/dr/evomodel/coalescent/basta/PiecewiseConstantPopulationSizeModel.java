@@ -65,13 +65,6 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
         this.treeIntervals = treeIntervals;
     }
     
-    @Override
-    protected void storeBaseSizes(BastaInternalStorage storage) {
-        for (int k = 0; k < stateCount; ++k) {
-            setCurrentSize(storage, k, populationSizeParameter.getParameterValue(k));
-        }
-    }
-    
     public Parameter getGridPoints() {
         return gridPoints;
     }
@@ -131,36 +124,36 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
 
 
     @Override
-    public void precalculatePopulationSizesAndIntegrals(
+    public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
-            BastaInternalStorage storage,
             int stateCount) {
         
         if (gridPoints == null || treeIntervals == null) {
-            super.precalculatePopulationSizesAndIntegrals(intervalStarts, branchIntervalOperations, storage, stateCount);
-            return;
+            return super.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
         }
-
-        storage.flip();
         
         cachedTimeline = new SingleTreeGriddedNodesTimeline(treeIntervals, gridPoints);
         double[] mergedTimeLine = cachedTimeline.getMergedTimeLine();
         int[] gridIndices = cachedTimeline.getGridIndices();
         double[] treeEventTimes = cachedTimeline.getTreeEventTimes();
-
-        storeBaseSizes(storage);
-
+        
         int numGridSegments = gridPoints.getDimension() + 1;
-        for (int gridSegmentIdx = 0; gridSegmentIdx < numGridSegments; gridSegmentIdx++) {
-            for (int k = 0; k < stateCount; ++k) {
-                int paramIndex = gridSegmentIdx * stateCount + k;
-                double popSize = populationSizeParameter.getParameterValue(paramIndex);
-                setCurrentSize(storage, stateCount + gridSegmentIdx * stateCount + k, popSize);
-            }
-        }
-
         int numIntervals = intervalStarts.size() - 1;
+
+        int gridBasedSize = stateCount + numGridSegments * stateCount;
+        int integralBasedSize = stateCount + numIntervals * stateCount;
+        int requiredStorageSize = Math.max(gridBasedSize, integralBasedSize);
+        
+        double[] sizes = new double[requiredStorageSize];
+        double[] integrals = new double[requiredStorageSize];
+        int[] populationSizeIndices = new int[numIntervals];
+        int[] integralIndices = new int[numIntervals];
+
+        for (int k = 0; k < stateCount; ++k) {
+            sizes[k] = populationSizeParameter.getParameterValue(k);
+        }
+        
         int currentGridSegment = 0;
         int mergedIdx = 1;
         
@@ -191,23 +184,19 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
                 }
                 mergedIdx++;
             }
-
-            int integralOffset = stateCount + interval * stateCount;
-            for (int k = 0; k < stateCount; ++k) {
-                setCurrentIntegral(storage, integralOffset + k, integralAccumulator[k]);
-            }
-
-
-            int populationSizeIndex = stateCount + currentGridSegment * stateCount;
-            int integralIndex = stateCount + interval * stateCount;
             
-            int start = intervalStarts.get(interval);
-            int end = intervalStarts.get(interval + 1);
-            for (int j = start; j < end; ++j) {
-                branchIntervalOperations.get(j).populationSizeIndex = populationSizeIndex;
-                branchIntervalOperations.get(j).integralIndex = integralIndex;
+            int intervalOffset = stateCount + interval * stateCount;
+            for (int k = 0; k < stateCount; ++k) {
+                integrals[intervalOffset + k] = integralAccumulator[k];
+                int paramIndex = currentGridSegment * stateCount + k;
+                sizes[intervalOffset + k] = populationSizeParameter.getParameterValue(paramIndex);
             }
+            
+            populationSizeIndices[interval] = intervalOffset;
+            integralIndices[interval] = intervalOffset;
         }
+        
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, requiredStorageSize);
     }
     
     @Override

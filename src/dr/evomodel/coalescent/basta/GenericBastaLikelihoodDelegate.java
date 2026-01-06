@@ -66,8 +66,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private int maxOutputBuffer;
     private AbstractPopulationSizeModel.PopulationSizeModelType populationSizeModelType;
     private AbstractPopulationSizeModel populationSizeModel;
-    private boolean populationSizesKnown = false;
-    private boolean storedPopulationSizesKnown = false;
+
+    private AbstractPopulationSizeModel.PopulationStatistics currentPopulationStatistics;
+    private AbstractPopulationSizeModel.PopulationStatistics storedPopulationStatistics;
+    private boolean useStoredStatistics = false;
     
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
@@ -114,11 +116,11 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     public void setPopulationSizeModel(AbstractPopulationSizeModel model) {
         this.populationSizeModel = model;
         this.populationSizeModelType = model.getModelType();
-        this.populationSizesKnown = false;
+        this.useStoredStatistics = false;
     }
 
     public void markPopulationSizesDirty() {
-        this.populationSizesKnown = false;
+        this.useStoredStatistics = false;
     }
 
 
@@ -129,13 +131,39 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             throw new RuntimeException("Population size model not set");
         }
 
-        if (!populationSizesKnown) {
-            int numIntervals = intervalStarts.size() - 1;
-            storage.resize(0, 0, null, populationSizeModel, numIntervals);
+        int numIntervals = intervalStarts.size() - 1;
+        
+        AbstractPopulationSizeModel.PopulationStatistics stats;
+        
+        if (useStoredStatistics && storedPopulationStatistics != null) {
+            stats = storedPopulationStatistics;
+            useStoredStatistics = false;
+        } else {
+            if (populationSizeModel.getNumIntervals() != numIntervals) {
+                populationSizeModel.setIntervalCount(numIntervals);
+            }
             
-            populationSizeModel.precalculatePopulationSizesAndIntegrals(
-                    intervalStarts, branchIntervalOperations, storage, stateCount);
-            populationSizesKnown = true;
+            stats = populationSizeModel.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
+
+            storage.flip();
+            storage.resize(0, 0, null, populationSizeModel, numIntervals);
+
+            int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
+            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
+
+            System.arraycopy(stats.sizes, 0, storage.sizes, sizesOffset, stats.sizes.length);
+            System.arraycopy(stats.integrals, 0, storage.integrals, integralsOffset, stats.integrals.length);
+        }
+
+        currentPopulationStatistics = stats;
+
+        for (int interval = 0; interval < numIntervals; interval++) {
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+            for (int j = start; j < end; j++) {
+                branchIntervalOperations.get(j).populationSizeIndex = stats.populationSizeIndices[interval];
+                branchIntervalOperations.get(j).integralIndex = stats.integralIndices[interval];
+            }
         }
     }
 
@@ -861,14 +889,14 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void storeState() {
-        //storage.storeState();
-        //storedPopulationSizesKnown = populationSizesKnown;
+        storage.storeState();
+        storedPopulationStatistics = currentPopulationStatistics;
     }
 
     @Override
     public void restoreState() {
-        //storage.restoreState();
-        //populationSizesKnown = storedPopulationSizesKnown;
+        storage.restoreState();
+        useStoredStatistics = true;
     }
 
     private static void peelPartials(double[] partials,

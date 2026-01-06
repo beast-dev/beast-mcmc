@@ -77,22 +77,30 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
     }
     
     @Override
-    public void precalculatePopulationSizesAndIntegrals(
+    public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
-            BastaInternalStorage storage,
             int stateCount) {
+        
+        int numIntervals = intervalStarts.size() - 1;
 
-        //storage.flip();
+        double[] sizes = new double[stateCount];
+        double[] integrals = new double[stateCount];
+        int[] populationSizeIndices = new int[numIntervals];
+        int[] integralIndices = new int[numIntervals];
+
         for (int k = 0; k < stateCount; ++k) {
             double popSize = populationSizeParameter.getParameterValue(k);
-            setCurrentSize(storage, k, popSize);
-            setCurrentIntegral(storage, k, 1.0 / popSize);
+            sizes[k] = popSize;
+            integrals[k] = 1.0 / popSize;
         }
 
-        for (BranchIntervalOperation operation : branchIntervalOperations) {
-            operation.populationSizeIndex = 0;
-            operation.integralIndex = 0;
+        for (int interval = 0; interval < numIntervals; interval++) {
+            populationSizeIndices[interval] = 0;
+            integralIndices[interval] = 0;
         }
+        
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, stateCount);
     }
+    
 }

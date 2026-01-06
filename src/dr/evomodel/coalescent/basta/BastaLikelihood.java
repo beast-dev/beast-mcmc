@@ -413,14 +413,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-
     protected final void restoreState() {
-        //likelihoodDelegate.restoreState();
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = true;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
-        likelihoodDelegate.markPopulationSizesDirty();
+        //likelihoodDelegate.markPopulationSizesDirty();
         int[][] temp = reconstructedStates;
         reconstructedStates = storedReconstructedStates;
         storedReconstructedStates = temp;

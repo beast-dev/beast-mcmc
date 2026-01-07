@@ -73,7 +73,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static final boolean THREADED_READING = true;
+    private static final boolean THREADED_READING = false;
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;

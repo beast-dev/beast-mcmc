@@ -37,10 +37,8 @@ import java.util.*;
  * @version $
  */
 class BiClade implements Clade {
-    private static final boolean USE_FINGERPRINTS = true;
 
     /**
-
      * Clade for a tip
      * @param index number of the tip
      */
@@ -252,47 +250,45 @@ class BiClade implements Clade {
     }
 
     public static Object getTaxonKey(int index) {
-        if (USE_FINGERPRINTS) {
             return FingerprintCladeKeys.getTaxonKey(index);
-        } else {
-            return index;
-        }
     }
 
     public static Object getParentKey(Object key1, Object key2) {
-        if (USE_FINGERPRINTS) {
             Long key =  FingerprintCladeKeys.getParentKey((Long)key1, (Long)key2);
             return key;
-        } else {
-            int maxIndex;
-            if (key1 instanceof Integer) {
-                maxIndex = (Integer) key1;
-            } else {
-                assert key1 instanceof BitsetCladeKey;
-                maxIndex = ((BitsetCladeKey) key1).getMaxIndex();
-            }
-            if (key2 instanceof Integer) {
-                maxIndex = Math.max(maxIndex, (Integer) key2);
-            } else {
-                assert key2 instanceof BitsetCladeKey;
-                maxIndex = Math.max(maxIndex, ((BitsetCladeKey) key2).getMaxIndex());
-            }
-
-            BitsetCladeKey key = new BitsetCladeKey(maxIndex);
-            if (key1 instanceof Integer) {
-                key.set((Integer) key1);
-            } else {
-                key.setTo((BitsetCladeKey) key1);
-            }
-            if (key2 instanceof Integer) {
-                key.set((Integer) key2);
-            } else {
-                key.or((BitsetCladeKey) key2);
-            }
-
-            return key;
-        }
     }
+
+    //treeannotator_test makeKey()
+//    public static Object makeKey(Object key1, Object key2) {
+//        int maxIndex;
+//        if (key1 instanceof Integer) {
+//            maxIndex = (Integer) key1;
+//        } else {
+//            assert key1 instanceof CladeKey;
+//            maxIndex = ((CladeKey) key1).getMaxIndex();
+//        }
+//        if (key2 instanceof Integer) {
+//            maxIndex = Math.max(maxIndex, (Integer) key2);
+//        } else {
+//            assert key2 instanceof CladeKey;
+//            maxIndex = Math.max(maxIndex, ((CladeKey) key2).getMaxIndex());
+//        }
+//
+//        CladeKey key = new CladeKey(maxIndex);
+//        if (key1 instanceof Integer) {
+//            key.set((Integer) key1);
+//        } else {
+//            key.setTo((CladeKey) key1);
+//        }
+//        if (key2 instanceof Integer) {
+//            key.set((Integer) key2);
+//        } else {
+//            key.or((CladeKey) key2);
+//        }
+//
+//        return key;
+//    }
+
 
 //    public static Object makeKey(Object... keys) {
 //        int maxIndex = 0;

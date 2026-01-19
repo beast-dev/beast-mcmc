@@ -131,6 +131,8 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
+                         final double hipstrPenalty,
+                         final int minCladeCount,
                          final int countLimit,
                          final double[] hpd2D,
                          final boolean computeESS,
@@ -208,6 +210,7 @@ public class TreeAnnotator extends BaseTreeTool {
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
                 targetTree = getHIPSTRTree(cladeSystem, false);
+                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty, minCladeCount);
                 break;
             }
             case MRHIPSTR: {
@@ -611,11 +614,18 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold, int minCladeCount) {
     private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule) {
 
         long startTime = System.currentTimeMillis();
 
+        if (minCladeCount > 0) {
+            Embiggulator embiggulator = new Embiggulator(cladeSystem);
+            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
+        }
+
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
+        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa /*, penaltyThreshold*/);
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, majorityRule);
 
         double score = scoreTree(tree, cladeSystem);
@@ -1001,6 +1011,7 @@ public class TreeAnnotator extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", "t", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in embiggulation (0 = off, default 0)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
@@ -1103,6 +1114,11 @@ public class TreeAnnotator extends BaseTreeTool {
             }
         }
 
+        int minCladeCount = 0;
+        if (arguments.hasOption("minCount")) {
+            minCladeCount = arguments.getIntegerOption("minCount");
+        }
+
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
@@ -1149,6 +1165,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
+                minCladeCount,
                 countLimit,
                 hpd2D,
                 computeESS,

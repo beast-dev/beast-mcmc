@@ -172,7 +172,7 @@ public class HIPSTRTreeBuilder {
                 }
 
                 cladeScore = cladeScore + bestSubtreeScore;
-            } else {
+            } else if (clade.getSize() == 2) {
                 // two tips so there will only be one pair and their sum log cred will be 0.0
                 assert clade.getSubClades().size() == 1;
                 Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
@@ -184,6 +184,8 @@ public class HIPSTRTreeBuilder {
                     clade.bestLeft = subClade.second;
                 }
                 cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
+            } else {
+                assert clade.getSize() == 1;
             }
             clade.bestSubTreeScore = cladeScore;
 

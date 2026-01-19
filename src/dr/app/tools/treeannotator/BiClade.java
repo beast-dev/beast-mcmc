@@ -51,11 +51,7 @@ class BiClade implements Clade {
         credibility = 1.0;
         size = 1;
 
-        if (USE_FINGERPRINTS) {
-            key = new FingerprintCladeKey(index);
-        } else {
-            key = index;
-        }
+        key = getTaxonKey(index);
 
         this.taxon = taxon;
     }
@@ -85,11 +81,7 @@ class BiClade implements Clade {
         index = left.index;
         addSubClades(left, right);
 
-        if (USE_FINGERPRINTS) {
-            key = new FingerprintCladeKey((FingerprintCladeKey)left.key, (FingerprintCladeKey)right.key);
-        } else {
-            key = BiClade.makeKey(left.key, right.key);
-        }
+        key = BiClade.getParentKey(left.key, right.key);
 
         this.taxon = null;
     }
@@ -259,9 +251,17 @@ class BiClade implements Clade {
         return key;
     }
 
-    public static Object makeKey(Object key1, Object key2) {
+    public static Object getTaxonKey(int index) {
         if (USE_FINGERPRINTS) {
-            CladeKey key =  FingerprintCladeKey.getParentKey((FingerprintCladeKey)key1, (FingerprintCladeKey)key2);
+            return FingerprintCladeKeys.getTaxonKey(index);
+        } else {
+            return index;
+        }
+    }
+
+    public static Object getParentKey(Object key1, Object key2) {
+        if (USE_FINGERPRINTS) {
+            Long key =  FingerprintCladeKeys.getParentKey((Long)key1, (Long)key2);
             return key;
         } else {
             int maxIndex;
@@ -293,22 +293,23 @@ class BiClade implements Clade {
             return key;
         }
     }
-    public static Object makeKey(Object... keys) {
-        int maxIndex = 0;
-        for (Object key : keys) {
-            maxIndex = Math.max(maxIndex, key instanceof Integer ? (Integer) key : ((BitsetCladeKey) key).getMaxIndex());
-        }
-        BitsetCladeKey bits = new BitsetCladeKey(maxIndex);
-        for (Object key : keys) {
-            if (key instanceof Integer) {
-                bits.set((Integer) key);
-            } else {
-                assert key instanceof BitsetCladeKey;
-                bits.or((BitsetCladeKey) key);
-            }
-        }
-        return bits;
-    }
+
+//    public static Object makeKey(Object... keys) {
+//        int maxIndex = 0;
+//        for (Object key : keys) {
+//            maxIndex = Math.max(maxIndex, key instanceof Integer ? (Integer) key : ((BitsetCladeKey) key).getMaxIndex());
+//        }
+//        BitsetCladeKey bits = new BitsetCladeKey(maxIndex);
+//        for (Object key : keys) {
+//            if (key instanceof Integer) {
+//                bits.set((Integer) key);
+//            } else {
+//                assert key instanceof BitsetCladeKey;
+//                bits.or((BitsetCladeKey) key);
+//            }
+//        }
+//        return bits;
+//    }
 
 //    public boolean equals(Object o) {
 //        if (this == o) return true;

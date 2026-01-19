@@ -118,7 +118,7 @@ public final class CladeSystem {
             }
             BiClade clade = new BiClade(index, taxon);
             tipClades.put(index, clade);
-            cladeMap.put(clade.getKey(), clade);
+            tipCladeMap.put(clade.getKey(), clade);
         }
     }
 
@@ -185,6 +185,9 @@ public final class CladeSystem {
 
     public Clade getClade(Object key) {
         Clade clade = cladeMap.get(key);
+        if (clade == null) {
+            clade = tipCladeMap.get(key);
+        }
         assert clade != null;
         return clade;
     }
@@ -513,8 +516,9 @@ public final class CladeSystem {
 
     // a map of taxon index to clade
     private final Map<Integer, BiClade> tipClades = new HashMap<>();
+    private final Map<Object, BiClade> tipCladeMap = new HashMap<>();
 
-    // a map of clade key to clade (includes tip clades)
+    // a map of clade key to clade (excluding tip clades)
     private final Map<Object, BiClade> cladeMap = new HashMap<>();
 
     Clade rootClade;

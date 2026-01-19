@@ -508,6 +508,10 @@ public final class CladeSystem {
         return cladeMap.values();
     }
 
+    Map<Object, BiClade> getCladeMap() {
+        return cladeMap;
+    }
+
     //
     // Private stuff
     //

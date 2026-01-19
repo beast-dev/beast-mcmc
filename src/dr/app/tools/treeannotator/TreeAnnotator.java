@@ -131,7 +131,6 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
-                         final double hipstrPenalty,
                          final int minCladeCount,
                          final int countLimit,
                          final double[] hpd2D,
@@ -209,13 +208,12 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, false);
-                targetTree = getHIPSTRTree(cladeSystem, hipstrPenalty, minCladeCount);
+                targetTree = getHIPSTRTree(cladeSystem, false, minCladeCount);
                 break;
             }
             case MRHIPSTR: {
                 progressStream.println("Finding majority rule highest independent posterior subtree reconstruction (MrHIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, true);
+                targetTree = getHIPSTRTree(cladeSystem, true, minCladeCount);
                 break;
             }
             case MAJORITY_RULE: {
@@ -614,8 +612,7 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, double penaltyThreshold, int minCladeCount) {
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule, int minCladeCount) {
 
         long startTime = System.currentTimeMillis();
 
@@ -625,7 +622,6 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
-        MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa /*, penaltyThreshold*/);
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, majorityRule);
 
         double score = scoreTree(tree, cladeSystem);
@@ -981,6 +977,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninStates,
                         heightsOption,
                         posteriorLimit,
+                        0,
                         5,
                         hpd2D,
                         computeESS,

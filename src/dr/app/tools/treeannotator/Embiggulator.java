@@ -65,8 +65,8 @@ public class Embiggulator {
         }
 
         // pull down the clades and tip clades into an array to iterate over easily
-        List<Clade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
-        allClades.addAll(cladeSystem.getTipClades().values());
+        List<BiClade> allClades = new ArrayList<>(cladeSystem.getCladeMap().values());
+        allClades.addAll(cladeSystem.getTipClades());
         BiClade[] cladeArray = new BiClade[allClades.size()];
         cladeArray = allClades.toArray(cladeArray);
 

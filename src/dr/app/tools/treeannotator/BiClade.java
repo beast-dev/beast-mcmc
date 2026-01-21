@@ -38,8 +38,9 @@ import java.util.*;
  */
 class BiClade implements Clade {
 
-    public static final CladeKeys cladeKeys = FingerprintCladeKeys.INSTANCE;
-//    public static final CladeKeys cladeKeys = BitsetCladeKeys.INSTANCE;
+    private static final boolean USE_BITSET_CLADE_KEYS = false;
+
+    public static final CladeKeys cladeKeys;
 
     /**
      * Clade for a tip
@@ -306,4 +307,11 @@ class BiClade implements Clade {
     private Double[] heightRange;
     private Double[] heightHPDs ;
 
+    static {
+        if (USE_BITSET_CLADE_KEYS) {
+            cladeKeys = BitsetCladeKeys.INSTANCE;
+        } else {
+            cladeKeys = FingerprintCladeKeys.INSTANCE;
+        }
+    }
 }

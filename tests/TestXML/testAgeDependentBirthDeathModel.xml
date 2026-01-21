@@ -1,0 +1,72 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Simulated tree under T = 10, lambda = 0.8 and mu = 0.3 using simulator from github.com/molkjar/tabd -->
+<beast>
+    <taxa id="taxa">
+        <taxon id="tip_1"/>
+        <taxon id="tip_2"/>
+        <taxon id="tip_3"/>
+        <taxon id="tip_4"/>
+        <taxon id="tip_5"/>
+        <taxon id="tip_6"/>
+        <taxon id="tip_7"/>
+        <taxon id="tip_8"/>
+        <taxon id="tip_9"/>
+        <taxon id="tip_10"/>
+        <taxon id="tip_11"/>
+        <taxon id="tip_12"/>
+        <taxon id="tip_13"/>
+        <taxon id="tip_14"/>
+        <taxon id="tip_15"/>
+        <taxon id="tip_16"/>
+        <taxon id="tip_17"/>
+        <taxon id="tip_18"/>
+        <taxon id="tip_19"/>
+        <taxon id="tip_20"/>
+        <taxon id="tip_21"/>
+        <taxon id="tip_22"/>
+        <taxon id="tip_23"/>
+        <taxon id="tip_24"/>
+        <taxon id="tip_25"/>
+        <taxon id="tip_26"/>
+        <taxon id="tip_27"/>
+        <taxon id="tip_28"/>
+        <taxon id="tip_29"/>
+        <taxon id="tip_30"/>
+        <taxon id="tip_31"/>
+        <taxon id="tip_32"/>
+        <taxon id="tip_33"/>
+        <taxon id="tip_34"/>
+        <taxon id="tip_35"/>
+    </taxa>
+
+    <newick id="tree">
+        ((((tip_1:0.722444,tip_2:0.722444):3.759228,((((tip_3:1.177025,(tip_4:0.703425,tip_5:0.703425):0.473599):0.074742,(tip_6:1.13443,(tip_7:0.630106,tip_8:0.630106):0.504324):0.117337):2.961029,tip_9:4.212795):0.232294,((((tip_10:2.92872,((((tip_11:0.310773,tip_12:0.310773):0.260839,tip_13:0.571613):0.770319,(tip_14:0.470111,tip_15:0.470111):0.87182):1.426213,((tip_16:0.245491,(tip_17:0.160518,tip_18:0.160518):0.084974):1.370669,(tip_19:1.087233,tip_20:1.087233):0.528928):1.151984):0.160576):0.190406,(tip_21:1.710327,(tip_22:0.977763,tip_23:0.977763):0.732564):1.408799):0.268499,tip_24:3.387625):0.492118,((tip_25:0.235218,tip_26:0.235218):2.709911,((tip_27:1.290976,(tip_28:0.544531,(tip_29:0.174645,tip_30:0.174645):0.369886):0.746445):0.614245,tip_31:1.905221):1.039908):0.934614):0.565347):0.036583):1.049099,(((tip_32:0.123621,tip_33:0.123621):1.050313,tip_34:1.173934):1.100494,tip_35:2.274428):3.256344):4.469228);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <ageDependentBirthDeathModel id="model" originTime="10.0" timeSteps="1000">
+        <treeModel idref="treeModel"/>
+        <birthRate>
+            <parameter id="birthRate" value="0.8"/>
+        </birthRate>
+        <deathRate>
+            <parameter id="deathRate" value="0.3"/>
+        </deathRate>
+    </ageDependentBirthDeathModel>
+
+    <report>
+        Model Log Likelihood: <ageDependentBirthDeathModel idref="model"/>
+    </report>
+</beast>

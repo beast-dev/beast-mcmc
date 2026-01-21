@@ -32,7 +32,7 @@ import jebl.math.Random;
 import java.util.Arrays;
 import java.util.BitSet;
 
-public class BitsetCladeKey implements CladeKey {
+public class BitsetKey {
     /*
      * BitSets are packed into arrays of "words."  Currently, a word is
      * a long, which consists of 64 bits, requiring 6 address bits.
@@ -63,7 +63,7 @@ public class BitsetCladeKey implements CladeKey {
     /**
      * Creates a new bit set to accommodate bit indices up to maxIndex. All bits are initially {@code false}.
      */
-    public BitsetCladeKey(int maxIndex) {
+    public BitsetKey(int maxIndex) {
         this.maxIndex = maxIndex;
         initWords(maxIndex);
     }
@@ -100,7 +100,7 @@ public class BitsetCladeKey implements CladeKey {
         hashCache = 0;
     }
 
-    public void setTo(BitsetCladeKey key) {
+    public void setTo(BitsetKey key) {
         assert this != key;
 
         wordsInUse = key.wordsInUse;
@@ -131,7 +131,7 @@ public class BitsetCladeKey implements CladeKey {
         return sum;
     }
 
-    public void and(BitsetCladeKey key) {
+    public void and(BitsetKey key) {
         assert this != key;
 
         while (wordsInUse > key.wordsInUse) {
@@ -147,7 +147,7 @@ public class BitsetCladeKey implements CladeKey {
         hashCache = 0;
     }
 
-    public void and(BitsetCladeKey key1, BitsetCladeKey key2) {
+    public void and(BitsetKey key1, BitsetKey key2) {
         assert this != key1 && this != key2 && key1 != key2;
 
         if (key1.wordsInUse >= key2.wordsInUse) {
@@ -173,7 +173,7 @@ public class BitsetCladeKey implements CladeKey {
     }
 
 
-    public void or(BitsetCladeKey key) {
+    public void or(BitsetKey key) {
         assert this != key;
         assert getMaxIndex() >= key.getMaxIndex();
         
@@ -194,7 +194,7 @@ public class BitsetCladeKey implements CladeKey {
         hashCache = 0;
     }
 
-    public void or(BitsetCladeKey key1, BitsetCladeKey key2) {
+    public void or(BitsetKey key1, BitsetKey key2) {
         assert this != key1 && this != key2 && key1 != key2;
 
         if (key1.wordsInUse >= key2.wordsInUse) {
@@ -255,7 +255,7 @@ public class BitsetCladeKey implements CladeKey {
     }
 
     public boolean equals(Object obj) {
-        BitsetCladeKey key = (BitsetCladeKey)obj;
+        BitsetKey key = (BitsetKey)obj;
 
         if (wordsInUse != key.wordsInUse)
             return false;
@@ -295,14 +295,14 @@ public class BitsetCladeKey implements CladeKey {
         long time = System.currentTimeMillis() - startTime;
         System.out.println("Bitset clear/or/or: " + time);
 
-        BitsetCladeKey cladeKey1 = new BitsetCladeKey(size);
-        BitsetCladeKey cladeKey2 = new BitsetCladeKey(size);
+        BitsetKey cladeKey1 = new BitsetKey(size);
+        BitsetKey cladeKey2 = new BitsetKey(size);
         for (int i = 0; i < 1000; i++) {
             cladeKey1.set(Random.nextInt(size));
             cladeKey2.set(Random.nextInt(size));
         }
 
-        BitsetCladeKey cladeKey = new BitsetCladeKey(size);
+        BitsetKey cladeKey = new BitsetKey(size);
 
         startTime = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {

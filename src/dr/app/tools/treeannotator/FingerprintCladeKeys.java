@@ -11,21 +11,24 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $
  */
-public final class FingerprintCladeKeys {
+public final class FingerprintCladeKeys implements CladeKeys {
+    public final static CladeKeys INSTANCE = new FingerprintCladeKeys();
 
     private FingerprintCladeKeys() {}
 
-    public static Long getParentKey(Long key1, Long key2) {
-        long fingerprint = key1 ^ key2;
+    @Override
+    public Object getParentKey(Object key1, Object key2) {
+        long fingerprint = ((Long)key1) ^ ((Long)key2);
         return fingerprint;
     }
 
-    public static Long getTaxonKey(int taxon) {
+    @Override
+    public Object getTaxonKey(int taxon) {
         long fingerprint = TAXON_FINGERPRINTS.computeIfAbsent(taxon, integer -> {
             long fp = MathUtils.nextLong();
             // abundance of caution - check each fingerprint is unique
             while (FINGERPRINTS.contains(fp)) {
-                assert true : "Taxon fingerprint collision"; // if exceptions are on then flag and stopx
+                assert true : "Taxon fingerprint collision"; // if exceptions are on then flag and stop
                 fp = MathUtils.nextLong();
             }
             FINGERPRINTS.add(fp);

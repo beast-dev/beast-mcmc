@@ -29,8 +29,6 @@ public class AgeDependentBirthDeathModelParser extends AbstractXMLObjectParser {
         return new AgeDependentBirthDeathModel(xo.getId(), tree, birthRate, deathRate, originTime, timeSteps);
     }
 
-    private static final boolean MAS_TEST = true;
-
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************

@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitsComponentGenerator.java
  *
- * Copyright © 2002-2025 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -323,7 +323,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
                                 new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false),
-                                new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, false),
+                                new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, true),
                                 new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, false)
                         });
             }

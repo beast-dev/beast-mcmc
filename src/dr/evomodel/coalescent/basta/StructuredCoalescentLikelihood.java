@@ -1033,8 +1033,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                             new Author("Guy", "Baele")
                     },
                     "Parallel algorithms for phylogenetic inference under a structured coalescent approximation",
+                    2025,
                     "bioRxiv",
-                    Citation.Status.IN_PREPARATION),
+                    "2025.09.22.677844","https://doi.org/10.1101/2025.09.22.677844"),
             new Citation(
                     new Author[]{
                             new Author("Nicola", "De Maio"),

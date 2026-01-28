@@ -619,10 +619,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
             if (substModel.isSharedCoalescentModel()) {
-                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER, new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES)
-                });
-                writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
                 writer.writeOpenTag(DuplicatedParameterParser.COPIES);
                 writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
                 writer.writeCloseTag(DuplicatedParameterParser.COPIES);

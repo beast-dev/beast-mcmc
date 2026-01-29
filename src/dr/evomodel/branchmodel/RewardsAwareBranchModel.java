@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.SericolaSeriesMarkovReward;
+import dr.inference.markovjumps.SericolaSeriesMarkovRewardFast;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -70,6 +71,12 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
     private boolean knownSortedQ;
     private boolean knownSortedRewardRates;
 
+    final double[] X;
+    final double[] times;
+
+    private SericolaSeriesMarkovRewardFast sericola;
+    private boolean sericolaValid;
+
     public RewardsAwareBranchModel(TreeModel tree,
                                    SubstitutionModel underlyingSubstitutionModel, //TODO askMarc why LogRateSubModel does not work
                                    Parameter rewardRates,
@@ -101,6 +108,10 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
         this.knownSortedRewardRates = false;
         this.knownSortedQ = false;
         this.knownTransitionMatrices = false;
+        this.sericolaValid = false;
+        this.sericola = null;
+        this.X = new double[tree.getNodeCount() - 1]; // number of branches
+        this.times = new double[tree.getNodeCount() - 1]; // number of
 
         addModel(underlyingSubstitutionModel);
         addModel(branchRateModel);
@@ -116,7 +127,7 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
     boolean DEBUG = false;
 
     public double[] getTransitionMatrix(int i) {
-        if (DUMMYTESTING) { //TODO this is only for testing
+        if (DUMMYTESTING) {
             NodeRef node = tree.getNode(i);
             double branchLength = tree.getBranchLength(node);
             getRootSubstitutionModel().getTransitionProbabilities(branchLength, W[i]);
@@ -136,26 +147,32 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
         if (!knownTransitionMatrices) {
             sortRewardRates();
             sortQ();
-            SericolaSeriesMarkovReward sericolaSeriesMarkovReward =
-                    new SericolaSeriesMarkovReward(Q, sortedRewardRates, nstates);
-
-//            final int branchCount = tree.getNodeCount() - 1;
-//            double[] branchRates = new double[branchCount];
-//            double[] branchLengths = new double[branchCount];
-
-//            int k = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                NodeRef node = tree.getNode(i);
-                if (tree.isRoot(node)) continue;
-                final double branchRate = branchRateModel.getBranchRate(tree, node);
-                final double branchLength = tree.getBranchLength(node);
-//                branchRates[k] = branchRateModel.getBranchRate(tree, node);
-//                branchLengths[k] = tree.getBranchLength(node);
-//                nodeIndicesW[node.getNumber()] = k;
-                unsortedW[i] = sericolaSeriesMarkovReward.computePdf(branchRate, branchLength);
-//                k++;
+            sericolaValid = false; //TODO  integrate lazy update better
+            if (sericola == null || !sericolaValid) {
+                sericola = new SericolaSeriesMarkovRewardFast(Q, sortedRewardRates, nstates);
+                sericolaValid = true;
             }
-//            unsortedW = sericolaSeriesMarkovReward.computePdf(branchRates, branchLengths, true); // TODO update using this call directly
+            final int nodeCount = tree.getNodeCount();
+            final int branchCount = nodeCount - 1;   // assuming exactly one root
+
+// Reuse these buffers as fields if this is called often (recommended)
+            final double[][] Wpacked = new double[branchCount][]; // just references, not big allocations
+
+            int k = 0;
+            for (int i = 0; i < nodeCount; i++) {
+                final NodeRef node = tree.getNode(i);
+                if (tree.isRoot(node)) continue;
+
+                final int nodeNr = node.getNumber();
+                final double t = tree.getBranchLength(node);
+                final double rate = branchRateModel.getBranchRate(tree, node);
+
+                X[k] = rate * t;        // reward
+                times[k] = t;           // branch length
+                Wpacked[k] = unsortedW[nodeNr]; // IMPORTANT: write directly into unsortedW for that node
+                k++;
+            }
+            sericola.computePdfInto(X, times, true, Wpacked);
             sortW();
             knownTransitionMatrices = true;
         }
@@ -163,7 +180,7 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
 
     private void sortRewardRates() { // compute permutation and sort reward rates
         if (!knownSortedRewardRates) {
-            System.out.println("Sorting reward rates");
+//            System.out.println("Sorting reward rates");
             final double[] rewardVals = rewardRates.getParameterValues();
 
             Integer[] permObj = new Integer[nstates];
@@ -251,10 +268,11 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (ignoreModelChangedEvent) {return;}
-        System.out.println("Model changed event");
+//        System.out.println("Model changed event");
         if (model == underlyingSubstitutionModel) {
             knownSortedQ = false;
             knownTransitionMatrices = false;
+            sericolaValid = false;
             fireModelChanged();
         } else if (model == branchRateModel) { // the branch rate model provides the tree and total rewards
             knownSortedQ = false;
@@ -267,27 +285,74 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == rewardRates) {
-            System.out.println("Reward rates changed");
+//            System.out.println("Reward rates changed");
             knownSortedRewardRates = false;
             knownTransitionMatrices = false;
-            //TODO this is not firing a change in the treeDataLikelihood that build again the transition matrices
+            sericolaValid = false;
             fireModelChanged();
         } else {
             throw new IllegalArgumentException("Unknown variable: " + variable);
         }
     }
 
-    double[][] storedW;
+//    double[][] storedW;
+//    protected void storeState() {
+//        storedW = Arrays.copyOf(W, W.length);
+//    }
+//
+//    protected void restoreState() {
+//        // TODO save Q and sortedRewardRates?
+//        double[][] tempW = storedW;
+//        storedW = W;
+//        W = tempW;
+//    }
+
+    private double[][] storedW;
+    private boolean storedKnownTransitionMatrices;
+    private boolean storedKnownSortedQ;
+    private boolean storedKnownSortedRewardRates;
+
+//    @Override
+//    protected void storeState() {
+//        storedKnownTransitionMatrices = knownTransitionMatrices;
+//        storedKnownSortedQ = knownSortedQ;
+//        storedKnownSortedRewardRates = knownSortedRewardRates;
+//
+//        storedW = new double[W.length][];
+//        for (int i = 0; i < W.length; i++) {
+//            storedW[i] = W[i].clone(); // deep copy each row
+//        }
+//    }
+//
+//    @Override
+//    protected void restoreState() {
+//        // restore flags too (important if your code uses caching logic)
+//        knownTransitionMatrices = storedKnownTransitionMatrices;
+//        knownSortedQ = storedKnownSortedQ;
+//        knownSortedRewardRates = storedKnownSortedRewardRates;
+//
+//        // IMPORTANT: do NOT swap W references; copy back into existing arrays
+//        for (int i = 0; i < W.length; i++) {
+//            System.arraycopy(storedW[i], 0, W[i], 0, W[i].length);
+//        }
+//    }
+
+    @Override
     protected void storeState() {
-        storedW = Arrays.copyOf(W, W.length);
+        storedKnownTransitionMatrices = knownTransitionMatrices;
+        storedKnownSortedQ = knownSortedQ;
+        storedKnownSortedRewardRates = knownSortedRewardRates;
     }
 
+    @Override
     protected void restoreState() {
-        // TODO save Q and sortedRewardRates?
-        double[][] tempW = storedW;
-        storedW = W;
-        W = tempW;
+        // simplest + safest: force recomputation when needed
+        knownTransitionMatrices = false;
+        knownSortedQ = false;
+        knownSortedRewardRates = false;
+        sericolaValid = false;
     }
+
 
     protected void acceptState() {
     }

@@ -73,6 +73,8 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
+    private static final String BACKWARD = "backward";
+
     //avoid writing a reference to self in the structured coalescent likelihood
     private boolean enableInsertionPointBIT = false;
 
@@ -503,9 +505,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
-        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-            writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
-        } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
+
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            prefix = BACKWARD + prefix;
+        }
+        if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
             writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
             writer.writeOpenTag(DuplicatedParameterParser.COPIES);
@@ -513,7 +517,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
-            //asymmetric
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
         }
 
@@ -521,9 +524,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
-            } else if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
+            if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
                 writer.writeOpenTag(DuplicatedParameterParser.COPIES);

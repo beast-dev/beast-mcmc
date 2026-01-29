@@ -99,11 +99,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     // where N1 = capacityN + 1
     // ------------------------------------------------------------
     private double[] Cflat;
-    private int capacityN = -1; // maximum n currently computed (>=0), -1 means none computed
-    private int N1 = 0;         // = capacityN + 1
 
-    // Tracks max time seen in current computed cache extent
-    private double maxTime = 0.0;
+    // allocation capacity (does not imply validity)
+    private int allocatedN = -1;
+    private int allocatedN1 = 0;   // allocatedN + 1
+
+    // computed extent valid for current numerics
+    private int computedN = -1;    // -1 means nothing computed / invalid
+    private double maxTime = 0.0;  // max time covered by current computed cache
 
     // Thread-safe scratch buffers to avoid allocations in computePdf hot path
     private static final class Scratch {
@@ -135,8 +138,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     // MCMC store/restore bookkeeping
     // ---------------------------------------
     private boolean storedPermDirty, storedQDirty, storedCachesDirty;
-    private int storedCapacityN, storedN1;
-    private double storedMaxTime;
     private boolean hasStoredState = false;
 
     // --------------------------------------------------------------------
@@ -482,7 +483,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
         ensureNumericsUpToDate();
         ensureCForTime(time, /*extraN=*/0);
-        final int N = capacityN;
+        final int N = computedN;
 
         final int T = X.length;
         final double[][] W = new double[T][dim2];
@@ -566,38 +567,44 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     private void ensureCForTime(double time, int extraN) {
         if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
 
-        if (time > maxTime) maxTime = time;
-
         final int requiredN = determineNumberOfSteps(time) + extraN;
 
-        if (capacityN < requiredN) {
-            ensureCapacityN(requiredN);
-            computeChnk(); // recompute all up to capacityN
+        // ensure allocation first
+        ensureCapacityN(requiredN);
+
+        // track max time covered by computed cache
+        if (time > maxTime) maxTime = time;
+
+        // compute (or recompute) if current cache does not cover requiredN
+        if (computedN < requiredN) {
+            computeChnk(requiredN);     // compute up to requiredN (or recompute all)
+            computedN = requiredN;
         }
     }
 
+
     private void ensureCapacityN(int requiredN) {
-        int newCap = (capacityN < 0) ? requiredN : capacityN;
-        while (newCap < requiredN) newCap = Math.max(requiredN, (int)(newCap * 1.5) + 1);
-
-        final int newN1 = newCap + 1;
-        final long totalDoubles = (long)(phi + 1) * newN1 * newN1 * dim2;
-        if (totalDoubles > Integer.MAX_VALUE) throw new IllegalStateException("C array too large: " + totalDoubles + " doubles"); //TODO THIS SHOULD NOT HAPPEN, block before
-
-        // REUSE if already allocated big enough
-        if (Cflat != null && capacityN >= newCap && N1 == newN1) {
-            return;
+        int newAlloc = (allocatedN < 0) ? requiredN : allocatedN;
+        while (newAlloc < requiredN) {
+            newAlloc = Math.max(requiredN, (int) (newAlloc * 1.5) + 1);
         }
 
-        // If Cflat exists but N1 differs (capacity differs), only allocate when growing
-        if (Cflat != null && capacityN >= newCap) {
-            // this case shouldn't happen if you keep N1 consistent with capacityN
-            return;
+        if (newAlloc <= allocatedN && Cflat != null) return;
+
+        final int newN1 = newAlloc + 1;
+        final long totalDoubles = (long) (phi + 1) * (long) newN1 * (long) newN1 * (long) dim2;
+
+        if (totalDoubles > Integer.MAX_VALUE) {
+            throw new IllegalStateException("C array too large: " + totalDoubles + " doubles");
         }
 
         Cflat = new double[(int) totalDoubles];
-        capacityN = newCap;
-        N1 = newN1;
+        allocatedN = newAlloc;
+        allocatedN1 = newN1;
+
+        // Allocation changed => any previously computed content is meaningless under new layout
+        computedN = -1;
+        maxTime = 0.0;
     }
 
 
@@ -633,8 +640,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
      *
      * IMPORTANT: Works in SORTED uv space.
      */
-    private void computeChnk() {
-        if (Cflat == null || capacityN < 0) {
+    private void computeChnk(int N) {
+        if (Cflat == null || allocatedN < 0) {
             throw new IllegalStateException("C storage not initialized");
         }
 
@@ -651,8 +658,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 Cflat[off + idx(u, u)] = 1.0;
             }
         }
-
-        final int N = capacityN;
 
         for (int n = 1; n <= N; ++n) {
 
@@ -770,14 +775,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
         if (!cachesDirty) return;
 
-        // Update lambda and P from sortedQ
-        this.lambda = determineLambda(sortedQ);
+        lambda = determineLambda(sortedQ);
         if (!(lambda > 0.0) || Double.isNaN(lambda) || Double.isInfinite(lambda)) {
             throw new IllegalStateException("Invalid uniformization rate lambda=" + lambda);
         }
         fillP(sortedQ, lambda, P);
 
-        // Update invRewardDiff from sortedR (requires strictly increasing rewards)
         Arrays.fill(invRewardDiff, 0.0);
         for (int h = 1; h < dim; h++) {
             final double d = sortedR[h] - sortedR[h - 1];
@@ -787,20 +790,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             invRewardDiff[h] = 1.0 / d;
         }
 
-        // Invalidate eigen cache
         eigenDecomposition = null;
 
-        // IMPORTANT: invalidate computed extent but keep any allocated Cflat //    todo check the following two lines
-//        capacityN = -1;
-//        N1 = 0;
-        maxTime = 0.0;
-
+        invalidateCComputedExtent(); // this sets computedN=-1 and maxTime=0
         cachesDirty = false;
-
-        if (DEBUG) {
-            System.err.println("Sericola numerics refreshed: lambda=" + lambda);
-        }
     }
+
 
     private void ensurePermutationUpToDate() {
         if (!permDirty) return;
@@ -844,13 +839,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             throw new IllegalStateException("Internal unsortedQ length mismatch");
         }
 
-        // Reorder Q into sortedQ using perm; matches your previous column-major convention
-//        for (int j = 0; j < dim; j++) {
-//            int pj = perm[j];
-//            for (int i = 0; i < dim; i++) {
-//                sortedQ[j * dim + i] = unsortedQ[pj * dim + perm[i]];
-//            }
-//        }
         for (int iS = 0; iS < dim; ++iS) {
             final int iO = perm[iS];          // original row
             final int rowS = iS * dim;
@@ -860,12 +848,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 sortedQ[rowS + jS] = unsortedQ[rowO + jO];
             }
         }
-//        for (int iS = 0; iS < dim; ++iS) {
-//            int iO = perm[iS];
-//            if (Math.abs(sortedQ[iS*dim + iS] - unsortedQ[iO*dim + iO]) > 1e-12) {
-//                throw new IllegalStateException("Q permutation mismatch at iS=" + iS);
-//            }
-//        }
 
         qDirty = false;
         cachesDirty = true;
@@ -896,7 +878,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     }
 
     private int cOffset(int h, int n, int k) {
-        return (((h * N1 + n) * N1 + k) * dim2);
+        return (((h * allocatedN1 + n) * allocatedN1 + k) * dim2);
     }
 
     private double determineLambda(double[] QrowMajor) {
@@ -917,6 +899,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         return -minDiag;
     }
 
+    private void invalidateCComputedExtent() {
+        computedN = -1;
+        maxTime = 0.0;
+        // do NOT touch allocation (Cflat, allocatedN, allocatedN1)
+    }
 
     private void fillP(double[] Qsorted, double lambda, double[] Pout) {
         final double inv = 1.0 / lambda;
@@ -1029,13 +1016,10 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
     @Override
     protected void storeState() {
+        // Store only dirtiness flags (optional, but consistent with BEAST patterns)
         storedPermDirty = permDirty;
         storedQDirty = qDirty;
         storedCachesDirty = cachesDirty;
-
-        storedCapacityN = capacityN;
-        storedN1 = N1;
-        storedMaxTime = maxTime;
 
         hasStoredState = true;
     }
@@ -1044,39 +1028,13 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     protected void restoreState() {
         if (!hasStoredState) return;
 
-        // After BEAST restore, upstream values may have reverted WITHOUT firing events.
-        // Therefore, all derived state must be treated as dirty.
         permDirty   = true;
         qDirty      = true;
         cachesDirty = true;
 
-        // Invalidate computed extent, but keep allocations to avoid reallocation.
-        // IMPORTANT: do NOT overwrite/assume capacityN is meaningful; it refers to computed extent. // todo check next 3 lines
-//        capacityN = -1;
-//        N1 = (Cflat == null ? 0 : N1); // keep N1 as-is if you want, but it is irrelevant when capacityN=-1
-//        maxTime = 0.0;
-
-        // Eigen cache must be rebuilt too
+        invalidateCComputedExtent();  // computedN = -1, maxTime = 0
         eigenDecomposition = null;
     }
-
-//    @Override
-//    protected void restoreState() {
-//        if (!hasStoredState) return;
-//
-//        // Restore dirtiness flags, but NEVER trust Cflat contents after restore:
-//        // we cannot snapshot it; safest is invalidate computed extent.
-//        permDirty = storedPermDirty;
-//        qDirty = storedQDirty;
-//
-//        // Force recompute-on-demand, but keep allocations
-//        cachesDirty = true;
-//
-//        // Invalidate computed extent; keep Cflat allocated as-is
-//        capacityN = -1;
-//        N1 = 0;
-//        maxTime = 0.0;
-//    }
 
     @Override
     protected void acceptState() {
@@ -1094,7 +1052,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         sb.append("sortedQ: ").append(new Vector(sortedQ)).append("\n");
         sb.append("sortedR: ").append(new Vector(sortedR)).append("\n");
         sb.append("lambda: ").append(lambda).append("\n");
-        sb.append("capacityN: ").append(capacityN).append("\n");
+        sb.append("allocateN: ").append(allocatedN).append("\n");
         sb.append("maxTime: ").append(maxTime).append("\n");
         sb.append("cprob at maxTime: ").append(new Vector(computeConditionalProbabilities(maxTime))).append("\n");
         return sb.toString();

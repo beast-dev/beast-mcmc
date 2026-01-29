@@ -77,7 +77,6 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final double[] times;      // branchLength
     private final double[][] Wpacked;  // references into W[nodeNr], one per branch
 
-    // Sericola model (does all lazy updates and store/restore internally)
     private final SericolaSeriesMarkovRewardFastModel sericola;
 
     // Cache flag at this branch-model layer
@@ -121,8 +120,6 @@ public class RewardsAwareBranchModel extends AbstractModel
         this.times = new double[branchCount];
         this.Wpacked = new double[branchCount][];
 
-        // Create Sericola *as a BEAST model* so it listens to Q and rewardRates itself.
-        // Choose epsilon to match your desired truncation accuracy.
         final double epsilon = 1e-10;
         this.sericola = new SericolaSeriesMarkovRewardFastModel(
                 underlyingSubstitutionModel,
@@ -130,16 +127,9 @@ public class RewardsAwareBranchModel extends AbstractModel
                 nstates,
                 epsilon
         );
-
-        // Register dependencies:
-        // We listen to tree + branchRateModel to know X/times changed,
-        // and to sericola for reward/Q changes (already hooked internally).
         addModel(tree);
         addModel(branchRateModel);
         addModel(sericola);
-
-        // NOTE: rewardRates & underlyingSubstitutionModel are already dependencies of sericola;
-        // we do NOT add them again here to avoid duplicating event graphs.
     }
 
     // -------------------- Basic accessors --------------------
@@ -231,17 +221,12 @@ public class RewardsAwareBranchModel extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (ignoreModelChangedEvent) return;
-
-        // If any dependency changes, our W cache is invalid.
-        // We do NOT manage sericola dirty flags here; sericola manages itself.
         knownTransitionMatrices = false;
         fireModelChanged();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // We only added tree/branchRateModel/sericola as dependencies.
-        // If you later add variables directly to this model, handle them here.
         knownTransitionMatrices = false;
         fireModelChanged();
     }
@@ -257,8 +242,6 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     @Override
     protected void restoreState() {
-        // Safest: force recomputation on demand.
-        // (Even if storedKnownTransitionMatrices was true, the underlying state may have reverted.)
         knownTransitionMatrices = false;
     }
 
@@ -285,7 +268,7 @@ public class RewardsAwareBranchModel extends AbstractModel
                 new Citation(new Author[]{new Author("F", "Monti"),
                         new Author("MA", "Suchard")},
                         "Dependencies between CTMCs",
-                        2025,
+                        2026,
                         "TOBE",
                         1,
                         1,

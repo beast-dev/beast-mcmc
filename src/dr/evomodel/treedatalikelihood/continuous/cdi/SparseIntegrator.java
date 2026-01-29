@@ -30,8 +30,6 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 import dr.matrix.SparseCompressedMatrix;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
@@ -43,11 +41,8 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
 
     private static final boolean DEBUG = false;
-    private static final boolean TIMING = true;
 
     private double[] sumOfSquares;
-
-    private final Map<String, Long> times;
 
     private static final boolean USE_SSE_CACHE = true;
 
@@ -58,12 +53,6 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
         assert precisionType == PrecisionType.SCALAR;
 
         allocateStorage();
-
-        if (TIMING) {
-            times = new HashMap<>();
-        } else {
-            times = null;
-        }
     }
 
     @Override
@@ -77,9 +66,9 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
     protected void updatePartial(
             final int kBuffer,
             final int iBuffer,
-            final int iMatrix,
+            final int imo,
             final int jBuffer,
-            final int jMatrix,
+            final int jmo,
             final boolean computeRemainders,
             final boolean incrementOuterProducts
     ) {
@@ -89,8 +78,8 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = iMatrix; //TODO: just use iMatrix * jMatrix? (also, why do we need these?)
-        final int jmo = jMatrix;
+//        final int imo = iMatrix; //TODO: just use iMatrix * jMatrix? (also, why do we need these?)
+//        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -157,7 +146,7 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
                     System.err.print(" " + partials[kbo + e]);
                 }
                 System.err.println(" prec k: " + pk);
-                System.err.println("");
+                System.err.println();
             }
 
             // Computer remainder at node k
@@ -243,14 +232,14 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
                 for (int g = 0; g < dimTrait; ++g) {
                     System.err.print(" " + partials[rootOffset + g]);
                 }
-                System.err.println("");
+                System.err.println();
                 System.err.println("prec: " + partials[rootOffset + dimTrait]);
                 System.err.println("rootScalar: " + rootScalar);
                 System.err.println("\t" + logLike + " " + (logLike + remainder));
                 if (incrementOuterProducts) {
                     System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                 }
-                System.err.println("");
+                System.err.println();
             }
 
             rootOffset += dimPartialForTrait;
@@ -347,15 +336,12 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
             System.err.println("\t\t\tSSk = " + (pk * SSk));
         }
 
-
         if (DEBUG) {
             System.err.println("\t\tremainder: " + remainder);
         }
 
         if (incrementOuterProducts) {
             int opo = dimTrait * dimTrait * trait;
-
-//                        final double remainderPrecision = pip * pjp / (pip + pjp);
 
             if (DEBUG) {
                 System.err.println("pip: " + pip);
@@ -388,21 +374,7 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
     }
 
     private double computeRootSumOfSquares(int rootOffset, int priorOffset, int pob) {
-
-//        double SS = 0;
-//
-//        final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-//
-//        for (int h = 0; h < dimTrait; ++h) {
-//            final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-//
-//            SS += gDifference * diffusions[pob] * hDifference;
-//            ++pob;
-//        }
-//
-//        return SS;
-
-        final SparseCompressedMatrix diffusion = sparseDiffusion[precisionIndex];
+        final SparseCompressedMatrix diffusion = sparseDiffusion[pob];
         return diffusion.multiplyVecDiffTransposeMatrixVecDiff(partials, rootOffset, partials, priorOffset);
     }
 }

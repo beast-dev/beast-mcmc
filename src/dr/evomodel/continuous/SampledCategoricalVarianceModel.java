@@ -161,6 +161,7 @@ public class SampledCategoricalVarianceModel extends AbstractModelLikelihood
 
     }
 
+    @SuppressWarnings("unused")
     class Multiplicative extends Parametrization {
 
         @Override
@@ -181,6 +182,7 @@ public class SampledCategoricalVarianceModel extends AbstractModelLikelihood
         }
     }
 
+    @SuppressWarnings("unused")
     class Regression extends Parametrization {
 
         @Override

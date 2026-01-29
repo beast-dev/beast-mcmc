@@ -148,15 +148,7 @@ public class FreeRateDeltaExchangeOperator extends AbstractAdaptableOperator {
 
         // Need to adjust by the Jacobian
 
-        double hr = -(1-(1+Math.exp(-draw))*weight1) + 1;
-        hr = hr*Math.exp(-draw);
-        hr = hr/Math.pow(1+Math.exp(-draw), 2);
-        hr = hr*((1/weight1) + 1/(1-weight1));
-        hr = Math.abs(hr);
-        double loghr = Math.log(hr);
-  ;
-
-        return loghr;
+        return -draw - Math.log(1-weight1) - Math.log(1+Math.exp(-draw));
     }
 
     // Interface MCMCOperator

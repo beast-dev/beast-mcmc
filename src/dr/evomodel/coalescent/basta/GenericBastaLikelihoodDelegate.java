@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
 
 /**
  * @author Marc A. Suchard
@@ -64,12 +63,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     private final double[] temp;
     private int currentOutputBuffer;
     private int maxOutputBuffer;
-    private AbstractPopulationSizeModel.PopulationSizeModelType populationSizeModelType;
     private AbstractPopulationSizeModel populationSizeModel;
 
     private AbstractPopulationSizeModel.PopulationStatistics currentPopulationStatistics;
     private AbstractPopulationSizeModel.PopulationStatistics storedPopulationStatistics;
-    private boolean useStoredStatistics = false;
+    private boolean populationSizesNeedUpdate = true;
+    private boolean storedPopulationSizesNeedUpdate = true;
     
     public GenericBastaLikelihoodDelegate(String name,
                                           Tree tree,
@@ -109,18 +108,17 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
     @Override
     public void updatePopulationSizeModel(AbstractPopulationSizeModel.PopulationSizeModelType modelType) {
-        this.populationSizeModelType = modelType;
+        this.populationSizesNeedUpdate = true;
     }
     
     @Override
     public void setPopulationSizeModel(AbstractPopulationSizeModel model) {
         this.populationSizeModel = model;
-        this.populationSizeModelType = model.getModelType();
-        this.useStoredStatistics = false;
+        this.populationSizesNeedUpdate = true;
     }
 
     public void markPopulationSizesDirty() {
-        this.useStoredStatistics = false;
+        this.populationSizesNeedUpdate = true;
     }
 
 
@@ -133,36 +131,22 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         int numIntervals = intervalStarts.size() - 1;
         
-        AbstractPopulationSizeModel.PopulationStatistics stats;
-        
-        if (useStoredStatistics && storedPopulationStatistics != null) {
-            stats = storedPopulationStatistics;
-            useStoredStatistics = false;
-        } else {
+        if (populationSizesNeedUpdate) {
             if (populationSizeModel.getNumIntervals() != numIntervals) {
                 populationSizeModel.setIntervalCount(numIntervals);
             }
             
-            stats = populationSizeModel.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
-
-            storage.flip();
-            storage.resize(0, 0, null, populationSizeModel, numIntervals);
-
-            int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
-            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
-
-            System.arraycopy(stats.sizes, 0, storage.sizes, sizesOffset, stats.sizes.length);
-            System.arraycopy(stats.integrals, 0, storage.integrals, integralsOffset, stats.integrals.length);
+            currentPopulationStatistics = populationSizeModel.calculatePopulationStatistics(
+                    intervalStarts, branchIntervalOperations, stateCount);
         }
 
-        currentPopulationStatistics = stats;
-
+        AbstractPopulationSizeModel.PopulationStatistics stats = currentPopulationStatistics;
+        
         for (int interval = 0; interval < numIntervals; interval++) {
             int start = intervalStarts.get(interval);
             int end = intervalStarts.get(interval + 1);
             for (int j = start; j < end; j++) {
                 branchIntervalOperations.get(j).populationSizeIndex = stats.populationSizeIndices[interval];
-                branchIntervalOperations.get(j).integralIndex = stats.integralIndices[interval];
             }
         }
     }
@@ -200,8 +184,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             BranchIntervalOperation operation = branchIntervalOperations.get(i);
             if (mode == Mode.LIKELIHOOD) {
 
-                int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
-                
                 peelPartials(
                         storage.partials, operation.outputBuffer,
                         operation.inputBuffer1, operation.inputBuffer2,
@@ -209,13 +191,12 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, sizesOffset + operation.populationSizeIndex,
+                        currentPopulationStatistics.sizes, operation.populationSizeIndex,
                         stateCount);
 
             } else if (mode == Mode.GRADIENT) {
 
                 TransitionMatrixOperation matrixOperation = matrixOperations.get(operation.intervalNumber);
-                int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
 
                 peelPartials(
                         storage.partials, operation.outputBuffer,
@@ -224,7 +205,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, sizesOffset + operation.populationSizeIndex,
+                        currentPopulationStatistics.sizes, operation.populationSizeIndex,
                         stateCount);
 
                 peelPartialsGrad(
@@ -234,7 +215,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, sizesOffset + operation.populationSizeIndex,
+                        currentPopulationStatistics.sizes, operation.populationSizeIndex,
                         stateCount);
 
                 peelPopSizeSGrad(
@@ -244,7 +225,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                         operation.inputMatrix1, operation.inputMatrix2,
                         operation.accBuffer1, operation.accBuffer2,
                         storage.coalescent, operation.intervalNumber,
-                        storage.sizes, sizesOffset + operation.populationSizeIndex,
+                        currentPopulationStatistics.sizes, operation.populationSizeIndex,
                         stateCount);
             }
 
@@ -320,11 +301,9 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
-            
             GenericBastaLikelihoodDelegate.reduceAcrossIntervals(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.integrals, integralsOffset + operation.integralIndex, 
+                    currentPopulationStatistics.integrals, operation.populationSizeIndex, 
                     storage.coalescent, out, stateCount);
         }
     }
@@ -347,7 +326,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
             reduceAcrossIntervalsGrad(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.integrals, operation.integralIndex, storage.coalescent, stateCount, out);
+                    currentPopulationStatistics.integrals, operation.populationSizeIndex, storage.coalescent, stateCount, out);
         }
     }
 
@@ -372,13 +351,10 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void reduceAcrossIntervals(BranchIntervalOperation operation, double[] out) {
-            int integralsOffset = populationSizeModel.getCurrentIntegralsOffset(storage);
-            int sizesOffset = populationSizeModel.getCurrentSizesOffset(storage);
-            
             reduceAcrossIntervalsGradPopSize(storage.e, storage.f, storage.g, storage.h,
                     operation.intervalNumber, operation.intervalLength,
-                    storage.integrals, integralsOffset + operation.integralIndex,
-                    storage.sizes, sizesOffset,
+                    currentPopulationStatistics.integrals, operation.populationSizeIndex,
+                    currentPopulationStatistics.sizes, 0,
                     storage.coalescent, out, stateCount);
         }
     }
@@ -476,7 +452,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
         BranchIntervalOperation.initializeMap(tree, maxNumCoalescentIntervals);
 
         // TODO double-buffer
-        int k = 0;
         for (BranchIntervalOperation op : branchIntervalOperations) {
 
             op.transform();
@@ -487,7 +462,6 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                 maxOutputBuffer = currentOutputBuffer;
             }
 
-            k += BASTA_OPERATION_SIZE;
         }
 
     }
@@ -891,12 +865,14 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     public void storeState() {
         storage.storeState();
         storedPopulationStatistics = currentPopulationStatistics;
+        storedPopulationSizesNeedUpdate = populationSizesNeedUpdate;
     }
 
     @Override
     public void restoreState() {
         storage.restoreState();
-        useStoredStatistics = true;
+        currentPopulationStatistics = storedPopulationStatistics;
+        populationSizesNeedUpdate = storedPopulationSizesNeedUpdate;
     }
 
     private static void peelPartials(double[] partials,

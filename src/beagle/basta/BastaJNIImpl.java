@@ -76,6 +76,22 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
+    public void setBastaPopulationSizesBuffer(double[] combinedSizesIntegrals, int requiredStorageSize, int bufferIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.setBastaPopulationSizesBuffer(instance, combinedSizesIntegrals, requiredStorageSize, bufferIndex);
+        if (errCode != 0) {
+            throw new BeagleException("setBastaPopulationSizesBuffer", errCode);
+        }
+    }
+    
+    @Override
+    public void setCurrentPopulationSizeBuffer(int bufferIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.setCurrentPopulationSizeBuffer(instance, bufferIndex);
+        if (errCode != 0) {
+            throw new BeagleException("setCurrentPopulationSizeBuffer", errCode);
+        }
+    }
+
+    @Override
     public void getBastaBuffer(int index, double[] buffer) {
         int errCode = BastaJNIWrapper.INSTANCE.getBastaBuffer(instance, index, buffer);
         if (errCode != 0) {
@@ -124,9 +140,9 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     @Override
     public void accumulateBastaPartials(int[] operations, int operationCount, int[] segments, int segmentCount,
                                         double[] intervalLengths, int populationSizesIndex,
-                                        int coalescentIndex, double[] result) {
+                                        int coalescentIndex, boolean isConstantPopulationModel, double[] result) {
         int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartials(instance,operations, operationCount,
-                segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, result);
+                segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, isConstantPopulationModel, result);
         if (errCode != 0) {
             throw new BeagleException("accumulateBastaPartials", errCode);
         }

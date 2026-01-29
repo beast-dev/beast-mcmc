@@ -47,11 +47,16 @@ public interface BeagleBasta extends Beagle {
                                  final double[] intervalLengths,
                                  int populationSizesIndex,
                                  int coalescentIndex,
+                                 boolean isConstantPopulationModel,
                                  double[] result);
 
     void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial, int threadCount);
 
     void setBastaPopulationSizes(double[] combinedSizesIntegrals, int requiredStorageSize);
+
+    void setBastaPopulationSizesBuffer(double[] combinedSizesIntegrals, int requiredStorageSize, int bufferIndex);
+    
+    void setCurrentPopulationSizeBuffer(int bufferIndex);
 
     void getBastaBuffer(int index, double[] buffer);
 

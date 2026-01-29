@@ -22,47 +22,6 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
     }
     
     @Override
-    protected int calculateArrayLength() {
-        return stateCount;
-    }
-    
-    @Override
-    public int getPopulationSizeIndex(int interval, int state) {
-        return state;
-    }
-    
-    @Override
-    public void updatePopulationSizes() {
-        for (int i = 0; i < stateCount; i++) {
-            populationSizes[i] = populationSizeParameter.getParameterValue(i);
-        }
-    }
-    
-    @Override
-    public double getIntegralMultiplier(double intervalLength) {
-        return intervalLength;
-    }
-    
-    @Override
-    public double calculateIntegral(int state, int interval, double intervalStartTime, double intervalLength) {
-        if (!populationSizesKnown) {
-            updatePopulationSizes();
-            populationSizesKnown = true;
-        }
-        double popSize = populationSizes[state];
-        return intervalLength / popSize;
-    }
-    
-    @Override
-    public double getPopulationSizeAtTime(int state, int interval, double time) {
-        if (!populationSizesKnown) {
-            updatePopulationSizes();
-            populationSizesKnown = true;
-        }
-        return populationSizes[state];
-    }
-    
-    @Override
     public PopulationSizeModelType getModelType() {
         return PopulationSizeModelType.CONSTANT;
     }
@@ -87,7 +46,6 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
         double[] sizes = new double[stateCount];
         double[] integrals = new double[stateCount];
         int[] populationSizeIndices = new int[numIntervals];
-        int[] integralIndices = new int[numIntervals];
 
         for (int k = 0; k < stateCount; ++k) {
             double popSize = populationSizeParameter.getParameterValue(k);
@@ -96,11 +54,9 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
         }
 
         for (int interval = 0; interval < numIntervals; interval++) {
-            populationSizeIndices[interval] = 0;
-            integralIndices[interval] = 0;
+            populationSizeIndices[interval] = 0;  // All intervals use the same constant population size at index 0
         }
         
-        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, stateCount);
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, stateCount);
     }
-    
 }

@@ -44,6 +44,14 @@ public class BastaJNIWrapper {
                                               double[] combinedSizesIntegrals,
                                               int requiredStorageSize);
 
+    public native int setBastaPopulationSizesBuffer(int instance,
+                                                     double[] combinedSizesIntegrals,
+                                                     int requiredStorageSize,
+                                                     int bufferIndex);
+    
+    public native int setCurrentPopulationSizeBuffer(int instance,
+                                                      int bufferIndex);
+
     public native int getBastaBuffer(int instance,
                                      int index,
                                      double[] buffer);
@@ -64,6 +72,7 @@ public class BastaJNIWrapper {
                                               final double[] intervalLengths,
                                               int populationSizesIndex,
                                               int coalescentProbabilityIndex,
+                                              boolean isConstantPopulationModel,
                                               double[] result);
 
     private static String getPlatformSpecificLibraryName() {

@@ -51,10 +51,10 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     private final BufferIndexHelper populationStatisticsBufferHelper;
     private int currentStorageSize = 0;
 
-    // When useStoredStatistics=true, we reuse stored stats instead of recalculating
     private AbstractPopulationSizeModel.PopulationStatistics currentPopulationStatistics;
     private AbstractPopulationSizeModel.PopulationStatistics storedPopulationStatistics;
-    private boolean useStoredStatistics = false;
+    private boolean populationSizesNeedUpdate = true;
+    private boolean storedPopulationSizesNeedUpdate = true;
 
     public BeagleBastaLikelihoodDelegate(String name,
                                          Tree tree,
@@ -243,17 +243,17 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     @Override
     public void setPopulationSizeModel(AbstractPopulationSizeModel model) {
         this.populationSizeModel = model;
-        this.useStoredStatistics = false;
+        this.populationSizesNeedUpdate = true;
     }
     
     @Override
     public void updatePopulationSizeModel(AbstractPopulationSizeModel.PopulationSizeModelType modelType) {
-        this.useStoredStatistics = false;
+        this.populationSizesNeedUpdate = true;
     }
     
     @Override
     public void markPopulationSizesDirty() {
-        this.useStoredStatistics = false;
+        this.populationSizesNeedUpdate = true;
     }
     
     private void precalculatePopulationSizesAndIntegrals(List<Integer> intervalStarts,
@@ -266,15 +266,22 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         
         AbstractPopulationSizeModel.PopulationStatistics stats;
         
-        if (useStoredStatistics && storedPopulationStatistics != null) {
-            stats = storedPopulationStatistics;
-            useStoredStatistics = false;
-        } else {
+        if (populationSizesNeedUpdate) {
             if (populationSizeModel.getNumIntervals() != numIntervals) {
                 populationSizeModel.setIntervalCount(numIntervals);
             }
             stats = populationSizeModel.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
             populationStatisticsBufferHelper.flipOffset(0);
+            int bufferIndex = populationStatisticsBufferHelper.getOffsetIndex(0);
+            
+            double[] combinedSizesIntegrals = new double[stats.requiredStorageSize * 2];
+            System.arraycopy(stats.sizes, 0, combinedSizesIntegrals, 0, stats.requiredStorageSize);
+            System.arraycopy(stats.integrals, 0, combinedSizesIntegrals, stats.requiredStorageSize, stats.requiredStorageSize);
+            beagle.setBastaPopulationSizesBuffer(combinedSizesIntegrals, stats.requiredStorageSize, bufferIndex);
+        } else {
+            stats = currentPopulationStatistics;
+            int bufferIndex = populationStatisticsBufferHelper.getOffsetIndex(0);
+            beagle.setCurrentPopulationSizeBuffer(bufferIndex);
         }
 
         currentPopulationStatistics = stats;
@@ -285,14 +292,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             int end = intervalStarts.get(interval + 1);
             for (int j = start; j < end; j++) {
                 branchIntervalOperations.get(j).populationSizeIndex = stats.populationSizeIndices[interval];
-                branchIntervalOperations.get(j).integralIndex = stats.integralIndices[interval];
             }
         }
-
-        double[] combinedSizesIntegrals = new double[stats.requiredStorageSize * 2];
-        System.arraycopy(stats.sizes, 0, combinedSizesIntegrals, 0, stats.requiredStorageSize);
-        System.arraycopy(stats.integrals, 0, combinedSizesIntegrals, stats.requiredStorageSize, stats.requiredStorageSize);
-        beagle.setBastaPopulationSizes(combinedSizesIntegrals, stats.requiredStorageSize);
     }
 
     @Override
@@ -387,9 +388,13 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
+        boolean isConstantModel = (populationSizeModel != null && 
+                                   populationSizeModel.getModelType() == AbstractPopulationSizeModel.PopulationSizeModelType.CONSTANT);
+        
         beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
+                isConstantModel,
                 out);
     }
 
@@ -480,13 +485,15 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         populationStatisticsBufferHelper.storeState();
         storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
         storedPopulationStatistics = currentPopulationStatistics;
+        storedPopulationSizesNeedUpdate = populationSizesNeedUpdate;
     }
 
     @Override
     public void restoreState() {
         populationStatisticsBufferHelper.restoreState();
         currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;
-        useStoredStatistics = true;
+        currentPopulationStatistics = storedPopulationStatistics;
+        populationSizesNeedUpdate = storedPopulationSizesNeedUpdate;
     }
 
 

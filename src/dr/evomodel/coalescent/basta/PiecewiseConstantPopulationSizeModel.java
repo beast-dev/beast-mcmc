@@ -11,7 +11,6 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
     
     private Parameter gridPoints;
     private BigFastTreeIntervals treeIntervals;
-
     private SingleTreeGriddedNodesTimeline cachedTimeline;
     
     public PiecewiseConstantPopulationSizeModel(String name, 
@@ -71,31 +70,7 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
     
     @Override
     public int getRequiredPopulationSizeStorageSize() {
-        if (gridPoints != null) {
-            int numGridSegments = gridPoints.getDimension() + 1;
-            int gridBasedSize = stateCount + numGridSegments * stateCount;
-            int intervalBasedSize = stateCount + numIntervals * stateCount;
-            return Math.max(gridBasedSize, intervalBasedSize);
-        } else {
-            return super.getRequiredPopulationSizeStorageSize();
-        }
-    }
-    
-    @Override
-    public void extractCombinedSizesAndIntegrals(BastaInternalStorage storage, double[] combinedArray) {
-        if (gridPoints != null) {
-            int totalSize = getRequiredPopulationSizeStorageSize();
-
-            for (int i = 0; i < totalSize; i++) {
-                combinedArray[i] = getCurrentSize(storage, i);
-            }
-
-            for (int i = 0; i < totalSize; i++) {
-                combinedArray[totalSize + i] = getCurrentIntegral(storage, i);
-            }
-        } else {
-            super.extractCombinedSizesAndIntegrals(storage, combinedArray);
-        }
+        return stateCount + numIntervals * stateCount;
     }
     
     @Override
@@ -107,7 +82,7 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
             int paramIndex = interval * stateCount + state;
             return populationSizeParameter.getParameterValue(paramIndex);
         } else {
-            int gridIdx = findGridSegmentIndex(gridPoints, time);
+            int gridIdx = findGridSegmentIndex(time);
             int paramIndex = gridIdx * stateCount + state;
             return populationSizeParameter.getParameterValue(paramIndex);
         }
@@ -122,6 +97,25 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
         return intervalLength / size;
     }
 
+    /**
+     * Find the grid segment index for a given time.
+     */
+    private int findGridSegmentIndex(double time) {
+        if (gridPoints == null) {
+            return 0;
+        }
+        
+        int gridSegmentIdx = 0;
+        for (int g = 0; g < gridPoints.getDimension(); g++) {
+            if (gridPoints.getParameterValue(g) < time) {
+                gridSegmentIdx = g + 1;
+            } else {
+                break;
+            }
+        }
+
+        return gridSegmentIdx;
+    }
 
     @Override
     public PopulationStatistics calculatePopulationStatistics(
@@ -141,14 +135,11 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
         int numGridSegments = gridPoints.getDimension() + 1;
         int numIntervals = intervalStarts.size() - 1;
 
-        int gridBasedSize = stateCount + numGridSegments * stateCount;
-        int integralBasedSize = stateCount + numIntervals * stateCount;
-        int requiredStorageSize = Math.max(gridBasedSize, integralBasedSize);
+        int requiredStorageSize = stateCount + numIntervals * stateCount;
         
         double[] sizes = new double[requiredStorageSize];
         double[] integrals = new double[requiredStorageSize];
         int[] populationSizeIndices = new int[numIntervals];
-        int[] integralIndices = new int[numIntervals];
 
         for (int k = 0; k < stateCount; ++k) {
             sizes[k] = populationSizeParameter.getParameterValue(k);
@@ -193,46 +184,15 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
             }
             
             populationSizeIndices[interval] = intervalOffset;
-            integralIndices[interval] = intervalOffset;
         }
         
-        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, requiredStorageSize);
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, requiredStorageSize);
     }
     
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);
         cachedTimeline = null;
-    }
-    
-    @Override
-    public void updatePopulationSizes() {
-        for (int interval = 0; interval < numIntervals; interval++) {
-            for (int state = 0; state < stateCount; state++) {
-                int paramIndex = interval * stateCount + state;
-                int storageIndex = getPopulationSizeIndex(interval, state);
-                populationSizes[storageIndex] = populationSizeParameter.getParameterValue(paramIndex);
-            }
-        }
-
-        for (int state = 0; state < stateCount; state++) {
-            populationSizes[state] = populationSizeParameter.getParameterValue(state);
-        }
-    }
-    
-    @Override
-    public double getIntegralMultiplier(double intervalLength) {
-        return 1.0;
-    }
-    
-    @Override
-    public double calculateIntegral(int state, int interval, double intervalStartTime, double intervalLength) {
-        return calculateIntervalIntegral(state, interval, intervalStartTime, intervalLength);
-    }
-    
-    @Override
-    public double getPopulationSizeAtTime(int state, int interval, double time) {
-        return calculatePopulationSizeAtTime(state, interval, time, 0, time);
     }
     
     @Override

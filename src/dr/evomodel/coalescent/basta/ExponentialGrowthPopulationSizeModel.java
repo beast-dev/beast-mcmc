@@ -72,40 +72,6 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     }
     
     @Override
-    public void updatePopulationSizes() {
-        for (int i = 0; i < stateCount; i++) {
-            int j = populationSizeParameter.getDimension() == 1 ? 0 : i;
-            populationSizes[i] = populationSizeParameter.getParameterValue(j);
-        }
-        
-
-        // HERE
-
-        for (int interval = 0; interval < numIntervals; interval++) {
-            for (int state = 0; state < stateCount; state++) {
-                int index = getPopulationSizeIndex(interval, state);
-                int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
-                populationSizes[index] = populationSizeParameter.getParameterValue(j);
-            }
-        }
-    }
-    
-    @Override
-    public double getIntegralMultiplier(double intervalLength) {
-        return 1.0;
-    }
-    
-    @Override
-    public double calculateIntegral(int state, int interval, double intervalStartTime, double intervalLength) {
-        return calculateIntervalIntegral(state, interval, intervalStartTime, intervalLength);
-    }
-    
-    @Override
-    public double getPopulationSizeAtTime(int state, int interval, double time) {
-        return calculatePopulationSizeAtTime(state, interval, time, 0, time);
-    }
-    
-    @Override
     public PopulationSizeModelType getModelType() {
         return PopulationSizeModelType.EXPONENTIAL_GROWTH;
     }

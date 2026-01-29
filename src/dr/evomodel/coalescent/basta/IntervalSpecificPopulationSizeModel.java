@@ -16,31 +16,18 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
     }
     
     @Override
-    protected int calculateArrayLength() {
-        return stateCount + numIntervals * stateCount;
-    }
-    
-    @Override
     public boolean requiresIntervalSpecificStorage() {
         return true;
     }
-    
-    @Override
-    public int getPopulationSizeIndex(int interval, int state) {
-        return stateCount + interval * stateCount + state;
-    }
-    
 
     protected abstract double calculatePopulationSizeAtTime(int state, int interval, 
                                                            double time, 
                                                            double intervalStartTime, 
                                                            double intervalEndTime);
-    
 
     protected abstract double calculateIntervalIntegral(int state, int interval,
                                                        double intervalStartTime,
                                                        double intervalLength);
-
 
     protected void getBaseSizes(double[] baseSizes) {
         for (int k = 0; k < stateCount; ++k) {
@@ -60,7 +47,6 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
         double[] sizes = new double[requiredStorageSize];
         double[] integrals = new double[requiredStorageSize];
         int[] populationSizeIndices = new int[numIntervals];
-        int[] integralIndices = new int[numIntervals];
 
         getBaseSizes(sizes);
         
@@ -83,16 +69,14 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
             }
             
             populationSizeIndices[interval] = populationSizeIndex;
-            integralIndices[interval] = populationSizeIndex;
             
             intervalStartTime = intervalEndTime;
         }
         
-        return new PopulationStatistics(sizes, integrals, populationSizeIndices, integralIndices, requiredStorageSize);
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, requiredStorageSize);
     }
 
     public Parameter getPopulationSizeParameter() {
         return populationSizeParameter;
     }
 }
-

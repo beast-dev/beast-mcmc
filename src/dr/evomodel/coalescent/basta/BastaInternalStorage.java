@@ -1,7 +1,6 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 
 /**
  * @author Yucai Shao
@@ -21,12 +20,7 @@ public class BastaInternalStorage {
     double[] g;
     double[] h;
 
-    double[] sizes;
-    double[] integrals;
     final double[] rates;
-
-    final BufferIndexHelper sizesBufferHelper;
-    final BufferIndexHelper integralsBufferHelper;
 
     final EigenDecomposition[] decompositions; // TODO flatten?
 
@@ -41,33 +35,11 @@ public class BastaInternalStorage {
         this.currentNumCoalescentIntervals = 0;
 
         this.stateCount = stateCount;
-        this.sizesBufferHelper = new SimpleBufferIndexHelper();
-        this.integralsBufferHelper = new SimpleBufferIndexHelper();
 
-        int baseLength = stateCount;
-        this.sizes = new double[baseLength * 2];      // Double for buffer flipping
-        this.integrals = new double[baseLength * 2];  // Double for buffer flipping
         this.rates = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 
         resize(3 * treeNodeCount, maxNumCoalescentIntervals, null);
-    }
-
-    public void resizeSizesAndIntegrals(int requiredSize) {
-        int actualSize = requiredSize * 2;
-        if (sizes.length != actualSize) {
-            double[] oldSizes = this.sizes;
-            double[] oldIntegrals = this.integrals;
-            
-            this.sizes = new double[actualSize];
-            this.integrals = new double[actualSize];
-
-            if (oldSizes != null && oldSizes.length > 0) {
-                int copyLength = Math.min(oldSizes.length, actualSize);
-                System.arraycopy(oldSizes, 0, this.sizes, 0, copyLength);
-                System.arraycopy(oldIntegrals, 0, this.integrals, 0, copyLength);
-            }
-        }
     }
 
     static private int getStartingPartialsCount(int maxNumCoalescentIntervals, int treeNodeCount) {
@@ -75,11 +47,6 @@ public class BastaInternalStorage {
     }
 
     public void resize(int newNumPartials, int newNumCoalescentIntervals, BastaLikelihood likelihood) {
-        resize(newNumPartials, newNumCoalescentIntervals, likelihood, null, 0);
-    }
-    
-    public void resize(int newNumPartials, int newNumCoalescentIntervals, BastaLikelihood likelihood,
-                       AbstractPopulationSizeModel populationSizeModel, int numIntervals) {
 
         if (newNumPartials > currentNumPartials) {
             this.partials = new double[newNumPartials * stateCount];
@@ -101,43 +68,15 @@ public class BastaInternalStorage {
 
             this.currentNumCoalescentIntervals = newNumCoalescentIntervals;
         }
-
-        if (populationSizeModel != null && numIntervals > 0) {
-            if (populationSizeModel.getNumIntervals() != numIntervals) {
-                populationSizeModel.setIntervalCount(numIntervals);
-            }
-            int requiredSize = populationSizeModel.getRequiredPopulationSizeStorageSize();
-            resizeSizesAndIntegrals(requiredSize);
-        }
     }
 
     public void storeState() {
         System.arraycopy(matrices, 0, storedMatrices, 0, currentNumCoalescentIntervals * stateCount * stateCount);
-        sizesBufferHelper.storeState();
-        integralsBufferHelper.storeState();
     }
 
     public void restoreState() {
         double[] temp = matrices;
         matrices = storedMatrices;
         storedMatrices = temp;
-        sizesBufferHelper.restoreState();
-        integralsBufferHelper.restoreState();
-    }
-
-    public void flip() {
-        sizesBufferHelper.flipOffset(0);
-        integralsBufferHelper.flipOffset(0);
-    }
-
-    private static class SimpleBufferIndexHelper extends BufferIndexHelper {
-        public SimpleBufferIndexHelper() {
-            super(1, 0);
-        }
-
-        @Override
-        protected int computeOffset(int offset) { 
-            return offset;
-        }
     }
 }

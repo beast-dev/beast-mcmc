@@ -845,10 +845,19 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
 
         // Reorder Q into sortedQ using perm; matches your previous column-major convention
-        for (int j = 0; j < dim; j++) {
-            int pj = perm[j];
-            for (int i = 0; i < dim; i++) {
-                sortedQ[j * dim + i] = unsortedQ[pj * dim + perm[i]];
+//        for (int j = 0; j < dim; j++) {
+//            int pj = perm[j];
+//            for (int i = 0; i < dim; i++) {
+//                sortedQ[j * dim + i] = unsortedQ[pj * dim + perm[i]];
+//            }
+//        }
+        for (int iS = 0; iS < dim; ++iS) {
+            final int iO = perm[iS];          // original row
+            final int rowS = iS * dim;
+            final int rowO = iO * dim;
+            for (int jS = 0; jS < dim; ++jS) {
+                final int jO = perm[jS];      // original col
+                sortedQ[rowS + jS] = unsortedQ[rowO + jO];
             }
         }
 

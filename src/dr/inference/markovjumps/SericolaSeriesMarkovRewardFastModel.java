@@ -211,12 +211,13 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
     @Override
     public double computePdf(double reward, double branchLength, int i, int j) {
-        if (i < 0 || i >= dim || j < 0 || j >= dim) {
-            throw new IndexOutOfBoundsException("i,j out of bounds");
-        }
-        final double[] out = new double[dim2];
-        computePdfInto(reward, branchLength, out);
-        return out[i * dim + j];
+        throw new UnsupportedOperationException("Not implemented yet.");
+//        if (i < 0 || i >= dim || j < 0 || j >= dim) {
+//            throw new IndexOutOfBoundsException("i,j out of bounds");
+//        }
+//        final double[] out = new double[dim2];
+//        computePdfInto(reward, branchLength, out);
+//        return out[i * dim + j];
     }
 
     public void computePdfInto(double reward, double branchLength, double[] out) {

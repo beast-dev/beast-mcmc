@@ -89,8 +89,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     private final double[] PnScratch;   // dim2
     private final double[] matMulScratch; // dim2
 
-    private final int[] outUvBySorted;
-
     // ------------------------------------------------------------
     // Storage for C(h,n,k,uv) flattened into a single array
     //
@@ -189,7 +187,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         this.eigenSystem = new DefaultEigenSystem(dim);
         this.PnScratch = new double[dim2];
         this.matMulScratch = new double[dim2];
-        this.outUvBySorted = new int[dim2];
 
         // Register dependencies
         addModel(underlyingSubstitutionModel);
@@ -391,15 +388,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                     addDiffBlockToOriginalOrder(W[t], base, aOff, bOff);
                 } else {
                     // w0(t) is (1-xh)^n maintained across n; ratio(t) fixed
-//                    loopCyclePdfAddToOriginalOrderFast(
-//                            h, n,
-//                            s.ratio[t],
-//                            s.w0[t],
-//                            s.premult[t],
-//                            W[t],
-//                            s.inc
-//                    );
-                    loopCyclePdfAddToOriginalOrderFastNoInc(h, n, s.ratio[t], s.w0[t], s.premult[t], W[t]);
+                    loopCyclePdfAddToOriginalOrderFast(
+                            h, n,
+                            s.ratio[t],
+                            s.w0[t],
+                            s.premult[t],
+                            W[t],
+                            s.inc
+                    );
                 }
             }
 
@@ -464,42 +460,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
-    private void loopCyclePdfAddToOriginalOrderFastNoInc(
-            int h, int n,
-            double ratio,
-            double w0,                 // (1-xh)^n
-            double premult,
-            double[] WtOriginal) {
 
-        final double temp = (lambda * invRewardDiff[h]) * premult;
-
-        // k = 0
-        {
-            final int aOff = cOffset(h, n + 1, 1);
-            final int bOff = cOffset(h, n + 1, 0);
-            final double wt = temp * w0;
-
-            for (int uvS = 0; uvS < dim2; ++uvS) {
-                WtOriginal[outUvBySorted[uvS]] += wt * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
-            }
-        }
-
-        // k = 1..n via Bernstein recurrence
-        double w = w0;
-        for (int k = 0; k < n; ++k) {
-            w *= ((double) (n - k) / (double) (k + 1)) * ratio;
-
-            final int kp1 = k + 1;
-            final int aOff = cOffset(h, n + 1, kp1 + 1);
-            final int bOff = cOffset(h, n + 1, kp1);
-
-            final double wt = temp * w;
-
-            for (int uvS = 0; uvS < dim2; ++uvS) {
-                WtOriginal[outUvBySorted[uvS]] += wt * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
-            }
-        }
-    }
 
 
     // ============================================================
@@ -622,21 +583,16 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
-    //    private void addDiffBlockToOriginalOrder(double[] WtOriginal, double temp, int aOff, int bOff) {
-//        // Adds temp*(C[a]-C[b]) for all uv, mapping sorted uv -> original uv
-//        for (int uS = 0; uS < dim; ++uS) {
-//            final int outRowBase = outRowBaseBySorted[uS];
-//            final int inRowBase = uS * dim;
-//            for (int vS = 0; vS < dim; ++vS) {
-//                final int uvS = inRowBase + vS;
-//                final int outIdx = outRowBase + outColBySorted[vS];
-//                WtOriginal[outIdx] += temp * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
-//            }
-//        }
-//    }
     private void addDiffBlockToOriginalOrder(double[] WtOriginal, double temp, int aOff, int bOff) {
-        for (int uvS = 0; uvS < dim2; ++uvS) {
-            WtOriginal[outUvBySorted[uvS]] += temp * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
+        // Adds temp*(C[a]-C[b]) for all uv, mapping sorted uv -> original uv
+        for (int uS = 0; uS < dim; ++uS) {
+            final int outRowBase = outRowBaseBySorted[uS];
+            final int inRowBase = uS * dim;
+            for (int vS = 0; vS < dim; ++vS) {
+                final int uvS = inRowBase + vS;
+                final int outIdx = outRowBase + outColBySorted[vS];
+                WtOriginal[outIdx] += temp * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
+            }
         }
     }
 
@@ -939,14 +895,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             perm[s] = idx[s];            // sorted index -> original index
             sortedR[s] = rewardVals[perm[s]];
         }
-        for (int uS = 0; uS < dim; ++uS) {
-            final int uOrow = perm[uS] * dim;
-            final int uSrow = uS * dim;
-            for (int vS = 0; vS < dim; ++vS) {
-                outUvBySorted[uSrow + vS] = uOrow + perm[vS];
-            }
-        }
-
         for (int o = 0; o < dim; o++) {
             invPerm[o] = -1;
         }

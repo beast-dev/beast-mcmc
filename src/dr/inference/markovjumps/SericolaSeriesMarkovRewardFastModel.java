@@ -860,6 +860,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 sortedQ[rowS + jS] = unsortedQ[rowO + jO];
             }
         }
+//        for (int iS = 0; iS < dim; ++iS) {
+//            int iO = perm[iS];
+//            if (Math.abs(sortedQ[iS*dim + iS] - unsortedQ[iO*dim + iO]) > 1e-12) {
+//                throw new IllegalStateException("Q permutation mismatch at iS=" + iS);
+//            }
+//        }
 
         qDirty = false;
         cachesDirty = true;

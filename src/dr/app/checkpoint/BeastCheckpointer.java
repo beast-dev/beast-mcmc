@@ -32,9 +32,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -298,10 +296,18 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     out.print(parameter.getParameterName());
                     out.print("\t");
                     out.print(parameter.getDimension());
-                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        out.print("\t");
-                        out.print(parameter.getParameterUntransformedValue(dim));
+                    if(parameter instanceof TransformedMultivariateParameter){
+                        for (int dim = 0; dim < ((TransformedMultivariateParameter) parameter).getUntransformedDimension(); dim++) {
+                            out.print("\t");
+                            out.print(parameter.getParameterUntransformedValue(dim));
+                        }
+                    } else {
+                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            out.print("\t");
+                            out.print(parameter.getParameterUntransformedValue(dim));
+                        }
                     }
+
                     out.print("\n");
                 }
             }

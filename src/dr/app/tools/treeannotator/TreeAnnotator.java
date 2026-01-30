@@ -1008,7 +1008,8 @@ public class TreeAnnotator extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", "t", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
-                        new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in embiggulation (0 = off, default 0)"),
+                        new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
+                        new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
@@ -1111,7 +1112,10 @@ public class TreeAnnotator extends BaseTreeTool {
             }
         }
 
-        int minCladeCount = 0;
+        int minCladeCount = 0; // ccd0 off
+        if (arguments.hasOption("ccd0")) {
+            minCladeCount = 1; // ccd0 on
+        }
         if (arguments.hasOption("minCount")) {
             minCladeCount = arguments.getIntegerOption("minCount");
         }
@@ -1189,6 +1193,10 @@ public class TreeAnnotator extends BaseTreeTool {
 //            progressStream.println("Loaded user target tree.");
         } else {
             throw new IllegalArgumentException("Unknown target option: " + target);
+        }
+        if (minCladeCount > 0) {
+            progressStream.println("  with CCD0-MAP expansion to unobserved subtrees  - citation:");
+            progressStream.println(Embiggulator.CITATION.toString());
         }
 
         System.exit(0);

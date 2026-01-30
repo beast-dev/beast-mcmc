@@ -27,6 +27,9 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.util.Author;
+import dr.util.Citation;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +47,17 @@ public class Embiggulator {
     private final CladeSystem cladeSystem;
     Map<Object, BiClade>[] cladeMapBySize = null;//    Map<Integer, Set<BiClade>>[] cladeSetByTipBySize = null;
     int binWidth;
+
+    public final static Citation CITATION = new Citation(
+            new Author[] {
+                    new Author("A", "Drummond")
+            },
+            "",
+            2025,
+            "",
+            0, "",
+            ""
+    );
 
     public Embiggulator(CladeSystem cladeSystem) {
         this.cladeSystem = cladeSystem;

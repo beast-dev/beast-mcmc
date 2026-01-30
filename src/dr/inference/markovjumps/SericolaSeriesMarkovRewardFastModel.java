@@ -240,11 +240,31 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     }
 
     public void computePdfInto(double[] X, double[] times, boolean parsimonious, double[][] W) {
+        validateInputs(X, times, W);
+        final int T = X.length;
+        if (T == 0) return;
+
+        ensureNumericsUpToDate();
+
+        validateAndZeroOutputs(W, T);
+
+        final Scratch s = tls.get();
+        ensureScratchCapacity(s, T);
+
+        final double maxT = precomputePdfScratch(X, times, parsimonious, s);
+
+        // Ensure C is available up to required N (pdf uses n+1)
+        ensureCForTime(maxT, /*extraN=*/1);
+        final int N = computedN - 1;
+
+        accumulatePdfOverN(W, s, T, N);
+    }
+
+    private void validateInputs(double[] X, double[] times, double[][] W) {
         if (X == null || times == null || W == null) {
             throw new IllegalArgumentException("X/times/W must be non-null");
         }
         final int T = X.length;
-        if (T == 0) return;
 
         final boolean singleTime = (times.length == 1);
         if (!singleTime && times.length != T) {
@@ -253,11 +273,9 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         if (W.length != T) {
             throw new IllegalArgumentException("W.length must equal X.length");
         }
+    }
 
-        // Ensure internal numerics and ordering are up-to-date
-        ensureNumericsUpToDate();
-
-        // Validate output rows and zero them (overwrite semantics)
+    private void validateAndZeroOutputs(double[][] W, int T) {
         for (int t = 0; t < T; ++t) {
             final double[] row = W[t];
             if (row == null || row.length != dim2) {
@@ -265,14 +283,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             }
             Arrays.fill(row, 0.0);
         }
+    }
 
-        // Thread-local scratch
-        final Scratch s = tls.get();
-        ensureScratchCapacity(s, T);
+    private double precomputePdfScratch(double[] X, double[] times, boolean parsimonious, Scratch s) {
+        final int T = X.length;
+        final boolean singleTime = (times.length == 1);
 
-        // ---------------------------
-        // Precompute per-t invariants
-        // ---------------------------
         double maxT = 0.0;
 
         if (singleTime) {
@@ -282,98 +298,70 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
             final double lt = lambda * time;
             final double premult0 = Math.exp(-lt);
-
-            // If you ever want parsimonious in singleTime mode, compute NN0 here.
             final int NN0 = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
 
             for (int t = 0; t < T; ++t) {
-                final int h = getHfromXSortedRate(X[t], time);
-                s.H[t] = h;
-
                 s.lt[t] = lt;
                 s.premult[t] = premult0;
                 s.NN[t] = NN0;
 
-                // xh in [0,1] + boundary flags + ratio + w0 init
-                final double invDiff = invRewardDiff[h];
-                double xh = (X[t] - sortedR[h - 1] * time) * invDiff / time;
-                if (xh <= 0.0) {
-                    xh = 0.0;
-                    s.isZero[t] = true;
-                    s.isOne[t] = false;
-                    s.oneMinus[t] = 1.0;   // unused
-                    s.ratio[t] = 0.0;      // unused
-                    s.w0[t] = 0.0;         // unused
-                } else if (xh >= 1.0) {
-                    xh = 1.0;
-                    s.isZero[t] = false;
-                    s.isOne[t] = true;
-                    s.oneMinus[t] = 0.0;   // unused
-                    s.ratio[t] = 0.0;      // unused
-                    s.w0[t] = 0.0;         // unused
-                } else {
-                    s.isZero[t] = false;
-                    s.isOne[t] = false;
-                    final double om = 1.0 - xh;
-                    s.oneMinus[t] = om;
-                    s.ratio[t] = xh / om;
-                    s.w0[t] = 1.0;         // (1-xh)^0
-                }
-
-                s.xh[t] = xh; // (optional; mostly for debugging)
-            }
-        } else {
-            for (int t = 0; t < T; ++t) {
-                final double time = times[t];
-                if (time <= 0.0) throw new IllegalArgumentException("time must be > 0 at index " + t);
-                if (time > maxT) maxT = time;
-
                 final int h = getHfromXSortedRate(X[t], time);
                 s.H[t] = h;
 
-                final double lt = lambda * time;
-                s.lt[t] = lt;
-                s.premult[t] = Math.exp(-lt);
-
-                s.NN[t] = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
-
-                final double invDiff = invRewardDiff[h];
-                double xh = (X[t] - sortedR[h - 1] * time) * invDiff / time;
-                if (xh <= 0.0) {
-                    xh = 0.0;
-                    s.isZero[t] = true;
-                    s.isOne[t] = false;
-                    s.oneMinus[t] = 1.0;
-                    s.ratio[t] = 0.0;
-                    s.w0[t] = 0.0;
-                } else if (xh >= 1.0) {
-                    xh = 1.0;
-                    s.isZero[t] = false;
-                    s.isOne[t] = true;
-                    s.oneMinus[t] = 0.0;
-                    s.ratio[t] = 0.0;
-                    s.w0[t] = 0.0;
-                } else {
-                    s.isZero[t] = false;
-                    s.isOne[t] = false;
-                    final double om = 1.0 - xh;
-                    s.oneMinus[t] = om;
-                    s.ratio[t] = xh / om;
-                    s.w0[t] = 1.0; // (1-xh)^0
-                }
-
-                s.xh[t] = xh; // (optional)
+                fillXhPrecomp(s, t, X[t], time, h);
             }
+            return maxT;
         }
 
-        // Ensure C is available up to required N (pdf uses n+1)
-        ensureCForTime(maxT, /*extraN=*/1);
-        final int N = capacityN - 1;
+        // per-time
+        for (int t = 0; t < T; ++t) {
+            final double time = times[t];
+            if (time <= 0.0) throw new IllegalArgumentException("time must be > 0 at index " + t);
+            if (time > maxT) maxT = time;
 
-        // ---------------------------
-        // Main accumulation over n
-        // ---------------------------
+            final double lt = lambda * time;
+            s.lt[t] = lt;
+            s.premult[t] = Math.exp(-lt);
+            s.NN[t] = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
+
+            final int h = getHfromXSortedRate(X[t], time);
+            s.H[t] = h;
+
+            fillXhPrecomp(s, t, X[t], time, h);
+        }
+        return maxT;
+    }
+
+    private void fillXhPrecomp(Scratch s, int t, double x, double time, int h) {
+        final double invDiff = invRewardDiff[h];
+        double xh = (x - sortedR[h - 1] * time) * invDiff / time;
+
+        if (xh <= 0.0) {
+            s.xh[t] = 0.0;
+            s.isZero[t] = true;
+            s.isOne[t]  = false;
+            return;
+        }
+        if (xh >= 1.0) {
+            s.xh[t] = 1.0;
+            s.isZero[t] = false;
+            s.isOne[t]  = true;
+            return;
+        }
+
+        s.xh[t] = xh;
+        s.isZero[t] = false;
+        s.isOne[t]  = false;
+
+        final double om = 1.0 - xh;
+        s.oneMinus[t] = om;
+        s.ratio[t]    = xh / om;
+        s.w0[t]       = 1.0;
+    }
+
+    private void accumulatePdfOverN(double[][] W, Scratch s, int T, int N) {
         for (int n = 0; n <= N; ++n) {
+
             for (int t = 0; t < T; ++t) {
                 if (s.NN[t] < n) continue;
 
@@ -381,15 +369,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 final double base = (lambda * invRewardDiff[h]) * s.premult[t];
 
                 if (s.isZero[t]) {
-                    final int aOff = cOffset(h, n + 1, 1);
-                    final int bOff = cOffset(h, n + 1, 0);
-                    addDiffBlockToOriginalOrder(W[t], base, aOff, bOff);
+                    addDiffBlockToOriginalOrder(W[t], base,
+                            cOffset(h, n + 1, 1),
+                            cOffset(h, n + 1, 0));
                 } else if (s.isOne[t]) {
-                    final int aOff = cOffset(h, n + 1, n + 1);
-                    final int bOff = cOffset(h, n + 1, n);
-                    addDiffBlockToOriginalOrder(W[t], base, aOff, bOff);
+                    addDiffBlockToOriginalOrder(W[t], base,
+                            cOffset(h, n + 1, n + 1),
+                            cOffset(h, n + 1, n));
                 } else {
-                    // w0(t) is (1-xh)^n maintained across n; ratio(t) fixed
                     loopCyclePdfAddToOriginalOrderFast(
                             h, n,
                             s.ratio[t],
@@ -407,7 +394,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 s.premult[t] *= s.lt[t] * inv;
             }
 
-            // update w0: (1-xh)^n -> (1-xh)^(n+1)
+            // w0: (1-xh)^n -> (1-xh)^(n+1) for interior points
             for (int t = 0; t < T; ++t) {
                 if (!s.isZero[t] && !s.isOne[t]) {
                     s.w0[t] *= s.oneMinus[t];
@@ -461,9 +448,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             }
         }
     }
-
-
-
 
     // ============================================================
     // Public API: CDF (kept; not heavily optimized)
@@ -606,33 +590,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         computedN = -1;
         maxTime = 0.0;
     }
-
-
-//    private void ensureCapacityN(int requiredN) {
-//        int newCap = (capacityN < 0) ? requiredN : capacityN;
-//        while (newCap < requiredN) {
-//            newCap = Math.max(requiredN, (int) (newCap * 1.5) + 1);
-//        }
-//        if (capacityN < 0) newCap = requiredN;
-//
-//        final int newN1 = newCap + 1;
-//
-//        final long blocks = (long) (phi + 1) * (long) newN1 * (long) newN1;
-//        final long totalDoubles = blocks * (long) dim2;
-//
-//        if (totalDoubles > Integer.MAX_VALUE) {
-//            throw new IllegalStateException("C array too large: " + totalDoubles + " doubles");
-//        }
-//
-//        // Allocate fresh; do NOT copy old (we recompute everything)
-//        this.Cflat = new double[(int) totalDoubles];
-//        this.capacityN = newCap;
-//        this.N1 = newN1;
-//
-//        if (DEBUG) {
-//            System.err.println("Allocated Cflat for capacityN=" + capacityN + " (N1=" + N1 + "), doubles=" + totalDoubles);
-//        }
-//    }
 
     /**
      * Compute all C(h,n,k,uv) up to capacityN using Sericola recursions,

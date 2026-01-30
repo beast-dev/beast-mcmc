@@ -409,15 +409,12 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <!--
-    <property name="version" value="1.9"/>
-     -->
-    <property name="version" value="10.5.0"/>
-    <property name="extra_release_tag" value=""/> <!-- "-beta7" -->
+    <property name="version" value="10.5.1"/>
+    <property name="extra_release_tag" value="-beta1"/> <!-- "-beta7" -->
     <property name="jvm_version" value="1.8+"/>
 
-    <property name="version_number" value="10.5.0"/>
-    <property name="copyright" value="Copyright 2002-2025"/>
+    <property name="version_number" value="10.5.1"/>
+    <property name="copyright" value="Copyright 2002-2026"/>
 
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>

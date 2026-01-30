@@ -91,7 +91,7 @@ public class Embiggulator {
 
         n = sizeIndices[minCladeSize - 1];
 
-        // make the clade array final so it can be accessed in an anonymous class
+        // make the clade array final so it can be accessed in an anonymous method
         final BiClade[] clades = cladeArray;
 
         // count the exact number of clade pairs (for reporting purposes)
@@ -101,7 +101,11 @@ public class Embiggulator {
             count += n - Math.max(u + 1, sizeIndices[maxSize - clade1.getSize()]);
         }
 
-        System.err.printf("Embiggening with up to %,d clade pairs...", count);
+        if (minCladeCount > 1) {
+            System.err.printf("Performing CCD0-MAP (minimum clade count = %d) expansion with up to %,d clade pairs...", minCladeCount, count);
+        } else {
+            System.err.printf("Performing CCD0-MAP expansion with up to %,d clade pairs...", count);
+        }
         System.err.println();
         System.err.println("0              25             50             75            100");
         System.err.println("|--------------|--------------|--------------|--------------|");

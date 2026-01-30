@@ -30,32 +30,25 @@ public class RewardsAwareBranchModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("The number of reward rates should equal to the number of states");
         }
         //     TODO   maybe this part should be moved into the RewardsAwareBranchModel constructor?
-        double minRate = min(rewardRates.getParameterValues());
-        double maxRate = max(rewardRates.getParameterValues());
+
         ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(BranchRateModel.class);
         TreeModel tree = (TreeModel) branchRateModel.getTree();
-        makeTotalRewardsCompatible(tree, branchRateModel, minRate, maxRate);
+        checkCompatibility(rewardRates, branchRateModel, tree);
 
         return new RewardsAwareBranchModel(tree, underlyingSubstitutionModel, rewardRates, branchRateModel);
     }
 
-    private void makeTotalRewardsCompatible(TreeModel tree, ArbitraryBranchRates branchRateModel,
-                                            double minRate, double maxRate) {
-        double minBranchRate;
-        double maxBranchRate;
-        double rate;
-
-        for (int i = 0; i < branchRateModel.getTree().getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
+    private void checkCompatibility(Parameter rewardRates,
+                                    ArbitraryBranchRates branchRateModel,
+                                    TreeModel tree) throws XMLParseException {
+        double minRate = min(rewardRates.getParameterValues());
+        double maxRate = max(rewardRates.getParameterValues());
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final NodeRef node = tree.getNode(i);
             if (tree.isRoot(node)) continue;
-
-            minBranchRate = minRate * tree.getBranchLength(node);
-            maxBranchRate = maxRate * tree.getBranchLength(node);
-            rate = branchRateModel.getBranchRate(tree, node);
-
-            if (rate < minBranchRate || rate > maxBranchRate) {
-                System.out.println("WARNING:Total reward *not* compatible: being set to mid point of the range");
-                branchRateModel.setBranchRate(tree, node, (minBranchRate + maxBranchRate) / 2);
+            final double rate = branchRateModel.getBranchRate(tree, node);
+            if (rate < minRate || rate > maxRate) {
+                throw new XMLParseException("The (branch-standardized) total rewards should be within the range (min, max) of the rewards rates.");
             }
         }
     }

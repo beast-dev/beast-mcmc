@@ -104,10 +104,13 @@
     <arbitraryBranchRates id="ind.totalRewardsBranchRateModel" centerAtOne="false">
         <treeModel idref="treeModel"/>
         <rates>
-            <parameter id="total.rewards" value="3.75 3 4.5 3"/>
+<!--            <parameter id="total.rewards" value="3.75 3 4.5 3"/>-->
+            <parameter id="total.rewards" value="1.5 1.5 1.5 1.5"/>
             <!--			<parameter id="ind.total.rewards" dimension="4" lower="0.0"/>-->
         </rates>
     </arbitraryBranchRates>
+<!--    2.5,(Homo_sapiens:2,Lemur_catta:3):2)-->
+<!--    2,3,2.5,2-->
 
     <rewardsAwareBranchModel id="ind.rewardModel">
         <!--		<treeModel idref="treeModel"/>-->

@@ -1,5 +1,4 @@
 /*
- * EpochBranchModel.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -33,264 +32,225 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.markovjumps.SericolaSeriesMarkovReward;
+import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModel;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
+ * TransitionMatrixProviderBranchModel that uses SericolaSeriesMarkovRewardFastModel
+ * to compute reward-conditioned transition matrices on each branch.
+ *
+ * Design goals:
+ *  - BranchModel only:
+ *      (i) packs branch rewards X and times,
+ *      (ii) provides output buffers W[nodeNr],
+ *      (iii) caches "knownTransitionMatrices" at the branch-model level.
+ *
  * @author Filippo Monti
- * @author Marc A. Suchard
  */
-
-public class RewardsAwareBranchModel extends AbstractModel implements TransitionMatrixProviderBranchModel, Citable, Reportable {
+public class RewardsAwareBranchModel extends AbstractModel
+        implements TransitionMatrixProviderBranchModel, Citable, Reportable {
 
     public static final String REWARDS_AWARE_BRANCH_MODEL = "RewardsAwareBranchModel";
+
     private final Parameter rewardRates;
     private final SubstitutionModel underlyingSubstitutionModel;
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
 
     private final int nstates;
-    private double[] unsortedQ;
-    private double[][] unsortedW;
+    private final int dim2;
 
-    private double[] sortedRewardRates;
+    // Output transition matrices in ORIGINAL state order, per node index.
+    // Root row is unused but kept for direct nodeNr indexing.
+    private final double[][] W;
 
-    private double[] Q;
-    private double[][] W;
+    // Packed inputs for Sericola: one entry per non-root branch (nodeCount - 1)
+    private final double[] X;          // reward = (branchRate * branchLength)
+    private final double[] times;      // branchLength
+    private final double[][] Wpacked;  // references into W[nodeNr], one per branch
 
-    private int[] perm;
+    private final SericolaSeriesMarkovRewardFastModel sericola;
+
+    // Cache flag at this branch-model layer
+    private boolean knownTransitionMatrices = false;
+
+    // For compatibility with SubstitutionModelDelegate
     private List<SubstitutionModel> substitutionModels;
-    private boolean knownTransitionMatrices;
-    private boolean knownSortedQ;
-    private boolean knownSortedRewardRates;
+
+    // Optional debug/testing
+    private boolean DUMMYTESTING = false;
+    private boolean DEBUG = false;
 
     public RewardsAwareBranchModel(TreeModel tree,
-                                   SubstitutionModel underlyingSubstitutionModel, //TODO askMarc why LogRateSubModel does not work
+                                   SubstitutionModel underlyingSubstitutionModel,
                                    Parameter rewardRates,
                                    ArbitraryBranchRates branchRateModel) {
 
         super(REWARDS_AWARE_BRANCH_MODEL);
 
+        if (tree == null) throw new IllegalArgumentException("tree must be non-null");
+        if (underlyingSubstitutionModel == null) {
+            throw new IllegalArgumentException("RewardsAwareBranchModel must be provided with an underlying substitution model");
+        }
+        if (rewardRates == null) throw new IllegalArgumentException("rewardRates must be non-null");
+        if (branchRateModel == null) throw new IllegalArgumentException("branchRateModel must be non-null");
+
+        this.tree = tree;
         this.underlyingSubstitutionModel = underlyingSubstitutionModel;
         this.rewardRates = rewardRates;
         this.branchRateModel = branchRateModel;
 
-        this.tree = tree;
-        if (underlyingSubstitutionModel == null) {
-            throw new IllegalArgumentException("RewardsAwareBranchModel must be provided " +
-                    "with an underlying substitution model");
-        }
-
         this.nstates = underlyingSubstitutionModel.getDataType().getStateCount();
-        this.sortedRewardRates = new double[nstates];
+        this.dim2 = nstates * nstates;
 
-        this.unsortedQ = new double[nstates * nstates];
-        this.Q = new double[nstates * nstates];
+        final int nodeCount = tree.getNodeCount();
+        final int branchCount = nodeCount - 1; // all non-root nodes
 
-        this.W = new double[tree.getNodeCount()][nstates * nstates];
-        this.unsortedW = new double[tree.getNodeCount()][nstates * nstates];
+        this.W = new double[nodeCount][dim2];
 
-        this.perm = new int[nstates];
+        this.X = new double[branchCount];
+        this.times = new double[branchCount];
+        this.Wpacked = new double[branchCount][];
 
-        this.knownSortedRewardRates = false;
-        this.knownSortedQ = false;
-        this.knownTransitionMatrices = false;
-
-        addModel(underlyingSubstitutionModel);
+        final double epsilon = 1e-10;
+        this.sericola = new SericolaSeriesMarkovRewardFastModel(
+                underlyingSubstitutionModel,
+                rewardRates,
+                nstates,
+                epsilon
+        );
+        addModel(tree);
         addModel(branchRateModel);
-        addVariable(rewardRates);
+        addModel(sericola);
     }
 
-    public FrequencyModel getRootFrequencyModel() {return underlyingSubstitutionModel.getFrequencyModel();}
+    // -------------------- Basic accessors --------------------
+
+    public FrequencyModel getRootFrequencyModel() { return underlyingSubstitutionModel.getFrequencyModel(); }
 
     @Override
-    public SubstitutionModel getRootSubstitutionModel() {return underlyingSubstitutionModel;}
+    public SubstitutionModel getRootSubstitutionModel() { return underlyingSubstitutionModel; }
 
-    boolean DUMMYTESTING = false;
-    boolean DEBUG = false;
+    public TreeModel getTree() { return tree; }
 
-    public double[] getTransitionMatrix(int i) {
-        if (DUMMYTESTING) { //TODO this is only for testing
-            NodeRef node = tree.getNode(i);
-            double branchLength = tree.getBranchLength(node);
-            getRootSubstitutionModel().getTransitionProbabilities(branchLength, W[i]);
-        } else {
-            computeTransitionMatrices();
-        }
-        return W[i];
-    }
+    public Parameter getRewardRates() { return rewardRates; }
+
+    public BranchRateModel getRateBranchModel() { return branchRateModel; }
+
+    // -------------------- Main API --------------------
 
     @Override
     public double[] getTransitionMatrix(NodeRef branch) {
-        return getTransitionMatrix(branch.getNumber()); // TODO this should be direct
+        return getTransitionMatrix(branch.getNumber());
+    }
+
+    public double[] getTransitionMatrix(int nodeNr) {
+        if (DUMMYTESTING) {
+            NodeRef node = tree.getNode(nodeNr);
+            double t = tree.getBranchLength(node);
+            getRootSubstitutionModel().getTransitionProbabilities(t, W[nodeNr]);
+            return W[nodeNr];
+        }
+        computeTransitionMatrices();
+        return W[nodeNr];
     }
 
     private void computeTransitionMatrices() {
-        if (DEBUG) {System.out.println("computeTransitionMatrices");}
-        if (!knownTransitionMatrices) {
-            sortRewardRates();
-            sortQ();
-            SericolaSeriesMarkovReward sericolaSeriesMarkovReward =
-                    new SericolaSeriesMarkovReward(Q, sortedRewardRates, nstates);
 
-//            final int branchCount = tree.getNodeCount() - 1;
-//            double[] branchRates = new double[branchCount];
-//            double[] branchLengths = new double[branchCount];
+        if (knownTransitionMatrices) return;
+        if (DEBUG) System.out.println("RewardsAwareBranchModel: computeTransitionMatrices");
 
-//            int k = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                NodeRef node = tree.getNode(i);
-                if (tree.isRoot(node)) continue;
-                final double branchRate = branchRateModel.getBranchRate(tree, node);
-                final double branchLength = tree.getBranchLength(node);
-//                branchRates[k] = branchRateModel.getBranchRate(tree, node);
-//                branchLengths[k] = tree.getBranchLength(node);
-//                nodeIndicesW[node.getNumber()] = k;
-                unsortedW[i] = sericolaSeriesMarkovReward.computePdf(branchRate, branchLength);
-//                k++;
-            }
-//            unsortedW = sericolaSeriesMarkovReward.computePdf(branchRates, branchLengths, true); // TODO update using this call directly
-            sortW();
-            knownTransitionMatrices = true;
+        final int nodeCount = tree.getNodeCount();
+
+        int k = 0;
+        for (int i = 0; i < nodeCount; i++) {
+            final NodeRef node = tree.getNode(i);
+            if (tree.isRoot(node)) continue;
+
+            final int nodeNr = node.getNumber();
+            final double t = tree.getBranchLength(node);
+            final double rate = branchRateModel.getBranchRate(tree, node);
+
+            times[k] = t;
+            X[k] = rate * t;
+
+            // Write results directly into W[nodeNr] (original order)
+            Wpacked[k] = W[nodeNr];
+            k++;
         }
+
+        // Sericola handles all sorting/lazy caches and writes into ORIGINAL order by design
+        sericola.computePdfInto(X, times, true, Wpacked);
+
+        knownTransitionMatrices = true;
     }
 
-    private void sortRewardRates() { // compute permutation and sort reward rates
-        if (!knownSortedRewardRates) {
-            System.out.println("Sorting reward rates");
-            final double[] rewardVals = rewardRates.getParameterValues();
-
-            Integer[] permObj = new Integer[nstates];
-            for (int i = 0; i < nstates; i++) permObj[i] = i;
-
-            Arrays.sort(permObj, Comparator.comparingDouble(i -> rewardVals[i]));
-
-            for (int i = 0; i < nstates; i++) {
-                perm[i] = permObj[i];
-                sortedRewardRates[i] = rewardVals[perm[i]];
-            }
-            knownSortedQ = false;
-            knownSortedRewardRates = true;
-        }
-    }
-
-    private void sortQ() {
-        if (!knownSortedQ) {
-            underlyingSubstitutionModel.getInfinitesimalMatrix(unsortedQ);
-            //  reorder Q using perm (column-major)
-            for (int j = 0; j < nstates; j++) {
-                int pj = perm[j];
-                for (int i = 0; i < nstates; i++) {
-                    Q[j * nstates + i] = unsortedQ[pj * nstates + perm[i]];
-                }
-            }
-            knownSortedQ = true;
-        }
-    }
-
-    private void sortW() {
-        // Build inverse permutation
-        int[] invPerm = new int[nstates];
-        for (int i = 0; i < nstates; i++) {
-            invPerm[perm[i]] = i;
-        }
-
-        // Apply inverse permutation to recover original order
-        for (int k = 0; k < tree.getNodeCount(); k++) {
-            if (tree.isRoot(tree.getNode(k))) continue;
-//            int nodeIndex = nodeIndicesW[k];
-            double[] wb = unsortedW[k];
-            double[] swb = W[k];
-            for (int j = 0; j < nstates; j++) {
-                final int ij = invPerm[j] * nstates;
-                final int jj = j * nstates;
-                for (int i = 0; i < nstates; i++) {
-                    swb[jj + i] = wb[ij + invPerm[i]];
-                }
-            }
-        }
-    }
+    // -------------------- Branch model mapping --------------------
 
     @Override
     public Mapping getBranchModelMapping(NodeRef node) {
-        // TODO this is redundant: it should map directly to the finite time transition matrix
-        final double[] weights = new double[1];
-        weights[0] = 1.0;
-        final int[] order = new int[1];
-        order[0] = node.getNumber();
-//        order[0] = nodeIndicesW[]
+        final double[] weights = new double[]{1.0};
+        final int[] order = new int[]{node.getNumber()};
 
         return new Mapping() {
             @Override
-            public int[] getOrder() {
-                return order;
-            }
+            public int[] getOrder() { return order; }
 
             @Override
-            public double[] getWeights() {
-                return weights;
-            }
+            public double[] getWeights() { return weights; }
         };
     }
 
     @Override
-    public boolean requiresMatrixConvolution() {return false;}
+    public boolean requiresMatrixConvolution() {
+        return false;
+    }
 
-    public TreeModel getTree() { return tree; }
-    public Parameter getRewardRates() { return rewardRates; }
-    public BranchRateModel getRateBranchModel() { return branchRateModel; }
+    // -------------------- Model events --------------------
 
+    private boolean ignoreModelChangedEvent = false;
 
-    boolean ignoreModelChangedEvent = false;
-
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (ignoreModelChangedEvent) {return;}
-        System.out.println("Model changed event");
-        if (model == underlyingSubstitutionModel) {
-            knownSortedQ = false;
-            knownTransitionMatrices = false;
-            fireModelChanged();
-        } else if (model == branchRateModel) { // the branch rate model provides the tree and total rewards
-            knownSortedQ = false;
-            knownTransitionMatrices = false;
-            fireModelChanged();
-        } else {
-            throw new IllegalArgumentException("Unknown model: " + model);
-        }
+        if (ignoreModelChangedEvent) return;
+        knownTransitionMatrices = false;
+        fireModelChanged();
     }
 
+    @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == rewardRates) {
-            System.out.println("Reward rates changed");
-            knownSortedRewardRates = false;
-            knownTransitionMatrices = false;
-            //TODO this is not firing a change in the treeDataLikelihood that build again the transition matrices
-            fireModelChanged();
-        } else {
-            throw new IllegalArgumentException("Unknown variable: " + variable);
-        }
+        knownTransitionMatrices = false;
+        fireModelChanged();
     }
 
-    double[][] storedW;
+    // -------------------- MCMC store/restore --------------------
+
+    private boolean storedKnownTransitionMatrices;
+
+    @Override
     protected void storeState() {
-        storedW = Arrays.copyOf(W, W.length);
+        storedKnownTransitionMatrices = knownTransitionMatrices;
     }
 
+    @Override
     protected void restoreState() {
-        // TODO save Q and sortedRewardRates?
-        double[][] tempW = storedW;
-        storedW = W;
-        W = tempW;
+        knownTransitionMatrices = false;
     }
 
+    @Override
     protected void acceptState() {
+        // nothing
     }
+
+    // -------------------- Citable / Reportable --------------------
 
     @Override
     public Citation.Category getCategory() {
@@ -308,7 +268,7 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
                 new Citation(new Author[]{new Author("F", "Monti"),
                         new Author("MA", "Suchard")},
                         "Dependencies between CTMCs",
-                        2025,
+                        2026,
                         "TOBE",
                         1,
                         1,
@@ -318,73 +278,67 @@ public class RewardsAwareBranchModel extends AbstractModel implements Transition
 
     @Override
     public String getReport() {
-        if (!DUMMYTESTING) {
-            computeTransitionMatrices();
-        }
+        if (!DUMMYTESTING) computeTransitionMatrices();
         StringBuilder sb = new StringBuilder();
         sb.append("W matrix: ");
-        for (int i=0; i < tree.getNodeCount() - 1; i++) {
-//            sb.append("Branch ").append(i).append(": ");
-            for (double val : W[i]) {
-                sb.append(val).append(" ");
-            }
-//            sb.append(Arrays.toString(W[i]));
-//                    .append("\n");
+        for (int nodeNr = 0; nodeNr < tree.getNodeCount(); nodeNr++) {
+            NodeRef node = tree.getNode(nodeNr);
+            if (tree.isRoot(node)) continue;
+            for (double val : W[nodeNr]) sb.append(val).append(" ");
         }
         return sb.toString();
     }
 
+    // -------------------- Compatibility: SubstitutionModelDelegate --------------------
+
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
-        System.out.println("getSubstitutionModels");
-        buildSubstitutionModels(); // TODO this is only for compatibility with SubstitutionModelDelegate; It is called only once
+        if (substitutionModels == null) {
+            buildSubstitutionModels();
+        }
         return substitutionModels;
     }
 
     protected void buildSubstitutionModels() {
-
-//        computeTransitionMatrices();
 
         substitutionModels = new ArrayList<>();
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (tree.isRoot(node)) continue;
-            ignoreModelChangedEvent = true; // todo this can be deleted since this method is called only once
+
+            ignoreModelChangedEvent = true;
             SubstitutionModel substitutionModel = new TransitionMatrixProvider(
                     "RewardsAwareSubstitutionModel",
                     underlyingSubstitutionModel.getDataType(),
                     underlyingSubstitutionModel.getFrequencyModel(),
-//                    W[nodeIndicesW[node.getNumber()]]
                     W[node.getNumber()]
             );
             ignoreModelChangedEvent = false;
+
             substitutionModels.add(substitutionModel);
         }
     }
 
-    class TransitionMatrixProvider extends ComplexSubstitutionModel { // TODO this should be deprecated
-        private double[] transitionMatrix;
+    class TransitionMatrixProvider extends ComplexSubstitutionModel {
+        private final double[] transitionMatrixRef;
 
         public TransitionMatrixProvider(String name, DataType dataType,
-                                        FrequencyModel freqModel, double[] transitionMatrix) {
+                                        FrequencyModel freqModel, double[] transitionMatrixRef) {
             super(name, dataType, freqModel, null);
-            this.transitionMatrix = transitionMatrix;
+            this.transitionMatrixRef = transitionMatrixRef;
         }
 
         @Override
         public void getTransitionProbabilities(double distance, double[] matrix) {
-            System.arraycopy(transitionMatrix, 0, matrix, 0, transitionMatrix.length);
+            // Ensure current before exposing.
+            if (!DUMMYTESTING) computeTransitionMatrices();
+            System.arraycopy(transitionMatrixRef, 0, matrix, 0, transitionMatrixRef.length);
         }
 
-        protected void handleModelChangedEvent(Model model, Object object, int index) {}
-        @Override
-        protected void frequenciesChanged() {}
-        @Override
-        protected void ratesChanged() {}
-        @Override
-        protected void setupRelativeRates(double[] rates) {}
-
+        @Override protected void handleModelChangedEvent(Model model, Object object, int index) {}
+        @Override protected void frequenciesChanged() {}
+        @Override protected void ratesChanged() {}
+        @Override protected void setupRelativeRates(double[] rates) {}
     }
 }
-

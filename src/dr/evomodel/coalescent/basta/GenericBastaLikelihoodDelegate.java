@@ -135,9 +135,15 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
             if (populationSizeModel.getNumIntervals() != numIntervals) {
                 populationSizeModel.setIntervalCount(numIntervals);
             }
+
+            double[] intervalLengths = new double[numIntervals];
+            for (int i = 0; i < numIntervals; i++) {
+                int start = intervalStarts.get(i);
+                intervalLengths[i] = branchIntervalOperations.get(start).intervalLength;
+            }
             
             currentPopulationStatistics = populationSizeModel.calculatePopulationStatistics(
-                    intervalStarts, branchIntervalOperations, stateCount);
+                    intervalStarts, branchIntervalOperations, intervalLengths, stateCount);
         }
 
         AbstractPopulationSizeModel.PopulationStatistics stats = currentPopulationStatistics;
@@ -998,10 +1004,7 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         double sum = 0.0;
         for (int k = 0; k < stateCount; ++k) {
-            double baseIntegral = integrals[populationSizeIndex + k];
-
-            double integralMultiplier = (populationSizeIndex == 0) ? length : 1.0;
-            double integralValue = baseIntegral * integralMultiplier;
+            double integralValue = integrals[populationSizeIndex + k];
             double term = (e[offset + k] * e[offset + k] - f[offset + k] +
                     g[offset + k] * g[offset + k] - h[offset + k]);
             sum += term * integralValue;

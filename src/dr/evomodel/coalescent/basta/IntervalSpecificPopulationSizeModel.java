@@ -39,6 +39,7 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
     public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
+            double[] intervalLengths,
             int stateCount) {
         
         int numIntervals = intervalStarts.size() - 1;
@@ -52,9 +53,7 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
         
         double intervalStartTime = 0.0;
         for (int interval = 0; interval < numIntervals; ++interval) {
-            int start = intervalStarts.get(interval);
-            
-            double intervalLength = branchIntervalOperations.get(start).intervalLength;
+            double intervalLength = intervalLengths[interval];
             double intervalEndTime = intervalStartTime + intervalLength;
             
             int populationSizeIndex = stateCount + interval * stateCount;

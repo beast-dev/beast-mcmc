@@ -121,18 +121,18 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
     public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
+            double[] intervalLengths,
             int stateCount) {
         
         if (gridPoints == null || treeIntervals == null) {
-            return super.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
+            return super.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, intervalLengths, stateCount);
         }
         
         cachedTimeline = new SingleTreeGriddedNodesTimeline(treeIntervals, gridPoints);
         double[] mergedTimeLine = cachedTimeline.getMergedTimeLine();
         int[] gridIndices = cachedTimeline.getGridIndices();
         double[] treeEventTimes = cachedTimeline.getTreeEventTimes();
-        
-        int numGridSegments = gridPoints.getDimension() + 1;
+
         int numIntervals = intervalStarts.size() - 1;
 
         int requiredStorageSize = stateCount + numIntervals * stateCount;

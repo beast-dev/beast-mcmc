@@ -35,6 +35,7 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
     public abstract PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
+            double[] intervalLengths,
             int stateCount);
 
     public abstract PopulationSizeModelType getModelType();

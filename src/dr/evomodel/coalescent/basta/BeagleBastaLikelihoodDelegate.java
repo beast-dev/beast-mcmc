@@ -270,7 +270,15 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             if (populationSizeModel.getNumIntervals() != numIntervals) {
                 populationSizeModel.setIntervalCount(numIntervals);
             }
-            stats = populationSizeModel.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, stateCount);
+
+
+            double[] intervalLengths = new double[numIntervals];
+            for (int i = 0; i < numIntervals; i++) {
+                int start = intervalStarts.get(i);
+                intervalLengths[i] = branchIntervalOperations.get(start).intervalLength;
+            }
+            
+            stats = populationSizeModel.calculatePopulationStatistics(intervalStarts, branchIntervalOperations, intervalLengths, stateCount);
             populationStatisticsBufferHelper.flipOffset(0);
             int bufferIndex = populationStatisticsBufferHelper.getOffsetIndex(0);
             
@@ -388,13 +396,9 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
-        boolean isConstantModel = (populationSizeModel != null && 
-                                   populationSizeModel.getModelType() == AbstractPopulationSizeModel.PopulationSizeModelType.CONSTANT);
-        
         beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
-                isConstantModel,
                 out);
     }
 

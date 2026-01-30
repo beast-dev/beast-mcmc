@@ -140,9 +140,9 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     @Override
     public void accumulateBastaPartials(int[] operations, int operationCount, int[] segments, int segmentCount,
                                         double[] intervalLengths, int populationSizesIndex,
-                                        int coalescentIndex, boolean isConstantPopulationModel, double[] result) {
+                                        int coalescentIndex, double[] result) {
         int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartials(instance,operations, operationCount,
-                segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, isConstantPopulationModel, result);
+                segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, result);
         if (errCode != 0) {
             throw new BeagleException("accumulateBastaPartials", errCode);
         }

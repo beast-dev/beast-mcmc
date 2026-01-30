@@ -28,7 +28,7 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
     
     @Override
     public boolean requiresIntervalSpecificStorage() {
-        return false;
+        return true;
     }
     
     public Parameter getPopulationSizeParameter() {
@@ -39,24 +39,28 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
     public PopulationStatistics calculatePopulationStatistics(
             List<Integer> intervalStarts,
             List<BranchIntervalOperation> branchIntervalOperations,
+            double[] intervalLengths,
             int stateCount) {
         
         int numIntervals = intervalStarts.size() - 1;
+        int storageSize = stateCount + numIntervals * stateCount;
 
-        double[] sizes = new double[stateCount];
-        double[] integrals = new double[stateCount];
+        double[] sizes = new double[storageSize];
+        double[] integrals = new double[storageSize];
         int[] populationSizeIndices = new int[numIntervals];
 
-        for (int k = 0; k < stateCount; ++k) {
-            double popSize = populationSizeParameter.getParameterValue(k);
-            sizes[k] = popSize;
-            integrals[k] = 1.0 / popSize;
-        }
-
         for (int interval = 0; interval < numIntervals; interval++) {
-            populationSizeIndices[interval] = 0;  // All intervals use the same constant population size at index 0
+            int offset = stateCount + interval * stateCount;
+            double length = intervalLengths[interval];
+            
+            for (int k = 0; k < stateCount; ++k) {
+                double popSize = populationSizeParameter.getParameterValue(k);
+                sizes[offset + k] = popSize;
+                integrals[offset + k] = length / popSize;
+            }
+            populationSizeIndices[interval] = offset;
         }
         
-        return new PopulationStatistics(sizes, integrals, populationSizeIndices, stateCount);
+        return new PopulationStatistics(sizes, integrals, populationSizeIndices, storageSize);
     }
 }

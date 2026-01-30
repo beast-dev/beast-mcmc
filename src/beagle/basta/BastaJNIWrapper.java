@@ -72,7 +72,6 @@ public class BastaJNIWrapper {
                                               final double[] intervalLengths,
                                               int populationSizesIndex,
                                               int coalescentProbabilityIndex,
-                                              boolean isConstantPopulationModel,
                                               double[] result);
 
     private static String getPlatformSpecificLibraryName() {

@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitsComponentOptions.java
  *
- * Copyright © 2002-2025 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -37,8 +37,11 @@ import dr.inference.operators.RateBitExchangeOperator;
 import java.util.List;
 import java.util.Set;
 
+import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
+
 /**
  * @author Andrew Rambaut
+ * @author Guy Baele
  */
 public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
@@ -71,19 +74,22 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 //BASTA
                 modelOptions.createParameterGammaPrior(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
                         "a vector of constant population sizes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.001, 1000.0, false);
+                modelOptions.createCachedGammaPrior(BACKWARD + "." + prefix + "rates", "discrete trait instantaneous transition rates",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, false);
 
                 // Operators
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
+                modelOptions.createOperator(BACKWARD + "." + prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
-//                modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
+                //modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
 
                 modelOptions.createZeroOneParameterUniformPrior(prefix + "root.frequencies", "discrete state root frequencies", 0.25);
                 modelOptions.createOperator(prefix + "root.frequencies", OperatorType.DELTA_EXCHANGE, 0.75, 1.0);
 
                 //bit Flip on clock.rate in PartitionClockModelSubstModelLink
-//                modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString() + "mu", prefix + "mu",
-//                        "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
+                //modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString() + "mu", prefix + "mu",
+                //"bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
                 modelOptions.createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME,
                         "(indicators, rates)",
                         "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
@@ -130,8 +136,10 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
             } else {
                 params.add(modelOptions.getParameter(prefix + "frequencies"));
-                params.add(modelOptions.getParameter(prefix + "rates"));
-                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    params.add(modelOptions.getParameter(prefix + "rates"));
+                } else if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    params.add(modelOptions.getParameter(BACKWARD + "." + prefix + "rates"));
                     params.add(modelOptions.getParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
                             "." + StructuredCoalescentLikelihoodParser.POPSIZES));
                 }
@@ -162,21 +170,21 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 ops.add(modelOptions.getOperator(prefix + "coefficients"));
                 ops.add(modelOptions.getOperator(prefix + "coefIndicators"));
-
             } else {
-//            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
-                ops.add(modelOptions.getOperator(prefix + "rates"));
+                //ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    ops.add(modelOptions.getOperator(BACKWARD + "." + prefix + "rates"));
+                    ops.add(modelOptions.getOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." +
+                            StructuredCoalescentLikelihoodParser.POPSIZES));
+                } else {
+                    ops.add(modelOptions.getOperator(prefix + "rates"));
+                }
 
                 if (substitutionModel.isActivateBSSVS()) {
                     ops.add(modelOptions.getOperator(prefix + "indicators"));
                 }
 
-                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                    ops.add(modelOptions.getOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." +
-                            StructuredCoalescentLikelihoodParser.POPSIZES));
-                }
             }
-
         }
         for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
@@ -186,6 +194,5 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             }
         }
     }
-
 
 }

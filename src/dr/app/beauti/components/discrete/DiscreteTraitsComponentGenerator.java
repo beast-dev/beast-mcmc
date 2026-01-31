@@ -65,6 +65,7 @@ import dr.xml.XMLParser;
 
 import java.util.Set;
 
+import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
 import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES;
 
 /**
@@ -72,8 +73,6 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
  * @author Guy Baele
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
-
-    private static final String BACKWARD = "backward";
 
     //avoid writing a reference to self in the structured coalescent likelihood
     private boolean enableInsertionPointBIT = false;
@@ -826,7 +825,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     private void writeFileLogEntries(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+
             String prefix = model.getName() + ".";
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                prefix = BACKWARD + "." + prefix;
+                writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
+                        "." + StructuredCoalescentLikelihoodParser.POPSIZES);
+            }
 
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
@@ -837,11 +842,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
                     writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
                     writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
-                }
-
-                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                    writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
-                            "." + StructuredCoalescentLikelihoodParser.POPSIZES);
                 }
             }
         }
@@ -857,7 +857,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeDiscreteTraitFileLogger(XMLWriter writer,
                                               PartitionSubstitutionModel model) {
 
-        String prefix = options.fileNameStem + "." + model.getName();
+        String prefix = options.fileNameStem + ".";
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            prefix = prefix + BACKWARD + ".";
+        }
+        prefix = prefix + model.getName();
 
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
             writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
@@ -884,9 +888,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "coefIndicators");
             writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
         } else {
-            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
-
-            if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+            } else {
+                writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "rates");
+            }
+            if (model.isActivateBSSVS()) {
+                //If "BSSVS" is not activated, rateIndicator should not be there.
                 writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
             }

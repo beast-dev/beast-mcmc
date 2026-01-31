@@ -1,7 +1,7 @@
 /*
  * StructuredCoalescentLikelihoodParser.java
  *
- * Copyright (c) 2002-2025 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2026 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -58,6 +58,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String GROWTH_RATES = "growthRates";
     public static final String POPSIZES = "popSizes";
+    public static final String BACKWARD = "backward";
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
     private static final boolean USE_BEAGLE = true;

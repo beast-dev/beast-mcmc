@@ -126,6 +126,16 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        DataType stateDataType = generalSubstitutionModel.getDataType();
+        if (popSizes.getDimension() > 1) {
+            String[] dimensionNames = new String[popSizes.getDimension()];
+            String prefix = popSizes.getParameterName();
+            for (int i = 0; i < popSizes.getDimension(); i++) {
+                dimensionNames[i] = prefix + "." + stateDataType.getCode(i);
+            }
+            popSizes.setDimensionNames(dimensionNames);
+        }
+
         int threads = xo.getAttribute(THREADS, 1);
 
         if (treeModel != null) {

@@ -406,8 +406,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 "\nPLOS Genetics 11(8): e1005421.\n";
         bitText += "Y. Shao, M.A. Suchard, A. Rambaut, P. Lemey, T. Vasylyeva, G. Baele (2025)" +
                 "\nParallel algorithms for phylogenetic inference" +
-                "\nunder a structured coalescent approximation" +
-                "\n(in preparation)";
+                "\nunder a structured coalescent approximation." +
+                "\nbioRxiv 2025.09.22.677844.";
         JTextArea bitTextArea = new JTextArea(bitText);
         bitTextArea.setEditable(false);
         bitTextArea.setEnabled(false);

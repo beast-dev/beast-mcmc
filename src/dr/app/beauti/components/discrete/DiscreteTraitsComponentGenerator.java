@@ -507,7 +507,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-            prefix = BACKWARD + prefix;
+            prefix = BACKWARD + "." + prefix;
         }
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
             writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);

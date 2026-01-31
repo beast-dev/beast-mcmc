@@ -289,7 +289,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + AbstractSubstitutionModel.MODEL),
                             new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.NORMALIZED, true),
-                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, true)
+                            new Attribute.Default<Boolean>(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.SCALE_RATES_BY_FREQUENCIES, false)
                     });
             }
 

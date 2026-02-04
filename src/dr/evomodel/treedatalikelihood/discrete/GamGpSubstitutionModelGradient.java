@@ -36,6 +36,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,43 +69,10 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
         this.mapEffectToIndices = makeAsymmetricMap();
     }
 
-     @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    final int ij = i * stateCount + j;
-                    total += differentials[ij] * generator[ij];
-                }
-            }
-        }
-        return total;
-    }
-    
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
-    }
-
     @Override
     double processSingleGradientDimension(int k, double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         final int i = mapEffectToIndices[k][0], j = mapEffectToIndices[k][1];
         final int ii = i * stateCount + i;
@@ -128,11 +96,6 @@ public class GamGpSubstitutionModelGradient extends AbstractLogAdditiveSubstitut
     @Override
     public LogColumn[] getColumns() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

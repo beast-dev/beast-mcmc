@@ -44,6 +44,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
@@ -172,14 +173,31 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             ContinuousDiffusionIntegrator base;
             if (precisionType == PrecisionType.SCALAR) {
 
-                base = new ContinuousDiffusionIntegrator.Basic(
-                        precisionType,
-                        numTraits,
-                        dimTrait,
-                        dimTrait,
-                        partialBufferCount,
-                        matrixBufferCount
-                );
+                if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
+                        diffusionProcessDelegate.getDiffusionModel(0)
+                        instanceof SparseBandedMultivariateDiffusionModel) {
+
+                    base =
+//                            new ContinuousDiffusionIntegrator.Basic(
+                            new SparseIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                } else {
+
+                    base = new ContinuousDiffusionIntegrator.Basic(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                }
 
             } else if (precisionType == PrecisionType.FULL) {
 
@@ -347,14 +365,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     public double[][] getTraitVariance() {
-        Matrix variance = new Matrix(getDiffusionModel().getPrecisionmatrix()).inverse();
+        Matrix variance = new Matrix(getDiffusionModel().getPrecisionMatrix()).inverse();
         return variance.toComponents();
     }
 
     public double[][] getTreeTraitPrecision() {
         return KroneckerOperation.product(
                 getTreePrecision(),
-                getDiffusionModel().getPrecisionmatrix());
+                getDiffusionModel().getPrecisionMatrix());
     }
 
     public double[][] getTreeTraitVariance() {
@@ -390,7 +408,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 rateTransformation.getNormalization(), Double.POSITIVE_INFINITY);
 
         double[][] treeVariance = getTreeVariance();
-        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = getDiffusionModel().getPrecisionMatrix();
         Matrix traitVariance = new Matrix(traitPrecision).inverse();
 
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());

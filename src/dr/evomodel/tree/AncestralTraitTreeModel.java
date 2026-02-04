@@ -422,7 +422,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return height;
     }
 
-    private static final boolean FIX_BRANCH_LENGTH = true;
+    private static final boolean FIX_BRANCH_LENGTH = false;
 
     public double getBranchLength(NodeRef iNode) {
 

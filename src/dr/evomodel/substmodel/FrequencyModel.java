@@ -61,7 +61,6 @@ public class FrequencyModel extends AbstractModel {
     }
 
     public FrequencyModel(DataType dataType, Parameter frequencyParameter) {
-
         super(FrequencyModelParser.FREQUENCY_MODEL);
 
         double sum = getSumOfFrequencies(frequencyParameter);

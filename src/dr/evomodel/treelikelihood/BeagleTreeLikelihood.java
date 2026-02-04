@@ -100,6 +100,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
     private static final String THREAD_COUNT = "beagle.thread.count";
+    private static final String THREADING_TYPE = "beagle.threading.type";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -302,12 +303,33 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 threadCount = Integer.parseInt(tc);
             }
 
+            String threadingType = System.getProperty(THREADING_TYPE);
+            if (threadingType != null) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                
+                switch (threadingType.toLowerCase()) {
+                    case "openmp":
+                        preferenceFlags |= BeagleFlag.THREADING_OPENMP.getMask();
+                        break;
+                    case "cpp":
+                        preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                        break;
+                    case "none":
+                    default:
+                        preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+                        break;
+                }
+            } else {
+
             if (threadCount == 0 || threadCount == 1) {
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
                 preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
             } else {
                 preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
                 preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                }
             }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)

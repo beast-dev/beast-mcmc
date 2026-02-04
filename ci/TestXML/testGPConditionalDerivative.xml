@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <randomField id="test.field">
+        <data>
+            <parameter id="loc.coefficients0" value="1.5 2.0 1.8"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp" dim="3">
+                <orderVariance>
+                    <parameter id="orderVariance" value="1.0"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise" value="0.001"/>
+                </gaussianNoise>
+                <basis>
+                    <designMatrix id="loc.designMatrix0">
+                        <parameter value="1 2 3"/>
+<!--                        <parameter value="1 0 0 0 0 0"/>-->
+                    </designMatrix>
+                    <kernel type="SquaredExponential">
+                        <scale>
+                            <parameter id="loc.scale" value="1.0"/>
+                        </scale>
+                        <length>
+                            <parameter id="loc.length" value="1"/>
+                        </length>
+                    </kernel>
+                </basis>
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
+
+
+    <gaussianProcessConditionalDerivative id="test.condDerivative">
+        <field>
+            <parameter idref="loc.coefficients0"/>
+        </field>
+        <additiveGaussianProcessDistribution idref="test.gp"/>
+        <!--        <priorMean>-->
+        <!--            <parameter id="loc.priorMean" value="0 0"/>-->
+        <!--        </priorMean>-->
+    </gaussianProcessConditionalDerivative>
+    <report>
+        <gaussianProcessConditionalDerivative idref="test.condDerivative"/>
+    </report>
+
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: mean
+        </message>
+        <actual regex="mean: (.*?)\n">
+            <gaussianProcessConditionalDerivative idref="test.condDerivative"/>
+        </actual>
+        <expected>
+            0.7517710817938391 0.2101959273494629 -0.6579689799297723
+        </expected>
+    </assertEqual>
+
+<!--    &lt;!&ndash;    check values predictive variance &ndash;&gt;-->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: variance
+        </message>
+        <actual regex="variance: (.*?)\n">
+            <gaussianProcessConditionalDerivative idref="test.condDerivative"/>
+        </actual>
+        <expected>
+            0.32152309892521935 -0.1896461690868132 0.18783949120518884 -0.18964616908681323 0.15006483677214477 -0.18964616908681317 0.18783949120518884 -0.1896461690868132 0.32152309892521935
+        </expected>
+    </assertEqual>
+
+
+</beast>

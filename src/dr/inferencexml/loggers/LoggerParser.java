@@ -121,7 +121,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
             final Object child = xo.getChild(i);
 
-            if (child instanceof Columns) {
+            if(child instanceof Columns) {
 
                 logger.addColumns(((Columns) child).getColumns());
 

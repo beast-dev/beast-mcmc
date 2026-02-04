@@ -152,6 +152,14 @@ public class TransformParsers {
             Transform.ParsedTransform innerPT = (Transform.ParsedTransform)
                     innerXo.getChild(Transform.ParsedTransform.class);
 
+//            if (outerPT.parameters == null || innerPT.parameters == null) {
+//                if (outerPT.parameters == null) {
+//                     outerPT.parameters = innerPT.parameters;
+//                } else {
+//                    innerPT.parameters = outerPT.parameters;
+//                }
+//            }
+
             if (!outerPT.equivalent(innerPT)) {
                 throw new XMLParseException("Not equivalent transformations");
             }
@@ -162,6 +170,14 @@ public class TransformParsers {
                 Transform.ParsedTransform composition = outerPT.clone();
                 composition.transform = new Transform.Compose((Transform.UnivariableTransform) outerPT.transform,
                         (Transform.UnivariableTransform) innerPT.transform);
+                return composition;
+
+            } else if (outerPT.transform instanceof Transform.MultivariableTransform &&
+                    innerPT.transform instanceof Transform.MultivariableTransform) {
+
+                Transform.ParsedTransform composition = outerPT.clone();
+                composition.transform = new Transform.ComposeMultivariable((Transform.MultivariableTransform) outerPT.transform,
+                        (Transform.MultivariableTransform) innerPT.transform);
                 return composition;
 
             } else {
@@ -290,9 +306,13 @@ public class TransformParsers {
                      if (xo.hasAttribute(SUM)) {
                          transform.fixedSum = xo.getDoubleAttribute(SUM);
                      }
-                     transform.parameters = new ArrayList<Parameter>();
+                     if (xo.getAllChildren(Parameter.class).size() > 0) {
+                         transform.parameters = new ArrayList<Parameter>();
+                         transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+                     } else {
+                         transform.parameters = null;
+                     }
 
-                     transform.parameters.addAll(xo.getAllChildren(Parameter.class));
                  }
              }
 

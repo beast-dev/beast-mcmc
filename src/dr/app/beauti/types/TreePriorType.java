@@ -44,7 +44,8 @@ public enum TreePriorType {
     YULE_CALIBRATION("Speciation: Calibrated Yule"),
     BIRTH_DEATH("Speciation: Birth-Death Process"),
     BIRTH_DEATH_INCOMPLETE_SAMPLING("Speciation: Birth-Death Incomplete Sampling"),
-    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled");
+    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled"),
+    SET_BY_BIT("Set by backward-in-time model");
 //    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number");
 
     TreePriorType(String name) {

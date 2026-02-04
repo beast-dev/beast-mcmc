@@ -45,10 +45,16 @@ import java.util.List;
 public class NumericalGradientParser extends AbstractXMLObjectParser {
 
     public static final String NUM_GRAD = "numericalGradient";
+    public static final String OTHER_NAME = "numericGradient";
 
     @Override
     public String getParserName() {
         return NUM_GRAD;
+    }
+
+    @Override
+    public String[] getParserNames() {
+        return new String[]{ NUM_GRAD, OTHER_NAME };
     }
 
     @Override

@@ -55,20 +55,30 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
 
     private final Parameter parameter;
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
+    private final List<TreeTrait> treeTraitProviderList = new ArrayList<>();
     private final Tree tree;
     private final Mode mode;
+    private final Integer dim;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                    int dim,
+                                                    Mode mode) {
+        this(traitName, treeDataLikelihood, parameter, likelihoodDelegate, null, mode);
+    }
+
+    public HomogeneousSubstitutionParameterGradient(String traitName,
+                                                    TreeDataLikelihood treeDataLikelihood,
+                                                    Parameter parameter,
+                                                    BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                    Integer dim,
                                                     Mode mode) {
         this.parameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.mode = mode;
+        this.dim = dim;
 
         final String name = BranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -80,30 +90,43 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
             } else {
                 substitutionModel = (DifferentiableSubstitutionModel) likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0);
             }
-
-            DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
-            DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(
-                    substitutionModel, wrtParameter, mode);
-
-            List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
-            differentialMassProviderList.add(differentialMassProvider);
-
-            BranchDifferentialMassProvider branchDifferentialMassProvider =
-                    new BranchDifferentialMassProvider(null, differentialMassProviderList);
-
-            ProcessSimulationDelegate gradientDelegate = new BranchSubstitutionParameterDelegate(traitName,
-                    treeDataLikelihood.getTree(),
-                    likelihoodDelegate,
-                    treeDataLikelihood.getBranchRateModel(),
-                    branchDifferentialMassProvider);
-
-            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+            if (dim != null) {
+                if (dim < 0 || dim > parameter.getDimension()) {
+                    throw new IllegalArgumentException("Dimension index out of range!");
+                }
+                buildTreeTraitProviderList(dim, substitutionModel, likelihoodDelegate, traitName, name);
+            } else
+                for (int i = 0; i < parameter.getDimension(); i++) {
+                buildTreeTraitProviderList(i, substitutionModel, likelihoodDelegate, traitName, name);
+            }
         }
 
-        this.treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
-        assert(treeTraitProvider != null);
+        assert(treeTraitProviderList.get(0) != null);
     }
+
+    public void buildTreeTraitProviderList(int i, DifferentiableSubstitutionModel substitutionModel,
+                                           BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                           String traitName, String name){
+        List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<>();
+        DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, i);
+        DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(
+                substitutionModel, wrtParameter, mode);
+        differentialMassProviderList.add(differentialMassProvider);
+        BranchDifferentialMassProvider branchDifferentialMassProvider =
+                new BranchDifferentialMassProvider(null, differentialMassProviderList);
+
+        ProcessSimulationDelegate gradientDelegate = new BranchSubstitutionParameterDelegate(traitName,
+                treeDataLikelihood.getTree(),
+                likelihoodDelegate,
+                treeDataLikelihood.getBranchRateModel(),
+                branchDifferentialMassProvider);
+
+        TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
+        treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+        treeTraitProviderList.add(treeDataLikelihood.getTreeTrait(name));
+    }
+
+
 
     @Override
     public Likelihood getLikelihood() {
@@ -117,20 +140,33 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
 
     @Override
     public int getDimension() {
-        return 1;
+        if (dim == null) {
+            return parameter.getDimension();
+        } else {
+            return 1;
+        }
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        double result = 0.0;
-
-        double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
-
-        for (int i = 0; i < gradient.length; i++) {
-            result += gradient[i];
+        if (treeTraitProviderList.size() == 1) {
+            double result = 0.0;
+            double[] gradient = (double[]) treeTraitProviderList.get(0).getTrait(tree, null);
+            for (int i = 0; i < gradient.length; i++) {
+                result += gradient[i]; // sum over all branches
+            }
+            return new double[]{result};
+        } else {
+            double[] result = new double[treeTraitProviderList.size()];
+            for (int i = 0; i < treeTraitProviderList.size(); i++) {
+                double[] gradient = (double[]) treeTraitProviderList.get(i).getTrait(tree, null);
+                for (int j = 0; j < gradient.length; j++) {
+                    result[i] += gradient[j]; // sum over all branches
+                }
+            }
+            return result;
         }
 
-        return new double[]{result};
     }
 
     @Override

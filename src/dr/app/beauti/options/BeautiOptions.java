@@ -32,6 +32,7 @@ import java.util.*;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
@@ -77,14 +78,24 @@ public class BeautiOptions extends ModelOptions {
 
     private static final long serialVersionUID = -3676802825545741012L;
 
-    public BeautiOptions() {
+    private static BeautiOptions INSTANCE;
+
+    private BeautiOptions() {
         this(new ComponentFactory[]{});
     }
 
-    public BeautiOptions(ComponentFactory[] components) {
+    private BeautiOptions(ComponentFactory[] components) {
 
         // Install all the component's options from the given list of factories:
         registerComponents(components);
+    }
+
+    public static BeautiOptions getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new BeautiOptions();
+        }
+
+        return INSTANCE;
     }
 
     /**
@@ -101,7 +112,6 @@ public class BeautiOptions extends ModelOptions {
             }
         }
     }
-
 
     /**
      * resets the options to the initial conditions
@@ -375,7 +385,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return null;
     }
-
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
@@ -1249,6 +1258,10 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
+
+    //map that indicate for each partition whether a coalescent model is required
+    //if not, a backward-in-time model has already been specified for that partition
+    public HashMap<String, Boolean> needCoalescentModel = new HashMap<>();
 
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;

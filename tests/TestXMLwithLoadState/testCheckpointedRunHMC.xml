@@ -973,5 +973,4 @@
 		<!-- write state of Markov chain to checkpoint file                          -->
 		<logCheckpoint id="checkpointFileLog" checkpointEvery="5000" checkpointFinal="5000" fileName="testHMC.chkpt" overwrite="true"/>
 	</mcmc>
-
 </beast>

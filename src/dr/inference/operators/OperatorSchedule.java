@@ -42,7 +42,7 @@ public interface OperatorSchedule extends Serializable {
     OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
     //int POWERB = 1000000; //TODO discuss with Luiz why this value doesn't seem to work
     int POWERB = 1;
-    double POWERC = 0.5556; // c = 5/9
+    double POWERC = 0.55; // c = 5/9
 
     /**
      * @return Choose the next operator.

@@ -56,6 +56,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
     private final Tree tree;
     private final Parameter rates;
     private final EpochTimeProvider epochTimeProvider;
+    private final Parameter slope;
 
     private boolean nodeRatesKnown;
     private boolean storedNodeRatesKnown;
@@ -68,19 +69,22 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
     public TimeVaryingBranchRateModel(FunctionalForm.Type type,
                                       Tree tree,
                                       Parameter rates,
-                                      Parameter gridPoints) {
-        this(type, tree, rates, new EpochTimeProvider.ParameterWrapper(gridPoints));
+                                      Parameter gridPoints,
+                                      Parameter slope) {
+        this(type, tree, rates, new EpochTimeProvider.ParameterWrapper(gridPoints), slope);
     }
 
     public TimeVaryingBranchRateModel(FunctionalForm.Type type,
                                       Tree tree,
                                       Parameter rates,
-                                      EpochTimeProvider epochTimeProvider) {
+                                      EpochTimeProvider epochTimeProvider,
+                                      Parameter slope) {
 
         super(TimeVaryingBranchRateModelParser.PARSER_NAME);
 
         this.tree = tree;
         this.rates = rates;
+        this.slope = slope;
         this.epochTimeProvider = epochTimeProvider;
 
         if (tree instanceof TreeModel) {
@@ -89,11 +93,21 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
 
         addVariable(rates);
         addModel(epochTimeProvider);
+        if (slope != null) {
+            addVariable(slope);
+        }
 
         nodeRates = new double[tree.getNodeCount()];
         storedNodeRates = new double[tree.getNodeCount()];
 
-        functionalForm = type.factory(rates);
+        if (type == FunctionalForm.Type.PIECEWISE_LOG_LINEAR) {
+            if (slope == null) {
+                throw new IllegalArgumentException("PIECEWISE_LOG_LINEAR requires slope");
+            }
+            functionalForm = type.factory(rates, slope);
+        } else {
+            functionalForm = type.factory(rates);
+        }
 
         nodeRatesKnown = false;
     }
@@ -353,7 +367,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
 
         void reset();
 
-        void incrementRate(int epochIndex, double startTime, double endTime);
+        void incrementRate(int epochIndex, double startTime, double endTime, double[] times);
 
         double gradientWeight(int epochIndex, double startTime, double endTime, double branchLength);
 
@@ -367,11 +381,27 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
                 FunctionalForm factory(Parameter parameter) {
                     return new PiecewiseConstant(parameter);
                 }
+                FunctionalForm factory(Parameter intercept, Parameter slopes) {
+                    throw new UnsupportedOperationException("PIECEWISE_CONSTANT does not support slope");
+                }
             },
             PIECEWISE_LOG_CONSTANT("piecewiseLogConstant") {
                 @Override
                 FunctionalForm factory(Parameter parameter) {
                     return new PiecewiseLogConstant(parameter);
+                }
+                FunctionalForm factory(Parameter intercept, Parameter slopes) {
+                    throw new UnsupportedOperationException("PIECEWISE_LOG_CONSTANT does not support slope");
+                }
+            },
+            PIECEWISE_LOG_LINEAR("piecewiseLogLinear") {
+                @Override
+                FunctionalForm factory(Parameter parameter) {
+                    throw new IllegalArgumentException("PIECEWISE_LOG_LINEAR requires slope");
+                }
+
+                FunctionalForm factory(Parameter rates, Parameter slope) {
+                    return new piecewiseLogLinear(rates, slope);
                 }
             };
 
@@ -382,6 +412,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
             public String getName() { return name; }
 
             abstract FunctionalForm factory(Parameter parameter);
+
+            abstract FunctionalForm factory(Parameter rates, Parameter slope);
 
             public static Type parse(String string) {
                 for (Type type : Type.values()) {
@@ -421,7 +453,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
             }
 
             @Override
-            public void incrementRate(int epochIndex, double startTime, double endTime) {
+            public void incrementRate(int epochIndex, double startTime, double endTime, double[] times) {
                 double timeLength = startTime - endTime;
                 branchRateNumerator += getRateParameter(epochIndex) * timeLength;
             }
@@ -456,6 +488,74 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
             }
         }
 
+        class piecewiseLogLinear extends Base {
+
+            private final Parameter rates;
+            private final Parameter slope;
+            private double branchRateNumerator;
+
+
+            piecewiseLogLinear(Parameter rates, Parameter slope) {
+                super(null);
+                this.rates = rates;
+                this.slope = slope;
+            }
+            @Override
+            public void reset() {
+                branchRateNumerator = 0.0;
+            }
+
+            @Override
+            public double getRateParameter(int epochIndex) {
+                return rates.getParameterValue(epochIndex);
+            }
+
+           private int getDimension(){
+                return rates.getDimension();
+           }
+
+           private double getSlope(){
+                return slope.getParameterValue(0);
+           }
+            @Override
+            public void incrementRate(int epochIndex, double startTime, double endTime, double[] times) {
+                double y0 = getRateParameter(epochIndex);
+                double x0 = startTime;
+                double x1 = endTime;
+                double y1;
+                double slope;
+                double intercept;
+                if(epochIndex == getDimension() - 1) {
+                    slope = getSlope();
+                }
+                else {
+                   y1 = getRateParameter(epochIndex + 1);
+                   slope = (y0 - y1)/(times[epochIndex] - times[epochIndex + 1]);
+                }
+                intercept = y0;
+                if (slope == 0) {
+                    branchRateNumerator += Math.exp(intercept) * (x0 - x1);
+                } else {
+                    branchRateNumerator += (Math.exp(intercept + slope * (x0 - times[epochIndex])) -
+                            Math.exp(intercept + slope * (x1 - times[epochIndex]))) / slope;
+                }
+            }
+
+
+            @Override
+            public double rateNumerator() {
+                return branchRateNumerator;
+            }
+
+            @Override
+            public double gradientWeight(int epochIndex, double startTime, double endTime, double branchLength) {
+                // TODO: implement analytic gradient
+                return 0;
+            }
+        }
+
+
+
         @SuppressWarnings("unused")
         abstract class PiecewiseLinear implements FunctionalForm { }
 
@@ -472,7 +572,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
 
         void reset();
 
-        void increment(int epochIndex, int childIndex, double startTime, double endTime, double branchLength);
+        void increment(int epochIndex, int childIndex, double startTime, double endTime, double branchLength,
+                       double[] times);
 
         void store(int epochIndex, int nodeIndex, double branchLength);
 
@@ -503,7 +604,7 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
 
             @Override
             public void increment(int epochIndex, int childIndex,
-                                  double startTime, double endTime, double branchLength) {
+                                  double startTime, double endTime, double branchLength, double[] times) {
                 gradientEpochs[epochIndex] += gradientNodes[childIndex] *
                         functionalForm.gradientWeight(epochIndex, startTime, endTime, branchLength);
             }
@@ -523,8 +624,8 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
 
             @Override
             public void increment(int epochIndex, int childIndex,
-                                  double startTime, double endTime, double branchLength) {
-                functionalForm.incrementRate(epochIndex, startTime, endTime);
+                                  double startTime, double endTime, double branchLength, double[] times) {
+                functionalForm.incrementRate(epochIndex, startTime, endTime, times);
             }
 
             @Override
@@ -561,13 +662,13 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
         if (currentHeight > childHeight) {
 
             while (times[epochIndex] > childHeight) {
-                generic.increment(epochIndex, childIndex, currentHeight, times[epochIndex], branchLength);
+                generic.increment(epochIndex, childIndex, currentHeight, times[epochIndex], branchLength, times);
                 currentHeight = times[epochIndex];
 
                 --epochIndex;
             }
 
-            generic.increment(epochIndex, childIndex, currentHeight, childHeight, branchLength);
+            generic.increment(epochIndex, childIndex, currentHeight, childHeight, branchLength, times);
         }
 
         generic.store(epochIndex, childIndex, branchLength);

@@ -411,7 +411,10 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", null, "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", null, "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", null, "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.StringOption("beagle_threading", null, new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
                         new Arguments.IntegerOption("beagle_threads", "bt", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_basta_threading_off", null, "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_basta_threads", null, 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", null, "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", null, "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
@@ -637,9 +640,15 @@ public class BeastMain {
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
         }
-//        if (arguments.hasOption("beagle_double")) {
-//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//        }
+        if (arguments.hasOption("beagle_threading")) {
+            System.setProperty("beagle.threading.type", arguments.getStringOption("beagle_threading"));
+        }
+        if (arguments.hasOption("beagle_basta_threading_off")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_basta_threads")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(arguments.getIntegerOption("beagle_basta_threads")));
+        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
         } else {

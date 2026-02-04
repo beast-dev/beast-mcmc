@@ -2711,11 +2711,16 @@
     <message>
         Check skygrid likelihood
     </message>
-    <actual regex="skygrid\((.*)\)\n">
-    <report>
-        <gmrfSkyrideLikelihood idref="skygrid"/>
-     </report>
+    <actual regex="Total: (.*?)\n">
+        <report>
+            <gmrfSkyrideLikelihood idref="skygrid"/>
+        </report>
     </actual>
+<!--    <actual regex="skygrid:\((.*)\)\n">-->
+<!--    <report>-->
+<!--        <gmrfSkyrideLikelihood idref="skygrid"/>-->
+<!--     </report>-->
+<!--    </actual>-->
     <expected>
         -2516.826653299598  <!-- from 10.4 release -->
     </expected>

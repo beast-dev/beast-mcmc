@@ -27,6 +27,8 @@
 
 package dr.evomodel.speciation;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -75,29 +77,31 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
         this.speciationModel = likelihood.getSpeciationModel();
         this.treeIntervals = likelihood.getTreeIntervals();
         this.provider = likelihood.getGradientProvider();
+        
+
+        CompoundBirthDeathParameters compoundParams = speciationModel instanceof NewBirthDeathSerialSamplingModel ? 
+            ((NewBirthDeathSerialSamplingModel)speciationModel).compoundParameters : null;
+            
+        likelihood.setupGradientDelegates(compoundParams);
+        
+
+        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.R0 ||
+            wrtParameter == SpeciationLikelihoodGradient.WrtParameter.D ||
+            wrtParameter == SpeciationLikelihoodGradient.WrtParameter.S) {
+            this.gradientProvider = likelihood.getTreeTrait(CachedGradientDelegate.COMPOUND_GRADIENT_KEY);
+        } else {
+            this.gradientProvider = likelihood.getTreeTrait(GRADIENT_KEY);
+        }
+
         this.parameter = wrtParameter.getParameter(provider, tree);
 
         likelihood.addModel(this);
-
         if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
             speciationModel.addModelListener(this);
             treeIntervals.addModelListener(this);
         }
 
         gradientKnown = false;
-
-        this.gradientProvider = getGradientDelegateSingleton(likelihood);
-    }
-
-    private TreeTrait getGradientDelegateSingleton(EfficientSpeciationLikelihood likelihood) {
-        TreeTrait singleton = likelihood.getTreeTrait(GRADIENT_KEY);
-        if (singleton == null) {
-            CachedGradientDelegate delegate = new CachedGradientDelegate(likelihood);
-            addModel(delegate);
-            singleton = delegate;
-            likelihood.addTrait(singleton);
-        }
-        return singleton;
     }
 
     @Override
@@ -119,7 +123,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     public double[] getGradientLogDensity() {
         if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
             if (!gradientKnown) {
-                gradient = wrtParameter.getGradientLogDensity(provider, tree); // TODO Harmonize
+                gradient = wrtParameter.getGradientLogDensity(provider, tree);
                 gradientKnown = true;
             }
             return gradient;

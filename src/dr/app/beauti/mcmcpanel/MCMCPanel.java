@@ -1,7 +1,7 @@
 /*
  * MCMCPanel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -27,13 +27,11 @@
 
 package dr.app.beauti.mcmcpanel;
 
-
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEDialog;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEGSSDialog;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
@@ -56,42 +54,43 @@ import java.util.List;
  */
 public class MCMCPanel extends BeautiPanel {
 
+    public static final String DEFAULT_FILE_NAME_STEM = "untitled";
+
     private static final long serialVersionUID = -3710586474593827540L;
     private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
     private static final int MAX_FILENAME_SHOWN = 48;
 
-    WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
-    WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
-    WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
-    WholeNumberField checkpointEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField checkpointEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
-    JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
-    JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
+    private JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
+    private JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
     //    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
-    JButton buttonMLE = new JButton("Settings");
+    private JButton buttonMLE = new JButton("Settings");
     //    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
     //  JButton buttonMLEGSS = new JButton("Settings");
 
-    public static final String DEFAULT_FILE_NAME_STEM = "untitled";
-    JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
+    private JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
 
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
-    JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
-    JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".trees");
-    JTextArea checkpointFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".chkpt");
+    private JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
+    private JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".trees");
+    private JTextArea checkpointFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".chkpt");
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
 //    JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
 
-    JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
-    JTextArea substTreeFileNameField = new JTextArea("untitled(subst).trees");
+    private JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
+    private JTextArea substTreeFileNameField = new JTextArea("untitled(subst).trees");
 
-    JCheckBox operatorAnalysisCheck = new JCheckBox("Create operator analysis file:");
-    JTextArea operatorAnalysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
+    private JCheckBox operatorAnalysisCheck = new JCheckBox("Create operator analysis file:");
+    private JTextArea operatorAnalysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
 
-    BeautiFrame frame = null;
+    private BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
 

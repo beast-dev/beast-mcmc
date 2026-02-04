@@ -31,6 +31,7 @@ import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
+import dr.inference.hmc.ParallelNumericalGradient;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -47,7 +48,8 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Citable, Profileable, Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements
+        TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;

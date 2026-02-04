@@ -1,7 +1,7 @@
 /*
  * AncestralStatesComponentGenerator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -27,6 +27,7 @@
 
 package dr.app.beauti.components.ancestralstates;
 
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -34,8 +35,8 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
@@ -351,7 +352,11 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
             writer.writeIDref("traitDataLikelihood", prefix + "traitLikelihood");
         } else {
-            writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+            if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeIDref(dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, prefix + "treeLikelihood");
+            } else {
+                writer.writeIDref(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, prefix + "treeLikelihood");
+            }
         }
         writer.writeCloseTag("trait");
     }
@@ -419,7 +424,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         if (options.treeFileName.get(0).endsWith(".txt")) {
             treeLogFileName += ".txt";
         }
-
 
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));

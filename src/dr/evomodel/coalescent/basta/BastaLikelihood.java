@@ -88,7 +88,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     // State reconstruction settings
     private final boolean useMAP;
-    private final boolean returnMarginalLogLikelihood;
+    private final boolean returnMarginalLogLikelihood = true;
     private final boolean conditionalProbabilitiesInLogSpace;
     private final boolean useOriginalDrawChoice;
 
@@ -98,8 +98,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private Map<Integer, List<Integer>> nodeIntervalMap = new HashMap<>();
     protected boolean ancestralStatesKnown = false;
 //    protected boolean storedAncestralStatesKnown = false;
-    protected double jointLogLikelihood;
-    private double storedJointLogLikelihood;
+//    protected double jointLogLikelihood;
+//    private double storedJointLogLikelihood;
 
     public BastaLikelihood(String name,
                            Tree treeModel,
@@ -187,7 +187,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         this.dataType = dataType;
         this.tag = tag;
         this.useMAP = useMAP;
-        this.returnMarginalLogLikelihood = returnMarginalLogLikelihood;
+//        this.returnMarginalLogLikelihood = returnMarginalLogLikelihood;
         this.conditionalProbabilitiesInLogSpace = conditionalProbabilitiesInLogSpace;
         this.useOriginalDrawChoice = true;
 
@@ -328,7 +328,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             redrawAncestralStates();
         }
 
-        return jointLogLikelihood;
+        throw new RuntimeException("bad");
+//        return jointLogLikelihood;
     }
 
 
@@ -686,9 +687,24 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
+    enum AncestralTraversalMethod {
+        LEVEL_ORDER,
+        PRE_ORDER
+    }
+
+    public void redrawAncestralStates(AncestralTraversalMethod traversalMethod) {
+
+        if (traversalMethod == AncestralTraversalMethod.LEVEL_ORDER) {
+            mapNodeToSubIntervals();
+            traverseSampleByCoalescentIntervals();
+        } else if (traversalMethod == AncestralTraversalMethod.PRE_ORDER) {
+            traverseSampleByNodes();
+        } else {
+            throw new IllegalArgumentException("Invalid traversal method: " + traversalMethod);
+        }
+    }
 
     public void redrawAncestralStates(int traversalMethod) {
-        jointLogLikelihood = 0;
 
         if (traversalMethod == 0) {
             mapNodeToSubIntervals();
@@ -700,9 +716,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-
     public void redrawAncestralStates() {
-        redrawAncestralStates(1); // Use original method by default
+//        redrawAncestralStates(1); // Use original method by default
+        redrawAncestralStates(AncestralTraversalMethod.PRE_ORDER); // Use original method by default
     }
 
 
@@ -867,7 +883,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             }
 
             if (!returnMarginalLogLikelihood) {
-                jointLogLikelihood += Math.log(frequencies[reconstructedStates[nodeNum][j]]);
+                throw new RuntimeException("bad");
+//                jointLogLikelihood += Math.log(frequencies[reconstructedStates[nodeNum][j]]);
             }
         }
     }
@@ -912,7 +929,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             subIntervalStates[nodeNumber][j] = drawChoice(conditionalProbabilities);
             if (!returnMarginalLogLikelihood) {
                 double contrib = transitionMatrix[subIntervalStates[nodeNumber][j] * stateCount + parentIndex];
-                jointLogLikelihood += Math.log(contrib);
+                throw new RuntimeException("bad");
+//                jointLogLikelihood += Math.log(contrib);
             }
         }
     }
@@ -1070,7 +1088,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
             if (!returnMarginalLogLikelihood) {
                 double contrib = transitionMatrix[reconstructedStates[childNumber][j] * stateCount + parentIndex];
-                jointLogLikelihood += Math.log(contrib);
+                throw new RuntimeException("bad");
+//                jointLogLikelihood += Math.log(contrib);
             }
         }
     }

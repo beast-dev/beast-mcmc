@@ -648,6 +648,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
 
         if (!areStatesRedrawn) {
+            makeDirty();
+            getLogLikelihood();
             redrawAncestralStates();
         }
         return reconstructedStates[node.getNumber()];
@@ -1006,7 +1008,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                     if (isAmbiguous) {
                         int parentState = reconstructedStates[parentNum][j];
                         int parentIndex = parentState;
-                        double branchLength = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+                        double branchTime = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+                        double branchLength = branchRateModel.getBranchRate(tree, child) * branchTime;
                         double[] transitionMatrix = new double[stateCount * stateCount];
                         substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
 
@@ -1028,7 +1031,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                 continue;
             }
 
-            double branchLength = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+            double branchTime = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+            double branchLength = branchRateModel.getBranchRate(tree, child) * branchTime;
             double[] transitionMatrix = new double[stateCount * stateCount];
             substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
 

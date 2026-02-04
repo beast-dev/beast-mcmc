@@ -32,6 +32,7 @@ import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.FunctionalForm.Type;
+import dr.math.IntegratedTransformedSplines;
 import dr.xml.*;
 
 import static dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser.getGridPoints;
@@ -45,25 +46,25 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     private static final String NUM_GRID_POINTS = GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS;
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
     private static final String SLOPE = "slope";
-
     private static final String FUNCTIONAL_FORM = "functionalForm";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
+        IntegratedTransformedSplines splines =
+                (IntegratedTransformedSplines) xo.getChild(IntegratedTransformedSplines.class);
         Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
         Parameter gridPoints = getGridPoints(xo);
         Parameter slope = xo.hasChildNamed(SLOPE) ?
                 (Parameter) xo.getElementFirstChild(SLOPE) : null;
-
         if (rates.getDimension() != gridPoints.getDimension() + 1) {
             throw new XMLParseException("Rates dimension != gridPoints dimension + 1");
         }
 
         Type type = Type.parse(xo.getAttribute(FUNCTIONAL_FORM, Type.PIECEWISE_CONSTANT.getName()));
 
-        return new TimeVaryingBranchRateModel(type, tree, rates, gridPoints, slope);
+        return new TimeVaryingBranchRateModel(type, tree, rates, gridPoints, slope, splines);
     }
 
     @Override
@@ -88,11 +89,13 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
+            new ElementRule(IntegratedTransformedSplines.class),
             new ElementRule(RATES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(SLOPE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+
             new XORRule(
                     new ElementRule(GRID_POINTS, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

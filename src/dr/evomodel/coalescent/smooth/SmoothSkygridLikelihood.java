@@ -733,7 +733,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
         double populationSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(0));
 
-        for (int j = 0; j < maxGridIndex; j++) {
+        for (int j = 0; j < maxGridIndex + (maxGridIndex == gridPointParameter.getDimension() ? 0 : 1); j++) {
             final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j));
             final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(j + 1));
             final double gridTime = gridPointParameter.getParameterValue(j);

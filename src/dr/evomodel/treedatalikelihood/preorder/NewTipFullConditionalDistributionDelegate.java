@@ -129,7 +129,9 @@ public class NewTipFullConditionalDistributionDelegate extends
 
             for (int i = 0; i < numTraits; ++i) {
                 statistics.add(new NormalSufficientStatistics(partial, mapped * dimPartial, dimTrait,
-                        Pd, likelihoodDelegate.getPrecisionType()));
+                        diffusionRepresentation.getPrecision(0),
+//                        Pd, choleskyPrecision,
+                        likelihoodDelegate.getPrecisionType()));
             }
         }
 

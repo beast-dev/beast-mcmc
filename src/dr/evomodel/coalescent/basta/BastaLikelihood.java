@@ -96,8 +96,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private int[][] storedReconstructedStates;
     private int[][] subIntervalStates;  // [interval][nodeNumber][pattern]
     private Map<Integer, List<Integer>> nodeIntervalMap = new HashMap<>();
-    protected boolean areStatesRedrawn = false;
-    protected boolean storedAreStatesRedrawn = false;
+    protected boolean ancestralStatesKnown = false;
+//    protected boolean storedAncestralStatesKnown = false;
     protected double jointLogLikelihood;
     private double storedJointLogLikelihood;
 
@@ -324,7 +324,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
 
         // Redraw states and return joint density for ancestral state reconstruction
-        if (!areStatesRedrawn) {
+        if (!ancestralStatesKnown) {
             redrawAncestralStates();
         }
 
@@ -345,7 +345,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
 
         likelihoodKnown = false;
-        areStatesRedrawn = false;
+        ancestralStatesKnown = false;
     }
 
     @Override
@@ -378,7 +378,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         treeIntervalsKnown = false;
         populationSizesKnown = false;
         transitionMatricesKnown = false;
-        areStatesRedrawn = false;
+        ancestralStatesKnown = false;
 
         likelihoodDelegate.makeDirty();
         updateAllNodes();
@@ -387,13 +387,14 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == popSizeParameter) {
             populationSizesKnown = false;
-            likelihoodKnown = false;
         } else if (variable == growthRateParameter) {
             populationSizesKnown = false;
-            likelihoodKnown = false;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
+
+        likelihoodKnown = false;
+        ancestralStatesKnown = false;
     }
 
     @Override
@@ -402,7 +403,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         if (model == treeIntervals) {
             treeIntervalsKnown = false;
             transitionMatricesKnown = false;
-            areStatesRedrawn = false;
             nodeIntervalMap.clear();
         } else if (model == branchRateModel) {
             treeIntervalsKnown = false; // TODO should not be necessary
@@ -415,6 +415,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
 
+        ancestralStatesKnown = false;
         likelihoodKnown = false;
         fireModelChanged();
     }
@@ -428,14 +429,14 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         storedLogLikelihood = logLikelihood;
 
         // Store ancestral state reconstruction information
-        if (areStatesRedrawn) {
-            for (int i = 0; i < reconstructedStates.length; i++) {
-                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
-            }
-        }
-
-        storedAreStatesRedrawn = areStatesRedrawn;
-        storedJointLogLikelihood = jointLogLikelihood;
+//        if (ancestralStatesKnown) {
+//            for (int i = 0; i < reconstructedStates.length; i++) {
+//                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
+//            }
+//        }
+//
+//        storedAncestralStatesKnown = ancestralStatesKnown;
+//        storedJointLogLikelihood = jointLogLikelihood;
     }
 
     @Override
@@ -449,12 +450,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         transitionMatricesKnown = false;
 
         // Restore ancestral state reconstruction information
-        int[][] temp = reconstructedStates;
-        reconstructedStates = storedReconstructedStates;
-        storedReconstructedStates = temp;
-
-        areStatesRedrawn = storedAreStatesRedrawn;
-        jointLogLikelihood = storedJointLogLikelihood;
+//        int[][] temp = reconstructedStates;
+//        reconstructedStates = storedReconstructedStates;
+//        storedReconstructedStates = temp;
+//
+//        ancestralStatesKnown = storedAncestralStatesKnown;
+        ancestralStatesKnown = false;
+//        jointLogLikelihood = storedJointLogLikelihood;
     }
 
     @Override
@@ -643,14 +645,11 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             throw new RuntimeException("Can only reconstruct states on tree given to constructor");
         }
 
-        if (!likelihoodKnown) {
-            getLogLikelihood();
-        }
-
-        if (!areStatesRedrawn) {
+        if (!ancestralStatesKnown) {
             makeDirty();
             getLogLikelihood();
             redrawAncestralStates();
+            ancestralStatesKnown = true;
         }
         return reconstructedStates[node.getNumber()];
     }
@@ -699,8 +698,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         } else {
             throw new IllegalArgumentException("Invalid traversal method: " + traversalMethod);
         }
-
-        areStatesRedrawn = true;
     }
 
 

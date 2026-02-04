@@ -32,8 +32,7 @@ package dr.evomodel.treelikelihood;
  */
 public interface MarkovJumpsTraitProvider extends AncestralStateTraitProvider {
 
-    public int getPatternCount();
+    int getPatternCount();
 
-    public double getLogLikelihood();
-
+    double getLogLikelihood();
 }

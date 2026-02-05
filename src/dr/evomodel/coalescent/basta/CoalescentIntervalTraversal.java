@@ -132,7 +132,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         private final List<NodeRef> intervalNodeOrder;
 
         public ActiveNodesForInterval(int maximumSize) {
-            activeSet = new HashSet<>();
+            activeSet = new LinkedHashSet<>();
             intervalNodeOrder = new ArrayList<>();
             currentOffset = new int[maximumSize];
             executionOrder = new int[maximumSize];

@@ -140,7 +140,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
 
         public Set<NodeRef> copy() {
-            return new HashSet<>(activeSet);
+            return new LinkedHashSet<>(activeSet);
         }
 
         private void test(NodeRef node) {

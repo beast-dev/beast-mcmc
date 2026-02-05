@@ -27,6 +27,7 @@
 
 package dr.inference.operators;
 
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.math.MathUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -38,8 +39,8 @@ import java.util.ArrayList;
  */
 public class JointOperator extends AbstractAdaptableOperator {
 
-    private final ArrayList<SimpleMCMCOperator> operatorList;
-    private final ArrayList<Integer> operatorToOptimizeList;
+    protected final ArrayList<SimpleMCMCOperator> operatorList;
+    protected final ArrayList<Integer> operatorToOptimizeList;
 
     private int currentOptimizedOperator;
 
@@ -64,7 +65,7 @@ public class JointOperator extends AbstractAdaptableOperator {
         }
     }
 
-    public final double doOperation() {
+    public double doOperation() {
 
         double logP = 0;
 

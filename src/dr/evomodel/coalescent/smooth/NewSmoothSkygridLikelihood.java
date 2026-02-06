@@ -103,9 +103,6 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return getDoubleSigmoidIntegral(ti, tj, t) - getDoubleSigmoidIntegral(ti, tj, 0);
     }
 
-    private double getFirstDoubleIntegral() {
-        return 0;
-    }
 
     private double[] tmpA;
     private double[] tmpB;
@@ -129,13 +126,15 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 final double singleExtra = (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s)) / s;
                 double sum = 0;
                 for (int j = 0; j < tree.getNodeCount(); j++) {
-                    final double gj = getLineageEffect(j);
-                    final double tj = tree.getNodeHeight(tree.getNode(j));
-                    if (Math.abs(ti - tj) < magicSmallThreshold) {
-                        sum += gj;
-                        firstDoubleIntegralExtra += gj * singleExtra;
-                    } else {
-                        sum += 2 * gj * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - tj, s);
+                    if (j != i) {
+                        final double gj = getLineageEffect(j);
+                        final double tj = tree.getNodeHeight(tree.getNode(j));
+                        if (Math.abs(ti - tj) < magicSmallThreshold) {
+                            sum += gj;
+                            firstDoubleIntegralExtra += gj * singleExtra;
+                        } else {
+                            sum += 2 * gj * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(tj - ti, s);
+                        }
                     }
                 }
                 tmpA[i] = sum;
@@ -175,6 +174,56 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
 
             cacheKnown = true;
         }
+    }
+
+    private double getFirstDoubleIntegral() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        final double s = getSmoothRate();
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double gi = getLineageEffect(i);
+            sum += tmpA[i] * tmpC[i];
+        }
+        sum /= s;
+        final double result = sum + firstDoubleIntegralExtra + rootTime * (2 - 2 * tree.getExternalNodeCount());
+        return result;
+    }
+
+    private double getFirstDoubleIntegralBruteForce() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double gi = getLineageEffect(i);
+            final double ti = tree.getNodeHeight(tree.getNode(i));
+            for (int j = 0; j < tree.getNodeCount(); j++) {
+                final double gj = getLineageEffect(j);
+                final double tj = tree.getNodeHeight(tree.getNode(j));
+                if (i != j) {
+                    sum += gi * gj * getCompleteDoubleSigmoidIntegral(ti, tj, rootTime);
+                }
+            }
+        }
+        return sum;
+    }
+
+    private double getFirstDoubleIntegralApproximate() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double gi = getLineageEffect(i);
+            final double ti = tree.getNodeHeight(tree.getNode(i));
+            for (int j = 0; j < tree.getNodeCount(); j++) {
+                final double gj = getLineageEffect(j);
+                final double tj = tree.getNodeHeight(tree.getNode(j));
+                if (i != j) {
+                    sum += gi * gj * (rootTime - ((ti > tj) ? ti : tj));
+                }
+            }
+        }
+        return sum;
     }
 
 
@@ -260,6 +309,9 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sb.append("smooth rate = " + getSmoothRate() + "\n");
             sb.append("Single integral = " + getAllSingleIntegrals() + "\n");
             sb.append("Single integral approximate (s -> Inf) = " + getAllSingleIntegralApproximate() + "\n");
+            sb.append("First double integral = " + getFirstDoubleIntegral() + "\n");
+            sb.append("First double integral brute force = " + getFirstDoubleIntegralBruteForce() + "\n");
+            sb.append("First double integral approximate = " + getFirstDoubleIntegralApproximate() + "\n");
 
         }
 

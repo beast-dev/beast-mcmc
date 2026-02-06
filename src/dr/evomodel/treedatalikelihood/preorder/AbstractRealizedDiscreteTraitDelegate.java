@@ -148,11 +148,11 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
             super.setupStatistics();
 
-            eigenDecomposition = substitutionModel.getEigenDecomposition();
-            if (TRANSPOSE_ONCE) {
-                if (transpose) {
-                    eigenDecomposition.transpose();
-                }
+            EigenDecomposition original = substitutionModel.getEigenDecomposition();
+            if (TRANSPOSE_ONCE && transpose) {
+                eigenDecomposition = original.transpose();
+            } else {
+                eigenDecomposition = original;
             }
 
             nodeMap = getNodeToBufferMap();

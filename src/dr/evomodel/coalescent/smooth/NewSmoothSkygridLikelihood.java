@@ -226,6 +226,40 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return sum;
     }
 
+    private double getSecondDoubleIntegral() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        final double s = getSmoothRate();
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double gi = getLineageEffect(i);
+            final double ti = tree.getNodeHeight(tree.getNode(i));
+            sum += gi * tmpC[i] + (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(-ti, s));
+        }
+        return sum / s + rootTime * tree.getNodeCount();
+    }
+
+    private double getSecondDoubleIntegralBruteForce() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double ti = tree.getNodeHeight(tree.getNode(i));
+            sum += getCompleteDoubleSigmoidIntegral(ti, ti, rootTime);
+        }
+        return sum;
+    }
+
+    private double getSecondDoubleIntegralApproximate() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            sum += rootTime - tree.getNodeHeight(tree.getNode(i));
+        }
+        return sum;
+    }
+
 
     private double getSingleSigmoidIntegral(double ti, double t) {
         final double s = getSmoothRate();
@@ -312,6 +346,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sb.append("First double integral = " + getFirstDoubleIntegral() + "\n");
             sb.append("First double integral brute force = " + getFirstDoubleIntegralBruteForce() + "\n");
             sb.append("First double integral approximate = " + getFirstDoubleIntegralApproximate() + "\n");
+
+            sb.append("Second double integral = " + getSecondDoubleIntegral() + "\n");
+            sb.append("Second double integral brute force = " + getSecondDoubleIntegralBruteForce() + "\n");
+            sb.append("Second double integral approximate = " + getSecondDoubleIntegralApproximate() + "\n");
 
         }
 

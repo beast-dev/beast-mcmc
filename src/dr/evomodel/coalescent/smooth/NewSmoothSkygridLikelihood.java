@@ -123,7 +123,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 final double ti = tree.getNodeHeight(tree.getNode(i));
                 final double gi = getLineageEffect(i);
-                final double singleExtra = (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s)) / s;
+                final double singleExtra = (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(-ti, s)) / s;
                 double sum = 0;
                 for (int j = 0; j < tree.getNodeCount(); j++) {
                     if (j != i) {

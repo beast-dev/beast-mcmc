@@ -149,7 +149,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                     final double xk = gridPointParameter.getParameterValue(k);
                     if (Math.abs(xk - ti) < magicSmallThreshold) {
                         sum += 0.5 * popSizeInverseDifference;
-                        secondDoubleIntegralExtra += secondDoubleExtra;
+                        secondDoubleIntegralExtra += gi * popSizeInverseDifference * secondDoubleExtra;
                     } else {
                         sum += popSizeInverseDifference * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s);
                     }

@@ -145,7 +145,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 sum = 0;
                 final double secondDoubleExtra = (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(- ti, s)) / s;
                 for (int k = 0; k < gridPointParameter.getDimension(); k++) {
-                    final double popSizeInverseDifference = Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                    final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                     final double xk = gridPointParameter.getParameterValue(k);
                     if (Math.abs(xk - ti) < magicSmallThreshold) {
                         sum += 0.5 * popSizeInverseDifference;
@@ -159,7 +159,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
 
             for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                 final double xk = gridPointParameter.getParameterValue(k);
-                final double popSizeInverseDifference = Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                 tmpD[k] = popSizeInverseDifference * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s));
                 double sum = 0;
                 for (int i = 0; i < tree.getNodeCount(); i++) {
@@ -287,7 +287,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             final double gi = getLineageEffect(i);
             for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                 final double xk = gridPointParameter.getParameterValue(k);
-                final double popSizeInverseDifference = Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                 sum += gi * popSizeInverseDifference * getCompleteDoubleSigmoidIntegral(ti, xk, rootTime);
             }
         }
@@ -303,13 +303,16 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             final double gi = getLineageEffect(i);
             for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                 final double xk = gridPointParameter.getParameterValue(k);
-                final double popSizeInverseDifference = Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                 sum += gi * popSizeInverseDifference * (rootTime - ((ti > xk) ? ti : xk));
             }
         }
         return sum;
     }
 
+    private double getPopSizeInverseDifference(int k) {
+        return Math.exp(-logPopSizeParameter.getParameterValue(k + 1)) - Math.exp(-logPopSizeParameter.getParameterValue(k));
+    }
 
     private double getSingleSigmoidIntegral(double ti, double t) {
         final double s = getSmoothRate();
@@ -350,6 +353,119 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final double lineageEffect = getLineageEffect(i);
             sum -= lineageEffect * getCompleteSingleSigmoidIntegral(tree.getNodeHeight(tree.getNode(i)), rootTime);
+        }
+        return sum;
+    }
+
+    private double getTripleIntegralFragment(double t0, double t1, double t2, double t) {
+        final double s = getSmoothRate();
+        final double numerator = GlobalSigmoidSmoothFunction.getLogOnePlusExponential(t0 - t, s);
+        final double denominatorInverse = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(t1 - t0, s) *
+                GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(t2 - t0, s);
+        if ((isLimitingCase(t0, t) || isLimitingCase(t1, t) || isLimitingCase(t2, t)) && t0 >= t) {
+            return (t0 - t) * denominatorInverse;
+        } else {
+            return numerator * denominatorInverse;
+        }
+    }
+
+    private double getCubicIntegral(double t0, double t) {
+        final double s = getSmoothRate();
+        final double exponent = Math.exp(s * (t - t0));
+        if (isLimitingCase(t0, t)) {
+            return t0 - t;
+        } else {
+            return ((3 + 4 * exponent)/2/(1+exponent)/(1+exponent) + GlobalSigmoidSmoothFunction.getLogOnePlusExponential(t0 - t, s)) / s;
+        }
+    }
+
+    private boolean isLimitingCase(double t0, double t) {
+        return Math.exp(getSmoothRate() * (t0 - t)) == 0;
+    }
+
+    private double getTripleIntegralWithQuadratic(double ti, double xk, double t) {
+        final double s = getSmoothRate();
+        final double oneOverOnePlusTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - t, s);
+        final double oneOverOneMinusXkMinusTi = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s);
+        final double oneOverOneMinusTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
+        final boolean limitS = isLimitingCase(ti, t) || isLimitingCase(xk, t);
+        if (limitS) {
+            return t + (oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
+                    + (oneOverOneMinusXkMinusTi + oneOverOneMinusXkMinusTi * oneOverOneMinusTiMinusXk) * (ti < t ? 0 : ti - t) * s
+                    + oneOverOneMinusTiMinusXk * oneOverOneMinusTiMinusXk * (xk < t ? 0 : xk - t) * s) / s;
+        }
+        return t + (oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
+                + (oneOverOneMinusXkMinusTi + oneOverOneMinusXkMinusTi * oneOverOneMinusTiMinusXk) * GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti - t, s)
+                + oneOverOneMinusTiMinusXk * oneOverOneMinusTiMinusXk * GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - t, s)) / s;
+    }
+
+    private double getTripleIntegral(double ti, double tj, double xk, double t) {
+        final double s = getSmoothRate();
+
+        if (Math.abs(ti - tj) < magicSmallThreshold && Math.abs(ti - xk) < magicSmallThreshold && Math.abs(tj - xk) < magicSmallThreshold) {
+            return getCubicIntegral(ti, t);
+        } else if (Math.abs(ti - tj) < magicSmallThreshold) {
+            return getTripleIntegralWithQuadratic(ti, xk, t);
+        } else if (Math.abs(ti - xk) < magicSmallThreshold) {
+            return getTripleIntegralWithQuadratic(ti, tj, t);
+        } else if (Math.abs(tj - xk) < magicSmallThreshold) {
+            return getTripleIntegralWithQuadratic(tj, ti, t);
+        } else {
+            return (t + (getTripleIntegralFragment(ti, tj, xk, t) + getTripleIntegralFragment(tj, xk, ti, t) + getTripleIntegralFragment(xk, ti, tj, t)) / s);
+        }
+    }
+
+    private double getCompleteTripleIntegral(double ti, double tj, double xk, double t) {
+        return getTripleIntegral(ti, tj, xk, t) - getTripleIntegral(ti, tj, xk, 0);
+    }
+
+    private double getFirstTripleIntegralBruteForce() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+            final double xk = gridPointParameter.getParameterValue(k);
+            final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                final double ti = tree.getNodeHeight(tree.getNode(i));
+                final double gi = getLineageEffect(i);
+                for (int j = 0; j < tree.getNodeCount(); j++) {
+                    final double gj = getLineageEffect(j);
+                    final double tj = tree.getNodeHeight(tree.getNode(j));
+                    if (i != j) {
+                        final double newAmount = popSizeInverseDifference * gi * gj * getCompleteTripleIntegral(ti, tj, xk, rootTime);
+                        sum += newAmount;
+                    }
+                }
+            }
+        }
+        return sum;
+    }
+
+    private double getFirstTripleIntegralApproximate() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+            final double xk = gridPointParameter.getParameterValue(k);
+            final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                final double ti = tree.getNodeHeight(tree.getNode(i));
+                final double gi = getLineageEffect(i);
+                double cutoff = ti > xk ? ti : xk;
+                for (int j = 0; j < tree.getNodeCount(); j++) {
+                    final double gj = getLineageEffect(j);
+                    final double tj = tree.getNodeHeight(tree.getNode(j));
+                    if (i != j) {
+                        final double newAmount = getCompleteTripleIntegral(ti, tj, xk, rootTime);
+                        final double integralApproximation = (rootTime - (tj > cutoff ? tj : cutoff)) < 0 ? 0 : (rootTime - (tj > cutoff ? tj : cutoff));
+                         if (integralApproximation != newAmount) {
+                            System.err.println("here");
+                        }
+                        sum += popSizeInverseDifference * gi * gj * (rootTime - cutoff);
+                    }
+                }
+            }
         }
         return sum;
     }
@@ -404,6 +520,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sb.append("Third double integral = " + getThirdDoubleIntegral() + "\n");
             sb.append("Third double integral brute force = " + getThirdDoubleIntegralBruteForce() + "\n");
             sb.append("Third double integral approximate = " + getThirdDoubleIntegralApproximate() + "\n");
+
+            sb.append("First triple integral brute force = " + getFirstTripleIntegralBruteForce() + "\n");
+            sb.append("First triple integral approximate = " + getFirstTripleIntegralApproximate() + "\n");
+
 
         }
 

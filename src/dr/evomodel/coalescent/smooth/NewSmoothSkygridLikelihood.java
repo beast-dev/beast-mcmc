@@ -362,8 +362,11 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double numerator = GlobalSigmoidSmoothFunction.getLogOnePlusExponential(t0 - t, s);
         final double denominatorInverse = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(t1 - t0, s) *
                 GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(t2 - t0, s);
-        if ((isLimitingCase(t0, t) || isLimitingCase(t1, t) || isLimitingCase(t2, t)) && t0 >= t) {
-            return (t0 - t) * denominatorInverse;
+        if ((isLimitingCase(t0, t) || isLimitingCase(t1, t) || isLimitingCase(t2, t)) && t0 == t) {
+//            if (t0 >= t)
+//                return (t0 - t) * s * denominatorInverse;
+//            else
+                return 0;
         } else {
             return numerator * denominatorInverse;
         }
@@ -390,11 +393,11 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double oneOverOneMinusTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
         final boolean limitS = isLimitingCase(ti, t) || isLimitingCase(xk, t);
         if (limitS) {
-            return t + (oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
+            return t + (-oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
                     + (oneOverOneMinusXkMinusTi + oneOverOneMinusXkMinusTi * oneOverOneMinusTiMinusXk) * (ti < t ? 0 : ti - t) * s
                     + oneOverOneMinusTiMinusXk * oneOverOneMinusTiMinusXk * (xk < t ? 0 : xk - t) * s) / s;
         }
-        return t + (oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
+        return t + (-oneOverOnePlusTiMinusT * oneOverOneMinusXkMinusTi
                 + (oneOverOneMinusXkMinusTi + oneOverOneMinusXkMinusTi * oneOverOneMinusTiMinusXk) * GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti - t, s)
                 + oneOverOneMinusTiMinusXk * oneOverOneMinusTiMinusXk * GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - t, s)) / s;
     }
@@ -457,12 +460,8 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                     final double gj = getLineageEffect(j);
                     final double tj = tree.getNodeHeight(tree.getNode(j));
                     if (i != j) {
-                        final double newAmount = getCompleteTripleIntegral(ti, tj, xk, rootTime);
                         final double integralApproximation = (rootTime - (tj > cutoff ? tj : cutoff)) < 0 ? 0 : (rootTime - (tj > cutoff ? tj : cutoff));
-                         if (integralApproximation != newAmount) {
-                            System.err.println("here");
-                        }
-                        sum += popSizeInverseDifference * gi * gj * (rootTime - cutoff);
+                        sum += popSizeInverseDifference * gi * gj * integralApproximation;
                     }
                 }
             }

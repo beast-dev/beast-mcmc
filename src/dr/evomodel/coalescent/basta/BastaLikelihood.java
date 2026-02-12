@@ -242,7 +242,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private void setupTraits() {
         TreeTrait<int[]> ancestralStateTrait = new TreeTrait.IA() {
             public String getTraitName() {
-                return tag;
+                return tag + "_old";
             }
 
             public Intent getIntent() {

@@ -105,7 +105,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     }
 
     public void computeCondStatMarkovJumps(double time,
-                                           double[] transitionProbs,
+                                           double[] transitionProbabilities,
                                            double[] countMatrix) {
 
         throw new IllegalArgumentException("Not implemented for UniformizedSubstitutionModel");
@@ -126,6 +126,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 tmp[startingState * stateCount + endingState]);
     }
 
+    @SuppressWarnings("unused")
     public String getCompleteHistory() {
         return getCompleteHistory(null, null);
     }
@@ -140,10 +141,6 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             completeHistory.rescaleTimesOfEvents(newStartTime, newEndTime);
         }
         return completeHistory.toStringChanges(site, dataType); //, 0.0);
-    }
-
-    public int getNumberOfJumpsInCompleteHistory() {
-        return completeHistory == null ? -1 : completeHistory.getNumberOfJumps();
     }
 
     static void warn() {
@@ -238,7 +235,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
     private double[] tmp;
 
-    private static int maxRejectionAttempts = 100000;
+    private static final int maxRejectionAttempts = 100000;
     private static final boolean RETURN_NAN = true;
     private static final boolean RETURN_UNIFORMLY_DISTRIBUTED_EVENT = true;
     private static boolean reportWarning = true;

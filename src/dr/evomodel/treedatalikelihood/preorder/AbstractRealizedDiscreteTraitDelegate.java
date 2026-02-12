@@ -59,7 +59,7 @@ import java.util.function.Function;
  */
 public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
 
-    public static String NAME_SUFFIX = "_unified";
+    public static String NAME_SUFFIX = "";
 
     public static class Fit extends AbstractRealizedDiscreteTraitDelegate {
 

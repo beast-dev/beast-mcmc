@@ -459,8 +459,8 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 for (int j = 0; j < tree.getNodeCount(); j++) {
                     final double gj = getLineageEffect(j);
                     final double tj = tree.getNodeHeight(tree.getNode(j));
-                    if (i != j) {
-                        final double integralApproximation = (rootTime - (tj > cutoff ? tj : cutoff)) < 0 ? 0 : (rootTime - (tj > cutoff ? tj : cutoff));
+                    final double integralApproximation = rootTime - (tj > cutoff ? tj : cutoff);
+                    if (i != j && integralApproximation > 0) {
                         sum += popSizeInverseDifference * gi * gj * integralApproximation;
                     }
                 }

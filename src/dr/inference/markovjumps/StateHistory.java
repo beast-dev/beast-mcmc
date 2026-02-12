@@ -45,12 +45,8 @@ import java.util.List;
 
 public class StateHistory {
 
-//    private StateHistory(int startingState, int stateCount) {
-//        this(0.0, startingState, stateCount);
-//    }
-
     public StateHistory(double startingTime, int startingState, int stateCount) {
-        stateList = new ArrayList<StateChange>();
+        stateList = new ArrayList<>();
         stateList.add(new StateChange(startingTime, startingState));
         this.stateCount = stateCount;
         finalized = false;
@@ -81,11 +77,6 @@ public class StateHistory {
 
     public double getTotalRegisteredCounts(double[] register) {
         int[] counts = getJumpCounts();
-//        double total = 0;
-//        for (int i = 0; i < counts.length; i++) {
-//            total += counts[i] * register[i];
-//        }
-//        return total;
         return dotProduct(counts, register);
     }
 
@@ -320,6 +311,7 @@ public class StateHistory {
         sb.append(time).append(",").append(source).append(",").append(dest).append("}");
     }
 
+    @SuppressWarnings("unused")
     public static StateHistory simulateConditionalOnEndingState(double startingTime,
                                                                 int startingState,
                                                                 double endingTime,
@@ -361,9 +353,19 @@ public class StateHistory {
         return history;
     }
 
+    public StateHistory(StateHistory in) {
 
-    private int stateCount;
-    private List<StateChange> stateList;
+        this.stateCount = in.stateCount;
+        this.stateList = new ArrayList<>();
+        for (StateChange sc : in.stateList) {
+            this.stateList.add(new StateChange(sc));
+        }
+        this.finalized = in.finalized;
+        this.isFiltered = in.isFiltered;
+    }
+
+    private final int stateCount;
+    private final List<StateChange> stateList;
     private boolean finalized;
     private boolean isFiltered = false;
 

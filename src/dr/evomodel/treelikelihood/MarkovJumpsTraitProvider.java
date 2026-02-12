@@ -35,4 +35,9 @@ public interface MarkovJumpsTraitProvider extends AncestralStateTraitProvider {
     int getPatternCount();
 
     double getLogLikelihood();
+
+    enum ValueScaling {
+        RAW,
+        BY_TIME
+    }
 }

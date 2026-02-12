@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate.NAME_SUFFIX;
 
 /**
  * @author Guy Baele
@@ -207,10 +208,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
 
-        TreeTraitProvider ttp = new ProcessSimulation(this,
-                new AbstractRealizedDiscreteTraitDelegate.Bit(tag + "_unified", this, useMAP));
-
+        traitDelegate = new AbstractRealizedDiscreteTraitDelegate.Bit(tag + NAME_SUFFIX, this, useMAP);
+        TreeTraitProvider ttp = new ProcessSimulation(this, traitDelegate);
         treeTraits.addTraits(ttp.getTreeTraits());
+    }
+
+    private final AbstractRealizedDiscreteTraitDelegate traitDelegate;
+
+    public AbstractRealizedDiscreteTraitDelegate getRealizedTraitDelegate() {
+        return traitDelegate;
     }
 
     /**

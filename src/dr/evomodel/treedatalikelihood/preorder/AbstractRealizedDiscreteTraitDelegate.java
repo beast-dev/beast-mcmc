@@ -45,14 +45,13 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
+import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -60,6 +59,8 @@ import java.util.function.Function;
  * @author Marc Suchard
  */
 public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
+
+    public static String NAME_SUFFIX = "_unified";
 
     public static class Fit extends AbstractRealizedDiscreteTraitDelegate {
 
@@ -90,37 +91,30 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         }
 
         @Override
-        double[] getTransitionMatrix(int node, int parent) {
+        public double[] getTransitionMatrix(int node, int parent) {
             throw new RuntimeException("Not yet implemented");
         }
 
-//        @Override
-//        double[] getPostOrderPartials(final NodeRef node) {
-//            beagleDataLikelihoodDelegate.getPartials(node.getNumber(), tmpPostOrder);
-//            return tmpPostOrder;
-//        }
+        @Override
+        public OrderedEvents getOrderedInformation(int node, int parent, double[] probabilities) {
 
-//        @Override
-//        double[] getTransitionMatrix(NodeRef node, NodeRef parent) {
-//            throw new RuntimeException("TODO");
-//        }
 
-//        @Override
-//        int getActiveNodeIndex(int nodeNumber) {
-//            return -1;
-//        }
-//
-//        @Override
-//        int getActiveMatrixIndex(int nodeNumber) {
-//            return -1;
-//        }
+            double nodeTime = tree.getNodeHeight(tree.getNode(node));
+            double parentTime = tree.getNodeHeight(tree.getNode(parent));
+
+            double branchTime = parentTime - nodeTime;
+            double branchRate = branchRateModel.getBranchRate(tree, tree.getNode(node));
+
+            return new OrderedEvents(reconstructedStates[parent], reconstructedStates[node],
+                    siteSpecificRateCategory, probabilities,
+                    parentTime, nodeTime, branchTime, branchRate);
+        }
     }
 
     public static class Bit extends AbstractRealizedDiscreteTraitDelegate {
 
         private final BastaLikelihood likelihood;
         private final BastaLikelihoodDelegate likelihoodDelegate;
-        private final BranchRateModel branchRateModel;
         private final SubstitutionModel substitutionModel;
         private final boolean transpose;
 
@@ -134,14 +128,28 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
             this.likelihood = likelihood;
             this.likelihoodDelegate = likelihood.getLikelihoodDelegate();
-            this.branchRateModel = likelihood.getBranchRateModel();
+//            this.branchRateModel = likelihood.getBranchRateModel();
             this.substitutionModel = likelihood.getSubstitutionModel();
             this.rootStateFrequencies = new double[stateCount];
             this.transpose = true; // TODO pass info
             Arrays.fill(rootStateFrequencies, 1.0);
         }
 
-        private static final boolean TRANSPOSE_ONCE = false; // TODO Make work
+        private static final boolean TRANSPOSE_ONCE = true;
+
+        @Override
+        public OrderedEvents getOrderedInformation(int node, int parent, double[] unused) {
+
+            double[] probabilities = getTransitionMatrix(tree.getNode(node), tree.getNode(parent), false);
+
+            double nodeTime = tree.getNodeHeight(tree.getNode(node));
+            double parentTime = tree.getNodeHeight(tree.getNode(parent));
+            double branchTime = parentTime - nodeTime;
+            double branchRate = branchRateModel.getBranchRate(tree, tree.getNode(node));
+
+            return new OrderedEvents(reconstructedStates[node], reconstructedStates[parent],
+                    siteSpecificRateCategory, probabilities, nodeTime, parentTime, branchTime, branchRate);
+        }
 
         @Override
         public void setupStatistics() {
@@ -197,10 +205,6 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             return nodeToBufferMap;
         }
 
-//        private int map(final NodeRef node) {
-//            return nodeMap.getOrDefault(node.getNumber(), node.getNumber());
-//        }
-
         private int map(final int node) {
             return nodeMap.getOrDefault(node, node);
             // TODO map should be `int[]` and can be constructed during Traversal vectorization
@@ -216,12 +220,6 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             throw new RuntimeException("Not yet implemented");
         }
 
-//        @Override
-//        double[] getPostOrderPartials(final NodeRef node) {
-//            likelihoodDelegate.getPartials(map(node), tmpPostOrder);
-//            return tmpPostOrder;
-//        }
-
         @Override
         double[] getPostOrderPartials(int node) {
             likelihoodDelegate.getPartials(map(node), tmpPostOrder);
@@ -229,35 +227,31 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         }
 
         @Override
-        double[] getTransitionMatrix(int node, int parent) {
-            return getTransitionMatrix(tree.getNode(node), tree.getNode(parent));
+        public double[] getTransitionMatrix(int node, int parent) {
+            return getTransitionMatrix(tree.getNode(node), tree.getNode(parent), true);
         }
 
-//        @Override
-        double[] getTransitionMatrix(NodeRef node, NodeRef parent) {
+        //        @Override
+        double[] getTransitionMatrix(NodeRef node, NodeRef parent, boolean transpose) {
 
             double branchTime = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
             double branchLength = branchRateModel.getBranchRate(tree, node) * branchTime;
             double[] transitionMatrix = new double[stateCount * stateCount];
-            substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix, eigenDecomposition);
+            if (transpose) {
+                substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix, eigenDecomposition);
+            } else {
+                substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
+            }
             if (!TRANSPOSE_ONCE) {
                 EigenDecomposition.transposeInPlace(transitionMatrix, stateCount); // TODO save work by transposing eigen-decomposition once
             }
             return transitionMatrix;
         }
 
-//        @Override
-//        int getActiveNodeIndex(int nodeNumber) {
-//            return -1;
-//        }
-//
-//        @Override
-//        int getActiveMatrixIndex(int nodeNumber) {
-//            return -1;
-//        }
-
         private final double[] rootStateFrequencies;
     }
+
+    final BranchRateModel branchRateModel;
 
     protected AbstractRealizedDiscreteTraitDelegate(String name,
                                                     ProcessAlongTree likelihood,
@@ -269,6 +263,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         this.likelihood = likelihood;
         this.likelihoodDelegate = likelihoodDelegate;
         this.useTipPartials = useTipPartials;
+        this.branchRateModel = likelihood.getBranchRateModel();
 
         this.evolutionaryProcessDelegate = likelihoodDelegate.getEvolutionaryProcessDelegate();
         this.siteRateModel = likelihoodDelegate.getSiteRateModel();
@@ -292,6 +287,19 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         this.tmpTransitionMatrix = new double[stateCount * stateCount * categoryCount];
 
         this.useMAP = useMAP;
+
+        boolean logCompleteHistory = true;
+        CompleteHistoryAddOn mj = new CompleteHistoryAddOn("name", tree,
+                likelihoodDelegate.getEvolutionaryProcessDelegate().getBranchSubstitutionModel().getSubstitutionModels(),
+                likelihoodDelegate.getSiteRateModel(), this,
+                MarkovJumpsTraitProvider.ValueScaling.RAW, logCompleteHistory);
+
+        registerAddOn(mj);
+    }
+
+    public void registerAddOn(RealizedDiscreteAddOn addOn) {
+        addOn.constructTraits(treeTraitHelper);
+        addOns.add(addOn);
     }
 
     @Override
@@ -389,7 +397,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         }
     }
 
-    private int[] siteSpecificRateCategory;
+    protected int[] siteSpecificRateCategory;
 
     abstract double[] getRootStateFrequencies();
 
@@ -397,31 +405,82 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
     abstract double[] getPostOrderPartials(final int node);
 
-    abstract double[] getTransitionMatrix(final int node, final int parent);
+    public abstract double[] getTransitionMatrix(final int node, final int parent);
 
-//    abstract double[] getPostOrderPartials(final NodeRef node);
+//    public abstract int[] getStartingStates(int[] nodeStates,  int[] parentStates);
 
-//    abstract double[] getTransitionMatrix(final NodeRef node, final NodeRef parent);
+//    public abstract int[] getEndingStates(int[] nodeStates, )
 
-//    @Override
-//    protected void simulateRoot(final NodeRef root) {
-//
-//        final double[] frequencies = getRootStateFrequencies();
-//        final double[] postOrderPartial = getPostOrderPartials(root);
-//
-//        double[] conditional = tmpConditional;
-//        for (int j = 0; j < patternCount; j++) {
-//
-//            int category = siteSpecificRateCategory[j];
-//            int offset = category * stateCount * patternCount + j * patternCount;
-//
-//            for (int i = 0; i < stateCount; i++) {
-//                conditional[i] = postOrderPartial[offset + i] * frequencies[i];
-//            }
-//
-//            reconstructedStates[root.getNumber()][j] = drawChoice(conditional);
-//        }
-//    }
+    public abstract OrderedEvents getOrderedInformation(int node, int parent, double[] probabilities);
+
+    public static class OrderedEvents {
+
+        int[] startingStates;
+        int[] endingStates;
+        int[] categories;
+
+        double[] probabilities;
+
+        double startingTime;
+        double endingTime;
+
+        double branchTime;
+        double branchRate;
+
+        public OrderedEvents(int[] startingStates, int[] endingStates,
+                             int[] categories, double[] probabilities,
+                             double startingTime, double endingTime,
+                             double branchTime, double branchRate) {
+            this.startingStates = startingStates;
+            this.endingStates = endingStates;
+            this.categories = categories;
+            this.probabilities = probabilities;
+
+            if (startingTime == -0.0) {
+                startingTime = 0.0;
+            }
+
+            this.startingTime = startingTime;
+            this.endingTime = endingTime;
+            this.branchTime = branchTime;
+            this.branchRate = branchRate;
+
+        }
+
+//        public void normalize(StateHistory stateHistory) { }
+
+        public double[] getTransitionMatrix() {
+            return probabilities;
+        }
+
+        public double getBranchTime() {
+            return branchTime;
+        }
+
+        public double getBranchRate() {
+            return branchRate;
+        }
+
+        public int[] getCategories() {
+            return categories;
+        }
+
+        public int[] getStartingStates() {
+            return startingStates;
+        }
+
+        public int[] getEndingStates() {
+            return endingStates;
+        }
+
+        public double getStartingTime() {
+            return startingTime;
+        }
+
+        public double getEndingTime() {
+            return endingTime;
+        }
+    }
 
     @Override
     protected void simulateRoot(final int rootNumber) {
@@ -456,23 +515,6 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             simulateInternalNode(node, parent);
         }
     }
-
-//    @Override
-//    protected void simulateNode(NodeOperation op) {
-//
-//        final NodeRef parent = tree.getNode(op.getNodeNumber());
-//        final NodeRef node = tree.getNode(op.getLeftChild());
-//
-//        if (tree.isExternal(node)) {
-//            if (useTipPartials) {
-//                simulateExternalNodeWithPartials(node, parent);
-//            } else {
-//                simulateExternalNodeWithStates(node, parent);
-//            }
-//        } else {
-//            simulateInternalNode(node, parent);
-//        }
-//    }
 
     @SuppressWarnings("unused")
     private void simulateExternalNodeWithStates(final int node, final int parent) {
@@ -515,7 +557,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 //            }
 
 
-            throw new RuntimeException("Not yet implemented");
+        throw new RuntimeException("Not yet implemented");
     }
 
     private void simulateExternalNodeWithPartials(final int node, final int parent) {
@@ -546,6 +588,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
             boolean isAmbiguous = (statesWithProbability != 1);
 
+            final int nodeState;
             if (isAmbiguous) {
 
                 if (probabilities == null) {
@@ -557,10 +600,12 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
                             * probabilities[matrixOffset + parentState * stateCount + i];
                 }
 
-                reconstructedStates[node][j] = drawChoice(conditionalProbabilities);
+                nodeState = drawChoice(conditionalProbabilities);
             } else {
-                reconstructedStates[node][j] = unambiguousState;
+                nodeState = unambiguousState;
             }
+
+            reconstructedStates[node][j] = nodeState;
 
             if (MAS_DEBUG) {
                 String id = parent + "->" + node + " ";
@@ -571,7 +616,18 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
                 }
             }
         }
+
+        hook(node, parent, probabilities);
     }
+
+    protected void hook(final int node, final int parent, double[] probabilities) {
+
+        for (RealizedDiscreteAddOn addOn : addOns) {
+            addOn.hookCalculation(node, parent, probabilities);
+        }
+    }
+
+//    private final MarkovJumpsOnTreeWrapper mj;
 
     private void simulateInternalNode(final int node, final int parent) {
 
@@ -596,7 +652,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             if (MAS_DEBUG) {
                 String id = parent + "->" + node + " ";
                 System.err.println("new: " + id + new WrappedVector.Raw(conditionalProbabilities));
-                System.err.println("old: " + id + new WrappedVector.Raw(probabilities));
+                System.err.println("new: " + id + new WrappedVector.Raw(probabilities));
                 if (MAS_KILL) {
                     if (count > 10) {
                         System.exit(-1);
@@ -607,44 +663,22 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
             reconstructedStates[node][j] =  drawChoice(conditionalProbabilities);
         }
-//        hookCalculation(tree, parent, node, parentState, state, probabilities, rateCategory);
+
+        hook(node, parent, probabilities);
     }
+
+    public interface RealizedDiscreteAddOn {
+
+        void constructTraits(Helper treeTraitHelper);
+
+        void hookCalculation(final int node, final int parent, double[] probabilities);
+    }
+
+    private final List<RealizedDiscreteAddOn> addOns = new ArrayList<>();
 
     private static final boolean MAS_KILL = false;
     private static final boolean MAS_DEBUG = false;
     private int count = 0;
-
-//    private void simulateExternalNodeWithPartials(final NodeRef node, final NodeRef parent) {
-//    }
-//
-//    private void simulateExternalNodeWithStates(final NodeRef node, final NodeRef parent) {
-//    }
-
-//    private void simulateInternalNode(final NodeRef node, final NodeRef parent) {
-//
-//        double[] conditionalProbabilities = tmpConditional;
-//        double[] partialLikelihood = getPostOrderPartials(node);
-//        double[] probabilities = getTransitionMatrix(node, parent);
-//        int[] parentStates = reconstructedStates[parent.getNumber()];
-//
-//        for (int j = 0; j < patternCount; ++j) {
-//
-//            int parentState = parentStates[j];
-//            int childIndex = j * stateCount;
-//
-//            int category = siteSpecificRateCategory[j];
-//            int matrixOffset = category * stateCount * stateCount;
-//            int partialOffset = category * stateCount * patternCount;
-//
-//            for (int i = 0; i < stateCount; i++) {
-//                    conditionalProbabilities[i] = partialLikelihood[partialOffset + childIndex + i]
-//                            * probabilities[matrixOffset + parentState * stateCount + i]; // need a transpose here!!!
-//            }
-//
-//            reconstructedStates[node.getNumber()][j] =  drawChoice(conditionalProbabilities);
-//        }
-////        hookCalculation(tree, parent, node, parentState, state, probabilities, rateCategory);
-//    }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
@@ -664,25 +698,13 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
 
             operations[k    ] = op.getNodeNumber(); // Parent sample
             operations[k + 1] = op.getLeftChild();  // Node sample
-//            operations[k + 2] = getActiveNodeIndex(op.getLeftChild());   // Node post-order partial
-//            operations[k + 3] = getActiveMatrixIndex(op.getLeftChild()); // Node branch info
             operations[k + 4] = op.getLeftChild() < tree.getExternalNodeCount() ? 1 : 0;    // Is node external?
-
-//            operations[k    ] = op.getNodeNumber(); // Parent sample
-//            operations[k + 1] = op.getLeftChild();  // Node sample
-//            operations[k + 2] = op.getLeftChild() < tree.getExternalNodeCount() ? 1 : 0;    // Is node external?
 
             k += 5;
         }
 
         return nodeOperations.size();
     }
-
-//    private static final int OPERATION_LENGTH = 3;
-
-//    abstract int getActiveNodeIndex(int nodeNumber);
-//
-//    abstract int getActiveMatrixIndex(int nodeNumber);
 
     private static String formattedState(int[] state, CodeFormatter formatter) {
         StringBuilder sb = new StringBuilder();

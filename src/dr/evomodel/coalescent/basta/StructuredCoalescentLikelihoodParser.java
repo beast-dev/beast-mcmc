@@ -33,6 +33,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treedatalikelihood.markovjumps.MarkovJumpsParserUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -156,9 +157,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                                     new GenericBastaLikelihoodDelegate("name", treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
-                        return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+
+                        BastaLikelihood likelihood = new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
                                 popSizes, r, branchRateModel, delegate, subIntervals, useAmbiguities,
                                 dataType, tag, useMAP);
+
+                        MarkovJumpsParserUtils.parseXMLObject(xo, treeModel, likelihood);
+
+                        return likelihood;
                     } else {
                         return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
                                 dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,

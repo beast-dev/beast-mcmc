@@ -139,6 +139,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         int threads = xo.getAttribute(THREADS, 1);
 
+        String name = xo.getId();
+
         if (treeModel != null) {
             try {
                 if (USE_OLD_CODE) {
@@ -148,21 +150,21 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     if (USE_DELEGATE) {
                         final BastaLikelihoodDelegate delegate;
                         if (USE_BEAGLE) {
-                            delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
+                            delegate = new BeagleBastaLikelihoodDelegate(name, treeModel,
                                     generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
                             delegate = (threads != 1) ?
-                                    new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                    new ParallelBastaLikelihoodDelegate(name, treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), threads, TRANSPOSE) :
-                                    new GenericBastaLikelihoodDelegate("name", treeModel,
+                                    new GenericBastaLikelihoodDelegate(name, treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
 
-                        BastaLikelihood likelihood = new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+                        BastaLikelihood likelihood = new BastaLikelihood(name, treeModel, patternList, generalSubstitutionModel,
                                 popSizes, r, branchRateModel, delegate, subIntervals, useAmbiguities,
                                 dataType, tag, useMAP);
 
-                        MarkovJumpsParserUtils.parseXMLObject(xo, treeModel, likelihood);
+                        MarkovJumpsParserUtils.parseXMLObject(xo, treeModel, likelihood, tag);
 
                         return likelihood;
                     } else {

@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.ModelListener;
 
@@ -17,4 +18,6 @@ public interface ProcessAlongTree {
     void addModelListener(ModelListener listener);
 
     double getLogLikelihood();
+
+    void addTrait(TreeTrait treeTrait);
 }

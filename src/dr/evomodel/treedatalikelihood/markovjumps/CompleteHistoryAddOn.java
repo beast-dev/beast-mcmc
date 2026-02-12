@@ -23,8 +23,7 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
                                 List<SubstitutionModel> branchSubstitutionModels,
                                 SiteRateModel siteRateModel,
                                 AbstractRealizedDiscreteTraitDelegate ancestralTraitDelegate,
-                                MarkovJumpsTraitProvider.ValueScaling valueScaling,
-                                boolean logCompleteHistory) {
+                                MarkovJumpsTraitProvider.ValueScaling valueScaling) {
 
         this.name = name;
         this.siteRateModel = siteRateModel;
@@ -68,10 +67,7 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
     private final String name;
     private final int stateCount;
 
-    private boolean useCompactHistory = true; // TODO final
     private final MarkovJumpsTraitProvider.ValueScaling valueScaling;
-
-    private final String stateHistoryName = "stateHistory";
 
     @Override
     public void constructTraits(TreeTraitProvider.Helper treeTraitHelper) {
@@ -166,6 +162,10 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
                 node, expectedJumps, stateHistories, histories);
     }
 
+    StateHistory[] getRawHistory(int node) {
+        return stateHistories[node];
+    }
+
     private void computeSampledMarkovJumpsForBranch(UniformizedSubstitutionModel markovJumpsModel,
                                                     AbstractRealizedDiscreteTraitDelegate.OrderedEvents events,
                                                     int destinationIndex,
@@ -214,62 +214,10 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
                 if (histories[destinationIndex] == null) {
                     histories[destinationIndex] = new String[patternCount];
                 }
-
-                int site = (useCompactHistory) ? j + 1 : -1;
-                String str1 =  sh.toStringChanges(site, markovJumpsModel.getSubstitutionModel().getDataType());
+                // site == -1 has special behavior
+                String str1 =  sh.toStringChanges(j + 1, markovJumpsModel.getSubstitutionModel().getDataType());
                 histories[destinationIndex][j] = str1;
             }
-
-            int m = 0; ++m;
-
         }
     }
-
-//    @Override
-//    public TreeTrait[] getTreeTraits() {
-//        return new TreeTrait[0];
-//    }
-//
-//    @Override
-//    public TreeTrait getTreeTrait(String key) {
-//        return null;
-//    }
-
-//    private void computeSampledMarkovJumpsForBranch(UniformizedSubstitutionModel thisMarkovJumps,
-//                                                    double substTime,
-//                                                    double branchRate,
-//                                                    int childNum,
-//                                                    int[] parentStates,
-//                                                    int[] childStates,
-//                                                    double unused1,
-//                                                    double childTime,
-//                                                    double[] probabilities,
-//                                                    boolean scaleByTime,
-//                                                    double[][] thisExpectedJumps,
-//                                                    int[] rateCategory,
-//                                                    boolean saveHistory) {
-//
-//
-//        // Fill condJumps with sampled values for this branch for each site
-//        for (int j = 0; j < patternCount; j++) {
-//            final int category = rateCategory == null ? 0 : rateCategory[j];
-//            final double categoryRate = siteRateModel.getRateForCategory(category);
-//            final int matrixIndex = category * stateCount * stateCount;
-//            double value = thisMarkovJumps.computeCondStatMarkovJumps(
-//                    parentStates[j],
-//                    childStates[j],
-//                    substTime * branchRate * categoryRate,
-//                    probabilities[matrixIndex + parentStates[j] * stateCount + childStates[j]]
-//            );
-//            if (scaleByTime) {
-//                value /= branchRate * categoryRate;
-//            }
-//            thisExpectedJumps[childNum][j] = value;
-//            if (saveHistory) {
-//                int site = (useCompactHistory) ? j + 1 : -1;
-//                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(site, parentTime, childTime);
-//            }
-//        }
-//    }
-
 }

@@ -36,6 +36,7 @@ import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.basta.BastaLikelihood;
 import dr.evomodel.coalescent.basta.BastaLikelihoodDelegate;
@@ -45,8 +46,6 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -287,20 +286,18 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         this.tmpTransitionMatrix = new double[stateCount * stateCount * categoryCount];
 
         this.useMAP = useMAP;
-
-        boolean logCompleteHistory = true;
-        CompleteHistoryAddOn mj = new CompleteHistoryAddOn("name", tree,
-                likelihoodDelegate.getEvolutionaryProcessDelegate().getBranchSubstitutionModel().getSubstitutionModels(),
-                likelihoodDelegate.getSiteRateModel(), this,
-                MarkovJumpsTraitProvider.ValueScaling.RAW, logCompleteHistory);
-
-        registerAddOn(mj);
     }
 
     public void registerAddOn(RealizedDiscreteAddOn addOn) {
+        TreeTraitProvider.Helper treeTraitHelper = new Helper();
         addOn.constructTraits(treeTraitHelper);
         addOns.add(addOn);
+        for (TreeTrait trait : treeTraitHelper.getTreeTraits()) {
+            likelihood.addTrait(trait);
+        }
     }
+
+    public int getStateCount() { return stateCount; }
 
     @Override
     public boolean isVectorized() {

@@ -3,6 +3,7 @@ package dr.evomodelxml.treedatalikelihood.markovjumps;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.basta.BastaLikelihood;
 import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
+import dr.evomodel.treedatalikelihood.markovjumps.MarkovJumpRewardAddOn;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
 import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.model.Parameter;
@@ -14,6 +15,7 @@ import java.util.List;
 public class MarkovJumpsParserUtils {
 
     private static final String COUNTS = "counts";
+    private static final String REWARDS = "rewards";
 
     private static boolean isTotalCounts(Parameter p, int stateCount) {
         for (int i = 0; i < stateCount; ++i) {
@@ -27,12 +29,18 @@ public class MarkovJumpsParserUtils {
         return true;
     }
 
-    public static void parseXMLObject(XMLObject xo, Tree tree, BastaLikelihood likelihood) throws XMLParseException {
+    public static void parseXMLObject(XMLObject xo,
+                                      Tree tree,
+                                      BastaLikelihood likelihood,
+                                      String tag) throws XMLParseException {
+
+        int stateCount = likelihood.getPatternList().getDataType().getStateCount();
+        AbstractRealizedDiscreteTraitDelegate traitDelegate = likelihood.getRealizedTraitDelegate();
+        CompleteHistoryAddOn completeHistoryAddOn = null;
 
         XMLObject countXo = xo.getChild(COUNTS);
-
         if (countXo != null) {
-            int stateCount = likelihood.getPatternList().getDataType().getStateCount();
+
             List<Parameter> countParameters = countXo.getAllChildren(Parameter.class);
 
             int indexOfTotalCounts = -1;
@@ -54,17 +62,43 @@ public class MarkovJumpsParserUtils {
 
             countParameters.remove(indexOfTotalCounts);
 
-            AbstractRealizedDiscreteTraitDelegate traitDelegate = likelihood.getRealizedTraitDelegate();
-
-            CompleteHistoryAddOn completeHistoryAddOn = new CompleteHistoryAddOn("name", tree,
+            completeHistoryAddOn = new CompleteHistoryAddOn(tag, tree,
                     likelihood.getEvolutionaryProcessDelegate().getBranchSubstitutionModel().getSubstitutionModels(),
                     likelihood.getSiteRateModel(), traitDelegate,
-                    MarkovJumpsTraitProvider.ValueScaling.RAW, true);
+                    MarkovJumpsTraitProvider.ValueScaling.RAW);
 
             traitDelegate.registerAddOn(completeHistoryAddOn);
 
             for (Parameter register : countParameters) {
-                // TODO add AddOns that depends on completeHistoryAddOn
+
+                if (register.getDimension() != stateCount * stateCount) {
+                    throw new XMLParseException("Invalid Markov jump register dimension");
+                }
+
+                MarkovJumpRewardAddOn markovJumpRewardAddOn = new MarkovJumpRewardAddOn(tag, tree,
+                        traitDelegate, completeHistoryAddOn, register, MarkovJumpsTraitProvider.ValueScaling.RAW);
+
+                traitDelegate.registerAddOn(markovJumpRewardAddOn);
+            }
+        }
+
+        XMLObject rewardXo = xo.getChild(REWARDS);
+        if (rewardXo != null) {
+            if (completeHistoryAddOn == null) {
+                throw new XMLParseException("Must provide a total-count parameter");
+            }
+
+            List<Parameter> rewardParameters = rewardXo.getAllChildren(Parameter.class);
+            for (Parameter register : rewardParameters) {
+
+                if (register.getDimension() != stateCount) {
+                    throw new XMLParseException("Invalid Markov reward register dimension");
+                }
+
+                MarkovJumpRewardAddOn markovJumpRewardAddOn = new MarkovJumpRewardAddOn(tag, tree,
+                        traitDelegate, completeHistoryAddOn, register, MarkovJumpsTraitProvider.ValueScaling.RAW);
+
+                traitDelegate.registerAddOn(markovJumpRewardAddOn);
             }
         }
     }

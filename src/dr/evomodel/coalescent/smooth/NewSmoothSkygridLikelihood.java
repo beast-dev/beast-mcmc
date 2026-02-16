@@ -143,14 +143,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 tmpC[i] = gi * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti, s));
 
                 sum = 0;
-                final double secondDoubleExtra = (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(- ti, s)) / s;
                 for (int k = 0; k < gridPointParameter.getDimension(); k++) {
                     final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                     final double xk = gridPointParameter.getParameterValue(k);
-                    if (Math.abs(xk - ti) < magicSmallThreshold) {
-                        sum += 0.5 * popSizeInverseDifference;
-                        secondDoubleIntegralExtra += gi * popSizeInverseDifference * secondDoubleExtra;
-                    } else {
+                    if (k != gridIndexUniqueTime[i]) {
                         sum += popSizeInverseDifference * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s);
                     }
                 }
@@ -162,12 +158,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                 tmpD[k] = popSizeInverseDifference * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s));
                 double sum = 0;
-                for (int i = 0; i < tree.getNodeCount(); i++) {
-                    final double ti = tree.getNodeHeight(tree.getNode(i));
-                    final double gi = getLineageEffect(i);
-                    if (Math.abs(ti - xk) < magicSmallThreshold) {
-                        sum += 0.5 * gi;
-                    } else {
+                for (int i = 0; i < numberUniqueNodeTimes; i++) {
+                    final double ti = uniqueNodeTimes[i];
+                    final double gi = sumLineageEffects[i];
+                    if (i != uniqueTimeIndexForGrid[k]) {
                         sum += gi * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
                     }
                 }
@@ -266,11 +260,18 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double s = getSmoothRate();
         double sum = 0;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
             sum += tmpC[i] * tmpB[i];
         }
         for (int k = 0; k < gridPointParameter.getDimension(); k++) {
             sum += tmpD[k] * tmpE[k];
+            if (uniqueTimeIndexForGrid[k] > -1) {
+                final double xk = gridPointParameter.getParameterValue(k);
+                final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                sum += gi * popSizeInverseDifference * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s)
+                        + GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - xk, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(- xk, s));
+            }
         }
         sum /= s;
         sum += secondDoubleIntegralExtra + (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;

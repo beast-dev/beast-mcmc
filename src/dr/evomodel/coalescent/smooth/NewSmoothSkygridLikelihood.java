@@ -371,8 +371,8 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private double getCubicIntegral(double t0, double t) {
         final double s = getSmoothRate();
         final double exponent = Math.exp(s * (t - t0));
-        if (isLimitingCase(t0, t)) {
-            return t0 - t;
+        if (isLimitingCase(t0, t) || isLimitingCase(t, t0)) {
+            return t > t0 ? t - t0 : 0;
         } else {
             return ((3 + 4 * exponent)/2/(1+exponent)/(1+exponent) + GlobalSigmoidSmoothFunction.getLogOnePlusExponential(t0 - t, s)) / s;
         }
@@ -463,8 +463,49 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         }
     }
 
-    private double getFirstTripleIntegralBruteForce() {
-        sortNodeTimes();
+
+
+
+    private double getFirstTripleIntegral() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        final double s = getSmoothRate();
+        double sum = 0;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            sum += tmpA[i] * tmpB[i] * tmpC[i];
+        }
+        for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+            final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+            double thisExtra = 0;
+            if (uniqueTimeIndexForGrid[k] > -1) {
+                final double ti = uniqueNodeTimes[uniqueTimeIndexForGrid[k]];
+                final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
+                final double inverseOnePlusExpTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s);
+                thisExtra -= inverseOnePlusExpTiMinusT * 0.5 * tmpA[uniqueTimeIndexForGrid[k]];
+
+                double firstSumOverJ = 0;
+                double secondSumOverJ = 0;
+                for (int j = 0; j < numberUniqueNodeTimes; j++) {
+                    if (j != uniqueTimeIndexForGrid[k]) {
+                        final double gj = sumLineageEffects[j];
+                        final double tj = uniqueNodeTimes[j];
+                        final double inverseOneMinusExpTiMinusTj = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - tj, s);
+                        final double inverseOneMinusExpTjMinusTi = - (1 + inverseOneMinusExpTiMinusTj);
+                        firstSumOverJ += inverseOneMinusExpTiMinusTj * inverseOneMinusExpTiMinusTj * tmpC[j];
+                        secondSumOverJ += gj * (inverseOneMinusExpTjMinusTi + inverseOneMinusExpTjMinusTi * inverseOneMinusExpTiMinusTj);
+                    }
+                }
+                thisExtra += firstSumOverJ + secondSumOverJ * tmpC[uniqueTimeIndexForGrid[k]];
+                sum += thisExtra * gi * popSizeInverseDifference;
+            }
+        }
+        sum /= s;
+        sum += rootTime * (2 - 2 * tree.getNodeCount()) * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+
+        return sum;
+    }
+
+    private double getTripleIntegralBruteForce() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         double sum = 0;
@@ -477,17 +518,15 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 for (int j = 0; j < tree.getNodeCount(); j++) {
                     final double gj = getLineageEffect(j);
                     final double tj = tree.getNodeHeight(tree.getNode(j));
-                    if (i != j) {
                         final double newAmount = popSizeInverseDifference * gi * gj * getCompleteTripleIntegral(ti, tj, xk, rootTime);
                         sum += newAmount;
-                    }
                 }
             }
         }
         return sum;
     }
 
-    private double getFirstTripleIntegralApproximate() {
+    private double getTripleIntegralApproximate() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         double sum = 0;
@@ -502,7 +541,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                     final double gj = getLineageEffect(j);
                     final double tj = tree.getNodeHeight(tree.getNode(j));
                     final double integralApproximation = rootTime - (tj > cutoff ? tj : cutoff);
-                    if (i != j && integralApproximation > 0) {
+                    if (integralApproximation > 0) {
                         sum += popSizeInverseDifference * gi * gj * integralApproximation;
                     }
                 }
@@ -567,8 +606,9 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sb.append("Third double integral brute force = " + getThirdDoubleIntegralBruteForce() + "\n");
             sb.append("Third double integral approximate = " + getThirdDoubleIntegralApproximate() + "\n");
 
-            sb.append("First triple integral brute force = " + getFirstTripleIntegralBruteForce() + "\n");
-            sb.append("First triple integral approximate = " + getFirstTripleIntegralApproximate() + "\n");
+            sb.append("First triple integral = " + getFirstTripleIntegral() + "\n");
+            sb.append("First triple integral brute force = " + getTripleIntegralBruteForce() + "\n");
+            sb.append("First triple integral approximate = " + getTripleIntegralApproximate() + "\n");
 
 
         }

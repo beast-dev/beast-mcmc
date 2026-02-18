@@ -31,7 +31,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -134,8 +136,6 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private double[] tmpD;
     private double[] tmpE;
     private double[] tmpF;
-    private double firstDoubleIntegralExtra;
-    private double secondDoubleIntegralExtra;
 
     private void cacheTmps() {
         if (!cacheKnown) {
@@ -144,8 +144,6 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             final double rootTime = tree.getNodeHeight(tree.getRoot());
             final double s = getSmoothRate();
 
-            firstDoubleIntegralExtra = 0;
-            secondDoubleIntegralExtra = 0;
             for (int i = 0; i < numberUniqueNodeTimes; i++) {
                 final double ti = uniqueNodeTimes[i];
                 final double gi = sumLineageEffects[i];
@@ -743,6 +741,16 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     @Override
     public double getCoalescentEventsStatisticValue(int i) {
         return 0;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        cacheKnown = false;
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        cacheKnown = false;
+        likelihoodKnown = false;
     }
 
     final private static boolean DEBUG = false;

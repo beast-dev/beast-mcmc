@@ -585,7 +585,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         }
 
 
-        return (sum + sum2 + sum3) / s;
+        return (sum + sum2 + 2 * sum3) / s;
     }
 
     private double getTripleIntegralWithSquares() {

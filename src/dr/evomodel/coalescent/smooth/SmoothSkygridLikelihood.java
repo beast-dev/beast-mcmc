@@ -53,6 +53,7 @@ import java.util.List;
  * @author Yuwei Bao
  * @author Marc A. Suchard
  */
+@Deprecated
 public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implements Citable, Reportable {
 
     private final List<TreeModel> trees;
@@ -333,7 +334,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                     if (j != i) {
                         final double timeJ = tmpTimes[j];
                         final double lineageCountEffect = tmpLineageEffect[j];
-                        final double thisInverse = smoothFunction.getInverseOneMinusExponential(timeJ - timeI, smoothRate.getParameterValue(0));
+                        final double thisInverse = tmpCounts[j] * (isNearZero(timeJ - timeI) ? 1.0 : smoothFunction.getInverseOneMinusExponential(timeJ - timeI, smoothRate.getParameterValue(0)));
                         sum += lineageCountEffect * thisInverse;
                     }
                 }
@@ -347,7 +348,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                     final double currentPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k));
                     final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
                     final double gridTime = gridPointParameter.getParameterValue(k);
-                    final double thisInverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
+                    final double thisInverse = isNearZero(gridTime - timeI) ? 1.0 : smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
                     sum += (nextPopSizeInverse - currentPopSizeInverse) * thisInverse;
                 }
                 tmpB[i] = sum;
@@ -369,7 +370,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 for (int i = 0; i < uniqueTimes; i++) {
                     final double timeI = tmpTimes[i];
                     final double lineageCountEffect = tmpLineageEffect[i];
-                    final double tmp = smoothFunction.getInverseOneMinusExponential(timeI - gridTime, smoothRate.getParameterValue(0)) *
+                    final double tmp = tmpCounts[i] * (isNearZero(timeI - gridTime) ? 1.0 : smoothFunction.getInverseOneMinusExponential(timeI - gridTime, smoothRate.getParameterValue(0))) *
                             lineageCountEffect;
                     sum += tmp;
                     quadraticSum += tmp * tmp;
@@ -379,6 +380,12 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             }
             tmpSumsKnown = true;
         }
+    }
+
+    private final double magicSmallThreshold = 1E-4; // XJ: about 1-hour difference if time in years
+
+    private boolean isNearZero(double a) {
+        return Math.abs(a) < magicSmallThreshold;
     }
 
     private void calculateTmpSumDerivatives() {
@@ -424,7 +431,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
     }
 
-    protected double calculateLogLikelihood() {
+    protected double calculateLogLikelihood3() {
         assert(trees.size() == 1);
         if (!likelihoodKnown) {
             TreeModel tree = trees.get(0);
@@ -451,7 +458,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 logPopulationSizeInverse += Math.log(getSmoothPopulationSizeInverse(tree.getNodeHeight(node), tree.getNodeHeight(tree.getRoot())));
             }
 
-            logLikelihood = logPopulationSizeInverse + singleIntegration + doubleIntegrationSum + tripleIntegrationSum;
+            logLikelihood = logPopulationSizeInverse - singleIntegration - doubleIntegrationSum - tripleIntegrationSum;
 
             likelihoodKnown = true;
         }
@@ -515,15 +522,21 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
                 final double nextPopSizeInverse = Math.exp(-logPopSizeParameter.getParameterValue(k + 1));
                 final double gridTime = gridPointParameter.getParameterValue(k);
                 final double inverse = smoothFunction.getInverseOneMinusExponential(gridTime - timeI, smoothRate.getParameterValue(0));
-                thisResult += (nextPopSizeInverse - currentPopSizeInverse) / smoothRate.getParameterValue(0)
+                final double thisSum = isNearZero(timeI - gridTime) ? getCubicSigmoidIntegral(smoothRate.getParameterValue(0), endTime, gridTime) - getCubicSigmoidIntegral(smoothRate.getParameterValue(0), 0, gridTime) : (nextPopSizeInverse - currentPopSizeInverse) / smoothRate.getParameterValue(0)
                         * (inverse * commonSecondTermMultiplier + (2.0 - inverse) * inverse * tmpC[i] +
                         (1 - inverse) * (1 - inverse) * tmpD[k]);
+                thisResult += thisSum;
             }
             thisResult *= lineageCountEffect;
             tripleWithQuadraticIntegrationSum += thisResult;
         }
         tripleWithQuadraticIntegrationSum *= -0.5;
         return tripleIntegrationSum + tripleWithQuadraticIntegrationSum;
+    }
+
+    private double getCubicSigmoidIntegral(double s, double t, double ti) {
+        final double exponential = Math.exp(s * (t - ti));
+        return (3 + 4 * exponential) / 2 / (1 + exponential) / (1 + exponential) / s + (Math.log(s) + Math.log(1 + exponential)) / s;
     }
 
     private void getGradientWrtNodeHeightFromTripleIntegration(double startTime, double endTime, int maxGridIndex,
@@ -661,7 +674,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         }
     }
 
-    protected double calculateLogLikelihood2() {
+    protected double calculateLogLikelihood() {
         assert(trees.size() == 1);
         if (!intervalsKnown) {
             for(IntervalList intervalList : intervalsList){
@@ -720,7 +733,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return logPopulationSizeInverse - singleSigmoidIntegralSums - pairSigmoidIntegralSums;
     }
 
-    public static int getMaxGridIndex(Parameter gridPointParameter, double endTime) {
+    public int getMaxGridIndex(Parameter gridPointParameter, double endTime) {
         int maxGridIndex = gridPointParameter.getDimension() - 1;
         while (gridPointParameter.getParameterValue(maxGridIndex) > endTime && maxGridIndex > 0) {
             maxGridIndex--;

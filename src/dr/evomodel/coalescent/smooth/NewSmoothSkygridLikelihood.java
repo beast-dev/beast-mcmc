@@ -476,10 +476,57 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double tripleWithSquareIntegral = getTripleIntegralWithSquares();
         final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
-        return firstTripleIntegral + tripleWithSquareIntegral + allTs;
+        final double firstTripleIntegralApprox = getFirstTripleIntegralBruteForce();
+        final double secondTripleIntegralApprox = getSecondTripleIntegralBruteForce();
+
+        final double result = firstTripleIntegral + tripleWithSquareIntegral;
+        final double approx = firstTripleIntegralApprox + secondTripleIntegralApprox;
+
+        return result + allTs;
 
     }
 
+    private double getFirstTripleIntegralBruteForce() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        double sumGiGj = 0;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            final double ti = uniqueNodeTimes[i];
+            final double gi = sumLineageEffects[i];
+            for (int j = 0; j < numberUniqueNodeTimes; j++) {
+                final double tj = uniqueNodeTimes[j];
+                final double gj = sumLineageEffects[j];
+                if (i != j) {
+                    for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+                        final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                        final double xk = gridPointParameter.getParameterValue(k);
+                        sum += gi * gj * popSizeInverseDifference * getCompleteTripleIntegral(ti, tj, xk, rootTime);
+                    }
+                    sumGiGj += gi * gj;
+                }
+            }
+        }
+        return sum - rootTime * sumGiGj * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+    }
+
+    private double getSecondTripleIntegralBruteForce() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        double sum = 0;
+        double sumGiSquare = 0;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            final double ti = uniqueNodeTimes[i];
+            final double gi = sumLineageEffects[i];
+            for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                final double xk = gridPointParameter.getParameterValue(k);
+                sum += gi * gi * popSizeInverseDifference * getCompleteTripleIntegral(ti, ti, xk, rootTime);
+            }
+            sumGiSquare += gi * gi;
+        }
+        return sum - rootTime * sumGiSquare * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+    }
 
     private double getFirstTripleIntegral() {
         TreeModel tree = trees.get(0);
@@ -510,8 +557,6 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sum2 += (tmpE[k] * tmpE[k] - tmpF[k]) * tmpD[k];
         }
 
-        sum += sum2;
-
         double sum3 = 0;
         for (int k = 0; k < gridPointParameter.getDimension(); k++) {
             final double popSizeInverseDifference = getPopSizeInverseDifference(k);
@@ -538,23 +583,21 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 sum3 += thisExtra * popSizeInverseDifference;
             }
         }
-        sum += sum3;
-        sum /= s;
 
 
-        return sum;
+        return (sum + sum2 + sum3) / s;
     }
 
     private double getTripleIntegralWithSquares() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double s = getSmoothRate();
-        double sum = 0;
+        double sum1 = 0;
         for (int i = 0; i < numberUniqueNodeTimes; i++) {
             final double ti = uniqueNodeTimes[i];
             final double gi = sumLineageEffects[i];
             final double inverseOnePlusExpTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s);
-            sum -= gi * gi * inverseOnePlusExpTiMinusT * tmpB[i];
+            sum1 -= gi * gi * inverseOnePlusExpTiMinusT * tmpB[i];
             double sumOverK = 0;
 
             for (int k = 0; k < gridPointParameter.getDimension(); k++) {
@@ -564,11 +607,13 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                     final double inverseOneMinusExpTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
                     final double inverseOneMinusExpXkMinusTi = 1 - inverseOneMinusExpTiMinusXk;
 
-                    sumOverK += popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpXkMinusTi);
+                    sumOverK += popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk);
                 }
             }
-            sum += sumOverK * gi * tmpC[i];
+            sum1 += sumOverK * gi * tmpC[i];
         }
+
+        double sum2 = 0;
 
         for (int k = 0; k < gridPointParameter.getDimension(); k++) {
             final double xk = gridPointParameter.getParameterValue(k);
@@ -581,23 +626,22 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                     sumOverI += gi * gi * inverseOneMinusExpTiMinusXk * inverseOneMinusExpTiMinusXk;
                 }
             }
-            sum += sumOverI * tmpD[k];
+            sum2 += sumOverI * tmpD[k];
         }
 
+        double sum3 = 0;
         for (int k = 0; k < gridPointParameter.getDimension(); k++) {
             if (uniqueTimeIndexForGrid[k] > -1) {
                 final double ti = gridPointParameter.getParameterValue(k);
                 final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
                 final double popSizeInverseDifference = getPopSizeInverseDifference(k);
 
-                sum += gi * gi * popSizeInverseDifference * (getCompleteTripleIntegral(ti, ti, ti, rootTime) - rootTime * s);
+                sum3 += gi * gi * popSizeInverseDifference * ((getCompleteTripleIntegral(ti, ti, ti, rootTime) - rootTime) * s);
 
             }
         }
 
-        sum /= s;
-
-        return sum;
+        return (sum1 + sum2 + sum3) / s;
     }
 
     private double getTripleIntegralBruteForce() {

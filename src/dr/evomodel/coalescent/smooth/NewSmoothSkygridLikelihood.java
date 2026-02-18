@@ -753,6 +753,11 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         likelihoodKnown = false;
     }
 
+    protected void restoreState() {
+        super.restoreState();
+        cacheKnown = false;
+    }
+
     final private static boolean DEBUG = false;
 
     @Override

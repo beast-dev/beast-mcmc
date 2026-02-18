@@ -109,6 +109,24 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return getDoubleSigmoidIntegral(ti, tj, t) - getDoubleSigmoidIntegral(ti, tj, 0);
     }
 
+    private double getSmoothPopSizeInverse(double t) {
+        double sum = Math.exp(-logPopSizeParameter.getParameterValue(0));
+        for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+            final double xk = gridPointParameter.getParameterValue(k);
+            final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+            sum += popSizeInverseDifference * GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(xk - t, getSmoothRate());
+        }
+        return sum;
+    }
+
+    private double getAllLogSmoothPopSize() {
+        double sum = 0;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            sum += sumLineageEffects[i] * Math.log(getSmoothPopSizeInverse(uniqueNodeTimes[i]));
+        }
+        return sum;
+    }
+
 
     private double[] tmpA;
     private double[] tmpB;
@@ -278,7 +296,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             }
         }
         sum /= s;
-        sum += secondDoubleIntegralExtra + (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
+        sum += (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
         return sum;
     }
 
@@ -335,7 +353,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         for (int i = 0; i < tree.getNodeCount(); i++) {
             sum -= getLineageEffect(i) * (rootHeight - tree.getNodeHeight(tree.getNode(i)));
         }
-        return sum;
+        return sum * Math.exp(-logPopSizeParameter.getParameterValue(0));
     }
 
     private double getCompleteSingleSigmoidIntegral(double ti, double t) {
@@ -357,7 +375,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         for (int i = 0; i < numberUniqueNodeTimes; i++) {
             sum -= sumLineageEffects[i] * getCompleteSingleSigmoidIntegral(uniqueNodeTimes[i], rootTime);
         }
-        return sum;
+        return sum * Math.exp(-logPopSizeParameter.getParameterValue(0));
     }
 
     private double getTripleIntegralFragment(double t0, double t1, double t2, double t) {
@@ -476,13 +494,11 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double tripleWithSquareIntegral = getTripleIntegralWithSquares();
         final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
-        final double firstTripleIntegralApprox = getFirstTripleIntegralBruteForce();
-        final double secondTripleIntegralApprox = getSecondTripleIntegralBruteForce();
+//        final double firstTripleIntegralApprox = getFirstTripleIntegralBruteForce();
+//        final double secondTripleIntegralApprox = getSecondTripleIntegralBruteForce();
+//        final double approx = firstTripleIntegralApprox + secondTripleIntegralApprox;
 
-        final double result = firstTripleIntegral + tripleWithSquareIntegral;
-        final double approx = firstTripleIntegralApprox + secondTripleIntegralApprox;
-
-        return result + allTs;
+        return  firstTripleIntegral + tripleWithSquareIntegral + allTs;
 
     }
 
@@ -689,12 +705,24 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return sum;
     }
 
+    private double getDoubleIntegral() {
+        final double firstDouble = getFirstDoubleIntegral();
+        final double secondDouble = getSecondDoubleIntegral();
+        final double thirdDouble = getThirdDoubleIntegral();
+        return Math.exp(-logPopSizeParameter.getParameterValue(0)) * (firstDouble + secondDouble) - thirdDouble;
+    }
+
     @Override
     protected double calculateLogLikelihood() {
         if (!cacheKnown) {
             cacheTmps();
         }
-        return 0;
+        final double tripleIntegrals = getTripleIntegral();
+        final double doubleIntegrals = getDoubleIntegral();
+        final double singleIntegrals = getAllSingleIntegrals();
+        final double negativeLogPopSizeSum = getAllLogSmoothPopSize();
+
+        return negativeLogPopSizeSum - (singleIntegrals + doubleIntegrals + tripleIntegrals)/2;
     }
 
     @Override
@@ -717,7 +745,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return 0;
     }
 
-    final private static boolean DEBUG = true;
+    final private static boolean DEBUG = false;
 
     @Override
     public String getReport() {

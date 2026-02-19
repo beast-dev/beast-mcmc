@@ -123,8 +123,9 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
 
     private double getAllLogSmoothPopSize() {
         double sum = 0;
-        for (int i = 0; i < numberUniqueNodeTimes; i++) {
-            sum += sumLineageEffects[i] * Math.log(getSmoothPopSizeInverse(uniqueNodeTimes[i]));
+        TreeModel tree = trees.get(0);
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            sum += Math.log(getSmoothPopSizeInverse(tree.getNodeHeight(tree.getNode(i + tree.getExternalNodeCount()))));
         }
         return sum;
     }

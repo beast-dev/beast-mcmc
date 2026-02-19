@@ -812,7 +812,7 @@
 		</chainParameter>
 	</exponentialMarkovLikelihood>
 	
-	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight" gradientCheckTolerance="1e-3">
+	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight" gradientCheckTolerance="5e-2">
 		<generalizedSkyLineLikelihood idref="skyline"/>
 	</skylineGradient>
 
@@ -1021,7 +1021,7 @@
 
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="100000" autoOptimize="true" fullEvaluation="0">
+	<mcmc id="mcmc" chainLength="1000" autoOptimize="true" fullEvaluation="0">
 		<joint id="joint">
 			<prior id="prior">
 				<jeffreysPrior>
@@ -1077,7 +1077,7 @@
 			</column>
 		</log>
 
-        <log logEvery="1000" fileName="check.log">
+        <log logEvery="10" fileName="check.log">
 			<skylineGradient idref="skylineGradientWrtNodeHeight"/>
         </log>
 

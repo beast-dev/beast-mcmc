@@ -721,7 +721,14 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double singleIntegrals = getAllSingleIntegrals();
         final double negativeLogPopSizeSum = getAllLogSmoothPopSize();
 
-        return negativeLogPopSizeSum - (singleIntegrals + doubleIntegrals + tripleIntegrals)/2;
+        final double result = negativeLogPopSizeSum - (singleIntegrals + doubleIntegrals + tripleIntegrals)/2;
+
+        if (Double.isInfinite(result)) {
+            return Double.NEGATIVE_INFINITY;
+        } else {
+            return result;
+        }
+
     }
 
     @Override

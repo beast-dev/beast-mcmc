@@ -111,7 +111,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return getDoubleSigmoidIntegral(ti, tj, t) - getDoubleSigmoidIntegral(ti, tj, 0);
     }
 
-    private double getSmoothPopSizeInverse(double t) {
+    public double getSmoothPopSizeInverse(double t) {
         double sum = Math.exp(-logPopSizeParameter.getParameterValue(0));
         for (int k = 0; k < gridPointParameter.getDimension(); k++) {
             final double xk = gridPointParameter.getParameterValue(k);
@@ -119,6 +119,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sum += popSizeInverseDifference * GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(xk - t, getSmoothRate());
         }
         return sum;
+    }
+
+    public Parameter getGridPointParameter() {
+        return gridPointParameter;
     }
 
     private double getAllLogSmoothPopSize() {

@@ -226,7 +226,7 @@ public class AnnotationAction implements CladeAction {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
-                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_sign", values);
                                     if (computeESS == true) {
                                         annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }

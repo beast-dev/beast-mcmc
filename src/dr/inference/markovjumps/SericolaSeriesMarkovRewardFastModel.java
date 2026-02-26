@@ -1,21 +1,14 @@
 /*
  * SericolaSeriesMarkovRewardFastModel.java
  *
- * A BEAST Model wrapper around the fast Sericola-series Markov reward PDF/CDF engine.
+ * Reparametrized to accept BRANCH-NORMALIZED reward:
+ *      Y = (total reward) / (branchLength)
  *
- * Key design:
- *  - Listens to:
- *      (i) underlyingSubstitutionModel  -> provides UNSORTED infinitesimal matrix Q
- *      (ii) rewardRates Parameter       -> provides UNSORTED reward rates r
- *  - Internally computes permutation perm that sorts rewards increasingly, then builds:
- *      sortedR, sortedQ, lambda, P, invRewardDiff, (optional eigenDecomposition)
- *  - Cflat cache is computed in SORTED index space.
- *  - Public outputs are written in ORIGINAL (unsorted) state order WITHOUT allocating
- *    per-branch temporary matrices: we map sorted (uS,vS) -> original (uO,vO) on the fly.
+ * Relationship (densities):
+ *   If f_R(x | t) is the density w.r.t. total reward x,
+ *   then the density w.r.t. y is:
+ *        f_Y(y | t) = t * f_R(y t | t)
  *
- * Store/restore:
- *  - We cannot snapshot Cflat (potentially huge).
- *  - On restore we "invalidate computed extent" but keep allocations to avoid reallocation.
  */
 
 package dr.inference.markovjumps;
@@ -34,6 +27,7 @@ import dr.math.matrixAlgebra.Vector;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Random;
 
 public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implements MarkovReward {
 
@@ -115,7 +109,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         double[] lt;
         double[] premult;
 
-        // NEW: precomputed per-t
+        // precomputed per-t
         double[] xh;        // in [0,1]
         double[] oneMinus;  // 1-xh
         double[] ratio;     // xh/(1-xh) (only valid when interior)
@@ -126,11 +120,10 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         double[] inc; // length dim2, in SORTED uv order
     }
 
-
     private final ThreadLocal<Scratch> tls = ThreadLocal.withInitial(Scratch::new);
 
     // Temporary objects for scalar wrapper (allocation-free)
-    private final double[] scratchX1 = new double[1];
+    private final double[] scratchY1 = new double[1];
     private final double[] scratchT1 = new double[1];
     private final double[][] scratchW1 = new double[1][];
 
@@ -200,48 +193,42 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     }
 
     // ============================================================
-    // Public API: PDF
+    // Public API: PDF (NOW EXPECTS y = reward/time)
     // ============================================================
 
     @Override
-    public double[] computePdf(double reward, double branchLength) {
+    public double[] computePdf(double y, double branchLength) {
         final double[] out = new double[dim2];
-        computePdfInto(reward, branchLength, out);
+        computePdfIntoY(y, branchLength, out);
         return out;
     }
 
     @Override
-    public double computePdf(double reward, double branchLength, int i, int j) {
+    public double computePdf(double y, double branchLength, int i, int j) {
         throw new UnsupportedOperationException("Not implemented yet.");
-//        if (i < 0 || i >= dim || j < 0 || j >= dim) {
-//            throw new IndexOutOfBoundsException("i,j out of bounds");
-//        }
-//        final double[] out = new double[dim2];
-//        computePdfInto(reward, branchLength, out);
-//        return out[i * dim + j];
     }
 
-    public void computePdfInto(double reward, double branchLength, double[] out) {
+    public void computePdfIntoY(double y, double branchLength, double[] out) {
         if (out == null || out.length != dim2) {
             throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
         }
-        scratchX1[0] = reward;
+        scratchY1[0] = y;
         scratchT1[0] = branchLength;
         scratchW1[0] = out;
-        computePdfInto(scratchX1, scratchT1, false, scratchW1);
+        computePdfIntoY(scratchY1, scratchT1, false, scratchW1);
     }
 
-    public void computePdfInto(double[] X, double time, double[][] W) {
-        computePdfInto(X, new double[]{time}, false, W);
+    public void computePdfIntoY(double[] Y, double time, double[][] W) {
+        computePdfIntoY(Y, new double[]{time}, false, W);
     }
 
-    public void computePdfInto(double[] X, double[] times, double[][] W) {
-        computePdfInto(X, times, false, W);
+    public void computePdfIntoY(double[] Y, double[] times, double[][] W) {
+        computePdfIntoY(Y, times, false, W);
     }
 
-    public void computePdfInto(double[] X, double[] times, boolean parsimonious, double[][] W) {
-        validateInputs(X, times, W);
-        final int T = X.length;
+    public void computePdfIntoY(double[] Y, double[] times, boolean parsimonious, double[][] W) {
+        validateInputsY(Y, times, W);
+        final int T = Y.length;
         if (T == 0) return;
 
         ensureNumericsUpToDate();
@@ -251,27 +238,67 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         final Scratch s = tls.get();
         ensureScratchCapacity(s, T);
 
-        final double maxT = precomputePdfScratch(X, times, parsimonious, s);
+        final double maxT = precomputePdfScratchY(Y, times, parsimonious, s);
 
         // Ensure C is available up to required N (pdf uses n+1)
         ensureCForTime(maxT, /*extraN=*/1);
         final int N = computedN - 1;
 
-        accumulatePdfOverN(W, s, T, N);
+        accumulatePdfOverN_Y(W, s, T, N);
     }
 
-    private void validateInputs(double[] X, double[] times, double[][] W) {
-        if (X == null || times == null || W == null) {
-            throw new IllegalArgumentException("X/times/W must be non-null");
+    // ----------------------------------------------------------------
+    // Backward-compat wrappers (if any code still passes total rewards)
+    // These convert X -> Y = X/t and call computePdfIntoY.
+    // ----------------------------------------------------------------
+    @Deprecated
+    public void computePdfInto(double reward, double branchLength, double[] out) {
+        if (branchLength <= 0.0) throw new IllegalArgumentException("branchLength must be > 0");
+        computePdfIntoY(reward / branchLength, branchLength, out);
+    }
+
+    @Deprecated
+    public void computePdfInto(double[] X, double time, double[][] W) {
+        if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
+        final double[] Y = new double[X.length];
+        for (int i = 0; i < X.length; i++) Y[i] = X[i] / time;
+        computePdfIntoY(Y, time, W);
+    }
+
+    @Deprecated
+    public void computePdfInto(double[] X, double[] times, double[][] W) {
+        final double[] Y = new double[X.length];
+        if (times.length == 1) {
+            final double t = times[0];
+            if (t <= 0.0) throw new IllegalArgumentException("time must be > 0");
+            for (int i = 0; i < X.length; i++) Y[i] = X[i] / t;
+        } else {
+            if (times.length != X.length) throw new IllegalArgumentException("times length mismatch");
+            for (int i = 0; i < X.length; i++) {
+                final double t = times[i];
+                if (t <= 0.0) throw new IllegalArgumentException("time must be > 0 at index " + i);
+                Y[i] = X[i] / t;
+            }
         }
-        final int T = X.length;
+        computePdfIntoY(Y, times, false, W);
+    }
+
+    // ============================================================
+    // Input validation / utilities
+    // ============================================================
+
+    private void validateInputsY(double[] Y, double[] times, double[][] W) {
+        if (Y == null || times == null || W == null) {
+            throw new IllegalArgumentException("Y/times/W must be non-null");
+        }
+        final int T = Y.length;
 
         final boolean singleTime = (times.length == 1);
         if (!singleTime && times.length != T) {
-            throw new IllegalArgumentException("Either times.length==1 or times.length==X.length");
+            throw new IllegalArgumentException("Either times.length==1 or times.length==Y.length");
         }
         if (W.length != T) {
-            throw new IllegalArgumentException("W.length must equal X.length");
+            throw new IllegalArgumentException("W.length must equal Y.length");
         }
     }
 
@@ -285,8 +312,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
-    private double precomputePdfScratch(double[] X, double[] times, boolean parsimonious, Scratch s) {
-        final int T = X.length;
+    private double precomputePdfScratchY(double[] Y, double[] times, boolean parsimonious, Scratch s) {
+        final int T = Y.length;
         final boolean singleTime = (times.length == 1);
 
         double maxT = 0.0;
@@ -305,10 +332,10 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                 s.premult[t] = premult0;
                 s.NN[t] = NN0;
 
-                final int h = getHfromXSortedRate(X[t], time);
+                final int h = getHfromY(Y[t]);
                 s.H[t] = h;
 
-                fillXhPrecomp(s, t, X[t], time, h);
+                fillXhPrecompY(s, t, Y[t], h);
             }
             return maxT;
         }
@@ -324,17 +351,19 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
             s.premult[t] = Math.exp(-lt);
             s.NN[t] = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
 
-            final int h = getHfromXSortedRate(X[t], time);
+            final int h = getHfromY(Y[t]);
             s.H[t] = h;
 
-            fillXhPrecomp(s, t, X[t], time, h);
+            fillXhPrecompY(s, t, Y[t], h);
         }
         return maxT;
     }
 
-    private void fillXhPrecomp(Scratch s, int t, double x, double time, int h) {
+    private void fillXhPrecompY(Scratch s, int t, double y, int h) {
         final double invDiff = invRewardDiff[h];
-        double xh = (x - sortedR[h - 1] * time) * invDiff / time;
+
+        // xh = (y - r_{h-1}) / (r_h - r_{h-1})
+        double xh = (y - sortedR[h - 1]) * invDiff;
 
         if (xh <= 0.0) {
             s.xh[t] = 0.0;
@@ -359,14 +388,17 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         s.w0[t]       = 1.0;
     }
 
-    private void accumulatePdfOverN(double[][] W, Scratch s, int T, int N) {
+    private void accumulatePdfOverN_Y(double[][] W, Scratch s, int T, int N) {
         for (int n = 0; n <= N; ++n) {
 
             for (int t = 0; t < T; ++t) {
                 if (s.NN[t] < n) continue;
 
                 final int h = s.H[t];
-                final double base = (lambda * invRewardDiff[h]) * s.premult[t];
+
+                // Jacobian factor: f_Y(y|t) = t f_R(yt|t), and here t = lt/lambda
+                final double time = s.lt[t] / lambda;
+                final double base = (lambda * invRewardDiff[h]) * s.premult[t] * time;
 
                 if (s.isZero[t]) {
                     addDiffBlockToOriginalOrder(W[t], base,
@@ -377,18 +409,19 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
                             cOffset(h, n + 1, n + 1),
                             cOffset(h, n + 1, n));
                 } else {
-                    loopCyclePdfAddToOriginalOrderFast(
+                    loopCyclePdfAddToOriginalOrderFast_Y(
                             h, n,
                             s.ratio[t],
                             s.w0[t],
                             s.premult[t],
+                            time,
                             W[t],
                             s.inc
                     );
                 }
             }
 
-            // premult_{n+1}(t) = premult_n(t) * (lambda*t)/(n+1)
+            // premult_{n+1}(t) = premult_n(t) * (lambda*t)/(n+1) = premult_n(t) * lt/(n+1)
             final double inv = 1.0 / (n + 1.0);
             for (int t = 0; t < T; ++t) {
                 s.premult[t] *= s.lt[t] * inv;
@@ -403,16 +436,16 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
-
-    private void loopCyclePdfAddToOriginalOrderFast(
+    private void loopCyclePdfAddToOriginalOrderFast_Y(
             int h, int n,
             double ratio,
             double w0,                 // (1-xh)^n
             double premult,
+            double time,               // Jacobian
             double[] WtOriginal,
             double[] incSorted) {
 
-        final double temp = (lambda * invRewardDiff[h]) * premult;
+        final double temp = (lambda * invRewardDiff[h]) * premult * time;
 
         Arrays.fill(incSorted, 0.0);
 
@@ -450,34 +483,43 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     }
 
     // ============================================================
-    // Public API: CDF (kept; not heavily optimized)
+    // Public API: CDF (NOW EXPECTS y)
     // ============================================================
 
     @Override
-    public double computeCdf(double x, double time, int i, int j) {
-        return computeCdf(new double[]{x}, time)[0][i * dim + j];
+    public double computeCdf(double y, double time, int i, int j) {
+        return computeCdfY(new double[]{y}, time)[0][i * dim + j];
     }
 
-    public double[] computeCdf(double x, double time) {
-        return computeCdf(new double[]{x}, time)[0];
+    public double[] computeCdf(double y, double time) {
+        return computeCdfY(new double[]{y}, time)[0];
     }
 
-    public double[][] computeCdf(double[] X, double time) {
+    public double[][] computeCdfY(double[] Y, double time) {
         if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
 
         ensureNumericsUpToDate();
         ensureCForTime(time, /*extraN=*/0);
         final int N = computedN;
 
-        final int T = X.length;
+        final int T = Y.length;
         final double[][] W = new double[T][dim2];
         final int[] H = new int[T];
-        for (int t = 0; t < T; t++) H[t] = getHfromXSortedRate(X[t], time);
+        for (int t = 0; t < T; t++) H[t] = getHfromY(Y[t]);
 
         for (int n = 0; n <= N; ++n) {
-            accumulateCdfAddToOriginalOrder(W, X, H, n, time);
+            accumulateCdfAddToOriginalOrder_Y(W, Y, H, n, time);
         }
         return W;
+    }
+
+    // Backward-compat CDF wrappers: X -> Y
+    @Deprecated
+    public double[][] computeCdf(double[] X, double time) {
+        if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
+        final double[] Y = new double[X.length];
+        for (int i = 0; i < X.length; i++) Y[i] = X[i] / time;
+        return computeCdfY(Y, time);
     }
 
     // ============================================================
@@ -485,12 +527,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     // ============================================================
 
     /**
-     * Hot inner kernel for PDF: add contribution for given (x,time,h,n) directly into Wt (ORIGINAL order).
+     * Hot inner kernel for PDF: add contribution for given block directly into Wt (ORIGINAL order).
      *
      * The cache Cflat is indexed by SORTED uv, but we write into ORIGINAL uv via precomputed maps:
      *   sorted (uS,vS) -> original index (perm[uS], perm[vS]).
      */
-
     private void addDiffBlockToOriginalOrder(double[] WtOriginal, double temp, int aOff, int bOff) {
         // Adds temp*(C[a]-C[b]) for all uv, mapping sorted uv -> original uv
         for (int uS = 0; uS < dim; ++uS) {
@@ -504,19 +545,19 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
-    // CDF accumulation (structurally similar to your previous version; writes in ORIGINAL order)
-    private void accumulateCdfAddToOriginalOrder(double[][] W, double[] X, int[] H, int n, double time) {
+    // CDF accumulation (writes in ORIGINAL order)
+    private void accumulateCdfAddToOriginalOrder_Y(double[][] W, double[] Y, int[] H, int n, double time) {
 
         final double lt = lambda * time;
         final double premult = Math.exp(
                 -lt + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
         );
 
-        for (int t = 0; t < X.length; ++t) {
-            final double x = X[t];
+        for (int t = 0; t < Y.length; ++t) {
+            final double y = Y[t];
             final int h = H[t];
 
-            double xh = (x - sortedR[h - 1] * time) / ((sortedR[h] - sortedR[h - 1]) * time);
+            double xh = (y - sortedR[h - 1]) / (sortedR[h] - sortedR[h - 1]);
 
             // Guard numerical drift
             if (xh <= 0.0) xh = 0.0;
@@ -561,11 +602,10 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
         // compute (or recompute) if current cache does not cover requiredN
         if (computedN < requiredN) {
-            computeChnk(requiredN);     // compute up to requiredN (or recompute all)
+            computeChnk(requiredN);     // compute up to requiredN
             computedN = requiredN;
         }
     }
-
 
     private void ensureCapacityN(int requiredN) {
         int newAlloc = (allocatedN < 0) ? requiredN : allocatedN;
@@ -592,7 +632,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     }
 
     /**
-     * Compute all C(h,n,k,uv) up to capacityN using Sericola recursions,
+     * Compute all C(h,n,k,uv) up to N using Sericola recursions,
      * assuming P, lambda, sortedR are current and consistent.
      *
      * IMPORTANT: Works in SORTED uv space.
@@ -601,6 +641,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         if (Cflat == null || allocatedN < 0) {
             throw new IllegalStateException("C storage not initialized");
         }
+        clearCflatUpToN(N);
 
         // Pn = I
         Arrays.fill(PnScratch, 0.0);
@@ -753,7 +794,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         cachesDirty = false;
     }
 
-
     private void ensurePermutationUpToDate() {
         if (!permDirty) return;
 
@@ -786,6 +826,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         permDirty = false;
         qDirty = true;
         cachesDirty = true;
+
+        if (DEBUG) {
+            System.err.println("[DEBUG] rewardRates (original): " +
+                    Arrays.toString(rewardRates.getParameterValues()));
+            System.err.println("[DEBUG] sortedR: " + Arrays.toString(sortedR));
+            System.err.println("[DEBUG] perm (sorted -> original): " + Arrays.toString(perm));
+            System.err.println("[DEBUG] invPerm (original -> sorted): " + Arrays.toString(invPerm));
+        }
     }
 
     private void ensureSortedQUpToDate() {
@@ -838,19 +886,17 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         return (((h * allocatedN1 + n) * allocatedN1 + k) * dim2);
     }
 
+    private void clearCflatUpToN(int N) {
+        // We will write/read C(h,n,k,uv) for h=0..phi and n,k=0..N.
+        // Clear exactly the range that can be touched.
+        final int end = cOffset(phi, N, N) + dim2; // exclusive end index
+        Arrays.fill(Cflat, 0, end, 0.0);
+    }
+
     private double determineLambda(double[] QrowMajor) {
         double minDiag = QrowMajor[0];          // Q[0,0]
         for (int i = 1; i < dim; ++i) {
             final double d = QrowMajor[i * dim + i];
-            if (d < minDiag) minDiag = d;
-        }
-        return -minDiag;
-    }
-
-    private double determineLambda(double[] Qsorted, int dimLocal) {
-        double minDiag = Qsorted[0];
-        for (int i = 1; i < dimLocal; ++i) {
-            final double d = Qsorted[i * dimLocal + i];
             if (d < minDiag) minDiag = d;
         }
         return -minDiag;
@@ -872,26 +918,37 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         }
     }
 
+    final Random rng = new Random(666);
+
     /**
-     * Determine h based on rate = x/time in SORTED reward space.
+     * Determine h based on y in SORTED reward space.
      * Returns an h in [1..phi].
      */
-    private int getHfromXSortedRate(double x, double time) {
-        if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
+    private int getHfromY(double y) {
 
-        final double lo = sortedR[0] * time;
-        final double hi = sortedR[phi] * time;
+        final double lo = sortedR[0];
+        final double hi = sortedR[phi];
 
-        if (x < lo) throw new IllegalArgumentException("x must be >= minReward*time");
-        if (x > hi) throw new IllegalArgumentException("x must be <= maxReward*time");
+        if (y < lo - 1e-10) {
+            throw new IllegalArgumentException("y must be >= minRewardRate");
+        }
 
-        final double rate = x / time;
-        int h = Arrays.binarySearch(sortedR, 0, phi + 1, rate);
-        if (h < 0) h = -h - 1;
+        if (y > hi + 1e-10) {
+            throw new IllegalArgumentException("y must be <= maxRewardRate");
+        }
 
-        if (h <= 0) return 1;
-        if (h > phi) return phi;
-        return h;
+        int idx = Arrays.binarySearch(sortedR, 0, phi + 1, y);
+
+        // Exact knot
+        if (idx >= 0) {
+            if (idx == 0) return 1;        // only possible interval
+            if (idx == phi) return phi;    // only possible interval
+            return idx + 1;                // deterministic: upper interval
+        }
+
+        // Strictly inside an interval
+        int insertionPoint = -idx - 1;   // in [1..phi]
+        return Math.max(1, Math.min(phi, insertionPoint));
     }
 
     /**
@@ -973,11 +1030,9 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
 
     @Override
     protected void storeState() {
-        // Store only dirtiness flags (optional, but consistent with BEAST patterns)
         storedPermDirty = permDirty;
         storedQDirty = qDirty;
         storedCachesDirty = cachesDirty;
-
         hasStoredState = true;
     }
 
@@ -985,11 +1040,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
     protected void restoreState() {
         if (!hasStoredState) return;
 
-        permDirty   = true;
-        qDirty      = true;
+        permDirty = true;
+        qDirty = true;
         cachesDirty = true;
 
-        invalidateCComputedExtent();  // computedN = -1, maxTime = 0
+        invalidateCComputedExtent();
         eigenDecomposition = null;
     }
 
@@ -1013,5 +1068,266 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel implement
         sb.append("maxTime: ").append(maxTime).append("\n");
         sb.append("cprob at maxTime: ").append(new Vector(computeConditionalProbabilities(maxTime))).append("\n");
         return sb.toString();
+    }
+
+    // ============================================================
+    // NO-ALLOCATION derivative of reward-density w.r.t. NORMALIZED REWARD y
+    // ============================================================
+    //
+    // Computes: d/dy f_{ij}(y | t)  where y = totalReward / t
+    //
+    // Convention for boundary snapping (xh==0 or 1):
+    //   returns 0 derivative (consistent with your "snap-to-boundary" semantics).
+
+    public void computePdfDerivativeWrtYInto(double y, double branchLength, double[] out) {
+        if (out == null || out.length != dim2) {
+            throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
+        }
+        if (branchLength <= 0.0) {
+            throw new IllegalArgumentException("branchLength must be > 0");
+        }
+        Arrays.fill(out, 0.0);
+
+        ensureNumericsUpToDate();
+
+        // Determine h from y
+        final int h = getHfromY(y);
+
+        // Precompute xh and boundary flags
+        final Scratch s = tls.get();
+        ensureScratchCapacity(s, 1);
+        fillXhPrecompY(s, 0, y, h);
+
+        if (s.isZero[0] || s.isOne[0]) {
+            return;
+        }
+
+        // Need C up to required N (pdf uses n+1; derivative uses same)
+        ensureCForTime(branchLength, /*extraN=*/1);
+        final int N = computedN - 1;
+
+        // xh depends on y with dxh/dy = invRewardDiff[h]
+        final double dxh_dy = invRewardDiff[h];
+
+        // Poisson / uniformization terms
+        final double lt = lambda * branchLength;
+        double premult = Math.exp(-lt); // n=0 premult
+
+        // reuse inc buffer (SORTED uv)
+        final double[] incSorted = s.inc;
+
+        // Bernstein recurrence helpers
+        final double xh = s.xh[0];
+        final double oneMinus = 1.0 - xh;
+        final double ratio = xh / oneMinus;
+
+        // Track (1-xh)^(n-1) for degree (n-1) Bernstein polynomials:
+        // for n=1, (1-xh)^(0)=1
+        double w0m = 1.0;
+
+        for (int n = 0; n <= N; ++n) {
+            if (n >= 1) {
+                // d/dy f_Y = [t * (lambda * invDiff[h]) * premult] * [dxh/dy] * [d/dxh ...]
+                // and d/dxh introduces factor n and second differences in k:
+                // scale = t * lambda * premult * n * (invDiff[h]^2)
+                final double scale = branchLength * lambda * premult * n * (invRewardDiff[h] * dxh_dy);
+
+                Arrays.fill(incSorted, 0.0);
+
+                // degree (n-1) weights
+                double w = w0m;
+
+                for (int k = 0; k <= n - 1; ++k) {
+                    // Second forward diff of C at (n+1, ·):
+                    // C(k+2) - 2 C(k+1) + C(k)
+                    final int c0 = cOffset(h, n + 1, k);
+                    final int c1 = cOffset(h, n + 1, k + 1);
+                    final int c2 = cOffset(h, n + 1, k + 2);
+
+                    for (int uv = 0; uv < dim2; ++uv) {
+                        incSorted[uv] += w * (Cflat[c2 + uv] - 2.0 * Cflat[c1 + uv] + Cflat[c0 + uv]);
+                    }
+
+                    // advance w -> w_{k+1} for degree (n-1)
+                    if (k < n - 1) {
+                        w *= ((double) ((n - 1) - k) / (double) (k + 1)) * ratio;
+                    }
+                }
+
+                // write to ORIGINAL order
+                for (int uS = 0; uS < dim; ++uS) {
+                    final int outRowBase = outRowBaseBySorted[uS];
+                    final int inRowBase = uS * dim;
+                    for (int vS = 0; vS < dim; ++vS) {
+                        out[outRowBase + outColBySorted[vS]] += scale * incSorted[inRowBase + vS];
+                    }
+                }
+            }
+
+            // premult_{n+1} = premult_n * (lambda*t)/(n+1)
+            premult *= lt / (n + 1.0);
+
+            // update w0m when moving n -> n+1:
+            // exponent (n) - 1 increases by 1 for n>=1
+            if (n >= 1) {
+                w0m *= oneMinus;
+            }
+        }
+        if (dim == 2) {
+            final double[] fY = computePdf(y, branchLength);
+            final double det = fY[0]*fY[3] - fY[1]*fY[2];
+            final double d00 = out[0], d01 = out[1], d10 = out[2], d11 = out[3];
+            out[0] = ( fY[3]*d00 - fY[1]*d10) / det;   // was fY[2], must be fY[1]
+            out[1] = ( fY[3]*d01 - fY[1]*d11) / det;   // was fY[2], must be fY[1]
+            out[2] = (-fY[2]*d00 + fY[0]*d10) / det;   // was fY[1], must be fY[2]
+            out[3] = (-fY[2]*d01 + fY[0]*d11) / det;   // was fY[1], must be fY[2]
+        }
+//        if (dim == 2) {
+//            // Get the PDF matrix f_Y(y|t) — this is what BEAGLE has as the transition matrix
+//            final double[] fY = computePdf(y, branchLength);
+//            // 2x2 solve: out = f_Y(y|t)^{-1} @ out  via Cramer's rule
+//            final double det = fY[0]*fY[3] - fY[1]*fY[2];
+//            final double d00 = out[0], d01 = out[1], d10 = out[2], d11 = out[3];
+//            out[0] = ( fY[3]*d00 - fY[2]*d10) / det;
+//            out[1] = ( fY[3]*d01 - fY[2]*d11) / det;
+//            out[2] = (-fY[1]*d00 + fY[0]*d10) / det;
+//            out[3] = (-fY[1]*d01 + fY[0]*d11) / det;
+//        }
+    }
+    /**
+     * Compute the "PDF inner increment" in SORTED uv space:
+     *
+     *   incSorted[uv] = Σ_{k=0}^n B_{n,k}(x_h) * ( C(h,n+1,k+1,uv) - C(h,n+1,k,uv) )
+     *
+     * using the same Bernstein recurrence as loopCyclePdfAddToOriginalOrderFast_Y,
+     * but WITHOUT applying any prefactor and WITHOUT writing to ORIGINAL order.
+     */
+    private void computePdfInnerIncSorted_Y(
+            int h, int n,
+            double ratio,
+            double w0,            // (1-xh)^n
+            double[] incSorted) {
+
+        Arrays.fill(incSorted, 0.0);
+
+        // k = 0
+        {
+            final int aOff = cOffset(h, n + 1, 1);
+            final int bOff = cOffset(h, n + 1, 0);
+            for (int uv = 0; uv < dim2; ++uv) {
+                incSorted[uv] += w0 * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+            }
+        }
+
+        // k = 1..n via Bernstein recurrence
+        double w = w0;
+        for (int k = 0; k < n; ++k) {
+            w *= ((double) (n - k) / (double) (k + 1)) * ratio;
+            final int kp1 = k + 1;
+
+            final int aOff = cOffset(h, n + 1, kp1 + 1);
+            final int bOff = cOffset(h, n + 1, kp1);
+
+            for (int uv = 0; uv < dim2; ++uv) {
+                incSorted[uv] += w * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+            }
+        }
+    }
+    /**
+     * Derivative of the BRANCH-NORMALIZED reward PDF matrix w.r.t. time t (branchLength):
+     *
+     *   Computes d/dt f_{ij}(y | t) where y = totalReward / t.
+     *
+     * Matches LaTeX Eq. (forwardGradientWrtBranchLength) with:
+     *   - premult = p_n(t) = e^{-λt} (λt)^n / n!
+     *   - dp_n/dt = λ (p_{n-1}(t) - p_n(t)), with p_{-1}=0
+     *   - Δ_h = r_h - r_{h-1}, and invRewardDiff[h] = 1/Δ_h
+     *
+     * IMPORTANT:
+     *   This assumes h is fixed for the given y (i.e., y not moving across knots).
+     *   If y is exactly at a knot, getHfromY(y) chooses the upper interval (your current rule).
+     */
+    public void computePdfDerivativeWrtTimeInto(double y, double branchLength, double[] out) {
+        if (out == null || out.length != dim2) {
+            throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
+        }
+        if (branchLength <= 0.0) {
+            throw new IllegalArgumentException("branchLength must be > 0");
+        }
+        Arrays.fill(out, 0.0);
+
+        ensureNumericsUpToDate();
+
+        // Determine h from y and precompute xh
+        final int h = getHfromY(y);
+        final Scratch s = tls.get();
+        ensureScratchCapacity(s, 1);
+        fillXhPrecompY(s, 0, y, h);
+
+        // Ensure C cache (pdf uses n+1)
+        ensureCForTime(branchLength, /*extraN=*/1);
+        final int N = computedN - 1;
+
+        final double invDiff = invRewardDiff[h];           // 1/Δ_h
+        final double lt = lambda * branchLength;
+
+        // premult = p_n(t), start at n=0
+        double premult = Math.exp(-lt);   // p_0(t)
+        double prevPremult = 0.0;         // p_{-1}(t) := 0
+
+        // Reuse inc buffer (SORTED uv)
+        final double[] incSorted = s.inc;
+
+        // For interior Bernstein recurrence
+        final boolean isBoundary = (s.isZero[0] || s.isOne[0]);
+        final double xh = s.xh[0];
+        final double oneMinus = 1.0 - xh;
+        final double ratio = (!isBoundary ? (xh / oneMinus) : 0.0);
+
+        // Track w0 = (1-xh)^n for degree-n Bernstein weights (interior only)
+        double w0 = 1.0;
+
+        for (int n = 0; n <= N; ++n) {
+
+            final double deltaPremult = prevPremult - premult; // (p_{n-1} - p_n)
+
+            // Term 1 prefactor: (λ/Δ_h) * p_n(t)
+            final double tempA = (lambda * invDiff) * premult;
+
+            // Term 2 prefactor: (λ^2 t / Δ_h) * (p_{n-1}(t) - p_n(t))
+            final double tempB = (lambda * invDiff) * (lambda * branchLength) * deltaPremult;
+
+            if (isBoundary) {
+                // At xh=0 or xh=1, the Bernstein mass is at k=0 or k=n.
+                if (s.isZero[0]) {
+                    // k=0 contribution: ΔC = C(n+1,1) - C(n+1,0)
+                    addDiffBlockToOriginalOrder(out, tempA, cOffset(h, n + 1, 1), cOffset(h, n + 1, 0));
+                    addDiffBlockToOriginalOrder(out, tempB, cOffset(h, n + 1, 1), cOffset(h, n + 1, 0));
+                } else {
+                    // xh=1: k=n contribution: ΔC = C(n+1,n+1) - C(n+1,n)
+                    addDiffBlockToOriginalOrder(out, tempA, cOffset(h, n + 1, n + 1), cOffset(h, n + 1, n));
+                    addDiffBlockToOriginalOrder(out, tempB, cOffset(h, n + 1, n + 1), cOffset(h, n + 1, n));
+                }
+            } else {
+                // Interior: compute shared inner sum once, then apply both prefactors
+                computePdfInnerIncSorted_Y(h, n, ratio, w0, incSorted);
+
+                for (int uS = 0; uS < dim; ++uS) {
+                    final int outRowBase = outRowBaseBySorted[uS];
+                    final int inRowBase = uS * dim;
+                    for (int vS = 0; vS < dim; ++vS) {
+                        final int outIdx = outRowBase + outColBySorted[vS];
+                        out[outIdx] += (tempA + tempB) * incSorted[inRowBase + vS];
+                    }
+                }
+
+                // update w0: (1-xh)^n -> (1-xh)^(n+1)
+                w0 *= oneMinus;
+            }
+
+            // advance Poisson weights: p_{n+1} = p_n * (λt)/(n+1) = p_n * lt/(n+1)
+            prevPremult = premult;
+            premult *= lt / (n + 1.0);
+        }
     }
 }

@@ -188,7 +188,26 @@ public class FiniteMixtureModel extends AbstractModelLikelihood implements Logga
     }
 
     public enum Constraint {
-        NONE,
-        ORDERED
+        NONE("none"),
+        ORDERED("ordered");
+
+        private final String name;
+
+        Constraint(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static Constraint parse(String label) {
+            for (Constraint c : Constraint.values()) {
+                if (label.equalsIgnoreCase(c.name)) {
+                    return c;
+                }
+            }
+            return null;
+        }
     }
 }

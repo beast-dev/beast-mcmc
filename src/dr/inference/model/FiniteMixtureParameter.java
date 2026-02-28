@@ -7,8 +7,6 @@ public class FiniteMixtureParameter extends Parameter.Proxy implements VariableL
 
     private final int maxCategory;
 
-    private boolean statisticsKnown;
-
     public FiniteMixtureParameter(String name,
                                   Parameter values,
                                   Parameter categories) {
@@ -18,7 +16,10 @@ public class FiniteMixtureParameter extends Parameter.Proxy implements VariableL
         this.categories = categories;
         this.maxCategory = values.getDimension();
 
+        Parameter.CONNECTED_PARAMETER_SET.add(values);
+        Parameter.CONNECTED_PARAMETER_SET.add(categories);
 
+        values.addParameterListener(this);
         categories.addParameterListener(this);
     }
 
@@ -59,8 +60,30 @@ public class FiniteMixtureParameter extends Parameter.Proxy implements VariableL
         throw new RuntimeException("Not implemented");
     }
 
+    public Bounds<Double> getBounds() {
+        throw new RuntimeException("Do not operate directly on finite-mixture parameter '" + getId() + "'");
+    }
+
     @Override
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        statisticsKnown = false;
+        fireParameterChangedEvent();
+    }
+
+    @Override
+    protected void storeValues() {
+        values.storeParameterValues();
+        categories.storeParameterValues();
+    }
+
+    @Override
+    protected void restoreValues() {
+        values.restoreParameterValues();
+        categories.restoreParameterValues();
+    }
+
+    @Override
+    protected void acceptValues() {
+        values.acceptParameterValues();
+        categories.acceptParameterValues();
     }
 }

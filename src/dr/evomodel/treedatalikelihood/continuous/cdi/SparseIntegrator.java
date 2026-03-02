@@ -192,7 +192,6 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
         for (int trait = 0; trait < numTraits; ++trait) {
 
             double SS = 0;
-            int pob = precisionOffset;
 
             double rootScalar = partials[rootOffset + dimTrait];
             final double priorScalar = partials[priorOffset + dimTrait];
@@ -201,7 +200,7 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
                 rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
             }
 
-            SS += computeRootSumOfSquares(rootOffset, priorOffset, pob);
+            SS += computeRootSumOfSquares(rootOffset, priorOffset, precisionIndex);
 
             final double logLike = -dimTrait * LOG_SQRT_2_PI
                     + 0.5 * (dimTrait * Math.log(rootScalar) + precisionLogDet)

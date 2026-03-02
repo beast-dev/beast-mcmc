@@ -67,7 +67,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
     protected void setupStorage() {
         rateMatrix = new double[stateCount * stateCount];
-        transitionProbs = new double[stateCount * stateCount];
+        transitionProbabilities = new double[stateCount * stateCount];
         rateReg = new double[stateCount * stateCount];
         if (PRECOMPUTE) {
             ievcRateRegEvec = new double[stateCount * stateCount];
@@ -169,8 +169,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     public void computeCondStatMarkovJumps(double time,
                                            double[] countMatrix) {
 
-        substModel.getTransitionProbabilities(time, transitionProbs);
-        computeCondStatMarkovJumps(time, transitionProbs, countMatrix);
+        substModel.getTransitionProbabilities(time, transitionProbabilities);
+        computeCondStatMarkovJumps(time, transitionProbabilities, countMatrix);
     }
 
 
@@ -186,7 +186,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
 
     public void computeCondStatMarkovJumps(double time,
-                                           double[] transitionProbs,
+                                           double[] transitionProbabilities,
                                            double[] countMatrix) {
 
         if (regRateChanged) {
@@ -199,9 +199,9 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
         if (PRECOMPUTE) {
             markovJumpsCore.computeCondStatMarkovJumpsPrecompute(
-                    evec, ievc, eval, ievcRateRegEvec, time, transitionProbs, countMatrix);
+                    evec, ievc, eval, ievcRateRegEvec, time, transitionProbabilities, countMatrix);
         } else {
-            markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbs, countMatrix);
+            markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbabilities, countMatrix);
         }
     }
 
@@ -254,7 +254,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private double[] rateReg;
     private double[] ievcRateRegEvec;
     private double[] tmp1;
-    private double[] transitionProbs;
+    private double[] transitionProbabilities;
     private double[] rateMatrix;
     protected double[] reward;
     protected double[] registration;

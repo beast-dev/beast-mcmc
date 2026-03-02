@@ -2,10 +2,11 @@ package dr.evomodel.treedatalikelihood;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.ModelListener;
 
-public interface ProcessAlongTree {
+public interface ProcessAlongTree extends TreeTraitProvider {
 
     Tree getTree();
 

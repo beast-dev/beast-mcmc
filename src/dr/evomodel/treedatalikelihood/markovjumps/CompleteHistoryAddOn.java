@@ -18,6 +18,8 @@ import java.util.List;
 
 public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelegate.RealizedDiscreteAddOn {
 
+    public static final String UNCONDITIONAL_COUNT_SUFFIX = ".unconditional.expected.count";
+
     public CompleteHistoryAddOn(String name,
                                 Tree tree,
                                 List<SubstitutionModel> branchSubstitutionModels,
@@ -29,31 +31,31 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
         this.siteRateModel = siteRateModel;
         this.ancestralTraitDelegate = ancestralTraitDelegate;
         this.stateCount = branchSubstitutionModels.get(0).getDataType().getStateCount();
+        this.registration = new double[stateCount * stateCount];
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                if (i != j) {
+                    registration[i * stateCount + j] = 1.0;
+                }
+            }
+        }
 
         this.markovJumps = new ArrayList<>();
         for (SubstitutionModel substitutionModel : branchSubstitutionModels) {
             UniformizedSubstitutionModel usm = new UniformizedSubstitutionModel(substitutionModel,
                     MarkovJumpsType.HISTORY, 1);
             usm.setSaveCompleteHistory(true);
-
-            double[] registration = new double[stateCount * stateCount];
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    if (i != j) {
-                        registration[i * stateCount + j] = 1.0;
-                    }
-                }
-            }
             usm.setRegistration(registration);
-
             this.markovJumps.add(usm);
         }
 
         this.valueScaling = valueScaling;
 
-        this.expectedJumps = new double[2 * tree.getNodeCount() - 2][];
-        this.histories = new String[2 * tree.getNodeCount() - 2][];
-        this.stateHistories = new StateHistory[2 * tree.getNodeCount() - 2][];
+        this.expectedJumps = new double[tree.getNodeCount()][];
+        this.unconditionalExpectedJumps = new double[tree.getNodeCount()];
+
+        this.histories = new String[tree.getNodeCount()][];
+        this.stateHistories = new StateHistory[tree.getNodeCount()][];
     }
 
     private final SiteRateModel siteRateModel;
@@ -61,13 +63,27 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
 
     private final List<MarkovJumpsSubstitutionModel> markovJumps;
     private final double[][] expectedJumps;
+    private final double[] unconditionalExpectedJumps;
     private final String[][] histories;
     private final StateHistory[][] stateHistories;
+    private final double[] registration;
 
     private final String name;
     private final int stateCount;
 
     private final MarkovJumpsTraitProvider.ValueScaling valueScaling;
+
+    int getMarkovJumpsSubstitutionModelCount() {
+        return markovJumps.size();
+    }
+
+    double[] getFullRegistration() {
+        return registration;
+    }
+
+    MarkovJumpsSubstitutionModel getMarkovJumpsSubstitutionModel(int index) {
+        return markovJumps.get(index);
+    }
 
     @Override
     public void constructTraits(TreeTraitProvider.Helper treeTraitHelper) {
@@ -107,6 +123,27 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
         };
 
         treeTraitHelper.addTrait(stateHistoryTrait);
+
+        TreeTrait<Double> unconditionalCountTrait = new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return name + UNCONDITIONAL_COUNT_SUFFIX;
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                ancestralTraitDelegate.getStatesForNode(tree, node);
+                return unconditionalExpectedJumps[node.getNumber()];
+            }
+        };
+
+        treeTraitHelper.addTrait(unconditionalCountTrait);
 
         if (histories != null) {
             TreeTrait<String[]> stateHistoryStringTrait = new TreeTrait.SA() {
@@ -166,10 +203,15 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
         return stateHistories[node];
     }
 
+    @Override
+    public void makeDirty() {
+
+    }
+
     private void computeSampledMarkovJumpsForBranch(UniformizedSubstitutionModel markovJumpsModel,
                                                     AbstractRealizedDiscreteTraitDelegate.OrderedEvents events,
                                                     int destinationIndex,
-                                                    double[][] expectedJumps,
+                                                    double[][] realizedJumps,
                                                     StateHistory[][] stateHistories,
                                                     String[][] histories) {
 
@@ -178,6 +220,8 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
         final int[] categories = events.getCategories();
         final double[] probabilities = events.getTransitionMatrix();
         final int patternCount = startingStates.length;
+
+        unconditionalExpectedJumps[destinationIndex] = events.getBranchRate() * events.getBranchTime();
 
         for (int j = 0; j < patternCount; j++) {
 
@@ -195,10 +239,10 @@ public class CompleteHistoryAddOn implements AbstractRealizedDiscreteTraitDelega
                 value /= events.getBranchRate() * categoryRate;
             }
 
-            if (expectedJumps[destinationIndex] == null) {
-                expectedJumps[destinationIndex] = new double[patternCount];
+            if (realizedJumps[destinationIndex] == null) {
+                realizedJumps[destinationIndex] = new double[patternCount];
             }
-            expectedJumps[destinationIndex][j] = value;
+            realizedJumps[destinationIndex][j] = value;
 
             StateHistory sh = markovJumpsModel.getStateHistory();
             sh.rescaleTimesOfEvents(events.getStartingTime(), events.getEndingTime());

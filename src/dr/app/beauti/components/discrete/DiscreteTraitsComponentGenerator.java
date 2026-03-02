@@ -615,24 +615,24 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-        writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+        writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
             if (substModel.isSharedCoalescentModel()) {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
-                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
                 writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-                writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
+                writeParameter(StructuredCoalescentLikelihoodParser.POPULATION_SIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
                 writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
-                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES,
                         stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
             }
         } else {
             throw new IllegalArgumentException("Unknown BASTAModelType");
         }
-        writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+        writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
 
         this.enableInsertionPointBIT = false;
         getCallingGenerator().generateInsertionPoint(InsertionPoint.IN_MCMC_LIKELIHOOD, partition, writer);
@@ -830,7 +830,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
                 prefix = BACKWARD + "." + prefix;
                 writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
-                        "." + StructuredCoalescentLikelihoodParser.POPSIZES);
+                        "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
             }
 
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {

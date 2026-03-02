@@ -59,7 +59,9 @@ import java.util.function.Function;
  */
 public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
 
-    public static String NAME_SUFFIX = "";
+    public static final String NAME_SUFFIX = "";
+    public static final String SITE_CATEGORY_SUFFIX = ".site.category";
+    public static final String SITE_RATE_SUFFIX = ".site.rate";
 
     public static class Fit extends AbstractRealizedDiscreteTraitDelegate {
 
@@ -331,6 +333,50 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         };
 
         treeTraitHelper.addTrait(ancestralStateTrait);
+
+        TreeTrait<int[]> siteSpecificCategoryTrait = new TreeTrait.IA() {
+
+            public String getTraitName() {
+                return name + SITE_CATEGORY_SUFFIX;
+            }
+
+            public Intent getIntent() {
+                return Intent.WHOLE_TREE;
+            }
+
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
+            public int[] getTrait(Tree tree, NodeRef node) {
+                getStatesForNode(tree, node);
+                return siteSpecificRateCategory;
+            }
+        };
+
+        treeTraitHelper.addTrait(siteSpecificCategoryTrait);
+
+        TreeTrait<double[]> siteSpecificRateTrait = new TreeTrait.DA() {
+
+            public String getTraitName() {
+                return name + SITE_RATE_SUFFIX;
+            }
+
+            public Intent getIntent() {
+                return Intent.WHOLE_TREE;
+            }
+
+            public Class getTraitClass() {
+                return double[].class;
+            }
+
+            public double[] getTrait(Tree tree, NodeRef node) {
+                getStatesForNode(tree, node);
+                return siteSpecificRate;
+            }
+        };
+
+        treeTraitHelper.addTrait(siteSpecificRateTrait);
     }
 
     public int[] getStatesForNode(Tree tree, NodeRef node) {
@@ -371,9 +417,14 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             siteSpecificRateCategory = new int[patternCount];
         }
 
+        if (siteSpecificRate == null) {
+            siteSpecificRate = new double[patternCount];
+        }
+
         // Simulate site-specific rate categories
         if (categoryCount == 1) {
             Arrays.fill(siteSpecificRateCategory, 0);
+            Arrays.fill(siteSpecificRate, 1.0);
         } else {
 
             double[] rootPartials = getPostOrderPartials(tree.getRoot().getNumber());
@@ -390,11 +441,17 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
                     posteriorWeightedCategory[r] *= priorWeightedCategory[r];
                 }
                 siteSpecificRateCategory[j] = drawChoice(posteriorWeightedCategory);
+                siteSpecificRate[j] = siteRateModel.getRateForCategory(siteSpecificRateCategory[j]);
             }
+        }
+
+        for (RealizedDiscreteAddOn addOn : addOns) {
+            addOn.makeDirty();
         }
     }
 
     protected int[] siteSpecificRateCategory;
+    protected double[] siteSpecificRate;
 
     abstract double[] getRootStateFrequencies();
 
@@ -669,6 +726,8 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
         void constructTraits(Helper treeTraitHelper);
 
         void hookCalculation(final int node, final int parent, double[] probabilities);
+
+        void makeDirty();
     }
 
     private final List<RealizedDiscreteAddOn> addOns = new ArrayList<>();

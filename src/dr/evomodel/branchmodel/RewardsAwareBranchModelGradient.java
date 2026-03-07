@@ -6,7 +6,7 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModelRho;
+import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -32,7 +32,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
     private final RewardsAwarePartialLikelihoodProvider partialLikelihoodProvider;
     private final ArbitraryBranchRates totalRewardsBranchRates;
-    private final SericolaSeriesMarkovRewardFastModelRho sericola;
+    private final SericolaSeriesMarkovRewardFastModel sericola;
     private int nstates;
 
     private double indicatorOnBase;

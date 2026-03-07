@@ -196,30 +196,30 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     // Public API: continuous density f^*(rho, t)
     // ============================================================
 
-    public double[] computePdfStar(double rho, double time) {
-        computePdfStarInto(rho, time, out);
+    public double[] computePdf(double rho, double time) {
+        computePdfInto(rho, time, out);
         return out;
     }
 
-    public void computePdfStarInto(double rho, double time, double[] out) {
+    public void computePdfInto(double rho, double time, double[] out) {
         if (out == null || out.length != dim2) {
             throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
         }
         scratchRho1[0] = rho;
         scratchT1[0] = time;
         scratchW1[0] = out;
-        computePdfStarInto(scratchRho1, scratchT1, false, scratchW1);
+        computePdfInto(scratchRho1, scratchT1, false, scratchW1);
     }
 
-    public void computePdfStarInto(double[] RHO, double time, double[][] W) {
-        computePdfStarInto(RHO, new double[]{time}, false, W);
+    public void computePdfInto(double[] RHO, double time, double[][] W) {
+        computePdfInto(RHO, new double[]{time}, false, W);
     }
 
-    public void computePdfStarInto(double[] RHO, double[] times, double[][] W) {
-        computePdfStarInto(RHO, times, false, W);
+    public void computePdfInto(double[] RHO, double[] times, double[][] W) {
+        computePdfInto(RHO, times, false, W);
     }
 
-    public void computePdfStarInto(double[] RHO, double[] times, boolean parsimonious, double[][] W) {
+    public void computePdfInto(double[] RHO, double[] times, boolean parsimonious, double[][] W) {
         validateInputs(RHO, times, W);
         final int T = RHO.length;
         if (T == 0) return;
@@ -1062,7 +1062,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         }
         if (shiftback) {
             if (dim == 2) {
-                final double[] W = computePdfStar(rho, branchLength);
+                final double[] W = computePdf(rho, branchLength);
                 final double det = W[0] * W[3] - W[1] * W[2];
                 final double d00 = out[0], d01 = out[1], d10 = out[2], d11 = out[3];
                 out[0] = (W[3] * d00 - W[1] * d10) / det;
@@ -1071,7 +1071,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 out[3] = (-W[2] * d01 + W[0] * d11) / det;
             } else if (dim == 3) {
 
-                final double[] W = computePdfStar(rho, branchLength);
+                final double[] W = computePdf(rho, branchLength);
 
                 final double f00 = W[0], f01 = W[1], f02 = W[2];
                 final double f10 = W[3], f11 = W[4], f12 = W[5];

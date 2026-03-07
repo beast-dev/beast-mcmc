@@ -33,7 +33,7 @@ public final class RewardsAwarePartialLikelihoodProviderParser extends AbstractX
 
     @Override
     public String getParserDescription() {
-        return "Gibbs operator for per-branch atomic reward indices conditional on z_b=1.";
+        return "Provider of pre-order partial likelihoods for rewards-aware tree likelihoods.";
     }
 
     @Override

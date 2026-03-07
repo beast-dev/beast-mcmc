@@ -2,7 +2,6 @@ package dr.evomodelxml.branchmodel;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchmodel.RewardsAwareBranchModelGradient;
-import dr.evomodel.branchmodel.RewardsAwareBranchModelGradientDeprecated;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
@@ -102,6 +101,6 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
 
     @Override
     public Class getReturnType() {
-        return RewardsAwareBranchModelGradientDeprecated.class;
+        return RewardsAwareBranchModelGradient.class;
     }
 }

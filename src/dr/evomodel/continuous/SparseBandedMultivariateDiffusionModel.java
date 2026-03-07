@@ -267,22 +267,28 @@ public class SparseBandedMultivariateDiffusionModel extends AbstractBandedMultiv
 
     private static final boolean TEST_CHOLESKY = false;
 
+    private static final boolean USE_BUFFER_INDEX_HELPER = true;
+
     protected void storeState() {
         super.storeState();
-        if (sparseMatrix != null) {
-            if (savedSparseMatrix == null) {
-                savedSparseMatrix = sparseMatrix.makeCopy();
-            } else {
-                sparseMatrix.copyTo(savedSparseMatrix);
+        if (!USE_BUFFER_INDEX_HELPER) {
+            if (sparseMatrix != null) {
+                if (savedSparseMatrix == null) {
+                    savedSparseMatrix = sparseMatrix.makeCopy();
+                } else {
+                    sparseMatrix.copyTo(savedSparseMatrix);
+                }
             }
         }
     }
 
     protected void restoreState() {
         super.restoreState();
-        SparseCompressedMatrix swap = sparseMatrix;
-        sparseMatrix = savedSparseMatrix;
-        savedSparseMatrix = swap;
+        if (!USE_BUFFER_INDEX_HELPER) {
+            SparseCompressedMatrix swap = sparseMatrix;
+            sparseMatrix = savedSparseMatrix;
+            savedSparseMatrix = swap;
+        }
     }
 
     private double[][] precisionMatrix;

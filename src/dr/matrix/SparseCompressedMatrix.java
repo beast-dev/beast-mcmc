@@ -81,6 +81,7 @@ public class SparseCompressedMatrix {
     }
 
     public void copyTo(SparseCompressedMatrix destination) {
+        // TODO takes up 15% of run-time, could consider swapping buffer indexes instead of values
         System.arraycopy(majorStarts, 0, destination.majorStarts, 0, majorStarts.length);
         System.arraycopy(minorIndices, 0, destination.minorIndices, 0, minorIndices.length);
         System.arraycopy(values, 0, destination.values, 0, values.length);

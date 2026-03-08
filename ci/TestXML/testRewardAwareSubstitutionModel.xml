@@ -105,7 +105,7 @@
         <treeModel idref="treeModel"/>
         <rates>
 <!--            <parameter id="total.rewards" value="3.75 3 4.5 3"/>-->
-            <parameter id="total.rewards" value="1.5 1.5 1.5 1.5"/>
+            <parameter id="total.rewards" value="0.5 0.5 0.5 0.5"/>
             <!--			<parameter id="ind.total.rewards" dimension="4" lower="0.0"/>-->
         </rates>
     </arbitraryBranchRates>
@@ -117,9 +117,22 @@
         <arbitraryBranchRates idref="ind.totalRewardsBranchRateModel"/>
         <!--		# reward rates = # states ind ctmc-->
         <rewardRates>
-            <parameter id="ind.rewardRates" dimension="2" value="2 1" lower="0.0"/>
+            <parameter id="ind.rewardRates" dimension="2" value="1 0" lower="0.0"/>
         </rewardRates>
-
+        <indicator>
+            <parameter dimension="4" value="0"/>
+        </indicator>
+        <extremeIndices>
+            <parameter dimension="2" value="1 0"/>
+        </extremeIndices>
+        <indexedParameter id="total.reward.pointMasses">
+            <values>
+                <parameter idref="ind.rewardRates"/>
+            </values>
+            <indices>
+                <parameter id="atomIndex" dimension="4" value="0 0 0 1"/>
+            </indices>
+        </indexedParameter>
         <generalSubstitutionModel id="ind.underlying.submodel">
             <generalDataType idref="ind.dataType"/>
             <frequencies>
@@ -153,8 +166,14 @@
             <rewardsAwareBranchModel idref="ind.rewardModel"/>
         </actual>
         <expected>
-            0.1565699150285395 0.323083481826218 0.13846434940947913 0.1565699150285395 0.16860053361175803 0.3853349183513836 0.16514353650236469 0.16860053361175803 0.1439241898517126 0.2784227590969922 0.11932403966072626 0.1439241898517126 0.16860053361711452 0.3853349183598661 0.16514353650600003 0.16860053361711452
+            0.391424788040965 0.8077087053054537 0.34616087384080163 0.3914247880409649
+            0.33720106722620274 0.770669836702309 0.33028707300453297 0.3372010672262028
+            0.4317725695551165 0.8352682772878882 0.35797211898085524 0.4317725695551165
+            0.33720106722620274 0.770669836702309 0.33028707300453297 0.3372010672262028
         </expected>
+<!--        <expected>-->
+<!--            0.1565699150285395 0.323083481826218 0.13846434940947913 0.1565699150285395 0.16860053361175803 0.3853349183513836 0.16514353650236469 0.16860053361175803 0.1439241898517126 0.2784227590969922 0.11932403966072626 0.1439241898517126 0.16860053361711452 0.3853349183598661 0.16514353650600003 0.16860053361711452-->
+<!--        </expected>-->
     </assertEqual>
 
 
@@ -191,7 +210,8 @@
             <treeDataLikelihood idref="ind.treeLikelihood"/>
         </actual>
         <expected>
-            -6.141956773589822
+            -2.740759391927666
+<!--            -6.141956773589822-->
         </expected>
     </assertEqual>
 

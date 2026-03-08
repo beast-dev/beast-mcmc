@@ -56,6 +56,7 @@ public final class RewardsAwarePartialLikelihoodProvider {
     private final int preOrderPartialOffset;
 
     private final ProcessSimulation processSimulation;
+    private final int[] nodeToTaxonIndex;
 
     /**
      * Lightweight delegate used only to trigger BEAGLE preorder-partial updates.
@@ -63,10 +64,12 @@ public final class RewardsAwarePartialLikelihoodProvider {
     private final class PreOrderDelegate extends ProcessSimulationDelegate.AbstractDelegate {
 
         private boolean substitutionProcessKnown = false;
+        private double[] scratch;
+
 
         private PreOrderDelegate(final String name, final Tree tree) {
             super(name, tree);
-
+            this.scratch = new double[stateCount * patternCount * categoryCount];
             likelihoodDelegate.addModelListener(this);
             likelihoodDelegate.addModelRestoreListener(this);
         }
@@ -95,7 +98,7 @@ public final class RewardsAwarePartialLikelihoodProvider {
         protected void simulateRoot(final int rootNumber) {
             final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
 
-            final double[] rootPreOrderPartial = new double[stateCount * patternCount * categoryCount];
+            final double[] rootPreOrderPartial = scratch;
             for (int i = 0; i < patternCount * categoryCount; i++) {
                 System.arraycopy(frequencies, 0, rootPreOrderPartial, i * stateCount, stateCount);
             }
@@ -152,6 +155,10 @@ public final class RewardsAwarePartialLikelihoodProvider {
         }
     }
 
+    private double[] scratch1;
+    private double[] scratch2;
+    private double[] scratch3;
+
     public RewardsAwarePartialLikelihoodProvider(final TreeDataLikelihood treeDataLikelihood,
                                      final BeagleDataLikelihoodDelegate likelihoodDelegate,
                                      final RewardsAwareBranchModel rewardsAwareBranchModel) {
@@ -179,6 +186,27 @@ public final class RewardsAwarePartialLikelihoodProvider {
 
         final ProcessSimulationDelegate delegate = new PreOrderDelegate("partialLikelihoodProvider", tree);
         this.processSimulation = new ProcessSimulation(treeDataLikelihood, delegate);
+
+        final int nodeCount = tree.getNodeCount();
+        this.nodeToTaxonIndex = new int[nodeCount];
+
+        this.scratch1 = new double[stateCount];
+        this.scratch2 = new double[stateCount];
+        this.scratch3 = new double[stateCount * patternCount * categoryCount];
+
+        Arrays.fill(nodeToTaxonIndex, -1);
+
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            Taxon taxon = tree.getNodeTaxon(tip);
+            int taxonIndex = patternList.getTaxonIndex(taxon);
+
+            if (taxonIndex < 0) {
+                throw new IllegalStateException("Taxon not found in pattern list: " + taxon);
+            }
+
+            nodeToTaxonIndex[tip.getNumber()] = taxonIndex;
+        }
     }
 
     /**
@@ -200,17 +228,10 @@ public final class RewardsAwarePartialLikelihoodProvider {
         checkVectorLength(postPartial, stateCount, "postPartial");
 
         if (tree.isExternal(node)) {
-            final Taxon taxon = tree.getNodeTaxon(node);
-            final int taxonIndex = patternList.getTaxonIndex(taxon);
-
-            if (taxonIndex < 0) {
-                throw new IllegalStateException("Taxon not found in pattern list: " + taxon);
-            }
-
+            final int taxonIndex = nodeToTaxonIndex[node.getNumber()];
             final int state = patternList.getPattern(0)[taxonIndex];
             Arrays.fill(postPartial, 0.0);
             postPartial[state] = 1.0;
-
             return;
         }
 
@@ -241,8 +262,8 @@ public final class RewardsAwarePartialLikelihoodProvider {
         final int preIdxParent = getPreOrderPartialIndex(parent.getNumber());
         copyFirstPatternFirstCategoryPartials(preIdxParent, prePartial);
 
-        final double[] siblingBelow = new double[stateCount];
-        final double[] siblingUp = new double[stateCount];
+        final double[] siblingBelow = scratch1;
+        final double[] siblingUp = scratch2;
 
         final int childCount = tree.getChildCount(parent);
         for (int k = 0; k < childCount; k++) {
@@ -332,7 +353,7 @@ public final class RewardsAwarePartialLikelihoodProvider {
      * Extract the first pattern / first category state vector from a BEAGLE partial buffer.
      */
     private void copyFirstPatternFirstCategoryPartials(final int partialIndex, final double[] out) {
-        final double[] all = new double[stateCount * patternCount * categoryCount];
+        final double[] all = scratch3;
         beagle.getPartials(partialIndex, Beagle.NONE, all);
         System.arraycopy(all, 0, out, 0, stateCount);
     }

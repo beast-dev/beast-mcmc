@@ -36,6 +36,9 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +58,9 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private final List<BigFastTreeIntervals> intervals;
     private final double magicSmallThreshold = 1E-4; // XJ: about 1-hour difference if time in years
     private boolean cacheKnown = false;
-    private final GridEndPointHandler gridEndPointHandler = GridEndPointHandler.TIGHTEST;
+    private final GridEndPointHandler gridEndPointHandler = GridEndPointHandler.ALL;
+    private final MathContext mc = new MathContext(64, RoundingMode.HALF_UP);
+    private final boolean useHighPrecision = true;
 
     public NewSmoothSkygridLikelihood(String name,
                                       List<TreeModel> trees,
@@ -82,16 +87,36 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             throw new IllegalArgumentException("Not so many trees yet");
         }
 
-        this.tmpA = new double[trees.get(0).getNodeCount()];
-        this.tmpB = new double[trees.get(0).getNodeCount()];
-        this.tmpC = new double[trees.get(0).getNodeCount()];
-        this.tmpD = new double[gridPointParameter.getDimension()];
-        this.tmpE = new double[gridPointParameter.getDimension()];
-        this.tmpF = new double[gridPointParameter.getDimension()];
         this.uniqueNodeTimes = new double[trees.get(0).getNodeCount()];
         this.sumLineageEffects = new double[trees.get(0).getNodeCount()];
         this.uniqueTimeIndexForGrid = new int[gridPointParameter.getDimension()];
         this.gridIndexUniqueTime = new int[trees.get(0).getNodeCount()];
+        if (useHighPrecision) {
+            this.highPrecisionTmpA = new BigDecimal[trees.get(0).getNodeCount()];
+            this.highPrecisionTmpB = new BigDecimal[trees.get(0).getNodeCount()];
+            this.highPrecisionTmpC = new BigDecimal[trees.get(0).getNodeCount()];
+            this.highPrecisionTmpD = new BigDecimal[gridPointParameter.getDimension()];
+            this.highPrecisionTmpE = new BigDecimal[gridPointParameter.getDimension()];
+            this.highPrecisionTmpF = new BigDecimal[gridPointParameter.getDimension()];
+            for (int i = 0; i < trees.get(0).getNodeCount(); i++) {
+                this.highPrecisionTmpA[i] = new BigDecimal(0);
+                this.highPrecisionTmpB[i] = new BigDecimal(0);
+                this.highPrecisionTmpC[i] = new BigDecimal(0);
+            }
+            for (int k = 0; k < gridPointParameter.getDimension(); k++) {
+                this.highPrecisionTmpD[k] = new BigDecimal(0);
+                this.highPrecisionTmpE[k] = new BigDecimal(0);
+                this.highPrecisionTmpF[k] = new BigDecimal(0);
+            }
+        } else {
+            this.tmpA = new double[trees.get(0).getNodeCount()];
+            this.tmpB = new double[trees.get(0).getNodeCount()];
+            this.tmpC = new double[trees.get(0).getNodeCount()];
+            this.tmpD = new double[gridPointParameter.getDimension()];
+            this.tmpE = new double[gridPointParameter.getDimension()];
+            this.tmpF = new double[gridPointParameter.getDimension()];
+        }
+
     }
 
     private double getSmoothRate() {
@@ -147,6 +172,69 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private double[] tmpD;
     private double[] tmpE;
     private double[] tmpF;
+
+    private BigDecimal[] highPrecisionTmpA;
+    private BigDecimal[] highPrecisionTmpB;
+    private BigDecimal[] highPrecisionTmpC;
+    private BigDecimal[] highPrecisionTmpD;
+    private BigDecimal[] highPrecisionTmpE;
+    private BigDecimal[] highPrecisionTmpF;
+
+    private void cacheHighPrecisionTmps() {
+        if (!cacheKnown) {
+            sortNodeTimes();
+            TreeModel tree = trees.get(0);
+            final double rootTime = tree.getNodeHeight(tree.getRoot());
+            final double s = getSmoothRate();
+
+            for (int i = 0; i < numberUniqueNodeTimes; i++) {
+                final double ti = uniqueNodeTimes[i];
+                final double gi = sumLineageEffects[i];
+                BigDecimal highPrecisionSum = BigDecimal.ZERO;
+                for (int j = 0; j < numberUniqueNodeTimes; j++) {
+                    if (j != i) {
+                        final double gj = sumLineageEffects[j];
+                        final double tj = uniqueNodeTimes[j];
+                        highPrecisionSum = highPrecisionSum.add(new BigDecimal(2 * gj * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(tj - ti, s)));
+                    }
+                }
+                highPrecisionTmpA[i] = highPrecisionSum;
+                highPrecisionTmpC[i] = new BigDecimal(gi * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(ti, s)));
+
+                highPrecisionSum = BigDecimal.ZERO;
+                for (int k = 0; k < getLastGridIndex(); k++) {
+                    final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                    final double xk = gridPointParameter.getParameterValue(k);
+                    if (k != gridIndexUniqueTime[i]) {
+                        highPrecisionSum = highPrecisionSum.add((new BigDecimal(GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s))).multiply(new BigDecimal(popSizeInverseDifference), mc));
+                    }
+                }
+                highPrecisionTmpB[i] = highPrecisionSum;
+            }
+
+            for (int k = 0; k < getLastGridIndex(); k++) {
+                final double xk = gridPointParameter.getParameterValue(k);
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                highPrecisionTmpD[k] = new BigDecimal(GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s)).multiply(new BigDecimal(popSizeInverseDifference), mc);
+                BigDecimal highPrecisionSum = BigDecimal.ZERO;
+                BigDecimal highPrecisionSumSquared = BigDecimal.ZERO;
+                for (int i = 0; i < numberUniqueNodeTimes; i++) {
+                    final double ti = uniqueNodeTimes[i];
+                    final double gi = sumLineageEffects[i];
+                    if (i != uniqueTimeIndexForGrid[k]) {
+                        final double thisInverse = gi * GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
+                        highPrecisionSum = highPrecisionSum.add(new BigDecimal(thisInverse), mc);
+                        highPrecisionSumSquared = highPrecisionSumSquared.add(new BigDecimal(thisInverse * thisInverse), mc);
+                    }
+                }
+                highPrecisionTmpE[k] = highPrecisionSum;
+                highPrecisionTmpF[k] = highPrecisionSumSquared;
+            }
+
+            cacheKnown = true;
+        }
+    }
+
 
     private void cacheTmps() {
         if (!cacheKnown) {
@@ -206,14 +294,14 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private double getFirstDoubleIntegral() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
-        final double s = getSmoothRate();
-        double sum = 0;
+        final BigDecimal s = new BigDecimal(getSmoothRate());
+
+        BigDecimal sum = BigDecimal.ZERO;
         for (int i = 0; i < numberUniqueNodeTimes; i++) {
-            sum += tmpA[i] * tmpC[i];
+            sum = sum.add(highPrecisionTmpA[i].multiply(highPrecisionTmpC[i], mc));
         }
-        sum /= s;
-        final double result = sum + rootTime * (2 - 2 * tree.getExternalNodeCount());
-        return result;
+        sum = sum.divide(s);
+        return sum.doubleValue() + rootTime * (2 - 2 * tree.getExternalNodeCount());
     }
 
     private double getFirstDoubleIntegralBruteForce() {
@@ -260,7 +348,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         for (int i = 0; i < numberUniqueNodeTimes; i++) {
             final double gi = sumLineageEffects[i];
             final double ti = uniqueNodeTimes[i];
-            sum += gi * tmpC[i] + gi * gi * (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(-ti, s));
+            sum += gi * highPrecisionTmpC[i].doubleValue() + gi * gi * (GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - ti, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(-ti, s));
         }
         return sum / s + rootTime * tree.getNodeCount();
     }
@@ -290,23 +378,23 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double s = getSmoothRate();
-        double sum = 0;
+
+        BigDecimal sum = BigDecimal.ZERO;
         for (int i = 0; i < numberUniqueNodeTimes; i++) {
-            sum += tmpC[i] * tmpB[i];
+            sum = sum.add(highPrecisionTmpC[i].multiply(highPrecisionTmpB[i], mc));
         }
         for (int k = 0; k < getLastGridIndex(); k++) {
-            sum += tmpD[k] * tmpE[k];
+            sum = sum.add(highPrecisionTmpD[k].multiply(highPrecisionTmpE[k], mc));
             if (uniqueTimeIndexForGrid[k] > -1) {
                 final double xk = gridPointParameter.getParameterValue(k);
                 final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
                 final double popSizeInverseDifference = getPopSizeInverseDifference(k);
-                sum += gi * popSizeInverseDifference * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s)
-                        + GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - xk, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(- xk, s));
+                sum = sum.add(new BigDecimal(gi * popSizeInverseDifference * (GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk - rootTime, s) - GlobalSigmoidSmoothFunction.getLogOnePlusExponential(xk, s)
+                        + GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(rootTime - xk, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(- xk, s))));
             }
         }
-        sum /= s;
-        sum += (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
-        return sum;
+        sum = sum.divide(new BigDecimal(s));
+        return sum.doubleValue() + (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
     }
 
     private double getThirdDoubleIntegralBruteForce() {
@@ -499,16 +587,21 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
 
-        final double firstTripleIntegral = getFirstTripleIntegral();
-        final double tripleWithSquareIntegral = getTripleIntegralWithSquares();
+        final BigDecimal firstTripleIntegralHighPrecision = getFirstTripleIntegralHighPrecision();
+        final BigDecimal tripleWithSquareIntegralHighPrecision = getTripleIntegralWithSquaresHighPrecision();
+
+//        final double firstTripleIntegral = getFirstTripleIntegral();
+//        final double tripleWithSquareIntegral = getTripleIntegralWithSquares();
         final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
 //        final double firstTripleIntegralApprox = getFirstTripleIntegralBruteForce();
 //        final double secondTripleIntegralApprox = getSecondTripleIntegralBruteForce();
 //        final double approx = firstTripleIntegralApprox + secondTripleIntegralApprox;
 
-        return  firstTripleIntegral + tripleWithSquareIntegral + allTs;
+//        final double result = firstTripleIntegral + tripleWithSquareIntegral + allTs;
+        final double output = firstTripleIntegralHighPrecision.add(tripleWithSquareIntegralHighPrecision).add(new BigDecimal(allTs)).doubleValue();
 
+        return  output;
     }
 
     private double getFirstTripleIntegralBruteForce() {
@@ -551,6 +644,68 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             sumGiSquare += gi * gi;
         }
         return sum - rootTime * sumGiSquare * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+    }
+
+    private BigDecimal getFirstTripleIntegralHighPrecision() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        final double s = getSmoothRate();
+
+
+        BigDecimal highPrecisionSum = BigDecimal.ZERO;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            highPrecisionSum = highPrecisionSum.add(highPrecisionTmpB[i].multiply(highPrecisionTmpA[i].multiply(highPrecisionTmpC[i], mc), mc), mc);
+        }
+
+        for (int k = 0; k < getLastGridIndex(); k++) {
+            if (uniqueTimeIndexForGrid[k] > -1) {
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                final double xk = gridPointParameter.getParameterValue(k);
+                for (int i = 0; i < numberUniqueNodeTimes; i++) {
+                    final double ti = uniqueNodeTimes[i];
+                    if (Math.abs(ti - xk) > magicSmallThreshold) {
+                        final double inverse = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s);
+                        highPrecisionSum = highPrecisionSum.subtract(highPrecisionTmpC[i].multiply(new BigDecimal(2 * inverse * inverse * sumLineageEffects[uniqueTimeIndexForGrid[k]] * popSizeInverseDifference), mc));
+                    }
+                }
+            }
+        }
+
+
+        BigDecimal highPrecisionSum2 = BigDecimal.ZERO;
+
+        for (int k = 0; k < getLastGridIndex(); k++) {
+            highPrecisionSum2 = highPrecisionSum2.add(highPrecisionTmpD[k].multiply(highPrecisionTmpE[k].multiply(highPrecisionTmpE[k], mc).subtract(highPrecisionTmpF[k]), mc));
+        }
+
+        BigDecimal highPrecisionSum3 = BigDecimal.ZERO;
+        for (int k = 0; k < getLastGridIndex(); k++) {
+            final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+            double thisExtra = 0;
+            if (uniqueTimeIndexForGrid[k] > -1) {
+                final double ti = uniqueNodeTimes[uniqueTimeIndexForGrid[k]];
+                final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
+                final double inverseOnePlusExpTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s);
+                thisExtra -= gi * inverseOnePlusExpTiMinusT * 0.5 * highPrecisionTmpA[uniqueTimeIndexForGrid[k]].doubleValue();
+
+                double firstSumOverJ = 0;
+                double secondSumOverJ = 0;
+                for (int j = 0; j < numberUniqueNodeTimes; j++) {
+                    if (j != uniqueTimeIndexForGrid[k]) {
+                        final double gj = sumLineageEffects[j];
+                        final double tj = uniqueNodeTimes[j];
+                        final double inverseOneMinusExpTiMinusTj = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - tj, s);
+                        final double inverseOneMinusExpTjMinusTi = 1 - inverseOneMinusExpTiMinusTj;
+                        firstSumOverJ += inverseOneMinusExpTiMinusTj * inverseOneMinusExpTiMinusTj * highPrecisionTmpC[j].doubleValue();
+                        secondSumOverJ += gj * (inverseOneMinusExpTjMinusTi + inverseOneMinusExpTjMinusTi * inverseOneMinusExpTiMinusTj);
+                    }
+                }
+                thisExtra += gi * firstSumOverJ + secondSumOverJ * highPrecisionTmpC[uniqueTimeIndexForGrid[k]].doubleValue();
+                highPrecisionSum3 = highPrecisionSum3.add(new BigDecimal(thisExtra * popSizeInverseDifference));
+            }
+        }
+
+        return highPrecisionSum.add(highPrecisionSum2).add(highPrecisionSum3.multiply(BigDecimal.TWO)).divide(new BigDecimal(s));
     }
 
     private double getFirstTripleIntegral() {
@@ -669,6 +824,61 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         return (sum1 + sum2 + sum3) / s;
     }
 
+    private BigDecimal getTripleIntegralWithSquaresHighPrecision() {
+        TreeModel tree = trees.get(0);
+        final double rootTime = tree.getNodeHeight(tree.getRoot());
+        final double s = getSmoothRate();
+        BigDecimal highPrecisionSum1 = BigDecimal.ZERO;
+        for (int i = 0; i < numberUniqueNodeTimes; i++) {
+            final double ti = uniqueNodeTimes[i];
+            final double gi = sumLineageEffects[i];
+            final double inverseOnePlusExpTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s);
+            highPrecisionSum1 = highPrecisionSum1.subtract(highPrecisionTmpB[i].multiply(new BigDecimal(gi * gi * inverseOnePlusExpTiMinusT), mc));
+            double sumOverK = 0;
+
+            for (int k = 0; k < getLastGridIndex(); k++) {
+                if (k != gridIndexUniqueTime[i]) {
+                    final double xk = gridPointParameter.getParameterValue(k);
+                    final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+                    final double inverseOneMinusExpTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
+                    final double inverseOneMinusExpXkMinusTi = 1 - inverseOneMinusExpTiMinusXk;
+
+                    sumOverK += popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk);
+                }
+            }
+            highPrecisionSum1 = highPrecisionSum1.add(highPrecisionTmpC[i].multiply(new BigDecimal(sumOverK * gi), mc));
+        }
+
+        BigDecimal highPrecisionSum2 = BigDecimal.ZERO;
+
+        for (int k = 0; k < getLastGridIndex(); k++) {
+            final double xk = gridPointParameter.getParameterValue(k);
+            double sumOverI = 0;
+            for (int i = 0; i < numberUniqueNodeTimes; i++) {
+                final double ti = uniqueNodeTimes[i];
+                final double gi = sumLineageEffects[i];
+                if (i != uniqueTimeIndexForGrid[k]) {
+                    final double inverseOneMinusExpTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
+                    sumOverI += gi * gi * inverseOneMinusExpTiMinusXk * inverseOneMinusExpTiMinusXk;
+                }
+            }
+            highPrecisionSum2 = highPrecisionSum2.add(highPrecisionTmpD[k].multiply(new BigDecimal(sumOverI), mc));
+        }
+
+        BigDecimal highPrecisionSum3 = BigDecimal.ZERO;
+        for (int k = 0; k < getLastGridIndex(); k++) {
+            if (uniqueTimeIndexForGrid[k] > -1) {
+                final double ti = gridPointParameter.getParameterValue(k);
+                final double gi = sumLineageEffects[uniqueTimeIndexForGrid[k]];
+                final double popSizeInverseDifference = getPopSizeInverseDifference(k);
+
+                highPrecisionSum3 = highPrecisionSum3.add(new BigDecimal(gi * gi * popSizeInverseDifference * ((getCompleteTripleIntegral(ti, ti, ti, rootTime) - rootTime) * s)));
+            }
+        }
+
+        return highPrecisionSum1.add(highPrecisionSum2).add(highPrecisionSum3).divide(new BigDecimal(s), mc);
+    }
+
     private double getTripleIntegralBruteForce() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
@@ -724,7 +934,11 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     @Override
     protected double calculateLogLikelihood() {
         if (!cacheKnown) {
-            cacheTmps();
+            if (useHighPrecision) {
+                cacheHighPrecisionTmps();
+            } else {
+                cacheTmps();
+            }
         }
         final double tripleIntegrals = getTripleIntegral();
         final double doubleIntegrals = getDoubleIntegral();

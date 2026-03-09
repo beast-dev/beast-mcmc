@@ -58,9 +58,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private final List<BigFastTreeIntervals> intervals;
     private final double magicSmallThreshold = 1E-4; // XJ: about 1-hour difference if time in years
     private boolean cacheKnown = false;
+    private boolean highPrecisionCacheKnown = false;
     private final GridEndPointHandler gridEndPointHandler = GridEndPointHandler.ALL;
-    private final MathContext mc = new MathContext(32, RoundingMode.HALF_UP);
-    private final boolean useHighPrecision = true;
+    private MathContext mc = new MathContext(100, RoundingMode.HALF_UP);
+    private boolean useHighPrecision = false;
 
     public NewSmoothSkygridLikelihood(String name,
                                       List<TreeModel> trees,
@@ -91,6 +92,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         this.sumLineageEffects = new double[trees.get(0).getNodeCount()];
         this.uniqueTimeIndexForGrid = new int[gridPointParameter.getDimension()];
         this.gridIndexUniqueTime = new int[trees.get(0).getNodeCount()];
+
+    }
+
+    private void initializeCache() {
         if (useHighPrecision) {
             this.highPrecisionTmpA = new BigDecimal[trees.get(0).getNodeCount()];
             this.highPrecisionTmpB = new BigDecimal[trees.get(0).getNodeCount()];
@@ -116,7 +121,6 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             this.tmpE = new double[gridPointParameter.getDimension()];
             this.tmpF = new double[gridPointParameter.getDimension()];
         }
-
     }
 
     private double getSmoothRate() {
@@ -181,7 +185,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private BigDecimal[] highPrecisionTmpF;
 
     private void cacheHighPrecisionTmps() {
-        if (!cacheKnown) {
+        if (highPrecisionTmpA == null) {
+            initializeCache();
+        }
+        if (!highPrecisionCacheKnown) {
             sortNodeTimes();
             TreeModel tree = trees.get(0);
             final double rootTime = tree.getNodeHeight(tree.getRoot());
@@ -231,12 +238,22 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 highPrecisionTmpF[k] = highPrecisionSumSquared;
             }
 
-            cacheKnown = true;
+            highPrecisionCacheKnown = true;
         }
     }
 
-
     private void cacheTmps() {
+        if (useHighPrecision) {
+            cacheHighPrecisionTmps();
+        } else {
+            cacheDoubleTmps();
+        }
+    }
+
+    private void cacheDoubleTmps() {
+        if (tmpA == null) {
+            initializeCache();
+        }
         if (!cacheKnown) {
             sortNodeTimes();
             TreeModel tree = trees.get(0);
@@ -637,6 +654,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
+        if (Double.isNaN(allTs) || Double.isInfinite(allTs)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
         if (useHighPrecision) {
             final BigDecimal firstTripleIntegralHighPrecision = getFirstTripleIntegralHighPrecision();
             final BigDecimal tripleWithSquareIntegralHighPrecision = getTripleIntegralWithSquaresHighPrecision();
@@ -757,6 +778,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     }
 
     private double getFirstTripleIntegral() {
+        if (!cacheKnown) {
+            cacheDoubleTmps();
+        }
+
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double s = getSmoothRate();
@@ -882,19 +907,25 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             final double gi = sumLineageEffects[i];
             final double inverseOnePlusExpTiMinusT = GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti - rootTime, s) - GlobalSigmoidSmoothFunction.getInverseOnePlusExponential(ti, s);
             highPrecisionSum1 = highPrecisionSum1.subtract(highPrecisionTmpB[i].multiply(new BigDecimal(gi * gi * inverseOnePlusExpTiMinusT), mc));
-            double sumOverK = 0;
+
+//            double sumOverK = 0;
+            BigDecimal sumOverKHighPrecision = BigDecimal.ZERO;
 
             for (int k = 0; k < getLastGridIndex(); k++) {
                 if (k != gridIndexUniqueTime[i]) {
                     final double xk = gridPointParameter.getParameterValue(k);
                     final double popSizeInverseDifference = getPopSizeInverseDifference(k);
                     final double inverseOneMinusExpTiMinusXk = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(ti - xk, s);
-                    final double inverseOneMinusExpXkMinusTi = 1 - inverseOneMinusExpTiMinusXk;
+                    final double inverseOneMinusExpXkMinusTi = GlobalSigmoidSmoothFunction.getInverseOneMinusExponential(xk - ti, s);
 
-                    sumOverK += popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk);
+//                    sumOverK += popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk);
+                    final double increment = popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk);
+                    if (!Double.isNaN(increment)) {
+                        sumOverKHighPrecision = sumOverKHighPrecision.add(new BigDecimal(popSizeInverseDifference * (inverseOneMinusExpXkMinusTi + inverseOneMinusExpXkMinusTi * inverseOneMinusExpTiMinusXk)));
+                    }
                 }
             }
-            highPrecisionSum1 = highPrecisionSum1.add(highPrecisionTmpC[i].multiply(new BigDecimal(sumOverK * gi), mc));
+            highPrecisionSum1 = highPrecisionSum1.add(highPrecisionTmpC[i].multiply(sumOverKHighPrecision, mc).multiply(new BigDecimal(gi), mc));
         }
 
         BigDecimal highPrecisionSum2 = BigDecimal.ZERO;
@@ -989,18 +1020,10 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     @Override
     protected double calculateLogLikelihood() {
         if (!cacheKnown) {
-            if (useHighPrecision) {
-                cacheHighPrecisionTmps();
-            } else {
-                cacheTmps();
-            }
+            cacheTmps();
         }
-        final double tripleIntegrals = getTripleIntegral();
-        final double doubleIntegrals = getDoubleIntegral();
-        final double singleIntegrals = getAllSingleIntegrals();
-        final double negativeLogPopSizeSum = getAllLogSmoothPopSize();
 
-        final double result = negativeLogPopSizeSum - (singleIntegrals + doubleIntegrals + tripleIntegrals)/2;
+        final double result = calculateLogLikelihood(5);
 
         if (Double.isInfinite(result)) {
             return Double.NEGATIVE_INFINITY;
@@ -1008,6 +1031,43 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             return result;
         }
 
+    }
+
+    private double calculateLogLikelihood(int maxIterations) {
+
+        int currentIteration = 0;
+
+        while(currentIteration < maxIterations) {
+            final double tripleIntegrals = getTripleIntegral();
+            final double doubleIntegrals = getDoubleIntegral();
+            final double singleIntegrals = getAllSingleIntegrals();
+            final double negativeLogPopSizeSum = getAllLogSmoothPopSize();
+
+            final double result = negativeLogPopSizeSum - (singleIntegrals + doubleIntegrals + tripleIntegrals)/2;
+
+            if (result > 0) {
+                if (useHighPrecision) {
+                    this.mc = new MathContext(mc.getPrecision() + 20, mc.getRoundingMode());
+                } else {
+                    useHighPrecision = true;
+                }
+                currentIteration++;
+            } else {
+                if (useHighPrecision) {
+                    useHighPrecision = false;
+                    final double tripleIntegralsDouble = getTripleIntegral();
+                    final double doubleIntegralsDouble = getDoubleIntegral();
+                    final double lowPrecisionResult = negativeLogPopSizeSum - (singleIntegrals + doubleIntegralsDouble + tripleIntegralsDouble)/2;
+                    if (Math.abs(result - lowPrecisionResult) < 0.1) {
+                        this.mc = new MathContext(100, mc.getRoundingMode());
+                    } else {
+                        useHighPrecision = true;
+                    }
+                }
+                return result;
+            }
+        }
+        return Double.NEGATIVE_INFINITY;
     }
 
     @Override

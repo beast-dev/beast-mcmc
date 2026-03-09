@@ -774,7 +774,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             }
         }
 
-        return highPrecisionSum.add(highPrecisionSum2).add(highPrecisionSum3.multiply(BigDecimal.TWO)).divide(new BigDecimal(s));
+        return highPrecisionSum.add(highPrecisionSum2).add(highPrecisionSum3.multiply(new BigDecimal(2))).divide(new BigDecimal(s));
     }
 
     private double getFirstTripleIntegral() {

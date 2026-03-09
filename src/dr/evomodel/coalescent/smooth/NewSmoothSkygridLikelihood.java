@@ -59,7 +59,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private final double magicSmallThreshold = 1E-4; // XJ: about 1-hour difference if time in years
     private boolean cacheKnown = false;
     private boolean highPrecisionCacheKnown = false;
-    private final GridEndPointHandler gridEndPointHandler = GridEndPointHandler.ALL;
+    private final GridEndPointHandler gridEndPointHandler = GridEndPointHandler.TIGHTEST;
     private MathContext mc = new MathContext(100, RoundingMode.HALF_UP);
     private boolean useHighPrecision = false;
 
@@ -437,7 +437,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             }
         }
         sum = sum.divide(new BigDecimal(s));
-        return sum.doubleValue() + (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
+        return sum.doubleValue() + (Math.exp(-logPopSizeParameter.getParameterValue(getLastGridIndex())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
     }
 
     private double getThirdDoubleIntegral() {
@@ -460,7 +460,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             }
         }
         sum /= s;
-        return sum + (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
+        return sum + (Math.exp(-logPopSizeParameter.getParameterValue(getLastGridIndex())) - Math.exp(-logPopSizeParameter.getParameterValue(0))) * rootTime;
     }
 
     private double getThirdDoubleIntegralBruteForce() {
@@ -652,7 +652,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private double getTripleIntegral() {
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
-        final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+        final double allTs = rootTime * (Math.exp(-logPopSizeParameter.getParameterValue(getLastGridIndex())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
 
         if (Double.isNaN(allTs) || Double.isInfinite(allTs)) {
             return Double.POSITIVE_INFINITY;
@@ -694,7 +694,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
                 }
             }
         }
-        return sum - rootTime * sumGiGj * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+        return sum - rootTime * sumGiGj * (Math.exp(-logPopSizeParameter.getParameterValue(getLastGridIndex())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
     }
 
     private double getSecondTripleIntegralBruteForce() {
@@ -712,10 +712,13 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
             }
             sumGiSquare += gi * gi;
         }
-        return sum - rootTime * sumGiSquare * (Math.exp(-logPopSizeParameter.getParameterValue(gridPointParameter.getDimension())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
+        return sum - rootTime * sumGiSquare * (Math.exp(-logPopSizeParameter.getParameterValue(getLastGridIndex())) - Math.exp(-logPopSizeParameter.getParameterValue(0)));
     }
 
     private BigDecimal getFirstTripleIntegralHighPrecision() {
+        if (!highPrecisionCacheKnown) {
+            cacheTmps();
+        }
         TreeModel tree = trees.get(0);
         final double rootTime = tree.getNodeHeight(tree.getRoot());
         final double s = getSmoothRate();

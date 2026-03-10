@@ -27,30 +27,56 @@
 
 package dr.inference.model;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
+ * @author Frederik M. Andersen
  */
 public class LikelihoodBenchmarker {
 
     public LikelihoodBenchmarker(List<Likelihood> likelihoods, int iterationCount) {
+        Logger logger = Logger.getLogger("dr.app.beagle");
+
         for (Likelihood likelihood : likelihoods) {
-            long startTime = System.nanoTime();
+            double[] times = new double[iterationCount];
 
             for (int i = 0; i < iterationCount; i++) {
                 likelihood.makeDirty();
+                long startTime = System.nanoTime();
                 likelihood.getLogLikelihood();
+                long endTime = System.nanoTime();
+                times[i] = (endTime - startTime) * 1E-3; // microseconds
             }
 
-            long endTime = System.nanoTime();
+            Arrays.sort(times);
 
-            double seconds = (endTime - startTime) * 1E-9;
-            Logger.getLogger("dr.app.beagle").info(
-                    "Benchmark " + likelihood.getId() + "(" + likelihood.getClass().getName() + "): " +
-                            seconds + " sec");
+            double sum = 0.0;
+            for (double t : times) {
+                sum += t;
+            }
+            double mean = sum / iterationCount;
 
+            double sumSqDev = 0.0;
+            for (double t : times) {
+                double dev = t - mean;
+                sumSqDev += dev * dev;
+            }
+            double sd = Math.sqrt(sumSqDev / iterationCount);
+
+            double median = iterationCount % 2 == 0
+                    ? (times[iterationCount / 2 - 1] + times[iterationCount / 2]) / 2.0
+                    : times[iterationCount / 2];
+
+            double min = times[0];
+            double max = times[iterationCount - 1];
+
+            String name = likelihood.getId() + " (" + likelihood.getClass().getSimpleName() + ")";
+            logger.info(String.format("Benchmark %s [%d iterations]: " +
+                            "mean=%.1f us, sd=%.1f us, median=%.1f us, range=[%.1f, %.1f] us",
+                    name, iterationCount, mean, sd, median, min, max));
         }
     }
 }

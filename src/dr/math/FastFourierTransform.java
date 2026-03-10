@@ -31,6 +31,7 @@ package dr.math;
  * Performs FFT on vectors with lengths equaling powers-of-2
  *
  * @author Marc A. Suchard
+ * @author Frederik M. Andersen
  */
 public class FastFourierTransform {
 
@@ -167,6 +168,87 @@ public class FastFourierTransform {
                 wi += wi * wpr + wtemp * wpi;
             }
             mmax = istep;
+        }
+    }
+
+    /**
+     * Helper function to compute fft on a real signal of length nn
+     * using a complex fft of half the size, then unpacks (or vice versa for inverse).
+     *
+     * @param data    real input of length nn (forward) or interleaved spectrum (inverse)
+     * @param nn      data length (must be a power of 2)
+     * @param inverse true if performing inverse FFT
+     */
+    public static void rfft(double[] data, int nn, boolean inverse) {
+        int halfN = nn >> 1; // equivalent to nn / 2
+
+        // phase for the twiddle factors based on direction
+        double theta = inverse ? (2.0 * Math.PI / nn) : (-2.0 * Math.PI / nn);
+
+        if (!inverse) {
+            // FORWARD: Treat real data as halfN complex pairs and do complex FFT first
+            fft(data, halfN, false);
+        } else {
+            // INVERSE: Undo DC/Nyquist packing first
+            double dc = data[0];
+            double nyq = data[1];
+            data[0] = 0.5 * (dc + nyq);
+            data[1] = 0.5 * (dc - nyq);
+        }
+
+        // Shared Twiddle Factor Setup
+        double wtemp = Math.sin(0.5 * theta);
+        double wpr = -2.0 * wtemp * wtemp;
+        double wpi = Math.sin(theta);
+        double wr = 1.0 + wpr;
+        double wi = wpi;
+
+        // Shared Unpack/Pack Loop
+        for (int k = 1; k < (halfN >> 1) + 1; k++) {
+            int k2 = k << 1;
+            int mk2 = (halfN - k) << 1;
+
+            double zr = data[k2], zi = data[k2 + 1];
+            double cr = data[mk2], ci = data[mk2 + 1];
+
+            double sr = 0.5 * (zr + cr), si = 0.5 * (zi - ci);
+            double dr = 0.5 * (zr - cr), di = 0.5 * (zi + ci);
+
+            double tr = wr * di + wi * dr;
+            double ti = -(wr * dr - wi * di);
+
+            if (!inverse) {
+                data[k2] = sr + tr;
+                data[k2 + 1] = si + ti;
+                data[mk2] = sr - tr;
+                data[mk2 + 1] = -(si - ti);
+            } else {
+                data[k2] = sr - tr;
+                data[k2 + 1] = si - ti;
+                data[mk2] = sr + tr;
+                data[mk2 + 1] = -(si + ti);
+            }
+
+            // Advance twiddle factors
+            wtemp = wr;
+            wr += wr * wpr - wi * wpi;
+            wi += wi * wpr + wtemp * wpi;
+        }
+
+        if (!inverse) {
+            // FORWARD: Handle DC and Nyquist last
+            double dc = data[0];
+            double nyq = data[1];
+            data[0] = dc + nyq;
+            data[1] = dc - nyq;
+        } else {
+            // INVERSE: Do inverse complex FFT of size halfN last, then scale
+            fft(data, halfN, true);
+
+            double scale = 1.0 / halfN;
+            for (int i = 0; i < nn; i++) {
+                data[i] *= scale;
+            }
         }
     }
 

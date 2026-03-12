@@ -117,6 +117,10 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return likelihood;
     }
 
+    public List<GradientWrtParameterProvider> getDerivativeList() {
+        return derivativeList;
+    }
+
     @Override
     public Parameter getParameter() {
         return parameter;

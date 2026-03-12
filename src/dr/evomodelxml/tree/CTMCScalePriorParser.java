@@ -35,6 +35,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -45,6 +47,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     public static final String SCALEPARAMETER = "ctmcScale";
     public static final String RECIPROCAL = "reciprocal";
     public static final String TRIAL = "trial";
+    public static final String PROPORTION = "proportion";
 
     public String getParserName() {
         return MODEL_NAME;
@@ -52,19 +55,21 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        List<TreeModel> treeModels = xo.getAllChildren(TreeModel.class);
         TaxonList taxa = (TaxonList) xo.getChild(Taxa.class);
 
         Parameter ctmcScale = (Parameter) xo.getElementFirstChild(SCALEPARAMETER);
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
         boolean trial = xo.getAttribute(TRIAL, false);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        double proportion = xo.getAttribute(PROPORTION, 1.0);
 
         Logger.getLogger("dr.evolution").info("\nCreating CTMC Scale Reference Prior model");
         if (taxa != null) {
             Logger.getLogger("dr.evolution").info("  Acting on subtree of size " + taxa.getTaxonCount());
         }
-        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, taxa, reciprocal, substitutionModel, trial);
+        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModels, taxa, reciprocal, substitutionModel, trial,
+                proportion);
     }
 
     //************************************************************************
@@ -84,11 +89,12 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(TreeModel.class),
+            new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE),
             new ElementRule(Taxa.class, true),
             new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             new ElementRule(SubstitutionModel.class, true),
             AttributeRule.newBooleanRule(TRIAL, true),
+            AttributeRule.newDoubleRule(PROPORTION, true),
     };
 }

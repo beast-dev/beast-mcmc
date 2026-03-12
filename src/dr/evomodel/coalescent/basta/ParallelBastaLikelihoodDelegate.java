@@ -32,6 +32,7 @@ import dr.evolution.tree.Tree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -62,58 +63,63 @@ public class ParallelBastaLikelihoodDelegate extends GenericBastaLikelihoodDeleg
 
         this.threadCount = Math.abs(threadCount);
         this.temp = new double[this.threadCount][stateCount * stateCount];
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+
+        logger.info("\nCreating ParallelBastaLikelihoodDelegate");
     }
 
     @Override
     protected void computeInnerBranchIntervalOperations(List<BranchIntervalOperation> branchIntervalOperations,
-                                                      int start, int end) {
+                                                        List<TransitionMatrixOperation> matrixOperations,
+                                                        int start, int end, Mode mode) {
 
         int totalTasks = end - start;
-//        System.err.println(totalTasks);
 
         if (totalTasks <= MIN_BRANCH_TASKS) {
-            super.computeInnerBranchIntervalOperations(branchIntervalOperations, start, end);
+            super.computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations, start, end, mode);
         } else {
-            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperations(branchIntervalOperations, s, e),
+            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperations(branchIntervalOperations, matrixOperations,
+                            s, e, mode),
                     start, end);
         }
     }
 
-    @Override
-    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations, int start, int end) {
-        int totalTasks = end - start;
-
-        if (totalTasks <= MIN_MATRIX_TASKS) {
-            super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, start, end);
-        } else {
-            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, s, e),
-                    start, end);
-        }
-    }
-
-    @Override
-    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end){
-
-        int totalTasks = end - start;
-//        System.err.println(totalTasks);
-
-        if (totalTasks <= MIN_BRANCH_TASKS) {
-            super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
-        } else {
-            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, s, e),
-                    start, end);
-        }
-    }
+//    @Override
+//    protected void computeInnerTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations, int start, int end) {
+//        int totalTasks = end - start;
+//
+//        if (totalTasks <= MIN_MATRIX_TASKS) {
+//            super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, start, end);
+//        } else {
+//            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperationsGrad(matrixOperations, s, e),
+//                    start, end);
+//        }
+//    }
+//
+//    @Override
+//    protected void computeInnerBranchIntervalOperationsGrad(List<BranchIntervalOperation> branchIntervalOperations, List<TransitionMatrixOperation> matrixOperations, int start, int end){
+//
+//        int totalTasks = end - start;
+////        System.err.println(totalTasks);
+//
+//        if (totalTasks <= MIN_BRANCH_TASKS) {
+//            super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, start, end);
+//        } else {
+//            forkJoin((s, e, t) -> super.computeInnerBranchIntervalOperationsGrad(branchIntervalOperations, matrixOperations, s, e),
+//                    start, end);
+//        }
+//    }
 
     @Override
     protected void computeInnerTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
-                                                               int start, int end, double[] temp) {
+                                                               int start, int end, Mode mode, double[] temp) {
         int totalTasks = end - start;
 
         if (totalTasks <= MIN_MATRIX_TASKS) {
-            super.computeInnerTransitionProbabilityOperations(matrixOperations, start, end, temp);
+            super.computeInnerTransitionProbabilityOperations(matrixOperations, start, end, mode, temp);
         } else {
-            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperations(matrixOperations, s, e, this.temp[t]),
+            forkJoin((s, e, t) -> super.computeInnerTransitionProbabilityOperations(matrixOperations, s, e, mode, this.temp[t]),
                     start, end);
         }
     }

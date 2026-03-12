@@ -50,16 +50,6 @@ import java.util.List;
 
 public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate, Citable {
 
-/*    public static final Parameterization DEFAULT_PARAMETERIZATION = Parameterization.ABSOLUTE;
-
-    public enum Parameterization {
-        ABSOLUTE,
-        RATIOS,
-        DIFFERENCES
-    };*/
-
-
-
     /**
      * Constructor for gamma+invar distributed sites. Either shapeParameter or
      * invarParameter (or both) can be null to turn off that feature.
@@ -67,32 +57,19 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
     public FreeRateDelegate(
             String name,
             int categoryCount,
-            /*  Parameterization parameterization,*/
             Parameter rateParameter,
-            Parameter weightParameter) {
+            Parameter weightParameter,
+            Parameter invarParameter) {
 
         super(name);
 
         this.categoryCount = categoryCount;
-//        this.parameterization = parameterization;
 
         this.rateParameter = rateParameter;
-//        if (parameterization == Parameterization.ABSOLUTE) {
-//            if (this.rateParameter.getDimension() == 1) {
-//                this.rateParameter.setDimension(categoryCount);
-//            } else if (this.rateParameter.getDimension() != categoryCount) {
-//                throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count");
-//            }
-//            this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, categoryCount));
-//        } else {
-//            if (this.rateParameter.getDimension() == 1) {
-//                this.rateParameter.setDimension(categoryCount - 1);
-//            } else if (this.rateParameter.getDimension() != categoryCount - 1) {
-//                throw new IllegalArgumentException("Rate parameter should have have an initial dimension of one or category count - 1");
-//            }
-//            this.rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, categoryCount - 1));
-//        }
         addVariable(this.rateParameter);
+
+        this.invarParameter = invarParameter;
+        addVariable(this.invarParameter);
 
         this.weightParameter = weightParameter;
         if (this.weightParameter.getDimension() == 1) {
@@ -130,6 +107,7 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         }
         assert Math.abs(meanRate - 1.0) < 1E-10;
         assert Math.abs(sumWeights - 1.0) < 1E-10;
+
     }
 
     // *****************************************************************
@@ -169,6 +147,7 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
      * weights parameter
      */
     private final Parameter weightParameter;
+    private  Parameter invarParameter;
 
 
     private final int categoryCount;

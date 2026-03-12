@@ -45,7 +45,14 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     private final BigFastTreeIntervals treeIntervals;
     private final SpeciationModel speciationModel;
 
+    private final CompoundBirthDeathParameters compoundParams;
+    private final Parameter birthRate;
+    private final Parameter deathRate;
+    private final Parameter samplingRate;   
+    private final String traitName;
+
     public static final boolean MEASURE_RUN_TIME = false;
+    public static final String COMPOUND_GRADIENT_KEY = "compoundGradient";
     public double gradientTime;
 
     public int gradientCounts;
@@ -55,17 +62,72 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     private boolean storedGradientKnown;
 
     CachedGradientDelegate(EfficientSpeciationLikelihood likelihood) {
+        this(likelihood, null, EfficientSpeciationLikelihoodGradient.GRADIENT_KEY);
+    }
+
+    CachedGradientDelegate(EfficientSpeciationLikelihood likelihood, 
+                          CompoundBirthDeathParameters compoundParams,
+                          String traitName) {
         super("cachedGradientDelegate");
 
         this.provider = likelihood.getGradientProvider();
         this.treeIntervals = likelihood.getTreeIntervals();
         this.speciationModel = likelihood.getSpeciationModel();
+        this.compoundParams = compoundParams;
+        this.traitName = traitName;
+
+        if (compoundParams != null) {
+            this.birthRate = compoundParams.getBirthRate();
+            this.deathRate = compoundParams.getDeathRate();
+            this.samplingRate = compoundParams.getSamplingRate();
+        } else {
+            this.birthRate = null;
+            this.deathRate = null;
+            this.samplingRate = null;
+        }
 
         addModel(this.treeIntervals);
         addModel(this.speciationModel);
         gradientTime = 0;
         gradientCounts = 0;
         gradientKnown = false;
+    }
+
+    private double[] transformGradients(double[] rawGradients) {
+        final int dim = birthRate.getDimension();
+        double[] compoundGradients = new double[rawGradients.length];
+
+        for (int i = 0; i < dim; i++) {
+            double lambda = birthRate.getParameterValue(i);
+            double mu = deathRate.getParameterValue(i);
+            double psi = samplingRate.getParameterValue(i);
+
+            int offset = i * 5;
+            double gradLambda = rawGradients[offset];
+            double gradMu = rawGradients[offset + 1];
+            double gradPsi = rawGradients[offset + 2];
+
+            double D = mu + psi;
+            double R0 = lambda / D;
+            double S = psi / D;
+
+            compoundGradients[offset] = D * gradLambda;
+
+
+            compoundGradients[offset + 1] =
+                    R0 * gradLambda
+                            + (1.0 - S) * gradMu
+                            + S * gradPsi;
+
+            compoundGradients[offset + 2] =
+                    D * (gradPsi - gradMu);
+
+
+            compoundGradients[offset + 3] = rawGradients[offset + 3];
+            compoundGradients[offset + 4] = rawGradients[offset + 4];
+        }
+
+        return compoundGradients;
     }
 
     private double[] getGradientLogDensityImpl() {
@@ -141,7 +203,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     public String getTraitName() {
-        return EfficientSpeciationLikelihoodGradient.GRADIENT_KEY;
+        return traitName;
     }
 
     @Override
@@ -157,7 +219,15 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     @Override
     public double[] getTrait(Tree tree, NodeRef node) {
         if (!gradientKnown) {
-            gradient = getGradientLogDensityImpl();
+            double[] rawGradient = getGradientLogDensityImpl();
+            
+            // Transform gradients if compound parameters are used
+            if (compoundParams != null) {
+                gradient = transformGradients(rawGradient);
+            } else {
+                gradient = rawGradient;
+            }
+            
             gradientKnown = true;
         }
         return gradient;

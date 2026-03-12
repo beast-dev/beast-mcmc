@@ -89,8 +89,9 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
         EmpiricalDistributionLikelihood likelihood;
         if (xo.hasChildNamed(FILE_INFORMATION)) {
 
-            String fileName = xo.getStringAttribute(FILE_NAME);
-            boolean byColumn = xo.getAttribute(READ_BY_COLUMN, true);
+            XMLObject cxo = xo.getChild(FILE_INFORMATION);
+            String fileName = cxo.getStringAttribute(FILE_NAME);
+            boolean byColumn = cxo.getAttribute(READ_BY_COLUMN, true);
 
             if (splineInterpolation) {
                 if (degree < 1)

@@ -29,7 +29,6 @@ package dr.inference.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.MachineAccuracy;
 
 /**
  * @author Andy Magee
@@ -65,6 +64,6 @@ import dr.math.MachineAccuracy;
                 0.0).getNumericalGradient();
     }
 
-    private Likelihood likelihood = null;
-    private Parameter parameter = null;
+    private final Likelihood likelihood;
+    private final Parameter parameter;
 }

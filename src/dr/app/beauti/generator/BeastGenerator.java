@@ -291,8 +291,8 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException(e.getMessage());
         }
 
-
     }
+
     public boolean checkUserTreeIsBifurcating(){
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if(model.getStartingTreeType()==StartingTreeType.USER){
@@ -303,6 +303,7 @@ public class BeastGenerator extends Generator {
         }
         return true;
     }
+
     public boolean isBifurcatingTree(Tree tree, NodeRef node) {
         if (tree.getChildCount(node) > 2) return false;
         for (int i = 0; i < tree.getChildCount(node); i++) {
@@ -344,7 +345,6 @@ public class BeastGenerator extends Generator {
             originTaxon.setDate(options.originDate);
             writeTaxon(originTaxon, true, false, writer);
         }
-
 
         //++++++++++++++++ Taxon List ++++++++++++++++++
         try {
@@ -437,6 +437,11 @@ public class BeastGenerator extends Generator {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 treePriorGenerator.writeTreePriorModel(prior, writer);
                 writer.writeText("");
+
+                if (prior.getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorModel(prior, writer);
+                    writer.writeText("");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -482,6 +487,10 @@ public class BeastGenerator extends Generator {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 treePriorGenerator.writePriorLikelihood(model, writer);
                 writer.writeText("");
+                if (model.getPartitionTreePrior().getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorLikelihood(model, writer);
+                    writer.writeText("");
+                }
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
@@ -565,7 +574,6 @@ public class BeastGenerator extends Generator {
                     } else {
                         options.otherPartitions.add(partition);
                     }
-
 
                 }
             }
@@ -683,7 +691,6 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(XMLParser.ID, taxon.getId())},
                 !(hasDate || hasAttr)); // false if any of hasDate or hasAttr is true
 
-
         if (hasDate) {
             dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
 
@@ -709,14 +716,14 @@ public class BeastGenerator extends Generator {
 
         for (TraitData trait : options.traits) {
             // there is no harm in allowing the species trait to be listed in the taxa
-//                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+            // if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
             writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
                     new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
             // denotes missing data using '?'
             writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
             writer.writeCloseTag(AttributeParser.ATTRIBUTE);
-//                }
+            // }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
@@ -785,6 +792,10 @@ public class BeastGenerator extends Generator {
             PartitionTreePrior prior = model.getPartitionTreePrior();
             treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
             writer.writeText("");
+            if (prior.getSubtreeTaxonSet() != null) {
+                treePriorGenerator.writeSubtreePriorLikelihoodReference(prior, model, writer);
+                writer.writeText("");
+            }
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

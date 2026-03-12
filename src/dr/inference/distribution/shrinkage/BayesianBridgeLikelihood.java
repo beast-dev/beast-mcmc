@@ -30,6 +30,7 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
+import dr.xml.Reportable;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
 
@@ -43,7 +44,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 
 public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
         BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
-        GradientWrtParameterProvider, HessianWrtParameterProvider {
+        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -149,4 +150,9 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;
     private final int dim;
+
+    @Override
+    public String getReport() {
+        return prettyName() + " = " + getLogLikelihood();
+    }
 }

@@ -36,6 +36,7 @@ import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Transform;
 
 import java.util.*;
 
@@ -44,7 +45,11 @@ import java.util.*;
  * @author Marc A. Suchard
  */
 
-public class LogRateSubstitutionModel extends ComplexSubstitutionModel { // implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel
+public class LogRateSubstitutionModel extends ComplexSubstitutionModel implements DifferentiableSubstitutionModel { // implements ParameterReplaceableSubstitutionModel
+
+    double[] Q = new double[stateCount * stateCount];
+    double normalizingConstant;
+    boolean Qknown = false;
 
     public LogRateSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
                                     LogAdditiveCtmcRateProvider lrm) {
@@ -61,25 +66,20 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel { // impl
         return lrm;
     }
 
-//    public GeneralizedLinearModel getGeneralizedLinearModel() { // TODO re-check if this can be translated in this context
-//        if (glm instanceof GeneralizedLinearModel) {
-//            return (GeneralizedLinearModel) glm;
-//        }
-//        throw new RuntimeException("Not yet implemented");
-//    }
-
     protected void setupRelativeRates(double[] rates) {
-        System.arraycopy(lrm.getLogRateParameter().getParameterValues(),0,rates,0,rates.length);
+        double[] transformedRates = lrm.getRates();
+        System.arraycopy(transformedRates,0,rates,0,rates.length);
     }
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {
-        return new HashSet<>(Arrays.asList(this, lrm));
+        return new HashSet<>(Collections.singletonList(this));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == lrm) {
             updateMatrix = true;
+            Qknown = false;
             fireModelChanged();
         } else {
             super.handleModelChangedEvent(model, object, index);
@@ -121,120 +121,139 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel { // impl
     private final LogAdditiveCtmcRateProvider lrm;
     private final double[] testProbabilities;
 
-//    @Override  // TODO check if this can be translated in this context
-//    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
-//        LogLinearModel newGLM = ((LogLinearModel)lrm).factory(oldParameters, newParameters);
-//        return new LogRateSubstitutionModel(getModelName(), dataType, freqModel, newGLM);
-//    }
+    public Transform getTransform() {
+        return lrm.getTransform();
+    }
 
 //    @Override
 //    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) {
-//        // TODO all instantiations of this function currently do the same thing; remove duplication
 //        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
 //    }
+    private void cachingQMatrix() {
+        if (!Qknown) {
+            normalizingConstant = this.setupMatrix();
+            this.getInfinitesimalMatrix(Q);
+            Qknown = true;
+        }
+    }
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) { // TODO this is duplicated code from DifferentialMassProvider
 
-//    static class WrtOldGLMSubstitutionModelParameter implements DifferentialMassProvider.DifferentialWrapper.WrtParameter { // TODO check if this can be translated in this context
-//
-//        final private int dim;
-//        final private int fixedEffectIndex;
-//        final private int stateCount;
-//        final private LogLinearModel glm;
-//
-//        public WrtOldGLMSubstitutionModelParameter(LogLinearModel glm, int fixedEffectIndex, int dim, int stateCount) {
-//            this.glm = glm;
-//            this.fixedEffectIndex = fixedEffectIndex;
-//            this.dim = dim;
-//            this.stateCount = stateCount;
-//        }
-//
-//        @Override
-//        public double getRate(int switchCase) {
-//            throw new RuntimeException("Should not be called.");
-//        }
-//
-//        @Override
-//        public double getNormalizationDifferential() {
-//            return 0;
-//        }
-//
-//        @Override
-//        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
-//            Arrays.fill(differentialFrequencies, 1);
-//        }
-//
-//        @Override
-//        public void setupDifferentialRates(double[] differentialRates, double[] Q, double normalizingConstant) {
-//
-//            final double[] covariate = glm.getDesignMatrix(fixedEffectIndex).getColumnValues(dim);
-//
-//            int k = 0;
-//            for (int i = 0; i < stateCount; ++i) {
-//                for (int j = i + 1; j < stateCount; ++j) {
-//
-//                    differentialRates[k] = covariate[k] * Q[index(i, j)];
-//                    k++;
-//
-//                }
-//            }
-//
-//            for (int j = 0; j < stateCount; ++j) {
-//                for (int i = j + 1; i < stateCount; ++i) {
-//
-//                    differentialRates[k] = covariate[k] * Q[index(i, j)];
-//                    k++;
-//
-//                }
-//            }
-//
-////            final double chainRule = getChainRule();
-//////            double[][] design = glm.getX(effect);
-////
-////            for (int i = 0; i < differentialRates.length; ++i) {
-////                differentialRates[i] = covariate[i] / normalizingConstant * chainRule;
-////            }
-//        }
-//
-//        double getChainRule() {
-//            return Math.exp(glm.getFixedEffect(fixedEffectIndex).getParameterValue(dim));
-//        }
-//
-//        private int index(int i, int j) {
-//            return i * stateCount + j;
-//        }
-//    }
+        cachingQMatrix();
 
-//    @Override // TODO check if this can be translated in this context
-//    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
-//
-//        final int effectIndex = ((LogLinearModel)lrm).getEffectNumber(parameter);
-//        if (effectIndex == -1) {
-//            throw new RuntimeException("Only implemented for single dimensions, break up beta to one for each block for now please.");
-//        }
-//        return new WrtOldGLMSubstitutionModelParameter((LogLinearModel) lrm, effectIndex, dim, stateCount);
-//    }
+        final double[] differentialRates = new double[rateCount];
+        ((DifferentiableSubstitutionModel) this).setupDifferentialRates(wrt, differentialRates, normalizingConstant);
+
+        final double[] differentialFrequencies = new double[stateCount];
+        ((DifferentiableSubstitutionModel) this).setupDifferentialFrequency(wrt, differentialFrequencies);
+
+        double[][] differentialMassMatrix = new double[stateCount][stateCount];
+        DifferentiableSubstitutionModelUtil.setupQDerivative(this, differentialRates, differentialFrequencies, differentialMassMatrix);
+        this.makeValid(differentialMassMatrix, stateCount);
+
+        final double weightedNormalizationGradient
+                = ((DifferentiableSubstitutionModel) this).getWeightedNormalizationGradient(
+                wrt, differentialMassMatrix, differentialFrequencies);
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+            }
+        }
+
+        WrappedMatrix differential = new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
+        return differential;
+//        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    public class WrtLogRate implements DifferentialMassProvider.DifferentialWrapper.WrtParameter {
+
+        private final int stateCount;
+        private final int dim;
+        /**
+         * @param stateCount The number of states in the substitution model.
+         */
+        public WrtLogRate(int stateCount, int dim) {
+            this.stateCount = stateCount;
+            this.dim = dim;
+        }
+
+        @Override
+        public double getRate(int switchCase) {
+            throw new RuntimeException("Should not be called.");
+        }
+
+        @Override
+        public double getNormalizationDifferential() {
+            return 0; // TODO update this
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            Arrays.fill(differentialFrequencies, 1);
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] Q, double normalizingConstant) {
+            // Initialize all derivatives to zero.
+            Arrays.fill(differentialRates, 0.0);
+
+            if (dim < differentialRates.length / 2) {
+                int k = 0;
+                for (int i = 0; i < stateCount; ++i) {
+                    for (int j = i + 1; j < stateCount; ++j) {
+                        if (k == dim) {
+                            differentialRates[k] = Q[index(i, j)];
+                        }
+                        k++;
+                    }
+                }
+            } else {
+                int k = differentialRates.length / 2;
+                for (int j = 0; j < stateCount; ++j) {
+                    for (int i = j + 1; i < stateCount; ++i) {
+                        if (k == dim) {
+                            differentialRates[k] = Q[index(i, j)];
+                        }
+                        k++;
+                    }
+                }
+            }
+        }
+        private int index(int i, int j) { return i * stateCount + j; }
+    }
+
+    @Override
+    public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        return new LogRateSubstitutionModel.WrtLogRate(stateCount, dim);
+    }
 
 
-//    @Override
-//    public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+    @Override
+    public void setupDifferentialRates(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt,
+                                       double[] differentialRates, double normalizingConstant) {
+        cachingQMatrix();
 //        final double[] Q = new double[stateCount * stateCount];
 //        getInfinitesimalMatrix(Q); // TODO These are large; should cache
-//        wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
-//    }
-//
-//    @Override
-//    public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialFrequency) {
-//        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
-//    }
-//
-//    @Override
-//    public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
-//        double derivative = 0;
-//
-//        if (getNormalization()) {
-//            for (int i = 0; i < stateCount; ++i) {
-//                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
-//            }
-//        }
-//        return derivative;
-//    }
+        wrt.setupDifferentialRates(differentialRates, Q, normalizingConstant);
+    }
+
+    @Override
+    public void setupDifferentialFrequency(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt, double[][] differentialMassMatrix, double[] differentialFrequencies) {
+        double derivative = 0;
+
+        if (getNormalization()) {
+            for (int i = 0; i < stateCount; ++i) {
+                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i); // TODO CHECK THIS
+            }
+        }
+        return derivative;
+    }
+
 }

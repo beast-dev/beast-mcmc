@@ -231,10 +231,10 @@ public class NodeStateAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.RealOption("mrsd","specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.RealOption("scale","Provide a scaling factor for the node heights [default=1]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.RealOption("mrsd","m","specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.RealOption("scale","s", "Provide a scaling factor for the node heights [default=1]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -71,12 +71,12 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
     }
 
     protected void setupRelativeRates(double[] rates) {
-        System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);
+        System.arraycopy(glm.getRates(),0,rates,0,rates.length);
     }
 
     @Override
     public Set<Likelihood> getLikelihoodSet() {
-        return new HashSet<>(Arrays.asList(this, glm));
+        return new HashSet<>(Collections.singletonList(this));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -191,15 +191,9 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
 
                 }
             }
-
-//            final double chainRule = getChainRule();
-////            double[][] design = glm.getX(effect);
-//
-//            for (int i = 0; i < differentialRates.length; ++i) {
-//                differentialRates[i] = covariate[i] / normalizingConstant * chainRule;
-//            }
         }
 
+        @SuppressWarnings("unused")
         double getChainRule() {
             return Math.exp(glm.getFixedEffect(fixedEffectIndex).getParameterValue(dim));
         }

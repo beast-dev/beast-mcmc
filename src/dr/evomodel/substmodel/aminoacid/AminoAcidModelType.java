@@ -48,7 +48,8 @@ public enum AminoAcidModelType {
     MTMET("mtMet", dr.evomodel.substmodel.aminoacid.MTMET.INSTANCE),
     MTINV("mtInv", dr.evomodel.substmodel.aminoacid.MTINV.INSTANCE),
     MTDEU("mtDeu", dr.evomodel.substmodel.aminoacid.MTDEU.INSTANCE),
-    MTMAM("mtMam", dr.evomodel.substmodel.aminoacid.MTMAM.INSTANCE);
+    MTMAM("mtMam", dr.evomodel.substmodel.aminoacid.MTMAM.INSTANCE),
+    ThreeDi("ThreeDi", dr.evomodel.substmodel.aminoacid.ThreeDi.INSTANCE);
 
     AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix) {
         this(displayName, displayName, matrix);

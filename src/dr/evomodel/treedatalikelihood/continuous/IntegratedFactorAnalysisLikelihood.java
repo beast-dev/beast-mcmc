@@ -905,7 +905,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             sb.append(Lt.transpose());
             sb.append("\n\n");
 
-            double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionmatrix();
+            double[][] diffusionPrecision = delegate.getDiffusionModel().getPrecisionMatrix();
             Matrix diffusionVariance = new Matrix(diffusionPrecision).inverse();
 
             Matrix loadingsVariance = null;

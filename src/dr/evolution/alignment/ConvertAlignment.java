@@ -88,32 +88,32 @@ public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLa
         if (dataType == null) {
             dataType = alignment.getDataType();
         }
-            
+
         this.alignment = alignment;
 
         int newType = dataType.getType();
         int originalType = alignment.getDataType().getType();
 
-      //TODO: this logic does not work for pibuss
+        //TODO: this logic does not work for pibuss
         if (originalType == DataType.NUCLEOTIDES) {
-        	
-            if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
-                throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-            }
-            
+
+//            if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
+//                throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
+//            }
+
         } else if (originalType == DataType.CODONS) {
-        	
+
             if (!(newType == DataType.AMINO_ACIDS || newType == DataType.NUCLEOTIDES)) {
 
                 System.err.println("originalType = " + originalType);
                 System.err.println("newType = " + newType);
                 throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
             }
-            
+
         } else {
-        	
+
             throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-            
+
         }//END: original type check
     }
 
@@ -142,7 +142,7 @@ public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLa
         int originalType = alignment.getDataType().getType();
         int count = alignment.getSiteCount();
 
-        if (originalType == DataType.NUCLEOTIDES) {
+        if (originalType == DataType.NUCLEOTIDES && dataType.getType() == DataType.CODONS) {
             count /= 3;
         }
 
@@ -160,29 +160,34 @@ public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLa
 
         int state = 0;
 
-        if (originalType == DataType.NUCLEOTIDES) {
-            int siteIndex3 = siteIndex * 3;
-            int state1 = alignment.getState(taxonIndex, siteIndex3);
-            int state2 = alignment.getState(taxonIndex, siteIndex3 + 1);
-            int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
+        if (newType == DataType.CODONS || newType == DataType.AMINO_ACIDS) {
 
-            if (newType == DataType.CODONS) {
-                if (dataType instanceof HiddenCodons) {
-                    state = ((HiddenCodons)dataType).getState(state1, state2, state3);
-                } else {
-                    state = ((Codons) dataType).getState(state1, state2, state3);
+            if (originalType == DataType.NUCLEOTIDES) {
+                int siteIndex3 = siteIndex * 3;
+                int state1 = alignment.getState(taxonIndex, siteIndex3);
+                int state2 = alignment.getState(taxonIndex, siteIndex3 + 1);
+                int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
+
+                if (newType == DataType.CODONS) {
+                    if (dataType instanceof HiddenCodons) {
+                        state = ((HiddenCodons) dataType).getState(state1, state2, state3);
+                    } else {
+                        state = ((Codons) dataType).getState(state1, state2, state3);
+                    }
+                } else { // newType == DataType.AMINO_ACIDS
+                    state = codonTable.getAminoAcidState(((Codons) dataType).getCanonicalState(((Codons) dataType).getState(state1, state2, state3)));
                 }
-            } else { // newType == DataType.AMINO_ACIDS
-                state = codonTable.getAminoAcidState(((Codons)dataType).getCanonicalState(((Codons)dataType).getState(state1, state2, state3)));
-            }
 
-        } else if (originalType == DataType.CODONS) {
-            if (newType == DataType.AMINO_ACIDS) {
-                state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
-            } else { // newType == DataType.CODONS
-                String string = alignment.getAlignedSequenceString(taxonIndex);
-                state = Nucleotides.INSTANCE.getState(string.charAt(siteIndex));
+            } else if (originalType == DataType.CODONS) {
+                if (newType == DataType.AMINO_ACIDS) {
+                    state = codonTable.getAminoAcidState(alignment.getState(taxonIndex, siteIndex));
+                } else { // newType == DataType.CODONS
+                    String string = alignment.getAlignedSequenceString(taxonIndex);
+                    state = Nucleotides.INSTANCE.getState(string.charAt(siteIndex));
+                }
             }
+        } else {
+            state = dataType.getState(alignment.getDataType().getCode(alignment.getState(taxonIndex, siteIndex)));
         }
 
         return state;

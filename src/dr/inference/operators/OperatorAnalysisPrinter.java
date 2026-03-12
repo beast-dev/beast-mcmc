@@ -58,7 +58,7 @@ public class OperatorAnalysisPrinter {
                 formatter.formatToFieldWidth("Tuning", 9) +
                 formatter.formatToFieldWidth("Count", 11) +
                 formatter.formatToFieldWidth("Time", 9) +
-                formatter.formatToFieldWidth("Time/Op", 9) +
+                formatter.formatToFieldWidth("Time/Op (ns)", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                 formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                 (useAdaptation ? "" : " Performance suggestion"));

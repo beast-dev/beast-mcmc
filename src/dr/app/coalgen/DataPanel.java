@@ -27,6 +27,7 @@
 
 package dr.app.coalgen;
 
+import dr.app.beauti.options.GuessDatesException;
 import dr.evolution.util.*;
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableSorter;
@@ -255,15 +256,22 @@ public class DataPanel extends JPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        String warningMessage = null;
+//        String warningMessage = null;
 
-        guesser.guessDates(data.taxonList);
-
-        if (warningMessage != null) {
-            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
-                    JOptionPane.WARNING_MESSAGE);
+        try {
+            guesser.guessDates(data.taxonList);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+//        if (warningMessage != null) {
+//            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+//                    "Error guessing dates",
+//                    JOptionPane.WARNING_MESSAGE);
+//        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

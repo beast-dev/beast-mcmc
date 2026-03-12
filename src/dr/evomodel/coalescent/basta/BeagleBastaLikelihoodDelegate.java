@@ -1,50 +1,21 @@
-/*
- * BeagleBastaLikelihoodDelegate.java
- *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
- */
-
 package dr.evomodel.coalescent.basta;
 
-import beagle.Beagle;
-import beagle.BeagleFlag;
+import beagle.*;
 import beagle.basta.BeagleBasta;
 import beagle.basta.BastaFactory;
 import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
 
 /**
  * @author Marc A. Suchard
@@ -57,6 +28,22 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final OffsetBufferIndexHelper populationSizesBufferHelper;
+    private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
+    private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
+    private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
+    private static final String THREAD_COUNT_PROPERTY = "beagle.basta.thread.count";
+    private static final String THREADING_TYPE = "beagle.threading.type";
+    int currentPartialsCount;
+    int currentIntervalsCount;
+    private static int instanceCount = 0;
+    private static List<Integer> resourceOrder = null;
+    private static List<Integer> preferredOrder = null;
+    private static List<Integer> requiredOrder = null;
+    private int currentOutputBuffer;
+    private int maxOutputBuffer;
+    private boolean updateStorage;
+    private int currentTransitionMatrixBuffer = 0;
+    private int storedTransitionMatrixBuffer = 0;
 
     public BeagleBastaLikelihoodDelegate(String name,
                                          Tree tree,
@@ -64,40 +51,199 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                                          boolean transpose) {
         super(name, tree, stateCount, transpose);
 
-        int partialsCount = maxNumCoalescentIntervals * (tree.getNodeCount() + 1); // TODO much too large
-        int matricesCount = maxNumCoalescentIntervals; // TODO much too small (except for strict-clock)
+        this.currentPartialsCount = 3 * tree.getNodeCount();
+        this.currentIntervalsCount = tree.getNodeCount();
 
         int coalescentBufferCount = 5; // E, F, G, H, probabilities
+        if (resourceOrder == null) {
+            resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+        }
+        if (preferredOrder == null) {
+            preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+        }
+        if (requiredOrder == null) {
+            requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+        }
 
         long requirementFlags = 0L;
         requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
 
+        int[] resourceList = null;
+        long preferenceFlags = 0;
+
+        if (resourceOrder.size() > 0) {
+            // added the zero on the end so that a CPU is selected if requested resource fails
+            resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
+            if (resourceList[0] > 0) {
+                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
+            }
+        }
+
+        if (preferredOrder.size() > 0) {
+            preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
+        }
+
+        if (requiredOrder.size() > 0) {
+            requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
+        }
+
+        if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+            // if single precision not explicitly set then prefer double
+            preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+        }
+
+        int threadCount = -1;
+        String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+        if (tc != null) {
+            threadCount = Integer.parseInt(tc);
+        }
+
+
+        String threadingType = System.getProperty(THREADING_TYPE);
+        
+        if (threadingType != null) {
+            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+            
+            switch (threadingType.toLowerCase()) {
+                case "openmp":
+                    preferenceFlags |= BeagleFlag.THREADING_OPENMP.getMask();
+                    break;
+                case "cpp":
+                    preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                    break;
+                case "none":
+                default:
+                    preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+                    break;
+            }
+        } else {
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else if (threadCount > 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+        }
+
+
+        if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                        BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                        BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+            // non-CPU implementations don't have SSE so remove default preference for SSE
+            // when using non-CPU preferences or prioritising non-CPU resource
+            preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+        }
+
         beagle = BastaFactory.loadBastaInstance(0, coalescentBufferCount, maxNumCoalescentIntervals,
-                partialsCount, 0, stateCount,
-                1, 2, matricesCount, 1,
-                1, null, 0L, requirementFlags);
+                currentPartialsCount, 0, stateCount,
+                1, 2, 2 * currentIntervalsCount, 1,
+                1, resourceList, preferenceFlags, requirementFlags);
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
         populationSizesBufferHelper = new OffsetBufferIndexHelper(1, 0, 0);
 
         beagle.setCategoryRates(new double[] { 1.0 });
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+
+        logger.info("\nCreating BeagleBastaLikelihoodDelegate");
+
+        InstanceDetails instanceDetails = beagle.getDetails();
+        ResourceDetails resourceDetails = null;
+
+        if (instanceDetails != null) {
+            resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+            if (resourceDetails != null) {
+                StringBuilder sb = new StringBuilder("  Using BEAGLE BASTA resource ");
+                sb.append(resourceDetails.getNumber()).append(": ");
+                sb.append(resourceDetails.getName()).append("\n");
+                if (resourceDetails.getDescription() != null) {
+                    String[] description = resourceDetails.getDescription().split("\\|");
+                    for (String desc : description) {
+                        if (desc.trim().length() > 0) {
+                            sb.append("    ").append(desc.trim()).append("\n");
+                        }
+                    }
+                }
+                sb.append("    with instance flags: ").append(instanceDetails.toString());
+                logger.info(sb.toString());
+            } else {
+                logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
+            }
+        } else {
+            logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+        }
+
+        if (threadCount > 0) {
+            logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for BEAGLE-BIT CPU.");
+        } else if (threadCount == 0) {
+            logger.info("    BEAGLE-BIT threading turned off for CPU.");
+        }
+    }
+
+
+    public void resize(int newNumPartials, int newNumCoalescentIntervals) {
+        updateStorage = false;
+        if (newNumPartials > currentPartialsCount) {
+            this.currentPartialsCount = newNumPartials + 1;
+            updateStorage = true;
+        }
+
+        if (newNumCoalescentIntervals > currentIntervalsCount) {
+            this.currentIntervalsCount = newNumCoalescentIntervals;
+            updateStorage = true;
+        }
+
+        if (updateStorage) {
+            int threadCount = -1;
+            String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, currentPartialsCount, 0, threadCount);
+        }
+    }
+
+    @Override
+    protected void allocateGradientMemory() {
+        // Do nothing
     }
 
     @Override
     protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
-                                                   List<BranchIntervalOperation> branchIntervalOperations) {
+                                                   List<BranchIntervalOperation> branchIntervalOperations,
+                                                   List<TransitionMatrixOperation> matrixOperations,
+                                                   Mode mode, BastaLikelihood likelihood) {
 
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
         vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
-
+        updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
-        beagle.updateBastaPartials(operations, branchIntervalOperations.size(),
-                intervals, intervalStarts.size(),
-                populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
+        if (mode == Mode.LIKELIHOOD) {
+            beagle.updateBastaPartials(operations, branchIntervalOperations.size(),
+                    intervals, intervalStarts.size(),
+                    populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
+            // TODO do dipatch inside BEAGLE by passing mode.getModeAsInt()
+        } else if (mode == Mode.GRADIENT) {
+            beagle.updateBastaPartialsGrad(operations, branchIntervalOperations.size(),
+                    intervals, intervalStarts.size(),
+                    populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
+        } else {
+            throw new RuntimeException("not yet implemented");
+        }
 
         if (PRINT_COMMANDS) {
             double[] partials = new double[stateCount];
@@ -115,9 +261,11 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     @Override
     String getStamp() { return "beagle"; }
 
+    public Beagle getBeagleInstance() { return beagle; }
 
     @Override
-    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations) {
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                          Mode mode) {
 
         int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
         double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
@@ -126,21 +274,29 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         int eigenIndex = eigenBufferHelper.getOffsetIndex(0);
 
-        beagle.updateTransitionMatrices(eigenIndex, transitionMatrixIndices, null, null,
-                branchLengths, matrixOperations.size());
+        if (mode == Mode.LIKELIHOOD) {
+            beagle.updateTransitionMatrices(eigenIndex, transitionMatrixIndices, null, null,
+                    branchLengths, matrixOperations.size());
+        } else if (mode == Mode.GRADIENT) {
+            beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
+                    branchLengths, matrixOperations.size());
+        }
 
         if (PRINT_COMMANDS) {
             double[] matrix = new double[stateCount * stateCount];
             for (TransitionMatrixOperation operation : matrixOperations) {
-                getMatrix(operation.outputBuffer, matrix);
+                getTransitionMatrices(operation.outputBuffer, matrix);
                 System.err.println(operation + " " + new WrappedVector.Raw(matrix));
             }
         }
     }
 
     @Override
-    protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
-                                                        List<BranchIntervalOperation> branchIntervalOperations) {
+    protected void computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                        List<BranchIntervalOperation> branchIntervalOperations,
+                                                        double[] out,
+                                                        Mode mode,
+                                                        StructuredCoalescentLikelihoodGradient.WrtParameter wrt) {
 
         // TODO vectorize once per likelihood-calculation
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
@@ -151,44 +307,16 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
-        double[] result = new double[1];
-
         beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
-                result);
-
-        return result[0];
+                out);
     }
 
-    @Override
-    protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations, List<BranchIntervalOperation> branchIntervalOperations) {
-        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
-        int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
-        double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
-
-        vectorizeBranchIntervalOperations(intervalStarts, branchIntervalOperations, operations, intervals, lengths);
-
-        int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
-
-        beagle.updateBastaPartialsGrad(operations, branchIntervalOperations.size(),
-                intervals, intervalStarts.size(),
-                populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
-    }
-
-    @Override
-    protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations) {
-        int[] transitionMatrixIndices = new int[matrixOperations.size()]; // TODO instantiate once
-        double[] branchLengths = new double[matrixOperations.size()]; // TODO instantiate once
-
-        vectorizeTransitionMatrixOperations(matrixOperations, transitionMatrixIndices, branchLengths);
-
-        beagle.updateTransitionMatricesGrad(transitionMatrixIndices,
-                branchLengths, matrixOperations.size());
-    }
-
-    @Override
-    protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+//    @Override
+    protected double[] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
+                                                              List<BranchIntervalOperation> branchIntervalOperations,
+                                                              double[] gradient) {
         int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
@@ -198,23 +326,18 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         double[] out = new double[stateCount*stateCount];
-        double[][] result = new double[stateCount][stateCount];
         beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
                 out);
 
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = 0; j < stateCount; ++j) {
-                result[i][j] = out[i*stateCount+j];
-            }
-        }
-
-        return result;
+        return out;
     }
 
-    @Override
-    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts, List<BranchIntervalOperation> branchIntervalOperations) {
+//    @Override
+    protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts,
+                                                                     List<BranchIntervalOperation> branchIntervalOperations,
+                                                                     double[] out) {
         return new double[0];
     }
 
@@ -232,7 +355,8 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         beagle.getPartials(index, Beagle.NONE, partials);
     }
 
-    public void getMatrix(int index, double[] matrix) {
+    @Override
+    public void getTransitionMatrices(int index, double[] matrix) {
         assert index >= 0;
         assert matrix != null;
         assert matrix.length >= stateCount * stateCount;
@@ -266,12 +390,41 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         beagle.setStateFrequencies(populationSizesBufferHelper.getOffsetIndex(0), sizes);
     }
 
+    @Override
+    public void updateStorage(int maxBufferCount, int treeNodeCount, BastaLikelihood likelihood) {
+        int newNumPartials = maxBufferCount + 1;
+        resize(newNumPartials, maxNumCoalescentIntervals);
+        if (likelihood != null && updateStorage) {
+            likelihood.setTipData();
+        }
+    }
+
+    @Override
+    public void storeState() {
+        //populationSizesBufferHelper.storeState();
+        //eigenBufferHelper.storeState();
+        //storedTransitionMatrixBuffer = currentTransitionMatrixBuffer;
+    }
+
+    @Override
+    public void restoreState() {
+        //populationSizesBufferHelper.restoreState();
+       // eigenBufferHelper.restoreState();
+        //currentTransitionMatrixBuffer = storedTransitionMatrixBuffer;
+    }
+
+
+    public void flipTransitionMatrixBuffer(List<TransitionMatrixOperation> matrixOperations) {
+        currentTransitionMatrixBuffer = (currentTransitionMatrixBuffer == 0 ? matrixOperations.size() : 0);
+    }
+
     private void vectorizeTransitionMatrixOperations(List<TransitionMatrixOperation> matrixOperations,
                                                      int[] transitionMatrixIndices,
                                                      double[] branchLengths) {
         int k = 0;
+        int currentTMBuffer = currentTransitionMatrixBuffer;
         for (TransitionMatrixOperation op : matrixOperations) {
-            transitionMatrixIndices[k] = op.outputBuffer; // TODO double-buffer
+            transitionMatrixIndices[k] = op.outputBuffer + currentTMBuffer; // TODO double-buffer
             branchLengths[k] = op.time;
             ++k;
         }
@@ -296,7 +449,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
 
-    private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
+   public void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
                                                    List<BranchIntervalOperation> branchIntervalOperations,
                                                    int[] operations,
                                                    int[] intervals,
@@ -313,38 +466,37 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         // TODO double-buffer
         int k = 0;
+        int currentTMBuffer = currentTransitionMatrixBuffer;
         for (BranchIntervalOperation op : branchIntervalOperations) {
 
             if (CACHE_FRIENDLY) {
                 operations[k] = map(op.outputBuffer);
                 operations[k + 1] = map(op.inputBuffer1);
-                operations[k + 2] = op.inputMatrix1;
+                operations[k + 2] = op.inputMatrix1 + currentTMBuffer;
                 operations[k + 3] = map(op.inputBuffer2);
-                operations[k + 4] = op.inputMatrix2;
+                operations[k + 4] = op.inputMatrix2 + currentTMBuffer;
                 operations[k + 5] = map(op.accBuffer1);
                 operations[k + 6] = map(op.accBuffer2);
                 operations[k + 7] = op.intervalNumber;
             } else {
                 operations[k] = op.outputBuffer;
                 operations[k + 1] = op.inputBuffer1;
-                operations[k + 2] = op.inputMatrix1;
+                operations[k + 2] = op.inputMatrix1 + currentTMBuffer;
                 operations[k + 3] = op.inputBuffer2;
-                operations[k + 4] = op.inputMatrix2;
+                operations[k + 4] = op.inputMatrix2 + currentTMBuffer;
                 operations[k + 5] = op.accBuffer1;
                 operations[k + 6] = op.accBuffer2;
                 operations[k + 7] = op.intervalNumber;
             }
+            currentOutputBuffer = operations[k + 6];
+
+            if (currentOutputBuffer > maxOutputBuffer) {
+                maxOutputBuffer = currentOutputBuffer;
+            }
 
             k += BASTA_OPERATION_SIZE;
         }
-
-//        int i = 0;
-//        for (int start : intervalStarts) {
-//            intervals[i] = start;
-//            lengths[i] = branchIntervalOperations.get(start).intervalLength;
-//            ++i;
-//        }
-
+        
         int i = 0;
         for (int end = intervalStarts.size() - 1; i < end; ++i) {
             int start = intervalStarts.get(i);

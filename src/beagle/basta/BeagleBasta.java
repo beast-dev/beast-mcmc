@@ -49,6 +49,8 @@ public interface BeagleBasta extends Beagle {
                                  int coalescentIndex,
                                  double[] result);
 
+    void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial, int threadCount);
+
     void getBastaBuffer(int index, double[] buffer);
 
     void updateBastaPartialsGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);

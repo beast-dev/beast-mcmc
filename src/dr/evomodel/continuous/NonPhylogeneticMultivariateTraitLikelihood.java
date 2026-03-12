@@ -257,7 +257,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
 
     public double calculateLogLikelihood() {
         
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+        double[][] traitPrecision = diffusionModel.getPrecisionMatrix();
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] marginalRoot = tmp2;
 

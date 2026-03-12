@@ -60,6 +60,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
+    public static final String DISCRETIZATION = "discretization";
 
     public String getParserName() {
         return  SITE_MODEL;
@@ -91,6 +92,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             }
         }
 
+
         Parameter shapeParam = null;
         int catCount = 4;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
@@ -100,6 +102,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
+
             msg += "\n  using equal weight discretization of gamma distribution";
         }
 
@@ -181,6 +184,7 @@ public class SiteModelParser extends AbstractXMLObjectParser {
 
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
+                    AttributeRule.newStringRule(DISCRETIZATION, true),
                     new ElementRule(Parameter.class)
             }, true),
 

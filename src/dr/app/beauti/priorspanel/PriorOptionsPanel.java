@@ -270,7 +270,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     protected Double getValue(int i) {
-        return ((RealNumberField) argumentFields.get(i)).getValue();
+        if (argumentFields.get(i) instanceof RealNumberField) {
+            return ((RealNumberField) argumentFields.get(i)).getValue();
+        }
+        return null;
     }
 
     protected Double getValue(String fieldName) {

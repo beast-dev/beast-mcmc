@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<taxon id="C"/>
+		<taxon id="D"/>
+    </taxa>
+
+    
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            A
+        </sequence>
+		<sequence>
+			<taxon idref="C"/>
+			C
+		</sequence>
+		<sequence>
+			<taxon idref="D"/>
+			A
+		</sequence>
+    </alignment>
+
+	<newick id="startingTree">
+<!--		((A:2.0,B:1.0):1.0,C:2.0);-->
+		(((A:2.0,B:1.0):1.0,C:2.0):5.0,D:4.0);
+	</newick>
+
+    <patterns id="loc.pattern" from="1">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+	<strictClockBranchRates id="loc.branchRates">
+		<rate>
+			<parameter id="loc.clock.rate" value="1E-0" lower="0.0"/>
+		</rate>
+	</strictClockBranchRates>
+
+	<logRateSubstitutionModel id="host.model" normalize="true"
+							   scaleRatesByFrequencies="false" dataType="nucleotide">
+		<rootFrequencies>
+			<frequencyModel normalize="true" dataType="nucleotide">
+				<frequencies>
+					<parameter id="frequencies" dimension="4"/>
+				</frequencies>
+			</frequencyModel>
+<!--			<frequencyModel idref="loc.frequencyModel"/>-->
+		</rootFrequencies>
+		<logRates>
+			<parameter id="logRates" dimension="12"/>
+		</logRates>
+	</logRateSubstitutionModel>
+
+	<siteModel id="loc.siteModel2">
+		<substitutionModel>
+			<logRateSubstitutionModel idref="host.model"/>
+		</substitutionModel>
+	</siteModel>
+
+	<treeDataLikelihood id="treeLikelihood2" useAmbiguities="true" usePreOrder="true"
+						branchInfinitesimalDerivative="true"
+						scalingScheme="never" delayScaling="false">
+		<patterns idref="loc.pattern"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="loc.siteModel2"/>
+		<strictClockBranchRates idref="loc.branchRates"/>
+		<frequencyModel normalize="true" dataType="nucleotide">
+			<frequencies>
+				<parameter dimension="4"/>
+			</frequencies>
+		</frequencyModel>
+	</treeDataLikelihood>
+
+	<branchSubstitutionParameterGradient id="logRates.exact" traitName="logRates.exact"
+			useHessian="false" homogeneous="true" mode="exact" dim="-1">
+		<treeDataLikelihood idref="treeLikelihood2"/>
+		<parameter idref="logRates"/>
+	</branchSubstitutionParameterGradient>
+
+	<report>
+		<branchSubstitutionParameterGradient idref="logRates.exact"/>
+	</report>
+
+	<assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check exact solution
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<branchSubstitutionParameterGradient idref="logRates.exact"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<branchSubstitutionParameterGradient idref="logRates.exact"/>
+		</expected>
+	</assertEqual>
+
+<!--	<approximateLogCtmcRateGradient id="gradient1" traitName="loc">-->
+<!--		<treeDataLikelihood idref="treeLikelihood2"/>-->
+<!--		<logRateSubstitutionModel idref="host.model"/>-->
+<!--	</approximateLogCtmcRateGradient>-->
+<!--	<report>-->
+<!--		<approximateLogCtmcRateGradient idref="gradient1"/>-->
+<!--	</report>-->
+
+</beast>

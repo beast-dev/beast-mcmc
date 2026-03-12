@@ -37,7 +37,6 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-
 public class ContinuousTraitDataModelParser extends AbstractXMLObjectParser {
 
     private static String CONTINUOUS_TRAITS = "continuousTraitDataModel";

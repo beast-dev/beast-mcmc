@@ -199,12 +199,12 @@ class BiClade implements Clade {
         return "clade " + hashCode();
     }
 
-    private int count;
-    private double credibility;
-    private final int size;
-    private final int index;
+     int count;
+     double credibility;
+     final int size;
+     final int index;
 
-    private final Object key;
+     final Object key;
 
     private final Taxon taxon;
 
@@ -213,7 +213,7 @@ class BiClade implements Clade {
     BiClade bestRight = null;
 
 
-    double bestSubTreeCredibility;
+    double bestSubTreeScore = Double.NaN;
 
     private List<Object[]> attributeValues = null;
 }

@@ -111,10 +111,10 @@ public class MarkovRewardDensityCalculator {
 public static void main(String[] args) throws IOException, Arguments.ArgumentException {
     Arguments arguments = new Arguments(
         new Arguments.Option[]{
-            new Arguments.RealOption("rate", "Rate parameter"),
-            new Arguments.RealOption("bias", "Bias parameter"),
-            new Arguments.RealOption("length", "branchlength to evaluate"),
-            new Arguments.Option("help", "option to print this message"),
+            new Arguments.RealOption("rate","r", "Rate parameter"),
+            new Arguments.RealOption("bias","b", "Bias parameter"),
+            new Arguments.RealOption("length","l", "branchlength to evaluate"),
+            new Arguments.Option("help", "h","option to print this message"),
         }
     );
 

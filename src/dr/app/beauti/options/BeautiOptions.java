@@ -1133,7 +1133,10 @@ public class BeautiOptions extends ModelOptions {
         //             partition);
         //     partition.setPartitionSubstitutionModel(substModel);
         // }
-
+        // Set now because this partition will note be visited by sitesModelPanel and will not get a partitionModel in PartitionModelPanel - perhaps it should?
+        if(this.needCoalescentModel.get(partitionName)==null){
+            this.needCoalescentModel.put(partitionName,true); 
+        }
         ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
         comp.createParameters(this);
 

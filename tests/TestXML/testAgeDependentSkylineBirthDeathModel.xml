@@ -3,11 +3,12 @@
   Tests for AgeDependentSkylineBirthDeathModel: compares FFT-Picard solver
   against direct quadrature reference across 4 scenarios:
 
-    1. Single epoch, shape=1.0 (age-independent / constant hazard)
-    2. Single epoch, shape=1.5/1.2 (age-dependent Weibull hazard)
-    3. Ten epochs, shape=1.0 (age-independent skyline)
-    4. Ten epochs, shape=1.5/1.2 (age-dependent skyline)
+    1. Single epoch, b=0/gamma=0 (age-independent / constant hazard)
+    2. Single epoch, b!=0/gamma!=0 (age-dependent linear-exponential hazard)
+    3. Ten epochs, b=0/gamma=0 (age-independent skyline)
+    4. Ten epochs, b!=0/gamma!=0 (age-dependent skyline)
 
+  Linear-exponential hazard: h(a) = (1 + b*a) * exp(-gamma*a)
   Each scenario asserts that the two solvers produce matching log-likelihoods.
 -->
 <beast>
@@ -67,7 +68,7 @@
     </treeModel>
 
     <!-- ================================================================== -->
-    <!-- 1. Single epoch, shape=1.0 (age-independent)                       -->
+    <!-- 1. Single epoch, b=0/gamma=0 (age-independent)                     -->
     <!-- ================================================================== -->
 
     <ageDependentSkylineBirthDeathModel id="fft.1ep.k1" solver="fft"
@@ -80,13 +81,13 @@
             <parameter value="0.8" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </birthShape>
         <deathScale>
             <parameter value="0.3" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
@@ -100,18 +101,18 @@
             <parameter value="0.8" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </birthShape>
         <deathScale>
             <parameter value="0.3" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
     <assertEqual tolerance="1e-1" verbose="true">
-        <message>1-epoch shape=1.0: FFT vs quadrature log-likelihood</message>
+        <message>1-epoch b=0/gamma=0: FFT vs quadrature log-likelihood</message>
         <actual regex="logLikelihood:\s+(.*)">
             <ageDependentSkylineBirthDeathModel idref="fft.1ep.k1"/>
         </actual>
@@ -121,7 +122,7 @@
     </assertEqual>
 
     <!-- ================================================================== -->
-    <!-- 2. Single epoch, shape!=1 (age-dependent Weibull hazard)           -->
+    <!-- 2. Single epoch, b!=0/gamma!=0 (age-dependent linear-exponential)  -->
     <!-- ================================================================== -->
 
     <ageDependentSkylineBirthDeathModel id="fft.1ep.kw" solver="fft"
@@ -134,13 +135,13 @@
             <parameter value="0.8" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.5" lower="0.01" upper="10.0"/>
+            <parameter value="1.5 0.3"/>
         </birthShape>
         <deathScale>
             <parameter value="0.3" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.2" lower="0.01" upper="10.0"/>
+            <parameter value="1.2 0.2"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
@@ -154,18 +155,18 @@
             <parameter value="0.8" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.5" lower="0.01" upper="10.0"/>
+            <parameter value="1.5 0.3"/>
         </birthShape>
         <deathScale>
             <parameter value="0.3" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.2" lower="0.01" upper="10.0"/>
+            <parameter value="1.2 0.2"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
     <assertEqual tolerance="1e-1" verbose="true">
-        <message>1-epoch shape=1.5/1.2: FFT vs quadrature log-likelihood</message>
+        <message>1-epoch b=1.5,gamma=0.3 / b=1.2,gamma=0.2: FFT vs quadrature log-likelihood</message>
         <actual regex="logLikelihood:\s+(.*)">
             <ageDependentSkylineBirthDeathModel idref="fft.1ep.kw"/>
         </actual>
@@ -175,7 +176,7 @@
     </assertEqual>
 
     <!-- ================================================================== -->
-    <!-- 3. Ten epochs, shape=1.0 (age-independent skyline)                 -->
+    <!-- 3. Ten epochs, b=0/gamma=0 (age-independent skyline)               -->
     <!-- ================================================================== -->
 
     <ageDependentSkylineBirthDeathModel id="fft.10ep.k1" solver="fft"
@@ -188,13 +189,13 @@
             <parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </birthShape>
         <deathScale>
             <parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
@@ -208,18 +209,18 @@
             <parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </birthShape>
         <deathScale>
             <parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.0" lower="0.01" upper="10.0"/>
+            <parameter value="0.0 0.0"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
     <assertEqual tolerance="1e-1" verbose="true">
-        <message>10-epoch shape=1.0: FFT vs quadrature log-likelihood</message>
+        <message>10-epoch b=0/gamma=0: FFT vs quadrature log-likelihood</message>
         <actual regex="logLikelihood:\s+(.*)">
             <ageDependentSkylineBirthDeathModel idref="fft.10ep.k1"/>
         </actual>
@@ -229,7 +230,7 @@
     </assertEqual>
 
     <!-- ================================================================== -->
-    <!-- 4. Ten epochs, shape!=1 (age-dependent skyline)                    -->
+    <!-- 4. Ten epochs, b!=0/gamma!=0 (age-dependent skyline)               -->
     <!-- ================================================================== -->
 
     <ageDependentSkylineBirthDeathModel id="fft.10ep.kw" solver="fft"
@@ -242,13 +243,13 @@
             <parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.5" lower="0.01" upper="10.0"/>
+            <parameter value="1.5 0.3"/>
         </birthShape>
         <deathScale>
             <parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.2" lower="0.01" upper="10.0"/>
+            <parameter value="1.2 0.2"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
@@ -262,18 +263,18 @@
             <parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/>
         </birthScale>
         <birthShape>
-            <parameter value="1.5" lower="0.01" upper="10.0"/>
+            <parameter value="1.5 0.3"/>
         </birthShape>
         <deathScale>
             <parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/>
         </deathScale>
         <deathShape>
-            <parameter value="1.2" lower="0.01" upper="10.0"/>
+            <parameter value="1.2 0.2"/>
         </deathShape>
     </ageDependentSkylineBirthDeathModel>
 
     <assertEqual tolerance="1e-1" verbose="true">
-        <message>10-epoch shape=1.5/1.2: FFT vs quadrature log-likelihood</message>
+        <message>10-epoch b=1.5,gamma=0.3 / b=1.2,gamma=0.2: FFT vs quadrature log-likelihood</message>
         <actual regex="logLikelihood:\s+(.*)">
             <ageDependentSkylineBirthDeathModel idref="fft.10ep.kw"/>
         </actual>

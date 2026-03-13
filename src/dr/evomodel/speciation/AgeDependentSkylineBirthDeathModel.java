@@ -10,12 +10,15 @@ import java.util.Arrays;
 /**
  * @author Frederik M. Andersen
  *
- * Time- and Age-dependent skyline-Weibull birth-death model.
+ * Time- and Age-dependent skyline birth-death model with linear-exponential age hazard.
  *
- * Birth and death rates are products of a piecewise-constant scale parameter and a Weibull age-dependent hazard:
+ * Birth and death rates are products of a piecewise-constant scale parameter and a
+ * linear-exponential age-dependent hazard:
  *
- * lambda(a, t) = lambdaScale(t) * lambdaAgeHazard(a)
- * mu(a, t)     = muScale(t)     * muAgeHazard(a)
+ * lambda(a, t) = lambdaScale(t) * h_b(a)
+ * mu(a, t)     = muScale(t)     * h_d(a)
+ *
+ * where h(a) = (1 + b*a) * exp(-gamma*a), with shape parameters [b, gamma].
  *
  * Two solver modes:
  * - FFT-Picard (default): Local convolution approach solved with FFT and Picard iteration
@@ -31,7 +34,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
 
     private final int numEpochs;
     private final int numSteps;
-    private final double h;
+    private double h;
 
     private final double epsPicard;
     private final int maxIterPicard;
@@ -101,12 +104,14 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
 
         this.numEpochs = times.getDimension();
         this.numSteps = numSteps;
-        double maxTime = times.getValue(numEpochs - 1);
-        this.h = maxTime / numSteps;
 
         this.epsPicard = epsPicard;
         this.maxIterPicard = maxIterPicard;
         this.useDirectQuadrature = useDirectQuadrature;
+
+        if (tree instanceof Model) {
+            addModel((Model) tree);
+        }
 
         addVariable(times);
         addVariable(birthScale);
@@ -144,9 +149,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         }
     }
 
-    /**
-     * Original constructor, defaults to FFT-Picard solver.
-     */
     public AgeDependentSkylineBirthDeathModel(String name,
                                               Tree tree,
                                               Parameter times,
@@ -162,10 +164,11 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     /**
-     * Cache epoch indices, piecewise constant scales and age-hazard arrays for Skyline-Weibull rates:
-     * r(t, a) = r(t) * h(a) with piecewise constant r(t) and Weibull hazard h(a) = shape * a^(shape - 1).
+     * Cache epoch indices, piecewise constant scales and age-hazard arrays.
+     * Linear-exponential hazard: h(a) = (1 + b*a) * exp(-gamma*a)
+     * Cumulative hazard H(a) = integral_0^a h(s) ds
      */
-    private void cacheSkylineWeibull() {
+    private void cacheRates() {
         if (!ratesDirty) return;
 
         // Epoch scales and indices
@@ -182,26 +185,39 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
             dScaleDelta[k] = dScale[k] - dScale[k - 1];
         }
 
-        // Age-hazard arrays
-        double bShape = birthShape.getParameterValue(0);
-        double dShape = deathShape.getParameterValue(0);
+        // Age-hazard arrays: linear-exponential h(a) = (1 + b*a) * exp(-gamma*a)
+        double bB = birthShape.getParameterValue(0);
+        double bGamma = birthShape.getParameterValue(1);
+        double dB = deathShape.getParameterValue(0);
+        double dGamma = deathShape.getParameterValue(1);
+
         for (int d = 0; d <= numSteps; d++) {
             double age = d * h;
+            double expBG = Math.exp(-bGamma * age);
+            double expDG = Math.exp(-dGamma * age);
 
-            if (age == 0.0) {
-                bHaz[d]    = (bShape == 1.0) ? 1.0 : 0.0;
-                dHaz[d]    = (dShape == 1.0) ? 1.0 : 0.0;
-                bCumHaz[d] = 0.0;
-                dCumHaz[d] = 0.0;
-            } else {
-                bHaz[d]    = bShape * Math.pow(age, bShape - 1.0);
-                dHaz[d]    = dShape * Math.pow(age, dShape - 1.0);
-                bCumHaz[d] = Math.pow(age, bShape);
-                dCumHaz[d] = Math.pow(age, dShape);
-            }
+            bHaz[d] = (1.0 + bB * age) * expBG;
+            dHaz[d] = (1.0 + dB * age) * expDG;
+
+            bCumHaz[d] = linExpCumHaz(age, bB, bGamma);
+            dCumHaz[d] = linExpCumHaz(age, dB, dGamma);
         }
 
         ratesDirty = false;
+    }
+
+    /**
+     * Cumulative hazard H(a) = integral_0^a (1 + b*s) * exp(-gamma*s) ds
+     * gamma > 0: H(a) = (1/gamma + b/gamma^2)(1 - exp(-gamma*a)) - (b*a/gamma) * exp(-gamma*a)
+     * gamma = 0: H(a) = a + b*a^2/2
+     */
+    private static double linExpCumHaz(double a, double b, double gamma) {
+        if (gamma == 0.0) {
+            return a + b * a * a / 2.0;
+        }
+        double emga = Math.exp(-gamma * a);
+        double invG = 1.0 / gamma;
+        return (invG + b * invG * invG) * (1.0 - emga) - b * a * invG * emga;
     }
 
     // =========================================================================
@@ -212,7 +228,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Compute extinction probability p0 and branch survival probability S (FFT path)
      */
     private void computeP0AndS() {
-        cacheSkylineWeibull();
+        cacheRates();
 
         // History integrals
         double[] p0History = new double[numSteps + 1];
@@ -846,7 +862,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Direct quadrature likelihood computation.
      */
     private double calculateLogLikelihoodDirect() {
-        cacheSkylineWeibull();
+        cacheRates();
 
         if (!gridValid) {
             buildGridDirect();
@@ -892,6 +908,9 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Use appropriate solver.
      */
     private double calculateLogLikelihood() {
+        // Recompute grid spacing from current times parameter
+        this.h = times.getParameterValue(numEpochs - 1) / numSteps;
+
         if (useDirectQuadrature) {
             return calculateLogLikelihoodDirect();
         } else {
@@ -1016,7 +1035,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      */
     public double[] getP0Array() {
         if (useDirectQuadrature) {
-            cacheSkylineWeibull();
+            cacheRates();
             if (!gridValid) {
                 buildGridDirect();
                 computeP0Direct();

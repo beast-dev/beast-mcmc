@@ -57,11 +57,11 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
             throw new XMLParseException("deathScale dimension (" + deathScale.getDimension() +
                     ") must be 1 or equal to epochTimes dimension (" + numEpochs + ")");
         }
-        if (birthShape.getDimension() != 1) {
-            throw new XMLParseException("birthShape must be a scalar parameter (dimension 1)");
+        if (birthShape.getDimension() != 2) {
+            throw new XMLParseException("birthShape must have dimension 2 [b, gamma], got " + birthShape.getDimension());
         }
-        if (deathShape.getDimension() != 1) {
-            throw new XMLParseException("deathShape must be a scalar parameter (dimension 1)");
+        if (deathShape.getDimension() != 2) {
+            throw new XMLParseException("deathShape must have dimension 2 [b, gamma], got " + deathShape.getDimension());
         }
 
         return new AgeDependentSkylineBirthDeathModel(
@@ -82,8 +82,9 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
     // TODO: Check up on these....
     public String getParserDescription() {
         return "Age-dependent skyline birth-death model using FFT-based Picard iteration. " +
-               "Rates are lambda(a) = birthScale * a^(birthShape-1) and " +
-               "mu(a) = deathScale * a^(deathShape-1) within each epoch.";
+               "Rates are lambda(a) = birthScale * (1 + b*a) * exp(-gamma*a) and " +
+               "mu(a) = deathScale * (1 + b*a) * exp(-gamma*a) within each epoch, " +
+               "where shape = [b, gamma].";
     }
 
     public Class getReturnType() {

@@ -67,7 +67,7 @@
     </treeModel>
 
     <!-- ================================================================== -->
-    <!-- 1. Single epoch, shape=1.0 (age-independent)                      -->
+    <!-- 1. Single epoch, shape=1.0 (age-independent)                       -->
     <!-- ================================================================== -->
 
     <ageDependentSkylineBirthDeathModel id="fft.1ep.k1" solver="fft"

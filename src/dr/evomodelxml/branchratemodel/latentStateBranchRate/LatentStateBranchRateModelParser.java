@@ -40,6 +40,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_RATE = "latentTransitionRate";
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
+    public static final String LATENT_STATE_INDICATORS = "latentStateIndicators";
     public static final String EPSILON = "epsilon";
     public static final String EXCLUDE_ROOT = "excludeRoot";
 
@@ -58,8 +59,13 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         CountableBranchCategoryProvider branchCategoryProvider = (CountableBranchCategoryProvider)xo.getChild(CountableBranchCategoryProvider.class);
 
         Parameter latentStateProportionParameter = null;
+        
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
+        }
+        Parameter latentStateIndicatorParameter = null;
+        if (xo.hasChildNamed(LATENT_STATE_INDICATORS)) {
+            latentStateIndicatorParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_INDICATORS);
         }
         double epsilon = xo.getAttribute(EPSILON, 1E-10);
         Logger.getLogger("dr.evomodel").info("\nCreating a latent state branch rate model");
@@ -71,7 +77,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                tree, nonLatentRateModel,
                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-               latentStateProportionParameter, branchCategoryProvider,epsilon,excludeRoot);
+               latentStateProportionParameter,latentStateIndicatorParameter, branchCategoryProvider,epsilon,excludeRoot);
     }
 
     //************************************************************************

@@ -203,6 +203,35 @@ public class SampleFromLogFiles {
         return info;
     }
 
+    private interface NextSample {
+
+        int next();
+
+        class Random implements NextSample {
+            private final int range;
+
+            private Random(int range) {
+                this.range = range;
+            }
+
+            public int next() {
+                return MathUtils.nextInt(range);
+            }
+        }
+
+        class Deterministic implements NextSample {
+            private int counter;
+
+            private Deterministic() {
+                this.counter = 0;
+            }
+
+            public int next() {
+                return counter++;
+            }
+        }
+    }
+
     public void run(long firstSample,
                     long lastSample,
                     int numberSamples) {
@@ -238,9 +267,17 @@ public class SampleFromLogFiles {
 
         timer.start();
 
+        NextSample sampler;
+        if (numberSamples == -1) {
+            numberSamples = range;
+            sampler = new NextSample.Deterministic();
+        } else {
+            sampler = new NextSample.Random(range);
+        }
+
         for (int i = 0; i < numberSamples; ++i) {
 
-            int sample = firstIndex + MathUtils.nextInt(range);
+            int sample = firstIndex + sampler.next();
 
             for (ParameterBinding binding : parameterBindings) {
                 setParameter(binding, sample);
@@ -268,7 +305,8 @@ public class SampleFromLogFiles {
             }
 
             if (printToScreen) {
-                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Iteration " + i + " completed.");
+                java.util.logging.Logger.getLogger("dr.evomodelxml").info("Iteration " + i +
+                        " (using state " + info.getState(sample) + ") completed.");
             }
         }
 

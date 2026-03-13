@@ -203,7 +203,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             throw new IllegalStateException("Invalid total weight: atomic=" + atomicWeight + ", continuous=" + ctsWeight);
         }
         int newZ = (MathUtils.nextDouble() < (atomicWeight / denom)) ? 1 : 0;
-        indicatorZ.setParameterValueQuietly(b, newZ);
+        indicatorZ.setParameterValue(b, newZ);
         if (newZ == 1) resampleAtom(b, atomicWeightsForBranch);
     }
 
@@ -231,7 +231,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
     private void resampleAtom(final int b, final double[] atomicWeights) {
         int newIndex = multinomialSampling(atomicWeights);
-        atomIndex.setParameterValueQuietly(b, newIndex);
+        atomIndex.setParameterValue(b, newIndex);
     }
 
     private int multinomialSampling(final double[] atomicWeights) {

@@ -52,6 +52,8 @@ import dr.inference.model.Variable;
  *          $LastChangedDate$
  *          $LastChangedRevision$
  */
+// Deprecated in favor of SericolaLatentStateBranchRateModel
+@Deprecated
 public class LatentStateBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
 
     public static final String LATENT_STATE_BRANCH_RATE_MODEL = "latentStateBranchRateModel";

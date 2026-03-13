@@ -1,8 +1,8 @@
 package dr.evomodelxml.branchratemodel.latentStateBranchRate;
 
 
-import dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel;
 import dr.evomodel.branchratemodel.latentStateBranchRate.LatentStateBranchRateLengthStatistic;
+import dr.evomodel.branchratemodel.latentStateBranchRate.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;

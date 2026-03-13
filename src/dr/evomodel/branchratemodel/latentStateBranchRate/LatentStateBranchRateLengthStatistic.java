@@ -1,7 +1,6 @@
 package dr.evomodel.branchratemodel.latentStateBranchRate;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.inference.model.Bounds;

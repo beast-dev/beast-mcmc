@@ -28,6 +28,7 @@
 package dr.evomodelxml.branchratemodel.latentStateBranchRate;
 
 import dr.evomodel.branchratemodel.*;
+import dr.evomodel.branchratemodel.latentStateBranchRate.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

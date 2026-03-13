@@ -46,7 +46,6 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     // Inputs
     private final Parameter indicatorZ; // z_b (dimension B), integer-like doubles, values in {0,1}
     private final Parameter atomIndex; // a_b (dimension B), integer-like doubles, values in {0,...,K-1}
-    private final Parameter pi;         // π (dimension K) OR null => uniform weights
     private double updateProportion;
     private final boolean adaptUpdateProportion;
     private final int[] branchBuffer;
@@ -81,7 +80,6 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
         this.indicatorZ = indicatorZ;
         this.atomIndex = atomIndex;
-        this.pi = pi; // may be null -> uniform
         this.rewardsAwareBranchModel = rewardsAwareBranchModel;
         this.partialLikelihoodProvider = partialLikelihoodProvider;
 
@@ -112,15 +110,6 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         }
         if (atomIndex.getDimension() != indicatorZ.getDimension()) {
             throw new IllegalArgumentException("atomIndex and indicatorZ must have the same dimension.");
-        }
-    }
-
-    private double getPriorOverAtomWeight(int i) {
-        if (pi == null) {
-            return uniformPrior;
-        } else {
-            // use provided pi as prior over atoms
-            return pi.getParameterValue(i);
         }
     }
 
@@ -227,7 +216,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         final double branchLength = tree.getBranchLength(node);
         final double scale = Math.exp(-uniformizationRate * branchLength);
         for (int j = 0; j < nstates; j++) {
-            atomicWeightsOut[j] = scale * getPriorOverAtomWeight(j) * prePartial[j] * postPartial[j];
+            atomicWeightsOut[j] = scale * prePartial[j] * postPartial[j];
         }
     }
 

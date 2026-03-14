@@ -343,6 +343,7 @@ public class SampleFromLogFiles {
         public TreeBinding(EmpiricalTreeDistributionModel treeModel) {
             this.treeModel = treeModel;
             this.trees = treeModel.getTrees();
+            System.err.println("");
         }
     }
 

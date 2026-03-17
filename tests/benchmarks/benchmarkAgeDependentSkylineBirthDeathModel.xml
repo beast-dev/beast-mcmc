@@ -6,13 +6,8 @@
   Two test scenarios:
     1. Constant rates (b=0, gamma=0): rate = scale
     2. Age-dependent rates (b=0.5, gamma=0.3): rate = scale * (1 + 0.5*a) * exp(-0.3*a)
-
-  Run with:
-    java -jar build/dist/beast.jar -seed 666 tests/benchmarks/benchmarkAgeDependentSkylineBirthDeathModel.xml
-
-  NOTE: This file is intentionally placed outside tests/TestXML/ so it does not
-  run in CI (benchmarks are slow and timing results are nondeterministic).
 -->
+
 <beast>
     <taxa id="taxa">
         <taxon id="tip_1"/>
@@ -75,7 +70,7 @@
     <!-- ================================================================== -->
 
     <!-- FFT-Picard: low resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.const.1k" solver="fft"
+    <ageDependentSkylineBirthDeathModel id="fft.const.low" solver="fft"
             timeSteps="1000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
@@ -86,8 +81,8 @@
     </ageDependentSkylineBirthDeathModel>
 
     <!-- FFT-Picard: high resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.const.8k" solver="fft"
-            timeSteps="8000" epsPicard="1e-8" maxIterPicard="100">
+    <ageDependentSkylineBirthDeathModel id="fft.const.high" solver="fft"
+            timeSteps="2000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
@@ -98,7 +93,7 @@
 
     <!-- PDE: low resolution -->
     <ageDependentBirthDeathPDEModel id="pde.const.low" symmetric="true"
-            timeSteps="100" ageSteps="10">
+            timeSteps="100" ageSteps="2">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
@@ -108,8 +103,8 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- PDE: medium resolution -->
-    <ageDependentBirthDeathPDEModel id="pde.const.med" symmetric="true"
-            timeSteps="100" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.const.high" symmetric="true"
+            timeSteps="200" ageSteps="2">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
@@ -123,24 +118,24 @@
         === Scenario 1: Constant rates (b=0, gamma=0) ===
     </report>
     <report>
-        FFT  1k steps:                <ageDependentSkylineBirthDeathModel idref="fft.const.1k"/>
+        FFT  1000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.const.low"/>
     </report>
     <report>
-        FFT  8k steps:                <ageDependentSkylineBirthDeathModel idref="fft.const.8k"/>
+        FFT  2000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.const.high"/>
     </report>
     <report>
-        PDE  100 time / 10 age steps: <ageDependentBirthDeathPDEModel idref="pde.const.low"/>
+        PDE  100 timesteps (age steps doesn't matter): <ageDependentBirthDeathPDEModel idref="pde.const.low"/>
     </report>
     <report>
-        PDE  1k time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.const.med"/>
+        PDE  200 timesteps (age steps doesn't matter): <ageDependentBirthDeathPDEModel idref="pde.const.high"/>
     </report>
 
     <!-- Timing benchmark: constant rates -->
     <benchmarker iterationCount="50">
-        <ageDependentSkylineBirthDeathModel idref="fft.const.1k"/>
-        <ageDependentSkylineBirthDeathModel idref="fft.const.8k"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.const.low"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.const.high"/>
         <ageDependentBirthDeathPDEModel idref="pde.const.low"/>
-        <ageDependentBirthDeathPDEModel idref="pde.const.med"/>
+        <ageDependentBirthDeathPDEModel idref="pde.const.high"/>
     </benchmarker>
 
     <!-- ================================================================== -->
@@ -150,7 +145,7 @@
     <!-- ================================================================== -->
 
     <!-- FFT-Picard: low resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.linexp.1k" solver="fft"
+    <ageDependentSkylineBirthDeathModel id="fft.linexp.low" solver="fft"
             timeSteps="1000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
@@ -161,8 +156,8 @@
     </ageDependentSkylineBirthDeathModel>
 
     <!-- FFT-Picard: high resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.linexp.8k" solver="fft"
-            timeSteps="8000" epsPicard="1e-8" maxIterPicard="100">
+    <ageDependentSkylineBirthDeathModel id="fft.linexp.high" solver="fft"
+            timeSteps="2000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
@@ -184,7 +179,7 @@
 
     <!-- PDE: medium resolution -->
     <ageDependentBirthDeathPDEModel id="pde.linexp.med" symmetric="true"
-            timeSteps="100" ageSteps="100">
+            timeSteps="200" ageSteps="100">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
@@ -198,22 +193,22 @@
         === Scenario 2: Age-dependent rates (birthShape=[0.5,0.3], deathShape=[0.2,0.1]) ===
     </report>
     <report>
-        FFT  1k steps:                <ageDependentSkylineBirthDeathModel idref="fft.linexp.1k"/>
+        FFT  1000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.linexp.low"/>
     </report>
     <report>
-        FFT  8k steps:                <ageDependentSkylineBirthDeathModel idref="fft.linexp.8k"/>
+        FFT  2000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.linexp.high"/>
     </report>
     <report>
         PDE  100 time / 10 age steps: <ageDependentBirthDeathPDEModel idref="pde.linexp.low"/>
     </report>
     <report>
-        PDE  1k time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.linexp.med"/>
+        PDE  200 time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.linexp.med"/>
     </report>
 
     <!-- Timing benchmark: age-dependent rates -->
     <benchmarker iterationCount="50">
-        <ageDependentSkylineBirthDeathModel idref="fft.linexp.1k"/>
-        <ageDependentSkylineBirthDeathModel idref="fft.linexp.8k"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.linexp.low"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.linexp.high"/>
         <ageDependentBirthDeathPDEModel idref="pde.linexp.low"/>
         <ageDependentBirthDeathPDEModel idref="pde.linexp.med"/>
     </benchmarker>
@@ -225,7 +220,7 @@
     <!-- ================================================================== -->
 
     <!-- FFT-Picard: 10 epochs, low resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.sky.const.1k" solver="fft"
+    <ageDependentSkylineBirthDeathModel id="fft.sky.const.low" solver="fft"
             timeSteps="1000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes>
@@ -242,8 +237,8 @@
     </ageDependentSkylineBirthDeathModel>
 
     <!-- FFT-Picard: 10 epochs, high resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.sky.const.8k" solver="fft"
-            timeSteps="8000" epsPicard="1e-8" maxIterPicard="100">
+    <ageDependentSkylineBirthDeathModel id="fft.sky.const.high" solver="fft"
+            timeSteps="2000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -260,7 +255,7 @@
 
     <!-- PDE: 10 epochs, low resolution -->
     <ageDependentBirthDeathPDEModel id="pde.sky.const.low" symmetric="true"
-            timeSteps="100" ageSteps="10">
+            timeSteps="100" ageSteps="2">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -277,7 +272,7 @@
 
     <!-- PDE: 10 epochs, medium resolution -->
     <ageDependentBirthDeathPDEModel id="pde.sky.const.med" symmetric="true"
-            timeSteps="100" ageSteps="100">
+            timeSteps="200" ageSteps="2">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -296,22 +291,22 @@
         === Scenario 3: Multi-epoch skyline (10 epochs, constant age hazard) ===
     </report>
     <report>
-        FFT  1k steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.const.1k"/>
+        FFT  1000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.const.low"/>
     </report>
     <report>
-        FFT  8k steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.const.8k"/>
+        FFT  2000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.const.high"/>
     </report>
     <report>
-        PDE  100 time / 10 age steps: <ageDependentBirthDeathPDEModel idref="pde.sky.const.low"/>
+        PDE  100 time (age steps doesn't matter): <ageDependentBirthDeathPDEModel idref="pde.sky.const.low"/>
     </report>
     <report>
-        PDE  1k time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.sky.const.med"/>
+        PDE  200 time (age steps doesn't matter): <ageDependentBirthDeathPDEModel idref="pde.sky.const.med"/>
     </report>
 
     <!-- Timing benchmark: multi-epoch constant -->
     <benchmarker iterationCount="50">
-        <ageDependentSkylineBirthDeathModel idref="fft.sky.const.1k"/>
-        <ageDependentSkylineBirthDeathModel idref="fft.sky.const.8k"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.sky.const.low"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.sky.const.high"/>
         <ageDependentBirthDeathPDEModel idref="pde.sky.const.low"/>
         <ageDependentBirthDeathPDEModel idref="pde.sky.const.med"/>
     </benchmarker>
@@ -323,7 +318,7 @@
     <!-- ================================================================== -->
 
     <!-- FFT-Picard: 10 epochs, low resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.sky.linexp.1k" solver="fft"
+    <ageDependentSkylineBirthDeathModel id="fft.sky.linexp.low" solver="fft"
             timeSteps="1000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes>
@@ -340,8 +335,8 @@
     </ageDependentSkylineBirthDeathModel>
 
     <!-- FFT-Picard: 10 epochs, high resolution -->
-    <ageDependentSkylineBirthDeathModel id="fft.sky.linexp.8k" solver="fft"
-            timeSteps="8000" epsPicard="1e-8" maxIterPicard="100">
+    <ageDependentSkylineBirthDeathModel id="fft.sky.linexp.high" solver="fft"
+            timeSteps="2000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -358,7 +353,7 @@
 
     <!-- PDE: 10 epochs, low resolution -->
     <ageDependentBirthDeathPDEModel id="pde.sky.linexp.low" symmetric="true"
-            timeSteps="100" ageSteps="100">
+            timeSteps="100" ageSteps="10">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -375,7 +370,7 @@
 
     <!-- PDE: 10 epochs, medium resolution -->
     <ageDependentBirthDeathPDEModel id="pde.sky.linexp.med" symmetric="true"
-            timeSteps="10000" ageSteps="1000">
+            timeSteps="200" ageSteps="100">
         <treeModel idref="treeModel"/>
         <epochTimes>
             <parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/>
@@ -394,22 +389,22 @@
         === Scenario 4: Multi-epoch skyline (10 epochs, age-dependent hazard) ===
     </report>
     <report>
-        FFT  1k steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.1k"/>
+        FFT  1000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.low"/>
     </report>
     <report>
-        FFT  8k steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.8k"/>
+        FFT  2000 steps:                <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.high"/>
     </report>
     <report>
         PDE  100 time / 10 age steps: <ageDependentBirthDeathPDEModel idref="pde.sky.linexp.low"/>
     </report>
     <report>
-        PDE  1000 k time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.sky.linexp.med"/>
+        PDE  200 time / 100 age steps: <ageDependentBirthDeathPDEModel idref="pde.sky.linexp.med"/>
     </report>
 
 <!--     Timing benchmark: multi-epoch age-dependent -->
     <benchmarker iterationCount="50">
-        <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.1k"/>
-        <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.8k"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.low"/>
+        <ageDependentSkylineBirthDeathModel idref="fft.sky.linexp.high"/>
         <ageDependentBirthDeathPDEModel idref="pde.sky.linexp.low"/>
         <ageDependentBirthDeathPDEModel idref="pde.sky.linexp.med"/>
     </benchmarker>

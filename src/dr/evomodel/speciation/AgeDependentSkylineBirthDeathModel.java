@@ -33,7 +33,8 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private final Parameter deathShape;
 
     private final int numEpochs;
-    private final int numSteps;
+    private final int maxSteps;
+    private int numSteps;
     private double h;
 
     private final double epsPicard;
@@ -71,9 +72,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     // Direct quadrature arrays (allocated only when useDirectQuadrature = true)
     private double[] birthRateAtGrid;
     private double[] deathRateAtGrid;
-    private boolean[] isChangepoint;
-    private double[] leftBirthRate;
-    private double[] leftDeathRate;
     private double[] antiDiagBuf;
     private double[] branchDensBuffer;
     private boolean gridValid;
@@ -103,6 +101,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         this.deathShape = deathShape;
 
         this.numEpochs = times.getDimension();
+        this.maxSteps = numSteps;
         this.numSteps = numSteps;
 
         this.epsPicard = epsPicard;
@@ -119,32 +118,28 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         addVariable(deathScale);
         addVariable(deathShape);
 
-        this.p0 = new double[numSteps + 1];
-        this.storedP0 = new double[numSteps + 1];
-        this.S = new double[numSteps + 1];
-        this.storedS = new double[numSteps + 1];
+        this.p0 = new double[maxSteps + 1];
+        this.storedP0 = new double[maxSteps + 1];
+        this.S = new double[maxSteps + 1];
+        this.storedS = new double[maxSteps + 1];
 
         this.bScale = new double[numEpochs];
         this.dScale = new double[numEpochs];
 
-        this.bHaz = new double[numSteps + 1];
-        this.dHaz = new double[numSteps + 1];
-        this.bCumHaz = new double[numSteps + 1];
-        this.dCumHaz = new double[numSteps + 1];
+        this.bHaz = new double[maxSteps + 1];
+        this.dHaz = new double[maxSteps + 1];
+        this.bCumHaz = new double[maxSteps + 1];
+        this.dCumHaz = new double[maxSteps + 1];
 
         this.epochIdx = new int[numEpochs + 1];
         this.dScaleDelta = new double[numEpochs];
         this.bScaleDelta = new double[numEpochs];
 
         if (useDirectQuadrature) {
-            int N = numSteps;
-            this.birthRateAtGrid = new double[N + 1];
-            this.deathRateAtGrid = new double[N + 1];
-            this.isChangepoint = new boolean[N + 1];
-            this.leftBirthRate = new double[N + 1];
-            this.leftDeathRate = new double[N + 1];
-            this.antiDiagBuf = new double[N + 1];
-            this.branchDensBuffer = new double[N + 1];
+            this.birthRateAtGrid = new double[maxSteps + 1];
+            this.deathRateAtGrid = new double[maxSteps + 1];
+            this.antiDiagBuf = new double[maxSteps + 1];
+            this.branchDensBuffer = new double[maxSteps + 1];
             this.gridValid = false;
         }
     }
@@ -305,7 +300,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
                 for (int i = 0; i < epochLen; i++) {
                     fBuf[i] = guessCurr[i] * guessCurr[i];
                 }
-                fBuf[0] *= 0.5; // Left-endpoint trapezoidal correction
+                fBuf[0] *= 0.5; // Left-endpoint trapezoidal weight
                 FastFourierTransform.rfft(fBuf, picardPad, false);
                 convolve(kernelFFT, fBuf, picardPad);
 
@@ -350,7 +345,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
                 for (int i = 0; i < epochLen; i++) {
                     fBuf[i] = 2.0 * p0[startIdx + i] * guessCurr[i];
                 }
-                fBuf[0] *= 0.5; // Left-endpoint trapezoidal correction
+                fBuf[0] *= 0.5; // Left-endpoint trapezoidal weight
                 FastFourierTransform.rfft(fBuf, picardPad, false);
                 convolve(kernelFFT, fBuf, picardPad);
 
@@ -517,7 +512,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
                 for (int i = 0; i < ellLen; i++) {
                     fBuf[i] = 2.0 * p0[tIdx + ellStart + i] * currentGuess[i];
                 }
-                fBuf[0] *= 0.5; // Left-endpoint trapezoidal correction
+                fBuf[0] *= 0.5; // Left-endpoint trapezoidal weight
                 FastFourierTransform.rfft(fBuf, picardPad, false);
                 convolve(kernelReal, fBuf, picardPad);
 
@@ -624,12 +619,10 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
 
     /**
      * Build grid arrays for direct quadrature: map epoch boundaries to grid points,
-     * fill rate arrays, flag changepoints.
+     * fill rate arrays.
      */
     private void buildGridDirect() {
-        int N = numSteps;
-
-        for (int i = 0; i <= N; i++) {
+        for (int i = 0; i <= numSteps; i++) {
             // Find which epoch this grid point belongs to
             int epoch = 0;
             for (int k = 1; k < numEpochs; k++) {
@@ -642,28 +635,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
 
             birthRateAtGrid[i] = bScale[birthEpoch];
             deathRateAtGrid[i] = dScale[deathEpoch];
-
-            // Detect changepoint
-            if (i > 0) {
-                int prevEpoch = 0;
-                for (int k = 1; k < numEpochs; k++) {
-                    if (i - 1 >= epochIdx[k]) {
-                        prevEpoch = k;
-                    }
-                }
-                int prevBirthEpoch = Math.min(prevEpoch, numEpochs - 1);
-                int prevDeathEpoch = Math.min(prevEpoch, deathScale.getDimension() - 1);
-
-                if (prevBirthEpoch != birthEpoch || prevDeathEpoch != deathEpoch) {
-                    isChangepoint[i] = true;
-                    leftBirthRate[i] = bScale[prevBirthEpoch];
-                    leftDeathRate[i] = dScale[prevDeathEpoch];
-                } else {
-                    isChangepoint[i] = false;
-                }
-            } else {
-                isChangepoint[i] = false;
-            }
         }
     }
 
@@ -687,7 +658,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         }
     }
 
-    // Vanilla: no changepoint averaging, just use the grid rate directly
     private double getEffectiveBirthRate(int i) {
         return birthRateAtGrid[i];
     }
@@ -695,21 +665,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private double getEffectiveDeathRate(int i) {
         return deathRateAtGrid[i];
     }
-
-    // Changepoint-averaged versions (commented out):
-    // private double getEffectiveBirthRate(int i) {
-    //     if (isChangepoint[i]) {
-    //         return (leftBirthRate[i] + birthRateAtGrid[i]) / 2.0;
-    //     }
-    //     return birthRateAtGrid[i];
-    // }
-    //
-    // private double getEffectiveDeathRate(int i) {
-    //     if (isChangepoint[i]) {
-    //         return (leftDeathRate[i] + deathRateAtGrid[i]) / 2.0;
-    //     }
-    //     return deathRateAtGrid[i];
-    // }
 
     /**
      * Full birth rate at grid point (i, j): b(i) * h_b(j*h)
@@ -724,31 +679,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private double getDeathRate(int i, int j) {
         return getEffectiveDeathRate(i) * dHaz[j];
     }
-
-    /**
-     * Vanilla: birth rate at age 0, just use point evaluation h_b(0).
-     */
-    private double getBirthRateAvgZero(int i) {
-        return getBirthRate(i, 0);
-    }
-
-    /**
-     * Vanilla: death rate at age 0, just use point evaluation h_d(0).
-     */
-    private double getDeathRateAvgZero(int i) {
-        return getDeathRate(i, 0);
-    }
-
-    // Integral-averaged age-0 versions (commented out):
-    // private double getBirthRateAvgZero(int i) {
-    //     double deltaBH = bCumHaz[1] - bCumHaz[0]; // = bCumHaz[1] since bCumHaz[0]=0
-    //     return getEffectiveBirthRate(i) * deltaBH / h;
-    // }
-    //
-    // private double getDeathRateAvgZero(int i) {
-    //     double deltaDH = dCumHaz[1] - dCumHaz[0];
-    //     return getEffectiveDeathRate(i) * deltaDH / h;
-    // }
 
     /**
      * Compute extinction probabilities using direct quadrature.
@@ -775,15 +705,15 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
                 trap_sum_lam += getBirthRate(i, j) * expmR_ij * p0[i] * p0[i];
             }
 
-            // i=m endpoint (half weight for mu only)
+            // i=m endpoint
             double expmR_m0 = antiDiagBuf[m];
-            trap_sum_mu += getDeathRateAvgZero(m) * expmR_m0 / 2.0;
+            trap_sum_mu += getDeathRate(m, 0) * expmR_m0 / 2.0;
 
             trap_sum_mu *= h;
             trap_sum_lam *= h;
 
             // Implicit quadratic for p0[m]
-            double a = h * getBirthRateAvgZero(m) * expmR_m0 / 2.0;
+            double a = h * getBirthRate(m, 0) * expmR_m0 / 2.0;
             double c = trap_sum_mu + trap_sum_lam;
 
             if (a == 0.0) {
@@ -819,7 +749,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
             }
 
             S[i] = (2.0 * h * trap_sum + expmR_0i) /
-                    (1.0 - h * getBirthRateAvgZero(i) * antiDiagBuf[i] * p0[i]);
+                    (1.0 - h * getBirthRate(i, 0) * antiDiagBuf[i] * p0[i]);
         }
 
         sComputedUpTo = idx;
@@ -832,7 +762,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         double p0_k = p0[k];
         double one_minus_p0_k = 1.0 - p0_k;
 
-        branchDensBuffer[0] = getBirthRateAvgZero(k) * one_minus_p0_k * one_minus_p0_k;
+        branchDensBuffer[0] = getBirthRate(k, 0) * one_minus_p0_k * one_minus_p0_k;
 
         for (int m = 1; m <= l; m++) {
             int C = k + m;
@@ -850,7 +780,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
 
             int i_end = k + m;
             double num = 2.0 * h * trap_sum + birthRate_k_m * expmR_k_m * one_minus_p0_k * one_minus_p0_k;
-            double denom = 1.0 - h * getBirthRateAvgZero(i_end) * antiDiagBuf[i_end] * p0[i_end];
+            double denom = 1.0 - h * getBirthRate(i_end, 0) * antiDiagBuf[i_end] * p0[i_end];
 
             branchDensBuffer[m] = num / denom;
         }
@@ -905,16 +835,56 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     // =======
 
     /**
-     * Use appropriate solver.
+     * Use appropriate solver with Richardson extrapolation.
+     * Solve at N/2 and N, combine: (4*L_fine - L_coarse) / 3
+     * to cancel the O(h²) trapezoidal error, yielding O(h⁴) accuracy.
      */
     private double calculateLogLikelihood() {
-        // Recompute grid spacing from current times parameter
-        this.h = times.getParameterValue(numEpochs - 1) / numSteps;
+        double T = times.getParameterValue(numEpochs - 1);
+
+        // Fall back to single solve if coarse grid too small
+        if (maxSteps / 2 < 8) {
+            this.numSteps = maxSteps;
+            this.h = T / numSteps;
+            ratesDirty = true;
+            if (useDirectQuadrature) {
+                gridValid = false;
+                return calculateLogLikelihoodDirect();
+            } else {
+                return calculateLogLikelihoodFFT();
+            }
+        }
 
         if (useDirectQuadrature) {
-            return calculateLogLikelihoodDirect();
+            // Coarse solve at N/2
+            this.numSteps = maxSteps / 2;
+            this.h = T / numSteps;
+            ratesDirty = true;
+            gridValid = false;
+            double logL_coarse = calculateLogLikelihoodDirect();
+
+            // Fine solve at N
+            this.numSteps = maxSteps;
+            this.h = T / numSteps;
+            ratesDirty = true;
+            gridValid = false;
+            double logL_fine = calculateLogLikelihoodDirect();
+
+            return (4.0 * logL_fine - logL_coarse) / 3.0;
         } else {
-            return calculateLogLikelihoodFFT();
+            // Coarse solve at N/2
+            this.numSteps = maxSteps / 2;
+            this.h = T / numSteps;
+            ratesDirty = true;
+            double logL_coarse = calculateLogLikelihoodFFT();
+
+            // Fine solve at N
+            this.numSteps = maxSteps;
+            this.h = T / numSteps;
+            ratesDirty = true;
+            double logL_fine = calculateLogLikelihoodFFT();
+
+            return (4.0 * logL_fine - logL_coarse) / 3.0;
         }
     }
 
@@ -989,14 +959,14 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     protected void storeState() {
-        System.arraycopy(p0, 0, storedP0, 0, p0.length);
+        System.arraycopy(p0, 0, storedP0, 0, p0.length); // FIXME: I don't think is ever really useful
         System.arraycopy(S, 0, storedS, 0, S.length);
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
     }
 
     protected void restoreState() {
-        System.arraycopy(storedP0, 0, p0, 0, p0.length);
+        System.arraycopy(storedP0, 0, p0, 0, p0.length); // FIXME: I don't think is ever really useful
         System.arraycopy(storedS, 0, S, 0, S.length);
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
@@ -1034,12 +1004,14 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Returns the full p0 grid array only for testing purpose
      */
     public double[] getP0Array() {
+        this.numSteps = maxSteps;
+        this.h = times.getParameterValue(numEpochs - 1) / numSteps;
+        ratesDirty = true;
         if (useDirectQuadrature) {
+            gridValid = false;
             cacheRates();
-            if (!gridValid) {
-                buildGridDirect();
-                computeP0Direct();
-            }
+            buildGridDirect();
+            computeP0Direct();
         } else {
             computeP0AndS();
         }
@@ -1050,12 +1022,30 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Returns the full S grid array only for testing purpose
      */
     public double[] getSArray() {
+        this.numSteps = maxSteps;
+        this.h = times.getParameterValue(numEpochs - 1) / numSteps;
+        ratesDirty = true;
         computeP0AndS();
         return S.clone();
     }
 
     public String getReport() {
-        return "logLikelihood: " + getLogLikelihood();
+        getLogLikelihood();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("logLikelihood: ").append(logLikelihood).append("\n");
+
+        // Report p0(t, 0) at 20 evenly spaced points
+//        double[] p0Arr = getP0Array();
+//        int nSamples = 20;
+//        sb.append("p0(t, 0) [").append(nSamples).append(" points, N=").append(numSteps).append("]:\n");
+//        for (int s = 0; s <= nSamples; s++) {
+//            double frac = (double) s / nSamples;
+//            int idx = (int) Math.round(frac * numSteps);
+//            if (idx > numSteps) idx = numSteps;
+//            sb.append(String.format("  t=%.4f  p0=%.10f%n", idx * h, p0Arr[idx]));
+//        }
+        return sb.toString();
     }
 
     public String toString() {

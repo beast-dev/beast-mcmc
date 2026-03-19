@@ -10,12 +10,15 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
     public static final String TRANSMISSION_RATE = "transmissionRate";
     public static final String RECOVERY_RATE = "recoveryRate";
     public static final String SAMPLING_PROPORTION = "samplingProportion";
+    public static final String RESUSCEPTIBILITY_RATE = "resusRate";
     public static final String NUM_S = "numS";
     public static final String NUM_I = "numI";
     public static final String NUM_R = "numR";
     public static final String ORIGIN = "origin";
+    public static final String TAUSTEP = "taustep";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
+
 
     public String getParserName() {
         return SIR_COMPARTMENTAL_MODEL;
@@ -26,15 +29,19 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
         Parameter transmissionRate = (Parameter) xo.getChild(TRANSMISSION_RATE).getChild(Parameter.class);
         Parameter recoveryRate = (Parameter) xo.getChild(RECOVERY_RATE).getChild(Parameter.class);
         Parameter samplingRate = (Parameter) xo.getChild(SAMPLING_PROPORTION).getChild(Parameter.class);
+        Parameter resusRate = (Parameter) xo.getChild(RESUSCEPTIBILITY_RATE).getChild(Parameter.class);
         Parameter numS = (Parameter) xo.getChild(NUM_S).getChild(Parameter.class);
         Parameter numI = (Parameter) xo.getChild(NUM_I).getChild(Parameter.class);
         Parameter numR = (Parameter) xo.getChild(NUM_R).getChild(Parameter.class);
         Parameter origin = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
+        Parameter taustep = (Parameter) xo.getChild(TAUSTEP).getChild(Parameter.class); new Parameter.Default(1.0);
         final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
         final Parameter cutOff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
 
-        SIRCompartmentalModel sirModel = new SIRCompartmentalModel(transmissionRate, recoveryRate, samplingRate,
-                numS, numI, numR, origin, (int)(numGridPoints.getParameterValue(0)),
+        System.out.println("resusRate: " + resusRate.getParameterValue(0));
+
+        SIRCompartmentalModel sirModel = new SIRCompartmentalModel(transmissionRate, recoveryRate, samplingRate, resusRate,
+                numS, numI, numR, origin, taustep, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0));
 
         return sirModel;
@@ -69,6 +76,10 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
+            new ElementRule(RESUSCEPTIBILITY_RATE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
             new ElementRule(NUM_S,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
@@ -82,6 +93,10 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                     }),
             new ElementRule(ORIGIN,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(TAUSTEP,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),

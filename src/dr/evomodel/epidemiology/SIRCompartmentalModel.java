@@ -17,6 +17,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
     Parameter numI;
     Parameter numR;
     Parameter origin;
+    Parameter taustep;
     int numGridPoints;
     double cutOff;
 
@@ -24,10 +25,12 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             Parameter transmissionRate,
             Parameter recoveryRate,
             Parameter samplingProportion,
+            Parameter resusRate,
             Parameter numS,
             Parameter numI,
             Parameter numR,
             Parameter origin,
+            Parameter taustep,
             int numGridPoints,
             double cutOff) {
 
@@ -39,6 +42,8 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         addVariable(recoveryRate);
         this.samplingProportion = samplingProportion;
         addVariable(samplingProportion);
+        this.resusRate = resusRate;
+        addVariable(resusRate);
         this.numS = numS;
         addVariable(numS);
         this.numI = numI;
@@ -47,6 +52,8 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         addVariable(numR);
         this.origin = origin;
         addVariable(origin);
+        this.taustep = taustep;
+        addVariable(taustep);
 
         this.numGridPoints = numGridPoints;
         this.cutOff = cutOff;
@@ -54,6 +61,13 @@ public class SIRCompartmentalModel extends CompartmentalModel {
 
 
     public void simulateTrajectory() {
+
+        System.out.println("this is running");
+        // print initial SIR
+        System.out.println("initial numI: " + numI.getParameterValue(0));
+        System.out.println("initial numR: " + numR.getParameterValue(0));
+        System.out.println("initial numS: " + numS.getParameterValue(0));
+
 
         // set up time interval vector
         double T = origin.getParameterValue(0);
@@ -66,8 +80,8 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         // Initialize time and ensure index 0 is defined
         double time = 0.0;
 
-        // you likely already set initial values in numS/numI/numR at index 0 via XML;
-        // this just reads them
+        // already set initial values in numS/numI/numR and taustep at index 0 via XML;
+        // this reads them
         numS.setParameterValue(0, numS.getParameterValue(0));
         numI.setParameterValue(0, numI.getParameterValue(0));
         numR.setParameterValue(0, numR.getParameterValue(0));
@@ -96,7 +110,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             double omega = resusRate.getParameterValue(0);
 
             // --------------------------------------------------------------------
-            // TAU SELECTION (your comments preserved)
+            // TAU SELECTION
             // --------------------------------------------------------------------
 
             // default epsilon
@@ -230,16 +244,26 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             double tau = Math.min(tau_prime, tau_2prime);
 
             // cap tau so we don't jump beyond the next grid boundary (keeps vectors consistent)
+            // maybe this should go after user tau override so each boundary gets a count?
             double nextBoundary = (i < K - 1) ? timeIntervals[i + 1] : T;
             tau = Math.min(tau, nextBoundary - time);
             tau = Math.min(tau, T - time);
 
-            if (tau <= cutOff) {
-                break;
+            //this allows user to specify a tau step. default in xml should be 0
+            if (taustep.getParameterValue(0) > 0.0) {
+                tau = taustep.getParameterValue(0);
             }
 
+            System.out.println("tau:" + tau);
+
+            //I don't remember what I was thinking with this. I'm pretty sure it stops if tau is too small and will take too long
+            //if (tau <= cutOff) {
+            //    System.out.println("breaking because tau <= cutOff");
+            //    break;
+            //}
+
             // --------------------------------------------------------------------
-            // TAU LEAP (your comments preserved)
+            // TAU LEAP
             // --------------------------------------------------------------------
 
             // assumes:
@@ -306,7 +330,13 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             numI.setParameterValue(j, I_new);
             numR.setParameterValue(j, R_new);
 
+            // print SIR
+            System.out.println("numS: " + S_new + "numI: " + I_new + "numR: " + R_new);
+
             time = time_new;
+
+            // print time
+            System.out.println("time: " + time);
 
             // stop if we’ve filled the last grid slot
             if (j >= K - 1) {

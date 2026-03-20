@@ -138,7 +138,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
 
         long firstSample = xo.getAttribute(FIRST_SAMPLE, -1L);
         long lastSample = xo.getAttribute(LAST_SAMPLE, -1L);
-        int numberSamples = xo.getAttribute(NUMBER_SAMPLES, 100);
+        int numberSamples = xo.getAttribute(NUMBER_SAMPLES, -1);
 
         action.run(firstSample, lastSample, numberSamples);
 
@@ -228,7 +228,7 @@ public class SampleFromLogFilesParser extends AbstractXMLObjectParser {
                             new StringAttributeRule(TRANSFORM, "Transform column value", true)
                     }, 1, Integer.MAX_VALUE),
             new ElementRule(EXECUTE, new XMLSyntaxRule[] {
-                    new ElementRule(Loggable.class, 1, Integer.MAX_VALUE),
+                    new ElementRule(Loggable.class, 0, Integer.MAX_VALUE),
             }),
             new ElementRule(CHECK_BLOCK,
                     new XMLSyntaxRule[]{

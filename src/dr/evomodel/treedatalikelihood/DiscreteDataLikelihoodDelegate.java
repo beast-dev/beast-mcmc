@@ -258,7 +258,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
                                           PartialsRescalingScheme rescalingScheme,
                                           boolean delayRescalingUntilUnderflow,
                                           PreOrderSettings preOrderSettings,
-//                                          DiscreteDataLikelihoodDelegateOld.BranchExecution legacyBranchExecution,
                                           PostOrderRepresentation postOrderRepresentation,
                                           PartialTransform postOrderTransform, // TODO is this really useful?
                                           PartialTransform preOrderTransform, // TODO is this really useful?
@@ -665,6 +664,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return totalNodeOperationCount;
     }
 
+    public void updatePostOrdersFromTreeDataLikelihood(TreeDataLikelihood treeDataLikelihood) {
+        treeDataLikelihood.calculatePostOrderStatistics();
+    }
     // -------------------------------------------------------------------------
     // Report / cite
     // -------------------------------------------------------------------------

@@ -104,7 +104,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     @Override
     public double doOperation() {
 
-        treeDataLikelihood.calculatePostOrderStatistics();
+        discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
         discreteDelegate.ensurePreOrderComputed();
 
         final int B = indicatorZ.getDimension();

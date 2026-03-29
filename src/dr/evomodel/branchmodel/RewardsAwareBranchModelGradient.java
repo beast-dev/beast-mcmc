@@ -108,7 +108,8 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     public double[] getGradientLogDensity() {
 
         // Ensure delegate caches are up to date.
-        treeDataLikelihood.calculatePostOrderStatistics();
+//        treeDataLikelihood.calculatePostOrderStatistics();
+        discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
 //        discreteDelegate.invalidatePreOrderOnlyForDebug();
         discreteDelegate.ensurePreOrderComputed();
 //        treeDataLikelihood.getLogLikelihood();

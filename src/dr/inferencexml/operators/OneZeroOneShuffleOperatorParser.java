@@ -1,5 +1,6 @@
 package dr.inferencexml.operators;
 
+import dr.evomodelxml.branchratemodel.RewardsAwareMixtureBranchRatesParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OneZeroOneShuffleOperator;
@@ -22,9 +23,6 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
     private static final String WEIGHT = "weight";
     private static final String TOL = "tol";
 
-    private static final String ALPHA_RATES = "alphaRates";
-    private static final String EXTREME_INDEX = "extremeIndex";
-
     @Override
     public String getParserName() {
         return OPERATOR;
@@ -36,16 +34,19 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
         final double weight = xo.getDoubleAttribute(WEIGHT);
         final double tol = xo.hasAttribute(TOL) ? xo.getDoubleAttribute(TOL) : 0.0;
 
-        final Parameter alphaRates = (Parameter) xo.getElementFirstChild(ALPHA_RATES);
-        final Parameter extremeIndex = (Parameter) xo.getElementFirstChild(EXTREME_INDEX);
+        final XMLObject rewardRatesObj = xo.getChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES);
+        final Parameter rewardRatesValues = (Parameter)
+                rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES);
+        final Parameter rewardRatesMapping = (Parameter)
+                rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING);
 
+        final OneZeroOneShuffleOperator op =
+                new OneZeroOneShuffleOperator(rewardRatesValues, rewardRatesMapping, weight, tol);
 
-            final OneZeroOneShuffleOperator op =
-                    new OneZeroOneShuffleOperator(alphaRates, extremeIndex, weight, tol);
-
-            return op;
+        return op;
 
     }
+
 
     @Override
     public String getParserDescription() {
@@ -62,16 +63,24 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
         return rules;
     }
 
-    private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+    private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newDoubleRule(TOL, true),
 
-            new ElementRule(ALPHA_RATES,
-                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-                    "The K-length alphaRates parameter (e.g., ind.rewardRates).", false),
+//            new ElementRule(ALPHA_RATES,
+//                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
+//                    "The K-length alphaRates parameter (e.g., ind.rewardRates).", false),
 
-            new ElementRule(EXTREME_INDEX,
-                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-                    "Length-2 integer-like parameter giving indices of the 0 and 1 labeled extremes.", false),
+            new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES, new XMLSyntaxRule[]{
+                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
+//                        new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES, new XMLSyntaxRule[] {
+//                                new ElementRule(Parameter.class)
+//                        }),
+                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    })
+            })
     };
 }

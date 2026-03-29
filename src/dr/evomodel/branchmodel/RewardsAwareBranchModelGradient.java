@@ -3,26 +3,25 @@ package dr.evomodel.branchmodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
+
 import java.util.Arrays;
 
 /**
- * Gradient of log tree data likelihood wrt branch-specific total rewards
+ * Gradient of log tree data likelihood with respect to branch-specific total rewards
  * stored in an ArbitraryBranchRates object.
  *
- * This mirrors the overall structure of HomogeneousSubstitutionParameterGradient,
- * but:
- *  - the per-branch differential matrix comes from Sericola (inside RewardsAwareBranchModel)
- *  - the parameter is the rates parameter inside ArbitraryBranchRates
- */
-
-/*
+ * This version uses DiscreteDataLikelihoodDelegate directly and assumes:
+ *  - one pattern
+ *  - one category
+ *
  * @author Filippo Monti
  */
 public final class RewardsAwareBranchModelGradient implements GradientWrtParameterProvider, Reportable {
@@ -30,44 +29,39 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     private final TreeDataLikelihood treeDataLikelihood;
     private final Tree tree;
 
-    private final RewardsAwarePartialLikelihoodProvider partialLikelihoodProvider;
+    private final DiscreteDataLikelihoodDelegate discreteDelegate;
     private final ArbitraryBranchRates totalRewardsBranchRates;
     private final SericolaSeriesMarkovRewardFastModel sericola;
-    private int nstates;
+    private final int nstates;
 
-    private double indicatorOnBase;
+    private final double indicatorOnBase;
 
-    private final Parameter parameter; // the underlying "total.rewards" parameter (dimension = #branches)
+    private final Parameter parameter;
     private final Parameter indicator;
 
-    private final Double tolerance;   // optional check tolerance (for Reportable)
-    private final boolean useHessian; // reserved; not implemented below
+    private final Double tolerance;
+    private final boolean useHessian;
 
-    // ---- Namespacing constants ----
     private static final String GRADIENT_TRAIT_PREFIX = "RewardAwareBranchModelGradient";
     private static final String HESSIAN_TRAIT_PREFIX  = "RewardAwareBranchModelHessian";
 
-
     private final double[] prePartial;
     private final double[] postPartial;
-    private final double[] differential; // to hold dP/d(totalReward)
+    private final double[] differential;
     private final double[] prePartialAtNode;
 
     private final double[] gradientBuffer;
 
-
     public RewardsAwareBranchModelGradient(TreeDataLikelihood treeDataLikelihood,
-                                           RewardsAwareBranchModel rewardsAwareBranchModel,
-                                           RewardsAwarePartialLikelihoodProvider partialLikelihoodProvider,
-                                           ArbitraryBranchRates totalRewardsBranchRates,
-                                           Parameter indicator,
-                                           Double tolerance,
-                                           boolean useHessian,
-                                           boolean isOneBasedIndicator) {     // if true, indicator=1 means "include in gradient"; if false, indicator=0 means "include in gradient". Only relevant if indicator is provided.
+                                              RewardsAwareBranchModel rewardsAwareBranchModel,
+                                              ArbitraryBranchRates totalRewardsBranchRates,
+                                              Parameter indicator,
+                                              Double tolerance,
+                                              boolean useHessian,
+                                              boolean isOneBasedIndicator) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = rewardsAwareBranchModel.getTree();
-        this.partialLikelihoodProvider = partialLikelihoodProvider;
         this.totalRewardsBranchRates = totalRewardsBranchRates;
         this.sericola = rewardsAwareBranchModel.getSericolaModel();
         this.nstates = rewardsAwareBranchModel.getStateCount();
@@ -79,12 +73,20 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
         this.parameter = totalRewardsBranchRates.getRateParameter();
         this.indicator = indicator;
 
+        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof DiscreteDataLikelihoodDelegate)) {
+            throw new IllegalArgumentException(
+                    "RewardsAwareBranchModelGradient requires TreeDataLikelihood to use DiscreteDataLikelihoodDelegate"
+            );
+        }
+        this.discreteDelegate = (DiscreteDataLikelihoodDelegate) delegate;
+
         this.prePartial = new double[nstates];
         this.prePartialAtNode = new double[nstates];
         this.postPartial = new double[nstates];
         this.differential = new double[nstates * nstates];
 
-        this.gradientBuffer = new double[ totalRewardsBranchRates.getRateParameter().getDimension() ];
+        this.gradientBuffer = new double[parameter.getDimension()];
     }
 
     @Override
@@ -99,13 +101,18 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
     @Override
     public int getDimension() {
-        // One dimension per branch-specific total reward
         return parameter.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        partialLikelihoodProvider.updatePreOrderPartials();
+
+        // Ensure delegate caches are up to date.
+        treeDataLikelihood.calculatePostOrderStatistics();
+//        discreteDelegate.invalidatePreOrderOnlyForDebug();
+        discreteDelegate.ensurePreOrderComputed();
+//        treeDataLikelihood.getLogLikelihood();
+
         Arrays.fill(prePartial, 0.0);
         Arrays.fill(prePartialAtNode, 0.0);
         Arrays.fill(postPartial, 0.0);
@@ -113,20 +120,23 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
         for (int b = 0; b < parameter.getDimension(); b++) {
             if (indicator != null && indicator.getParameterValue(b) == indicatorOnBase) {
-                // If indicator is provided, skip branches where indicator=indicatorOnBase
-                gradientBuffer[b] = 0;
+                gradientBuffer[b] = 0.0;
                 continue;
             }
-            int nodeNum = totalRewardsBranchRates.getNodeNumberFromParameterIndex(b);
-            NodeRef node = tree.getNode(nodeNum);
+
+            final int nodeNum = totalRewardsBranchRates.getNodeNumberFromParameterIndex(b);
+            final NodeRef node = tree.getNode(nodeNum);
+
             computeDifferentialForBranch(node, differential);
-            partialLikelihoodProvider.getAbovePartialsForBranch(b, prePartial);
-            partialLikelihoodProvider.getAbovePartialsForNode(node, prePartialAtNode);
-            partialLikelihoodProvider.getBelowPartialsForBranch(b, postPartial);
+
+            discreteDelegate.getPreOrderAtBranchStartInto(nodeNum, prePartial);
+            discreteDelegate.getPreOrderAtBranchEndInto(nodeNum, prePartialAtNode);
+            discreteDelegate.getPostOrderAtBranchEndInto(nodeNum, postPartial);
+
+//            System.out.println("Branch " + b + " (node " + nodeNum + "): prePartial=" + Arrays.toString(prePartial) + ",\n postPartial=" + Arrays.toString(postPartial) + ",\n differential=" + Arrays.toString(differential));
 
             final double acc = bilinearFormStable(prePartial, differential, postPartial, nstates);
 
-            // compute likelihood
             double L = 0.0;
             for (int i = 0; i < nstates; i++) {
                 L += prePartialAtNode[i] * postPartial[i];
@@ -154,14 +164,12 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
             double rowDot = 0.0, cRow = 0.0;
 
             for (int j = 0; j < n; j++) {
-                // y = D_ij * post_j
                 double y = D[rowBase + j] * post[j] - cRow;
                 double t = rowDot + y;
                 cRow = (t - rowDot) - y;
                 rowDot = t;
             }
 
-            // acc += pre_i * rowDot (also Kahan)
             double y = pre_i * rowDot - cAcc;
             double t = acc + y;
             cAcc = (t - acc) - y;
@@ -186,5 +194,4 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     public static String getHessianTraitName(String traitName) {
         return HESSIAN_TRAIT_PREFIX + ":" + traitName;
     }
-
 }

@@ -33,6 +33,7 @@ import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.StronglyLumpableCtmcRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractGlmSubstitutionModelGradient;
 import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
@@ -67,7 +68,7 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-        if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
+        if (!(delegate instanceof GradientDataLikelihoodDelegate)) {
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
@@ -90,7 +91,7 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
                             (BeagleDataLikelihoodDelegate) delegate, substitutionModel, parameter);
                 } else {
                     return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                            (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+                            (GradientDataLikelihoodDelegate) delegate, substitutionModel);
                 }
             }
         }

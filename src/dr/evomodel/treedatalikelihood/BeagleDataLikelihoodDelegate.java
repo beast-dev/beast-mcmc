@@ -60,7 +60,7 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements
-        DataLikelihoodDelegate, TipStateAccessor, Citable {
+        DataLikelihoodDelegate, TipStateAccessor, Citable, GradientDataLikelihoodDelegate {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 

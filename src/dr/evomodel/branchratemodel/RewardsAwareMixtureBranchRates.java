@@ -25,12 +25,19 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
     public static final String ID = "rewardsAwareMixtureBranchRates";
 
     private final Parameter indicator;
-    private final IndexedParameter indexedAtomic;
+    private final Parameter atomIndices;
+    private final Parameter rewardRatesValues;
+    private final Parameter rewardRatesMapping;
+    private final Parameter rewardRatesInternal;
+
 
     public RewardsAwareMixtureBranchRates(TreeModel tree,
                                           Parameter ctsParameter,
                                           Parameter indicator,
-                                          IndexedParameter indexedAtomic,
+                                          Parameter atomIndices,
+                                          Parameter rewardRatesValues,
+                                          Parameter rewardRatesInternal,
+                                          Parameter rewardRatesMapping,
                                           BranchRateTransform transform,
                                           boolean setRates,
                                           TreeParameterModel.Type includeRoot) {
@@ -41,12 +48,24 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         if (indicator == null) {
             throw new IllegalArgumentException("indicator must be non-null");
         }
-        if (indexedAtomic == null) {
-            throw new IllegalArgumentException("indexedAtomic must be non-null");
+        if (atomIndices == null) {
+            throw new IllegalArgumentException("atomIndices must be non-null");
+        }
+        if (rewardRatesValues == null) {
+            throw new IllegalArgumentException("rewardRatesValues must be non-null");
+        }
+        if (rewardRatesMapping == null) {
+            throw new IllegalArgumentException("rewardRatesMapping must be non-null");
+        }
+        if (rewardRatesInternal == null) {
+            throw new IllegalArgumentException("rewardRatesInternal must be non-null");
         }
 
         this.indicator = indicator;
-        this.indexedAtomic = indexedAtomic;
+        this.atomIndices = atomIndices;
+        this.rewardRatesValues = rewardRatesValues;
+        this.rewardRatesInternal = rewardRatesInternal;
+        this.rewardRatesMapping = rewardRatesMapping;
 
         final int expected = ctsParameter.getDimension();
 
@@ -55,15 +74,17 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
                     "indicator dim must match ctsParameter dim (" + expected + ") but is " +
                             indicator.getDimension());
         }
-
-        if (indexedAtomic.getDimension() != expected) {
+        if (atomIndices.getDimension() != expected) {
             throw new IllegalArgumentException(
-                    "indexedAtomic dim must match ctsParameter dim (" + expected + ") but is " +
-                            indexedAtomic.getDimension());
+                    "atomIndices dim must match ctsParameter dim (" + expected + ") but is " +
+                            atomIndices.getDimension());
         }
 
         addVariable(indicator);
-        addVariable(indexedAtomic);
+        addVariable(atomIndices);
+        addVariable(rewardRatesValues);
+        addVariable(rewardRatesInternal);
+        addVariable(rewardRatesMapping);
     }
 
     @Override
@@ -71,7 +92,8 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         final int p = getParameterIndexFromNode(node);
 
         if (isOne(indicator.getParameterValue(p))) {
-            return indexedAtomic.getParameterValue(p);
+            final int stateIndex = (int) atomIndices.getParameterValue(p);
+            return rewardRatesValues.getParameterValue((int) rewardRatesMapping.getParameterValue(stateIndex));
         } else {
             return super.getUntransformedBranchRate(tree, node);
         }
@@ -101,8 +123,10 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == indicator || variable == indexedAtomic) {
-            fireModelChanged(variable, index);
+        if (variable == indicator || variable == atomIndices ||
+                variable == rewardRatesValues || variable == rewardRatesInternal ||
+                variable == rewardRatesMapping) {
+            fireModelChanged();
         } else {
             super.handleVariableChangedEvent(variable, index, type);
         }

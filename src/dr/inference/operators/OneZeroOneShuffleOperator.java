@@ -4,105 +4,171 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
 /**
- * Moves which TWO labeled indices are the extremes:
- *  - extremeIndex[0] = index of the alpha entry that is forced to be 0
- *  - extremeIndex[1] = index of the alpha entry that is forced to be 1
+ * Swaps one extreme reward label (0 or 1) with one non-extreme reward label
+ * inside rewardRatesMapping.
  *
- * This operator:
- *  - chooses whether to move the 0-label or the 1-label
- *  - chooses a destination index among the NON-extreme indices
- *  - swaps the label (extremeIndex entry) with dst
+ * New parametrization:
  *
- */
-
-/*
-* @author: Filippo Monti
+ *   rewardRatesValues[0] = 0
+ *   rewardRatesValues[1] = 1
+ *   rewardRatesValues[2..K-1] = internal continuous reward values
+ *
+ *   rewardRatesMapping[state] = reward-label index
+ *
+ * atomIndex indexes STATES, not reward labels, so it is not changed here.
+ *
+ * This operator changes which states are associated with the two extreme
+ * reward labels 0 and 1.
+ *
+ * @author Filippo Monti
  */
 public final class OneZeroOneShuffleOperator extends SimpleMCMCOperator {
 
-    private final Parameter alphaRates;    // length K
-    private final Parameter extremeIndex;  // length 2, integer-like doubles
+    private final Parameter rewardRatesValues;    // length K
+    private final Parameter rewardRatesMapping;   // length = number of states
     private final double tol;
 
-    public OneZeroOneShuffleOperator(final Parameter alphaRates,
-                                     final Parameter extremeIndex,
+    public OneZeroOneShuffleOperator(final Parameter rewardRatesValues,
+                                     final Parameter rewardRatesMapping,
                                      final double weight,
                                      final double tol) {
-        if (alphaRates == null) throw new IllegalArgumentException("alphaRates must be non-null");
-        if (extremeIndex == null) throw new IllegalArgumentException("extremeIndex must be non-null");
-        if (alphaRates.getDimension() < 2) throw new IllegalArgumentException("alphaRates dimension must be >= 2");
-        if (extremeIndex.getDimension() != 2) throw new IllegalArgumentException("extremeIndex dimension must be 2");
-        if (tol < 0.0) throw new IllegalArgumentException("tol must be >= 0");
+        if (rewardRatesValues == null) {
+            throw new IllegalArgumentException("rewardRatesValues must be non-null");
+        }
+        if (rewardRatesMapping == null) {
+            throw new IllegalArgumentException("rewardRatesMapping must be non-null");
+        }
+        if (rewardRatesValues.getDimension() < 2) {
+            throw new IllegalArgumentException("rewardRatesValues dimension must be >= 2");
+        }
+        if (tol < 0.0) {
+            throw new IllegalArgumentException("tol must be >= 0");
+        }
 
-        this.alphaRates = alphaRates;
-        this.extremeIndex = extremeIndex;
+        this.rewardRatesValues = rewardRatesValues;
+        this.rewardRatesMapping = rewardRatesMapping;
         this.tol = tol;
+
+        validateRewardRatesValues();
 
         setWeight(weight);
     }
 
     @Override
     public String getOperatorName() {
-        return "oneZeroOneShuffleOperator(" + alphaRates.getParameterName() + ")";
+        return "oneZeroOneShuffleOperator(" + rewardRatesMapping.getParameterName() + ")";
     }
 
     @Override
     public double doOperation() {
 
-        final int K = alphaRates.getDimension();
+        final int K = rewardRatesValues.getDimension();
 
-        final int i0 = toIndexStrict(extremeIndex.getParameterValue(0), "extremeIndex[0]");
-        final int i1 = toIndexStrict(extremeIndex.getParameterValue(1), "extremeIndex[1]");
+        localMove(K);
 
-        if (i0 < 0 || i0 >= K) throw new IllegalArgumentException("extremeIndex[0] out of range: " + i0);
-        if (i1 < 0 || i1 >= K) throw new IllegalArgumentException("extremeIndex[1] out of range: " + i1);
-        if (i0 == i1) throw new IllegalArgumentException("extremeIndex entries must be different");
-
-        if (K == 2) {
-            // only possible labeled move: swap which state is 0 vs 1
-            extremeIndex.setParameterValue(0, i1);
-            extremeIndex.setParameterValue(1, i0);
-
-            // optional hard enforcement
-            alphaRates.setParameterValue(i1, 0.0);
-            alphaRates.setParameterValue(i0, 1.0);
-
-        } else {
-
-            // choose which labeled extreme to move: 0-label (slot 0) or 1-label (slot 1)
-            final boolean moveOneLabel = MathUtils.nextBoolean();
-            final int slot = moveOneLabel ? 1 : 0;
-            final int i = moveOneLabel ? i1 : i0;
-            final int other = moveOneLabel ? i0 : i1;
-
-            // choose destination "k" uniformly among indices excluding {i, other} without rejection
-            final int r = MathUtils.nextInt(K - 2);
-            int k = r;
-            if (k >= Math.min(i, other)) k++;
-            if (k >= Math.max(i, other)) k++;
-
-            // relabel: move chosen extreme label to k; k becomes old i
-            extremeIndex.setParameterValue(slot, k);
-            // keep the other slot unchanged (already equals other)
-
-            double kValue = alphaRates.getParameterValue(k);
-            double iValue = alphaRates.getParameterValue(i);
-
-            alphaRates.setParameterValue(k, iValue);
-            alphaRates.setParameterValue(i, kValue);
-
-            if (tol >= 0.0) {
-                final double a = alphaRates.getParameterValue(i);
-                if (a < -tol || a > 1.0 + tol || Double.isNaN(a)) {
-                    throw new IllegalStateException("alphaRates out of [0,1] at former extreme i=" + i + ": " + a);
-                }
-            }
-        }
-
-        alphaRates.fireParameterChangedEvent();
-        extremeIndex.fireParameterChangedEvent();
+        rewardRatesMapping.fireParameterChangedEvent();
 
         return 0.0;
+    }
+
+    private void localMove(final int K) {
+
+        if (K == 2) {
+            // only labels 0 and 1 exist, so just swap them in the mapping
+            remapRewardLabelsBySwap(0, 1);
+            return;
+        }
+
+        // choose which extreme label to move: 0 or 1
+        final boolean moveOneLabel = MathUtils.nextBoolean();
+        final int i = moveOneLabel ? 1 : 0;
+
+        // choose k uniformly from {2, ..., K-1}
+        final int k = 2 + MathUtils.nextInt(K - 2);
+
+        remapRewardLabelsBySwap(i, k);
+
+        if (tol >= 0.0) {
+            validateRewardRatesValues();
+            validateRewardRatesMapping(K);
+        }
+    }
+
+    /**
+     * Swap reward labels i and k everywhere inside rewardRatesMapping.
+     */
+    private void remapRewardLabelsBySwap(final int i, final int k) {
+
+        final int K = rewardRatesValues.getDimension();
+        if (i < 0 || i >= K) {
+            throw new IllegalArgumentException("swap index i out of range: " + i);
+        }
+        if (k < 0 || k >= K) {
+            throw new IllegalArgumentException("swap index k out of range: " + k);
+        }
+        if (i == k) {
+            return;
+        }
+
+        final int nStates = rewardRatesMapping.getDimension();
+        for (int s = 0; s < nStates; s++) {
+            final int r = toIndexStrict(
+                    rewardRatesMapping.getParameterValue(s),
+                    "rewardRatesMapping[" + s + "]"
+            );
+
+            if (r == i) {
+                rewardRatesMapping.setParameterValueQuietly(s, k);
+            } else if (r == k) {
+                rewardRatesMapping.setParameterValueQuietly(s, i);
+            }
+        }
+    }
+
+    private void validateRewardRatesValues() {
+        final int K = rewardRatesValues.getDimension();
+
+        if (K < 2) {
+            throw new IllegalArgumentException("rewardRatesValues must have dimension at least 2");
+        }
+
+        final double v0 = rewardRatesValues.getParameterValue(0);
+        final double v1 = rewardRatesValues.getParameterValue(1);
+
+        if (Math.abs(v0 - 0.0) > tol) {
+            throw new IllegalArgumentException(
+                    "rewardRatesValues[0] must be 0.0 but found " + v0
+            );
+        }
+        if (Math.abs(v1 - 1.0) > tol) {
+            throw new IllegalArgumentException(
+                    "rewardRatesValues[1] must be 1.0 but found " + v1
+            );
+        }
+
+        for (int j = 0; j < K; j++) {
+            final double a = rewardRatesValues.getParameterValue(j);
+            if (Double.isNaN(a) || a < -tol || a > 1.0 + tol) {
+                throw new IllegalArgumentException(
+                        "rewardRatesValues out of [0,1] at index " + j + ": " + a
+                );
+            }
+        }
+    }
+
+    private void validateRewardRatesMapping(final int K) {
+        final int nStates = rewardRatesMapping.getDimension();
+        for (int s = 0; s < nStates; s++) {
+            final int r = toIndexStrict(
+                    rewardRatesMapping.getParameterValue(s),
+                    "rewardRatesMapping[" + s + "]"
+            );
+            if (r < 0 || r >= K) {
+                throw new IllegalStateException(
+                        "rewardRatesMapping[" + s + "] out of range: " + r
+                );
+            }
+        }
     }
 
     private static int toIndexStrict(final double x, final String name) {

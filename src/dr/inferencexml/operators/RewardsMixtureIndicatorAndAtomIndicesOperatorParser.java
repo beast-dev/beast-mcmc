@@ -25,6 +25,7 @@
 package dr.inferencexml.operators;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -65,24 +66,16 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
         final Parameter indicatorZ = (Parameter) zxo.getChild(Parameter.class);
         final Parameter atomIndex = (Parameter) xo.getElementFirstChild(ATOM_INDEX);
 
-        // optional: pi
-        Parameter pi = null;
-        final XMLObject pix = xo.getChild(PI);
-        if (pix != null) {
-            pi = (Parameter) pix.getChild(Parameter.class);
-        }
-
         final RewardsAwareBranchModel rewardsAwareBranchModel =
                 (RewardsAwareBranchModel) xo.getChild(RewardsAwareBranchModel.class);
-        final RewardsAwarePartialLikelihoodProvider partialLikelihoodProvider =
-                (RewardsAwarePartialLikelihoodProvider) xo.getChild(RewardsAwarePartialLikelihoodProvider.class);
+        final TreeDataLikelihood treeDataLikelihood =
+                (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         return new RewardsMixtureIndicatorAndAtomIndicesOperator(
                 indicatorZ,
                 atomIndex,
-                pi,
                 rewardsAwareBranchModel,
-                partialLikelihoodProvider,
+                treeDataLikelihood,
                 updateProportion,
                 adapt,
                 weight
@@ -109,7 +102,6 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             AttributeRule.newDoubleRule(UPDATE_PROPORTION, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 
-            new ElementRule(RewardsAwarePartialLikelihoodProvider.class, false),
             new ElementRule(RewardsAwareBranchModel.class, false),
 
             new ElementRule(INDICATOR_Z,
@@ -118,9 +110,5 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             new ElementRule(ATOM_INDEX,
                     new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
                     "Indicator vector z_b (0/1).", false),
-            new ElementRule(PI,
-                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-                    "Optional weights pi over states (dimension K). If omitted, uniform weights are used.",
-                    true),
     };
 }

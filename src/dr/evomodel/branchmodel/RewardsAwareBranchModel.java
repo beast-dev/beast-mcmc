@@ -61,12 +61,11 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public static final String REWARDS_AWARE_BRANCH_MODEL = "RewardsAwareBranchModel";
 
-    private final Parameter rewardRates;
+    private final Parameter atomIndices;
     private final SubstitutionModel underlyingSubstitutionModel;
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
     private final Parameter indicator;                  // 0/1, same indexing as rho
-    private final IndexedParameter indexedParameter;    // same indexing as rho
 
     private final int nstates;
     private final int dim2;
@@ -101,11 +100,12 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public RewardsAwareBranchModel(TreeModel tree,
                                    SubstitutionModel underlyingSubstitutionModel,
-                                   Parameter rewardRates,
+                                   Parameter rewardRatesValues,
+                                   Parameter rewardRatesValuesInternal,
+                                   Parameter rewardRatesMapping,
                                    Parameter indicator,
-                                   IndexedParameter indexedParameter,
-                                   ArbitraryBranchRates branchRateModel,
-                                   Parameter extremeIndices,
+                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewaerdsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                   Parameter atomIndices,
                                    boolean conditional) {
 
         super(REWARDS_AWARE_BRANCH_MODEL);
@@ -113,24 +113,23 @@ public class RewardsAwareBranchModel extends AbstractModel
         if (underlyingSubstitutionModel == null) {
             throw new IllegalArgumentException("RewardsAwareBranchModel must be provided with an underlying substitution model");
         }
-        if (rewardRates == null) throw new IllegalArgumentException("rewardRates must be non-null");
+        if (rewardRatesMapping == null) throw new IllegalArgumentException("rewardRatesMapping must be non-null");
+        if (rewardRatesValues == null) throw new IllegalArgumentException("rewardRatesValues must be non-null");
         if (branchRateModel == null) throw new IllegalArgumentException("branchRateModel must be non-null");
+        if (indicator == null) throw new IllegalArgumentException("indicator must be non-null");
+        if (atomIndices == null) throw new IllegalArgumentException("atomIndices must be non-null");
 
         this.tree = tree;
         this.underlyingSubstitutionModel = underlyingSubstitutionModel;
-        this.rewardRates = rewardRates;
+
         this.branchRateModel = branchRateModel;
         this.indicator = indicator;
-        this.indexedParameter = indexedParameter;
+        this.atomIndices = atomIndices;
 
         final int dim = branchRateModel.getRateParameter().getDimension();
         if (indicator.getDimension() != dim) {
             throw new IllegalArgumentException("indicator dimension must equal rho dimension (branchRateModel rate parameter).");
         }
-        if (indexedParameter.getDimension() != dim) {
-            throw new IllegalArgumentException("indexedParameter dimension must equal rho dimension (branchRateModel rate parameter).");
-        }
-
 
         this.nstates = underlyingSubstitutionModel.getDataType().getStateCount();
         this.dim2 = nstates * nstates;
@@ -152,7 +151,9 @@ public class RewardsAwareBranchModel extends AbstractModel
         final double epsilon = 1e-10;
         this.sericola = new SericolaSeriesMarkovRewardFastModel( //only for cts values
                 underlyingSubstitutionModel,
-                rewardRates,
+                rewardRatesValues,
+                rewardRatesValuesInternal,
+                rewardRatesMapping,
                 nstates,
                 epsilon,
                 conditional
@@ -162,9 +163,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         addModel(branchRateModel);
         addModel(sericola);
         addVariable(indicator);
-        addVariable(indexedParameter.getIndicesParameter());
-        addVariable(indexedParameter.getValuesParameter());
-        addVariable(extremeIndices);
+        addVariable(atomIndices);
 
         final int nNodes = tree.getNodeCount();
         final int nBranches = nNodes - 1;
@@ -187,9 +186,8 @@ public class RewardsAwareBranchModel extends AbstractModel
     public int getNodeNumberForBranchIndex(int branchIndex) {
         return branchIndexToNodeNr[branchIndex];
     }
-    private int getParameterIndexForNode(final int nodeNr) {
+    public int getParameterIndexForNode(final int nodeNr) {
         final NodeRef node = tree.getNode(nodeNr);
-        // This method name is from your commented code; if your version differs, swap accordingly.
         return branchRateModel.getParameterIndexFromNode(node);
     }
 
@@ -197,8 +195,6 @@ public class RewardsAwareBranchModel extends AbstractModel
         return nodeNrToBranchIndex[nodeNr];
     }
     public Parameter getIndicator() { return indicator; }
-    public IndexedParameter getIndexedParameter() { return indexedParameter; }
-
 
     // -------------------- Basic accessors --------------------
 
@@ -209,7 +205,7 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public TreeModel getTree() { return tree; }
 
-    public Parameter getRewardRates() { return rewardRates; }
+//    public Parameter getRewardRates() { return rewardRates; }
 
     public BranchRateModel getRateBranchModel() { return branchRateModel; }
 
@@ -247,7 +243,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         if (DEBUG) {
             final double[] w = W[nodeNr];
 
-            final double tol = 0.0; // or something like -1e-12 if you want numerical tolerance
+            final double tol = 0.0; // set higher ( e.g. -1e-12) if we want numerical tolerance
             for (int i = 0; i < w.length; i++) {
                 if (!(w[i] > tol)) {
                     throw new IllegalStateException(
@@ -282,7 +278,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         computeAtomicScales();
 
         final int paramIndex = getParameterIndexForNode(nodeNr);
-        final int atomState = indexedParameter.getIndexValue(paramIndex);
+        final int atomState = (int) atomIndices.getParameterValue(paramIndex);
         final int newIndex = atomState * nstates + atomState;
 
         final double[] matrix = Watomic[nodeNr];
@@ -339,12 +335,26 @@ public class RewardsAwareBranchModel extends AbstractModel
         }
 
         // Sericola handles all sorting/lazy caches and writes into ORIGINAL order by design
-//        sericola.computePdfIntoY(X, times, true, Wpacked);
         sericola.computePdfInto(X, times, true, Wpacked);
         ctsMatricesDirty = false;
     }
     public double[] getWPacked(int i) {
         return Wpacked[i];
+    }
+
+    public boolean isAtomicBranch(int branchNodeNumber) {
+        final int paramIndex = getParameterIndexForNode(branchNodeNumber);
+        return isOne(indicator.getParameterValue(paramIndex));
+    }
+
+    public int getAtomicBranchState(int branchNodeNumber) {
+        final int paramIndex = getParameterIndexForNode(branchNodeNumber);
+        return (int) atomIndices.getParameterValue(paramIndex);
+    }
+
+    public double getAtomicBranchScale(int branchNodeNumber) {
+        computeAtomicScales();
+        return atomicScale[branchNodeNumber];
     }
 
     // -------------------- Branch model mapping --------------------
@@ -388,6 +398,10 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == atomIndices) {
+            invalidateAtomicScales();
+//            invalidateCtsMatrices(); // safe, even if a bit conservative
+        }
         fireModelChanged();
     }
 

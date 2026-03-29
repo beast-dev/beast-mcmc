@@ -37,7 +37,6 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
         return NAME;
     }
 
-    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
@@ -55,22 +54,19 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
 
         final ArbitraryBranchRates totalRewardsBranchRates =
                 (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
-        final RewardsAwarePartialLikelihoodProvider partialLikelihoodProvider =
-                (RewardsAwarePartialLikelihoodProvider) xo.getChild(RewardsAwarePartialLikelihoodProvider.class);
 
 
         final Parameter indicator = (Parameter) xo.getElementFirstChild(INDICATOR);
 
-        return new RewardsAwareBranchModelGradient(
-                treeDataLikelihood,
-                rewardsAwareBranchModel,
-                partialLikelihoodProvider,
-                totalRewardsBranchRates,
-                indicator,
-                tolerance,
-                false, // useHessian  TODO add this
-                indicatorBaseOneStr
-        );
+            return new RewardsAwareBranchModelGradient(
+                    treeDataLikelihood,
+                    rewardsAwareBranchModel,
+                    totalRewardsBranchRates,
+                    indicator,
+                    tolerance,
+                    false, // useHessian  TODO add this
+                    indicatorBaseOneStr
+            );
 
     }
 
@@ -86,12 +82,12 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
 
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(RewardsAwareBranchModel.class),
-            new ElementRule(RewardsAwarePartialLikelihoodProvider.class),
             new ElementRule(ArbitraryBranchRates.class),
             new ElementRule(INDICATOR, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
             }),
     };
+
 
     @Override
     public String getParserDescription() {

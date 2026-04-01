@@ -15,7 +15,7 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
     public static final String NUM_I = "numI";
     public static final String NUM_R = "numR";
     public static final String ORIGIN = "origin";
-    public static final String TAUSTEP = "taustep";
+    public static final String TAUSTEP = "tauStep";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
 
@@ -34,14 +34,14 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
         Parameter numI = (Parameter) xo.getChild(NUM_I).getChild(Parameter.class);
         Parameter numR = (Parameter) xo.getChild(NUM_R).getChild(Parameter.class);
         Parameter origin = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
-        Parameter taustep = (Parameter) xo.getChild(TAUSTEP).getChild(Parameter.class); new Parameter.Default(1.0);
+        Parameter tauStep = (Parameter) xo.getChild(TAUSTEP).getChild(Parameter.class); new Parameter.Default(1.0);
         final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
         final Parameter cutOff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
 
         System.out.println("resusRate: " + resusRate.getParameterValue(0));
 
         SIRCompartmentalModel sirModel = new SIRCompartmentalModel(transmissionRate, recoveryRate, samplingRate, resusRate,
-                numS, numI, numR, origin, taustep, (int)(numGridPoints.getParameterValue(0)),
+                numS, numI, numR, origin, tauStep, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0));
 
         return sirModel;

@@ -42,18 +42,22 @@ public class RungeKutta {
      * @param rhs  right-hand side function
      */
     public void step(double t, double h, double[] y, double[] yOut, int n, RhsFunction rhs) {
+        final double h2 = 0.5 * h;
+        final double h6 = h / 6.0;
+        final double h3 = h / 3.0;
+
         rhs.evaluate(t, y, k1);
-        for (int i = 0; i < n; i++) tmp[i] = y[i] + 0.5 * h * k1[i];
+        for (int i = 0; i < n; i++) tmp[i] = y[i] + h2 * k1[i];
 
-        rhs.evaluate(t + 0.5 * h, tmp, k2);
-        for (int i = 0; i < n; i++) tmp[i] = y[i] + 0.5 * h * k2[i];
+        rhs.evaluate(t + h2, tmp, k2);
+        for (int i = 0; i < n; i++) tmp[i] = y[i] + h2 * k2[i];
 
-        rhs.evaluate(t + 0.5 * h, tmp, k3);
+        rhs.evaluate(t + h2, tmp, k3);
         for (int i = 0; i < n; i++) tmp[i] = y[i] + h * k3[i];
 
         rhs.evaluate(t + h, tmp, k4);
         for (int i = 0; i < n; i++) {
-            yOut[i] = y[i] + (h / 6.0) * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
+            yOut[i] = y[i] + h6 * (k1[i] + k4[i]) + h3 * (k2[i] + k3[i]);
         }
     }
 }

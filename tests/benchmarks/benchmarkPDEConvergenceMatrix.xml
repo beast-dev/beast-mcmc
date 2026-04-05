@@ -79,7 +79,7 @@
     <ageDependentSkylineBirthDeathModel id="ref.agedep" solver="fft"
             timeSteps="8000" epsPicard="1e-8" maxIterPicard="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -88,49 +88,49 @@
 
     <!-- PDE convergence matrix: Nt x Na -->
     <!-- Nt=100 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.25" symmetric="true" timeSteps="100" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.25" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.50" symmetric="true" timeSteps="100" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.50" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.100" symmetric="true" timeSteps="100" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.100" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.200" symmetric="true" timeSteps="100" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.200" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.500" symmetric="true" timeSteps="100" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.500" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.100.1000" symmetric="true" timeSteps="100" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.100.1000" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -138,49 +138,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=200 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.25" symmetric="true" timeSteps="200" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.25" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.50" symmetric="true" timeSteps="200" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.50" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.100" symmetric="true" timeSteps="200" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.100" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.200" symmetric="true" timeSteps="200" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.200" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.500" symmetric="true" timeSteps="200" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.500" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.200.1000" symmetric="true" timeSteps="200" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.200.1000" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -188,49 +188,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=500 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.25" symmetric="true" timeSteps="500" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.25" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.50" symmetric="true" timeSteps="500" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.50" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.100" symmetric="true" timeSteps="500" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.100" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.200" symmetric="true" timeSteps="500" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.200" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.500" symmetric="true" timeSteps="500" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.500" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.500.1000" symmetric="true" timeSteps="500" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.500.1000" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -238,49 +238,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=1000 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.25" symmetric="true" timeSteps="1000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.25" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.50" symmetric="true" timeSteps="1000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.50" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.100" symmetric="true" timeSteps="1000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.100" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.200" symmetric="true" timeSteps="1000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.200" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.500" symmetric="true" timeSteps="1000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.500" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.1000.1000" symmetric="true" timeSteps="1000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.1000.1000" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -288,49 +288,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=2000 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.25" symmetric="true" timeSteps="2000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.25" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.50" symmetric="true" timeSteps="2000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.50" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.100" symmetric="true" timeSteps="2000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.100" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.200" symmetric="true" timeSteps="2000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.200" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.500" symmetric="true" timeSteps="2000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.500" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.2000.1000" symmetric="true" timeSteps="2000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.2000.1000" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -338,49 +338,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=5000 -->
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.25" symmetric="true" timeSteps="5000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.25" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.50" symmetric="true" timeSteps="5000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.50" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.100" symmetric="true" timeSteps="5000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.100" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.200" symmetric="true" timeSteps="5000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.200" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.500" symmetric="true" timeSteps="5000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.500" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.ad.5000.1000" symmetric="true" timeSteps="5000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.ad.5000.1000" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
+
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -445,49 +445,49 @@
 
     <!-- PDE convergence matrix: Nt x Na (skyline + age-dependent) -->
     <!-- Nt=100 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.25" symmetric="true" timeSteps="100" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.25" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.50" symmetric="true" timeSteps="100" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.50" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.100" symmetric="true" timeSteps="100" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.100" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.200" symmetric="true" timeSteps="100" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.200" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.500" symmetric="true" timeSteps="100" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.500" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.100.1000" symmetric="true" timeSteps="100" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.100.1000" originTime="10.0" symmetric="true" timeSteps="100" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
@@ -495,49 +495,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=200 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.25" symmetric="true" timeSteps="200" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.25" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.50" symmetric="true" timeSteps="200" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.50" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.100" symmetric="true" timeSteps="200" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.100" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.200" symmetric="true" timeSteps="200" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.200" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.500" symmetric="true" timeSteps="200" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.500" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.200.1000" symmetric="true" timeSteps="200" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.200.1000" originTime="10.0" symmetric="true" timeSteps="200" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
@@ -545,49 +545,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=500 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.25" symmetric="true" timeSteps="500" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.25" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.50" symmetric="true" timeSteps="500" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.50" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.100" symmetric="true" timeSteps="500" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.100" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.200" symmetric="true" timeSteps="500" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.200" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.500" symmetric="true" timeSteps="500" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.500" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.500.1000" symmetric="true" timeSteps="500" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.500.1000" originTime="10.0" symmetric="true" timeSteps="500" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
@@ -595,49 +595,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=1000 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.25" symmetric="true" timeSteps="1000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.25" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.50" symmetric="true" timeSteps="1000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.50" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.100" symmetric="true" timeSteps="1000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.100" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.200" symmetric="true" timeSteps="1000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.200" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.500" symmetric="true" timeSteps="1000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.500" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.1000.1000" symmetric="true" timeSteps="1000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.1000.1000" originTime="10.0" symmetric="true" timeSteps="1000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
@@ -645,49 +645,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=2000 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.25" symmetric="true" timeSteps="2000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.25" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.50" symmetric="true" timeSteps="2000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.50" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.100" symmetric="true" timeSteps="2000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.100" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.200" symmetric="true" timeSteps="2000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.200" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.500" symmetric="true" timeSteps="2000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.500" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.2000.1000" symmetric="true" timeSteps="2000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.2000.1000" originTime="10.0" symmetric="true" timeSteps="2000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
@@ -695,49 +695,49 @@
     </ageDependentBirthDeathPDEModel>
 
     <!-- Nt=5000 -->
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.25" symmetric="true" timeSteps="5000" ageSteps="25">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.25" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="25">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.50" symmetric="true" timeSteps="5000" ageSteps="50">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.50" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="50">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.100" symmetric="true" timeSteps="5000" ageSteps="100">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.100" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="100">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.200" symmetric="true" timeSteps="5000" ageSteps="200">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.200" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="200">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.500" symmetric="true" timeSteps="5000" ageSteps="500">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.500" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="500">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>
         <deathShape><parameter value="0.2 0.1"/></deathShape>
     </ageDependentBirthDeathPDEModel>
-    <ageDependentBirthDeathPDEModel id="pde.sk.5000.1000" symmetric="true" timeSteps="5000" ageSteps="1000">
+    <ageDependentBirthDeathPDEModel id="pde.sk.5000.1000" originTime="10.0" symmetric="true" timeSteps="5000" ageSteps="1000">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0"/></epochTimes>
+        <epochTimes><parameter value="1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0"/></epochTimes>
         <birthScale><parameter value="0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" lower="0.0"/></deathScale>

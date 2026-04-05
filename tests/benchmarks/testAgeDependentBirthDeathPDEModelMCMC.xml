@@ -107,9 +107,6 @@
         </nodeHeights>
     </treeModel>
 
-    <!-- Single epoch: origin at 10.0 -->
-    <parameter id="epochTimes" value="10.0"/>
-
     <!-- Scale parameters. Starting values offset from truth (0.8, 0.3). -->
     <parameter id="birthScale" value="0.5" lower="0.0"/>
     <parameter id="deathScale" value="0.5" lower="0.0"/>
@@ -129,11 +126,8 @@
         <parameter idref="deathGamma"/>
     </compoundParameter>
 
-    <ageDependentBirthDeathPDEModel id="model" symmetric="true" timeSteps="100" ageSteps="10">
+    <ageDependentBirthDeathPDEModel id="model" symmetric="true" timeSteps="100" ageSteps="10" originTime="10.0">
         <treeModel idref="treeModel"/>
-        <epochTimes>
-            <parameter idref="epochTimes"/>
-        </epochTimes>
         <birthScale>
             <parameter idref="birthScale"/>
         </birthScale>

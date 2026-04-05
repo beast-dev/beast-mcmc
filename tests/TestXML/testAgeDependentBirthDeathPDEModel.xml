@@ -94,9 +94,8 @@
 
     <!-- Symmetric PDE -->
     <ageDependentBirthDeathPDEModel id="pde.const" symmetric="true"
-            timeSteps="5000" ageSteps="500">
+            timeSteps="5000" ageSteps="500" originTime="10.0">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.0 0.0"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
@@ -175,9 +174,8 @@
 
     <!-- Symmetric PDE -->
     <ageDependentBirthDeathPDEModel id="pde.linexp" symmetric="true"
-            timeSteps="5000" ageSteps="500">
+            timeSteps="5000" ageSteps="500" originTime="10.0">
         <treeModel idref="treeModel"/>
-        <epochTimes><parameter value="10.0"/></epochTimes>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthShape><parameter value="0.5 0.3"/></birthShape>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>

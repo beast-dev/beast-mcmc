@@ -149,11 +149,8 @@
 	</compoundParameter>
 
 	<!-- Age-dependent birth-death PDE model -->
-	<ageDependentBirthDeathPDEModel id="agePDE" symmetric="true" timeSteps="100" ageSteps="10">
+	<ageDependentBirthDeathPDEModel id="agePDE" symmetric="true" timeSteps="100" ageSteps="10" originTime="0.1">
 		<treeModel idref="treeModel"/>
-		<epochTimes>
-			<parameter idref="epochTimes"/>
-		</epochTimes>
 		<birthScale>
 			<parameter idref="birthScale"/>
 		</birthScale>

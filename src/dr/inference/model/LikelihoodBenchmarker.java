@@ -37,8 +37,11 @@ import java.util.logging.Logger;
  */
 public class LikelihoodBenchmarker {
 
+    private final String results;
+
     public LikelihoodBenchmarker(List<Likelihood> likelihoods, int iterationCount) {
         Logger logger = Logger.getLogger("dr.app.beagle");
+        StringBuilder sb = new StringBuilder();
 
         for (Likelihood likelihood : likelihoods) {
             double[] times = new double[iterationCount];
@@ -74,9 +77,18 @@ public class LikelihoodBenchmarker {
             double max = times[iterationCount - 1];
 
             String name = likelihood.getId() + " (" + likelihood.getClass().getSimpleName() + ")";
-            logger.info(String.format("Benchmark %s [%d iterations]: " +
+            String line = String.format("BENCHMARK %s [%d iterations]: " +
                             "mean=%.1f us, sd=%.1f us, median=%.1f us, range=[%.1f, %.1f] us",
-                    name, iterationCount, mean, sd, median, min, max));
+                    name, iterationCount, mean, sd, median, min, max);
+            logger.info(line);
+            sb.append(line).append("\n");
         }
+
+        this.results = sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return results;
     }
 }

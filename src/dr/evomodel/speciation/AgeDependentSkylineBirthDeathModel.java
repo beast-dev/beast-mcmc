@@ -1,6 +1,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.*;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
 import dr.math.FastFourierTransform;
 import dr.xml.Reportable;
@@ -41,9 +42,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private final int maxIterPicard;
 
     private final double[] p0;
-    private final double[] storedP0;
     private final double[] S;
-    private final double[] storedS;
 
     private double logLikelihood = 0.0;
     private double storedLogLikelihood = 0.0;
@@ -76,6 +75,28 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private double[] branchDensBuffer;
     private boolean gridValid;
     private int sComputedUpTo;
+
+    // Caching for Richardson extrapolation
+    private final boolean useRichardsonCaching;
+    private double[] p0Coarse;
+    private double[] storedP0Coarse;
+    private double[] SCoarse;
+    private double[] storedSCoarse;
+    private double[] p0Fine;
+    private double[] storedP0Fine;
+    private double[] SFine;
+    private double[] storedSFine;
+
+    private double[] cachedNodeLogL;
+    private double[] storedCachedNodeLogL;
+    private boolean[] nodeValid;
+    private boolean[] storedNodeValid;
+
+    private double[] coarseNodeLogL;
+    private double[] fineNodeLogL;
+
+    private boolean parametersDirty = true;
+    private boolean storedParametersDirty = true;
 
     /**
      * useDirectQuadrature: if true, use direct quadrature solver; if false, use FFT-Picard
@@ -119,9 +140,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         addVariable(deathShape);
 
         this.p0 = new double[maxSteps + 1];
-        this.storedP0 = new double[maxSteps + 1];
         this.S = new double[maxSteps + 1];
-        this.storedS = new double[maxSteps + 1];
 
         this.bScale = new double[numEpochs];
         this.dScale = new double[numEpochs];
@@ -142,6 +161,31 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
             this.branchDensBuffer = new double[maxSteps + 1];
             this.gridValid = false;
         }
+
+        // Per-node caching: only when Richardson extrapolation is used
+        this.useRichardsonCaching = (maxSteps / 2 >= 8);
+
+        if (useRichardsonCaching) {
+            int coarseLen = maxSteps / 2 + 1;
+            int fineLen = maxSteps + 1;
+            int totalNodes = tree.getNodeCount();
+
+            this.p0Coarse = new double[coarseLen];
+            this.storedP0Coarse = new double[coarseLen];
+            this.SCoarse = new double[coarseLen];
+            this.storedSCoarse = new double[coarseLen];
+            this.p0Fine = new double[fineLen];
+            this.storedP0Fine = new double[fineLen];
+            this.SFine = new double[fineLen];
+            this.storedSFine = new double[fineLen];
+
+            this.cachedNodeLogL = new double[totalNodes];
+            this.storedCachedNodeLogL = new double[totalNodes];
+            this.nodeValid = new boolean[totalNodes];
+            this.storedNodeValid = new boolean[totalNodes];
+            this.coarseNodeLogL = new double[totalNodes];
+            this.fineNodeLogL = new double[totalNodes];
+        }
     }
 
     public AgeDependentSkylineBirthDeathModel(String name,
@@ -156,6 +200,21 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
                                               int maxIterPicard) {
         this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
              numSteps, epsPicard, maxIterPicard, false);
+    }
+
+    // =========================================================================
+    // Node invalidation
+    // =========================================================================
+
+    private void invalidateNode(NodeRef node) {
+        nodeValid[node.getNumber()] = false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            nodeValid[tree.getChild(node, i).getNumber()] = false;
+        }
+    }
+
+    private void invalidateAllNodes() {
+        Arrays.fill(nodeValid, false);
     }
 
     /**
@@ -565,7 +624,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     /**
-     * FFT-Picard likelihood computation.
+     * FFT-Picard likelihood computation
      */
     private double calculateLogLikelihoodFFT() {
         computeP0AndS();
@@ -611,6 +670,86 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         }
 
         return logL;
+    }
+
+    // =========================================================================
+    // Per-node contribution methods for cached Richardson extrapolation
+    // =========================================================================
+
+    /**
+     * Compute per-node log-likelihood contributions at the current resolution (FFT path).
+     * Only computes contributions for nodes where nodeValid[nodeNum] is false.
+     * Requires p0[] and S[] to be set up at the current resolution.
+     */
+    private void computeNodeContributionsFFT(double[] contributions) {
+        double originTime = times.getParameterValue(times.getDimension() - 1);
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getInternalNode(i);
+            int nodeNum = node.getNumber();
+            if (nodeValid[nodeNum]) continue;
+
+            double nodeHeight = tree.getNodeHeight(node);
+            double branchLength;
+            if (tree.isRoot(node)) {
+                branchLength = originTime - nodeHeight;
+            } else {
+                branchLength = tree.getBranchLength(node);
+            }
+            branchLength = Math.max(branchLength, h);
+
+            double gt = branchLenDens(nodeHeight, branchLength);
+            double parentHeight = nodeHeight + branchLength;
+            double p0Parent = interpolate(p0, parentHeight);
+
+            contributions[nodeNum] = Math.log(gt) - Math.log(1.0 - p0Parent);
+        }
+
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef node = tree.getExternalNode(i);
+            int nodeNum = node.getNumber();
+            if (nodeValid[nodeNum]) continue;
+
+            double branchLength = Math.max(tree.getBranchLength(node), h);
+            double parentHeight = tree.getNodeHeight(node) + branchLength;
+
+            double sVal = interpolate(S, branchLength);
+            double p0Parent = interpolate(p0, parentHeight);
+
+            contributions[nodeNum] = Math.log(sVal) - Math.log(1.0 - p0Parent);
+        }
+    }
+
+    /**
+     * Compute per-node log-likelihood contributions at the current resolution (direct quadrature path).
+     * Only computes contributions for nodes where nodeValid[nodeNum] is false.
+     * Requires p0[] and S[] to be set up at the current resolution.
+     */
+    private void computeNodeContributionsDirect(double[] contributions) {
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getInternalNode(i);
+            int nodeNum = node.getNumber();
+            if (nodeValid[nodeNum]) continue;
+
+            int k = (int) Math.round(tree.getNodeHeight(node) / h);
+            int l;
+            if (tree.isRoot(node)) {
+                l = numSteps - k;
+            } else {
+                l = Math.max(1, (int) Math.round(tree.getBranchLength(node) / h));
+            }
+
+            contributions[nodeNum] = branchLengthDensityDirect(k, l);
+        }
+
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef node = tree.getExternalNode(i);
+            int nodeNum = node.getNumber();
+            if (nodeValid[nodeNum]) continue;
+
+            int l = Math.max(1, (int) Math.round(tree.getBranchLength(node) / h));
+            contributions[nodeNum] = Math.log(S[l]) - Math.log(1.0 - p0[l]);
+        }
     }
 
     // =========================================================================
@@ -789,7 +928,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     /**
-     * Direct quadrature likelihood computation.
+     * Direct quadrature likelihood computation (non-cached, used for single-solve fallback).
      */
     private double calculateLogLikelihoodDirect() {
         cacheRates();
@@ -838,12 +977,16 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
      * Use appropriate solver with Richardson extrapolation.
      * Solve at N/2 and N, combine: (4*L_fine - L_coarse) / 3
      * to cancel the O(h²) trapezoidal error, yielding O(h⁴) accuracy.
+     *
+     * When useRichardsonCaching is enabled, per-node contributions are cached
+     * so that tree-only proposals only recompute affected nodes (~2-4) instead
+     * of all ~N internal nodes, yielding large speedups for tree proposals.
      */
     private double calculateLogLikelihood() {
         double T = times.getParameterValue(numEpochs - 1);
 
-        // Fall back to single solve if coarse grid too small
-        if (maxSteps / 2 < 8) {
+        // Fall back to single solve without caching if coarse grid too small
+        if (!useRichardsonCaching) {
             this.numSteps = maxSteps;
             this.h = T / numSteps;
             ratesDirty = true;
@@ -855,37 +998,135 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
             }
         }
 
-        if (useDirectQuadrature) {
-            // Coarse solve at N/2
-            this.numSteps = maxSteps / 2;
-            this.h = T / numSteps;
-            ratesDirty = true;
-            gridValid = false;
-            double logL_coarse = calculateLogLikelihoodDirect();
-
-            // Fine solve at N
-            this.numSteps = maxSteps;
-            this.h = T / numSteps;
-            ratesDirty = true;
-            gridValid = false;
-            double logL_fine = calculateLogLikelihoodDirect();
-
-            return (4.0 * logL_fine - logL_coarse) / 3.0;
-        } else {
-            // Coarse solve at N/2
-            this.numSteps = maxSteps / 2;
-            this.h = T / numSteps;
-            ratesDirty = true;
-            double logL_coarse = calculateLogLikelihoodFFT();
-
-            // Fine solve at N
-            this.numSteps = maxSteps;
-            this.h = T / numSteps;
-            ratesDirty = true;
-            double logL_fine = calculateLogLikelihoodFFT();
-
-            return (4.0 * logL_fine - logL_coarse) / 3.0;
+        boolean needP0S = parametersDirty;
+        if (needP0S) {
+            invalidateAllNodes();
         }
+
+        if (useDirectQuadrature) {
+            return calculateLogLikelihoodCachedDirect(T, needP0S);
+        } else {
+            return calculateLogLikelihoodCachedFFT(T, needP0S);
+        }
+    }
+
+    /**
+     * Cached Richardson extrapolation for the FFT-Picard path.
+     */
+    private double calculateLogLikelihoodCachedFFT(double T, boolean needP0S) {
+        // --- Coarse solve (N/2) ---
+        this.numSteps = maxSteps / 2;
+        this.h = T / numSteps;
+        ratesDirty = true;
+
+        if (needP0S) {
+            computeP0AndS();
+            System.arraycopy(p0, 0, p0Coarse, 0, numSteps + 1);
+            System.arraycopy(S, 0, SCoarse, 0, numSteps + 1);
+        } else {
+            cacheRates();
+            System.arraycopy(p0Coarse, 0, p0, 0, numSteps + 1);
+            System.arraycopy(SCoarse, 0, S, 0, numSteps + 1);
+        }
+
+        computeNodeContributionsFFT(coarseNodeLogL);
+
+        // --- Fine solve (N) ---
+        this.numSteps = maxSteps;
+        this.h = T / numSteps;
+        ratesDirty = true;
+
+        if (needP0S) {
+            computeP0AndS();
+            System.arraycopy(p0, 0, p0Fine, 0, numSteps + 1);
+            System.arraycopy(S, 0, SFine, 0, numSteps + 1);
+        } else {
+            cacheRates();
+            System.arraycopy(p0Fine, 0, p0, 0, numSteps + 1);
+            System.arraycopy(SFine, 0, S, 0, numSteps + 1);
+        }
+
+        computeNodeContributionsFFT(fineNodeLogL);
+
+        return richardsonAndSum();
+    }
+
+    /**
+     * Cached Richardson extrapolation for the direct quadrature path.
+     */
+    private double calculateLogLikelihoodCachedDirect(double T, boolean needP0S) {
+        // --- Coarse solve (N/2) ---
+        this.numSteps = maxSteps / 2;
+        this.h = T / numSteps;
+        ratesDirty = true;
+        cacheRates();
+        buildGridDirect();
+
+        if (needP0S) {
+            computeP0Direct();
+            computeSUpToDirect(numSteps);
+            System.arraycopy(p0, 0, p0Coarse, 0, numSteps + 1);
+            System.arraycopy(S, 0, SCoarse, 0, numSteps + 1);
+        } else {
+            System.arraycopy(p0Coarse, 0, p0, 0, numSteps + 1);
+            System.arraycopy(SCoarse, 0, S, 0, numSteps + 1);
+            sComputedUpTo = numSteps;
+        }
+
+        computeNodeContributionsDirect(coarseNodeLogL);
+
+        // --- Fine solve (N) ---
+        this.numSteps = maxSteps;
+        this.h = T / numSteps;
+        ratesDirty = true;
+        cacheRates();
+        buildGridDirect();
+
+        if (needP0S) {
+            computeP0Direct();
+            computeSUpToDirect(numSteps);
+            System.arraycopy(p0, 0, p0Fine, 0, numSteps + 1);
+            System.arraycopy(S, 0, SFine, 0, numSteps + 1);
+        } else {
+            System.arraycopy(p0Fine, 0, p0, 0, numSteps + 1);
+            System.arraycopy(SFine, 0, S, 0, numSteps + 1);
+            sComputedUpTo = numSteps;
+        }
+
+        computeNodeContributionsDirect(fineNodeLogL);
+
+        return richardsonAndSum();
+    }
+
+    /**
+     * Apply Richardson extrapolation per dirty node, mark valid, and sum.
+     */
+    private double richardsonAndSum() {
+        double logL = 0.0;
+        int totalNodes = tree.getNodeCount();
+
+        for (int i = 0; i < totalNodes; i++) {
+            if (!nodeValid[i]) {
+                double coarse = coarseNodeLogL[i];
+                double fine = fineNodeLogL[i];
+
+                if (Double.isInfinite(coarse) || Double.isInfinite(fine) ||
+                        Double.isNaN(coarse) || Double.isNaN(fine)) {
+                    cachedNodeLogL[i] = Double.NEGATIVE_INFINITY;
+                } else {
+                    cachedNodeLogL[i] = (4.0 * fine - coarse) / 3.0;
+                }
+                nodeValid[i] = true;
+            }
+            logL += cachedNodeLogL[i];
+        }
+
+        parametersDirty = false;
+
+        if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        return logL;
     }
 
     /**
@@ -951,7 +1192,21 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        makeDirty();
+        if (useRichardsonCaching && model == tree) {
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent event = (TreeChangedEvent) object;
+                if (event.getNode() != null) {
+                    invalidateNode(event.getNode());
+                } else {
+                    invalidateAllNodes();
+                }
+            } else {
+                invalidateAllNodes();
+            }
+            likelihoodKnown = false;
+        } else {
+            makeDirty();
+        }
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -959,15 +1214,33 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     protected void storeState() {
-        System.arraycopy(p0, 0, storedP0, 0, p0.length); // FIXME: I don't think is ever really useful
-        System.arraycopy(S, 0, storedS, 0, S.length);
+        if (useRichardsonCaching) {
+            System.arraycopy(cachedNodeLogL, 0, storedCachedNodeLogL, 0, cachedNodeLogL.length);
+            System.arraycopy(nodeValid, 0, storedNodeValid, 0, nodeValid.length);
+            System.arraycopy(p0Coarse, 0, storedP0Coarse, 0, p0Coarse.length);
+            System.arraycopy(SCoarse, 0, storedSCoarse, 0, SCoarse.length);
+            System.arraycopy(p0Fine, 0, storedP0Fine, 0, p0Fine.length);
+            System.arraycopy(SFine, 0, storedSFine, 0, SFine.length);
+            storedParametersDirty = parametersDirty;
+        }
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
     }
 
     protected void restoreState() {
-        System.arraycopy(storedP0, 0, p0, 0, p0.length); // FIXME: I don't think is ever really useful
-        System.arraycopy(storedS, 0, S, 0, S.length);
+        if (useRichardsonCaching) {
+            // Pointer swap for efficient restore
+            double[] tmpD;
+            boolean[] tmpB;
+
+            tmpD = cachedNodeLogL; cachedNodeLogL = storedCachedNodeLogL; storedCachedNodeLogL = tmpD;
+            tmpB = nodeValid; nodeValid = storedNodeValid; storedNodeValid = tmpB;
+            tmpD = p0Coarse; p0Coarse = storedP0Coarse; storedP0Coarse = tmpD;
+            tmpD = SCoarse; SCoarse = storedSCoarse; storedSCoarse = tmpD;
+            tmpD = p0Fine; p0Fine = storedP0Fine; storedP0Fine = tmpD;
+            tmpD = SFine; SFine = storedSFine; storedSFine = tmpD;
+            parametersDirty = storedParametersDirty;
+        }
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
 
@@ -995,6 +1268,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     public void makeDirty() {
         ratesDirty = true;
         likelihoodKnown = false;
+        parametersDirty = true;
         if (useDirectQuadrature) {
             gridValid = false;
         }
@@ -1035,16 +1309,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         StringBuilder sb = new StringBuilder();
         sb.append("logLikelihood: ").append(logLikelihood).append("\n");
 
-        // Report p0(t, 0) at 20 evenly spaced points
-//        double[] p0Arr = getP0Array();
-//        int nSamples = 20;
-//        sb.append("p0(t, 0) [").append(nSamples).append(" points, N=").append(numSteps).append("]:\n");
-//        for (int s = 0; s <= nSamples; s++) {
-//            double frac = (double) s / nSamples;
-//            int idx = (int) Math.round(frac * numSteps);
-//            if (idx > numSteps) idx = numSteps;
-//            sb.append(String.format("  t=%.4f  p0=%.10f%n", idx * h, p0Arr[idx]));
-//        }
         return sb.toString();
     }
 

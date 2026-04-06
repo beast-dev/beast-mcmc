@@ -11,6 +11,7 @@ import java.util.Map;
 public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
 
     private static final double EIGEN_TOLERANCE = 1.0e-12;
+    private static final double EXACT_EXP_THRESHOLD = 1.0e-10;
 
     private final Map<Integer, double[]> tipPartials = new LinkedHashMap<>();
     private final double[] sizes;
@@ -93,15 +94,20 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             if (decomposition == null) {
                 throw new IllegalStateException("Missing eigen decomposition for adjoint route");
             }
-            double[] eigenValues = decomposition.getEigenValues();
-            if (eigenValues.length > stateCount) {
-                for (int i = 0; i < stateCount; ++i) {
-                    if (Math.abs(eigenValues[stateCount + i]) > EIGEN_TOLERANCE) {
-                        throw new IllegalArgumentException("Adjoint route currently requires real eigenvalues");
-                    }
-                }
+        }
+    }
+
+    private boolean hasComplexEigenvalues(EigenDecomposition decomposition) {
+        double[] eigenValues = decomposition.getEigenValues();
+        if (eigenValues.length <= stateCount) {
+            return false;
+        }
+        for (int i = 0; i < stateCount; ++i) {
+            if (Math.abs(eigenValues[stateCount + i]) > EIGEN_TOLERANCE) {
+                return true;
             }
         }
+        return false;
     }
 
     private ForwardResult forward(List<BranchIntervalOperation> branchOperations,
@@ -121,10 +127,19 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
 
         double[][][] matrices = workspace.matrices;
         double[][][] spectralKernels = workspace.spectralKernels;
+        ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans = workspace.complexKernelPlans;
         for (TransitionMatrixOperation operation : matrixOperations) {
-            computeTransitionProbabilitiesInPlace(operation.time, decompositions[operation.decompositionBuffer],
+            EigenDecomposition decomposition = decompositions[operation.decompositionBuffer];
+            computeTransitionProbabilitiesInPlace(operation.time, decomposition,
                     matrices[operation.outputBuffer], workspace.transitionScratch);
-            computeLoewnerKernelInPlace(operation.time, decompositions[operation.decompositionBuffer], spectralKernels[operation.outputBuffer]);
+            if (hasComplexEigenvalues(decomposition)) {
+                clearSquare(spectralKernels[operation.outputBuffer]);
+                complexKernelPlans[operation.outputBuffer] =
+                        ComplexBlockKernelUtils.buildPlan(decomposition, operation.time, stateCount);
+            } else {
+                computeLoewnerKernelInPlace(operation.time, decomposition, spectralKernels[operation.outputBuffer]);
+                complexKernelPlans[operation.outputBuffer] = null;
+            }
         }
 
         double[] coalescentProb = workspace.coalescentProb;
@@ -202,7 +217,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         }
 
         return new ForwardResult(logLikelihood, partials, matrices, intervalE, intervalF, intervalG, intervalH,
-                coalescentProb, hasCoalescentProb, coalescentDetails, spectralKernels);
+                coalescentProb, hasCoalescentProb, coalescentDetails, spectralKernels, complexKernelPlans);
     }
 
     private ReverseResult reverse(List<BranchIntervalOperation> branchOperations,
@@ -288,10 +303,22 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         }
 
         for (TransitionMatrixOperation operation : matrixOperations) {
-            accumulateSpectralExpmAdjointEigenBasis(decompositions[operation.decompositionBuffer],
-                    forward.spectralKernels[operation.outputBuffer], matrixAdjoint[operation.outputBuffer],
-                    workspace.eigenBasisGradient[operation.decompositionBuffer], workspace);
-            workspace.decompositionUsed[operation.decompositionBuffer] = true;
+            EigenDecomposition decomposition = decompositions[operation.decompositionBuffer];
+            if (hasComplexEigenvalues(decomposition)) {
+                transformMatrixAdjointToEigenBasis(decomposition, matrixAdjoint[operation.outputBuffer],
+                        workspace.transformedFlat, workspace);
+                ComplexBlockKernelUtils.applyPlan(forward.complexKernelPlans[operation.outputBuffer],
+                        workspace.transformedFlat,
+                        workspace.eigenBasisGradient[operation.decompositionBuffer],
+                        workspace.complexKernelWorkspace,
+                        stateCount);
+                workspace.decompositionUsed[operation.decompositionBuffer] = true;
+            } else {
+                accumulateSpectralExpmAdjointEigenBasis(decomposition,
+                        forward.spectralKernels[operation.outputBuffer], matrixAdjoint[operation.outputBuffer],
+                        workspace.eigenBasisGradient[operation.decompositionBuffer], workspace);
+                workspace.decompositionUsed[operation.decompositionBuffer] = true;
+            }
         }
 
         for (int buffer = 0; buffer < decompositions.length; ++buffer) {
@@ -488,7 +515,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
     private void accumulateSpectralExpmAdjointEigenBasis(EigenDecomposition decomposition,
                                                          double[][] spectralKernel,
                                                          double[][] matrixAdjoint,
-                                                         double[][] eigenBasisGradient,
+                                                         double[] eigenBasisGradient,
                                                          ReverseWorkspace workspace) {
         double[] eigenVectors = decomposition.getEigenVectors();
         double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
@@ -530,9 +557,198 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         for (int a = 0; a < stateCount; ++a) {
             int offset = a * stateCount;
             for (int b = 0; b < stateCount; ++b) {
-                eigenBasisGradient[a][b] += transformed[offset + b] * spectralKernel[a][b];
+                eigenBasisGradient[offset + b] += transformed[offset + b] * spectralKernel[a][b];
             }
         }
+    }
+
+    private void accumulateExactExpmAdjointByBasis(EigenDecomposition decomposition,
+                                                   double distance,
+                                                   double[][] matrixAdjoint,
+                                                   double[][] rateGradient,
+                                                   ReverseWorkspace workspace) {
+        double[][] differentialMassMatrix = workspace.exactDifferentialMassMatrix;
+        for (int row = 0; row < stateCount; ++row) {
+            for (int col = 0; col < stateCount; ++col) {
+                clearSquare(differentialMassMatrix);
+                differentialMassMatrix[row][col] = 1.0;
+                exactDifferentialExpmInPlace(distance, differentialMassMatrix, decomposition, workspace);
+                rateGradient[row][col] += frobeniusInnerProduct(matrixAdjoint, differentialMassMatrix);
+            }
+        }
+    }
+
+    private void accumulateComplexExpmAdjointBlockFrechet(EigenDecomposition decomposition,
+                                                          double distance,
+                                                          double[][] matrixAdjoint,
+                                                          double[][] rateGradient,
+                                                          ReverseWorkspace workspace) {
+        double[][] baseQ = workspace.complexBaseGenerator;
+        reconstructGeneratorMatrix(decomposition, baseQ, workspace.projected);
+        AdjointMatrixExponentialUtils.accumulateExpmAdjoint(baseQ, distance, matrixAdjoint, rateGradient,
+                workspace.complexExpmWorkspace);
+    }
+
+    private void transformMatrixAdjointToEigenBasis(EigenDecomposition decomposition,
+                                                    double[][] matrixAdjoint,
+                                                    double[] transformed,
+                                                    ReverseWorkspace workspace) {
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+        double[] temp = workspace.projectedFlat;
+
+        clearFlat(transformed);
+        clearFlat(temp);
+
+        for (int i = 0; i < stateCount; ++i) {
+            double[] matrixAdjointRow = matrixAdjoint[i];
+            int tempOffset = i * stateCount;
+            for (int j = 0; j < stateCount; ++j) {
+                double value = matrixAdjointRow[j];
+                if (value == 0.0) {
+                    continue;
+                }
+                for (int b = 0; b < stateCount; ++b) {
+                    temp[tempOffset + b] += value * inverseEigenVectors[b * stateCount + j];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            int tempOffset = i * stateCount;
+            int eigRowOffset = i * stateCount;
+            for (int a = 0; a < stateCount; ++a) {
+                double viaLeft = eigenVectors[eigRowOffset + a];
+                if (viaLeft == 0.0) {
+                    continue;
+                }
+                int transformedOffset = a * stateCount;
+                for (int b = 0; b < stateCount; ++b) {
+                    transformed[transformedOffset + b] += viaLeft * temp[tempOffset + b];
+                }
+            }
+        }
+    }
+
+    private void exactDifferentialExpmInPlace(double time,
+                                              double[][] differentialMassMatrix,
+                                              EigenDecomposition decomposition,
+                                              ReverseWorkspace workspace) {
+        double[] eigenValues = decomposition.getEigenValues();
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+
+        int numComplexPairs = getComplexEigenValueFirstIndices(eigenValues, workspace.complexIndices);
+        int numRealEigenValues = getRealEigenValueIndices(eigenValues, workspace.realIndices);
+
+        tripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors, workspace.projected);
+        setSmallEntriesToZero(differentialMassMatrix);
+
+        for (int i = 0; i < numRealEigenValues; ++i) {
+            final int iIndex = workspace.realIndices[i];
+            final double eigenValueI = eigenValues[iIndex];
+            for (int j = 0; j < numRealEigenValues; ++j) {
+                final int jIndex = workspace.realIndices[j];
+                final double eigenValueJ = eigenValues[jIndex];
+                if (i == j || Math.abs(eigenValueI - eigenValueJ) < EXACT_EXP_THRESHOLD) {
+                    differentialMassMatrix[iIndex][jIndex] *= time;
+                } else {
+                    double value = differentialMassMatrix[iIndex][jIndex];
+                    differentialMassMatrix[iIndex][jIndex] = value == 0.0 ? 0.0 :
+                            value * (1.0 - Math.exp((eigenValueJ - eigenValueI) * time)) / (eigenValueI - eigenValueJ);
+                }
+            }
+        }
+
+        for (int i = 0; i < numRealEigenValues; ++i) {
+            final int iIndex = workspace.realIndices[i];
+            final double eigenValueI = eigenValues[iIndex];
+            for (int j = 0; j < numComplexPairs; ++j) {
+                final int jIndex = workspace.complexIndices[j];
+                final double realEigenValue = eigenValues[jIndex];
+                final double imagEigenValue = eigenValues[jIndex + stateCount];
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vijp1 = differentialMassMatrix[iIndex][jIndex + 1];
+                final double expSineIntegral = getExpSineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+                final double expCosineIntegral = getExpCosineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+
+                differentialMassMatrix[iIndex][jIndex] = Vij * expCosineIntegral - Vijp1 * expSineIntegral;
+                differentialMassMatrix[iIndex][jIndex + 1] = Vij * expSineIntegral + Vijp1 * expCosineIntegral;
+            }
+        }
+
+        for (int i = 0; i < numComplexPairs; ++i) {
+            final int iIndex = workspace.complexIndices[i];
+            final double realEigenValueI = eigenValues[iIndex];
+            final double imagEigenValueI = eigenValues[iIndex + stateCount];
+
+            for (int j = 0; j < numRealEigenValues; ++j) {
+                final int jIndex = workspace.realIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vip1j = differentialMassMatrix[iIndex + 1][jIndex];
+
+                final double expSineIntegral = getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI);
+                final double expCosineIntegral = getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI);
+
+                differentialMassMatrix[iIndex][jIndex] = Vij * expCosineIntegral - Vip1j * expSineIntegral;
+                differentialMassMatrix[iIndex + 1][jIndex] = Vij * expSineIntegral + Vip1j * expCosineIntegral;
+            }
+
+            for (int j = 0; j < numComplexPairs; ++j) {
+                final int jIndex = workspace.complexIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+                final double imagEigenValueJ = eigenValues[jIndex + stateCount];
+
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vijp1 = differentialMassMatrix[iIndex][jIndex + 1];
+                final double Vip1j = differentialMassMatrix[iIndex + 1][jIndex];
+                final double Vip1jp1 = differentialMassMatrix[iIndex + 1][jIndex + 1];
+
+                final boolean specialCase =
+                        Math.abs(realEigenValueI - realEigenValueJ) < EXACT_EXP_THRESHOLD &&
+                        Math.abs(imagEigenValueI - imagEigenValueJ) < EXACT_EXP_THRESHOLD;
+
+                final double expCosineXPlusY2 = specialCase
+                        ? Math.sin(2.0 * imagEigenValueI * time) / (2.0 * imagEigenValueI)
+                        : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
+                final double expCosineXMinusY2 = specialCase
+                        ? time
+                        : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
+                final double expSineXPlusY2 = specialCase
+                        ? (1.0 - Math.cos(2.0 * imagEigenValueI * time)) / (2.0 * imagEigenValueI)
+                        : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
+                final double expSineXMinusY2 = specialCase
+                        ? 0.0
+                        : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
+
+                differentialMassMatrix[iIndex][jIndex] =
+                        0.5 * ((Vij - Vip1jp1) * expCosineXPlusY2 + (Vij + Vip1jp1) * expCosineXMinusY2
+                                - (Vip1j + Vijp1) * expSineXPlusY2 + (Vijp1 - Vip1j) * expSineXMinusY2);
+                differentialMassMatrix[iIndex][jIndex + 1] =
+                        0.5 * ((Vijp1 + Vip1j) * expCosineXPlusY2 + (Vijp1 - Vip1j) * expCosineXMinusY2
+                                + (Vij - Vip1jp1) * expSineXPlusY2 - (Vij + Vip1jp1) * expSineXMinusY2);
+                differentialMassMatrix[iIndex + 1][jIndex] =
+                        0.5 * ((Vijp1 + Vip1j) * expCosineXPlusY2 + (Vip1j - Vijp1) * expCosineXMinusY2
+                                + (Vij - Vip1jp1) * expSineXPlusY2 + (Vij + Vip1jp1) * expSineXMinusY2);
+                differentialMassMatrix[iIndex + 1][jIndex + 1] =
+                        0.5 * ((Vip1jp1 - Vij) * expCosineXPlusY2 + (Vij + Vip1jp1) * expCosineXMinusY2
+                                + (Vip1j + Vijp1) * expSineXPlusY2 + (Vijp1 - Vip1j) * expSineXMinusY2);
+            }
+        }
+
+        tripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors, workspace.projected);
+    }
+
+    private double frobeniusInnerProduct(double[][] left, double[][] right) {
+        double sum = 0.0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                sum += left[i][j] * right[i][j];
+            }
+        }
+        return sum;
     }
 
     private void computeLoewnerKernelInPlace(double distance, EigenDecomposition decomposition, double[][] target) {
@@ -551,7 +767,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
     }
 
     private void accumulateGeneratorGradientFromEigenBasis(EigenDecomposition decomposition,
-                                                           double[][] eigenBasisGradient,
+                                                           double[] eigenBasisGradient,
                                                            double[][] rateGradient,
                                                            ReverseWorkspace workspace) {
         double[] eigenVectors = decomposition.getEigenVectors();
@@ -569,8 +785,9 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
                 if (value == 0.0) {
                     continue;
                 }
+                int gradientOffset = a * stateCount;
                 for (int b = 0; b < stateCount; ++b) {
-                    temp[tempOffset + b] += value * eigenBasisGradient[a][b];
+                    temp[tempOffset + b] += value * eigenBasisGradient[gradientOffset + b];
                 }
             }
         }
@@ -705,6 +922,117 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
 
     private void clearFlat(double[] vector) {
         Arrays.fill(vector, 0.0);
+    }
+
+    private void copyInto(double[][] target, double[][] source) {
+        for (int i = 0; i < target.length; ++i) {
+            System.arraycopy(source[i], 0, target[i], 0, target[i].length);
+        }
+    }
+
+    private void tripleMatrixMultiplication(double[] leftMatrix,
+                                            double[][] middleMatrix,
+                                            double[] rightMatrix,
+                                            double[][] tmpMatrix) {
+        clearSquare(tmpMatrix);
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    total += middleMatrix[i][k] * rightMatrix[k * stateCount + j];
+                }
+                tmpMatrix[i][j] = total;
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    total += leftMatrix[i * stateCount + k] * tmpMatrix[k][j];
+                }
+                middleMatrix[i][j] = total;
+            }
+        }
+    }
+
+    private void setSmallEntriesToZero(double[][] matrix) {
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                if (Math.abs(matrix[i][j]) < EXACT_EXP_THRESHOLD) {
+                    matrix[i][j] = 0.0;
+                }
+            }
+        }
+    }
+
+    private int getComplexEigenValueFirstIndices(double[] eigenValues, int[] indices) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue != 0.0) {
+                    indices[currentIndex++] = i;
+                    i++;
+                }
+            }
+            return currentIndex;
+        }
+        return 0;
+    }
+
+    private int getRealEigenValueIndices(double[] eigenValues, int[] indices) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                if (eigenValues[i + stateCount] == 0.0) {
+                    indices[currentIndex++] = i;
+                }
+            }
+            return currentIndex;
+        }
+        for (int i = 0; i < stateCount; ++i) {
+            indices[i] = i;
+        }
+        return stateCount;
+    }
+
+    private double getExpCosineIntegral(double time, double expRate, double cosRate) {
+        final double denominator = expRate * expRate + cosRate * cosRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = cosRate * expProduct * Math.sin(cosRate * time) +
+                expRate * expProduct * Math.cos(cosRate * time) - expRate;
+        return numerator / denominator;
+    }
+
+    private void reconstructGeneratorMatrix(EigenDecomposition decomposition,
+                                            double[][] target,
+                                            double[][] tmp) {
+        double[] eigenValues = decomposition.getEigenValues();
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+
+        clearSquare(target);
+        for (int i = 0; i < stateCount; ++i) {
+            target[i][i] = eigenValues[i];
+            if (eigenValues.length > stateCount && Math.abs(eigenValues[stateCount + i]) > EIGEN_TOLERANCE) {
+                target[i][i + 1] = eigenValues[stateCount + i];
+                target[i + 1][i] = -eigenValues[stateCount + i];
+                target[i + 1][i + 1] = eigenValues[i];
+                i++;
+            }
+        }
+        tripleMatrixMultiplication(eigenVectors, target, inverseEigenVectors, tmp);
+    }
+
+    private double getExpSineIntegral(double time, double expRate, double sinRate) {
+        final double denominator = expRate * expRate + sinRate * sinRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = expRate * expProduct * Math.sin(sinRate * time) -
+                sinRate * expProduct * Math.cos(sinRate * time) + sinRate;
+        return numerator / denominator;
     }
 
     private double[][] copyMatrix(double[][] matrix) {
@@ -855,6 +1183,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         final boolean[] hasCoalescentProb;
         final CoalescentDetails[] coalescentDetails;
         final double[][][] spectralKernels;
+        final ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans;
 
         private ForwardResult(double logLikelihood,
                               double[][] partials,
@@ -866,7 +1195,8 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
                               double[] coalescentProb,
                               boolean[] hasCoalescentProb,
                               CoalescentDetails[] coalescentDetails,
-                              double[][][] spectralKernels) {
+                              double[][][] spectralKernels,
+                              ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans) {
             this.logLikelihood = logLikelihood;
             this.partials = partials;
             this.matrices = matrices;
@@ -878,6 +1208,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             this.hasCoalescentProb = hasCoalescentProb;
             this.coalescentDetails = coalescentDetails;
             this.spectralKernels = spectralKernels;
+            this.complexKernelPlans = complexKernelPlans;
         }
     }
 
@@ -906,6 +1237,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         final boolean[] hasCoalescentProb;
         final CoalescentDetails[] coalescentDetails;
         final double[] transitionScratch;
+        final ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans;
 
         private ForwardWorkspace(int bufferCount, int matrixCount, int intervalCount, int maxIntervalNumber) {
             this.partials = new double[bufferCount][stateCount];
@@ -919,6 +1251,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             this.hasCoalescentProb = new boolean[maxIntervalNumber + 1];
             this.coalescentDetails = new CoalescentDetails[bufferCount];
             this.transitionScratch = new double[stateCount * stateCount];
+            this.complexKernelPlans = new ComplexBlockKernelUtils.ComplexKernelPlan[matrixCount];
             for (int i = 0; i < bufferCount; ++i) {
                 coalescentDetails[i] = new CoalescentDetails(new double[stateCount]);
             }
@@ -939,7 +1272,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
     private final class ReverseWorkspace {
         final double[][] partialAdjoint;
         final double[][][] matrixAdjoint;
-        final double[][][] eigenBasisGradient;
+        final double[][] eigenBasisGradient;
         final boolean[] decompositionUsed;
         final double[][] rateGradient;
         final double[] populationSizeGradient;
@@ -954,6 +1287,12 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         final double[][] transformed;
         final double[][] projected;
         final double[][] expmAdjoint;
+        final double[][] exactDifferentialMassMatrix;
+        final double[][] complexBaseGenerator;
+        final AdjointMatrixExponentialUtils.Workspace complexExpmWorkspace;
+        final ComplexBlockKernelUtils.Workspace complexKernelWorkspace;
+        final int[] complexIndices;
+        final int[] realIndices;
         final double[] transformedFlat;
         final double[] projectedFlat;
         final double[] expmAdjointFlat;
@@ -961,7 +1300,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         private ReverseWorkspace(int bufferCount, int matrixCount, int stateCount) {
             this.partialAdjoint = new double[bufferCount][stateCount];
             this.matrixAdjoint = new double[matrixCount][stateCount][stateCount];
-            this.eigenBasisGradient = new double[decompositions.length][stateCount][stateCount];
+            this.eigenBasisGradient = new double[decompositions.length][stateCount * stateCount];
             this.decompositionUsed = new boolean[decompositions.length];
             this.rateGradient = new double[stateCount][stateCount];
             this.populationSizeGradient = new double[stateCount];
@@ -976,6 +1315,12 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             this.transformed = new double[stateCount][stateCount];
             this.projected = new double[stateCount][stateCount];
             this.expmAdjoint = new double[stateCount][stateCount];
+            this.exactDifferentialMassMatrix = new double[stateCount][stateCount];
+            this.complexBaseGenerator = new double[stateCount][stateCount];
+            this.complexExpmWorkspace = new AdjointMatrixExponentialUtils.Workspace(stateCount);
+            this.complexKernelWorkspace = new ComplexBlockKernelUtils.Workspace();
+            this.complexIndices = new int[stateCount];
+            this.realIndices = new int[stateCount];
             this.transformedFlat = new double[stateCount * stateCount];
             this.projectedFlat = new double[stateCount * stateCount];
             this.expmAdjointFlat = new double[stateCount * stateCount];
@@ -989,7 +1334,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             }
             for (TransitionMatrixOperation operation : matrixOperations) {
                 clearSquare(matrixAdjoint[operation.outputBuffer]);
-                clearSquare(eigenBasisGradient[operation.decompositionBuffer]);
+                clearFlat(eigenBasisGradient[operation.decompositionBuffer]);
                 decompositionUsed[operation.decompositionBuffer] = false;
             }
             clearSquare(rateGradient);

@@ -209,7 +209,14 @@
 			</proportions>
 		</lump>
 	</stronglyLumpableCtmcRates>
-
+<!--	A CompoundParameter is a container of one or more Parameter objects. Each Parameter may itself be multi-dimensional (a vector).-->
+	<compoundParameter id="all.lumpable">
+		<parameter idref="lump.across.rates"/>
+		<parameter idref="Cafornia.l2.proportions"/>
+		<parameter idref="L2.within.rates"/>
+		<parameter idref="Michigan.l1.proportions"/>
+		<parameter idref="Texas.l1.proportions"/>
+	</compoundParameter>
 	<!-- Data pattern for discrete trait, 'state'                                -->
 	<attributePatterns id="state.pattern" attribute="state">
 		<taxa idref="taxa"/>
@@ -287,7 +294,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="state.branchRates">
 		<rate>
-			<parameter id="state.clock.rate" value="1.0" lower="0.0"/>
+			<parameter id="state.clock.rate" value="0.001" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
@@ -384,6 +391,7 @@
     <approximateLogCtmcRateGradient id="gradient" traitName="state">
 		<treeDataLikelihood idref="state.treeLikelihood"/>
 		<logRateSubstitutionModel idref="state.model"/>
+		<compoundParameter idref="all.lumpable"/>
     </approximateLogCtmcRateGradient>
 
     <report>
@@ -547,9 +555,9 @@
 		</joint>
 		<operators idref="operators"/>
 
-		<!-- write log to screen                                                     -->
+		 write log to screen
 		<log id="screenLog" logEvery="1">
-<!-- 
+<!--
 			<column label="Joint" dp="4" width="12">
 				<joint idref="joint"/>
 			</column>
@@ -591,44 +599,44 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="100" fileName="bat_deletetx5275.log" overwrite="false">
-			<joint idref="joint"/>
-			<prior idref="prior"/>
-			<likelihood idref="likelihood"/>
-			<parameter idref="treeModel.rootHeight"/>
-			<tmrcaStatistic idref="age(root)"/>
-			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="constant.popSize"/>
-			<parameter idref="kappa"/>
-			<parameter idref="frequencies"/>
-			<parameter idref="alpha"/>
-			<parameter idref="default.clock.rate"/>
-			<parameter idref="state.clock.rate"/>
-			<rateStatistic idref="default.meanRate"/>
-			<rateStatistic idref="state.meanRate"/>
+<!--		<log id="fileLog" logEvery="100" fileName="bat_deletetx5275.log" overwrite="false">-->
+<!--			<joint idref="joint"/>-->
+<!--			<prior idref="prior"/>-->
+<!--			<likelihood idref="likelihood"/>-->
+<!--			<parameter idref="treeModel.rootHeight"/>-->
+<!--			<tmrcaStatistic idref="age(root)"/>-->
+<!--			<treeLengthStatistic idref="treeLength"/>-->
+<!--			<parameter idref="constant.popSize"/>-->
+<!--			<parameter idref="kappa"/>-->
+<!--			<parameter idref="frequencies"/>-->
+<!--			<parameter idref="alpha"/>-->
+<!--			<parameter idref="default.clock.rate"/>-->
+<!--			<parameter idref="state.clock.rate"/>-->
+<!--			<rateStatistic idref="default.meanRate"/>-->
+<!--			<rateStatistic idref="state.meanRate"/>-->
 
-			<!-- START Discrete Traits Model                                             -->
-			<!-- 	<parameter idref="state.rates"/>   -->
-			<parameter idref="lump.across.rates"/>
-			<parameter idref="L2.within.rates"/>
-			<parameter idref="Cafornia.l2.proportions"/>
-			<parameter idref="Michigan.l1.proportions"/>
-			<parameter idref="Texas.l1.proportions"/>
+<!--			&lt;!&ndash; START Discrete Traits Model                                             &ndash;&gt;-->
+<!--			&lt;!&ndash; 	<parameter idref="state.rates"/>   &ndash;&gt;-->
+<!--			<parameter idref="lump.across.rates"/>-->
+<!--			<parameter idref="L2.within.rates"/>-->
+<!--			<parameter idref="Cafornia.l2.proportions"/>-->
+<!--			<parameter idref="Michigan.l1.proportions"/>-->
+<!--			<parameter idref="Texas.l1.proportions"/>-->
 
-                <!-- END Discrete Traits Model                                               -->
+<!--                &lt;!&ndash; END Discrete Traits Model                                               &ndash;&gt;-->
 
-			<ancestralTreeLikelihood idref="treeLikelihood"/>
-			<strictClockBranchRates idref="default.branchRates"/>
-			<strictClockBranchRates idref="state.branchRates"/>
+<!--			<ancestralTreeLikelihood idref="treeLikelihood"/>-->
+<!--			<strictClockBranchRates idref="default.branchRates"/>-->
+<!--			<strictClockBranchRates idref="state.branchRates"/>-->
 
-			<!-- START Discrete Traits Model                                             -->
-			<ancestralTreeLikelihood idref="state.treeLikelihood"/>
+<!--			&lt;!&ndash; START Discrete Traits Model                                             &ndash;&gt;-->
+<!--			<ancestralTreeLikelihood idref="state.treeLikelihood"/>-->
 
-			<!-- END Discrete Traits Model                                               -->
+<!--			&lt;!&ndash; END Discrete Traits Model                                               &ndash;&gt;-->
 
-			<coalescentLikelihood idref="coalescent"/>
-			
-		</log>
+<!--			<coalescentLikelihood idref="coalescent"/>-->
+<!--			-->
+<!--		</log>-->
 
 		<!-- START Discrete Traits Model                                             -->
 		<!-- 	<log id="bat_deletetx5275.staterateMatrixLog" logEvery="100" fileName="bat_deletetx5275.state.rates.log">
@@ -639,27 +647,27 @@
 
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="bat_deletetx5275.trees" sortTranslationTable="true">
-			<treeModel idref="treeModel"/>
-			<trait name="rate" tag="default.rate">
-				<strictClockBranchRates idref="default.branchRates"/>
-			</trait>
-			<!-- 	<trait name="rate" tag="state.rate">
-                    <strictClockBranchRates idref="state.branchRates"/>
-                </trait>   -->
-                <joint idref="joint"/>
+<!--		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="bat_deletetx5275.trees" sortTranslationTable="true">-->
+<!--			<treeModel idref="treeModel"/>-->
+<!--			<trait name="rate" tag="default.rate">-->
+<!--				<strictClockBranchRates idref="default.branchRates"/>-->
+<!--			</trait>-->
+<!--			&lt;!&ndash; 	<trait name="rate" tag="state.rate">-->
+<!--                    <strictClockBranchRates idref="state.branchRates"/>-->
+<!--                </trait>   &ndash;&gt;-->
+<!--                <joint idref="joint"/>-->
 
-                <!-- START Ancestral state reconstruction                                    -->
-			<trait name="states" tag="bat_deletetx5275">
-				<ancestralTreeLikelihood idref="treeLikelihood"/>
-			</trait>
-			<trait name="state.states" tag="state">
-				<ancestralTreeLikelihood idref="state.treeLikelihood"/>
-			</trait>
+<!--                &lt;!&ndash; START Ancestral state reconstruction                                    &ndash;&gt;-->
+<!--			<trait name="states" tag="bat_deletetx5275">-->
+<!--				<ancestralTreeLikelihood idref="treeLikelihood"/>-->
+<!--			</trait>-->
+<!--			<trait name="state.states" tag="state">-->
+<!--				<ancestralTreeLikelihood idref="state.treeLikelihood"/>-->
+<!--			</trait>-->
 
-			<!-- END Ancestral state reconstruction                                      -->
+<!--			&lt;!&ndash; END Ancestral state reconstruction                                      &ndash;&gt;-->
 
-		</logTree>
+<!--		</logTree>-->
 	</mcmc>
 	
 	<report>

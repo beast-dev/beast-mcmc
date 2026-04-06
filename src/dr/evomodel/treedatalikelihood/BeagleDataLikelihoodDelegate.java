@@ -60,7 +60,7 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements
-        DataLikelihoodDelegate, TipStateAccessor, Citable {
+        DataLikelihoodDelegate, TipStateAccessor, Citable, GradientDataLikelihoodDelegate {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -211,14 +211,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
             }
 
-            if (settings.branchInfinitesimalDerivative) {
-                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
-                        extraBufferCount, settings);
-            } else {
-                if (settings.useRewardAwareBranchModelDelegate) {
-                    evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree, (TransitionMatrixProviderBranchModel) branchModel, 0,
+            if (settings.useRewardAwareBranchModelDelegate) {
+                evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree,
+                        (TransitionMatrixProviderBranchModel) branchModel, 0, extraBufferCount, settings);
+            }  else if (settings.branchInfinitesimalDerivative) {
+                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
                             extraBufferCount, settings);
-                } else {
+            } else {
                     if (branchModel.getSubstitutionModels().size() == 1) {
                         evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
                     } else {
@@ -229,7 +228,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                         evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
                                 extraBufferCount, settings);
                     }
-                }
             }
 
             int numPartials = partialBufferHelper.getBufferCount();

@@ -32,7 +32,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
-import dr.math.IntegratedSquaredSplines;
+import dr.math.IntegratedTransformedSplines;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -57,7 +57,6 @@ import java.util.Objects;
  * @author Marc A. Suchard
  */
 
-// This branch rate model uses quadratic splines and gives accurate rates and gradients
 // Also being implemented as the Integrable FunctionalForm in timeVaryingRates
 // Current Integrable version in timeVaryingRates requires debugging
 // This branch rate model will no longer be needed once merged with timeVaryingRates
@@ -68,9 +67,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
 
     private final Tree tree;
-    private final Parameter coefficients;
-    private final double[] knots;
-    private final int degree;
+    private final IntegratedTransformedSplines splines;
 
     private boolean nodeRatesKnown;
     private boolean storedNodeRatesKnown;
@@ -84,24 +81,19 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     private static final double CACHE_PRECISION = 1e-5;
 
     public NonParametricBranchRateModel2(String name,
-                                        Tree tree,
-                                        Parameter coefficients,
-                                        double[] knots,
-                                        int degree) {
+                                         Tree tree,
+                                         IntegratedTransformedSplines splines) {
         super(name);
 
         this.tree = tree;
-        this.coefficients = coefficients;
-        this.degree = degree;
-        this.knots = knots;
+        this.splines = splines;
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
 
-        addVariable(coefficients);
-
-
+        addVariable(splines.getCoefficients());
+        addVariable(splines.getIntercept());
 
         nodeRatesKnown = false;
         coefficientsChanged = true;
@@ -129,12 +121,11 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
             NonParametricBranchRateModel2.TreeTraversal func =
                     new NonParametricBranchRateModel2.TreeTraversal.Rate(
-                            nodeRates, new IntegratedSquaredSplines(
-                                    coefficients.getParameterValues(), knots, degree),
-                            integralCache);
+                            nodeRates, splines, integralCache);
 
             calculateNodeGeneric(func);
             nodeRatesKnown = true;
+
         }
 
         return nodeRates[getParameterIndexFromNode(node)];
@@ -146,37 +137,32 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     public double[] updateGradientLogDensity(double[] gradientWrtBranches, double[] value, int from, int to) {
 
         assert from == 0;
-        assert to == coefficients.getDimension() - 1;
-        double[] gradientWrtCoefficients = new double[coefficients.getDimension()];
-
-        Arrays.fill(gradientWrtCoefficients, 0);
+        assert to == splines.getCoefficientDim() - 1;
+        double[] gradientWrtCoefficients = new double[splines.getCoefficientDim()];
 
         NonParametricBranchRateModel2.TreeTraversal func =
                 new NonParametricBranchRateModel2.TreeTraversal.Gradient(gradientWrtCoefficients,
-                        gradientWrtBranches, new IntegratedSquaredSplines(
-                        coefficients.getParameterValues(), knots, degree));
+                        gradientWrtBranches, splines);
         calculateNodeGeneric(func);
-
 
         return gradientWrtCoefficients;
 
     }
+
     interface TreeTraversal {
 
-        void calculate(int childIndex, double start, double end, IntegratedSquaredSplines approximation,
+        void calculate(int childIndex, double start, double end, IntegratedTransformedSplines approximation,
                        double[] coefficients);
-
-        double[] getCoefficients();
 
         class Gradient implements TreeTraversal {
 
             final private double[] gradientCoefficients;
             final private double[] gradientNodes;
-            final private IntegratedSquaredSplines approximation;
+            final private IntegratedTransformedSplines approximation;
 
 
             Gradient(double[] gradientCoefficients, double[] gradientNodes,
-                     IntegratedSquaredSplines approximation) {
+                     IntegratedTransformedSplines approximation) {
 
                 this.gradientCoefficients = gradientCoefficients;
                 this.gradientNodes = gradientNodes;
@@ -184,15 +170,18 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
             }
 
             @Override
-            public double[] getCoefficients() { return gradientCoefficients; }
-
-            @Override
             public void calculate(int childIndex, double start, double end,
-                                  IntegratedSquaredSplines dead_approximation, double[] coefficients) {
-
-                int dim = getCoefficients().length;
+                                  IntegratedTransformedSplines dead_approximation, double[] coefficients) {
+                int dim = gradientCoefficients.length;
                 double branchLength = end - start;
-                double[] gradientBranchWrtCoeff = approximation.getGradient(start, end);
+                double[] gradientBranchWrtCoeff = new double[0];
+                try {
+                    gradientBranchWrtCoeff = approximation.getGradient(start, end);
+                } catch (FunctionEvaluationException e) {
+                    throw new RuntimeException(e);
+                } catch (MaxIterationsExceededException e) {
+                    throw new RuntimeException(e);
+                }
                 for (int i = 0; i < dim; i++) {
                     gradientCoefficients[i] += (gradientNodes[childIndex] * gradientBranchWrtCoeff[i])/branchLength;
                 }
@@ -202,34 +191,37 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         class Rate implements TreeTraversal {
 
             final private double[] nodeRates;
-            final private IntegratedSquaredSplines approximation;
+            final private IntegratedTransformedSplines approximation;
             final private Map<IntegralCacheKey, Double> integralCache;
 
-            Rate(double[] nodeRates, IntegratedSquaredSplines approximation, Map<IntegralCacheKey, Double> integralCache) {
+            Rate(double[] nodeRates, IntegratedTransformedSplines approximation, Map<IntegralCacheKey, Double> integralCache) {
                 this.nodeRates = nodeRates;
                 this.approximation = approximation;
                 this.integralCache = integralCache;
             }
 
-            @Override
-            public double[] getCoefficients() {
-                return null;
-            }
 
             @Override
             public void calculate(int childIndex, double start, double end,
-                                  IntegratedSquaredSplines dead_approximation, double[] dead_coefficients) {
+                                  IntegratedTransformedSplines dead_approximation, double[] dead_coefficients) {
 
 
                 double branchLength = end - start;
 
                 if (!USE_CACHE) {
-                    double integral = approximation.getIntegral(start, end);
+                    double integral = 0;
+                    try {
+                        integral = approximation.getIntegral(start, end);
+                    } catch (FunctionEvaluationException e) {
+                        throw new RuntimeException(e);
+                    } catch (MaxIterationsExceededException e) {
+                        throw new RuntimeException(e);
+                    }
                     nodeRates[childIndex] = integral / branchLength;
                 } else {
 //                    try {
-                        double integral = getOrComputeIntegral(null, start, end, approximation, integralCache);
-                        nodeRates[childIndex] = integral / branchLength;
+                    double integral = getOrComputeIntegral(null, start, end, approximation, integralCache);
+                    nodeRates[childIndex] = integral / branchLength;
 //                    } catch (FunctionEvaluationException e) {
 //                        throw new RuntimeException(e);
 //                    } catch (MaxIterationsExceededException e) {
@@ -240,9 +232,8 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
             }
 
             private double getOrComputeIntegral(double[] dead_coeffValues, double start, double end,
-                                                IntegratedSquaredSplines approximation
-//    )
-                    , Map<IntegralCacheKey, Double> integralCache)
+                                                IntegratedTransformedSplines approximation,
+                                                Map<IntegralCacheKey, Double> integralCache)
 //            throws FunctionEvaluationException, MaxIterationsExceededException
             {
 
@@ -250,14 +241,21 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
                     return 0.0;
                 }
 
-                IntegralCacheKey key = new IntegralCacheKey(approximation.coefficient, roundKey(start), roundKey(end));
+                IntegralCacheKey key = new IntegralCacheKey(approximation.getCoefficientValues(), roundKey(start), roundKey(end));
 
                 Double cached = integralCache.get(key);
                 if (cached != null) {
                     return cached;
                 }
 
-                double val = approximation.getIntegral(start, end);
+                double val = 0;
+                try {
+                    val = approximation.getIntegral(start, end);
+                } catch (FunctionEvaluationException e) {
+                    throw new RuntimeException(e);
+                } catch (MaxIterationsExceededException e) {
+                    throw new RuntimeException(e);
+                }
                 integralCache.put(key, val);
                 return val;
             }
@@ -281,7 +279,6 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         final double childHeight = tree.getNodeHeight(child);
         final int childIndex = getParameterIndexFromNode(child);
 //        double[] coefficientValues = new double[coefficients.getDimension()];
-        double[] coefficientValues = generic.getCoefficients();
         double start = childHeight;
         double end = currentHeight;
 
@@ -386,7 +383,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         nodeRatesKnown = false;
 
-        if (variable == coefficients) {
+        if (variable == splines.getCoefficients()) {
             coefficientsChanged = true;
         }
 
@@ -427,7 +424,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
     @Override
     public Parameter getRateParameter() {
-        return coefficients;
+        return splines.getCoefficients();
     }
 
     @Override

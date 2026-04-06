@@ -33,15 +33,19 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.RewardsAwarePartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.SpectralStandardPartialsRepresentation;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -73,6 +77,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
     public static final String INITIAL_NUM_CATS = "initialNumCats";
     public static final String PARTITION = "partition";
+    public static final String PHYLOGEOFAST = "phyloGeoFast";
 
     public String getParserName() {
         return TREE_DATA_LIKELIHOOD;
@@ -90,7 +95,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   boolean preferGPU,
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
-                                                  PreOrderSettings settings/*,
+                                                  PreOrderSettings settings,
+                                                  boolean phyloGeoFast/*,
                                                   Parameter siteAssignInd,
                                                   List<Parameter> polyaPartitionCategories,
                                                   List<SiteRateModel> polyaSiteRateModels,
@@ -209,7 +215,70 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
             for (int j = 0; j < bic; j++) {
                 PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
-                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                DataLikelihoodDelegate dataLikelihoodDelegate;
+                if (phyloGeoFast) {
+                    final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final DiscreteDataLikelihoodDelegate.PartialTransform preOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final BranchModel branchModel = branchModels.get(i);
+
+                    SpectralStandardPartialsRepresentation SpectralStandardPostOrderRepresentation =
+                            new SpectralStandardPartialsRepresentation((BaseSubstitutionModel)
+                                    branchModel.getSubstitutionModels().get(0)); //TODO generalize
+
+                    dataLikelihoodDelegate = new DiscreteDataLikelihoodDelegate(
+                                treeModel,
+                                subPatterns,
+                                branchModel,
+                                siteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings,
+                                SpectralStandardPostOrderRepresentation,
+                                postOrderTransform,
+                                preOrderTransform,
+                                null,
+                                null
+                        );
+
+                } else if (branchModels.get(i) instanceof RewardsAwareBranchModel) {
+
+                    final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final DiscreteDataLikelihoodDelegate.PartialTransform preOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final Parameter siteAssignInd = null;
+                    final Parameter partitionCat = null;
+                    final BranchModel branchModel = branchModels.get(i);
+                    if (!(branchModel instanceof RewardsAwareBranchModel)) {
+                        throw new XMLParseException(
+                                "DiscreteDataLikelihoodDelegate currently only supports RewardsAwareBranchModel in this parser branch."
+                        );
+                    }
+                    RewardsAwarePartialsRepresentation rewardsAwarePartialsRepresentation =
+                            new RewardsAwarePartialsRepresentation((RewardsAwareBranchModel) branchModel);
+                    dataLikelihoodDelegate = new DiscreteDataLikelihoodDelegate(
+                            treeModel,
+                            subPatterns,
+                            branchModel,
+                            siteRateModels.get(i),
+                            useAmbiguities,
+                            preferGPU,
+                            scalingScheme,
+                            delayRescalingUntilUnderflow,
+                            settings,
+                            rewardsAwarePartialsRepresentation,
+                            postOrderTransform,
+                            preOrderTransform,
+                            siteAssignInd,
+                            partitionCat
+                    );
+
+                } else {
+                 dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
                         subPatterns,
                         branchModels.get(i),
@@ -219,14 +288,13 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         scalingScheme,
                         delayRescalingUntilUnderflow,
                         settings);
-
+                }
                 TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                         dataLikelihoodDelegate,
                         treeModel,
                         branchRateModel);
 
                 treeDataLikelihood.setId(id + "_" + (j + 1));
-
                 treeDataLikelihoods.add(treeDataLikelihood);
             }
         }
@@ -426,6 +494,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
+        final boolean phyloGeoFast = xo.getAttribute(PHYLOGEOFAST, false);
 
         if (tipStatesModel != null) {
             throw new XMLParseException("TreeDataLikelihood is not currently compatible with TipStateModel (i.e., a sequence error model).");
@@ -444,7 +513,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 preferGPU,
                 scalingScheme,
                 delayScaling,
-                settings/*,
+                settings,
+                phyloGeoFast/*,
                 indicators,
                 polyaPartitionCategories,
                 polyaSiteRateModels,
@@ -469,6 +539,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
+            AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(

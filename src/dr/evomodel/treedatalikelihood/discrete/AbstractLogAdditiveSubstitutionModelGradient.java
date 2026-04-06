@@ -32,9 +32,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.*;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.Loggable;
@@ -162,7 +160,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
-                                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                        GradientDataLikelihoodDelegate likelihoodDelegate,
                                                         ComplexSubstitutionModel substitutionModel,
                                                         ApproximationMode mode) {
         this.treeDataLikelihood = treeDataLikelihood;
@@ -179,11 +177,22 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
 
         if (treeDataLikelihood.getTreeTrait(name) == null) {
-            ProcessSimulationDelegate gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
-                    treeDataLikelihood.getTree(),
-                    likelihoodDelegate,
-                    treeDataLikelihood.getBranchRateModel(),
-                    substitutionModel.getDataType().getStateCount());
+            ProcessSimulationDelegate gradientDelegate;
+            if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+                gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
+                        treeDataLikelihood.getTree(),
+                        (BeagleDataLikelihoodDelegate) likelihoodDelegate,
+                        treeDataLikelihood.getBranchRateModel(),
+                        substitutionModel.getDataType().getStateCount());
+            } else if (likelihoodDelegate instanceof  DiscreteDataLikelihoodDelegate){
+                gradientDelegate = new DiscreteSubstitutionModelCrossProductDelegate(traitName,
+                        treeDataLikelihood.getTree(),
+                        (DiscreteDataLikelihoodDelegate) likelihoodDelegate,
+                        substitutionModel.getDataType().getStateCount());
+            } else {
+                throw new RuntimeException("Other likelihood delegates are currently not supported");
+            }
+
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

@@ -305,6 +305,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     }
                     out.print("\n");
                 }
+//                if (parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")) {
+//                }
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -498,7 +500,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.err.println();
                     }
 
-                    if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
+                    if (fields[1].endsWith(".rootNodeNumber")) {
                         // System.out.println("eek");
                         double value = parser.parseDouble(fields[3]);
                         parameter.setParameterValue(0, value);
@@ -510,6 +512,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             System.out.print("restoring " + fields[1] + " with values ");
                         }
                         for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
+
                             try {
                                 parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
                             } catch (RuntimeException rte) {
@@ -626,7 +630,6 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 linkedModels.put(name, tpmList);
             }
 
-            // TODO start of skip???
             if (hasTreeModel) {
 
                 line = in.readLine();
@@ -741,7 +744,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 if (DEBUG) {
                     System.out.println("\nDouble checking:");
                     for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                        if (parameter.getParameterName() != null && parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
+                        if (parameter.getParameterName() != null && parameter.getParameterName().endsWith(".rootNodeNumber")) {
                             System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
                         }
                     }

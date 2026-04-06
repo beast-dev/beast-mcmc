@@ -35,11 +35,11 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.matrix.SparseCompressedMatrix;
 import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -171,6 +171,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         double[] diffusionVariance;
         DenseMatrix64F Vd;
         DenseMatrix64F Pd;
+        DiffusionRepresentation diffusionRepresentation;
 
         double[][] cholesky;
         SparseSquareUpperTriangular choleskyPrecision;
@@ -233,13 +234,18 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         @Override
         protected void setupStatistics() {
             if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
-                if (diffusionVariance == null) {
-                    // TODO
-                }
-                if (cholesky == null) {
-                    choleskyPrecision = ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition();
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Sparse(
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition(),
+                            1.0);
                 }
             } else {
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Dense(
+                           diffusionModel.getPrecisionMatrixAsVector(), 1, diffusionModel.getDimension());
+                }
+                // TODO check is below is necessary
                 if (diffusionVariance == null) {
                     double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
                     diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
@@ -257,6 +263,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             Vd = null;
             Pd = null;
             cholesky = null;
+            diffusionRepresentation = null;
             conditionalMap = null;
         }
 
@@ -270,7 +277,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return cholesky;
         }
 
-        static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
+        public static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 

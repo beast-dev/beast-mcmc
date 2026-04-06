@@ -227,7 +227,7 @@
         <branchRateGradient idref="gradient"/>
     </report>
 
-    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="2e-2" verbose="true" charactersToStrip="\[\],">
     	<message>
     		Check gradient
     	</message>

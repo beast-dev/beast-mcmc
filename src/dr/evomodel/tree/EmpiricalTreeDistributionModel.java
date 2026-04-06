@@ -119,24 +119,21 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
 
         if (importer != null) {
             try {
-                if (importer.hasTree() == false) {
+                if (!importer.hasTree()) {
                     throw new RuntimeException("EmpiricalTreeDistributionModel has run out of trees");
                 }
                 currentTree = importer.importNextTree();
-            } catch (IOException e) {
-                throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
-            } catch (Importer.ImportException e) {
+            } catch (IOException | Importer.ImportException e) {
                 throw new RuntimeException("EmpiricalTreeDistributionModel unable to load next tree");
             }
             currentTreeIndex += 1;
         } else {
             if (treeNumber == -1) {
                 currentTreeIndex = MathUtils.nextInt(trees.size());
-                currentTree = trees.get(currentTreeIndex);
             } else {
                 currentTreeIndex = treeNumber;
-                currentTree = trees.get(currentTreeIndex);
             }
+            currentTree = trees.get(currentTreeIndex);
         }
 
         // Force computation of node heights now rather than later in the evaluation
@@ -196,14 +193,17 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         return currentTree.getBranchLength(node);
     }
 
+    @SuppressWarnings("deprecation")
     public double getNodeRate(final NodeRef node) {
         return currentTree.getNodeRate(node);
     }
 
+    @SuppressWarnings("deprecation")
     public Object getNodeAttribute(final NodeRef node, final String name) {
         return currentTree.getNodeAttribute(node, name);
     }
 
+    @SuppressWarnings("deprecation")
     public Iterator getNodeAttributeNames(final NodeRef node) {
         return currentTree.getNodeAttributeNames(node);
     }

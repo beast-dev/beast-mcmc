@@ -55,6 +55,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String SUBINTERVALS = "subIntervals";
     private static final String THREADS = "threads";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String GRADIENT_IMPLEMENTATION = "gradientImplementation";
 
     public static final String MAP_RECONSTRUCTION = "useMAP";
 
@@ -110,6 +111,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         }
 
         int threads = xo.getAttribute(THREADS, 1);
+        String gradientImplementationName = xo.getAttribute(GRADIENT_IMPLEMENTATION, (String) null);
 
         if (treeModel != null) {
             try {
@@ -119,7 +121,20 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 } else {
                     if (USE_DELEGATE) {
                         final BastaLikelihoodDelegate delegate;
-                        if (USE_BEAGLE) {
+                        if (gradientImplementationName != null) {
+                            if (threads != 1) {
+                                throw new XMLParseException("gradientImplementation currently requires threads=\"1\".");
+                            }
+                            if ("adjoint".equalsIgnoreCase(gradientImplementationName)) {
+                                delegate = new AdjointGenericBastaLikelihoodDelegate("name", treeModel,
+                                        generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                            } else if ("legacy".equalsIgnoreCase(gradientImplementationName)) {
+                                delegate = new GenericBastaLikelihoodDelegate("name", treeModel,
+                                        generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                            } else {
+                                throw new XMLParseException("Unknown BASTA gradient implementation: " + gradientImplementationName);
+                            }
+                        } else if (USE_BEAGLE) {
                             delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
                                     generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
@@ -167,6 +182,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newStringRule(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newIntegerRule(SUBINTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
+            AttributeRule.newStringRule(GRADIENT_IMPLEMENTATION, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),

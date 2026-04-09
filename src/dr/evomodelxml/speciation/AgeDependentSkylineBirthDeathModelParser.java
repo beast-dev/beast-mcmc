@@ -79,7 +79,6 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
         );
     }
 
-    // TODO: Check up on these....
     public String getParserDescription() {
         return "Age-dependent skyline birth-death model using FFT-based Picard iteration. " +
                "Rates are lambda(a) = birthScale * (1 + b*a) * exp(-gamma*a) and " +

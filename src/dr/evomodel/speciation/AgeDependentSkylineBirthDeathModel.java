@@ -80,7 +80,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private int sComputedUpTo;
 
     // Per-node caching
-    private final boolean useNodeCaching;
     private double[] cachedNodeLogL;
     private double[] storedCachedNodeLogL;
     private boolean[] nodeValid;
@@ -158,17 +157,13 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         }
 
         // Per-node caching
-        this.useNodeCaching = (maxSteps >= 16);
-
-        if (useNodeCaching) {
-            int totalNodes = tree.getNodeCount();
-            this.cachedNodeLogL = new double[totalNodes];
-            this.storedCachedNodeLogL = new double[totalNodes];
-            this.nodeValid = new boolean[totalNodes];
-            this.storedNodeValid = new boolean[totalNodes];
-            this.storedP0 = new double[maxSteps + 1];
-            this.storedS = new double[maxSteps + 1];
-        }
+        int totalNodes = tree.getNodeCount();
+        this.cachedNodeLogL = new double[totalNodes];
+        this.storedCachedNodeLogL = new double[totalNodes];
+        this.nodeValid = new boolean[totalNodes];
+        this.storedNodeValid = new boolean[totalNodes];
+        this.storedP0 = new double[maxSteps + 1];
+        this.storedS = new double[maxSteps + 1];
     }
 
     public AgeDependentSkylineBirthDeathModel(String name,
@@ -964,15 +959,6 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         this.h = T / numSteps;
         ratesDirty = true;
 
-        if (!useNodeCaching) {
-            if (useDirectQuadrature) {
-                gridValid = false;
-                return calculateLogLikelihoodDirect();
-            } else {
-                return calculateLogLikelihoodFFT();
-            }
-        }
-
         // Per-node cached path
         boolean needP0S = parametersDirty;
         if (needP0S) {
@@ -1075,7 +1061,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (useNodeCaching && model == tree) {
+        if (model == tree) {
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent event = (TreeChangedEvent) object;
                 if (event.getNode() != null) {
@@ -1097,29 +1083,26 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     protected void storeState() {
-        if (useNodeCaching) {
-            System.arraycopy(cachedNodeLogL, 0, storedCachedNodeLogL, 0, cachedNodeLogL.length);
-            System.arraycopy(nodeValid, 0, storedNodeValid, 0, nodeValid.length);
-            System.arraycopy(p0, 0, storedP0, 0, numSteps + 1);
-            System.arraycopy(S, 0, storedS, 0, numSteps + 1);
-            storedParametersDirty = parametersDirty;
-        }
+        System.arraycopy(cachedNodeLogL, 0, storedCachedNodeLogL, 0, cachedNodeLogL.length);
+        System.arraycopy(nodeValid, 0, storedNodeValid, 0, nodeValid.length);
+        System.arraycopy(p0, 0, storedP0, 0, numSteps + 1);
+        System.arraycopy(S, 0, storedS, 0, numSteps + 1);
+        storedParametersDirty = parametersDirty;
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
     }
 
     protected void restoreState() {
-        if (useNodeCaching) {
-            double[] tmpD;
-            boolean[] tmpB;
+        double[] tmpD;
+        boolean[] tmpB;
 
-            tmpD = cachedNodeLogL; cachedNodeLogL = storedCachedNodeLogL; storedCachedNodeLogL = tmpD;
-            tmpB = nodeValid; nodeValid = storedNodeValid; storedNodeValid = tmpB;
-            tmpD = p0; // p0 is final, can't swap — need to copy
-            System.arraycopy(storedP0, 0, p0, 0, maxSteps + 1);
-            System.arraycopy(storedS, 0, S, 0, maxSteps + 1);
-            parametersDirty = storedParametersDirty;
-        }
+        tmpD = cachedNodeLogL; cachedNodeLogL = storedCachedNodeLogL; storedCachedNodeLogL = tmpD;
+        tmpB = nodeValid; nodeValid = storedNodeValid; storedNodeValid = tmpB;
+        tmpD = p0;
+        System.arraycopy(storedP0, 0, p0, 0, maxSteps + 1);
+        System.arraycopy(storedS, 0, S, 0, maxSteps + 1);
+        parametersDirty = storedParametersDirty;
+
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
 

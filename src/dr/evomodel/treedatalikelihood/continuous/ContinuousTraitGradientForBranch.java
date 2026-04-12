@@ -36,6 +36,8 @@ import dr.evomodel.treedatalikelihood.hmc.MultivariateChainRule;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.Parameter;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -52,11 +54,116 @@ public interface ContinuousTraitGradientForBranch {
 
     double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node);
 
+    default double[] getNumericalGradientForBranch(BranchSufficientStatistics statistics, NodeRef node) {
+        return null;
+    }
+
 //    double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node, boolean getGradientQ, boolean getGradientN);
 
     int getParameterIndexFromNode(NodeRef node);
 
     int getDimension();
+
+    abstract class ProcessGradientTarget {
+        public abstract int getDimension(int dim);
+    }
+
+    final class VarianceTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim * dim;
+        }
+    }
+
+    final class ConstantDriftTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim;
+        }
+    }
+
+    final class RootMeanTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim;
+        }
+    }
+
+    final class ConstantDriftAndRootMeanTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim;
+        }
+    }
+
+    final class DiagonalSelectionStrengthTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim;
+        }
+    }
+
+    final class BranchSpecificDriftTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim;
+        }
+    }
+
+    final class SamplingVarianceTarget extends ProcessGradientTarget {
+        @Override
+        public int getDimension(int dim) {
+            return dim * dim;
+        }
+    }
+
+    static ProcessGradientTarget targetForDerivationParameter(
+            final ContinuousProcessParameterGradient.DerivationParameter derivationParameter) {
+        switch (derivationParameter) {
+            case WRT_VARIANCE:
+                return new VarianceTarget();
+            case WRT_CONSTANT_DRIFT:
+                return new ConstantDriftTarget();
+            case WRT_ROOT_MEAN:
+                return new RootMeanTarget();
+            case WRT_CONSTANT_DRIFT_AND_ROOT_MEAN:
+                return new ConstantDriftAndRootMeanTarget();
+            case WRT_DIAGONAL_SELECTION_STRENGTH:
+                return new DiagonalSelectionStrengthTarget();
+            case WRT_BRANCH_SPECIFIC_DRIFT:
+                return new BranchSpecificDriftTarget();
+            case WRT_SAMPLING_VARIANCE:
+                return new SamplingVarianceTarget();
+            default:
+                throw new IllegalArgumentException("Unknown derivation parameter: " + derivationParameter);
+        }
+    }
+
+    static ContinuousProcessParameterGradient.DerivationParameter derivationParameterForTarget(
+            final ProcessGradientTarget target) {
+        if (target instanceof VarianceTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE;
+        }
+        if (target instanceof ConstantDriftTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_CONSTANT_DRIFT;
+        }
+        if (target instanceof RootMeanTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_ROOT_MEAN;
+        }
+        if (target instanceof ConstantDriftAndRootMeanTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_CONSTANT_DRIFT_AND_ROOT_MEAN;
+        }
+        if (target instanceof DiagonalSelectionStrengthTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH;
+        }
+        if (target instanceof BranchSpecificDriftTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_BRANCH_SPECIFIC_DRIFT;
+        }
+        if (target instanceof SamplingVarianceTarget) {
+            return ContinuousProcessParameterGradient.DerivationParameter.WRT_SAMPLING_VARIANCE;
+        }
+        throw new IllegalArgumentException("Unknown process-gradient target type: " + target.getClass().getName());
+    }
 
     abstract class Default implements ContinuousTraitGradientForBranch {
 
@@ -351,6 +458,10 @@ public interface ContinuousTraitGradientForBranch {
                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
+                                .getCanonicalGradientVarianceForBranch(statistics, node, cdi);
+                    }
 
                     DenseMatrix64F gradient = diffusionProcessDelegate.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv);
 
@@ -385,6 +496,11 @@ public interface ContinuousTraitGradientForBranch {
                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        final OUDiffusionModelDelegate ouDelegate =
+                                (OUDiffusionModelDelegate) diffusionProcessDelegate;
+                        return ouDelegate.getCanonicalGradientDisplacementForBranch(statistics);
+                    }
 
                     DenseMatrix64F gradient = ((AbstractDriftDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtDrift(node, cdi, likelihoodDelegate, gradN);
 
@@ -471,6 +587,20 @@ public interface ContinuousTraitGradientForBranch {
                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        final OUDiffusionModelDelegate ouDelegate =
+                                (OUDiffusionModelDelegate) diffusionProcessDelegate;
+                        if (!ouDelegate.isExternalNode(node)) {
+                            final double[] denseGradient = ouDelegate
+                                    .getCanonicalGradientSelectionForBranch(statistics, node, cdi);
+                            final int dim = likelihoodDelegate.getTraitDim();
+                            final double[] diagonal = new double[dim];
+                            for (int i = 0; i < dim; ++i) {
+                                diagonal[i] = denseGradient[i * dim + i];
+                            }
+                            return diagonal;
+                        }
+                    }
 
                     DenseMatrix64F gradQInvDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientVarianceWrtAttenuation(node, cdi, statistics, gradQInv);
 
@@ -657,6 +787,88 @@ public interface ContinuousTraitGradientForBranch {
             return 0;
         }
 
+    }
+
+    class SelectionParameterGradient implements ContinuousTraitGradientForBranch {
+
+        private final int dim;
+        private final Tree tree;
+        private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+        private final ContinuousDiffusionIntegrator cdi;
+        private final OUDiffusionModelDelegate diffusionDelegate;
+        private final Parameter requestedParameter;
+        private final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter;
+
+        public SelectionParameterGradient(final int dim,
+                                          final Tree tree,
+                                          final ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          final Parameter requestedParameter,
+                                          final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
+            this.dim = dim;
+            this.tree = tree;
+            this.likelihoodDelegate = likelihoodDelegate;
+            this.cdi = likelihoodDelegate.getIntegrator();
+            if (!(likelihoodDelegate.getDiffusionProcessDelegate() instanceof OUDiffusionModelDelegate)) {
+                throw new IllegalArgumentException("SelectionParameterGradient requires an OUDiffusionModelDelegate");
+            }
+            this.diffusionDelegate = (OUDiffusionModelDelegate) likelihoodDelegate.getDiffusionProcessDelegate();
+            this.requestedParameter = requestedParameter;
+            this.nativeBlockParameter = nativeBlockParameter;
+        }
+
+        @Override
+        public double[] getGradientForBranch(final BranchSufficientStatistics statistics, final NodeRef node) {
+            if (tree.isRoot(node)) {
+                return new double[getDimension()];
+            }
+
+            if (nativeBlockParameter != null) {
+                return diffusionDelegate.getCanonicalNativeOrthogonalBlockGradientSelectionForBranch(
+                        statistics, node, cdi, nativeBlockParameter, requestedParameter);
+            }
+
+            return diffusionDelegate.getCanonicalGradientSelectionForBranch(statistics, node, cdi);
+        }
+
+        @Override
+        public int getParameterIndexFromNode(final NodeRef node) {
+            return 0;
+        }
+
+        @Override
+        public int getDimension() {
+            if (requestedParameter != null) {
+                return requestedParameter.getDimension();
+            }
+            return dim * dim;
+        }
+    }
+
+    class TargetBasedContinuousProcessParameterGradient extends ContinuousProcessParameterGradient {
+
+        private final List<ProcessGradientTarget> targets;
+
+        public TargetBasedContinuousProcessParameterGradient(int dim,
+                                                             Tree tree,
+                                                             ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                             List<ProcessGradientTarget> targets) {
+            super(dim, tree, likelihoodDelegate, toDerivationParameters(targets));
+            this.targets = targets;
+        }
+
+        public List<ProcessGradientTarget> getTargets() {
+            return targets;
+        }
+
+        private static List<ContinuousProcessParameterGradient.DerivationParameter> toDerivationParameters(
+                final List<ProcessGradientTarget> targets) {
+            final List<ContinuousProcessParameterGradient.DerivationParameter> derivations =
+                    new java.util.ArrayList<ContinuousProcessParameterGradient.DerivationParameter>(targets.size());
+            for (ProcessGradientTarget target : targets) {
+                derivations.add(derivationParameterForTarget(target));
+            }
+            return derivations;
+        }
     }
 
 }

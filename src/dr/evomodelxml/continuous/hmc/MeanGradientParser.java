@@ -33,12 +33,10 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDriftGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -57,6 +55,8 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final static String DRIFT = "drift";
     private final static String OPT = "opt";
     private final static String BOTH = "both";
+    private final static String IMPLEMENTATION = "implementation";
+    private final static String IMPLEMENTATION_LEGACY = "legacy";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -74,13 +74,61 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
             mode = ParameterMode.WRT_ROOT;
         } else if (parameterString.compareTo(BOTH) == 0) {
             mode = ParameterMode.WRT_BOTH;
+        } else if (parameterString.compareTo(OPT) == 0) {
+            if (sharesRootMeanParameter(continuousData.getRootPrior().getMeanParameter(), parameter)) {
+                mode = ParameterMode.WRT_BOTH;
+            } else {
+                mode = ParameterMode.WRT_DRIFT;
+            }
+        } else if (parameterString.compareTo(DRIFT) == 0) {
+            mode = ParameterMode.WRT_DRIFT;
         } else {
             DiffusionProcessDelegate diffusionDelegate = continuousData.getDiffusionProcessDelegate();
             assert diffusionDelegate instanceof AbstractDriftDiffusionModelDelegate : "Model does not have drift.";
             assert ((AbstractDriftDiffusionModelDelegate) diffusionDelegate).isConstantDrift() : "Model does not have constant drift.";
-            if (continuousData.getRootPrior().getMeanParameter() == parameter) mode = ParameterMode.WRT_BOTH;
+            if (sharesRootMeanParameter(continuousData.getRootPrior().getMeanParameter(), parameter)) {
+                mode = ParameterMode.WRT_BOTH;
+            }
         }
         return mode;
+    }
+
+    private boolean sharesRootMeanParameter(final Parameter rootMeanParameter, final Parameter candidateParameter) {
+        if (rootMeanParameter == candidateParameter) {
+            return true;
+        }
+        if (rootMeanParameter == null || candidateParameter == null) {
+            return false;
+        }
+
+        final String rootId = rootMeanParameter.getId();
+        final String candidateId = candidateParameter.getId();
+        if (rootId != null && rootId.equals(candidateId)) {
+            return true;
+        }
+
+        if (rootMeanParameter instanceof CompoundParameter && candidateParameter instanceof CompoundParameter) {
+            final CompoundParameter rootCompound = (CompoundParameter) rootMeanParameter;
+            final CompoundParameter candidateCompound = (CompoundParameter) candidateParameter;
+            if (rootCompound.getParameterCount() != candidateCompound.getParameterCount()) {
+                return false;
+            }
+            for (int i = 0; i < rootCompound.getParameterCount(); ++i) {
+                final Parameter rootPart = rootCompound.getParameter(i);
+                final Parameter candidatePart = candidateCompound.getParameter(i);
+                if (rootPart == candidatePart) {
+                    continue;
+                }
+                final String rootPartId = rootPart.getId();
+                final String candidatePartId = candidatePart.getId();
+                if (rootPartId == null || !rootPartId.equals(candidatePartId)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     enum ParameterMode {
@@ -123,12 +171,11 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
 
         ParameterMode parameterMode = parseParameterMode(xo, continuousData, parameter);
 
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
-                        dim, tree, continuousData,
-                        new ArrayList<>(
-                                Arrays.asList(parameterMode.getDerivationParameter())
-                        ));
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+
+        final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(parameterMode.getDerivationParameter());
+        final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(
+                dim, tree, continuousData, implementation);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
@@ -143,6 +190,7 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
             new ElementRule(Parameter.class),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
     };
 
     @Override

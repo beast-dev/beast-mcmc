@@ -135,6 +135,9 @@ public class BranchConditionalDistributionDelegate extends
         } else {
             cdi.getBranchMatrices(branchNumber, precisionIndex, branchPrecision, branchDisplacement, branchActualization);
         }
+        // IMPORTANT: pre-order ("above") partials are indexed at the current node (child-side endpoint
+        // of the branch), not at the parent endpoint. Branch-specific consumers that need parent-side
+        // moments must explicitly map child-side above moments through the branch transition.
         cdi.getPreOrderPartial(nodeNumber, abovePartial);
 
 
@@ -155,7 +158,6 @@ public class BranchConditionalDistributionDelegate extends
 
         return statistics;
     }
-
     private void addOneNode(List<BranchSufficientStatistics> statistics,
                             double[] belowPartial, double[] abovePartial,
                             DiffusionRepresentation branchPrecision,
@@ -185,6 +187,8 @@ public class BranchConditionalDistributionDelegate extends
                         null,
                         choleskyPrecision, likelihoodDelegate.getPrecisionType());
 
+        // "above" here means "message coming from above the node in the tree", but numerically this
+        // object is anchored at the child/node side because it is built from getPreOrderPartial(nodeIndex,...).
         NormalSufficientStatistics above =
                 new NormalSufficientStatistics(abovePartial, nodeIndex, dimTrait,
 //                                Pd,

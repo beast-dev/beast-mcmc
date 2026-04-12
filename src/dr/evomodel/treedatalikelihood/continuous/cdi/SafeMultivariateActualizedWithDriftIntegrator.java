@@ -54,6 +54,93 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         System.err.println("Trying SafeMultivariateActualizedWithDriftIntegrator");
     }
 
+    // Legacy OU strategy hooks kept for compatibility with OUStrategyBundle/OUActualizationStrategies.
+    // Current behavior is unchanged because this integrator already implements the full actualized path.
+    public void useDiagonalOUActualizationStrategy() {
+        // no-op compatibility shim
+    }
+
+    public void useGeneralOUActualizationStrategy() {
+        // no-op compatibility shim
+    }
+
+    public void useBlockOUActualizationStrategy() {
+        // no-op compatibility shim
+    }
+
+    public void performDiagonalSetDiffusionStationaryVariance(final int precisionIndex,
+                                                              final double[] basisValues,
+                                                              final double[] basisRotations) {
+        setDiffusionStationaryVariance(precisionIndex, basisValues, basisRotations);
+    }
+
+    public void performGeneralSetDiffusionStationaryVariance(final int precisionIndex,
+                                                             final double[] basisValues,
+                                                             final double[] basisRotations) {
+        setDiffusionStationaryVariance(precisionIndex, basisValues, basisRotations);
+    }
+
+    public void performBlockSetDiffusionStationaryVariance(final int precisionIndex,
+                                                           final double[] basisValues,
+                                                           final double[] basisRotations) {
+        setDiffusionStationaryVariance(precisionIndex, basisValues, basisRotations);
+    }
+
+    public void performDiagonalUpdateOrnsteinUhlenbeckDiffusionMatrices(final int precisionIndex,
+                                                                         final int[] probabilityIndices,
+                                                                         final double[] edgeLengths,
+                                                                         final double[] optimalRates,
+                                                                         final double[] basisValues,
+                                                                         final double[] basisRotations,
+                                                                         final int updateCount) {
+        updateOrnsteinUhlenbeckDiffusionMatrices(
+                precisionIndex, probabilityIndices, edgeLengths, optimalRates, basisValues, basisRotations, updateCount);
+    }
+
+    public void performGeneralUpdateOrnsteinUhlenbeckDiffusionMatrices(final int precisionIndex,
+                                                                        final int[] probabilityIndices,
+                                                                        final double[] edgeLengths,
+                                                                        final double[] optimalRates,
+                                                                        final double[] basisValues,
+                                                                        final double[] basisRotations,
+                                                                        final int updateCount) {
+        updateOrnsteinUhlenbeckDiffusionMatrices(
+                precisionIndex, probabilityIndices, edgeLengths, optimalRates, basisValues, basisRotations, updateCount);
+    }
+
+    public void performBlockUpdateOrnsteinUhlenbeckDiffusionMatrices(final int precisionIndex,
+                                                                      final int[] probabilityIndices,
+                                                                      final double[] edgeLengths,
+                                                                      final double[] optimalRates,
+                                                                      final double[] basisValues,
+                                                                      final double[] basisRotations,
+                                                                      final int updateCount) {
+        updateOrnsteinUhlenbeckDiffusionMatrices(
+                precisionIndex, probabilityIndices, edgeLengths, optimalRates, basisValues, basisRotations, updateCount);
+    }
+
+    public void performDiagonalUpdateIntegratedOrnsteinUhlenbeckDiffusionMatrices(final int precisionIndex,
+                                                                                   final int[] probabilityIndices,
+                                                                                   final double[] edgeLengths,
+                                                                                   final double[] optimalRates,
+                                                                                   final double[] basisValues,
+                                                                                   final double[] basisRotations,
+                                                                                   final int updateCount) {
+        updateIntegratedOrnsteinUhlenbeckDiffusionMatrices(
+                precisionIndex, probabilityIndices, edgeLengths, optimalRates, basisValues, basisRotations, updateCount);
+    }
+
+    public void performGeneralUpdateIntegratedOrnsteinUhlenbeckDiffusionMatrices(final int precisionIndex,
+                                                                                  final int[] probabilityIndices,
+                                                                                  final double[] edgeLengths,
+                                                                                  final double[] optimalRates,
+                                                                                  final double[] basisValues,
+                                                                                  final double[] basisRotations,
+                                                                                  final int updateCount) {
+        updateIntegratedOrnsteinUhlenbeckDiffusionMatrices(
+                precisionIndex, probabilityIndices, edgeLengths, optimalRates, basisValues, basisRotations, updateCount);
+    }
+
     @Override
     public void getBranchActualization(int bufferIndex, double[] actualization) {
 
@@ -116,6 +203,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         matrixQdjPjp = new DenseMatrix64F(dimTrait, dimTrait);
 
         matrixNiacc = new DenseMatrix64F(dimTrait, 1);
+        transformGeneralTmp = new DenseMatrix64F(dimProcess, dimProcess);
+        transformGeneralRotationInverse = new DenseMatrix64F(dimProcess, dimProcess);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -215,10 +304,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     private void transformMatrixBaseGeneral(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-        DenseMatrix64F tmp = new DenseMatrix64F(dimProcess, dimProcess);
-        CommonOps.mult(rotation, matrix, tmp);
-        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
-        CommonOps.mult(tmp, rotation, matrix);
+        CommonOps.mult(rotation, matrix, transformGeneralTmp);
+        CommonOps.invert(rotation, transformGeneralRotationInverse);
+        CommonOps.mult(transformGeneralTmp, transformGeneralRotationInverse, matrix);
     }
 
     @Override
@@ -263,6 +351,43 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.mult(temp, optVal, displacement);
 
         unwrap(displacement, displacements, pio);
+    }
+
+    public void overrideOrnsteinUhlenbeckBranchMatrices(final int probabilityIndex,
+                                                        final double[] actualization,
+                                                        final double[] variance,
+                                                        final double[] displacement) {
+        if (probabilityIndex < 0) {
+            throw new IllegalArgumentException("probabilityIndex must be non-negative");
+        }
+        final int matrixSize = dimTrait * dimTrait;
+        if (actualization.length < matrixSize) {
+            throw new IllegalArgumentException("Actualization buffer is too small");
+        }
+        if (variance.length < matrixSize) {
+            throw new IllegalArgumentException("Variance buffer is too small");
+        }
+        if (displacement.length < dimTrait) {
+            throw new IllegalArgumentException("Displacement buffer is too small");
+        }
+
+        final int matrixOffset = matrixSize * probabilityIndex;
+        final int displacementOffset = dimTrait * probabilityIndex;
+
+        System.arraycopy(actualization, 0, actualizations, matrixOffset, matrixSize);
+        System.arraycopy(variance, 0, variances, matrixOffset, matrixSize);
+        invertBranchVarianceIntoPrecision(variances, precisions, matrixOffset, dimTrait);
+        System.arraycopy(displacement, 0, displacements, displacementOffset, dimTrait);
+    }
+
+    private static void invertBranchVarianceIntoPrecision(final double[] source,
+                                                          final double[] destination,
+                                                          final int offset,
+                                                          final int dim) {
+        final DenseMatrix64F sourceMatrix = wrap(source, offset, dim, dim);
+        final DenseMatrix64F destinationMatrix = new DenseMatrix64F(dim, dim);
+        symmPosDefInvert(sourceMatrix, destinationMatrix);
+        unwrap(destinationMatrix, destination, offset);
     }
 
     private void computeIOUActualizedDisplacement(final double[] optimalRates,
@@ -570,9 +695,11 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         weightedSum(ipartial, 0, matrixQdiPip, jpartial, 0, matrixQdjPjp, dimTrait, out);
     }
 
-    private double[] actualizations;
+    protected double[] actualizations;
     private DenseMatrix64F matrixQdiPip;
     private DenseMatrix64F matrixQdjPjp;
     private DenseMatrix64F matrixNiacc;
+    private DenseMatrix64F transformGeneralTmp;
+    private DenseMatrix64F transformGeneralRotationInverse;
     private final boolean isActualizationSymmetric;
 }

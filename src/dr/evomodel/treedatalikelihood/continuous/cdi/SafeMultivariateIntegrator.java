@@ -517,7 +517,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         }
 
         // A. Get current precision of i and j
-        final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+        DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
 
         if (TIMING) {
             endTime("peel1");
@@ -535,7 +535,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
             if (allZeroOrInfinite(Vip)) {
-                throw new RuntimeException("Zero-length branch on data is not allowed.");
+                Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+                CommonOps.scale(1.0, Pi, Pip);  // Pip := Pi
+                return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY);
+//                throw new RuntimeException("Zero-length branch on data is not allowed.");
             }
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
@@ -631,7 +634,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         int rootOffset = dimPartial * rootBufferIndex;
         int priorOffset = dimPartial * priorBufferIndex;
 
-        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimProcess, dimProcess);
+        // THIS IS THE INSTANTANEOUS PRECISION
+        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimProcess, dimProcess); //TODO THIS IS THE INSTANTANEOUS PRECISION
 //        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
         // TODO For each trait in parallel
@@ -639,7 +643,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             final DenseMatrix64F PPrior = wrap(partials, priorOffset + dimTrait, dimTrait, dimTrait);
             final DenseMatrix64F VPrior = wrap(partials, priorOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+// TODO VPRIOR IS JUST THE INVERSE OF PPRIOR
+            if (DEBUG) {
+//                System.out.println("SS root trait " + trait + ": " + Arrays.toString(PPrior.getData()));
 
+            }
 
             // TODO Block below is for the conjugate prior ONLY
             {
@@ -647,6 +655,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 if (!isIntegratedProcess) {
                     final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
                     CommonOps.mult(Pd, PPrior, PTmp);
+//                    CommonOps.mult(Pd, PPrior, PTmp);
+//                    CommonOps.multTransB(PTmp, Pd, PPrior); //weighting by the instantaneous precision
                     PPrior.set(PTmp); // TODO What does this do?
                 } else {
                     DenseMatrix64F Pdbis = new DenseMatrix64F(dimTrait, dimTrait);
@@ -663,19 +673,28 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             final DenseMatrix64F PTotal = new DenseMatrix64F(dimTrait, dimTrait);
             CommonOps.invert(VTotal, PTotal);  // TODO Does this do anything?
-
+//            System.out.println("Vtotal " + trait + ": " + Arrays.toString(VTotal.getData()));
+//            System.out.println("Ptotal " + trait + ": " + Arrays.toString(PTotal.getData()));
             InversionResult ctot = increaseVariances(rootOffset, rootBufferIndex, VPrior, PPrior, PTotal, true);
 
             double SS = weightedInnerProductOfDifferences(
                     partials, rootOffset,
                     partials, priorOffset,
                     PTotal, dimTrait);
+            if (DEBUG) {
+                System.out.println("SS root trait " + trait + ": " + SS);
+            }
 
             double dettot = (ctot.getReturnCode() == NOT_OBSERVED) ? 0 : ctot.getLogDeterminant();
-
+//            System.out.println("det root trait " + trait + ": " + dettot);
+            if (DEBUG) {
+//                System.err.println("partials: " + Arrays.toString(partials));
+//                throw new RuntimeException("Stop here");
+            }
             final double logLike = -0.5 * dettot - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
+//            System.out.println("remainder " + remainder);
             logLikelihoods[trait] = logLike + remainder;
 
             if (DEBUG) {

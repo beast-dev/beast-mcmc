@@ -186,6 +186,24 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
         return eigenDecompositionStrengthOfSelection.getEigenVectors();
     }
 
+    /**
+     * Basis values used by OU transition/actualization code.
+     * For block parametrizations this returns the native compressed block basis.
+     * For legacy parametrizations this returns eigen values.
+     */
+    public double[] getActualizationBasisValues() {
+        return hasBlockStructure() ? getSelectionBasisValues() : getEigenValuesStrengthOfSelection();
+    }
+
+    /**
+     * Basis rotations used by OU transition/actualization code.
+     * For block parametrizations this returns [R | R^{-1}] (concatenated).
+     * For legacy parametrizations this returns the eigen-vector matrix.
+     */
+    public double[] getActualizationBasisRotations() {
+        return hasBlockStructure() ? getSelectionBasisRotations() : getEigenVectorsStrengthOfSelection();
+    }
+
     // *****************************************************************
     // Parametrization
     // *****************************************************************

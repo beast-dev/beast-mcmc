@@ -214,7 +214,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     );
                 } else {
                     if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                        final OUDiffusionModelDelegate ouDelegate =
+                                (OUDiffusionModelDelegate) diffusionProcessDelegate;
+                        if (ouDelegate.hasDiagonalActualization()) {
                             base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
@@ -223,16 +225,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     partialBufferCount,
                                     matrixBufferCount
                             );
-                        } else {
-                            base = new SafeMultivariateActualizedWithDriftIntegrator(
+                        } else if (ouDelegate.getElasticModel().hasBlockStructure()
+                                && ouDelegate.getElasticModel().hasOrthogonalActualizationBasis()) {
+                            base = new SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
                                     dimTrait,
                                     dimTrait,
                                     partialBufferCount,
-                                    matrixBufferCount,
-                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                                    matrixBufferCount
                             );
+                        } else {
+                            final SafeMultivariateActualizedWithDriftIntegrator actualizedIntegrator =
+                                    new SafeMultivariateActualizedWithDriftIntegrator(
+                                            precisionType,
+                                            numTraits,
+                                            dimTrait,
+                                            dimTrait,
+                                            partialBufferCount,
+                                            matrixBufferCount,
+                                            ouDelegate.isSymmetric()
+                                    );
+                            ouDelegate.getOUStrategyBundle().applyTo(actualizedIntegrator);
+                            base = actualizedIntegrator;
                         }
                     } else {
                         if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
@@ -549,6 +564,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
+            // Keep report diagnostics aligned with the runtime pruning likelihood path.
+            // The report-side closed form is useful for inspection but can drift from runtime in
+            // some OU pathways where branch-level kernels are computed through CDI updates.
+            logDensity = callbackLikelihood.getLogLikelihood();
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
 
@@ -861,7 +880,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (double d : logLikelihoods) {
             logL += d;
         }
-
         return logL;
     }
 

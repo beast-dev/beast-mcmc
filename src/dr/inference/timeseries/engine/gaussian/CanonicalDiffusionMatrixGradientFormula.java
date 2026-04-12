@@ -1,0 +1,101 @@
+package dr.inference.timeseries.engine.gaussian;
+
+import dr.inference.model.Parameter;
+import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
+import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
+
+/**
+ * Diffusion gradient formula driven by branch-local canonical posterior states.
+ */
+public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalGradientFormula {
+
+    private final DiffusionMatrixParameterization diffusionParameterization;
+    private final int stateDimension;
+    private final OUProcessModel processModel;
+
+    private final CanonicalBranchPosterior branchPosterior;
+    private final CanonicalBranchMessageContribution localContribution;
+    private final CanonicalLocalTransitionAdjoints localAdjoints;
+    private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
+
+    public CanonicalDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
+                                                   final int stateDimension) {
+        this(null, diffusionParameterization, stateDimension);
+    }
+
+    public CanonicalDiffusionMatrixGradientFormula(final OUProcessModel processModel,
+                                                   final DiffusionMatrixParameterization diffusionParameterization,
+                                                   final int stateDimension) {
+        if (diffusionParameterization == null) {
+            throw new IllegalArgumentException("diffusionParameterization must not be null");
+        }
+        if (stateDimension < 1) {
+            throw new IllegalArgumentException("stateDimension must be at least 1");
+        }
+        this.processModel = processModel;
+        this.diffusionParameterization = diffusionParameterization;
+        this.stateDimension = stateDimension;
+
+        this.branchPosterior = new CanonicalBranchPosterior(stateDimension);
+        this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
+        this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
+        this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+    }
+
+    @Override
+    public boolean supportsParameter(final Parameter parameter) {
+        return diffusionParameterization.supportsParameter(parameter);
+    }
+
+    @Override
+    public double[] computeGradient(final Parameter parameter,
+                                    final CanonicalForwardTrajectory trajectory,
+                                    final GaussianTransitionRepresentation repr,
+                                    final TimeGrid timeGrid) {
+        final int d = stateDimension;
+        final int T = trajectory.timeCount;
+        final double[] gradientAccumulator = new double[d * d];
+        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
+                getOrthogonalParameterizationIfAvailable();
+
+        for (int t = 0; t < T - 1; ++t) {
+            branchPosterior.fillFromCanonicalPairState(trajectory.branchPairStates[t]);
+            branchPosterior.fillLocalMessageContribution(localContribution);
+            CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                    trajectory.transitions[t],
+                    localContribution,
+                    canonicalAdjointWorkspace,
+                    localAdjoints);
+            if (orthogonalParameterization != null) {
+                orthogonalParameterization.accumulateDiffusionGradient(
+                        processModel.getDiffusionMatrix(),
+                        timeGrid.getDelta(t, t + 1),
+                        localAdjoints.dLogL_dOmega,
+                        gradientAccumulator);
+            } else {
+                repr.accumulateDiffusionGradient(
+                        t, t + 1, timeGrid, localAdjoints.dLogL_dOmega, gradientAccumulator);
+            }
+        }
+
+        if (parameter == diffusionParameterization.getMatrixParameter()) {
+            return gradientAccumulator;
+        }
+        return diffusionParameterization.pullBackGradient(parameter, gradientAccumulator);
+    }
+
+    private OrthogonalBlockDiagonalSelectionMatrixParameterization getOrthogonalParameterizationIfAvailable() {
+        if (processModel == null) {
+            return null;
+        }
+        if (processModel.getSelectionMatrixParameterization()
+                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+            return (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                    processModel.getSelectionMatrixParameterization();
+        }
+        return null;
+    }
+}

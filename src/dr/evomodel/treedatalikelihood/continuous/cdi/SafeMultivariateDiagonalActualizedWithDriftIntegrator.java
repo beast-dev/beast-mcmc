@@ -64,14 +64,28 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         assert (diagonal1mActualization != null);
         assert (diagonal1mActualization.length >= dimTrait);
 
-        System.arraycopy(diagonal1mActualizations, bufferIndex * dimTrait,
-                diagonal1mActualization, 0, dimTrait);
+        final int sourceOffset = bufferIndex * dimTrait;
+        if (diagonal1mActualization.length >= dimTrait * dimTrait) {
+            Arrays.fill(diagonal1mActualization, 0, dimTrait * dimTrait, 0.0);
+            for (int i = 0; i < dimTrait; ++i) {
+                diagonal1mActualization[i * dimTrait + i] = diagonal1mActualizations[sourceOffset + i];
+            }
+        } else {
+            System.arraycopy(diagonal1mActualizations, sourceOffset,
+                    diagonal1mActualization, 0, dimTrait);
+        }
     }
 
     @Override
     public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
         getBranch1mActualization(bufferIndex, diagonalActualization);
-        oneMinus(diagonalActualization);
+        if (diagonalActualization.length >= dimTrait * dimTrait) {
+            for (int i = 0; i < dimTrait; ++i) {
+                diagonalActualization[i * dimTrait + i] = 1.0 - diagonalActualization[i * dimTrait + i];
+            }
+        } else {
+            oneMinus(diagonalActualization);
+        }
     }
 
     @Override
@@ -302,6 +316,35 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         symmPosDefInvert(sourceMatrix, destinationMatrix);
 
         unwrap(destinationMatrix, destination, offset);
+    }
+
+    public void overrideOrnsteinUhlenbeckBranchMatrices(final int probabilityIndex,
+                                                        final double[] actualization,
+                                                        final double[] variance,
+                                                        final double[] displacement) {
+        if (probabilityIndex < 0) {
+            throw new IllegalArgumentException("probabilityIndex must be non-negative");
+        }
+        if (actualization.length < dimTrait) {
+            throw new IllegalArgumentException("Diagonal actualization buffer is too small");
+        }
+        if (variance.length < dimTrait * dimTrait) {
+            throw new IllegalArgumentException("Variance buffer is too small");
+        }
+        if (displacement.length < dimTrait) {
+            throw new IllegalArgumentException("Displacement buffer is too small");
+        }
+
+        final int actualizationOffset = dimTrait * probabilityIndex;
+        final int matrixOffset = dimTrait * dimTrait * probabilityIndex;
+
+        for (int i = 0; i < dimTrait; ++i) {
+            diagonal1mActualizations[actualizationOffset + i] = 1.0 - actualization[i];
+        }
+
+        System.arraycopy(variance, 0, variances, matrixOffset, dimTrait * dimTrait);
+        invertVectorSymmPosDef(variances, precisions, matrixOffset, dimTrait);
+        System.arraycopy(displacement, 0, displacements, actualizationOffset, dimTrait);
     }
 
     void computeOUActualizedDisplacement(final double[] optimalRates,

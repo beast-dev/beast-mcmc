@@ -33,6 +33,12 @@ import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 
 /**
+ * Gaussian sufficient statistics container (mean + precision/variance view).
+ *
+ * Coordinate-system note: this class is representation-agnostic. In branch-preorder workflows, callers often
+ * pass pre-order ("above") partials that are anchored at the current node (child-side branch endpoint), not at
+ * the parent-side endpoint. Any parent-side interpretation must be performed explicitly by the caller.
+ *
  * @author Marc A. Suchard
  */
 public class NormalSufficientStatistics {

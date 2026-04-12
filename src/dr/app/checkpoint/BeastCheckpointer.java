@@ -36,6 +36,7 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.AbstractComputedCompoundMatrix;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -71,6 +72,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     public final static String FORCE_RESUME = "force.resume";
     public final static String CHECKPOINT_SEED = "checkpoint.seed";
+    public final static String DEBUG_UNUSED_CHECKPOINT_PARAMETERS = "checkpoint.debug.unused.parameters";
+    public final static String DEBUG_LIKELIHOOD_COMPONENTS = "checkpoint.debug.likelihood.components";
 
     public final static String FULL_CHECKPOINT_PRECISION = "full.checkpoint.precision";
 
@@ -248,6 +251,13 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }
                     if (Math.abs(lnL - savedLnL) > threshold) {
+                        if (Boolean.parseBoolean(System.getProperty(DEBUG_LIKELIHOOD_COMPONENTS, "false"))) {
+                            System.err.println("Likelihood components at resumed state:");
+                            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+                                final String id = likelihood.getId() == null ? "<null>" : likelihood.getId();
+                                System.err.println("  " + id + " = " + likelihood.getLogLikelihood());
+                            }
+                        }
                         throw new RuntimeException("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
                                 "\nYour XML may require the construction of a randomly generated starting tree. " +
@@ -294,6 +304,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
                 if (!parameter.isImmutable()) {
+                    if (!isCheckpointRestorableParameter(parameter)) {
+                        continue;
+                    }
                     out.print("parameter");
                     out.print("\t");
                     out.print(parameter.getParameterName());
@@ -481,53 +494,89 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
+            // Parse all serialized parameter lines first (supports duplicates via queue).
+            line = in.readLine();
+            final Map<String, Deque<String[]>> serializedParameters = new HashMap<String, Deque<String[]>>();
+            while (line != null && line.startsWith("parameter\t")) {
+                fields = line.split("\t");
+                if (fields.length >= 4) {
+                    final String serializedName = fields[1];
+                    if (!serializedParameters.containsKey(serializedName)) {
+                        serializedParameters.put(serializedName, new ArrayDeque<String[]>());
+                    }
+                    serializedParameters.get(serializedName).addLast(fields);
+                }
+                line = in.readLine();
+            }
+
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                if (parameter.isImmutable()) {
+                    continue;
+                }
+                final String parameterName = parameter.getParameterName();
+                final String serializedKey = (parameterName == null) ? "null" : parameterName;
+                final boolean restorable = isCheckpointRestorableParameter(parameter);
 
-                if (!parameter.isImmutable()) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    //if (!fields[0].equals(parameter.getParameterName())) {
-                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                    //}
-                    int dimension = Integer.parseInt(fields[2]);
-
-                    if (dimension != parameter.getDimension()) {
-                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                        System.err.print("Read from file: ");
-                        for (int i = 0; i < fields.length; i++) {
-                            System.err.print(fields[i] + "\t");
-                        }
-                        System.err.println();
+                final Deque<String[]> queue = serializedParameters.get(serializedKey);
+                if (queue == null || queue.isEmpty()) {
+                    if (!restorable) {
+                        continue;
                     }
+                    throw new RuntimeException("Unable to find checkpoint entry for parameter: " + serializedKey);
+                }
 
-                    if (fields[1].endsWith(".rootNodeNumber")) {
-                        // System.out.println("eek");
-                        double value = parser.parseDouble(fields[3]);
-                        parameter.setParameterValue(0, value);
-                        if (DEBUG) {
-                            System.out.println("restoring " + fields[1] + " with value " + value);
-                        }
-                    } else {
-                        if (DEBUG) {
-                            System.out.print("restoring " + fields[1] + " with values ");
-                        }
-                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                            // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
+                fields = queue.removeFirst();
+                int dimension = Integer.parseInt(fields[2]);
 
-                            try {
-                                parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
-                            } catch (RuntimeException rte) {
-                                System.err.println(rte);
-                                continue;
-                            }
-                            if (DEBUG) {
-                                System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
-                            }
-                        }
+                if (dimension != parameter.getDimension()) {
+                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + serializedKey);
+                    System.err.print("Read from file: ");
+                    for (int i = 0; i < fields.length; i++) {
+                        System.err.print(fields[i] + "\t");
+                    }
+                    System.err.println();
+                    continue;
+                }
+
+                if (!restorable) {
+                    continue;
+                }
+
+                if (fields[1].endsWith(".rootNodeNumber")) {
+                    double value = parser.parseDouble(fields[3]);
+                    parameter.setParameterValue(0, value);
+                    if (DEBUG) {
+                        System.out.println("restoring " + fields[1] + " with value " + value);
+                    }
+                } else {
+                    if (DEBUG) {
+                        System.out.print("restoring " + fields[1] + " with values ");
+                    }
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
                         if (DEBUG) {
-                            System.out.println();
+                            System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
                         }
                     }
+                    if (DEBUG) {
+                        System.out.println();
+                    }
+                }
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(DEBUG_UNUSED_CHECKPOINT_PARAMETERS, "false"))) {
+                int unusedEntries = 0;
+                for (Map.Entry<String, Deque<String[]>> entry : serializedParameters.entrySet()) {
+                    final int remaining = entry.getValue() == null ? 0 : entry.getValue().size();
+                    if (remaining > 0) {
+                        unusedEntries += remaining;
+                        System.err.println("Checkpoint parameter entries not consumed for name '" + entry.getKey() + "': " + remaining);
+                    }
+                }
+                if (unusedEntries > 0) {
+                    System.err.println("Total unused checkpoint parameter entries: " + unusedEntries);
+                } else {
+                    System.err.println("All checkpoint parameter entries were consumed.");
                 }
             }
 
@@ -537,7 +586,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 //TODO does not only apply to the operators but also to the parameters
                 //TODO test using additional tip-date sampling compared to previous run
                 MCMCOperator operator = operatorSchedule.getOperator(i);
-                line = in.readLine();
+                if (line == null) {
+                    throw new RuntimeException("Unexpected end of checkpoint while reading operators");
+                }
                 fields = line.split("\t");
                 if (!fields[1].equals(operator.getOperatorName())) {
                     throw new RuntimeException("Unable to match " + operator.getOperatorName() + " operator: " + fields[1]);
@@ -554,6 +605,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     ((AdaptableMCMCOperator)operator).setAdaptableParameter(parser.parseDouble(fields[4]));
                     ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
                 }
+                line = in.readLine();
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
@@ -631,8 +683,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
             }
 
             if (hasTreeModel) {
-
-                line = in.readLine();
+                if (line == null) {
+                    throw new RuntimeException("Unexpected end of checkpoint before reading tree models");
+                }
                 fields = line.split("\t");
                 // Read in all (possibly more than one) trees
                 while (fields[0].equals("tree")) {
@@ -765,10 +818,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
             in.close();
             fileIn.close();
 
-            //This shouldn't be necessary and if it is then it might be hiding a bug...
-            /*for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+            // Ensure resumed state is recomputed from restored variable values rather than stale cached messages.
+            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
                 likelihood.makeDirty();
-            }*/
+            }
 
         } catch (IOException ioe) {
             throw new RuntimeException("Unable to read file: " + ioe.getMessage());
@@ -855,6 +908,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
         };
 
         public abstract double parseDouble(String string);
+    }
+
+    private static boolean isCheckpointRestorableParameter(final Parameter parameter) {
+        return !(parameter instanceof AbstractComputedCompoundMatrix);
     }
 
 }

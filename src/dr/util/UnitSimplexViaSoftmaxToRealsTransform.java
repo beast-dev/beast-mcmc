@@ -110,22 +110,30 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
 
     @Override
     public double[] getGradientLogJacobianInverse(double[] valuesOnReals) {
+        // Let x = inverse(y) be simplex coordinates and z be sum-to-zero coordinates.
+        // getLogJacobian(x) = const + sum_i log x_i, therefore:
+        // d/dz_j log|J_inverse(y)| = d/dz_j [-getLogJacobian(x(z))]
+        //                         = K * x_j - 1, where K = simplex dimension (= dim).
+        //
+        // Chain rule to unconstrained coordinates y:
+        // grad_y = grad_z * (dz/dy), with dz/dy supplied by the sum-to-zero Jacobian.
+        final double[] valuesOnSimplex = inverse(valuesOnReals);
+        final double[][] sumToZeroJacobianT = sumToZeroTransform.computeJacobianMatrixInverse(valuesOnReals);
 
-        double[] valuesOnSimplex = inverse(valuesOnReals);
-//        double[][] computeJacobianMatrixInverse
+        final int inputLength = valuesOnReals.length;
+        final int activeLength = Math.min(inputLength, sumToZeroJacobianT.length);
+        final double[] gradient = new double[inputLength];
 
-        double[][] partial = new double[1][dim];
-        for (int i = 0; i < dim; ++i) {
-            partial[0][i] = 1 / valuesOnSimplex[i];
+        for (int i = 0; i < activeLength; ++i) {
+            double gi = 0.0;
+            for (int j = 0; j < dim; ++j) {
+                final double gradZj = dim * valuesOnSimplex[j] - 1.0;
+                gi += gradZj * sumToZeroJacobianT[i][j];
+            }
+            gradient[i] = gi;
         }
 
-        double[][] chain = sumToZeroTransform.computeJacobianMatrixInverse(valuesOnReals);
-//        return multiply(jacobian, false, chain, true, dim, dim,  dim -1 ); // TODO compute everything in place!
-        double[][] product = multiply(partial, false, chain, true, 1, dim, dim - 1);
-
-        return product[0];
-
-//        return chain;
+        return gradient;
     }
 
     // ************************************************************************* //
@@ -221,4 +229,3 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
         }
     };
 }
-

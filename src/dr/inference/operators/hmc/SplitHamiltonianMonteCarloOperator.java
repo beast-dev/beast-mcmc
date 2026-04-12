@@ -111,19 +111,21 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             throw new RuntimeException("Unequal dimensions");
         }
 
+        final GradientCheckSnapshot snapshot = new GradientCheckSnapshot(parameter, joint);
+        final double[] rawSnapshot = snapshot.rawSnapshot();
+
         MultivariateFunction numeric = new MultivariateFunction() {
 
             @Override
             public double evaluate(double[] argument) {
 
                 if (!anyTransform()) {
-
-                    ReadableVector.Utils.setParameter(argument, parameter);
+                    snapshot.setRawAndDirty(argument);
                     return joint.getLogLikelihood();
                 } else {
 
                     double[] untransformedValue = jointTransformInverse(argument);
-                    ReadableVector.Utils.setParameter(untransformedValue, parameter);
+                    snapshot.setRawAndDirty(untransformedValue);
                     return joint.getLogLikelihood() - transformGetLogJacobian(untransformedValue);
                 }
             }
@@ -144,13 +146,12 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             }
         };
 
+        snapshot.restoreAndDirty();
         double[] analyticalGradientOriginal = mergeGradient();
-
-        double[] restoredParameterValue = parameter.getParameterValues();
 
         if (!anyTransform()) {
 
-            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, rawSnapshot);
 
             if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, gradientCheckTolerance)) {
 
@@ -178,7 +179,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             }
         }
 
-        ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
+        snapshot.restoreAndDirty();
     }
 
     private boolean anyTransform() {

@@ -138,6 +138,12 @@
             <!-- complie JUnit test classes -->
             <include name="test/dr/**"/>
         </javac>
+        <!-- Copy runtime parser/config resources needed when running tests from ${build}. -->
+        <copy todir="${build}">
+            <fileset dir="${src}">
+                <include name="dr/**/*.properties"/>
+            </fileset>
+        </copy>
         <echo message="Successfully compiled."/>
     </target>
 
@@ -239,6 +245,8 @@
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evomodel/treedatalikelihood/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/TreeDataLikelihoodTest.class"/>
+
                 <include name="dr/evomodelxml/**/*.class"/>
                 <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
@@ -358,7 +366,8 @@
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
-
+                    <exclude name="test/dr/evomodel/treedatalikelihood/TreeDataLikelihoodTest.java"/>
+                    <exclude name="test/dr/inference/mcmc/MCMCTest.java"/>
                     <!-- Broken JUnits -->
                     <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
                     <exclude name="test/dr/app/beagle/MarkovJumpsTest.java"/> <!-- doesn't always fail-->

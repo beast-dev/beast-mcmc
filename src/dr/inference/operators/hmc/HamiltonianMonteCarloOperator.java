@@ -27,7 +27,9 @@
 
 package dr.inference.operators.hmc;
 
+import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.JointGradient;
 import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
@@ -239,19 +241,21 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             throw new RuntimeException("Unequal dimensions");
         }
 
+        final GradientCheckSnapshot snapshot = new GradientCheckSnapshot(parameter, joint);
+        final double[] rawSnapshot = snapshot.rawSnapshot();
+
         MultivariateFunction numeric = new MultivariateFunction() {
 
             @Override
             public double evaluate(double[] argument) {
 
                 if (transform == null) {
-
-                    ReadableVector.Utils.setParameter(argument, parameter);
+                    snapshot.setRawAndDirty(argument);
                     return joint.getLogLikelihood();
                 } else {
 
                     double[] untransformedValue = transform.inverse(argument, 0, argument.length);
-                    ReadableVector.Utils.setParameter(untransformedValue, parameter);
+                    snapshot.setRawAndDirty(untransformedValue);
                     return joint.getLogLikelihood() - transform.logJacobian(untransformedValue, 0, untransformedValue.length);
                 }
             }
@@ -272,12 +276,35 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             }
         };
 
+        MultivariateFunction numericRaw = new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+                snapshot.setRawAndDirty(argument);
+                return joint.getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return parameter.getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return parameter.getBounds().getLowerLimit(n);
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return parameter.getBounds().getUpperLimit(n);
+            }
+        };
+
+        snapshot.restoreAndDirty();
         double[] analyticalGradientOriginal = gradientProvider.getGradientLogDensity();
-        double[] restoredParameterValue = parameter.getParameterValues();
 
         if (transform == null) {
 
-            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+            double[] numericGradientOriginal = computeNumericGradient(numeric, rawSnapshot);
 
             if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
 
@@ -290,25 +317,81 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         } else {
 
-            double[] transformedParameter = transform.transform(parameter.getParameterValues(), 0,
-                    parameter.getParameterValues().length);
-            double[] numericGradientTransformed = NumericalDerivative.gradient(numeric, transformedParameter);
+            double[] transformedParameter = transform.transform(rawSnapshot, 0, rawSnapshot.length);
+            double[] numericGradientTransformed = computeNumericGradient(numeric, transformedParameter);
 
             double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
-                    parameter.getParameterValues(), 0, parameter.getParameterValues().length);
+                    rawSnapshot, 0, rawSnapshot.length);
 
             if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
-                String sb = "Transformed Gradients do not match:\n" +
-                        "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n" +
-                        "\tParameter : " + new WrappedVector.Raw(parameter.getParameterValues()) + "\n" +
-                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n" +
-                        gradientMismatchInformation(analyticalGradientTransformed, numericGradientTransformed);
-                throw new RuntimeException(sb);
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Transformed Gradients do not match:\n")
+                  .append("\tAnalytic: ").append(new WrappedVector.Raw(analyticalGradientTransformed)).append("\n")
+                  .append("\tNumeric : ").append(new WrappedVector.Raw(numericGradientTransformed)).append("\n")
+                  .append("\tParameter : ").append(new WrappedVector.Raw(rawSnapshot)).append("\n")
+                  .append("\tTransformed Parameter : ").append(new WrappedVector.Raw(transformedParameter)).append("\n")
+                  .append(gradientMismatchInformation(analyticalGradientTransformed, numericGradientTransformed));
+
+                if (Boolean.getBoolean("beast.debug.hmcGradientRawMismatch")) {
+                    final double[] numericGradientOriginal = computeNumericGradient(numericRaw, rawSnapshot);
+                    sb.append("\tRaw-space analytic : ").append(new WrappedVector.Raw(analyticalGradientOriginal)).append("\n")
+                      .append("\tRaw-space numeric  : ").append(new WrappedVector.Raw(numericGradientOriginal)).append("\n")
+                      .append(gradientMismatchInformation(analyticalGradientOriginal, numericGradientOriginal));
+                }
+                maybeAppendParameterDiffusionReplayDebug(sb);
+
+                throw new RuntimeException(sb.toString());
             }
         }
 
-        ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
+        snapshot.restoreAndDirty();
+    }
+
+    private void maybeAppendParameterDiffusionReplayDebug(final StringBuilder sb) {
+        if (!Boolean.getBoolean("beast.debug.parameterDiffusionReplay.onMismatch")) {
+            return;
+        }
+        final StringBuilder replay = new StringBuilder();
+        appendParameterDiffusionReplayDebugRecursive(gradientProvider, replay);
+        if (replay.length() > 0) {
+            sb.append("\tParameterDiffusion replay debug:\n");
+            sb.append(replay);
+        }
+    }
+
+    private void appendParameterDiffusionReplayDebugRecursive(final GradientWrtParameterProvider provider,
+                                                              final StringBuilder out) {
+        if (provider == null) {
+            return;
+        }
+
+        if (provider instanceof JointGradient) {
+            for (GradientWrtParameterProvider child : ((JointGradient) provider).getDerivativeList()) {
+                appendParameterDiffusionReplayDebugRecursive(child, out);
+            }
+            return;
+        }
+
+        if (provider instanceof CompoundGradient) {
+            for (GradientWrtParameterProvider child : ((CompoundGradient) provider).getDerivativeList()) {
+                appendParameterDiffusionReplayDebugRecursive(child, out);
+            }
+            return;
+        }
+
+        if (provider instanceof dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient) {
+            final dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient pdg =
+                    (dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient) provider;
+            out.append(pdg.getSingleStateReplayDebug()).append('\n');
+        }
+    }
+
+    private double[] computeNumericGradient(final MultivariateFunction numeric,
+                                            final double[] point) {
+        if (Boolean.getBoolean("beast.debug.hmcGradientUseFourthOrderFD")) {
+            return NumericalDerivative.gradient4thOrder(numeric, point);
+        }
+        return NumericalDerivative.gradient(numeric, point);
     }
 
     private String gradientMismatchInformation(double[] analyticGradient, double[] numericGradient) {

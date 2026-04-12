@@ -46,7 +46,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
                                         Likelihood likelihood,
                                         MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter, -1.0, 1.0);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
     }
 
     @Override
@@ -60,22 +60,21 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
     }
 
     protected Parameter getNumericalParameter() {
-        return compoundSymmetricMatrix.getOffDiagonalParameter();
+        return getParameter();
     }
 
     @Override
     String checkNumeric(double[] analytic) {
 
-        System.err.println("Numeric at: \n" + new Vector(compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues()));
+        System.err.println("Numeric at: \n" + new Vector(getNumericalParameter().getParameterValues()));
 
-        double[] storedValues = compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues();
+        double[] storedValues = getNumericalParameter().getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
-        double[] testGradientTrans = compoundSymmetricMatrix.updateGradientCorrelation(testGradient);
         for (int i = 0; i < storedValues.length; ++i) {
-            compoundSymmetricMatrix.getOffDiagonalParameter().setParameterValue(i, storedValues[i]);
+            getNumericalParameter().setParameterValue(i, storedValues[i]);
         }
 
-        return getReportString(analytic, testGradient, testGradientTrans);
+        return getReportString(analytic, testGradient);
     }
 
     @Override
@@ -97,7 +96,19 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
 
     @Override
     public String getReport() {
+        final double[] analytic = getGradientLogDensity();
+        final String numericDetails = checkNumeric(analytic);
+
+        final double[] storedValues = getNumericalParameter().getParameterValues();
+        final double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
+        for (int i = 0; i < storedValues.length; ++i) {
+            getNumericalParameter().setParameterValue(i, storedValues[i]);
+        }
+
         return "correlationGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
-                super.getReport();
+                "Gradient\n" +
+                "analytic: " + new Vector(analytic) + "\n" +
+                "numeric : " + new Vector(testGradient) + "\n\n" +
+                numericDetails;
     }
 }

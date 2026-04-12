@@ -126,6 +126,11 @@ public class NumericalDerivative
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
 		}
+
+		// Ensure side-effecting functions are restored to x at method exit.
+		// Some callers (e.g., parameter-setting wrappers used for gradient checks)
+		// mutate model state inside evaluate(...).
+		f.evaluate(x);
 	}
 
 	/**
@@ -157,6 +162,9 @@ public class NumericalDerivative
 
 			grad[i] = (-fxPlus2H + 8 * fxPlusH - 8 * fxMinusH + fxMinus2H) / (12 * h);
 		}
+
+		// Ensure side-effecting functions are restored to x at method exit.
+		f.evaluate(x);
 	}
 
 	/**

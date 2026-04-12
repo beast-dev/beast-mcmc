@@ -103,7 +103,8 @@ public class CompoundGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(GradientWrtParameterProvider.class, 1, Integer.MAX_VALUE),
+            new ElementRule(GradientWrtParameterProvider.class, 0, Integer.MAX_VALUE),
+            new ElementRule(MultivariateDistributionLikelihood.class, 0, Integer.MAX_VALUE),
     };
 
     @Override

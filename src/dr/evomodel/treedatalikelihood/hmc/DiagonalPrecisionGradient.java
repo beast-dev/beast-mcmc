@@ -44,7 +44,7 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient impleme
                                      Likelihood likelihood,
                                      MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter, 0.0, Double.POSITIVE_INFINITY);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, Double.POSITIVE_INFINITY, 0.0);
     }
 
     @Override

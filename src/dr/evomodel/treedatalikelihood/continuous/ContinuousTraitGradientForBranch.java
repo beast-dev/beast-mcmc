@@ -452,6 +452,8 @@ public interface ContinuousTraitGradientForBranch {
 
         public enum DerivationParameter {
             WRT_VARIANCE {
+                private static final String USE_LEGACY_OU_VARIANCE_GRADIENT_PROPERTY =
+                        "beast.experimental.ouVarianceLegacy";
                 @Override
                 public double[] chainRule(ContinuousDiffusionIntegrator cdi,
                                           DiffusionProcessDelegate diffusionProcessDelegate,
@@ -459,6 +461,11 @@ public interface ContinuousTraitGradientForBranch {
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
                     if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        if (Boolean.getBoolean(USE_LEGACY_OU_VARIANCE_GRADIENT_PROPERTY)) {
+                            return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
+                                    .getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv)
+                                    .getData();
+                        }
                         return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
                                 .getCanonicalGradientVarianceForBranch(statistics, node, cdi);
                     }
@@ -479,7 +486,11 @@ public interface ContinuousTraitGradientForBranch {
                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                               BranchSufficientStatistics statistics, NodeRef node,
                                               final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
-
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
+                                .rootGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv)
+                                .getData();
+                    }
                     return chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
 
                 }

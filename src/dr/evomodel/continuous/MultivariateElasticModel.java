@@ -30,7 +30,11 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeAttributeProvider;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.*;
+import dr.inference.model.OrthogonalMatrixProvider;
+import dr.inference.timeseries.gaussian.SelectionMatrixParameterization;
+import dr.inference.timeseries.gaussian.SelectionMatrixParameterizationFactory;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.Complex64F;
 import org.ejml.data.DenseMatrix64F;
@@ -74,6 +78,9 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
         }
 
         isSymmetric = strengthOfSelectionMatrixParameter.isConstrainedSymmetric();
+        selectionMatrixParameterization =
+                SelectionMatrixParameterizationFactory.create(strengthOfSelectionMatrixParameter);
+        hasOrthogonalActualizationBasis = inferOrthogonalActualizationBasis(strengthOfSelectionMatrixParameter);
 
         calculateSelectionInfo();
         addVariable(strengthOfSelectionMatrixParameter);
@@ -93,6 +100,10 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     public MatrixParameterInterface getStrengthOfSelectionMatrixParameter() {
         checkVariableChanged();
         return strengthOfSelectionMatrixParameter;
+    }
+
+    public SelectionMatrixParameterization getSelectionMatrixParameterization() {
+        return selectionMatrixParameterization;
     }
 
     public double[][] getStrengthOfSelectionMatrix() {
@@ -134,8 +145,45 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
         return parametrization == Parametrization.AS_DIAGONAL;
     }
 
+    public boolean hasBlockStructure() {
+        return strengthOfSelectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter;
+    }
+
     public boolean isSymmetric() {
         return isSymmetric;
+    }
+
+    public boolean hasOrthogonalActualizationBasis() {
+        return hasOrthogonalActualizationBasis;
+    }
+
+    public double[] getSelectionBasisValues() {
+        checkVariableChanged();
+        if (strengthOfSelectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter) {
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) strengthOfSelectionMatrixParameter;
+            final double[] out = new double[blockParameter.getTridiagonalDDimension()];
+            blockParameter.fillBlockDiagonalElements(out);
+            return out;
+        }
+        return eigenDecompositionStrengthOfSelection.getEigenValues();
+    }
+
+    public double[] getSelectionBasisRotations() {
+        checkVariableChanged();
+        if (strengthOfSelectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter) {
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) strengthOfSelectionMatrixParameter;
+            final int matrixSize = dim * dim;
+            final double[] out = new double[2 * matrixSize];
+            final double[] r = new double[matrixSize];
+            final double[] rinv = new double[matrixSize];
+            blockParameter.fillRAndRinv(r, rinv);
+            System.arraycopy(r, 0, out, 0, matrixSize);
+            System.arraycopy(rinv, 0, out, matrixSize, matrixSize);
+            return out;
+        }
+        return eigenDecompositionStrengthOfSelection.getEigenVectors();
     }
 
     // *****************************************************************
@@ -316,10 +364,24 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 
     private Parametrization parametrization;
     private boolean isSymmetric;
+    private SelectionMatrixParameterization selectionMatrixParameterization;
+    private boolean hasOrthogonalActualizationBasis;
 
     private int dim;
 
     private boolean variableChanged = true;
     private boolean storedVariableChanged;
+
+    private static boolean inferOrthogonalActualizationBasis(final MatrixParameterInterface matrixParameter) {
+        if (matrixParameter instanceof DiagonalMatrix) {
+            return true;
+        }
+        if (matrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter) {
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) matrixParameter;
+            return blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider;
+        }
+        return matrixParameter.isConstrainedSymmetric();
+    }
 
 }

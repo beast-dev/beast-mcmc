@@ -4,7 +4,6 @@ import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.MatrixSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContribution;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContributionUtils;
 import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
 import dr.inference.timeseries.engine.gaussian.CanonicalTransitionAdjointUtils;
 import dr.inference.timeseries.gaussian.OUProcessModel;
@@ -181,7 +180,7 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             fillContributionForPartiallyObservedTip(statistics.getAbove(), statistics.getBelow(), observedCount);
         } else {
             fillPairPosterior(statistics.getAbove(), statistics.getBelow());
-            CanonicalBranchMessageContributionUtils.fillFromPairState(pairPosterior, contribution);
+            fillContributionFromPairPosterior();
         }
         return contribution;
     }

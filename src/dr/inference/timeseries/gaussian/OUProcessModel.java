@@ -62,6 +62,8 @@ import dr.inference.timeseries.representation.RepresentableProcess;
 public class OUProcessModel extends AbstractModel
         implements LatentProcessModel, RepresentableProcess,
         GaussianBranchTransitionKernel, CanonicalGaussianBranchTransitionKernel {
+    private static final String DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY =
+            "beast.experimental.ouDiffusionGradientQuadratureSubsteps";
 
     /**
      * Strategy for computing the V-path contribution of ∂logL/∂A.
@@ -475,18 +477,24 @@ public class OUProcessModel extends AbstractModel
             }
         }
 
-        for (int idx = 0; idx < GL5_NODES.length; ++idx) {
-            final double s = 0.5 * dt * (GL5_NODES[idx] + 1.0);
-            final double scaledWeight = 0.5 * dt * GL5_WEIGHTS[idx];
+        final int substeps = Math.max(1,
+                Integer.getInteger(DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY, 2));
+        final double h = dt / substeps;
+        for (int sub = 0; sub < substeps; ++sub) {
+            final double t0 = sub * h;
+            for (int idx = 0; idx < GL5_NODES.length; ++idx) {
+                final double s = t0 + 0.5 * h * (GL5_NODES[idx] + 1.0);
+                final double scaledWeight = 0.5 * h * GL5_WEIGHTS[idx];
 
-            buildExpmMinusAs(s, a, d, fS);
-            MatrixExponentialUtils.transpose(fS, fST);
-            MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
-            MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
+                buildExpmMinusAs(s, a, d, fS);
+                MatrixExponentialUtils.transpose(fS, fST);
+                MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
+                MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
 
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    gradientAccumulator[i * d + j] += scaledWeight * contrib[i][j];
+                for (int i = 0; i < d; ++i) {
+                    for (int j = 0; j < d; ++j) {
+                        gradientAccumulator[i * d + j] += scaledWeight * contrib[i][j];
+                    }
                 }
             }
         }

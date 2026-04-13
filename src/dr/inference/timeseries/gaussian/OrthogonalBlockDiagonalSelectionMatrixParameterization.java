@@ -295,17 +295,27 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         refreshBasisCaches(dt);
         fillSymmetricDenseMatrix(dLogL_dV, gV);
 
+        // Map covariance adjoint to block-D basis: G_V^D = R^T G_V R.
         CommonOps.mult(rtMatrix, gV, temp1);
         CommonOps.mult(temp1, rMatrix, hDBasis);
         symmetrize(hDBasis);
 
-        lyapunovSolver.solve(blockDParams, hDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, temp1);
-        CommonOps.multTransB(temp1, expD, transitionCovDBasis);
-        CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
-        symmetrize(transitionCovDBasis);
+        // For V = R (S - E S E^T) R^T with D S + S D^T = Q_D, the exact adjoint is:
+        //   G_S = G_V^D - E^T G_V^D E
+        //   D^T Y + Y D = G_S
+        //   G_Q^D = Y
+        //   G_Q = R G_Q^D R^T
+        CommonOps.multTransA(expD, hDBasis, temp1); // E^T G_V^D
+        CommonOps.mult(temp1, expD, gS);            // E^T G_V^D E
+        CommonOps.subtract(hDBasis, gS, gS);        // G_S
+        symmetrize(gS);
 
-        CommonOps.mult(rMatrix, transitionCovDBasis, temp1);
+        // Helper solves D^T Y + Y D = -hBlock, so pass hBlock = -G_S.
+        yAdjoint.set(gS);
+        CommonOps.scale(-1.0, yAdjoint);
+        lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);
+
+        CommonOps.mult(rMatrix, yAdjoint, temp1);
         CommonOps.mult(temp1, rtMatrix, temp2);
         symmetrize(temp2);
 

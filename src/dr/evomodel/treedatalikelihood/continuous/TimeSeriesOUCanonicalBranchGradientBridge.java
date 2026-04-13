@@ -101,8 +101,23 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         refreshProcessSnapshots();
         branchWiring.fillLocalAdjoints(branchLength, optimum, statistics, localAdjoints);
         zero(matrixGradient);
-        copyInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
-        processModel.accumulateDiffusionGradient(branchLength, covarianceAdjointScratch, matrixGradient);
+        if (processModel.getSelectionMatrixParameterization()
+                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+            // Branch-local canonical adjoints in the tree bridge use the opposite
+            // covariance orientation relative to the orthogonal exact helper.
+            // Match the same orientation convention used by the selection-covariance path.
+            transposeInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            ((OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                    processModel.getSelectionMatrixParameterization())
+                    .accumulateDiffusionGradient(
+                            processModel.getDiffusionMatrix(),
+                            branchLength,
+                            covarianceAdjointScratch,
+                            matrixGradient);
+        } else {
+            copyInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            processModel.accumulateDiffusionGradient(branchLength, covarianceAdjointScratch, matrixGradient);
+        }
         return matrixGradient.clone();
     }
 

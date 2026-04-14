@@ -220,8 +220,13 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                                                                 final Parameter requestedParameter) {
         final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
         final double[] optimum = getDriftRate(node);
-        return canonicalBranchGradientBridge.getNativeOrthogonalBlockGradientWrtSelection(
-                branchLength, optimum, statistics, blockParameter, requestedParameter);
+        return canonicalBranchGradientBridge.getGradientWrtSelection(
+                branchLength,
+                optimum,
+                statistics,
+                tree.isExternal(node),
+                blockParameter,
+                requestedParameter);
     }
 
     @Override

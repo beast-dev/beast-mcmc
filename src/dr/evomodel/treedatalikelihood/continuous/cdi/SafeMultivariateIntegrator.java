@@ -272,6 +272,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                     Vip,
                     dimTrait);
 
+            // Second pre-order channel: parent-side message for branch (v -> i), before branch transport.
+            System.arraycopy(preOrderPartials, ibo, parentPreOrderPartials, ibo, dimTrait);
+            unwrap(Pip, parentPreOrderPartials, ibo + dimTrait);
+            unwrap(Vip, parentPreOrderPartials, ibo + dimTrait + dimTrait * dimTrait);
+
             scaleAndDriftMean(ibo, imo, ido);
 
             // C. Inflate variance along node branch

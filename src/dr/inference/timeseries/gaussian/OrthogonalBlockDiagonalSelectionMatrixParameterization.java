@@ -31,6 +31,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             "beast.experimental.transposeNativeFrechetInput";
     private static final String DEBUG_NATIVE_R_CONSISTENCY_PROPERTY =
             "beast.debug.nativeRConsistency";
+    private static final String DEBUG_PD_PIVOT_FLOOR_PROPERTY =
+            "beast.debug.pdPivotFloor";
 
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final OrthogonalMatrixProvider orthogonalRotation;
@@ -794,6 +796,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         final double pivotFloor = Math.max(
                 SPD_JITTER_ABSOLUTE,
                 SPD_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal));
+        int clippedPivotCount = 0;
+        double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
         double logDet = 0.0;
         for (int i = 0; i < d; ++i) {
             final double[] cholRow = choleskyScratch[i];
@@ -803,7 +807,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                     sum -= cholRow[k] * choleskyScratch[j][k];
                 }
                 if (i == j) {
+                    minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
                     if (sum < pivotFloor) {
+                        clippedPivotCount++;
                         sum = pivotFloor;
                     }
                     cholRow[j] = Math.sqrt(sum);
@@ -816,6 +822,14 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             for (int j = i + 1; j < d; ++j) {
                 cholRow[j] = 0.0;
             }
+        }
+        if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
+            System.err.println(
+                    "pdPivotFloorDebug clipped=" + clippedPivotCount
+                            + " dim=" + d
+                            + " minPivotBeforeFloor=" + minPivotBeforeFloor
+                            + " pivotFloor=" + pivotFloor
+                            + " maxAbsDiagonal=" + maxAbsDiagonal);
         }
 
         for (int col = 0; col < d; ++col) {

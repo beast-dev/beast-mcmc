@@ -33,6 +33,18 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             "beast.debug.ou.spdDump";
     private static final String NONFINITE_BRANCH_STATS_DEBUG_PROPERTY =
             "beast.debug.ou.nonfiniteBranchStats";
+    private static final String FORCE_STRICT_SPD_INVERSION_PROPERTY =
+            "beast.debug.ou.forceStrictSpdInverse";
+    private static final String COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY =
+            "beast.debug.ou.compareParentAboveRecovered";
+    private static final String COMPARE_PARENT_ABOVE_RECOVERED_FAIL_PROPERTY =
+            "beast.debug.ou.compareParentAboveRecovered.failOnMismatch";
+    private static final String COMPARE_PARENT_ABOVE_RECOVERED_TOLERANCE_PROPERTY =
+            "beast.debug.ou.compareParentAboveRecovered.tolerance";
+    private static final String COMPARE_PARENT_ABOVE_RECOVERED_MAX_REPORTS_PROPERTY =
+            "beast.debug.ou.compareParentAboveRecovered.maxReports";
+    private static final String FORCE_RECOVER_PARENT_ABOVE_FROM_CHILD_PROPERTY =
+            "beast.debug.ou.forceRecoverParentAboveFromChild";
 
     private static final double SYMMETRIC_JITTER_RELATIVE = 1.0e-12;
     private static final double SYMMETRIC_JITTER_ABSOLUTE = 1.0e-12;
@@ -77,6 +89,7 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     private final double[][] transitionMatrixScratch;
     private final double[][] transitionCovarianceScratch;
     private final double[] transitionOffsetScratch;
+    private int parentAboveCompareReportCount = 0;
 
     public TimeSeriesOUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
         if (branchTransitionProvider == null) {
@@ -177,9 +190,16 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                 ? 0
                 : classifyExactObservationPattern(statistics.getBelow());
         if (observedCount > 0) {
-            fillContributionForPartiallyObservedTip(statistics.getAbove(), statistics.getBelow(), observedCount);
+            fillContributionForPartiallyObservedTip(
+                    statistics.getAbove(),
+                    statistics.getAboveParent(),
+                    statistics.getBelow(),
+                    observedCount);
         } else {
-            fillPairPosterior(statistics.getAbove(), statistics.getBelow());
+            fillPairPosterior(
+                    statistics.getAbove(),
+                    statistics.getAboveParent(),
+                    statistics.getBelow());
             fillContributionFromPairPosterior();
         }
         return contribution;
@@ -328,19 +348,16 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         actualizationMatrix.set(actualization);
         displacementVector.set(displacement);
         branchPrecisionMatrix.set(precision);
-        safeInvertSymmetricPositiveDefinite(
-                branchPrecisionMatrix,
-                branchCovarianceMatrix,
-                "fillCanonicalTransition:branchPrecision->branchCovariance");
+        canonicalizeBranchPrecisionCovariancePair("fillCanonicalTransition");
 
         for (int i = 0; i < dimension; ++i) {
             double infoY = 0.0;
             for (int j = 0; j < dimension; ++j) {
-                final double p = precision.unsafe_get(i, j);
+                final double p = branchPrecisionMatrix.unsafe_get(i, j);
                 transition.precisionYY[i][j] = p;
-                transition.precisionYX[i][j] = -multiplyEntry(precision, actualization, i, j);
+                transition.precisionYX[i][j] = -multiplyEntry(branchPrecisionMatrix, actualization, i, j);
                 transition.precisionXY[j][i] = transition.precisionYX[i][j];
-                transition.precisionXX[i][j] = multiplyEntryTranspose(actualization, precision, actualization, i, j);
+                transition.precisionXX[i][j] = multiplyEntryTranspose(actualization, branchPrecisionMatrix, actualization, i, j);
                 infoY += p * displacement.unsafe_get(j, 0);
             }
             transition.informationY[i] = infoY;
@@ -371,18 +388,37 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                 branchCovarianceMatrix.unsafe_set(i, j, transitionCovariance[i][j]);
             }
         }
-        safeInvertSymmetricPositiveDefinite(
-                branchCovarianceMatrix,
-                branchPrecisionMatrix,
-                "fillCanonicalTransitionFromKernel(branchLength=" + branchLength + "):branchCovariance->branchPrecision");
+        canonicalizeBranchCovariancePrecisionPair(
+                "fillCanonicalTransitionFromKernel(branchLength=" + branchLength + ")");
 
         if (branchLength <= 0.0) {
             // Zero-length branches can have singular covariance; use the local jittered path.
             fillTransitionFromMomentsLocally(
                     transitionMatrix, transitionOffset, transitionCovariance, transition);
         } else {
-            CanonicalGaussianUtils.fillTransitionFromMoments(
-                    transitionMatrix, transitionOffset, transitionCovariance, transition);
+            // Build canonical transition from the canonicalized precision pair to keep
+            // all downstream consumers (local factors and parent-recovery algebra)
+            // numerically consistent.
+            for (int i = 0; i < dimension; ++i) {
+                double infoY = 0.0;
+                for (int j = 0; j < dimension; ++j) {
+                    final double p = branchPrecisionMatrix.unsafe_get(i, j);
+                    transition.precisionYY[i][j] = p;
+                    transition.precisionYX[i][j] = -multiplyEntry(branchPrecisionMatrix, actualizationMatrix, i, j);
+                    transition.precisionXY[j][i] = transition.precisionYX[i][j];
+                    transition.precisionXX[i][j] = multiplyEntryTranspose(actualizationMatrix, branchPrecisionMatrix, actualizationMatrix, i, j);
+                    infoY += p * displacementVector.unsafe_get(j, 0);
+                }
+                transition.informationY[i] = infoY;
+            }
+            for (int i = 0; i < dimension; ++i) {
+                double infoX = 0.0;
+                for (int j = 0; j < dimension; ++j) {
+                    infoX -= actualizationMatrix.unsafe_get(j, i) * transition.informationY[j];
+                }
+                transition.informationX[i] = infoX;
+            }
+            transition.logNormalizer = 0.0;
         }
     }
 
@@ -542,8 +578,9 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     }
 
     private void fillPairPosterior(final NormalSufficientStatistics above,
+                                   final NormalSufficientStatistics aboveParent,
                                    final NormalSufficientStatistics below) {
-        final DenseMatrix64F abovePrecision = recoverParentAbovePrecision(above);
+        final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
         final DenseMatrix64F aboveMean = aboveParentMeanVector;
         final DenseMatrix64F belowPrecision = below.getRawPrecision();
         final DenseMatrix64F belowMean = below.getRawMean();
@@ -580,8 +617,9 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     }
 
     private void fillContributionForObservedTip(final NormalSufficientStatistics above,
+                                                final NormalSufficientStatistics aboveParent,
                                                 final NormalSufficientStatistics below) {
-        final DenseMatrix64F abovePrecision = recoverParentAbovePrecision(above);
+        final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
         final DenseMatrix64F aboveMean = aboveParentMeanVector;
         final DenseMatrix64F observedChild = below.getRawMean();
 
@@ -619,9 +657,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     }
 
     private void fillContributionForPartiallyObservedTip(final NormalSufficientStatistics above,
+                                                         final NormalSufficientStatistics aboveParent,
                                                          final NormalSufficientStatistics below,
                                                          final int observedCount) {
-        final DenseMatrix64F abovePrecision = recoverParentAbovePrecision(above);
+        final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
         final DenseMatrix64F aboveMean = aboveParentMeanVector;
         final DenseMatrix64F observedChild = below.getRawMean();
 
@@ -709,6 +748,153 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         contribution.dLogL_dLogNormalizer = -1.0;
     }
 
+    private DenseMatrix64F recoverOrUseParentAbovePrecision(final NormalSufficientStatistics aboveChild,
+                                                            final NormalSufficientStatistics aboveParent) {
+        if (Boolean.getBoolean(FORCE_RECOVER_PARENT_ABOVE_FROM_CHILD_PROPERTY)) {
+            return recoverParentAbovePrecision(aboveChild);
+        }
+        if (aboveParent == null) {
+            throw new IllegalStateException(
+                    "Missing parent-above message for canonical branch contribution."
+                            + " childAbovePrecisionFinite=" + isFinite(aboveChild.getRawPrecision())
+                            + " childAboveMeanFinite=" + isFinite(aboveChild.getRawMean()));
+        }
+        if (Boolean.getBoolean(COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY)) {
+            compareParentAboveAgainstRecovered(aboveChild, aboveParent);
+        }
+        final boolean parentPrecisionFinite = isFinite(aboveParent.getRawPrecision());
+        final boolean parentMeanFinite = isFinite(aboveParent.getRawMean());
+        if (!parentPrecisionFinite || !parentMeanFinite) {
+            throw new IllegalStateException(
+                    "Non-finite parent-above message."
+                            + " parentPrecisionFinite=" + parentPrecisionFinite
+                            + " parentMeanFinite=" + parentMeanFinite
+                            + " parentPrecisionSummary=" + summarizeDenseMatrix(aboveParent.getRawPrecision())
+                            + " parentMeanSummary=" + summarizeDenseMatrix(aboveParent.getRawMean())
+                            + " childAbovePrecisionFinite=" + isFinite(aboveChild.getRawPrecision())
+                            + " childAboveMeanFinite=" + isFinite(aboveChild.getRawMean())
+                            + " childAbovePrecisionSummary=" + summarizeDenseMatrix(aboveChild.getRawPrecision())
+                            + " childAboveMeanSummary=" + summarizeDenseMatrix(aboveChild.getRawMean()));
+        }
+        aboveParentPrecisionMatrix.set(aboveParent.getRawPrecision());
+        aboveParentMeanVector.set(aboveParent.getRawMean());
+        return aboveParentPrecisionMatrix;
+    }
+
+    private void compareParentAboveAgainstRecovered(final NormalSufficientStatistics aboveChild,
+                                                    final NormalSufficientStatistics aboveParent) {
+        final DenseMatrix64F suppliedPrecision = aboveParent.getRawPrecision();
+        final DenseMatrix64F suppliedMean = aboveParent.getRawMean();
+
+        final DenseMatrix64F recoveredPrecision = recoverParentAbovePrecision(aboveChild);
+        final DenseMatrix64F recoveredMean = aboveParentMeanVector;
+
+        final MatrixComparison precisionComparison = compareMatricesAllowingInf(suppliedPrecision, recoveredPrecision);
+        final MatrixComparison meanComparison = compareMatricesAllowingInf(suppliedMean, recoveredMean);
+
+        final double tolerance = Double.parseDouble(
+                System.getProperty(COMPARE_PARENT_ABOVE_RECOVERED_TOLERANCE_PROPERTY, "1e-6"));
+        final boolean mismatch =
+                precisionComparison.infPatternMismatchCount > 0
+                        || precisionComparison.nanPatternMismatchCount > 0
+                        || precisionComparison.maxFiniteAbsDiff > tolerance
+                        || meanComparison.infPatternMismatchCount > 0
+                        || meanComparison.nanPatternMismatchCount > 0
+                        || meanComparison.maxFiniteAbsDiff > tolerance;
+
+        final int maxReports = Integer.parseInt(
+                System.getProperty(COMPARE_PARENT_ABOVE_RECOVERED_MAX_REPORTS_PROPERTY, "20"));
+        if (mismatch || parentAboveCompareReportCount < maxReports) {
+            if (parentAboveCompareReportCount < maxReports) {
+                parentAboveCompareReportCount++;
+                System.err.println(
+                        "parentAboveCompare"
+                                + " call=" + parentAboveCompareReportCount
+                                + " precision=" + precisionComparison
+                                + " mean=" + meanComparison
+                                + " tolerance=" + tolerance);
+            }
+        }
+
+        if (mismatch && Boolean.getBoolean(COMPARE_PARENT_ABOVE_RECOVERED_FAIL_PROPERTY)) {
+            throw new IllegalStateException(
+                    "parent-above supplied vs recovered mismatch"
+                            + " precision=" + precisionComparison
+                            + " mean=" + meanComparison
+                            + " tolerance=" + tolerance);
+        }
+    }
+
+    private static MatrixComparison compareMatricesAllowingInf(final DenseMatrix64F supplied,
+                                                               final DenseMatrix64F recovered) {
+        final double[] suppliedData = supplied.getData();
+        final double[] recoveredData = recovered.getData();
+        final int length = suppliedData.length;
+
+        int finitePairCount = 0;
+        int infPatternMismatchCount = 0;
+        int nanPatternMismatchCount = 0;
+        double maxFiniteAbsDiff = 0.0;
+
+        for (int i = 0; i < length; ++i) {
+            final double a = suppliedData[i];
+            final double b = recoveredData[i];
+
+            final boolean aNaN = Double.isNaN(a);
+            final boolean bNaN = Double.isNaN(b);
+            if (aNaN || bNaN) {
+                if (!(aNaN && bNaN)) {
+                    nanPatternMismatchCount++;
+                }
+                continue;
+            }
+
+            final boolean aInf = Double.isInfinite(a);
+            final boolean bInf = Double.isInfinite(b);
+            if (aInf || bInf) {
+                if (!(aInf && bInf && Math.signum(a) == Math.signum(b))) {
+                    infPatternMismatchCount++;
+                }
+                continue;
+            }
+
+            finitePairCount++;
+            maxFiniteAbsDiff = Math.max(maxFiniteAbsDiff, Math.abs(a - b));
+        }
+
+        return new MatrixComparison(
+                maxFiniteAbsDiff,
+                finitePairCount,
+                infPatternMismatchCount,
+                nanPatternMismatchCount);
+    }
+
+    private static final class MatrixComparison {
+        private final double maxFiniteAbsDiff;
+        private final int finitePairCount;
+        private final int infPatternMismatchCount;
+        private final int nanPatternMismatchCount;
+
+        private MatrixComparison(final double maxFiniteAbsDiff,
+                                 final int finitePairCount,
+                                 final int infPatternMismatchCount,
+                                 final int nanPatternMismatchCount) {
+            this.maxFiniteAbsDiff = maxFiniteAbsDiff;
+            this.finitePairCount = finitePairCount;
+            this.infPatternMismatchCount = infPatternMismatchCount;
+            this.nanPatternMismatchCount = nanPatternMismatchCount;
+        }
+
+        @Override
+        public String toString() {
+            return "{maxFiniteAbsDiff=" + maxFiniteAbsDiff
+                    + ",finitePairCount=" + finitePairCount
+                    + ",infPatternMismatchCount=" + infPatternMismatchCount
+                    + ",nanPatternMismatchCount=" + nanPatternMismatchCount
+                    + "}";
+        }
+    }
+
     private DenseMatrix64F recoverParentAbovePrecision(final NormalSufficientStatistics above) {
         aboveChildPrecisionMatrix.set(above.getRawPrecision());
         safeInvertSymmetricPositiveDefinite(
@@ -721,8 +907,15 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                     above.getRawMean().unsafe_get(i, 0) - displacementVector.unsafe_get(i, 0));
         }
 
-        actualizationInverseMatrix.set(actualizationMatrix);
-        safeInvert(actualizationInverseMatrix, actualizationInverseMatrix);
+        // Keep this path smooth and deterministic:
+        // always regularize/invert the same stabilized actualization matrix
+        // instead of branching between solve/fallback paths.
+        secondaryScratchMatrix.set(actualizationMatrix);
+        final double solveJitter = Math.max(
+                SYMMETRIC_JITTER_ABSOLUTE,
+                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(secondaryScratchMatrix)));
+        addDiagonalJitter(secondaryScratchMatrix, solveJitter);
+        safeInvert(secondaryScratchMatrix, actualizationInverseMatrix);
         CommonOps.mult(actualizationInverseMatrix, centeredChildMeanVector, aboveParentMeanVector);
 
         aboveParentCovarianceMatrix.set(aboveChildCovarianceMatrix);
@@ -743,6 +936,34 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         safeInvertSymmetricPositiveDefinite(source, inverseOut, "unspecified");
     }
 
+    private void canonicalizeBranchPrecisionCovariancePair(final String context) {
+        symmetrizeInPlace(branchPrecisionMatrix);
+        safeInvertSymmetricPositiveDefinite(
+                branchPrecisionMatrix,
+                branchCovarianceMatrix,
+                context + ":branchPrecision->branchCovariance");
+        safeInvertSymmetricPositiveDefinite(
+                branchCovarianceMatrix,
+                branchPrecisionMatrix,
+                context + ":branchCovariance->branchPrecision");
+        symmetrizeInPlace(branchPrecisionMatrix);
+        symmetrizeInPlace(branchCovarianceMatrix);
+    }
+
+    private void canonicalizeBranchCovariancePrecisionPair(final String context) {
+        symmetrizeInPlace(branchCovarianceMatrix);
+        safeInvertSymmetricPositiveDefinite(
+                branchCovarianceMatrix,
+                branchPrecisionMatrix,
+                context + ":branchCovariance->branchPrecision");
+        safeInvertSymmetricPositiveDefinite(
+                branchPrecisionMatrix,
+                branchCovarianceMatrix,
+                context + ":branchPrecision->branchCovariance");
+        symmetrizeInPlace(branchPrecisionMatrix);
+        symmetrizeInPlace(branchCovarianceMatrix);
+    }
+
     private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
                                                      final DenseMatrix64F inverseOut,
                                                      final String context) {
@@ -750,6 +971,15 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         final double jitterBase = Math.max(
                 SYMMETRIC_JITTER_ABSOLUTE,
                 SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(scratchMatrix)));
+
+        if (Boolean.getBoolean(FORCE_STRICT_SPD_INVERSION_PROPERTY)) {
+            if (invertSymmetricPositiveDefiniteStrictFallback(scratchMatrix, inverseOut, jitterBase)) {
+                return;
+            }
+            emitSpdFailureDebugDump(context, source, scratchMatrix, jitterBase);
+            throw new IllegalStateException(
+                    "Failed strict SPD inversion with fallback; context=" + context);
+        }
 
         double jitter = 0.0;
         for (int attempt = 0; attempt < 8; ++attempt) {
@@ -788,13 +1018,13 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
         double jitter = 0.0;
         for (int attempt = 0; attempt < 12; ++attempt) {
-            copySquare(symmetric, adjusted);
+            copySquare(symmetric, adjusted, d);
             if (jitter > 0.0) {
                 for (int i = 0; i < d; ++i) {
                     adjusted[i][i] += jitter;
                 }
             }
-            if (invertSymmetricPositiveDefiniteStrict(adjusted, cholesky, lowerInverse, inverseOut)) {
+            if (invertSymmetricPositiveDefiniteStrict(adjusted, cholesky, lowerInverse, inverseOut, d)) {
                 symmetrizeInPlace(inverseOut);
                 return true;
             }
@@ -806,9 +1036,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     private static boolean invertSymmetricPositiveDefiniteStrict(final double[][] matrix,
                                                                  final double[][] cholesky,
                                                                  final double[][] lowerInverse,
-                                                                 final DenseMatrix64F inverseOut) {
-        final int d = matrix.length;
-        copySquare(matrix, cholesky);
+                                                                 final DenseMatrix64F inverseOut,
+                                                                 final int dimensionUsed) {
+        final int d = dimensionUsed;
+        copySquare(matrix, cholesky, d);
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j <= i; ++j) {
@@ -854,10 +1085,19 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
     private void safeInvert(final DenseMatrix64F source,
                             final DenseMatrix64F inverseOut) {
-        secondaryScratchMatrix.set(source);
-        if (!CommonOps.invert(secondaryScratchMatrix, inverseOut) || !isFinite(inverseOut)) {
-            throw new IllegalStateException("Failed to invert matrix stably");
+        final double jitterBase = Math.max(
+                SYMMETRIC_JITTER_ABSOLUTE,
+                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(source)));
+        double jitter = jitterBase;
+        for (int attempt = 0; attempt < 8; ++attempt) {
+            secondaryScratchMatrix.set(source);
+            addDiagonalJitter(secondaryScratchMatrix, jitter);
+            if (CommonOps.invert(secondaryScratchMatrix, inverseOut) && isFinite(inverseOut)) {
+                return;
+            }
+            jitter *= 10.0;
         }
+        throw new IllegalStateException("Failed to invert matrix stably");
     }
 
     private static void symmetrizeCopy(final DenseMatrix64F source,
@@ -907,9 +1147,44 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         return true;
     }
 
-    private static void copySquare(final double[][] source, final double[][] target) {
-        for (int i = 0; i < source.length; ++i) {
-            System.arraycopy(source[i], 0, target[i], 0, source[i].length);
+    private static String summarizeDenseMatrix(final DenseMatrix64F matrix) {
+        int nanCount = 0;
+        int posInfCount = 0;
+        int negInfCount = 0;
+        double minFinite = Double.POSITIVE_INFINITY;
+        double maxFinite = Double.NEGATIVE_INFINITY;
+        final double[] data = matrix.getData();
+        for (double value : data) {
+            if (Double.isNaN(value)) {
+                nanCount++;
+            } else if (value == Double.POSITIVE_INFINITY) {
+                posInfCount++;
+            } else if (value == Double.NEGATIVE_INFINITY) {
+                negInfCount++;
+            } else {
+                minFinite = Math.min(minFinite, value);
+                maxFinite = Math.max(maxFinite, value);
+            }
+        }
+        if (minFinite == Double.POSITIVE_INFINITY) {
+            minFinite = Double.NaN;
+            maxFinite = Double.NaN;
+        }
+        return "{rows=" + matrix.numRows
+                + ",cols=" + matrix.numCols
+                + ",nan=" + nanCount
+                + ",posInf=" + posInfCount
+                + ",negInf=" + negInfCount
+                + ",minFinite=" + minFinite
+                + ",maxFinite=" + maxFinite
+                + "}";
+    }
+
+    private static void copySquare(final double[][] source,
+                                   final double[][] target,
+                                   final int dimensionUsed) {
+        for (int i = 0; i < dimensionUsed; ++i) {
+            System.arraycopy(source[i], 0, target[i], 0, dimensionUsed);
         }
     }
 

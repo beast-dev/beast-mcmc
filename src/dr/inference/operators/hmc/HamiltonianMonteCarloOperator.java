@@ -200,7 +200,13 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
     private void checkStepSize() {
 
-        double[] initialPosition = parameter.getParameterValues();
+        // Copy the initial position defensively: Parameter#getParameterValues may expose
+        // a mutable backing array for some Parameter implementations.
+        double[] initialPosition = parameter.getParameterValues().clone();
+        final boolean debugStepRestore = Boolean.getBoolean("beast.debug.hmcCheckStepRestore");
+        if (debugStepRestore) {
+            System.err.println("HMC_STEP_RESTORE initial=" + new WrappedVector.Raw(initialPosition));
+        }
 
         int iterations = 0;
         boolean acceptableSize = false;
@@ -223,6 +229,14 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             }
 
             ReadableVector.Utils.setParameter(initialPosition, parameter);  // Restore initial position
+            gradientProvider.getLikelihood().makeDirty();
+            if (debugStepRestore) {
+                System.err.println("HMC_STEP_RESTORE afterRestore=" +
+                        new WrappedVector.Raw(parameter.getParameterValues()) +
+                        " acceptable=" + acceptableSize +
+                        " stepSize=" + stepSize +
+                        " iterations=" + iterations);
+            }
             ++iterations;
         }
 

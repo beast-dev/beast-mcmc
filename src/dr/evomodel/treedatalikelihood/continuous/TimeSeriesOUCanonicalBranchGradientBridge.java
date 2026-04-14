@@ -373,6 +373,28 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                 nativeGradient,
                 rotationGradient);
         final double[] direct = assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradient);
+        if (Boolean.getBoolean(DEBUG_BRANCH_LOCAL_SELECTION_FD_PROPERTY)) {
+            final double[] numeric = numericalLocalSelectionGradientGeneric(
+                    branchLength,
+                    stationaryMean,
+                    localAdjoints,
+                    requestedParameter);
+            double maxAbs = 0.0;
+            int maxIdx = -1;
+            for (int i = 0; i < Math.min(direct.length, numeric.length); ++i) {
+                final double diff = Math.abs(direct[i] - numeric[i]);
+                if (diff > maxAbs) {
+                    maxAbs = diff;
+                    maxIdx = i;
+                }
+            }
+            System.err.println("NATIVE_ORTH_LOCAL_FD branchLength=" + branchLength
+                    + " requested=" + requestedParameter.getId()
+                    + " maxAbsDiff=" + maxAbs
+                    + " maxIdx=" + maxIdx
+                    + " analytic=" + Arrays.toString(direct)
+                    + " numeric=" + Arrays.toString(numeric));
+        }
         if (isFinite(direct)) {
             return direct;
         }

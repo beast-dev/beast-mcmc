@@ -37,13 +37,22 @@ public class BranchSufficientStatistics {
     private final NormalSufficientStatistics below;
     private final MatrixSufficientStatistics branch;
     private final NormalSufficientStatistics above;
+    private final NormalSufficientStatistics aboveParent;
 
     BranchSufficientStatistics(NormalSufficientStatistics below,
                                MatrixSufficientStatistics branch,
                                NormalSufficientStatistics above) {
+        this(below, branch, above, null);
+    }
+
+    BranchSufficientStatistics(NormalSufficientStatistics below,
+                               MatrixSufficientStatistics branch,
+                               NormalSufficientStatistics above,
+                               NormalSufficientStatistics aboveParent) {
         this.below = below;
         this.branch = branch;
         this.above = above;
+        this.aboveParent = aboveParent;
     }
 
     public NormalSufficientStatistics getBelow() { return below; }
@@ -51,6 +60,12 @@ public class BranchSufficientStatistics {
     public MatrixSufficientStatistics getBranch() { return branch; }
 
     public NormalSufficientStatistics getAbove() { return above; }
+
+    /**
+     * Optional parent-side "above" message for the same branch endpoint.
+     * Null when not provided by the integrator/delegate wiring.
+     */
+    public NormalSufficientStatistics getAboveParent() { return aboveParent; }
 
     public String toString() { return below + " / " + branch + " / " + above; }
 

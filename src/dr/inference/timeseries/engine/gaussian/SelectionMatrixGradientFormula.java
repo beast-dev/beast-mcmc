@@ -49,6 +49,9 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  */
 public class SelectionMatrixGradientFormula implements GradientFormula {
 
+    private static final String DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY =
+            "beast.experimental.disableOrthogonalNativeSelectionPath";
+
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
 
@@ -270,6 +273,9 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
 
     private boolean shouldUseOrthogonalNativePath(final Parameter requestedParameter,
                                                   final GaussianTransitionRepresentation repr) {
+        if (Boolean.getBoolean(DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY)) {
+            return false;
+        }
         if (requestedParameter == selectionMatrixParameter) {
             return false;
         }

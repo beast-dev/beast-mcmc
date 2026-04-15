@@ -200,6 +200,18 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         return canonicalBranchGradientBridge.getGradientWrtBranchDrift(statistics);
     }
 
+    public double[] getCanonicalGradientDisplacementForBranch(final BranchSufficientStatistics statistics,
+                                                              final NodeRef node,
+                                                              final ContinuousDiffusionIntegrator cdi) {
+        final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
+        final double[] optimum = getDriftRate(node);
+        return canonicalBranchGradientBridge.getGradientWrtBranchDrift(
+                branchLength,
+                optimum,
+                statistics,
+                node.getNumber());
+    }
+
     public void fillCanonicalLocalAdjointsForBranch(final BranchSufficientStatistics statistics,
                                                     final CanonicalLocalTransitionAdjoints out) {
         canonicalBranchGradientBridge.fillLocalAdjoints(statistics, out);
@@ -735,7 +747,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
         DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
         DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
-        CommonOps.mult(Actu, gradient, tmp);
+        // Root-mean backprop is a vector-Jacobian product; use A^T * g for full (non-symmetric) actualization.
+        CommonOps.multTransA(Actu, gradient, tmp);
         return tmp.getData();
     }
 

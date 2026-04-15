@@ -69,6 +69,8 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
     private static final String BRANCH_DEBUG_PROPERTY = "beast.debug.branchGradient";
     private static final String BRANCH_DEBUG_ONLY_PARAMETER_PROPERTY = "beast.debug.branchGradient.onlyParameterContains";
     private static final String BRANCH_DEBUG_NODE_FILTER_PROPERTY = "beast.debug.branchGradient.nodeFilter";
+    private static final String ENABLE_GLOBAL_REMAINDER_PASS_PROPERTY =
+            "beast.experimental.enableGlobalRemainderPass";
 
     public BranchSpecificGradient(String traitName,
                                   TreeDataLikelihood treeDataLikelihood,
@@ -181,6 +183,26 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
                 destinationIndexByNode[node.getNumber()] = destinationIndex;
             }
 //            }
+        }
+
+        if (Boolean.getBoolean(ENABLE_GLOBAL_REMAINDER_PASS_PROPERTY)) {
+            // Second pass: add global pruning-remainder contributions.
+            // For non-selection providers this is a no-op.
+            for (int i = 0; i < tree.getNodeCount(); ++i) {
+                final NodeRef node = tree.getNode(i);
+                if (tree.isRoot(node)) {
+                    continue;
+                }
+                final NodeRef parent = tree.getParent(node);
+                final List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
+                final BranchSufficientStatistics branchStatistics = statisticsForNode.get(0);
+                final double[] globalGradient = new double[dimGradient];
+                branchProvider.accumulateGlobalRemainderGradientForBranch(
+                        branchStatistics, node, parent, globalGradient);
+                final int destinationIndex = getParameterIndexFromNode(node);
+                assert (destinationIndex != -1);
+                accumulateBranchGradient(result, globalGradient, destinationIndex, dimGradient);
+            }
         }
 
         if (debugPerBranchComparison) {

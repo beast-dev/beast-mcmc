@@ -687,6 +687,37 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.multTransB(QtP, Q, QtPQ);
     }
 
+    /**
+     * Actualized-path override:
+     * bar(Pip) = barSS * (dispi - Qdi * mk)(dispi - Qdi * mk)^T.
+     */
+    @Override
+    protected DenseMatrix64F computeBarPip(final int ibo,
+                                           final int ido,
+                                           final int kbo,
+                                           final double barSS) {
+        final double[] dispi = getSSDisplacement(ibo, ido);
+        final double[] mk = new double[dimTrait];
+        System.arraycopy(partials, kbo, mk, 0, dimTrait);
+
+        final int matrixOffset = ido * dimTrait; // ido = dimTrait * iMatrix
+        final DenseMatrix64F Qdi = wrap(actualizations, matrixOffset, dimTrait, dimTrait);
+
+        final DenseMatrix64F mkVector = new DenseMatrix64F(dimTrait, 1);
+        System.arraycopy(mk, 0, mkVector.data, 0, dimTrait);
+        final DenseMatrix64F qMkVector = new DenseMatrix64F(dimTrait, 1);
+        CommonOps.mult(Qdi, mkVector, qMkVector);
+
+        final DenseMatrix64F barPip = new DenseMatrix64F(dimTrait, dimTrait);
+        for (int g = 0; g < dimTrait; ++g) {
+            final double rg = dispi[g] - qMkVector.get(g, 0);
+            for (int h = 0; h < dimTrait; ++h) {
+                barPip.set(g, h, barSS * rg * (dispi[h] - qMkVector.get(h, 0)));
+            }
+        }
+        return barPip;
+    }
+
     @Override
     void computeWeightedSum(final double[] ipartial,
                             final double[] jpartial,

@@ -225,5 +225,17 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         weightedSum(ipartial, 0, matrixPip, jpartial, 0, matrixPjp, dimTrait, out);
     }
 
+    /**
+     * Drift-aware displacement used in the remainder SS term: mi - di.
+     */
+    @Override
+    protected double[] getSSDisplacement(final int ibo, final int ido) {
+        final double[] disp = new double[dimTrait];
+        for (int g = 0; g < dimTrait; ++g) {
+            disp[g] = partials[ibo + g] - displacements[ido + g];
+        }
+        return disp;
+    }
+
     double[] displacements;
 }

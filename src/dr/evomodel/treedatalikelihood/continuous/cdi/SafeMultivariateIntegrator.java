@@ -44,6 +44,8 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
     private static final boolean DEBUG = false;
+    private static final String ZERO_GLOBAL_REMAINDER_ADJOINT_PROPERTY =
+            "beast.experimental.zeroGlobalRemainderAdjoint";
 
     public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
                                       int bufferCount, int diffusionCount) {
@@ -770,6 +772,151 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 partials, kbo,
                 vectorPMk, 0,
                 dimTrait);
+    }
+
+    /**
+     * Returns the displacement vector used in the remainder SS term for child i.
+     * Base implementation uses the raw child mean; drift-aware subclasses override.
+     */
+    protected double[] getSSDisplacement(final int ibo, final int ido) {
+        final double[] disp = new double[dimTrait];
+        System.arraycopy(partials, ibo, disp, 0, dimTrait);
+        return disp;
+    }
+
+    /**
+     * Backward pass for one branch: computes bar(Vd_i), the adjoint of the branch covariance
+     * entering {@link #increaseVariances(int, int, DenseMatrix64F, DenseMatrix64F, DenseMatrix64F, boolean)}.
+     */
+    @Override
+    public void computeGlobalRemainderAdjointWrtBranchVariance(
+            final int iBuffer,
+            final int iMatrix,
+            final int kBuffer,
+            final double[] barVdiOut) {
+
+        if (Boolean.getBoolean(ZERO_GLOBAL_REMAINDER_ADJOINT_PROPERTY)) {
+            for (int i = 0; i < dimTrait * dimTrait; ++i) {
+                barVdiOut[i] = 0.0;
+            }
+            return;
+        }
+
+        final double barSS = -0.5;
+        final double barEll = -0.5;
+
+        final int matrixOffset = dimTrait * dimTrait * iMatrix;
+        final int displacementOffset = dimTrait * iMatrix;
+
+        final DenseMatrix64F Vdi = new DenseMatrix64F(dimTrait, dimTrait);
+        final DenseMatrix64F Pdi = new DenseMatrix64F(dimTrait, dimTrait);
+        System.arraycopy(variances, matrixOffset, Vdi.data, 0, dimTrait * dimTrait);
+        System.arraycopy(precisions, matrixOffset, Pdi.data, 0, dimTrait * dimTrait);
+
+        final DenseMatrix64F barVdiAccum = new DenseMatrix64F(dimTrait, dimTrait);
+
+        int ibo = dimPartial * iBuffer;
+        int kbo = dimPartial * kBuffer;
+
+        for (int trait = 0; trait < numTraits; ++trait) {
+            final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
+            final InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
+
+            if (ci.getReturnCode() == NOT_OBSERVED) {
+                ibo += dimPartialForTrait;
+                kbo += dimPartialForTrait;
+                continue;
+            }
+
+            final DenseMatrix64F barPip = computeBarPip(ibo, displacementOffset, kbo, barSS);
+            accumulateIncreaseVariancesAdjoint(ibo, Pdi, Pip, barPip, barEll, barVdiAccum);
+
+            ibo += dimPartialForTrait;
+            kbo += dimPartialForTrait;
+        }
+
+        System.arraycopy(barVdiAccum.data, 0, barVdiOut, 0, dimTrait * dimTrait);
+    }
+
+    /**
+     * bar(Pip) contribution from the SS term.
+     */
+    protected DenseMatrix64F computeBarPip(final int ibo,
+                                           final int ido,
+                                           final int kbo,
+                                           final double barSS) {
+        final double[] dispi = getSSDisplacement(ibo, ido);
+        final double[] mk = new double[dimTrait];
+        System.arraycopy(partials, kbo, mk, 0, dimTrait);
+
+        final DenseMatrix64F barPip = new DenseMatrix64F(dimTrait, dimTrait);
+        for (int g = 0; g < dimTrait; ++g) {
+            final double rg = dispi[g] - mk[g];
+            for (int h = 0; h < dimTrait; ++h) {
+                barPip.set(g, h, barSS * rg * (dispi[h] - mk[h]));
+            }
+        }
+        return barPip;
+    }
+
+    private void accumulateIncreaseVariancesAdjoint(final int ibo,
+                                                    final DenseMatrix64F Pdi,
+                                                    final DenseMatrix64F Pip,
+                                                    final DenseMatrix64F barPip,
+                                                    final double barEll,
+                                                    final DenseMatrix64F barVdiAccum) {
+        final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+        final boolean useVariancei = anyDiagonalInfinities(Pi);
+
+        final DenseMatrix64F tmp = new DenseMatrix64F(dimTrait, dimTrait);
+        final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
+
+        if (useVariancei) {
+            CommonOps.mult(Pip, barPip, tmp);
+            CommonOps.mult(tmp, Pip, tmp2);
+            for (int idx = 0; idx < dimTrait * dimTrait; ++idx) {
+                barVdiAccum.data[idx] += -tmp2.data[idx] + barEll * Pip.data[idx];
+            }
+            return;
+        }
+
+        final DenseMatrix64F A = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.add(Pi, Pdi, A);
+
+        final DenseMatrix64F S = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.invert(A, S);
+
+        final DenseMatrix64F T = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.mult(S, Pi, T);
+
+        final DenseMatrix64F U = new DenseMatrix64F(dimTrait, dimTrait);
+        for (int idx = 0; idx < dimTrait * dimTrait; ++idx) {
+            U.data[idx] = -T.data[idx];
+        }
+        for (int g = 0; g < dimTrait; ++g) {
+            U.add(g, g, 1.0);
+        }
+
+        final DenseMatrix64F UinvT = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.invert(U, UinvT);
+        CommonOps.transpose(UinvT);
+
+        final DenseMatrix64F barU = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.mult(Pi, barPip, barU);
+        for (int idx = 0; idx < dimTrait * dimTrait; ++idx) {
+            barU.data[idx] += barEll * UinvT.data[idx];
+        }
+
+        CommonOps.mult(S, barU, tmp);
+        CommonOps.mult(tmp, Pi, tmp2);
+        final DenseMatrix64F barPdi = new DenseMatrix64F(dimTrait, dimTrait);
+        CommonOps.mult(tmp2, S, barPdi);
+
+        CommonOps.mult(Pdi, barPdi, tmp);
+        CommonOps.mult(tmp, Pdi, tmp2);
+        for (int idx = 0; idx < dimTrait * dimTrait; ++idx) {
+            barVdiAccum.data[idx] -= tmp2.data[idx];
+        }
     }
 
     private final int effectiveDimensionOffset;

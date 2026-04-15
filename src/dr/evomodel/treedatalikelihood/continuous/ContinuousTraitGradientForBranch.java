@@ -58,6 +58,18 @@ public interface ContinuousTraitGradientForBranch {
         return null;
     }
 
+    /**
+     * Accumulates into {@code gradOut} any global pruning-remainder contribution for this
+     * branch. Default is no-op; selection-gradient providers override it.
+     */
+    default void accumulateGlobalRemainderGradientForBranch(
+            BranchSufficientStatistics statistics,
+            NodeRef node,
+            NodeRef parentNode,
+            double[] gradOut) {
+        // no-op
+    }
+
 //    double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node, boolean getGradientQ, boolean getGradientN);
 
     int getParameterIndexFromNode(NodeRef node);
@@ -867,6 +879,28 @@ public interface ContinuousTraitGradientForBranch {
                 return requestedParameter.getDimension();
             }
             return dim * dim;
+        }
+
+        @Override
+        public void accumulateGlobalRemainderGradientForBranch(
+                final BranchSufficientStatistics statistics,
+                final NodeRef node,
+                final NodeRef parentNode,
+                final double[] gradOut) {
+            if (tree.isRoot(node)) {
+                return;
+            }
+            final int nodeBuffer = likelihoodDelegate.getActiveNodeIndex(node.getNumber());
+            final int parentBuffer = likelihoodDelegate.getActiveNodeIndex(parentNode.getNumber());
+            diffusionDelegate.accumulateCanonicalGlobalRemainderSelectionGradientForBranch(
+                    node,
+                    parentNode,
+                    nodeBuffer,
+                    parentBuffer,
+                    cdi,
+                    nativeBlockParameter,
+                    requestedParameter,
+                    gradOut);
         }
     }
 

@@ -82,6 +82,10 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         }
     }
 
+    public int getDimension() {
+        return dimension;
+    }
+
     public void fillLocalAdjoints(final BranchSufficientStatistics statistics,
                                   final CanonicalLocalTransitionAdjoints out) {
         refreshProcessSnapshots();
@@ -131,6 +135,65 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             processModel.accumulateDiffusionGradient(branchLength, covarianceAdjointScratch, matrixGradient);
         }
         return matrixGradient.clone();
+    }
+
+    /**
+     * Accumulates into {@code gradientAccumulator} the branch contribution from the
+     * pruning-remainder covariance adjoint {@code barVdiFlatIn}.
+     */
+    public void accumulateGlobalRemainderSelectionGradientForBranch(
+            final double branchLength,
+            final double[] barVdiFlatIn,
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
+            final Parameter requestedParameter,
+            final double[] gradientAccumulator) {
+
+        refreshProcessSnapshots();
+
+        final double[][] barVdi2D = new double[dimension][dimension];
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = 0; j < dimension; ++j) {
+                barVdi2D[i][j] = 0.5 * (
+                        barVdiFlatIn[i * dimension + j] + barVdiFlatIn[j * dimension + i]);
+            }
+        }
+
+        if (nativeBlockParameter != null
+                && processModel.getSelectionMatrixParameterization()
+                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+            final double[] denseGradient = new double[dimension * dimension];
+            processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
+            final double[] pulled = pullBackDenseGradientToBlock(
+                    requestedParameter, nativeBlockParameter, denseGradient);
+            for (int k = 0; k < gradientAccumulator.length; ++k) {
+                gradientAccumulator[k] += pulled[k];
+            }
+            return;
+        }
+
+        if (nativeBlockParameter == null) {
+            if (requestedParameter == null) {
+                processModel.accumulateSelectionGradientFromCovariance(
+                        branchLength, barVdi2D, gradientAccumulator);
+            } else {
+                final double[] denseGradient = new double[dimension * dimension];
+                processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
+                final double[] reordered = reorderDenseGradientForRequestedParameter(
+                        requestedParameter, denseGradient);
+                for (int k = 0; k < gradientAccumulator.length; ++k) {
+                    gradientAccumulator[k] += reordered[k];
+                }
+            }
+            return;
+        }
+
+        final double[] denseGradient = new double[dimension * dimension];
+        processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
+        final double[] pulled = pullBackDenseGradientToBlock(
+                requestedParameter, nativeBlockParameter, denseGradient);
+        for (int k = 0; k < gradientAccumulator.length; ++k) {
+            gradientAccumulator[k] += pulled[k];
+        }
     }
 
     public double[] getGradientWrtSelection(final double branchLength,

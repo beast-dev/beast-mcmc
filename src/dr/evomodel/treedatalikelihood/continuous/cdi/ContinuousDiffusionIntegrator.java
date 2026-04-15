@@ -62,6 +62,18 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance);
 
+    /**
+     * Backward pass through branch variance integration for one branch.
+     * Fills {@code barVdiOut} (row-major) with the adjoint of the branch covariance.
+     */
+    default void computeGlobalRemainderAdjointWrtBranchVariance(
+            final int iBuffer,
+            final int iMatrix,
+            final int kBuffer,
+            final double[] barVdiOut) {
+        Arrays.fill(barVdiOut, 0.0);
+    }
+
     void getBranchDisplacement(int bufferIndex, double[] displacement);
 
     void getBranchActualization(int bufferIndex, double[] actualization);

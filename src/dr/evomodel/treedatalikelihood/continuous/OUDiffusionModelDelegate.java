@@ -241,6 +241,31 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                 requestedParameter);
     }
 
+    /**
+     * Accumulates the global pruning-remainder selection gradient for one branch.
+     */
+    public void accumulateCanonicalGlobalRemainderSelectionGradientForBranch(
+            final NodeRef node,
+            final NodeRef parentNode,
+            final int nodeBuffer,
+            final int parentBuffer,
+            final ContinuousDiffusionIntegrator cdi,
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
+            final Parameter requestedParameter,
+            final double[] gradOut) {
+
+        final int matrixIndex = getMatrixBufferOffsetIndex(node.getNumber());
+        final double branchLength = cdi.getBranchLength(matrixIndex);
+        final int dimTrait = canonicalBranchGradientBridge.getDimension();
+        final double[] barVdi = new double[dimTrait * dimTrait];
+
+        cdi.computeGlobalRemainderAdjointWrtBranchVariance(
+                nodeBuffer, matrixIndex, parentBuffer, barVdi);
+
+        canonicalBranchGradientBridge.accumulateGlobalRemainderSelectionGradientForBranch(
+                branchLength, barVdi, nativeBlockParameter, requestedParameter, gradOut);
+    }
+
     @Override
     public void setDiffusionModels(ContinuousDiffusionIntegrator cdi, boolean flip) {
         super.setDiffusionModels(cdi, flip);

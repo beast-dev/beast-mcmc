@@ -45,6 +45,8 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             "beast.debug.ou.compareParentAboveRecovered.maxReports";
     private static final String FORCE_RECOVER_PARENT_ABOVE_FROM_CHILD_PROPERTY =
             "beast.debug.ou.forceRecoverParentAboveFromChild";
+    private static final String ALLOW_INFINITE_PARENT_ABOVE_RECOVERY_PROPERTY =
+            "beast.debug.ou.allowInfiniteParentAboveRecovery";
 
     private static final double SYMMETRIC_JITTER_RELATIVE = 1.0e-12;
     private static final double SYMMETRIC_JITTER_ABSOLUTE = 1.0e-12;
@@ -207,11 +209,29 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
     public double evaluateFrozenLocalLogFactor(final double branchLength,
                                                final double[] optimum,
-                                               final NormalSufficientStatistics above,
+                                               final NormalSufficientStatistics aboveChild,
                                                final NormalSufficientStatistics below) {
         fillCanonicalTransitionFromKernel(branchLength, optimum);
-        final DenseMatrix64F parentAbovePrecision = recoverParentAbovePrecision(above);
+        final DenseMatrix64F parentAbovePrecision = recoverParentAbovePrecision(aboveChild);
         final DenseMatrix64F parentAboveMean = aboveParentMeanVector;
+        return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
+    }
+
+    public double evaluateFrozenLocalLogFactor(final double branchLength,
+                                               final double[] optimum,
+                                               final NormalSufficientStatistics aboveChild,
+                                               final NormalSufficientStatistics aboveParent,
+                                               final NormalSufficientStatistics below) {
+        fillCanonicalTransitionFromKernel(branchLength, optimum);
+        final DenseMatrix64F parentAbovePrecision = recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
+        final DenseMatrix64F parentAboveMean = aboveParentMeanVector;
+        return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
+    }
+
+    private double evaluateFrozenLocalLogFactorWithResolvedParentPrecision(
+            final DenseMatrix64F parentAbovePrecision,
+            final DenseMatrix64F parentAboveMean,
+            final NormalSufficientStatistics below) {
         fillInformation(parentAbovePrecision, parentAboveMean, aboveInformation);
 
         final int observedCount = classifyExactObservationPattern(below);
@@ -762,22 +782,42 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         if (Boolean.getBoolean(COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY)) {
             compareParentAboveAgainstRecovered(aboveChild, aboveParent);
         }
-        final boolean parentPrecisionFinite = isFinite(aboveParent.getRawPrecision());
-        final boolean parentMeanFinite = isFinite(aboveParent.getRawMean());
-        if (!parentPrecisionFinite || !parentMeanFinite) {
+        final DenseMatrix64F parentPrecisionRaw = aboveParent.getRawPrecision();
+        final DenseMatrix64F parentMeanRaw = aboveParent.getRawMean();
+        final boolean parentMeanFinite = isFinite(parentMeanRaw);
+        final boolean parentPrecisionHasNaN = hasNaN(parentPrecisionRaw);
+        final boolean parentPrecisionHasInfinity = hasInfinity(parentPrecisionRaw);
+        if (!parentMeanFinite || parentPrecisionHasNaN) {
             throw new IllegalStateException(
-                    "Non-finite parent-above message."
-                            + " parentPrecisionFinite=" + parentPrecisionFinite
+                    "Invalid parent-above message."
                             + " parentMeanFinite=" + parentMeanFinite
-                            + " parentPrecisionSummary=" + summarizeDenseMatrix(aboveParent.getRawPrecision())
-                            + " parentMeanSummary=" + summarizeDenseMatrix(aboveParent.getRawMean())
+                            + " parentPrecisionHasNaN=" + parentPrecisionHasNaN
+                            + " parentPrecisionHasInfinity=" + parentPrecisionHasInfinity
+                            + " parentPrecisionSummary=" + summarizeDenseMatrix(parentPrecisionRaw)
+                            + " parentMeanSummary=" + summarizeDenseMatrix(parentMeanRaw)
                             + " childAbovePrecisionFinite=" + isFinite(aboveChild.getRawPrecision())
                             + " childAboveMeanFinite=" + isFinite(aboveChild.getRawMean())
                             + " childAbovePrecisionSummary=" + summarizeDenseMatrix(aboveChild.getRawPrecision())
                             + " childAboveMeanSummary=" + summarizeDenseMatrix(aboveChild.getRawMean()));
         }
-        aboveParentPrecisionMatrix.set(aboveParent.getRawPrecision());
-        aboveParentMeanVector.set(aboveParent.getRawMean());
+        if (parentPrecisionHasInfinity) {
+            if (!Boolean.parseBoolean(System.getProperty(ALLOW_INFINITE_PARENT_ABOVE_RECOVERY_PROPERTY, "true"))) {
+                throw new IllegalStateException(
+                        "Parent-above precision contains infinite entries and infinite-recovery is disabled."
+                                + " parentPrecisionSummary=" + summarizeDenseMatrix(parentPrecisionRaw)
+                                + " parentMeanSummary=" + summarizeDenseMatrix(parentMeanRaw));
+            }
+            // Parent-above messages can be represented as exact constraints (infinite precision)
+            // in mixed missing-data paths. Convert to a finite equivalent recovered from child-above
+            // for stable downstream canonical algebra. Keep the supplied parent mean fixed:
+            // recovering mean from child-above introduces parameter dependence that is not
+            // part of the original parent-above message.
+            final DenseMatrix64F recoveredPrecision = recoverParentAbovePrecision(aboveChild);
+            aboveParentMeanVector.set(parentMeanRaw);
+            return recoveredPrecision;
+        }
+        aboveParentPrecisionMatrix.set(parentPrecisionRaw);
+        aboveParentMeanVector.set(parentMeanRaw);
         return aboveParentPrecisionMatrix;
     }
 
@@ -1145,6 +1185,26 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             }
         }
         return true;
+    }
+
+    private static boolean hasNaN(final DenseMatrix64F matrix) {
+        final double[] data = matrix.getData();
+        for (double value : data) {
+            if (Double.isNaN(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasInfinity(final DenseMatrix64F matrix) {
+        final double[] data = matrix.getData();
+        for (double value : data) {
+            if (Double.isInfinite(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String summarizeDenseMatrix(final DenseMatrix64F matrix) {

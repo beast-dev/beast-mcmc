@@ -22,6 +22,8 @@ import java.util.Arrays;
 public final class TimeSeriesOUCanonicalBranchGradientBridge {
     private static final String DEBUG_NONORTH_OMEGA_PROPERTY = "beast.debug.nonorth.omega";
     private static final String DEBUG_BRANCH_LOCAL_SELECTION_FD_PROPERTY = "beast.debug.branchLocalSelectionFD";
+    private static final String DEBUG_BRANCH_LOCAL_MEAN_FD_PROPERTY = "beast.debug.branchLocalMeanFD";
+    private static final String DEBUG_BRANCH_LOCAL_MEAN_FD_NODE_PROPERTY = "beast.debug.branchLocalMeanFD.node";
     private static final String USE_NUMERIC_LOCAL_SELECTION_PROPERTY = "beast.experimental.localSelectionNumeric";
     private static final String USE_FROZEN_LOG_FACTOR_NUMERIC_PROPERTY =
             "beast.experimental.localSelectionNumeric.useFrozenLogFactor";
@@ -89,6 +91,16 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     public double[] getGradientWrtBranchDrift(final BranchSufficientStatistics statistics) {
         fillLocalAdjoints(statistics, localAdjoints);
         branchWiring.accumulateBranchMeanGradient(statistics.getBranch(), localAdjoints.dLogL_df, branchMeanGradient);
+        return branchMeanGradient.clone();
+    }
+
+    public double[] getGradientWrtBranchDrift(final double branchLength,
+                                              final double[] optimum,
+                                              final BranchSufficientStatistics statistics,
+                                              final int nodeNumber) {
+        fillLocalAdjoints(statistics, localAdjoints);
+        branchWiring.accumulateBranchMeanGradient(statistics.getBranch(), localAdjoints.dLogL_df, branchMeanGradient);
+        maybeEmitLocalMeanFDDebug(branchLength, optimum, statistics, nodeNumber, branchMeanGradient);
         return branchMeanGradient.clone();
     }
 
@@ -758,6 +770,141 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                 + " maxIdx=" + maxIdx
                 + " analytic=" + Arrays.toString(analytic)
                 + " numeric=" + Arrays.toString(numeric));
+    }
+
+    private void maybeEmitLocalMeanFDDebug(final double branchLength,
+                                           final double[] optimum,
+                                           final BranchSufficientStatistics statistics,
+                                           final int nodeNumber,
+                                           final double[] analytic) {
+        if (!Boolean.getBoolean(DEBUG_BRANCH_LOCAL_MEAN_FD_PROPERTY)) {
+            return;
+        }
+        final String nodeFilterRaw = System.getProperty(DEBUG_BRANCH_LOCAL_MEAN_FD_NODE_PROPERTY);
+        if (nodeFilterRaw != null && !nodeFilterRaw.trim().isEmpty()) {
+            final int requestedNode = Integer.parseInt(nodeFilterRaw.trim());
+            if (nodeNumber != requestedNode) {
+                return;
+            }
+        }
+        final double[] numericAdjointScore = numericalFrozenLocalMeanGradient(branchLength, optimum);
+        final double[] numericFrozenFactor = numericalFrozenLocalMeanGradientFromFrozenFactor(
+                branchLength, optimum, statistics);
+        final double baseAdjointScore = evaluateLocalSelectionScore(branchLength, optimum, localAdjoints);
+        final double baseFrozenFactor = branchWiring.evaluateFrozenLocalLogFactor(
+                branchLength,
+                optimum,
+                statistics.getAbove(),
+                statistics.getAboveParent(),
+                statistics.getBelow());
+        double maxAbsAdjoint = 0.0;
+        int maxIdxAdjoint = -1;
+        double maxAbsFrozenFactor = 0.0;
+        int maxIdxFrozenFactor = -1;
+        for (int i = 0; i < analytic.length; ++i) {
+            final double adjointDiff = Math.abs(analytic[i] - numericAdjointScore[i]);
+            if (adjointDiff > maxAbsAdjoint) {
+                maxAbsAdjoint = adjointDiff;
+                maxIdxAdjoint = i;
+            }
+            final double frozenFactorDiff = Math.abs(analytic[i] - numericFrozenFactor[i]);
+            if (frozenFactorDiff > maxAbsFrozenFactor) {
+                maxAbsFrozenFactor = frozenFactorDiff;
+                maxIdxFrozenFactor = i;
+            }
+        }
+        System.err.println("branchLocalMeanFDDebug node=" + nodeNumber
+                + " len=" + branchLength
+                + " belowPrecisionHasInf=" + hasInfinity(statsBelowPrecision(statistics))
+                + " aboveParentPrecisionHasInf=" + hasInfinity(statsAboveParentPrecision(statistics))
+                + " belowHasMissingMask=" + hasMissingMask(statistics)
+                + " maxAbsAdjointScoreDiff=" + maxAbsAdjoint
+                + " maxIdxAdjointScore=" + maxIdxAdjoint
+                + " maxAbsFrozenFactorDiff=" + maxAbsFrozenFactor
+                + " maxIdxFrozenFactor=" + maxIdxFrozenFactor
+                + " baseScoreDelta=" + (baseAdjointScore - baseFrozenFactor)
+                + " analytic=" + Arrays.toString(analytic)
+                + " numericAdjointScore=" + Arrays.toString(numericAdjointScore)
+                + " numericFrozenFactor=" + Arrays.toString(numericFrozenFactor));
+    }
+
+    private double[] numericalFrozenLocalMeanGradient(final double branchLength,
+                                                      final double[] optimum) {
+        final double[] gradient = new double[dimension];
+        final double[] optimumWork = optimum.clone();
+        for (int i = 0; i < dimension; ++i) {
+            final double base = optimumWork[i];
+            final double step = 1.0e-6 * Math.max(1.0, Math.abs(base));
+            optimumWork[i] = base + step;
+            final double plus = evaluateLocalSelectionScore(branchLength, optimumWork, localAdjoints);
+            optimumWork[i] = base - step;
+            final double minus = evaluateLocalSelectionScore(branchLength, optimumWork, localAdjoints);
+            gradient[i] = (plus - minus) / (2.0 * step);
+            optimumWork[i] = base;
+        }
+        return gradient;
+    }
+
+    private double[] numericalFrozenLocalMeanGradientFromFrozenFactor(final double branchLength,
+                                                                      final double[] optimum,
+                                                                      final BranchSufficientStatistics statistics) {
+        final double[] gradient = new double[dimension];
+        final double[] optimumWork = optimum.clone();
+        for (int i = 0; i < dimension; ++i) {
+            final double base = optimumWork[i];
+            final double step = 1.0e-6 * Math.max(1.0, Math.abs(base));
+            optimumWork[i] = base + step;
+            final double plus = branchWiring.evaluateFrozenLocalLogFactor(
+                    branchLength,
+                    optimumWork,
+                    statistics.getAbove(),
+                    statistics.getAboveParent(),
+                    statistics.getBelow());
+            optimumWork[i] = base - step;
+            final double minus = branchWiring.evaluateFrozenLocalLogFactor(
+                    branchLength,
+                    optimumWork,
+                    statistics.getAbove(),
+                    statistics.getAboveParent(),
+                    statistics.getBelow());
+            gradient[i] = (plus - minus) / (2.0 * step);
+            optimumWork[i] = base;
+        }
+        return gradient;
+    }
+
+    private static DenseMatrix64F statsBelowPrecision(final BranchSufficientStatistics statistics) {
+        return statistics.getBelow() == null ? null : statistics.getBelow().getRawPrecision();
+    }
+
+    private static DenseMatrix64F statsAboveParentPrecision(final BranchSufficientStatistics statistics) {
+        return statistics.getAboveParent() == null ? null : statistics.getAboveParent().getRawPrecision();
+    }
+
+    private static boolean hasMissingMask(final BranchSufficientStatistics statistics) {
+        final int[] missing = statistics.getMissing();
+        if (missing == null) {
+            return false;
+        }
+        for (int value : missing) {
+            if (value != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasInfinity(final DenseMatrix64F matrix) {
+        if (matrix == null) {
+            return false;
+        }
+        final double[] data = matrix.getData();
+        for (double value : data) {
+            if (Double.isInfinite(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private double[] numericalLocalSelectionGradientDenseA(final double branchLength,

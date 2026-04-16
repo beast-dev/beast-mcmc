@@ -28,3 +28,4 @@ src/revision.txt
 *.citations.txt
 *.ops
 *.MLE
+.Rproj.user

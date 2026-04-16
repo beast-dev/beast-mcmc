@@ -109,9 +109,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         for (int i = 0; i < startingValue.length; i++) {
 
             if (startingValue[i] == 0 && (mask == null || mask.getParameterValue(i) == 1)) {
-                throw new RuntimeException("Must start from either positive or negative value!");
+                sign[i] = Double.NaN;
+            } else {
+                sign[i] = startingValue[i] > 0 ? 1 : -1;
             }
-            sign[i] = startingValue[i] > 0 ? 1 : -1;
         }
         return sign;
     }
@@ -406,9 +407,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
             int index = 0;
             for (int taxon = 0; taxon < taxonCount; ++taxon) {
-                for (int trait = 0; trait < dimTrait; ++trait) {
-                    mean[index + trait] = rootMean[trait];
-                }
+                System.arraycopy(rootMean, 0, mean, index, dimTrait);
                 index += dimTrait;
             }
         }
@@ -478,7 +477,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    protected class Preconditioning {
+    protected static class Preconditioning {
 
         WrappedVector mass;
         double totalTravelTime;
@@ -489,7 +488,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    class BounceState {
+    static class BounceState {
         final Type type;
         final int index;
         final double remainingTime;

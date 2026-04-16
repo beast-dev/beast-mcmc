@@ -70,6 +70,8 @@ public class TreeTraitParserUtilities {
     public static final String LATENT_FROM = "latentFrom";
     public static final String LATENT_TO = "latentTo";
 
+    private static final String MISSING_VALUE = "missingValue";
+
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
         for (int i = 0; i < trait.getDimension(); i++) {
@@ -321,6 +323,17 @@ public class TreeTraitParserUtilities {
             int warningLength = 0;
             final int maxWarnings = 10;
 
+            double missingValue = 0.0;
+            if (xo.hasAttribute(MISSING_VALUE)) {
+                String str = xo.getStringAttribute(MISSING_VALUE, "0.0");
+                if (str.compareToIgnoreCase("na") == 0 ||
+                        str.compareToIgnoreCase("nan") == 0) {
+                    missingValue = Double.NaN;
+                } else {
+                    missingValue = Double.valueOf(str);
+                }
+            }
+
             // Fill in attributeValues
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {
@@ -432,7 +445,7 @@ public class TreeTraitParserUtilities {
             missingIndicators = new boolean[allValues.length];
             for (int i = 0; i < allValues.length; i++) {
                 if ((new Double(allValues[i])).isNaN()) {
-                    traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
+                    traitParameter.setParameterValue(i, missingValue); // Here, missings are set to zero
                     missingIndicators[i] = true;
                     nMissing++;
                 }

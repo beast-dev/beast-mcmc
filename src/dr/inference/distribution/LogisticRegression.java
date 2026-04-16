@@ -37,14 +37,18 @@ import java.util.List;
 @Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
 public class LogisticRegression extends GeneralizedLinearModel {
 
-
 	public LogisticRegression(Parameter dependentParam) { //, Parameter independentParam, DesignMatrix designMatrix) {
 		super(dependentParam);//, independentParam, designMatrix);
 	}
 
-
-	protected double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient) {
-		return 0;  // todo
+	@Override
+	protected void checkDependentVariables() {
+		for (int i = 0; i < N; ++i) {
+			double y = dependentParam.getParameterValue(i);
+			if (y != 0.0 && y != 1.0 && !Double.isNaN(y)) {
+				throw new IllegalArgumentException("Invalid logistic regression outcomes");
+			}
+		}
 	}
 
 	protected double calculateLogLikelihood(double[] beta) {
@@ -68,10 +72,10 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		double[] xBeta = getXBeta();
 
 		for (int i = 0; i < N; i++) {
-			// for each "pseudo"-datum
-			logLikelihood += dependentParam.getParameterValue(i) * xBeta[i]
-					- Math.log(1.0 + Math.exp(xBeta[i]));
-
+			double y = dependentParam.getParameterValue(i);
+			if (!Double.isNaN(y)) {
+				logLikelihood += y * xBeta[i] - Math.log(1.0 + Math.exp(xBeta[i]));
+			}
 		}
 		return logLikelihood;
 	}

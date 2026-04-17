@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
+import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
@@ -57,6 +58,7 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final static String BOTH = "both";
     private final static String IMPLEMENTATION = "implementation";
     private final static String IMPLEMENTATION_LEGACY = "legacy";
+    private final static String IMPLEMENTATION_CANONICAL = "canonical";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -172,6 +174,23 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
         ParameterMode parameterMode = parseParameterMode(xo, continuousData, parameter);
 
         final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+        final boolean useCanonicalImplementation =
+                IMPLEMENTATION_CANONICAL.equals(implementation)
+                        || (IMPLEMENTATION_LEGACY.equals(implementation) && continuousData.usesCanonicalOULikelihood());
+
+        if (useCanonicalImplementation) {
+            if (!continuousData.usesCanonicalOULikelihood()) {
+                throw new XMLParseException(
+                        "meanGradient implementation=\"canonical\" requires "
+                                + "traitDataLikelihood implementation=\"canonical\".");
+            }
+            return new CanonicalMeanParameterGradient(
+                    treeDataLikelihood,
+                    continuousData,
+                    parameter,
+                    parameterMode != ParameterMode.WRT_ROOT,
+                    parameterMode != ParameterMode.WRT_DRIFT);
+        }
 
         final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(parameterMode.getDerivationParameter());
         final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(

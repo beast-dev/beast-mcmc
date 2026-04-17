@@ -53,6 +53,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
     private final static String PRECISION_GRADIENT = "precisionGradient";
     private final static String PARAMETER = "parameter";
+    private final static String IMPLEMENTATION = "implementation";
+    private final static String IMPLEMENTATION_LEGACY = "legacy";
+    private final static String IMPLEMENTATION_CANONICAL = "canonical";
     private final static String PRECISION_CORRELATION = "correlation";
     private final static String PRECISION_CORRELATION_OLD = "precisionCorrelation";
     private final static String PRECISION_DIAGONAL = "diagonal";
@@ -88,6 +91,13 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      MatrixParameterInterface parameter) {
                 return new PrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
             }
+
+            @Override
+            public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
+                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final MatrixParameterInterface parameter) {
+                return new CanonicalPrecisionGradient(treeDataLikelihood, continuousData, parameter);
+            }
         },
         WRT_CORRELATION {
             @Override
@@ -95,6 +105,13 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      TreeDataLikelihood treeDataLikelihood,
                                                      MatrixParameterInterface parameter) {
                 return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+
+            @Override
+            public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
+                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final MatrixParameterInterface parameter) {
+                return new CanonicalCorrelationPrecisionGradient(treeDataLikelihood, continuousData, parameter);
             }
         },
         WRT_DIAGONAL {
@@ -104,6 +121,13 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      MatrixParameterInterface parameter) {
                 return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
             }
+
+            @Override
+            public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
+                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final MatrixParameterInterface parameter) {
+                return new CanonicalDiagonalPrecisionGradient(treeDataLikelihood, continuousData, parameter);
+            }
         },
         WRT_CORRELATION_DECOMPOSED {
             @Override
@@ -112,11 +136,22 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      MatrixParameterInterface parameter) {
                 return new FullCorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
             }
+
+            @Override
+            public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
+                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final MatrixParameterInterface parameter) {
+                return new CanonicalFullCorrelationPrecisionGradient(treeDataLikelihood, continuousData, parameter);
+            }
         };
 
         abstract AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                                                    TreeDataLikelihood treeDataLikelihood,
                                                    MatrixParameterInterface parameter);
+
+        abstract AbstractPrecisionGradient canonicalFactory(TreeDataLikelihood treeDataLikelihood,
+                                                            ContinuousDataLikelihoodDelegate continuousData,
+                                                            MatrixParameterInterface parameter);
     }
 
     @Override
@@ -139,6 +174,20 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
             ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+            final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+            final boolean useCanonicalImplementation =
+                    IMPLEMENTATION_CANONICAL.equals(implementation)
+                            || (IMPLEMENTATION_LEGACY.equals(implementation) && continuousData.usesCanonicalOULikelihood());
+
+            if (useCanonicalImplementation) {
+                if (!continuousData.usesCanonicalOULikelihood()) {
+                    throw new XMLParseException(
+                            "precisionGradient implementation=\"canonical\" requires "
+                                    + "traitDataLikelihood implementation=\"canonical\".");
+                }
+                final ParameterMode parameterMode = parseParameterMode(xo);
+                return parameterMode.canonicalFactory(treeDataLikelihood, continuousData, parameter);
+            }
 
             ModelExtensionProvider.NormalExtensionProvider extensionProvider = (ModelExtensionProvider.NormalExtensionProvider)
                     xo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
@@ -175,6 +224,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class, true),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
     };
 
     @Override

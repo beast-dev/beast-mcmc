@@ -29,6 +29,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private final CanonicalGaussianState filteredState;
     private final CanonicalGaussianState predictedState;
     private final CanonicalGaussianTransition transition;
+    private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
 
     private final double[][] designMatrix;
     private final double[][] noiseCovariance;
@@ -76,6 +77,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.filteredState = new CanonicalGaussianState(stateDimension);
         this.predictedState = new CanonicalGaussianState(stateDimension);
         this.transition = new CanonicalGaussianTransition(stateDimension);
+        this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
 
         this.designMatrix = new double[observationDimension][stateDimension];
         this.noiseCovariance = new double[observationDimension][observationDimension];
@@ -147,31 +149,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private void predict(final CanonicalGaussianState previous,
                          final CanonicalGaussianTransition transition,
                          final CanonicalGaussianState out) {
-        addMatrices(previous.precision, transition.precisionXX, stateWorkspace);
-        addVectors(previous.information, transition.informationX, stateVectorWorkspace);
-
-        final double[][] statePrecisionInverse = stateWorkspace2;
-        invertPositiveDefinite(stateWorkspace, statePrecisionInverse, stateDimension);
-
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(statePrecisionInverse, transition.precisionXY, transitionWorkspace);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transition.precisionYX, transitionWorkspace, stateWorkspace3);
-
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                out.precision[i][j] = transition.precisionYY[i][j] - stateWorkspace3[i][j];
-            }
-        }
-        KalmanLikelihoodEngine.symmetrize(out.precision);
-
-        KalmanLikelihoodEngine.multiplyMatrixVector(statePrecisionInverse, stateVectorWorkspace, stateVectorWorkspace2,
-                stateDimension, stateDimension);
-        KalmanLikelihoodEngine.multiplyMatrixVector(transition.precisionYX, stateVectorWorkspace2, stateVectorWorkspace,
-                stateDimension, stateDimension);
-        for (int i = 0; i < stateDimension; ++i) {
-            out.information[i] = transition.informationY[i] - stateVectorWorkspace[i];
-        }
-
-        out.logNormalizer = normalizedLogNormalizer(out.precision, out.information);
+        CanonicalGaussianMessageOps.pushForward(previous, transition, messageWorkspace, out);
     }
 
     private void buildObservationPrecisionContribution() {

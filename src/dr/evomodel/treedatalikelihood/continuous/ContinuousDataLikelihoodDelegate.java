@@ -46,6 +46,8 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUMessagePasserComputer;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalTipObservationAdapter;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
@@ -756,6 +758,111 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return diffusionProcessDelegate.getDiffusionModel(0);
     }
 
+    public boolean usesCanonicalOULikelihood() {
+        return useCanonicalOULikelihood;
+    }
+
+    public void enableCanonicalOULikelihood() {
+        if (useCanonicalOULikelihood) {
+            return;
+        }
+        if (!(diffusionProcessDelegate instanceof OUDiffusionModelDelegate)) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood is only available for OU diffusion delegates.");
+        }
+        if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood does not yet support integrated OU delegates.");
+        }
+        if (getTraitCount() != 1) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood currently supports only a single trait partition.");
+        }
+
+        final OUDiffusionModelDelegate ouDelegate = (OUDiffusionModelDelegate) diffusionProcessDelegate;
+        canonicalOUComputer = new CanonicalOUMessagePasserComputer(
+                tree,
+                ouDelegate.getElasticModel(),
+                getDiffusionModel(),
+                CanonicalTipObservationAdapter.extractTipObservations(tree, dataModel, dimTrait),
+                rootPrior,
+                ouDelegate.getCanonicalStationaryMeanParameter(),
+                rateModel,
+                rateTransformation);
+        useCanonicalOULikelihood = true;
+    }
+
+    public double[] getCanonicalSelectionGradient(final Parameter requestedParameter,
+                                                  final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
+        if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
+            throw new IllegalStateException("Canonical OU likelihood mode is not enabled on this delegate.");
+        }
+        if (nativeBlockParameter == null) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU XML wiring currently supports only native orthogonal-block selection gradients.");
+        }
+        if (requestedParameter.getDimension() != nativeBlockParameter.getParameter().getDimension()) {
+            throw new IllegalArgumentException(
+                    "Requested parameter dimension does not match native orthogonal-block parameter dimension.");
+        }
+
+        syncCanonicalTipObservations();
+        final double[] gradient = new double[requestedParameter.getDimension()];
+        canonicalOUComputer.computeGradientA(gradient);
+        return gradient;
+    }
+
+    public double[] getCanonicalMeanGradient(final Parameter requestedParameter,
+                                             final boolean includeStationaryMean,
+                                             final boolean includeRootMean) {
+        if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
+            throw new IllegalStateException("Canonical OU likelihood mode is not enabled on this delegate.");
+        }
+        if (!includeStationaryMean && !includeRootMean) {
+            throw new IllegalArgumentException("Canonical mean gradient requested no active target.");
+        }
+        if (requestedParameter.getDimension() != dimTrait) {
+            throw new IllegalArgumentException(
+                    "Requested mean parameter dimension does not match canonical OU trait dimension.");
+        }
+
+        syncCanonicalTipObservations();
+        final double[] gradient = new double[requestedParameter.getDimension()];
+        final double[] scratchGradient = new double[requestedParameter.getDimension()];
+
+        if (includeStationaryMean) {
+            canonicalOUComputer.computeGradientMu(scratchGradient);
+            addInPlace(gradient, scratchGradient);
+            java.util.Arrays.fill(scratchGradient, 0.0);
+        }
+        if (includeRootMean) {
+            canonicalOUComputer.computeGradientRootMean(scratchGradient);
+            addInPlace(gradient, scratchGradient);
+        }
+        return gradient;
+    }
+
+    public double[] getCanonicalPrecisionSourceGradient(final MatrixParameterInterface requestedParameter) {
+        if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
+            throw new IllegalStateException("Canonical OU likelihood mode is not enabled on this delegate.");
+        }
+        if (requestedParameter.getRowDimension() != dimTrait || requestedParameter.getColumnDimension() != dimTrait) {
+            throw new IllegalArgumentException(
+                    "Requested precision/variance matrix dimension does not match canonical OU trait dimension.");
+        }
+
+        syncCanonicalTipObservations();
+        final double[] gradient = new double[dimTrait * dimTrait];
+        canonicalOUComputer.computeGradientQ(gradient);
+        return gradient;
+    }
+
+    private static void addInPlace(final double[] accumulator, final double[] increment) {
+        for (int i = 0; i < accumulator.length; i++) {
+            accumulator[i] += increment[i];
+        }
+    }
+
     private void setAllTipData(boolean flip) {
         for (int index = 0; index < tipCount; index++) {
             setTipData(index, flip);
@@ -804,6 +911,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                       int rootNodeNumber) {
+
+        if (useCanonicalOULikelihood) {
+            branchNormalization = rateTransformation.getNormalization();
+            syncCanonicalTipObservations();
+            return canonicalOUComputer.computeLogLikelihood();
+        }
 
         branchNormalization = rateTransformation.getNormalization();
 
@@ -963,6 +1076,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         flip = true;
 
         storedBranchNormalization = branchNormalization;
+
+        if (useCanonicalOULikelihood) {
+            canonicalOUComputer.storeState();
+        }
     }
 
     /**
@@ -973,10 +1090,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         partialBufferHelper.restoreState();
 
         branchNormalization = storedBranchNormalization;
+
+        if (useCanonicalOULikelihood) {
+            canonicalOUComputer.restoreState();
+        }
     }
 
     @Override
     protected void acceptState() {
+        if (useCanonicalOULikelihood) {
+            canonicalOUComputer.acceptState();
+        }
     }
 
     public PreOrderSettings getPreOrderSettings() {
@@ -1054,6 +1178,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final ContinuousDiffusionIntegrator cdi;
 
     private boolean updateDiffusionModel;
+    private boolean useCanonicalOULikelihood = false;
+    private CanonicalOUMessagePasserComputer canonicalOUComputer;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
@@ -1204,5 +1330,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         System.arraycopy(partial, type.getMeanOffset(dimProcess), mean, 0, dimProcess);
 
         return mean;
+    }
+
+    private void syncCanonicalTipObservations() {
+        if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
+            return;
+        }
+        canonicalOUComputer.reloadTips(
+                CanonicalTipObservationAdapter.extractTipObservations(tree, dataModel, dimTrait));
     }
 }

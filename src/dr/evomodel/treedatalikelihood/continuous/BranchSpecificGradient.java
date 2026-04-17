@@ -85,6 +85,12 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
         this.parameter = parameter;
         this.branchProvider = branchProvider;
 
+        if (likelihoodDelegate.usesCanonicalOULikelihood()) {
+            throw new IllegalArgumentException(
+                    "BranchSpecificGradient is not available when traitDataLikelihood uses the canonical OU backend. "
+                            + "Use a canonical XML gradient implementation instead.");
+        }
+
         // TODO Move into different constructor / parser
         String bcdName = BranchConditionalDistributionDelegate.getName(traitName);
         if (treeDataLikelihood.getTreeTrait(bcdName) == null) {

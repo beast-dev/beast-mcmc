@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
+import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Likelihood;
@@ -56,6 +57,7 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     private final static String PARAMETER = "parameter";
     private final static String IMPLEMENTATION = "implementation";
     private final static String IMPLEMENTATION_LEGACY = "legacy";
+    private final static String IMPLEMENTATION_CANONICAL = "canonical";
     private final static String ATTENUATION_CORRELATION = "correlation";
     private final static String ATTENUATION_DIAGONAL = "diagonal";
     private final static String ATTENUATION_BOTH = "both";
@@ -148,6 +150,21 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
                         : null;
         final Parameter requestedParameter =
                 nativeBlockParameter != null ? nativeBlockParameter.getParameter() : null;
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+
+        if (nativeBlockParameter != null && IMPLEMENTATION_CANONICAL.equals(implementation)) {
+            if (!continuousData.usesCanonicalOULikelihood()) {
+                throw new XMLParseException(
+                        "attenuationGradient implementation=\"canonical\" requires "
+                                + "traitDataLikelihood implementation=\"canonical\".");
+            }
+            requestedParameter.setId(parameter.getId());
+            return new CanonicalSelectionParameterGradient(
+                    treeDataLikelihood,
+                    continuousData,
+                    requestedParameter,
+                    nativeBlockParameter);
+        }
 
         final ContinuousTraitGradientForBranch traitGradient;
         if (nativeBlockParameter != null) {
@@ -155,7 +172,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             traitGradient = new ContinuousTraitGradientForBranch.SelectionParameterGradient(
                     dim, tree, continuousData, requestedParameter, nativeBlockParameter);
         } else {
-            final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
             final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(
                     ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
             traitGradient = gradientSpec.build(dim, tree, continuousData, implementation);

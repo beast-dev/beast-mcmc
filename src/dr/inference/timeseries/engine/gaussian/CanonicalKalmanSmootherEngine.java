@@ -33,6 +33,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final ForwardTrajectory trajectory;
     private final CanonicalForwardTrajectory canonicalTrajectory;
     private final BranchSmootherStats[] smootherStats;
+    private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
 
     private final double[][] designMatrix;
     private final double[][] noiseCovariance;
@@ -87,6 +88,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.trajectory = new ForwardTrajectory(timeCount, stateDimension);
         this.canonicalTrajectory = new CanonicalForwardTrajectory(timeCount, stateDimension);
         this.smootherStats = new BranchSmootherStats[timeCount];
+        this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
         for (int t = 0; t < timeCount; ++t) {
             smootherStats[t] = new BranchSmootherStats(t, stateDimension, t < timeCount - 1);
         }
@@ -290,31 +292,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private void predict(final CanonicalGaussianState previous,
                          final CanonicalGaussianTransition transition,
                          final CanonicalGaussianState out) {
-        addMatrices(previous.precision, transition.precisionXX, stateWorkspace);
-        addVectors(previous.information, transition.informationX, stateVectorWorkspace);
-
-        final double[][] statePrecisionInverse = stateWorkspace2;
-        invertPositiveDefinite(stateWorkspace, statePrecisionInverse, stateDimension);
-
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(statePrecisionInverse, transition.precisionXY, transitionWorkspace);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transition.precisionYX, transitionWorkspace, stateWorkspace3);
-
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                out.precision[i][j] = transition.precisionYY[i][j] - stateWorkspace3[i][j];
-            }
-        }
-        KalmanLikelihoodEngine.symmetrize(out.precision);
-
-        KalmanLikelihoodEngine.multiplyMatrixVector(statePrecisionInverse, stateVectorWorkspace, stateVectorWorkspace2,
-                stateDimension, stateDimension);
-        KalmanLikelihoodEngine.multiplyMatrixVector(transition.precisionYX, stateVectorWorkspace2, stateVectorWorkspace,
-                stateDimension, stateDimension);
-        for (int i = 0; i < stateDimension; ++i) {
-            out.information[i] = transition.informationY[i] - stateVectorWorkspace[i];
-        }
-
-        out.logNormalizer = normalizedLogNormalizer(out.precision, out.information);
+        CanonicalGaussianMessageOps.pushForward(previous, transition, messageWorkspace, out);
     }
 
     private void fillMomentsFromCanonical(final CanonicalGaussianState canonical,
@@ -433,46 +411,12 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                                     final CanonicalGaussianTransition transition,
                                     final CanonicalGaussianState futureMessage,
                                     final CanonicalGaussianState pairOut) {
-        final int d = stateDimension;
-        for (int i = 0; i < d; ++i) {
-            pairOut.information[i] = filteredState.information[i] + transition.informationX[i];
-            pairOut.information[d + i] = futureMessage.information[i] + transition.informationY[i];
-            for (int j = 0; j < d; ++j) {
-                pairOut.precision[i][j] = filteredState.precision[i][j] + transition.precisionXX[i][j];
-                pairOut.precision[i][d + j] = transition.precisionXY[i][j];
-                pairOut.precision[d + i][j] = transition.precisionYX[i][j];
-                pairOut.precision[d + i][d + j] = futureMessage.precision[i][j] + transition.precisionYY[i][j];
-            }
-        }
-        pairOut.logNormalizer = 0.0;
+        CanonicalGaussianMessageOps.buildPairPosterior(filteredState, transition, futureMessage, pairOut);
     }
 
     private void marginalizeFirstBlock(final CanonicalGaussianState pairState,
                                        final CanonicalGaussianState out) {
-        final int d = stateDimension;
-        final double[][] yyInverse = tempDxD1;
-        fillLowerRightBlock(pairState.precision, tempDxD2);
-        invertPositiveDefinite(tempDxD2, yyInverse, d);
-
-        fillUpperRightBlock(pairState.precision, transitionWorkspace);
-        fillLowerLeftBlock(pairState.precision, stateWorkspace3);
-        multiply(transitionWorkspace, yyInverse, stateWorkspace);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(stateWorkspace, stateWorkspace3, stateWorkspace2);
-
-        fillUpperLeftBlock(pairState.precision, out.precision);
-        subtractMatrixInPlace(out.precision, stateWorkspace2);
-        KalmanLikelihoodEngine.symmetrize(out.precision);
-
-        fillSecondBlock(pairState.information, stateVectorWorkspace2);
-        KalmanLikelihoodEngine.multiplyMatrixVector(yyInverse, stateVectorWorkspace2, stateVectorWorkspace,
-                d, d);
-        KalmanLikelihoodEngine.multiplyMatrixVector(transitionWorkspace, stateVectorWorkspace, tempD,
-                d, d);
-        fillFirstBlock(pairState.information, out.information);
-        for (int i = 0; i < d; ++i) {
-            out.information[i] -= tempD[i];
-        }
-        out.logNormalizer = normalizedLogNormalizer(out.precision, out.information);
+        CanonicalGaussianMessageOps.marginalizeFirstBlock(pairState, stateDimension, messageWorkspace, out);
     }
 
     private void fillUpperLeftBlock(final double[][] source, final double[][] out) {

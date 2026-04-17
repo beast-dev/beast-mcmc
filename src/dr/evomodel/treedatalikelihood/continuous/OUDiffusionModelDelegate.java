@@ -145,6 +145,10 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         return branchTransitionProvider;
     }
 
+    public Parameter getCanonicalStationaryMeanParameter() {
+        return getCanonicalConstantDriftParameter();
+    }
+
     public OUStrategyBundle getOUStrategyBundle() {
         return OUActualizationStrategies.bundleFor(elasticModel);
     }

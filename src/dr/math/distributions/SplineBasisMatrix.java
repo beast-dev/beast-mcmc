@@ -53,9 +53,9 @@ public class SplineBasisMatrix extends MatrixParameter {
         this.knots = new double[2 * order + k.getDimension()];
         this.basisMatrix = new double[rowDimension][columnDimension];
 
-        x.addParameterListener(this);
-        k.addParameterListener(this);
-
+        addParameter(x);
+        addParameter(k);
+        
         basisMatrixKnown = false;
         knotsKnown = false;
     }

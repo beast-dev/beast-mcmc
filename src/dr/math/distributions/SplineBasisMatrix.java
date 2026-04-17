@@ -1,7 +1,7 @@
 package dr.math.distributions;
 
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.WrappedMatrix;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
@@ -39,7 +39,8 @@ public class SplineBasisMatrix extends MatrixParameter {
                              boolean intercept,
                              Double lowerBoundary,
                              Double upperBoundary) {
-        super(name, x.getDimension(), k.getDimension() + degree + (intercept ? 1 : 0));
+        super(name, x.getDimension(),
+                (k != null ? k.getDimension() : 0) + degree + (intercept ? 1 : 0));
 
         this.x = x;
         this.k = k;
@@ -50,14 +51,27 @@ public class SplineBasisMatrix extends MatrixParameter {
         this.lowerBoundary = lowerBoundary;
         this.upperBoundary = upperBoundary;
 
-        this.knots = new double[2 * order + k.getDimension()];
+        this.knots = new double[2 * order + (k != null ? k.getDimension() : 0)];
         this.basisMatrix = new double[rowDimension][columnDimension];
 
         addParameter(x);
-        addParameter(k);
+
+        if (k != null) {
+            addParameter(k);
+        }
         
         basisMatrixKnown = false;
         knotsKnown = false;
+    }
+
+    @Override
+    public int getColumnDimension() {
+        return columnDimension;
+    }
+
+    @Override
+    public int getRowDimension() {
+        return rowDimension;
     }
 
     private void getExpandedKnots() {
@@ -92,7 +106,8 @@ public class SplineBasisMatrix extends MatrixParameter {
                 knots[order + i] = upper;
             }
 
-            for (int i = 0; i < k.getDimension(); ++i) {
+            int kDim = (k != null ? k.getDimension() : 0);
+            for (int i = 0; i < kDim; ++i) {
                 knots[2 * order + i] = k.getParameterValue(i);
             }
 
@@ -159,7 +174,8 @@ public class SplineBasisMatrix extends MatrixParameter {
 
     @Override
     public String getReport() {
-        return new WrappedMatrix.MatrixParameter(this).toString();
+        DenseMatrix64F mat = new DenseMatrix64F(getParameterAsMatrix());
+        return mat.toString();
     }
 
     @Override

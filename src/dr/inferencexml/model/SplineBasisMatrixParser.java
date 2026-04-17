@@ -49,7 +49,7 @@ public class SplineBasisMatrixParser extends AbstractXMLObjectParser {
             new ElementRule(Parameter.class),
             new ElementRule(KNOTS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
-            }),
+            }, true),
             AttributeRule.newIntegerRule(DEGREE, true),
             AttributeRule.newBooleanRule(INTERCEPT, true),
             AttributeRule.newDoubleRule(LOWER_BOUND, true),
@@ -60,7 +60,11 @@ public class SplineBasisMatrixParser extends AbstractXMLObjectParser {
     public Object parseXMLObject (XMLObject xo) throws XMLParseException {
 
         Parameter evaluationPoints = (Parameter) xo.getChild(Parameter.class);
-        Parameter knots = (Parameter) xo.getElementFirstChild(KNOTS);
+
+        Parameter knots = null;
+        if (xo.hasChildNamed(KNOTS)) {
+            knots = (Parameter) xo.getElementFirstChild(KNOTS);
+        }
 
         int degree = xo.getAttribute(DEGREE, 3);
         boolean includeIntercept = xo.getAttribute(INTERCEPT, true);

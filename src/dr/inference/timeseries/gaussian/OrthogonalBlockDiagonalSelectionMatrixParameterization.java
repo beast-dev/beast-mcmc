@@ -15,6 +15,8 @@ import dr.inference.timeseries.representation.CanonicalGaussianUtils;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
+
 /**
  * Orthogonal block-diagonal parametrization using block-space helpers for the
  * forward path and the orthogonal native backward path.
@@ -23,8 +25,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
 
     private static final double SPD_JITTER_RELATIVE = 1.0e-14;
     private static final double SPD_JITTER_ABSOLUTE = 1.0e-14;
-    private static final String TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY =
-            "beast.experimental.transposeNativeFrechetOutput";
     private static final String NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY =
             "beast.experimental.nativeForceDenseAdjointExp";
     private static final String TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY =
@@ -43,6 +43,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private final double[] rData;
     private final double[] rtData;
     private final double[] blockDParams;
+    private final double[] cachedRData;
+    private final double[] cachedRtData;
+    private final double[] cachedBlockDParams;
     private final DenseMatrix64F expD;
     private final DenseMatrix64F rMatrix;
     private final DenseMatrix64F rtMatrix;
@@ -75,6 +78,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final double[] tempVector1;
     private final double[] tempVector2;
+    private boolean expCacheValid;
+    private boolean basisCacheValid;
+    private double cachedExpDt;
+    private double cachedBasisDt;
 
     public OrthogonalBlockDiagonalSelectionMatrixParameterization(
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
@@ -98,6 +105,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         this.rData = new double[d * d];
         this.rtData = new double[d * d];
         this.blockDParams = new double[blockParameter.getTridiagonalDDimension()];
+        this.cachedRData = new double[d * d];
+        this.cachedRtData = new double[d * d];
+        this.cachedBlockDParams = new double[blockParameter.getTridiagonalDDimension()];
         this.expD = new DenseMatrix64F(d, d);
         this.rMatrix = new DenseMatrix64F(d, d);
         this.rtMatrix = new DenseMatrix64F(d, d);
@@ -130,6 +140,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
         this.tempVector1 = new double[d];
         this.tempVector2 = new double[d];
+        this.expCacheValid = false;
+        this.basisCacheValid = false;
+        this.cachedExpDt = Double.NaN;
+        this.cachedBasisDt = Double.NaN;
     }
 
     @Override
@@ -448,9 +462,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                     denseAdjointScratch,
                     denseAdjointScratch);
             fillDenseMatrix(denseAdjointScratch, gradD);
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY)) {
-                transposeInPlace(gradD);
-            }
+            transposeInPlace(gradD);
             CommonOps.scale(-dt, gradD);
         } else {
             final DenseMatrix64F frechetInputTransition;
@@ -461,9 +473,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                 frechetInputTransition = upstreamFD;
             }
             frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputTransition, dt, gradD);
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY)) {
-                transposeInPlace(gradD);
-            }
+            transposeInPlace(gradD);
             if (!isFinite(gradD.data)) {
                 fillScaledNegativeBlockDMatrix(dt, scaledNegativeBlockDScratch);
                 copyDenseMatrixToArray(upstreamFD, denseAdjointScratch);
@@ -472,9 +482,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                         denseAdjointScratch,
                         denseAdjointScratch);
                 fillDenseMatrix(denseAdjointScratch, gradD);
-                if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY)) {
-                    transposeInPlace(gradD);
-                }
+                transposeInPlace(gradD);
                 CommonOps.scale(-dt, gradD);
             }
         }
@@ -534,9 +542,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                     denseAdjointScratch,
                     denseAdjointScratch);
             fillDenseMatrix(denseAdjointScratch, gradD);
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY)) {
-                transposeInPlace(gradD);
-            }
+            transposeInPlace(gradD);
             CommonOps.scale(-dt, gradD);
         } else {
             final DenseMatrix64F frechetInputCov;
@@ -547,9 +553,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                 frechetInputCov = gECov;
             }
             frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputCov, dt, gradD);
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_OUTPUT_PROPERTY)) {
-                transposeInPlace(gradD);
-            }
+            transposeInPlace(gradD);
         }
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
@@ -580,6 +584,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         final int d = getDimension();
         orthogonalRotation.fillOrthogonalMatrix(rData);
         orthogonalRotation.fillOrthogonalTranspose(rtData);
+        blockParameter.fillBlockDiagonalElements(blockDParams);
+
+        final boolean expNeedsRefresh = !expCacheValid
+                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
+                || !Arrays.equals(blockDParams, cachedBlockDParams);
         if (Boolean.getBoolean(DEBUG_NATIVE_R_CONSISTENCY_PROPERTY)) {
             final double[] blockR = new double[d * d];
             final double[] blockRinv = new double[d * d];
@@ -605,17 +614,43 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                     + " maxAbsRtDiff=" + maxRt
                     + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);
         }
+        final boolean basisNeedsRefresh = expNeedsRefresh
+                || !basisCacheValid
+                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedBasisDt)
+                || !Arrays.equals(rData, cachedRData)
+                || !Arrays.equals(rtData, cachedRtData);
+        if (!basisNeedsRefresh) {
+            return;
+        }
+
+        if (expNeedsRefresh) {
+            expSolver.compute(blockDParams, dt, expD);
+            System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
+            cachedExpDt = dt;
+            expCacheValid = true;
+        }
+
         System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
         System.arraycopy(rtData, 0, rtMatrix.data, 0, d * d);
-        blockParameter.fillBlockDiagonalElements(blockDParams);
-        expSolver.compute(blockDParams, dt, expD);
         multiplyRowMajor(rData, expD.data, d, workMatrix);
         multiply(workMatrix, rtData, d, transitionMatrix);
+        System.arraycopy(rData, 0, cachedRData, 0, rData.length);
+        System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
+        cachedBasisDt = dt;
+        basisCacheValid = true;
     }
 
     private void refreshMeanGradientCaches(final double dt) {
         blockParameter.fillBlockDiagonalElements(blockDParams);
-        expSolver.compute(blockDParams, dt, expD);
+        if (!expCacheValid
+                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
+                || !Arrays.equals(blockDParams, cachedBlockDParams)) {
+            expSolver.compute(blockDParams, dt, expD);
+            System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
+            cachedExpDt = dt;
+            expCacheValid = true;
+            basisCacheValid = false;
+        }
     }
 
     private static void multiplyRowMajor(final double[] leftRowMajor,

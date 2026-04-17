@@ -6,9 +6,16 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 /**
- * Pure block-space helper for Fréchet derivatives of exp(-D t).
+ * Exact block-space helper for Fréchet derivatives of exp(-D t).
+ *
+ * <p>The forward block integral is represented as a cached exact linear map on each
+ * 1x1 / 2x2 block pair. This avoids numerical quadrature on the hot path and turns
+ * repeated branch-local applications into tiny dense matrix-vector multiplies.</p>
  */
 public final class BlockDiagonalFrechetHelper {
+
+    private static final String QUADRATURE_DEBUG_PROPERTY =
+            "beast.experimental.nativeUseQuadratureFrechet";
 
     private final int dim;
     private final BlockDiagonalExpSolver.BlockStructure structure;
@@ -19,9 +26,13 @@ public final class BlockDiagonalFrechetHelper {
     private final double[] buf4a = new double[4];
     private final double[] buf4b = new double[4];
     private final double[] buf4c = new double[4];
-
     private final DenseMatrix64F lastExp;
-    private final DenseMatrix64F workspaceResult;
+    private final BlockDiagonalFrechetExactPlan.Workspace workspace;
+
+    private final double[] cachedPlanParams;
+    private BlockDiagonalFrechetExactPlan.Plan cachedPlan;
+    private double cachedPlanT;
+    private boolean cachedPlanValid;
 
     public BlockDiagonalFrechetHelper(final BlockDiagonalExpSolver.BlockStructure structure) {
         this.structure = structure;
@@ -29,7 +40,11 @@ public final class BlockDiagonalFrechetHelper {
         this.expSolver = new BlockDiagonalExpSolver(structure);
         this.blockDTransposeParams = new double[3 * dim - 2];
         this.lastExp = new DenseMatrix64F(dim, dim);
-        this.workspaceResult = new DenseMatrix64F(dim, dim);
+        this.workspace = new BlockDiagonalFrechetExactPlan.Workspace();
+        this.cachedPlanParams = new double[3 * dim - 2];
+        this.cachedPlan = null;
+        this.cachedPlanT = Double.NaN;
+        this.cachedPlanValid = false;
     }
 
     public DenseMatrix64F computeExpInDBasis(final double[] blockDParams,
@@ -45,6 +60,7 @@ public final class BlockDiagonalFrechetHelper {
         validateInputs(blockDParams, xD, out);
         buildTransposeParams(blockDParams, blockDTransposeParams);
         computeForwardFrechetInDBasis(blockDTransposeParams, xD, t, out);
+        CommonOps.transpose(out);
         CommonOps.scale(-t, out);
     }
 
@@ -54,26 +70,59 @@ public final class BlockDiagonalFrechetHelper {
                                               final DenseMatrix64F out) {
         validateInputs(blockDParams, eD, out);
         Arrays.fill(out.data, 0.0);
+        if (Boolean.getBoolean(QUADRATURE_DEBUG_PROPERTY)) {
+            computeForwardFrechetInDBasisQuadrature(blockDParams, eD, t, out);
+            return;
+        }
+        getOrBuildPlan(blockDParams, t).apply(eD, out, workspace);
+    }
 
+    private void buildTransposeParams(final double[] src, final double[] dst) {
+        final int diagLen = dim;
+        final int offLen = dim - 1;
+        System.arraycopy(src, 0, dst, 0, diagLen);
+        System.arraycopy(src, diagLen + offLen, dst, diagLen, offLen);
+        System.arraycopy(src, diagLen, dst, diagLen + offLen, offLen);
+    }
+
+    private void validateInputs(final double[] blockDParams,
+                                final DenseMatrix64F in,
+                                final DenseMatrix64F out) {
+        BlockDiagonalExpSolver.validateCompressedParams(blockDParams, dim);
+        validateMatrix(in, "input");
+        validateMatrix(out, "out");
+    }
+
+    private void validateMatrix(final DenseMatrix64F x, final String name) {
+        if (x.numRows != dim || x.numCols != dim) {
+            throw new IllegalArgumentException(
+                    name + " must be " + dim + "x" + dim + " but is " + x.numRows + "x" + x.numCols);
+        }
+    }
+
+    private void computeForwardFrechetInDBasisQuadrature(final double[] blockDParams,
+                                                         final DenseMatrix64F eD,
+                                                         final double t,
+                                                         final DenseMatrix64F out) {
         for (int bi = 0; bi < structure.getNumBlocks(); bi++) {
             final int startI = structure.getBlockStart(bi);
             final int sizeI = structure.getBlockSize(bi);
             for (int bj = 0; bj < structure.getNumBlocks(); bj++) {
                 final int startJ = structure.getBlockStart(bj);
                 final int sizeJ = structure.getBlockSize(bj);
-                computeBlockFrechetIntegral(blockDParams, eD, t, startI, sizeI, startJ, sizeJ, out);
+                computeBlockFrechetIntegralQuadrature(blockDParams, eD, t, startI, sizeI, startJ, sizeJ, out);
             }
         }
     }
 
-    private void computeBlockFrechetIntegral(final double[] blockDParams,
-                                             final DenseMatrix64F eTilde,
-                                             final double t,
-                                             final int startI,
-                                             final int sizeI,
-                                             final int startJ,
-                                             final int sizeJ,
-                                             final DenseMatrix64F out) {
+    private void computeBlockFrechetIntegralQuadrature(final double[] blockDParams,
+                                                       final DenseMatrix64F eTilde,
+                                                       final double t,
+                                                       final int startI,
+                                                       final int sizeI,
+                                                       final int startJ,
+                                                       final int sizeJ,
+                                                       final DenseMatrix64F out) {
         final int upperOffset = dim;
         final int lowerOffset = dim + (dim - 1);
 
@@ -150,26 +199,16 @@ public final class BlockDiagonalFrechetHelper {
         out.set(startI + 1, startJ + 1, buf4a[3]);
     }
 
-    private void buildTransposeParams(final double[] src, final double[] dst) {
-        final int diagLen = dim;
-        final int offLen = dim - 1;
-        System.arraycopy(src, 0, dst, 0, diagLen);
-        System.arraycopy(src, diagLen + offLen, dst, diagLen, offLen);
-        System.arraycopy(src, diagLen, dst, diagLen + offLen, offLen);
-    }
-
-    private void validateInputs(final double[] blockDParams,
-                                final DenseMatrix64F in,
-                                final DenseMatrix64F out) {
-        BlockDiagonalExpSolver.validateCompressedParams(blockDParams, dim);
-        validateMatrix(in, "input");
-        validateMatrix(out, "out");
-    }
-
-    private void validateMatrix(final DenseMatrix64F x, final String name) {
-        if (x.numRows != dim || x.numCols != dim) {
-            throw new IllegalArgumentException(
-                    name + " must be " + dim + "x" + dim + " but is " + x.numRows + "x" + x.numCols);
+    private BlockDiagonalFrechetExactPlan.Plan getOrBuildPlan(final double[] blockDParams,
+                                                              final double t) {
+        if (!cachedPlanValid
+                || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT)
+                || !Arrays.equals(blockDParams, cachedPlanParams)) {
+            cachedPlan = BlockDiagonalFrechetExactPlan.buildPlan(structure, blockDParams, t);
+            System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
+            cachedPlanT = t;
+            cachedPlanValid = true;
         }
+        return cachedPlan;
     }
 }

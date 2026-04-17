@@ -184,18 +184,18 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     }
 
     private void fillTransitionMoments(final dr.inference.timeseries.representation.CanonicalGaussianTransition transition) {
-        KalmanLikelihoodEngine.copyMatrix(transition.precisionYY, stepCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                KalmanLikelihoodEngine.cholesky(stepCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
+        GaussianMatrixOps.copyMatrix(transition.precisionYY, stepCovInv);
+        final GaussianMatrixOps.CholeskyFactor stepChol =
+                GaussianMatrixOps.cholesky(stepCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, transition.precisionYX, branchTransitionMatrix);
+        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, transition.precisionYX, branchTransitionMatrix);
         for (int i = 0; i < stateDimension; ++i) {
             for (int j = 0; j < stateDimension; ++j) {
                 branchTransitionMatrix[i][j] = -branchTransitionMatrix[i][j];
             }
         }
-        KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, transition.informationY, branchTransitionOffset);
+        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, transition.informationY, branchTransitionOffset);
     }
 
     private void fillSelectionTransitionAdjoints(final dr.inference.timeseries.representation.CanonicalGaussianTransition transition) {
@@ -256,14 +256,14 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
             }
         }
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transition.precisionYY, tempDxD, tempDxD2);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(tempDxD2, transition.precisionYY, dLogL_dV);
+        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionYY, tempDxD, tempDxD2);
+        GaussianMatrixOps.multiplyMatrixMatrix(tempDxD2, transition.precisionYY, dLogL_dV);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 dLogL_dV[i][j] = -dLogL_dV[i][j];
             }
         }
-        KalmanLikelihoodEngine.symmetrize(dLogL_dV);
+        GaussianMatrixOps.symmetrize(dLogL_dV);
     }
 
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,

@@ -21,8 +21,10 @@ public final class CanonicalGaussianMessageOps {
         final double[][] matrix2;
         final double[][] matrix3;
         final double[][] matrix4;
+        final double[][] matrix5;
         final double[] vector1;
         final double[] vector2;
+        final double[] vector3;
 
         public Workspace(final int dimension) {
             if (dimension < 1) {
@@ -33,8 +35,10 @@ public final class CanonicalGaussianMessageOps {
             this.matrix2 = new double[dimension][dimension];
             this.matrix3 = new double[dimension][dimension];
             this.matrix4 = new double[dimension][dimension];
+            this.matrix5 = new double[dimension][dimension];
             this.vector1 = new double[dimension];
             this.vector2 = new double[dimension];
+            this.vector3 = new double[dimension];
         }
 
         public int getDimension() {
@@ -112,18 +116,18 @@ public final class CanonicalGaussianMessageOps {
 
         final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInverse, tempv);
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(aInverse, transition.precisionXY, temp);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transition.precisionYX, temp, temp2);
+        GaussianMatrixOps.multiplyMatrixMatrix(aInverse, transition.precisionXY, temp);
+        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionYX, temp, temp2);
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 out.precision[i][j] = transition.precisionYY[i][j] - temp2[i][j];
             }
         }
-        KalmanLikelihoodEngine.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrize(out.precision);
 
-        KalmanLikelihoodEngine.multiplyMatrixVector(aInverse, h, tempv, d, d);
-        KalmanLikelihoodEngine.multiplyMatrixVector(transition.precisionYX, tempv, h, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(aInverse, h, tempv, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(transition.precisionYX, tempv, h, d, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationY[i] - h[i];
         }
@@ -153,18 +157,18 @@ public final class CanonicalGaussianMessageOps {
 
         final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInverse, tempv);
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transition.precisionXY, aInverse, temp);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(temp, transition.precisionYX, temp2);
+        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionXY, aInverse, temp);
+        GaussianMatrixOps.multiplyMatrixMatrix(temp, transition.precisionYX, temp2);
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 out.precision[i][j] = transition.precisionXX[i][j] - temp2[i][j];
             }
         }
-        KalmanLikelihoodEngine.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrize(out.precision);
 
-        KalmanLikelihoodEngine.multiplyMatrixVector(aInverse, h, tempv, d, d);
-        KalmanLikelihoodEngine.multiplyMatrixVector(transition.precisionXY, tempv, h, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(aInverse, h, tempv, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(transition.precisionXY, tempv, h, d, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationX[i] - h[i];
         }
@@ -312,7 +316,7 @@ public final class CanonicalGaussianMessageOps {
                 out.precision[i][j] -= precisionCorrection;
             }
         }
-        KalmanLikelihoodEngine.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrize(out.precision);
         out.logNormalizer = transition.logNormalizer
                 + observedQuadraticConstant(transition, observedValues, observedIndices, observedCount)
                 - eliminated;
@@ -390,8 +394,8 @@ public final class CanonicalGaussianMessageOps {
         final double eliminated = normalizedLogNormalizer(elimPrecision, elimInformation, d,
                 workspace, elimPrecisionInverse, tempv);
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(cross1, elimPrecisionInverse, workspace.matrix3);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(workspace.matrix3, cross2, workspace.matrix4);
+        GaussianMatrixOps.multiplyMatrixMatrix(cross1, elimPrecisionInverse, workspace.matrix3);
+        GaussianMatrixOps.multiplyMatrixMatrix(workspace.matrix3, cross2, workspace.matrix4);
 
         if (keepFirstBlock) {
             fillUpperLeftBlock(pairState.precision, d, out.precision);
@@ -402,10 +406,10 @@ public final class CanonicalGaussianMessageOps {
         }
 
         subtractMatrixInPlace(out.precision, workspace.matrix4, d);
-        KalmanLikelihoodEngine.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrize(out.precision);
 
-        KalmanLikelihoodEngine.multiplyMatrixVector(elimPrecisionInverse, elimInformation, tempv, d, d);
-        KalmanLikelihoodEngine.multiplyMatrixVector(cross1, tempv, elimInformation, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(elimPrecisionInverse, elimInformation, tempv, d, d);
+        GaussianMatrixOps.multiplyMatrixVector(cross1, tempv, elimInformation, d, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] -= elimInformation[i];
         }
@@ -420,24 +424,22 @@ public final class CanonicalGaussianMessageOps {
                                                   final double[][] inverseOut,
                                                   final double[] tempVector) {
         final double logDet = invertPositiveDefinite(precision, inverseOut, dimension, workspace);
-        KalmanLikelihoodEngine.multiplyMatrixVector(inverseOut, information, tempVector, dimension, dimension);
+        GaussianMatrixOps.multiplyMatrixVector(inverseOut, information, tempVector, dimension, dimension);
         final double quadratic = dot(information, tempVector, dimension);
-        return 0.5 * (dimension * KalmanLikelihoodEngine.LOG_TWO_PI - logDet + quadratic);
+        return 0.5 * (dimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 
     private static double invertPositiveDefinite(final double[][] matrix,
                                                  final double[][] inverseOut,
                                                  final int dimension,
                                                  final Workspace workspace) {
-        KalmanLikelihoodEngine.copyMatrix(matrix, workspace.matrix4, dimension, dimension);
+        GaussianMatrixOps.copyMatrix(matrix, workspace.matrix4, dimension, dimension);
         symmetrizeSquare(workspace.matrix4, dimension);
-        try {
-            return invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension);
-        } catch (IllegalArgumentException ignored) {
-            // Retry with progressively larger diagonal jitter when numerical symmetry/PD issues arise.
+        if (invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension, workspace)) {
+            return logDeterminant(workspace.matrix5, dimension);
         }
 
-        KalmanLikelihoodEngine.copyMatrix(workspace.matrix4, workspace.matrix3, dimension, dimension);
+        GaussianMatrixOps.copyMatrix(workspace.matrix4, workspace.matrix3, dimension, dimension);
         final double jitterBase = Math.max(
                 SYMMETRIC_JITTER_ABSOLUTE,
                 SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(workspace.matrix3, dimension)));
@@ -445,14 +447,12 @@ public final class CanonicalGaussianMessageOps {
         double jitter = 0.0;
         double lowerBound = Double.NaN;
         for (int attempt = 0; attempt < 12; ++attempt) {
-            KalmanLikelihoodEngine.copyMatrix(workspace.matrix3, workspace.matrix4, dimension, dimension);
+            GaussianMatrixOps.copyMatrix(workspace.matrix3, workspace.matrix4, dimension, dimension);
             if (jitter > 0.0) {
                 addDiagonalJitter(workspace.matrix4, jitter, dimension);
             }
-            try {
-                return invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension);
-            } catch (IllegalArgumentException ignored) {
-                // Increase jitter and retry.
+            if (invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension, workspace)) {
+                return logDeterminant(workspace.matrix5, dimension);
             }
 
             if (jitter == 0.0) {
@@ -468,13 +468,27 @@ public final class CanonicalGaussianMessageOps {
         throw new IllegalArgumentException("Matrix is not positive definite (failed robust inversion retries)");
     }
 
-    private static double invertPositiveDefiniteFromSymmetricCopy(final double[][] matrix,
-                                                                  final double[][] inverseOut,
-                                                                  final int dimension) {
-        final KalmanLikelihoodEngine.CholeskyFactor chol = KalmanLikelihoodEngine.cholesky(matrix);
-        KalmanLikelihoodEngine.copyMatrix(matrix, inverseOut, dimension, dimension);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(inverseOut, chol);
-        return chol.logDeterminant();
+    private static boolean invertPositiveDefiniteFromSymmetricCopy(final double[][] matrix,
+                                                                   final double[][] inverseOut,
+                                                                   final int dimension,
+                                                                   final Workspace workspace) {
+        if (!GaussianMatrixOps.tryCholesky(matrix, workspace.matrix5, dimension)) {
+            return false;
+        }
+        GaussianMatrixOps.invertPositiveDefiniteFromLowerTriangular(
+                inverseOut,
+                workspace.matrix5,
+                workspace.vector3,
+                dimension);
+        return true;
+    }
+
+    private static double logDeterminant(final double[][] lowerTriangular, final int dimension) {
+        double value = 0.0;
+        for (int i = 0; i < dimension; ++i) {
+            value += 2.0 * Math.log(lowerTriangular[i][i]);
+        }
+        return value;
     }
 
     private static double observedQuadraticConstant(final CanonicalGaussianTransition transition,

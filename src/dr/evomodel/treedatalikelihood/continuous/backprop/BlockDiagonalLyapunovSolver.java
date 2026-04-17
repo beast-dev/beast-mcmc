@@ -75,22 +75,25 @@ public final class BlockDiagonalLyapunovSolver {
     public void solve(final double[] blockDParams,
                       final DenseMatrix64F rhs,
                       final DenseMatrix64F sigmaOut) {
-        try {
-            solving(blockDParams, rhs, sigmaOut);
-        } catch (LyapunovNonStationaryException e) {
+        if (!trySolve(blockDParams, rhs, sigmaOut)) {
             // Parameters are in non-stationary region during leapfrog trajectory.
-            // Signal -Infinity to the likelihood by filling with NaN or +Infinity.
+            // Signal -Infinity to the likelihood by filling with +Infinity.
             Arrays.fill(sigmaOut.data, Double.POSITIVE_INFINITY);
             // This will propagate to -Infinity log-likelihood, causing HMC to
             // reject the trajectory and reverse momentum correctly.
         }
     }
 
-
-    public void solving(final double[] blockDParams,
-                      final DenseMatrix64F rhs,
-                      final DenseMatrix64F sigmaOut) {
-
+    /**
+     * Non-throwing hot path for HMC/integration code.
+     *
+     * @return {@code true} when the Lyapunov system was solved successfully,
+     * {@code false} when the current block parameters imply a singular or
+     * non-stationary system.
+     */
+    public boolean trySolve(final double[] blockDParams,
+                            final DenseMatrix64F rhs,
+                            final DenseMatrix64F sigmaOut) {
         checkSquare(rhs, "rhs");
         checkSquare(sigmaOut, "sigmaOut");
 
@@ -106,8 +109,20 @@ public final class BlockDiagonalLyapunovSolver {
             for (int bj = 0; bj < blocks.count; bj++) {
                 final int j0 = blocks.starts[bj];
                 final int js = blocks.sizes[bj];
-                solvePair(blockDParams, rhsData, outData, i0, is, j0, js);
+                if (!solvePair(blockDParams, rhsData, outData, i0, is, j0, js)) {
+                    return false;
+                }
             }
+        }
+        return true;
+    }
+
+
+    public void solving(final double[] blockDParams,
+                      final DenseMatrix64F rhs,
+                      final DenseMatrix64F sigmaOut) {
+        if (!trySolve(blockDParams, rhs, sigmaOut)) {
+            throw new LyapunovNonStationaryException("Singular or non-stationary block Lyapunov system");
         }
     }
 
@@ -167,46 +182,48 @@ public final class BlockDiagonalLyapunovSolver {
         return Math.abs(p[upperOffset + i]) >= EPS || Math.abs(p[lowerOffset + i]) >= EPS;
     }
 
-    private void solvePair(final double[] p,
-                           final double[] rhs,
-                           final double[] out,
-                           final int i0,
-                           final int is,
-                           final int j0,
-                           final int js) {
+    private boolean solvePair(final double[] p,
+                              final double[] rhs,
+                              final double[] out,
+                              final int i0,
+                              final int is,
+                              final int j0,
+                              final int js) {
 
         if (is == 1) {
             if (js == 1) {
-                solve11(p, rhs, out, i0, j0);
+                return solve11(p, rhs, out, i0, j0);
             } else {
-                solve12(p, rhs, out, i0, j0);
+                return solve12(p, rhs, out, i0, j0);
             }
-            return;
         }
 
         if (js == 1) {
-            solve21(p, rhs, out, i0, j0);
+            return solve21(p, rhs, out, i0, j0);
         } else {
-            solve22(p, rhs, out, i0, j0);
+            return solve22(p, rhs, out, i0, j0);
         }
     }
 
-    private void solve11(final double[] p,
-                         final double[] rhs,
-                         final double[] out,
-                         final int i,
-                         final int j) {
+    private boolean solve11(final double[] p,
+                            final double[] rhs,
+                            final double[] out,
+                            final int i,
+                            final int j) {
 
         final double denom = p[i] + p[j];
-        checkNonSingular(denom, "Singular 1x1 Lyapunov block at (" + i + "," + j + ")");
+        if (!isNonSingular(denom)) {
+            return false;
+        }
         out[index(i, j)] = rhs[index(i, j)] / denom;
+        return true;
     }
 
-    private void solve12(final double[] p,
-                         final double[] rhs,
-                         final double[] out,
-                         final int i,
-                         final int j) {
+    private boolean solve12(final double[] p,
+                            final double[] rhs,
+                            final double[] out,
+                            final int i,
+                            final int j) {
 
         final double d = p[i];
         final double e00 = p[j];
@@ -223,20 +240,23 @@ public final class BlockDiagonalLyapunovSolver {
         final double a22 = d + e11;
 
         final double det = a11 * a22 - a12 * a21;
-        checkNonSingular(det, "Singular 1x2 Lyapunov block at (" + i + "," + j + ")");
+        if (!isNonSingular(det)) {
+            return false;
+        }
 
         final double v0 = rhs[idx0];
         final double v1 = rhs[idx1];
 
         out[idx0] = (v0 * a22 - v1 * a12) / det;
         out[idx1] = (a11 * v1 - a21 * v0) / det;
+        return true;
     }
 
-    private void solve21(final double[] p,
-                         final double[] rhs,
-                         final double[] out,
-                         final int i,
-                         final int j) {
+    private boolean solve21(final double[] p,
+                            final double[] rhs,
+                            final double[] out,
+                            final int i,
+                            final int j) {
 
         final double d00 = p[i];
         final double d01 = p[upperOffset + i];
@@ -253,20 +273,23 @@ public final class BlockDiagonalLyapunovSolver {
         final double a22 = d11 + e;
 
         final double det = a11 * a22 - a12 * a21;
-        checkNonSingular(det, "Singular 2x1 Lyapunov block at (" + i + "," + j + ")");
+        if (!isNonSingular(det)) {
+            return false;
+        }
 
         final double v0 = rhs[idx0];
         final double v1 = rhs[idx1];
 
         out[idx0] = (v0 * a22 - v1 * a12) / det;
         out[idx1] = (a11 * v1 - a21 * v0) / det;
+        return true;
     }
 
-    private void solve22(final double[] p,
-                         final double[] rhs,
-                         final double[] out,
-                         final int i,
-                         final int j) {
+    private boolean solve22(final double[] p,
+                            final double[] rhs,
+                            final double[] out,
+                            final int i,
+                            final int j) {
 
         final double d00 = p[i];
         final double d01 = p[upperOffset + i];
@@ -293,13 +316,15 @@ public final class BlockDiagonalLyapunovSolver {
             b3[1] = rhs[ij01];
             b3[2] = rhs[ij11];
 
-            solveSmallSystem(3, a3, b3, x3);
+            if (!solveSmallSystem(3, a3, b3, x3)) {
+                return false;
+            }
 
             out[ij00] = x3[0];
             out[ij01] = x3[1];
             out[ij10] = x3[1];
             out[ij11] = x3[2];
-            return;
+            return true;
         }
 
         a4[0]  = d00 + e00; a4[1]  = e01;       a4[2]  = d01;       a4[3]  = 0.0;
@@ -312,22 +337,25 @@ public final class BlockDiagonalLyapunovSolver {
         b4[2] = rhs[ij10];
         b4[3] = rhs[ij11];
 
-        solveSmallSystem(4, a4, b4, x4);
+        if (!solveSmallSystem(4, a4, b4, x4)) {
+            return false;
+        }
 
         out[ij00] = x4[0];
         out[ij01] = x4[1];
         out[ij10] = x4[2];
         out[ij11] = x4[3];
+        return true;
     }
 
     /**
      * In-place Gaussian elimination with partial pivoting on tiny dense systems.
      * The coefficient array is overwritten.
      */
-    private static void solveSmallSystem(final int n,
-                                         final double[] a,
-                                         final double[] b,
-                                         final double[] xOut) {
+    private static boolean solveSmallSystem(final int n,
+                                            final double[] a,
+                                            final double[] b,
+                                            final double[] xOut) {
 
         for (int col = 0; col < n; col++) {
             int pivot = col;
@@ -340,7 +368,9 @@ public final class BlockDiagonalLyapunovSolver {
                 }
             }
 
-            checkNonSingular(pivotAbs, "Singular small Lyapunov system");
+            if (!isNonSingular(pivotAbs)) {
+                return false;
+            }
             if (pivot != col) {
                 swapRows(a, n, col, pivot);
                 swap(b, col, pivot);
@@ -367,6 +397,7 @@ public final class BlockDiagonalLyapunovSolver {
             }
             xOut[row] = sum / a[row * n + row];
         }
+        return true;
     }
 
     private static void swapRows(final double[] a, final int n, final int r1, final int r2) {
@@ -395,11 +426,8 @@ public final class BlockDiagonalLyapunovSolver {
         }
     }
 
-    private static void checkNonSingular(final double value, final String message) {
-        if (Math.abs(value) < EPS) {
-            throw new LyapunovNonStationaryException(message);
-//            throw new RuntimeException(message);
-        }
+    private static boolean isNonSingular(final double value) {
+        return Math.abs(value) >= EPS;
     }
 
     private static final class BlockStructure {

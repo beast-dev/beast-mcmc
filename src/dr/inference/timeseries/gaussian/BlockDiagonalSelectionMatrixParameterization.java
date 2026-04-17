@@ -124,6 +124,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.multTransA(rMatrix, upstreamF, tmpMatrix1);
         CommonOps.multTransB(tmpMatrix1, rinvMatrix, upstreamFD);
         frechetHelper.frechetAdjointExpInDBasis(blockDParams, upstreamFD, dt, gradD);
+        transposeInPlace(gradD);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         CommonOps.multTransB(upstreamF, transitionMatrix, tmpMatrix1);
@@ -173,6 +174,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.mult(tmpMatrix1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
         frechetHelper.frechetAdjointExpInDBasis(blockDParams, gECov, dt, gradD);
+        transposeInPlace(gradD);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         CommonOps.mult(gV, rMatrix, tmpMatrix1);
@@ -324,6 +326,20 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
                 final double value = 0.5 * (data[i * dimension + j] + data[j * dimension + i]);
                 data[i * dimension + j] = value;
                 data[j * dimension + i] = value;
+            }
+        }
+    }
+
+    private static void transposeInPlace(final DenseMatrix64F matrix) {
+        final int dimension = matrix.numRows;
+        final double[] data = matrix.data;
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = i + 1; j < dimension; ++j) {
+                final int ij = i * dimension + j;
+                final int ji = j * dimension + i;
+                final double tmp = data[ij];
+                data[ij] = data[ji];
+                data[ji] = tmp;
             }
         }
     }

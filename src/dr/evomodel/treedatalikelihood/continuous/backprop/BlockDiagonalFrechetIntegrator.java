@@ -92,11 +92,6 @@ final class BlockDiagonalFrechetIntegrator {
                                            final double d,
                                            final double scale,
                                            final double[] out4) {
-        final double[] dense = new double[4];
-        BlockDiagonalExpSolver.fillExp2x2GeneralBlock(-a, -b, -c, -d, scale, dense, 2, 0);
-        out4[0] = dense[0];
-        out4[1] = dense[1];
-        out4[2] = dense[2];
-        out4[3] = dense[3];
+        BlockDiagonalExpSolver.fillExp2x2GeneralBlock(-a, -b, -c, -d, scale, out4, 2, 0);
     }
 }

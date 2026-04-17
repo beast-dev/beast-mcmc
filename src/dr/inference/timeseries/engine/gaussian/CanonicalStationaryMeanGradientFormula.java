@@ -109,15 +109,15 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
                 smoothedInitialCovariance);
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(initialCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
+        final GaussianMatrixOps.CholeskyFactor initialChol =
+                GaussianMatrixOps.cholesky(initialCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - currentMean[i];
         }
         final double[] initialGradient = localAdjoints.dLogL_df;
-        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
         for (int i = 0; i < stateDimension; ++i) {
             denseGradient[i] += initialGradient[i];
         }
@@ -157,15 +157,15 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
                 smoothedInitialCovariance);
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(initialCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
+        final GaussianMatrixOps.CholeskyFactor initialChol =
+                GaussianMatrixOps.cholesky(initialCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - meanValue;
         }
         final double[] initialGradient = localAdjoints.dLogL_df;
-        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
         for (int i = 0; i < stateDimension; ++i) {
             scalarGradient += initialGradient[i];
         }

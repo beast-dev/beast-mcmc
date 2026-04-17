@@ -62,6 +62,9 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     private final MultivariateDiffusionModel diffusionModel;
     private final MatrixParameter diffusionCovariance;
     private final OUProcessModel processModel;
+    private final CanonicalGaussianTransition[] transitionCache;
+    private final double[] cachedEffectiveBranchLength;
+    private final boolean[] transitionCacheValid;
 
     private final DenseMatrix64F ejmlPrecision;
     private final DenseMatrix64F ejmlCovariance;
@@ -103,6 +106,11 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 diffusionCovariance,
                 stationaryMean,
                 initialCovariance);
+        addModel(processModel);
+
+        this.transitionCache = new CanonicalGaussianTransition[tree.getNodeCount()];
+        this.cachedEffectiveBranchLength = new double[tree.getNodeCount()];
+        this.transitionCacheValid = new boolean[tree.getNodeCount()];
 
         this.ejmlPrecision = new DenseMatrix64F(dimension, dimension);
         this.ejmlCovariance = new DenseMatrix64F(dimension, dimension);
@@ -116,11 +124,22 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     @Override
     public void fillCanonicalTransition(final int childNodeIndex, final CanonicalGaussianTransition out) {
-        if (dirty) {
-            refreshSnapshot();
-            dirty = false;
+        ensureCurrentSnapshot();
+
+        final double effectiveBranchLength = getEffectiveBranchLength(childNodeIndex);
+        if (!transitionCacheValid[childNodeIndex]
+                || Double.doubleToLongBits(cachedEffectiveBranchLength[childNodeIndex])
+                != Double.doubleToLongBits(effectiveBranchLength)) {
+            CanonicalGaussianTransition cached = transitionCache[childNodeIndex];
+            if (cached == null) {
+                cached = new CanonicalGaussianTransition(dimension);
+                transitionCache[childNodeIndex] = cached;
+            }
+            processModel.fillCanonicalTransition(effectiveBranchLength, cached);
+            cachedEffectiveBranchLength[childNodeIndex] = effectiveBranchLength;
+            transitionCacheValid[childNodeIndex] = true;
         }
-        processModel.fillCanonicalTransition(getEffectiveBranchLength(childNodeIndex), out);
+        copyTransition(transitionCache[childNodeIndex], out);
     }
 
     @Override
@@ -136,10 +155,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     @Override
     public void fillTraitCovariance(final double[][] out) {
-        if (dirty) {
-            refreshSnapshot();
-            dirty = false;
-        }
+        ensureCurrentSnapshot();
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
                 out[i][j] = diffusionCovariance.getParameterValue(i, j);
@@ -148,11 +164,17 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     public OUProcessModel getProcessModel() {
-        if (dirty) {
-            refreshSnapshot();
-            dirty = false;
-        }
+        ensureCurrentSnapshot();
         return processModel;
+    }
+
+    private void ensureCurrentSnapshot() {
+        if (!dirty) {
+            return;
+        }
+        refreshSnapshot();
+        dirty = false;
+        clearTransitionCache();
     }
 
     private void refreshSnapshot() {
@@ -174,6 +196,28 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         }
         diffusionCovariance.fireParameterChangedEvent();
         processModel.fireModelChanged();
+    }
+
+    private void clearTransitionCache() {
+        for (int i = 0; i < transitionCacheValid.length; i++) {
+            transitionCacheValid[i] = false;
+        }
+    }
+
+    private static void copyTransition(final CanonicalGaussianTransition source,
+                                       final CanonicalGaussianTransition target) {
+        final int dimension = source.getDimension();
+        for (int i = 0; i < dimension; i++) {
+            target.informationX[i] = source.informationX[i];
+            target.informationY[i] = source.informationY[i];
+            for (int j = 0; j < dimension; j++) {
+                target.precisionXX[i][j] = source.precisionXX[i][j];
+                target.precisionXY[i][j] = source.precisionXY[i][j];
+                target.precisionYX[i][j] = source.precisionYX[i][j];
+                target.precisionYY[i][j] = source.precisionYY[i][j];
+            }
+        }
+        target.logNormalizer = source.logNormalizer;
     }
 
     private static void setIdentity(final MatrixParameter matrix) {

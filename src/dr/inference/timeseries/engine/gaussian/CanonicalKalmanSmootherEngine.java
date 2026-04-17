@@ -126,7 +126,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyVector(smootherStats[t].smoothedMean, out[t]);
+            GaussianMatrixOps.copyVector(smootherStats[t].smoothedMean, out[t]);
         }
         return out;
     }
@@ -135,7 +135,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyMatrix(smootherStats[t].smoothedCovariance, out[t]);
+            GaussianMatrixOps.copyMatrix(smootherStats[t].smoothedCovariance, out[t]);
         }
         return out;
     }
@@ -144,7 +144,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyVector(trajectory.filteredMeans[t], out[t]);
+            GaussianMatrixOps.copyVector(trajectory.filteredMeans[t], out[t]);
         }
         return out;
     }
@@ -153,7 +153,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyMatrix(trajectory.filteredCovariances[t], out[t]);
+            GaussianMatrixOps.copyMatrix(trajectory.filteredCovariances[t], out[t]);
         }
         return out;
     }
@@ -162,7 +162,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyVector(trajectory.predictedMeans[t], out[t]);
+            GaussianMatrixOps.copyVector(trajectory.predictedMeans[t], out[t]);
         }
         return out;
     }
@@ -171,7 +171,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureResults();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            KalmanLikelihoodEngine.copyMatrix(trajectory.predictedCovariances[t], out[t]);
+            GaussianMatrixOps.copyMatrix(trajectory.predictedCovariances[t], out[t]);
         }
         return out;
     }
@@ -299,20 +299,20 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                                           final double[] meanOut,
                                           final double[][] covarianceOut) {
         invertPositiveDefinite(canonical.precision, covarianceOut, stateDimension);
-        KalmanLikelihoodEngine.multiplyMatrixVector(covarianceOut, canonical.information, meanOut,
+        GaussianMatrixOps.multiplyMatrixVector(covarianceOut, canonical.information, meanOut,
                 stateDimension, stateDimension);
     }
 
     private void buildObservationPrecisionContribution() {
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(noisePrecision, designMatrix, obsWorkspace,
+        GaussianMatrixOps.multiplyMatrixMatrix(noisePrecision, designMatrix, obsWorkspace,
                 observationDimension, observationDimension, stateDimension);
-        KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(
+        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(
                 designMatrix, obsWorkspace, observationPrecisionContribution);
-        KalmanLikelihoodEngine.symmetrize(observationPrecisionContribution);
+        GaussianMatrixOps.symmetrize(observationPrecisionContribution);
     }
 
     private void buildObservationInformation(final double[] observation) {
-        KalmanLikelihoodEngine.multiplyMatrixVector(noisePrecision, observation, observationVectorWorkspace,
+        GaussianMatrixOps.multiplyMatrixVector(noisePrecision, observation, observationVectorWorkspace,
                 observationDimension, observationDimension);
         for (int i = 0; i < stateDimension; ++i) {
             double sum = 0.0;
@@ -324,27 +324,27 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     private double observationPotentialLogNormalizer(final double[] observation, final double logDetNoise) {
-        final double quadratic = KalmanLikelihoodEngine.quadraticForm(noisePrecision, observation);
-        return 0.5 * (observationDimension * KalmanLikelihoodEngine.LOG_TWO_PI + logDetNoise + quadratic);
+        final double quadratic = GaussianMatrixOps.quadraticForm(noisePrecision, observation);
+        return 0.5 * (observationDimension * GaussianMatrixOps.LOG_TWO_PI + logDetNoise + quadratic);
     }
 
     private double normalizedLogNormalizer(final double[][] precision, final double[] information) {
         final double[][] precisionInverse = stateWorkspace;
         final double logDet = invertPositiveDefinite(precision, precisionInverse, stateDimension);
-        KalmanLikelihoodEngine.multiplyMatrixVector(precisionInverse, information, stateVectorWorkspace,
+        GaussianMatrixOps.multiplyMatrixVector(precisionInverse, information, stateVectorWorkspace,
                 stateDimension, stateDimension);
         final double quadratic = dot(information, stateVectorWorkspace);
-        return 0.5 * (stateDimension * KalmanLikelihoodEngine.LOG_TWO_PI - logDet + quadratic);
+        return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 
     private static double invertPositiveDefinite(final double[][] matrix,
                                                  final double[][] inverseOut,
                                                  final int dimension) {
         final double[][] copy = new double[dimension][dimension];
-        KalmanLikelihoodEngine.copyMatrix(matrix, copy, dimension, dimension);
-        final KalmanLikelihoodEngine.CholeskyFactor chol = KalmanLikelihoodEngine.cholesky(copy);
-        KalmanLikelihoodEngine.copyMatrix(copy, inverseOut, dimension, dimension);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(inverseOut, chol);
+        GaussianMatrixOps.copyMatrix(matrix, copy, dimension, dimension);
+        final GaussianMatrixOps.CholeskyFactor chol = GaussianMatrixOps.cholesky(copy);
+        GaussianMatrixOps.copyMatrix(copy, inverseOut, dimension, dimension);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(inverseOut, chol);
         return chol.logDeterminant();
     }
 
@@ -379,19 +379,19 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     private static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {
-        KalmanLikelihoodEngine.copyMatrix(source.precision, target.precision);
-        KalmanLikelihoodEngine.copyVector(source.information, target.information);
+        GaussianMatrixOps.copyMatrix(source.precision, target.precision);
+        GaussianMatrixOps.copyVector(source.information, target.information);
         target.logNormalizer = source.logNormalizer;
     }
 
     private static void copyTransition(final CanonicalGaussianTransition source,
                                        final CanonicalGaussianTransition target) {
-        KalmanLikelihoodEngine.copyMatrix(source.precisionXX, target.precisionXX);
-        KalmanLikelihoodEngine.copyMatrix(source.precisionXY, target.precisionXY);
-        KalmanLikelihoodEngine.copyMatrix(source.precisionYX, target.precisionYX);
-        KalmanLikelihoodEngine.copyMatrix(source.precisionYY, target.precisionYY);
-        KalmanLikelihoodEngine.copyVector(source.informationX, target.informationX);
-        KalmanLikelihoodEngine.copyVector(source.informationY, target.informationY);
+        GaussianMatrixOps.copyMatrix(source.precisionXX, target.precisionXX);
+        GaussianMatrixOps.copyMatrix(source.precisionXY, target.precisionXY);
+        GaussianMatrixOps.copyMatrix(source.precisionYX, target.precisionYX);
+        GaussianMatrixOps.copyMatrix(source.precisionYY, target.precisionYY);
+        GaussianMatrixOps.copyVector(source.informationX, target.informationX);
+        GaussianMatrixOps.copyVector(source.informationY, target.informationY);
         target.logNormalizer = source.logNormalizer;
     }
 
@@ -482,9 +482,9 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                                            final int dimension) {
         final double[][] precisionInverse = stateWorkspace;
         final double logDet = invertPositiveDefinite(precision, precisionInverse, dimension);
-        KalmanLikelihoodEngine.multiplyMatrixVector(precisionInverse, information, stateVectorWorkspace,
+        GaussianMatrixOps.multiplyMatrixVector(precisionInverse, information, stateVectorWorkspace,
                 dimension, dimension);
         final double quadratic = dot(information, stateVectorWorkspace);
-        return 0.5 * (dimension * KalmanLikelihoodEngine.LOG_TWO_PI - logDet + quadratic);
+        return 0.5 * (dimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 }

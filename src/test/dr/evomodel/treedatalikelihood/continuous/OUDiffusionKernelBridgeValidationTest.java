@@ -29,6 +29,7 @@ import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
 import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.inference.timeseries.gaussian.OUProcessModel;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import junit.framework.Test;
@@ -201,6 +202,12 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         assertTrue("tree bridge should preserve orthogonal block parametrization",
                 blockProvider.getProcessModel().getSelectionMatrixParameterization()
                         instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization);
+        assertEquals("orthogonal tree bridge should default to stationary Lyapunov covariance adjoints",
+                OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV,
+                blockProvider.getProcessModel().getCovarianceGradientMethod());
+        assertEquals("dense tree bridge should keep the dense default covariance adjoint",
+                OUProcessModel.CovarianceGradientMethod.VAN_LOAN_ADJOINT,
+                denseProvider.getProcessModel().getCovarianceGradientMethod());
 
         final double dt = 0.17;
         final double[][] blockF = new double[dimension][dimension];

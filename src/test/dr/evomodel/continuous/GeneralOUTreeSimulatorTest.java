@@ -156,7 +156,7 @@ public class GeneralOUTreeSimulatorTest extends TestCase {
                             "    <taxon id=\"A\"/>" +
                             "    <taxon id=\"B\"/>" +
                             "  </taxa>" +
-                            "  <generalOuTreeSimulator id=\"simTree\" traitName=\"ouTrait\" clone=\"true\">" +
+                            "  <generalOuTreeSimulator id=\"simTree\" traitName=\"ouTrait\" clone=\"true\" selectionChart=\"dense\">" +
                             "    <newick id=\"startTree\" usingDates=\"false\" usingHeights=\"false\">(A:0.7,B:0.5);</newick>" +
                             "    <multivariateDiffusionModel id=\"diffusion\">" +
                             "      <precisionMatrix>" +
@@ -197,6 +197,63 @@ public class GeneralOUTreeSimulatorTest extends TestCase {
 
             final Object taxonTrait = simulated.getNodeTaxon(tipA).getAttribute("ouTrait");
             assertTrue(taxonTrait instanceof String);
+        } finally {
+            if (previousParsers == null) {
+                System.clearProperty("parsers");
+            } else {
+                System.setProperty("parsers", previousParsers);
+            }
+        }
+    }
+
+    public void testXmlParserRejectsDenseSelectionWithoutExplicitChart() throws Exception {
+        final String previousParsers = System.getProperty("parsers");
+        System.setProperty("parsers", "development");
+        try {
+            final BeastParser parser = new BeastParser(new String[0], null, false, true, true, null);
+            final String xml =
+                    "<beast>" +
+                            "  <taxa id=\"taxa\">" +
+                            "    <taxon id=\"A\"/>" +
+                            "    <taxon id=\"B\"/>" +
+                            "  </taxa>" +
+                            "  <generalOuTreeSimulator id=\"simTree\" traitName=\"ouTrait\" clone=\"true\">" +
+                            "    <newick id=\"startTree\" usingDates=\"false\" usingHeights=\"false\">(A:0.7,B:0.5);</newick>" +
+                            "    <multivariateDiffusionModel id=\"diffusion\">" +
+                            "      <precisionMatrix>" +
+                            "        <matrixParameter id=\"precision\">" +
+                            "          <parameter value=\"2.0 0.3\"/>" +
+                            "          <parameter value=\"0.3 1.5\"/>" +
+                            "        </matrixParameter>" +
+                            "      </precisionMatrix>" +
+                            "    </multivariateDiffusionModel>" +
+                            "    <strengthOfSelectionMatrix>" +
+                            "      <matrixParameter id=\"selection\">" +
+                            "        <parameter value=\"0.8 -0.1\"/>" +
+                            "        <parameter value=\"0.2 1.1\"/>" +
+                            "      </matrixParameter>" +
+                            "    </strengthOfSelectionMatrix>" +
+                            "    <optimalTraits>" +
+                            "      <parameter id=\"optimum\" value=\"1.0 -0.5\"/>" +
+                            "    </optimalTraits>" +
+                            "    <rootMean>" +
+                            "      <parameter id=\"rootMean\" value=\"0.2 -0.4\"/>" +
+                            "    </rootMean>" +
+                            "    <rootCovariance>" +
+                            "      <matrixParameter id=\"rootCovariance\">" +
+                            "        <parameter value=\"0.0 0.0\"/>" +
+                            "        <parameter value=\"0.0 0.0\"/>" +
+                            "      </matrixParameter>" +
+                            "    </rootCovariance>" +
+                            "  </generalOuTreeSimulator>" +
+                            "</beast>";
+
+            try {
+                parser.parse(new StringReader(xml), true);
+                fail("Expected XMLParseException for dense selection matrix without explicit selectionChart");
+            } catch (Exception expected) {
+                assertTrue(expected.getMessage().contains("selectionChart=\"dense\""));
+            }
         } finally {
             if (previousParsers == null) {
                 System.clearProperty("parsers");

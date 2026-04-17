@@ -65,7 +65,7 @@ public final class TimeSeriesOUGaussianBranchTransitionProvider
                 diffusionCovariance,
                 zeroMean,
                 initialCovariance,
-                OUProcessModel.CovarianceGradientMethod.LYAPUNOV_ADJOINT);
+                OUProcessModel.defaultCovarianceGradientMethod(driftMatrix));
         this.kernel = processModel.getRepresentation(GaussianBranchTransitionKernel.class);
 
         this.precisionMatrix = new DenseMatrix64F(dimension, dimension);

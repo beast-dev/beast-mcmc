@@ -1,9 +1,11 @@
 package dr.inference.timeseries.gaussian;
 
 import dr.inference.model.AbstractModel;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
+import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.timeseries.core.LatentProcessModel;
@@ -43,7 +45,7 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  * transition matrix and offset) and the <em>V-path</em> (through the step covariance).
  * Two strategies for the V-path are available via {@link CovarianceGradientMethod}:
  * <ul>
- *   <li>{@link CovarianceGradientMethod#VAN_LOAN_ADJOINT} (default): backpropagates
+ *   <li>{@link CovarianceGradientMethod#VAN_LOAN_ADJOINT}: backpropagates
  *       through the 2d×2d Van Loan block-exponential using the Fréchet-adjoint identity.
  *       Exact, O(d³) per branch after a single expm(2d×2d) call.</li>
  *   <li>{@link CovarianceGradientMethod#LYAPUNOV_ADJOINT}: numerically integrates the
@@ -57,7 +59,10 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  *       stationary-covariance adjoint and the F-inside-V adjoint. This requires a stable
  *       drift matrix; zero-drift and other non-stable cases are rejected.</li>
  * </ul>
- * The active strategy is selected at construction time and is immutable.
+ * By default, orthogonal block-diagonal drift parametrizations use
+ * {@link CovarianceGradientMethod#STATIONARY_LYAPUNOV}, while general dense drift matrices
+ * use {@link CovarianceGradientMethod#VAN_LOAN_ADJOINT}. The active strategy is selected
+ * at construction time and is immutable unless explicitly overridden.
  */
 public class OUProcessModel extends AbstractModel
         implements LatentProcessModel, RepresentableProcess,
@@ -111,7 +116,12 @@ public class OUProcessModel extends AbstractModel
     private final DiffusionMatrixParameterization diffusionMatrixParameterization;
     private final GaussianTransitionRepresentation transitionRepresentation;
 
-    /** Constructs an OUProcessModel using the default {@link CovarianceGradientMethod#VAN_LOAN_ADJOINT}. */
+    /**
+     * Constructs an OUProcessModel using the default covariance-adjoint strategy for the
+     * supplied drift parametrization:
+     * orthogonal block-diagonal drift matrices use stationary-Lyapunov adjoints, while
+     * general dense drift matrices use the Van Loan adjoint.
+     */
     public OUProcessModel(final String name,
                           final int stateDimension,
                           final MatrixParameterInterface driftMatrix,
@@ -119,7 +129,7 @@ public class OUProcessModel extends AbstractModel
                           final Parameter stationaryMean,
                           final MatrixParameter initialCovariance) {
         this(name, stateDimension, driftMatrix, diffusionMatrix, stationaryMean,
-                initialCovariance, CovarianceGradientMethod.VAN_LOAN_ADJOINT);
+                initialCovariance, defaultCovarianceGradientMethod(driftMatrix));
     }
 
     /** Constructs an OUProcessModel with an explicit V-path gradient strategy. */
@@ -209,6 +219,24 @@ public class OUProcessModel extends AbstractModel
 
     public CovarianceGradientMethod getCovarianceGradientMethod() {
         return covarianceGradientMethod;
+    }
+
+    public static boolean usesOrthogonalBlockSelectionChart(
+            final MatrixParameterInterface driftMatrix) {
+        if (driftMatrix instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter) {
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) driftMatrix;
+            return blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider;
+        }
+        return false;
+    }
+
+    public static CovarianceGradientMethod defaultCovarianceGradientMethod(
+            final MatrixParameterInterface driftMatrix) {
+        if (usesOrthogonalBlockSelectionChart(driftMatrix)) {
+            return CovarianceGradientMethod.STATIONARY_LYAPUNOV;
+        }
+        return CovarianceGradientMethod.VAN_LOAN_ADJOINT;
     }
 
     public GaussianComputationMode getDefaultComputationMode() {

@@ -1,11 +1,13 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.gaussian.OUProcessModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
+import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
@@ -30,10 +32,13 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(final XMLObject xo) throws XMLParseException {
         final int stateDimension = xo.getIntegerAttribute(STATE_DIMENSION);
-        final MatrixParameter driftMatrix = (MatrixParameter) xo.getElementFirstChild(DRIFT_MATRIX);
+        final MatrixParameterInterface driftMatrix =
+                (MatrixParameterInterface) xo.getElementFirstChild(DRIFT_MATRIX);
         final MatrixParameter diffusionMatrix = (MatrixParameter) xo.getElementFirstChild(DIFFUSION_MATRIX);
         final Parameter stationaryMean = (Parameter) xo.getElementFirstChild(STATIONARY_MEAN);
         final MatrixParameter initialCovariance = (MatrixParameter) xo.getElementFirstChild(INITIAL_COVARIANCE);
+
+        OUSelectionChartParserHelper.validateSelectionChart(xo, driftMatrix, PARSER_NAME);
 
         final String id = xo.hasId() ? xo.getId() : PARSER_NAME;
         return new OUProcessModel(id, stateDimension, driftMatrix, diffusionMatrix, stationaryMean, initialCovariance);
@@ -46,7 +51,10 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[] {
             AttributeRule.newIntegerRule(STATE_DIMENSION),
-            new ElementRule(DRIFT_MATRIX, new XMLSyntaxRule[] { new ElementRule(MatrixParameter.class) }),
+            new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
+                    "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
+                    OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
+            new ElementRule(DRIFT_MATRIX, new XMLSyntaxRule[] { new ElementRule(MatrixParameterInterface.class) }),
             new ElementRule(DIFFUSION_MATRIX, new XMLSyntaxRule[] { new ElementRule(MatrixParameter.class) }),
             new ElementRule(STATIONARY_MEAN, new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
             new ElementRule(INITIAL_COVARIANCE, new XMLSyntaxRule[] { new ElementRule(MatrixParameter.class) })

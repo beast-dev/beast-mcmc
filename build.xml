@@ -411,6 +411,27 @@
         <echo message="JUnit test finished."/>
     </target>
 
+    <target name="junit-canonical" depends="compile-all"
+            description="Run only canonical continuous-trait pathway tests">
+        <mkdir dir="${report}"/>
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${build}"/>
+            </classpath>
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${report}">
+                <fileset dir="${src}">
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/Canonical*Test.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="At least one of the canonical JUnits failed the test. Check test results." if="test.failed"/>
+        <echo message="Canonical JUnit tests finished."/>
+    </target>
+
     <target name="junitreport">
         <junitreport todir="${report}">
             <fileset dir="${report}" includes="*.xml"/>

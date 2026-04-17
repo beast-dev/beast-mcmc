@@ -43,6 +43,7 @@ import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.xml.*;
 
 import java.util.List;
@@ -128,6 +129,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
             }
         }
+        OUSelectionChartParserHelper.validateSelectionChart(xo,
+                elasticModel == null ? null : elasticModel.getStrengthOfSelectionMatrixParameter(),
+                CONTINUOUS_DATA_LIKELIHOOD);
 
 
         DiffusionProcessDelegate diffusionProcessDelegate;
@@ -323,6 +327,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
+            new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
+                    "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
+                    OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),

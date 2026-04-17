@@ -37,6 +37,7 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.gaussian.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianBranchTransitionKernel;
+import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -443,6 +444,9 @@ public final class GeneralOUTreeSimulator {
             final Parameter optimumMean =
                     (Parameter) xo.getChild(OPTIMUM_MEAN).getChild(Parameter.class);
 
+            OUSelectionChartParserHelper.validateSelectionChart(
+                    xo, selectionMatrix, GENERAL_OU_TREE_SIMULATOR);
+
             final MultivariateElasticModel elasticModel = new MultivariateElasticModel(selectionMatrix);
             final GeneralOUTreeSimulator simulator;
 
@@ -490,6 +494,9 @@ public final class GeneralOUTreeSimulator {
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[]{
             new StringAttributeRule(TRAIT_NAME, "The trait attribute name written onto tips and nodes."),
             AttributeRule.newBooleanRule(CLONE, true),
+            new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
+                    "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
+                    OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
             new ElementRule(Tree.class),
             new ElementRule(MultivariateDiffusionModel.class),
             new ElementRule(STRENGTH_OF_SELECTION_MATRIX,

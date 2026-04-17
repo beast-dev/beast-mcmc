@@ -1,6 +1,8 @@
 package test.dr.inference.timeseries;
 
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
@@ -69,6 +71,18 @@ public class OUProcessModelTest extends TestCase {
                 makeMatrix("P0", new double[][]{{p0Diag, 0}, {0, p0Diag}}));
     }
 
+    private static OrthogonalBlockDiagonalPolarStableMatrixParameter makeOrthogonalBlock2D(final String name) {
+        final Parameter angles = new Parameter.Default(name + ".angles", new double[]{0.2});
+        final GivensRotationMatrixParameter rotation =
+                new GivensRotationMatrixParameter(name + ".rotation", 2, angles);
+        final Parameter scalar = new Parameter.Default(0);
+        final Parameter rho = new Parameter.Default(name + ".rho", new double[]{0.85});
+        final Parameter theta = new Parameter.Default(name + ".theta", new double[]{0.25});
+        final Parameter t = new Parameter.Default(name + ".t", new double[]{-0.08});
+        return new OrthogonalBlockDiagonalPolarStableMatrixParameter(
+                name, rotation, scalar, rho, theta, t);
+    }
+
     private static EulerOUProcessModel makeEulerScalar1D(double a, double q, double mu0, double p0) {
         return new EulerOUProcessModel("euler1d", 1,
                 makeMatrix("A", new double[][]{{a}}),
@@ -95,6 +109,31 @@ public class OUProcessModelTest extends TestCase {
 
     public void testGetStateDimension2D() {
         assertEquals(2, make2D(1, 1, 1, 1, 0, 1).getStateDimension());
+    }
+
+    public void testDefaultCovarianceGradientMethodUsesVanLoanForDenseDrift() {
+        final OUProcessModel process = make2D(1.0, 2.0, 1.5, 1.7, 0.0, 1.0);
+        assertEquals(OUProcessModel.CovarianceGradientMethod.VAN_LOAN_ADJOINT,
+                process.getCovarianceGradientMethod());
+    }
+
+    public void testDefaultCovarianceGradientMethodUsesStationaryLyapunovForOrthogonalBlockDrift() {
+        final OUProcessModel process = new OUProcessModel(
+                "ou2dBlockDefault",
+                2,
+                makeOrthogonalBlock2D("Ablock.default"),
+                makeMatrix("Q.default", new double[][]{{1.3, 0.1}, {0.1, 1.7}}),
+                new Parameter.Default(0.0),
+                makeMatrix("P0.default", new double[][]{{1.0, 0.0}, {0.0, 1.0}}));
+        assertEquals(OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV,
+                process.getCovarianceGradientMethod());
+    }
+
+    public void testUsesOrthogonalBlockSelectionChartDetectsExpectedCharts() {
+        assertFalse(OUProcessModel.usesOrthogonalBlockSelectionChart(
+                makeMatrix("A.dense", new double[][]{{1.0, -0.2}, {0.1, 1.4}})));
+        assertTrue(OUProcessModel.usesOrthogonalBlockSelectionChart(
+                makeOrthogonalBlock2D("A.block.chart")));
     }
 
     // ── Initial mean ─────────────────────────────────────────────────────────────

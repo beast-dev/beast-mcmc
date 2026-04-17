@@ -38,6 +38,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  */
 public class DesignMatrix extends MatrixParameter {
+
     public static final String DESIGN_MATRIX = "designMatrix";
     public static final String ADD_INTERCEPT = "addIntercept";
     public static final String FORM = "form";

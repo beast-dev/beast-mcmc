@@ -12,7 +12,7 @@ import java.util.Arrays;
  * @author Pratyusa Datta
  * @author Marc Suchard
  */
-public class SplineBasisMatrix extends MatrixParameter {
+public class SplineBasisMatrix extends DesignMatrix {
 
     private final Parameter x;
     private final Parameter k;
@@ -39,8 +39,9 @@ public class SplineBasisMatrix extends MatrixParameter {
                              boolean intercept,
                              Double lowerBoundary,
                              Double upperBoundary) {
-        super(name, x.getDimension(),
-                (k != null ? k.getDimension() : 0) + degree + (intercept ? 1 : 0));
+        super(name, false);
+        this.rowDimension = x.getDimension();
+        this.columnDimension = (k != null ? k.getDimension() : 0) + degree + (intercept ? 1 : 0);
 
         this.x = x;
         this.k = k;
@@ -179,7 +180,7 @@ public class SplineBasisMatrix extends MatrixParameter {
     }
 
     @Override
-    public double getParameterValue(int row, int col) {
+    public double getRawParameterValue(int row, int col) {
         computeBasisMatrix();
         return basisMatrix[row][col];
     }

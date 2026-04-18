@@ -793,6 +793,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 rateModel,
                 rateTransformation);
         useCanonicalOULikelihood = true;
+        canonicalTipObservationsDirty = false;
     }
 
     public double[] getCanonicalSelectionGradient(final Parameter requestedParameter,
@@ -1034,6 +1035,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void makeDirty() {
         updateDiffusionModel = true;
+        invalidateCanonicalOUGradientCache();
         fireModelChanged(); // Signal simulation processes
     }
 
@@ -1041,9 +1043,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionProcessDelegate) {
             updateDiffusionModel = true;
+            invalidateCanonicalOUGradientCache();
             // Tell TreeDataLikelihood to update all nodes
             fireModelChanged();
         } else if (model == dataModel) {
+            canonicalTipObservationsDirty = true;
+            invalidateCanonicalOUGradientCache();
             if (object == dataModel) {
                 if (index == -1) { // all taxa updated
                     updateTipData.addFirst(index);
@@ -1055,8 +1060,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             }
 
         } else if (model instanceof BranchRateModel) {
+            invalidateCanonicalOUGradientCache();
             fireModelChanged();
         } else if (model == rootProcessDelegate) {
+            invalidateCanonicalOUGradientCache();
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
@@ -1184,6 +1191,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private boolean useCanonicalOULikelihood = false;
     private CanonicalOUMessagePasserComputer canonicalOUComputer;
     private CanonicalTipObservation[] canonicalTipObservations;
+    private boolean canonicalTipObservationsDirty = false;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
@@ -1340,8 +1348,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
             return;
         }
+        if (!canonicalTipObservationsDirty) {
+            return;
+        }
         CanonicalTipObservationAdapter.fillTipObservations(tree, dataModel, dimTrait, canonicalTipObservations);
         canonicalOUComputer.reloadTips(canonicalTipObservations);
+        canonicalTipObservationsDirty = false;
+    }
+
+    private void invalidateCanonicalOUGradientCache() {
+        if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
+            return;
+        }
+        canonicalOUComputer.invalidateGradientCache();
     }
 
     private static CanonicalTipObservation[] allocateCanonicalTipObservations(final int tipCount, final int dim) {

@@ -38,7 +38,11 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonicalOUMessagePasser;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
+import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 
 /**
  * Wiring class for the canonical OU tree passer path.
@@ -55,6 +59,14 @@ public final class CanonicalOUMessagePasserComputer {
     private final CanonicalRootPrior rootPrior;
     private final double[][] scratchTraitCovariance;
     private final int rootIndex;
+    private final double[] cachedGradientA;
+    private final double[] cachedGradientQ;
+    private final double[] cachedGradientMu;
+    private final double[] storedGradientA;
+    private final double[] storedGradientQ;
+    private final double[] storedGradientMu;
+    private boolean jointGradientCacheValid;
+    private boolean storedJointGradientCacheValid;
 
     public CanonicalOUMessagePasserComputer(final Tree tree,
                                             final MultivariateElasticModel elasticModel,
@@ -81,6 +93,15 @@ public final class CanonicalOUMessagePasserComputer {
         this.passer = new SequentialCanonicalOUMessagePasser(tree, dim);
         this.scratchTraitCovariance = new double[dim][dim];
         this.rootIndex = tree.getRoot().getNumber();
+        final int selectionGradientDimension = inferSelectionGradientDimension(this.transitionProvider, this.passer);
+        this.cachedGradientA = new double[selectionGradientDimension];
+        this.cachedGradientQ = new double[dim * dim];
+        this.cachedGradientMu = new double[dim];
+        this.storedGradientA = new double[selectionGradientDimension];
+        this.storedGradientQ = new double[dim * dim];
+        this.storedGradientMu = new double[dim];
+        this.jointGradientCacheValid = false;
+        this.storedJointGradientCacheValid = false;
         loadTips(tipObservations);
     }
 
@@ -92,6 +113,15 @@ public final class CanonicalOUMessagePasserComputer {
         this.rootPrior = rootPrior;
         this.scratchTraitCovariance = new double[passer.getDimension()][passer.getDimension()];
         this.rootIndex = -1;
+        final int selectionGradientDimension = inferSelectionGradientDimension(this.transitionProvider, this.passer);
+        this.cachedGradientA = new double[selectionGradientDimension];
+        this.cachedGradientQ = new double[passer.getDimension() * passer.getDimension()];
+        this.cachedGradientMu = new double[passer.getDimension()];
+        this.storedGradientA = new double[selectionGradientDimension];
+        this.storedGradientQ = new double[passer.getDimension() * passer.getDimension()];
+        this.storedGradientMu = new double[passer.getDimension()];
+        this.jointGradientCacheValid = false;
+        this.storedJointGradientCacheValid = false;
     }
 
     public double computeLogLikelihood() {
@@ -99,21 +129,18 @@ public final class CanonicalOUMessagePasserComputer {
     }
 
     public void computeGradientA(final double[] gradA) {
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        passer.computePreOrder(transitionProvider, rootPrior);
-        passer.computeGradientA(transitionProvider, gradA);
+        ensureJointGradientCache();
+        copyGradient(cachedGradientA, gradA, "selection");
     }
 
     public void computeGradientQ(final double[] gradQ) {
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        passer.computePreOrder(transitionProvider, rootPrior);
-        passer.computeGradientQ(transitionProvider, gradQ);
+        ensureJointGradientCache();
+        copyGradient(cachedGradientQ, gradQ, "diffusion");
     }
 
     public void computeGradientMu(final double[] gradMu) {
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        passer.computePreOrder(transitionProvider, rootPrior);
-        passer.computeGradientMu(transitionProvider, gradMu);
+        ensureJointGradientCache();
+        copyGradient(cachedGradientMu, gradMu, "stationary mean");
     }
 
     public void computeGradientRootMean(final double[] gradRootMean) {
@@ -123,7 +150,9 @@ public final class CanonicalOUMessagePasserComputer {
         if (rootIndex < 0) {
             throw new IllegalStateException("Root index is unavailable for this canonical OU message passer computer.");
         }
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        if (!jointGradientCacheValid) {
+            passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        }
         transitionProvider.fillTraitCovariance(scratchTraitCovariance);
         rootPrior.accumulateRootMeanGradient(
                 passer.getPostOrderState(rootIndex),
@@ -139,6 +168,7 @@ public final class CanonicalOUMessagePasserComputer {
 
     public void reloadTips(final CanonicalTipObservation[] tipObservations) {
         loadTips(tipObservations);
+        invalidateGradientCache();
     }
 
     public CanonicalTreeMessagePasser getPasser() {
@@ -148,16 +178,40 @@ public final class CanonicalOUMessagePasserComputer {
     public void storeState() {
         passer.storeState();
         transitionProvider.storeState();
+        storedJointGradientCacheValid = jointGradientCacheValid;
+        if (jointGradientCacheValid) {
+            System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
+            System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
+            System.arraycopy(cachedGradientMu, 0, storedGradientMu, 0, cachedGradientMu.length);
+        }
     }
 
     public void restoreState() {
         passer.restoreState();
         transitionProvider.restoreState();
+        jointGradientCacheValid = storedJointGradientCacheValid;
+        if (jointGradientCacheValid) {
+            System.arraycopy(storedGradientA, 0, cachedGradientA, 0, storedGradientA.length);
+            System.arraycopy(storedGradientQ, 0, cachedGradientQ, 0, storedGradientQ.length);
+            System.arraycopy(storedGradientMu, 0, cachedGradientMu, 0, storedGradientMu.length);
+        } else {
+            invalidateGradientCache();
+        }
     }
 
     public void acceptState() {
         passer.acceptState();
         transitionProvider.acceptState();
+        storedJointGradientCacheValid = jointGradientCacheValid;
+        if (jointGradientCacheValid) {
+            System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
+            System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
+            System.arraycopy(cachedGradientMu, 0, storedGradientMu, 0, cachedGradientMu.length);
+        }
+    }
+
+    public void invalidateGradientCache() {
+        jointGradientCacheValid = false;
     }
 
     private void loadTips(final CanonicalTipObservation[] tipObservations) {
@@ -171,5 +225,56 @@ public final class CanonicalOUMessagePasserComputer {
             }
             passer.setTipObservation(tipIdx, tipObservations[tipIdx]);
         }
+    }
+
+    private void ensureJointGradientCache() {
+        if (jointGradientCacheValid) {
+            return;
+        }
+        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        passer.computePreOrder(transitionProvider, rootPrior);
+        passer.computeJointGradients(transitionProvider, cachedGradientA, cachedGradientQ, cachedGradientMu);
+        jointGradientCacheValid = true;
+    }
+
+    private static void copyGradient(final double[] source,
+                                     final double[] destination,
+                                     final String label) {
+        if (destination.length != source.length) {
+            throw new IllegalArgumentException(
+                    "Requested " + label + " gradient length " + destination.length
+                            + " does not match cached canonical length " + source.length + ".");
+        }
+        System.arraycopy(source, 0, destination, 0, source.length);
+    }
+
+    private static int inferSelectionGradientDimension(final CanonicalBranchTransitionProvider transitionProvider,
+                                                       final CanonicalTreeMessagePasser passer) {
+        if (!(transitionProvider instanceof HomogeneousCanonicalOUBranchTransitionProvider)) {
+            final int dim = passer.getDimension();
+            return dim * dim;
+        }
+
+        final OUProcessModel processModel =
+                ((HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider).getProcessModel();
+        if (processModel.getSelectionMatrixParameterization()
+                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+            final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization =
+                    (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                            processModel.getSelectionMatrixParameterization();
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameterization.getMatrixParameter();
+            if (!(blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider)) {
+                throw new IllegalStateException(
+                        "Orthogonal block native gradient requires an OrthogonalMatrixProvider rotation parameter.");
+            }
+            final OrthogonalMatrixProvider orthogonalRotation =
+                    (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
+            return blockParameter.getBlockDiagonalNParameters()
+                    + orthogonalRotation.getOrthogonalParameter().getDimension();
+        }
+
+        return processModel.getSelectionMatrixParameterization().getMatrixParameter().getRowDimension()
+                * processModel.getSelectionMatrixParameterization().getMatrixParameter().getColumnDimension();
     }
 }

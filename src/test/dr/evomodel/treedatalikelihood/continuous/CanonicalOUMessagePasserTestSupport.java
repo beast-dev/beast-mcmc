@@ -311,6 +311,25 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         }
     }
 
+    protected OUSetup withPasserParallelism(final OUSetup baseSetup,
+                                            final CanonicalTipObservation[] tips,
+                                            final int branchGradientParallelism) {
+        final SequentialCanonicalOUMessagePasser passer =
+                new SequentialCanonicalOUMessagePasser(treeModel, dimTrait, branchGradientParallelism);
+        for (int tipIndex = 0; tipIndex < tips.length; tipIndex++) {
+            passer.setTipObservation(tipIndex, tips[tipIndex]);
+        }
+        return new OUSetup(
+                baseSetup.aMatrix,
+                baseSetup.qMatrix,
+                baseSetup.precisionMatrix,
+                baseSetup.muParam,
+                baseSetup.branchScale,
+                baseSetup.provider,
+                passer,
+                baseSetup.rootPrior);
+    }
+
     protected OUSetup buildOUSetup(final String tag, final CanonicalTipObservation[] tips) {
         final int d = dimTrait;
 

@@ -115,7 +115,7 @@ public class OUProcessModel extends AbstractModel
     private final SelectionMatrixParameterization selectionMatrixParameterization;
     private final DiffusionMatrixParameterization diffusionMatrixParameterization;
     private final GaussianTransitionRepresentation transitionRepresentation;
-    private final Workspace workspace;
+    private final ThreadLocal<Workspace> workspaceLocal;
 
     /**
      * Constructs an OUProcessModel using the default covariance-adjoint strategy for the
@@ -188,9 +188,14 @@ public class OUProcessModel extends AbstractModel
                 DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
         this.transitionRepresentation =
                 new KernelBackedGaussianTransitionRepresentation(this);
-        this.workspace = new Workspace(
-                stateDimension,
-                covarianceGradientMethod == CovarianceGradientMethod.STATIONARY_LYAPUNOV);
+        final boolean allocateStationaryLyapunov =
+                covarianceGradientMethod == CovarianceGradientMethod.STATIONARY_LYAPUNOV;
+        this.workspaceLocal = new ThreadLocal<Workspace>() {
+            @Override
+            protected Workspace initialValue() {
+                return new Workspace(stateDimension, allocateStationaryLyapunov);
+            }
+        };
 
         validateShapes();
 
@@ -332,6 +337,7 @@ public class OUProcessModel extends AbstractModel
 
     @Override
     public void fillInitialCanonicalState(final CanonicalGaussianState out) {
+        final Workspace workspace = workspace();
         final double[] mean = workspace.vector0;
         final double[][] covariance = workspace.squareMatrices[0];
         getInitialMean(mean);
@@ -341,6 +347,7 @@ public class OUProcessModel extends AbstractModel
 
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
+        final Workspace workspace = workspace();
         if (selectionMatrixParameterization instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
             final double[] mean = workspace.vector0;
             getInitialMean(mean);
@@ -393,6 +400,7 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillTransitionOffset(final double dt, final double[] out) {
         checkVectorLength(out, stateDimension, "transition offset");
+        final Workspace workspace = workspace();
         final double[][] transitionMatrix = workspace.squareMatrices[2];
         final double[] mu = workspace.vector0;
         final double[] transformedMean = workspace.vector2;
@@ -409,6 +417,7 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillTransitionCovariance(final double dt, final double[][] out) {
         checkSquareMatrix(out, stateDimension, "transition covariance");
+        final Workspace workspace = workspace();
 
         if (selectionMatrixParameterization instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
             ((OrthogonalBlockDiagonalSelectionMatrixParameterization) selectionMatrixParameterization)
@@ -463,6 +472,7 @@ public class OUProcessModel extends AbstractModel
                                                           final double[][] dLogL_dV,
                                                           final double[] gradientAccumulator) {
         final int d = stateDimension;
+        final Workspace workspace = workspace();
 
         // Read current parameter values into local arrays (shared by both strategies)
         final double[][] a = workspace.squareMatrices[0];
@@ -490,6 +500,7 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
         final int d = stateDimension;
+        final Workspace workspace = workspace();
         final double[][] a = workspace.squareMatrices[0];
         final double[][] gSym = workspace.squareMatrices[2];
         final double[][] fS = workspace.squareMatrices[3];
@@ -548,6 +559,7 @@ public class OUProcessModel extends AbstractModel
                                               final double[][] a, final double[][] q,
                                               final double[][] dLogL_dV,
                                               final double[] gradientAccumulator) {
+        final Workspace workspace = workspace();
         final int blockDim = 2 * d;
 
         // Build Van Loan block M = [[-A dt, Q dt], [0, A^T dt]]
@@ -618,6 +630,7 @@ public class OUProcessModel extends AbstractModel
                                               final double[][] a, final double[][] q,
                                               final double[][] dLogL_dV,
                                               final double[] gradientAccumulator) {
+        final Workspace workspace = workspace();
         final double[][] gSym = workspace.squareMatrices[2];
         final double[][] fRemaining = workspace.squareMatrices[3];
         final double[][] fRemainingT = workspace.squareMatrices[4];
@@ -655,6 +668,7 @@ public class OUProcessModel extends AbstractModel
                                                  final double[][] a, final double[][] q,
                                                  final double[][] dLogL_dV,
                                                  final double[] gradientAccumulator) {
+        final Workspace workspace = workspace();
         final double[][] sStat = workspace.squareMatrices[2];
         final double[][] f = workspace.squareMatrices[3];
         final double[][] gV = workspace.squareMatrices[4];
@@ -900,6 +914,7 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dF,
                                             final double[] dLogL_df,
                                             final double[] gradientAccumulator) {
+        final Workspace workspace = workspace();
         final double[] mu = workspace.vector0;
         getInitialMean(mu);
         accumulateSelectionGradient(dt, mu, dLogL_dF, dLogL_df, gradientAccumulator);
@@ -939,6 +954,10 @@ public class OUProcessModel extends AbstractModel
     @Override
     protected void acceptState() {
         // no-op
+    }
+
+    private Workspace workspace() {
+        return workspaceLocal.get();
     }
 
     private void validateShapes() {

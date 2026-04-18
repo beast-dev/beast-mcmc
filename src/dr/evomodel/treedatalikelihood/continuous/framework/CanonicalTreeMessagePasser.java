@@ -67,6 +67,15 @@ public interface CanonicalTreeMessagePasser {
 
     void computeGradientMu(CanonicalBranchTransitionProvider transitionProvider, double[] gradMu);
 
+    default void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
+                                       final double[] gradA,
+                                       final double[] gradQ,
+                                       final double[] gradMu) {
+        computeGradientA(transitionProvider, gradA);
+        computeGradientQ(transitionProvider, gradQ);
+        computeGradientMu(transitionProvider, gradMu);
+    }
+
     void storeState();
 
     void restoreState();

@@ -470,9 +470,10 @@ public final class CanonicalGaussianMessageOps {
                                                       final Workspace workspace) {
         GaussianMatrixOps.copyMatrixFlat(matrix, workspace.matrix4, dimension);
         symmetrizeSquareFlat(workspace.matrix4, dimension);
-        if (invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4)) {
-            return logDeterminantFlat(workspace.matrix5, dimension);
+        double logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4);
+        if (!Double.isNaN(logDet)) {
+            return logDet;
         }
 
         GaussianMatrixOps.copyMatrixFlat(workspace.matrix4, workspace.matrix3, dimension);
@@ -487,9 +488,10 @@ public final class CanonicalGaussianMessageOps {
             if (jitter > 0.0) {
                 addDiagonalJitterFlat(workspace.matrix4, jitter, dimension);
             }
-            if (invertPositiveDefiniteFromSymmetricCopyFlat(
-                    workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4)) {
-                return logDeterminantFlat(workspace.matrix5, dimension);
+            logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
+                    workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4);
+            if (!Double.isNaN(logDet)) {
+                return logDet;
             }
             if (jitter == 0.0) {
                 if (Double.isNaN(lowerBound)) {
@@ -510,30 +512,49 @@ public final class CanonicalGaussianMessageOps {
         System.arraycopy(matrix, 0, workspace.matrix3, 0, dim * dim);
         symmetrizeSquareFlat(workspace.matrix3, dim);
 
-        if (invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix3, inverseOut, dim, workspace.matrix5, workspace.matrix4)) {
-            return logDeterminantFlat(workspace.matrix5, dim);
+        double logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix3, inverseOut, dim, workspace.matrix5, workspace.matrix4);
+        if (!Double.isNaN(logDet)) {
+            return logDet;
         }
 
         System.arraycopy(workspace.matrix3, 0, workspace.matrix4, 0, dim * dim);
         addDiagonalJitterFlat(workspace.matrix4, SYMMETRIC_JITTER_ABSOLUTE, dim);
-        if (invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix4, inverseOut, dim, workspace.matrix5, workspace.matrix4)) {
-            return logDeterminantFlat(workspace.matrix5, dim);
+        logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix4, inverseOut, dim, workspace.matrix5, workspace.matrix4);
+        if (!Double.isNaN(logDet)) {
+            return logDet;
         }
 
         throw new IllegalArgumentException("Sub-matrix is not positive definite");
     }
 
-    private static boolean invertPositiveDefiniteFromSymmetricCopyFlat(final double[] matrix,
-                                                                       final double[] inverseOut,
-                                                                       final int dimension,
-                                                                       final double[] choleskyScratch,
-                                                                       final double[] lowerInverseScratch) {
-        if (!GaussianMatrixOps.tryCholeskyFlat(matrix, choleskyScratch, dimension)) {
-            return false;
-        }
+    // Returns log-det(matrix) on success, Double.NaN if not positive definite.
+    // Inlines Cholesky with simultaneous log-det accumulation to avoid a separate diagonal pass.
+    private static double invertPositiveDefiniteFromSymmetricCopyFlat(final double[] matrix,
+                                                                      final double[] inverseOut,
+                                                                      final int dimension,
+                                                                      final double[] choleskyScratch,
+                                                                      final double[] lowerInverseScratch) {
         final int d = dimension;
+        double logDet = 0.0;
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j <= i; ++j) {
+                double sum = matrix[i * d + j];
+                for (int k = 0; k < j; ++k) {
+                    sum -= choleskyScratch[i * d + k] * choleskyScratch[j * d + k];
+                }
+                if (i == j) {
+                    if (sum <= 0.0) return Double.NaN;
+                    choleskyScratch[i * d + i] = Math.sqrt(sum);
+                    logDet += Math.log(choleskyScratch[i * d + i]);
+                } else {
+                    final double denom = choleskyScratch[j * d + j];
+                    if (denom == 0.0) return Double.NaN;
+                    choleskyScratch[i * d + j] = sum / denom;
+                }
+            }
+        }
         for (int col = 0; col < d; ++col) {
             for (int row = 0; row < d; ++row) {
                 double sum = (row == col) ? 1.0 : 0.0;
@@ -541,7 +562,7 @@ public final class CanonicalGaussianMessageOps {
                     sum -= choleskyScratch[row * d + k] * lowerInverseScratch[k * d + col];
                 }
                 final double denom = choleskyScratch[row * d + row];
-                if (denom == 0.0) return false;
+                if (denom == 0.0) return Double.NaN;
                 lowerInverseScratch[row * d + col] = sum / denom;
             }
         }
@@ -555,15 +576,7 @@ public final class CanonicalGaussianMessageOps {
             }
         }
         GaussianMatrixOps.symmetrizeFlat(inverseOut, d);
-        return true;
-    }
-
-    private static double logDeterminantFlat(final double[] lowerTriangular, final int dimension) {
-        double value = 0.0;
-        for (int i = 0; i < dimension; ++i) {
-            value += 2.0 * Math.log(lowerTriangular[i * dimension + i]);
-        }
-        return value;
+        return 2.0 * logDet;
     }
 
     private static double observedQuadraticConstant(final CanonicalGaussianTransition transition,

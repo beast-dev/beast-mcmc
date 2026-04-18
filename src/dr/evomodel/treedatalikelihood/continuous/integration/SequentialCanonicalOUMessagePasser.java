@@ -101,10 +101,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     public static final class BranchGradientInputs {
         private final int dimension;
         private final int capacity;
+        private final int nodeSlotCount;
         private final int[] activeChildIndices;
         private final double[] activeBranchLengths;
         private final CanonicalLocalTransitionAdjoints[] activeAdjoints;
         private final OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis[] activeOrthogonalPreparedBasis;
+        private final boolean[] stagedActiveByChild;
+        private final double[] stagedBranchLengthsByChild;
+        private final CanonicalLocalTransitionAdjoints[] stagedAdjointsByChild;
+        private final OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis[] stagedOrthogonalPreparedBasisByChild;
         private final CanonicalGaussianState rootPreOrder;
         private final CanonicalGaussianState rootPostOrder;
         private int activeBranchCount;
@@ -114,13 +119,22 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         private BranchGradientInputs(final int capacity, final int dimension) {
             this.dimension = dimension;
             this.capacity = capacity;
+            this.nodeSlotCount = capacity + 1;
             this.activeChildIndices = new int[capacity];
             this.activeBranchLengths = new double[capacity];
             this.activeAdjoints = new CanonicalLocalTransitionAdjoints[capacity];
             this.activeOrthogonalPreparedBasis =
                     new OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis[capacity];
+            this.stagedActiveByChild = new boolean[nodeSlotCount];
+            this.stagedBranchLengthsByChild = new double[nodeSlotCount];
+            this.stagedAdjointsByChild = new CanonicalLocalTransitionAdjoints[nodeSlotCount];
+            this.stagedOrthogonalPreparedBasisByChild =
+                    new OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis[nodeSlotCount];
             for (int i = 0; i < capacity; ++i) {
                 this.activeAdjoints[i] = new CanonicalLocalTransitionAdjoints(dimension);
+            }
+            for (int i = 0; i < nodeSlotCount; ++i) {
+                this.stagedAdjointsByChild[i] = new CanonicalLocalTransitionAdjoints(dimension);
             }
             this.rootPreOrder = new CanonicalGaussianState(dimension);
             this.rootPostOrder = new CanonicalGaussianState(dimension);
@@ -165,6 +179,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         }
 
         private void clear() {
+            Arrays.fill(stagedActiveByChild, false);
             activeBranchCount = 0;
             rootDiffusionScale = 0.0;
             hasOrthogonalPreparedBasis = false;
@@ -208,6 +223,74 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             activeBranchCount++;
         }
 
+        private void stageBranch(final int childIndex,
+                                 final double branchLength,
+                                 final CanonicalLocalTransitionAdjoints source,
+                                 final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection,
+                                 final double[] stationaryMean) {
+            checkChildIndex(childIndex);
+            stagedBranchLengthsByChild[childIndex] = branchLength;
+            copyAdjoints(source, stagedAdjointsByChild[childIndex]);
+            if (orthogonalSelection != null) {
+                OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis prepared =
+                        stagedOrthogonalPreparedBasisByChild[childIndex];
+                if (prepared == null) {
+                    prepared = orthogonalSelection.createPreparedBranchBasis();
+                    stagedOrthogonalPreparedBasisByChild[childIndex] = prepared;
+                }
+                orthogonalSelection.prepareBranchBasis(branchLength, stationaryMean, prepared);
+            }
+            stagedActiveByChild[childIndex] = true;
+        }
+
+        private void clearStagedBranch(final int childIndex) {
+            checkChildIndex(childIndex);
+            stagedActiveByChild[childIndex] = false;
+        }
+
+        private void compactStagedBranches(final int rootIndex,
+                                           final boolean useOrthogonalPreparedBasis) {
+            checkChildIndex(rootIndex);
+            activeBranchCount = 0;
+            for (int childIndex = 0; childIndex < nodeSlotCount; ++childIndex) {
+                if (childIndex == rootIndex || !stagedActiveByChild[childIndex]) {
+                    continue;
+                }
+                if (activeBranchCount >= capacity) {
+                    throw new IllegalStateException("BranchGradientInputs capacity exceeded during compaction.");
+                }
+                activeChildIndices[activeBranchCount] = childIndex;
+                activeBranchLengths[activeBranchCount] = stagedBranchLengthsByChild[childIndex];
+                activeAdjoints[activeBranchCount] = stagedAdjointsByChild[childIndex];
+                if (useOrthogonalPreparedBasis) {
+                    activeOrthogonalPreparedBasis[activeBranchCount] =
+                            stagedOrthogonalPreparedBasisByChild[childIndex];
+                }
+                activeBranchCount++;
+            }
+            hasOrthogonalPreparedBasis = useOrthogonalPreparedBasis && activeBranchCount > 0;
+        }
+
+        private void prepareOrthogonalBasisForActiveBranches(
+                final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection,
+                final double[] stationaryMean) {
+            if (orthogonalSelection == null) {
+                hasOrthogonalPreparedBasis = false;
+                return;
+            }
+
+            for (int activeIndex = 0; activeIndex < activeBranchCount; ++activeIndex) {
+                OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis prepared =
+                        activeOrthogonalPreparedBasis[activeIndex];
+                if (prepared == null) {
+                    prepared = orthogonalSelection.createPreparedBranchBasis();
+                    activeOrthogonalPreparedBasis[activeIndex] = prepared;
+                }
+                orthogonalSelection.prepareBranchBasis(activeBranchLengths[activeIndex], stationaryMean, prepared);
+            }
+            hasOrthogonalPreparedBasis = activeBranchCount > 0;
+        }
+
         private OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis
         getOrthogonalPreparedBasis(final int activeIndex) {
             checkActiveIndex(activeIndex);
@@ -222,6 +305,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 throw new IndexOutOfBoundsException(
                         "Active branch index " + activeIndex
                                 + " is outside [0, " + activeBranchCount + ").");
+            }
+        }
+
+        private void checkChildIndex(final int childIndex) {
+            if (childIndex < 0 || childIndex >= nodeSlotCount) {
+                throw new IndexOutOfBoundsException(
+                        "Child index " + childIndex
+                                + " is outside [0, " + nodeSlotCount + ").");
             }
         }
     }
@@ -697,20 +788,44 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         }
 
         final int rootIndex = tree.getRoot().getNumber();
-        for (int childIndex = 0; childIndex < nodeCount; ++childIndex) {
-            if (childIndex == rootIndex) {
-                continue;
+        if (branchGradientWorkspaces.length <= 1 || nodeCount <= 2) {
+            for (int childIndex = 0; childIndex < nodeCount; ++childIndex) {
+                if (childIndex == rootIndex) {
+                    continue;
+                }
+                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
+                    continue;
+                }
+                final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+                out.addBranch(
+                        childIndex,
+                        branchLength,
+                        mainWorkspace.adjoints,
+                        orthogonalSelection,
+                        orthogonalStationaryMean);
             }
-            if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
-                continue;
-            }
-            final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            out.addBranch(
-                    childIndex,
-                    branchLength,
-                    mainWorkspace.adjoints,
-                    orthogonalSelection,
-                    orthogonalStationaryMean);
+        } else {
+            branchGradientTaskPool.fork((childIndex, thread) -> {
+                if (childIndex == rootIndex) {
+                    out.clearStagedBranch(childIndex);
+                    return;
+                }
+
+                final BranchGradientWorkspace workspace = branchGradientWorkspaces[thread];
+                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
+                    out.clearStagedBranch(childIndex);
+                    return;
+                }
+
+                out.stageBranch(
+                        childIndex,
+                        transitionProvider.getEffectiveBranchLength(childIndex),
+                        workspace.adjoints,
+                        null,
+                        null);
+            });
+            out.compactStagedBranches(rootIndex, false);
+            out.prepareOrthogonalBasisForActiveBranches(orthogonalSelection, orthogonalStationaryMean);
         }
 
         out.rootDiffusionScale = lastRootDiffusionScale;

@@ -74,8 +74,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private final DenseMatrix64F temp2;
     private final DenseMatrix64F temp3;
     private final double[][] workMatrix;
-    private final double[][] choleskyScratch;
-    private final double[][] lowerInverseScratch;
+    private final double[] choleskyScratch;
+    private final double[] lowerInverseScratch;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final double[] tempVector1;
     private final double[] tempVector2;
@@ -134,8 +134,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         private final DenseMatrix64F temp1;
         private final DenseMatrix64F temp2;
         private final DenseMatrix64F temp3;
-        private final double[][] choleskyScratch;
-        private final double[][] lowerInverseScratch;
+        private final double[] choleskyScratch;
+        private final double[] lowerInverseScratch;
         private final double[] tempVector1;
         private final double[] tempVector2;
 
@@ -168,8 +168,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             this.temp1 = new DenseMatrix64F(dimension, dimension);
             this.temp2 = new DenseMatrix64F(dimension, dimension);
             this.temp3 = new DenseMatrix64F(dimension, dimension);
-            this.choleskyScratch = new double[dimension][dimension];
-            this.lowerInverseScratch = new double[dimension][dimension];
+            this.choleskyScratch = new double[dimension * dimension];
+            this.lowerInverseScratch = new double[dimension * dimension];
             this.tempVector1 = new double[dimension];
             this.tempVector2 = new double[dimension];
         }
@@ -228,8 +228,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         this.temp2 = new DenseMatrix64F(d, d);
         this.temp3 = new DenseMatrix64F(d, d);
         this.workMatrix = new double[d][d];
-        this.choleskyScratch = new double[d][d];
-        this.lowerInverseScratch = new double[d][d];
+        this.choleskyScratch = new double[d * d];
+        this.lowerInverseScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
         this.tempVector1 = new double[d];
         this.tempVector2 = new double[d];
@@ -1390,12 +1390,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         double maxAbsDiagonal = 0.0;
         for (int i = 0; i < d; ++i) {
             final double[] matrixRow = matrixOut[i];
-            final double[] cholRow = choleskyScratch[i];
-            final int rowOffset = i * d;
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                final double value = 0.5 * (sourceData[rowOffset + j] + sourceData[j * d + i]);
+                final double value = 0.5 * (sourceData[iOff + j] + sourceData[j * d + i]);
                 matrixRow[j] = value;
-                cholRow[j] = value;
+                choleskyScratch[iOff + j] = value;
             }
             maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixRow[i]));
         }
@@ -1407,11 +1406,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
         double logDet = 0.0;
         for (int i = 0; i < d; ++i) {
-            final double[] cholRow = choleskyScratch[i];
+            final int iOff = i * d;
             for (int j = 0; j <= i; ++j) {
-                double sum = cholRow[j];
+                double sum = choleskyScratch[iOff + j];
                 for (int k = 0; k < j; ++k) {
-                    sum -= cholRow[k] * choleskyScratch[j][k];
+                    sum -= choleskyScratch[iOff + k] * choleskyScratch[j * d + k];
                 }
                 if (i == j) {
                     minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
@@ -1419,15 +1418,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                         clippedPivotCount++;
                         sum = pivotFloor;
                     }
-                    cholRow[j] = Math.sqrt(sum);
-                    logDet += Math.log(cholRow[j]);
+                    choleskyScratch[iOff + i] = Math.sqrt(sum);
+                    logDet += Math.log(choleskyScratch[iOff + i]);
                 } else {
-                    final double denominator = Math.max(choleskyScratch[j][j], Math.sqrt(pivotFloor));
-                    cholRow[j] = sum / denominator;
+                    final double denominator = Math.max(choleskyScratch[j * d + j], Math.sqrt(pivotFloor));
+                    choleskyScratch[iOff + j] = sum / denominator;
                 }
-            }
-            for (int j = i + 1; j < d; ++j) {
-                cholRow[j] = 0.0;
             }
         }
         if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
@@ -1442,11 +1438,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         for (int col = 0; col < d; ++col) {
             for (int row = 0; row < d; ++row) {
                 double sum = (row == col) ? 1.0 : 0.0;
+                final int rowOff = row * d;
                 for (int k = 0; k < row; ++k) {
-                    sum -= choleskyScratch[row][k] * lowerInverseScratch[k][col];
+                    sum -= choleskyScratch[rowOff + k] * lowerInverseScratch[k * d + col];
                 }
-                final double denominator = Math.max(choleskyScratch[row][row], Math.sqrt(pivotFloor));
-                lowerInverseScratch[row][col] = sum / denominator;
+                final double denominator = Math.max(choleskyScratch[rowOff + row], Math.sqrt(pivotFloor));
+                lowerInverseScratch[rowOff + col] = sum / denominator;
             }
         }
 
@@ -1454,7 +1451,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    sum += lowerInverseScratch[k][i] * lowerInverseScratch[k][j];
+                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
                 }
                 inverseOut[i][j] = sum;
             }
@@ -1472,20 +1469,19 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private static double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,
                                                             final double[] matrixOut,
                                                             final double[] inverseOut,
-                                                            final double[][] choleskyScratch,
-                                                            final double[][] lowerInverseScratch) {
+                                                            final double[] choleskyScratch,
+                                                            final double[] lowerInverseScratch) {
         final int d = source.numRows;
         final double[] sourceData = source.data;
         double maxAbsDiagonal = 0.0;
         for (int i = 0; i < d; ++i) {
-            final double[] cholRow = choleskyScratch[i];
-            final int rowOffset = i * d;
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                final double value = 0.5 * (sourceData[rowOffset + j] + sourceData[j * d + i]);
-                matrixOut[rowOffset + j] = value;
-                cholRow[j] = value;
+                final double value = 0.5 * (sourceData[iOff + j] + sourceData[j * d + i]);
+                matrixOut[iOff + j] = value;
+                choleskyScratch[iOff + j] = value;
             }
-            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixOut[rowOffset + i]));
+            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixOut[iOff + i]));
         }
 
         final double pivotFloor = Math.max(
@@ -1495,11 +1491,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
         double logDet = 0.0;
         for (int i = 0; i < d; ++i) {
-            final double[] cholRow = choleskyScratch[i];
+            final int iOff = i * d;
             for (int j = 0; j <= i; ++j) {
-                double sum = cholRow[j];
+                double sum = choleskyScratch[iOff + j];
                 for (int k = 0; k < j; ++k) {
-                    sum -= cholRow[k] * choleskyScratch[j][k];
+                    sum -= choleskyScratch[iOff + k] * choleskyScratch[j * d + k];
                 }
                 if (i == j) {
                     minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
@@ -1507,15 +1503,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                         clippedPivotCount++;
                         sum = pivotFloor;
                     }
-                    cholRow[j] = Math.sqrt(sum);
-                    logDet += Math.log(cholRow[j]);
+                    choleskyScratch[iOff + i] = Math.sqrt(sum);
+                    logDet += Math.log(choleskyScratch[iOff + i]);
                 } else {
-                    final double denominator = Math.max(choleskyScratch[j][j], Math.sqrt(pivotFloor));
-                    cholRow[j] = sum / denominator;
+                    final double denominator = Math.max(choleskyScratch[j * d + j], Math.sqrt(pivotFloor));
+                    choleskyScratch[iOff + j] = sum / denominator;
                 }
-            }
-            for (int j = i + 1; j < d; ++j) {
-                cholRow[j] = 0.0;
             }
         }
         if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
@@ -1530,11 +1523,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         for (int col = 0; col < d; ++col) {
             for (int row = 0; row < d; ++row) {
                 double sum = (row == col) ? 1.0 : 0.0;
+                final int rowOff = row * d;
                 for (int k = 0; k < row; ++k) {
-                    sum -= choleskyScratch[row][k] * lowerInverseScratch[k][col];
+                    sum -= choleskyScratch[rowOff + k] * lowerInverseScratch[k * d + col];
                 }
-                final double denominator = Math.max(choleskyScratch[row][row], Math.sqrt(pivotFloor));
-                lowerInverseScratch[row][col] = sum / denominator;
+                final double denominator = Math.max(choleskyScratch[rowOff + row], Math.sqrt(pivotFloor));
+                lowerInverseScratch[rowOff + col] = sum / denominator;
             }
         }
 
@@ -1542,7 +1536,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    sum += lowerInverseScratch[k][i] * lowerInverseScratch[k][j];
+                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
                 }
                 inverseOut[i * d + j] = sum;
             }

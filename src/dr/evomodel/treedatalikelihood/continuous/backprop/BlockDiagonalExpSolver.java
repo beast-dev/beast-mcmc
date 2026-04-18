@@ -125,8 +125,10 @@ public final class BlockDiagonalExpSolver {
         } else if (delta2 > 0.0) {
             final double delta = Math.sqrt(delta2);
             final double z = delta * t;
-            alpha = Math.cosh(z);
-            beta = -Math.sinh(z) / delta;
+            final double expZ    = Math.exp(z);
+            final double invExpZ = 1.0 / expZ;
+            alpha = 0.5 * (expZ + invExpZ);
+            beta  = -0.5 * (expZ - invExpZ) / delta;
         } else {
             final double delta = Math.sqrt(-delta2);
             final double z = delta * t;

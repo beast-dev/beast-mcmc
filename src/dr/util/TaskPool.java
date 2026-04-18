@@ -30,6 +30,8 @@ package dr.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.BinaryOperator;
 
 /**
@@ -57,6 +59,7 @@ public class TaskPool {
     }
 
     private ExecutorService pool = null;
+    private volatile PersistentForkCoordinator persistentForkCoordinator = null;
     final private List<TaskIndices> indices;
     final private int taskCount;
     final private int threadCount;
@@ -114,6 +117,108 @@ public class TaskPool {
         E map(int start, int end, int thread);
     }
 
+    private final class PersistentForkCoordinator {
+
+        private final Thread[] workers;
+        private final AtomicInteger completedWorkers;
+        private volatile TaskCallable currentRunnable;
+        private volatile Throwable failure;
+        private volatile Thread waitingThread;
+        private volatile int generation;
+
+        private PersistentForkCoordinator() {
+            this.workers = new Thread[indices.size()];
+            this.completedWorkers = new AtomicInteger(0);
+            this.generation = 0;
+            for (final TaskIndices indexSet : indices) {
+                final Thread worker = new Thread(
+                        () -> runWorker(indexSet),
+                        "TaskPool-worker-" + System.identityHashCode(TaskPool.this) + "-" + indexSet.task);
+                worker.setDaemon(true);
+                worker.start();
+                workers[indexSet.task] = worker;
+            }
+        }
+
+        private void runWorker(final TaskIndices indexSet) {
+            int observedGeneration = 0;
+            while (true) {
+                while (generation == observedGeneration) {
+                    LockSupport.park(this);
+                }
+                observedGeneration = generation;
+
+                final TaskCallable runnable = currentRunnable;
+                if (runnable == null) {
+                    return;
+                }
+
+                try {
+                    for (int task = indexSet.start; task < indexSet.stop; ++task) {
+                        runnable.execute(task, indexSet.task);
+                    }
+                } catch (Throwable throwable) {
+                    recordFailure(throwable);
+                }
+
+                if (completedWorkers.incrementAndGet() == workers.length) {
+                    LockSupport.unpark(waitingThread);
+                }
+            }
+        }
+
+        private synchronized void execute(final TaskCallable runnable) {
+            failure = null;
+            completedWorkers.set(0);
+            waitingThread = Thread.currentThread();
+            currentRunnable = runnable;
+            generation++;
+            for (final Thread worker : workers) {
+                LockSupport.unpark(worker);
+            }
+
+            while (completedWorkers.get() < workers.length) {
+                LockSupport.park(this);
+            }
+            waitingThread = null;
+
+            final Throwable throwable = failure;
+            if (throwable != null) {
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                if (throwable instanceof Error) {
+                    throw (Error) throwable;
+                }
+                throw new RuntimeException(throwable);
+            }
+        }
+
+        private void recordFailure(final Throwable throwable) {
+            if (failure == null) {
+                synchronized (this) {
+                    if (failure == null) {
+                        failure = throwable;
+                    }
+                }
+            }
+        }
+    }
+
+    private PersistentForkCoordinator getPersistentForkCoordinator() {
+        PersistentForkCoordinator coordinator = persistentForkCoordinator;
+        if (coordinator == null) {
+            synchronized (this) {
+                coordinator = persistentForkCoordinator;
+                if (coordinator == null) {
+                    coordinator = new PersistentForkCoordinator();
+                    persistentForkCoordinator = coordinator;
+                }
+            }
+        }
+        return coordinator;
+    }
+
     public <E> E mapReduce(final RangeCallable<E> map, final BinaryOperator<E> reduce) {
 
         E result = null;
@@ -162,6 +267,10 @@ public class TaskPool {
             }
 
         } else {
+            if (threadCount > 1) {
+                getPersistentForkCoordinator().execute(runnable);
+                return;
+            }
 
             if (pool == null) {
                 pool = setupParallelServices(threadCount);

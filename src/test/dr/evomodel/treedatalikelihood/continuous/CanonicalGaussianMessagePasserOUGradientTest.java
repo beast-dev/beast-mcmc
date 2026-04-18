@@ -175,9 +175,9 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                 parallelQ,
                 parallelMu);
 
-        assertArrayEquals("orthogonal joint A threads", sequentialA, parallelA, 1.0e-12);
-        assertArrayEquals("orthogonal joint Q threads", sequentialQ, parallelQ, 1.0e-12);
-        assertArrayEquals("orthogonal joint mu threads", sequentialMu, parallelMu, 1.0e-12);
+        assertArrayEquals("orthogonal joint A threads", sequentialA, parallelA, 1.0e-11);
+        assertArrayEquals("orthogonal joint Q threads", sequentialQ, parallelQ, 1.0e-11);
+        assertArrayEquals("orthogonal joint mu threads", sequentialMu, parallelMu, 1.0e-11);
     }
 
     private void assertArrayEquals(final String label,

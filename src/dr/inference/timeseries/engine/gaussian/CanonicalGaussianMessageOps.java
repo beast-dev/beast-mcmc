@@ -9,6 +9,9 @@ import dr.inference.timeseries.representation.CanonicalGaussianTransition;
  * <p>This utility centralizes the Schur-complement algebra used by canonical
  * filtering, smoothing, and tree message passing. It operates directly on
  * {@link CanonicalGaussianState} and {@link CanonicalGaussianTransition}.
+ *
+ * <p>All matrix fields use flat row-major storage: element {@code (i, j)} of
+ * a {@code dim × dim} matrix is at index {@code i * dim + j}.
  */
 public final class CanonicalGaussianMessageOps {
 
@@ -17,11 +20,11 @@ public final class CanonicalGaussianMessageOps {
 
     public static final class Workspace {
         private final int dimension;
-        final double[][] matrix1;
-        final double[][] matrix2;
-        final double[][] matrix3;
-        final double[][] matrix4;
-        final double[][] matrix5;
+        final double[] matrix1;
+        final double[] matrix2;
+        final double[] matrix3;
+        final double[] matrix4;
+        final double[] matrix5;
         final double[] vector1;
         final double[] vector2;
         final double[] vector3;
@@ -31,11 +34,12 @@ public final class CanonicalGaussianMessageOps {
                 throw new IllegalArgumentException("dimension must be positive");
             }
             this.dimension = dimension;
-            this.matrix1 = new double[dimension][dimension];
-            this.matrix2 = new double[dimension][dimension];
-            this.matrix3 = new double[dimension][dimension];
-            this.matrix4 = new double[dimension][dimension];
-            this.matrix5 = new double[dimension][dimension];
+            final int d2 = dimension * dimension;
+            this.matrix1 = new double[d2];
+            this.matrix2 = new double[d2];
+            this.matrix3 = new double[d2];
+            this.matrix4 = new double[d2];
+            this.matrix5 = new double[d2];
             this.vector1 = new double[dimension];
             this.vector2 = new double[dimension];
             this.vector3 = new double[dimension];
@@ -50,21 +54,15 @@ public final class CanonicalGaussianMessageOps {
 
     public static void clearState(final CanonicalGaussianState state) {
         final int dim = state.getDimension();
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                state.precision[i][j] = 0.0;
-            }
-            state.information[i] = 0.0;
-        }
+        java.util.Arrays.fill(state.precision, 0, dim * dim, 0.0);
+        java.util.Arrays.fill(state.information, 0.0);
         state.logNormalizer = 0.0;
     }
 
     public static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {
         final int dim = source.getDimension();
-        for (int i = 0; i < dim; i++) {
-            System.arraycopy(source.precision[i], 0, target.precision[i], 0, dim);
-            target.information[i] = source.information[i];
-        }
+        System.arraycopy(source.precision, 0, target.precision, 0, dim * dim);
+        System.arraycopy(source.information, 0, target.information, 0, dim);
         target.logNormalizer = source.logNormalizer;
     }
 
@@ -72,11 +70,12 @@ public final class CanonicalGaussianMessageOps {
                                      final CanonicalGaussianState right,
                                      final CanonicalGaussianState out) {
         final int dim = left.getDimension();
+        final int d2 = dim * dim;
         for (int i = 0; i < dim; i++) {
             out.information[i] = left.information[i] + right.information[i];
-            for (int j = 0; j < dim; j++) {
-                out.precision[i][j] = left.precision[i][j] + right.precision[i][j];
-            }
+        }
+        for (int k = 0; k < d2; k++) {
+            out.precision[k] = left.precision[k] + right.precision[k];
         }
         out.logNormalizer = left.logNormalizer + right.logNormalizer;
     }
@@ -84,11 +83,12 @@ public final class CanonicalGaussianMessageOps {
     public static void combineStateInPlace(final CanonicalGaussianState accumulator,
                                            final CanonicalGaussianState increment) {
         final int dim = accumulator.getDimension();
+        final int d2 = dim * dim;
         for (int i = 0; i < dim; i++) {
             accumulator.information[i] += increment.information[i];
-            for (int j = 0; j < dim; j++) {
-                accumulator.precision[i][j] += increment.precision[i][j];
-            }
+        }
+        for (int k = 0; k < d2; k++) {
+            accumulator.precision[k] += increment.precision[k];
         }
         accumulator.logNormalizer += increment.logNormalizer;
     }
@@ -100,34 +100,34 @@ public final class CanonicalGaussianMessageOps {
         final int d = previous.getDimension();
         ensureDimension(workspace, d);
 
-        final double[][] a = workspace.matrix1;
-        final double[][] aInverse = workspace.matrix2;
-        final double[][] temp = workspace.matrix3;
-        final double[][] temp2 = workspace.matrix4;
-        final double[] h = workspace.vector1;
-        final double[] tempv = workspace.vector2;
+        final double[] a      = workspace.matrix1;
+        final double[] aInv   = workspace.matrix2;
+        final double[] temp   = workspace.matrix3;
+        final double[] temp2  = workspace.matrix4;
+        final double[] h      = workspace.vector1;
+        final double[] tempv  = workspace.vector2;
 
         for (int i = 0; i < d; ++i) {
             h[i] = previous.information[i] + transition.informationX[i];
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                a[i][j] = previous.precision[i][j] + transition.precisionXX[i][j];
+                a[iOff + j] = previous.precision[iOff + j] + transition.precisionXX[iOff + j];
             }
         }
 
-        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInverse, tempv);
+        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInv, tempv);
 
-        GaussianMatrixOps.multiplyMatrixMatrix(aInverse, transition.precisionXY, temp);
-        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionYX, temp, temp2);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(aInv, transition.precisionXY, temp, d);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(transition.precisionYX, temp, temp2, d);
 
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out.precision[i][j] = transition.precisionYY[i][j] - temp2[i][j];
-            }
+        final int d2 = d * d;
+        for (int k = 0; k < d2; ++k) {
+            out.precision[k] = transition.precisionYY[k] - temp2[k];
         }
-        GaussianMatrixOps.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrizeFlat(out.precision, d);
 
-        GaussianMatrixOps.multiplyMatrixVector(aInverse, h, tempv, d, d);
-        GaussianMatrixOps.multiplyMatrixVector(transition.precisionYX, tempv, h, d, d);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(aInv, h, tempv, d);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(transition.precisionYX, tempv, h, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationY[i] - h[i];
         }
@@ -141,34 +141,34 @@ public final class CanonicalGaussianMessageOps {
         final int d = next.getDimension();
         ensureDimension(workspace, d);
 
-        final double[][] a = workspace.matrix1;
-        final double[][] aInverse = workspace.matrix2;
-        final double[][] temp = workspace.matrix3;
-        final double[][] temp2 = workspace.matrix4;
-        final double[] h = workspace.vector1;
-        final double[] tempv = workspace.vector2;
+        final double[] a      = workspace.matrix1;
+        final double[] aInv   = workspace.matrix2;
+        final double[] temp   = workspace.matrix3;
+        final double[] temp2  = workspace.matrix4;
+        final double[] h      = workspace.vector1;
+        final double[] tempv  = workspace.vector2;
 
         for (int i = 0; i < d; ++i) {
             h[i] = next.information[i] + transition.informationY[i];
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                a[i][j] = next.precision[i][j] + transition.precisionYY[i][j];
+                a[iOff + j] = next.precision[iOff + j] + transition.precisionYY[iOff + j];
             }
         }
 
-        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInverse, tempv);
+        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInv, tempv);
 
-        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionXY, aInverse, temp);
-        GaussianMatrixOps.multiplyMatrixMatrix(temp, transition.precisionYX, temp2);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(transition.precisionXY, aInv, temp, d);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(temp, transition.precisionYX, temp2, d);
 
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out.precision[i][j] = transition.precisionXX[i][j] - temp2[i][j];
-            }
+        final int d2 = d * d;
+        for (int k = 0; k < d2; ++k) {
+            out.precision[k] = transition.precisionXX[k] - temp2[k];
         }
-        GaussianMatrixOps.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrizeFlat(out.precision, d);
 
-        GaussianMatrixOps.multiplyMatrixVector(aInverse, h, tempv, d, d);
-        GaussianMatrixOps.multiplyMatrixVector(transition.precisionXY, tempv, h, d, d);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(aInv, h, tempv, d);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(transition.precisionXY, tempv, h, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationX[i] - h[i];
         }
@@ -180,16 +180,17 @@ public final class CanonicalGaussianMessageOps {
                                                       final CanonicalGaussianState out) {
         final int d = transition.getDimension();
         for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
             double info = transition.informationX[i];
             for (int j = 0; j < d; ++j) {
-                out.precision[i][j] = transition.precisionXX[i][j];
-                info -= transition.precisionXY[i][j] * observed[j];
+                out.precision[iOff + j] = transition.precisionXX[iOff + j];
+                info -= transition.precisionXY[iOff + j] * observed[j];
             }
             out.information[i] = info;
         }
         out.logNormalizer = transition.logNormalizer
-                + 0.5 * quadraticForm(transition.precisionYY, observed, d)
-                - dot(transition.informationY, observed, d);
+                + 0.5 * quadraticFormFlat(transition.precisionYY, observed, d)
+                - dotFlat(transition.informationY, observed, d);
     }
 
     public static void conditionOnObservedFirstBlock(final CanonicalGaussianTransition transition,
@@ -197,16 +198,17 @@ public final class CanonicalGaussianMessageOps {
                                                      final CanonicalGaussianState out) {
         final int d = transition.getDimension();
         for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
             double info = transition.informationY[i];
             for (int j = 0; j < d; ++j) {
-                out.precision[i][j] = transition.precisionYY[i][j];
-                info -= transition.precisionYX[i][j] * observed[j];
+                out.precision[iOff + j] = transition.precisionYY[iOff + j];
+                info -= transition.precisionYX[iOff + j] * observed[j];
             }
             out.information[i] = info;
         }
         out.logNormalizer = transition.logNormalizer
-                + 0.5 * quadraticForm(transition.precisionXX, observed, d)
-                - dot(transition.informationX, observed, d);
+                + 0.5 * quadraticFormFlat(transition.precisionXX, observed, d)
+                - dotFlat(transition.informationX, observed, d);
     }
 
     /**
@@ -239,40 +241,43 @@ public final class CanonicalGaussianMessageOps {
             return;
         }
 
-        final double[][] missingPrecision = workspace.matrix1;
-        final double[][] missingPrecisionInverse = workspace.matrix2;
-        final double[][] xyTimesMissingInverse = workspace.matrix3;
-        final double[] missingInformation = workspace.vector1;
-        final double[] missingMean = workspace.vector2;
+        final double[] missingPrecision        = workspace.matrix1;
+        final double[] missingPrecisionInverse  = workspace.matrix2;
+        final double[] xyTimesMissingInverse    = workspace.matrix3;
+        final double[] missingInformation       = workspace.vector1;
+        final double[] missingMean              = workspace.vector2;
 
         for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
             double information = transition.informationX[i];
             for (int j = 0; j < d; ++j) {
-                out.precision[i][j] = transition.precisionXX[i][j];
+                out.precision[iOff + j] = transition.precisionXX[iOff + j];
             }
-            for (int observed = 0; observed < observedCount; ++observed) {
-                final int observedIndex = observedIndices[observed];
-                information -= transition.precisionXY[i][observedIndex] * observedValues[observedIndex];
+            for (int obs = 0; obs < observedCount; ++obs) {
+                final int obsIdx = observedIndices[obs];
+                information -= transition.precisionXY[iOff + obsIdx] * observedValues[obsIdx];
             }
             out.information[i] = information;
         }
 
         for (int row = 0; row < missingCount; ++row) {
             final int missingRow = missingIndices[row];
+            final int missingRowOff = missingRow * d;
             double information = transition.informationY[missingRow];
             for (int col = 0; col < missingCount; ++col) {
-                missingPrecision[row][col] = transition.precisionYY[missingRow][missingIndices[col]];
+                missingPrecision[row * missingCount + col] =
+                        transition.precisionYY[missingRowOff + missingIndices[col]];
             }
-            for (int observed = 0; observed < observedCount; ++observed) {
-                final int observedIndex = observedIndices[observed];
-                information -= transition.precisionYY[missingRow][observedIndex] * observedValues[observedIndex];
+            for (int obs = 0; obs < observedCount; ++obs) {
+                final int obsIdx = observedIndices[obs];
+                information -= transition.precisionYY[missingRowOff + obsIdx] * observedValues[obsIdx];
             }
             missingInformation[row] = information;
         }
 
         final double eliminated;
         try {
-            eliminated = normalizedLogNormalizer(
+            eliminated = normalizedLogNormalizerSubmatrix(
                     missingPrecision,
                     missingInformation,
                     missingCount,
@@ -282,41 +287,43 @@ public final class CanonicalGaussianMessageOps {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
                     "Failed canonical partial-tip elimination with missing block "
-                            + formatSquare(missingPrecision, missingCount)
+                            + formatVectorAsSquare(missingPrecision, missingCount)
                             + " and missing information "
                             + formatVector(missingInformation, missingCount),
                     e);
         }
 
         for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
             double informationCorrection = 0.0;
             for (int missing = 0; missing < missingCount; ++missing) {
                 final int missingIndex = missingIndices[missing];
-                informationCorrection += transition.precisionXY[i][missingIndex] * missingMean[missing];
+                informationCorrection += transition.precisionXY[iOff + missingIndex] * missingMean[missing];
             }
             out.information[i] -= informationCorrection;
 
             for (int missing = 0; missing < missingCount; ++missing) {
                 double sum = 0.0;
                 for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                    sum += transition.precisionXY[i][missingIndices[otherMissing]]
-                            * missingPrecisionInverse[otherMissing][missing];
+                    sum += transition.precisionXY[iOff + missingIndices[otherMissing]]
+                            * missingPrecisionInverse[otherMissing * missingCount + missing];
                 }
-                xyTimesMissingInverse[i][missing] = sum;
+                xyTimesMissingInverse[i * missingCount + missing] = sum;
             }
         }
 
         for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
                 double precisionCorrection = 0.0;
                 for (int missing = 0; missing < missingCount; ++missing) {
-                    precisionCorrection += xyTimesMissingInverse[i][missing]
-                            * transition.precisionYX[missingIndices[missing]][j];
+                    precisionCorrection += xyTimesMissingInverse[i * missingCount + missing]
+                            * transition.precisionYX[missingIndices[missing] * d + j];
                 }
-                out.precision[i][j] -= precisionCorrection;
+                out.precision[iOff + j] -= precisionCorrection;
             }
         }
-        GaussianMatrixOps.symmetrize(out.precision);
+        GaussianMatrixOps.symmetrizeFlat(out.precision, d);
         out.logNormalizer = transition.logNormalizer
                 + observedQuadraticConstant(transition, observedValues, observedIndices, observedCount)
                 - eliminated;
@@ -327,14 +334,16 @@ public final class CanonicalGaussianMessageOps {
                                           final CanonicalGaussianState secondState,
                                           final CanonicalGaussianState pairOut) {
         final int d = firstState.getDimension();
+        final int d2 = 2 * d;
         for (int i = 0; i < d; ++i) {
-            pairOut.information[i] = firstState.information[i] + transition.informationX[i];
+            pairOut.information[i]     = firstState.information[i]  + transition.informationX[i];
             pairOut.information[d + i] = secondState.information[i] + transition.informationY[i];
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                pairOut.precision[i][j] = firstState.precision[i][j] + transition.precisionXX[i][j];
-                pairOut.precision[i][d + j] = transition.precisionXY[i][j];
-                pairOut.precision[d + i][j] = transition.precisionYX[i][j];
-                pairOut.precision[d + i][d + j] = secondState.precision[i][j] + transition.precisionYY[i][j];
+                pairOut.precision[i * d2 + j]           = firstState.precision[iOff + j]  + transition.precisionXX[iOff + j];
+                pairOut.precision[i * d2 + (d + j)]     = transition.precisionXY[iOff + j];
+                pairOut.precision[(d + i) * d2 + j]     = transition.precisionYX[iOff + j];
+                pairOut.precision[(d + i) * d2 + (d + j)] = secondState.precision[iOff + j] + transition.precisionYY[iOff + j];
             }
         }
         pairOut.logNormalizer = firstState.logNormalizer + transition.logNormalizer + secondState.logNormalizer;
@@ -358,7 +367,8 @@ public final class CanonicalGaussianMessageOps {
                                                  final Workspace workspace) {
         final int d = state.getDimension();
         ensureDimension(workspace, d);
-        return normalizedLogNormalizer(state.precision, state.information, d, workspace, workspace.matrix1, workspace.vector1);
+        return normalizedLogNormalizer(state.precision, state.information, d, workspace,
+                workspace.matrix1, workspace.vector1);
     }
 
     public static double normalizationShift(final CanonicalGaussianState state,
@@ -372,44 +382,48 @@ public final class CanonicalGaussianMessageOps {
                                     final Workspace workspace,
                                     final CanonicalGaussianState out) {
         ensureDimension(workspace, d);
-        final double[][] elimPrecision = workspace.matrix1;
-        final double[][] elimPrecisionInverse = workspace.matrix2;
-        final double[][] cross1 = workspace.matrix3;
-        final double[][] cross2 = workspace.matrix4;
-        final double[] elimInformation = workspace.vector1;
-        final double[] tempv = workspace.vector2;
+        final double[] elimPrecision        = workspace.matrix1;
+        final double[] elimPrecisionInverse = workspace.matrix2;
+        final double[] cross1               = workspace.matrix3;
+        final double[] cross2               = workspace.matrix4;
+        final double[] elimInformation      = workspace.vector1;
+        final double[] tempv                = workspace.vector2;
 
         if (keepFirstBlock) {
-            fillLowerRightBlock(pairState.precision, d, elimPrecision);
-            fillUpperRightBlock(pairState.precision, d, cross1);
-            fillLowerLeftBlock(pairState.precision, d, cross2);
-            fillSecondBlock(pairState.information, d, elimInformation);
+            fillLowerRightBlockFlat(pairState.precision, d, elimPrecision);
+            fillSecondBlockFlat(pairState.information, d, elimInformation);
         } else {
-            fillUpperLeftBlock(pairState.precision, d, elimPrecision);
-            fillLowerLeftBlock(pairState.precision, d, cross1);
-            fillUpperRightBlock(pairState.precision, d, cross2);
-            fillFirstBlock(pairState.information, d, elimInformation);
+            fillUpperLeftBlockFlat(pairState.precision, d, elimPrecision);
+            fillFirstBlockFlat(pairState.information, d, elimInformation);
         }
 
         final double eliminated = normalizedLogNormalizer(elimPrecision, elimInformation, d,
                 workspace, elimPrecisionInverse, tempv);
 
-        GaussianMatrixOps.multiplyMatrixMatrix(cross1, elimPrecisionInverse, workspace.matrix3);
-        GaussianMatrixOps.multiplyMatrixMatrix(workspace.matrix3, cross2, workspace.matrix4);
-
         if (keepFirstBlock) {
-            fillUpperLeftBlock(pairState.precision, d, out.precision);
-            fillFirstBlock(pairState.information, d, out.information);
+            fillUpperRightBlockFlat(pairState.precision, d, cross1);
+            fillLowerLeftBlockFlat(pairState.precision, d, cross2);
         } else {
-            fillLowerRightBlock(pairState.precision, d, out.precision);
-            fillSecondBlock(pairState.information, d, out.information);
+            fillLowerLeftBlockFlat(pairState.precision, d, cross1);
+            fillUpperRightBlockFlat(pairState.precision, d, cross2);
         }
 
-        subtractMatrixInPlace(out.precision, workspace.matrix4, d);
-        GaussianMatrixOps.symmetrize(out.precision);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(cross1, elimPrecisionInverse, workspace.matrix5, d);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(workspace.matrix5, cross2, workspace.matrix1, d);
 
-        GaussianMatrixOps.multiplyMatrixVector(elimPrecisionInverse, elimInformation, tempv, d, d);
-        GaussianMatrixOps.multiplyMatrixVector(cross1, tempv, elimInformation, d, d);
+        if (keepFirstBlock) {
+            fillUpperLeftBlockFlat(pairState.precision, d, out.precision);
+            fillFirstBlockFlat(pairState.information, d, out.information);
+        } else {
+            fillLowerRightBlockFlat(pairState.precision, d, out.precision);
+            fillSecondBlockFlat(pairState.information, d, out.information);
+        }
+
+        subtractMatrixInPlaceFlat(out.precision, workspace.matrix1, d);
+        GaussianMatrixOps.symmetrizeFlat(out.precision, d);
+
+        GaussianMatrixOps.multiplyMatrixVectorFlat(elimPrecisionInverse, elimInformation, tempv, d);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(cross1, tempv, elimInformation, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] -= elimInformation[i];
         }
@@ -417,76 +431,137 @@ public final class CanonicalGaussianMessageOps {
         out.logNormalizer = pairState.logNormalizer - eliminated;
     }
 
-    private static double normalizedLogNormalizer(final double[][] precision,
+    private static double normalizedLogNormalizer(final double[] precision,
                                                   final double[] information,
                                                   final int dimension,
                                                   final Workspace workspace,
-                                                  final double[][] inverseOut,
+                                                  final double[] inverseOut,
                                                   final double[] tempVector) {
-        final double logDet = invertPositiveDefinite(precision, inverseOut, dimension, workspace);
-        GaussianMatrixOps.multiplyMatrixVector(inverseOut, information, tempVector, dimension, dimension);
-        final double quadratic = dot(information, tempVector, dimension);
+        final double logDet = invertPositiveDefiniteFlat(precision, inverseOut, dimension, workspace);
+        GaussianMatrixOps.multiplyMatrixVectorFlat(inverseOut, information, tempVector, dimension);
+        final double quadratic = dotFlat(information, tempVector, dimension);
         return 0.5 * (dimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 
-    private static double invertPositiveDefinite(final double[][] matrix,
-                                                 final double[][] inverseOut,
-                                                 final int dimension,
-                                                 final Workspace workspace) {
-        GaussianMatrixOps.copyMatrix(matrix, workspace.matrix4, dimension, dimension);
-        symmetrizeSquare(workspace.matrix4, dimension);
-        if (invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension, workspace)) {
-            return logDeterminant(workspace.matrix5, dimension);
+    /** Same as {@link #normalizedLogNormalizer} but operates on a compact {@code dim x dim} block
+     *  stored in the leading portion of the workspace arrays. */
+    private static double normalizedLogNormalizerSubmatrix(final double[] precision,
+                                                           final double[] information,
+                                                           final int dim,
+                                                           final Workspace workspace,
+                                                           final double[] inverseOut,
+                                                           final double[] tempVector) {
+        final double logDet = invertPositiveDefiniteFlatSubmatrix(precision, inverseOut, dim, workspace);
+        double quadratic = 0.0;
+        for (int i = 0; i < dim; ++i) {
+            double row = 0.0;
+            for (int j = 0; j < dim; ++j) {
+                row += inverseOut[i * dim + j] * information[j];
+            }
+            tempVector[i] = row;
+            quadratic += information[i] * row;
+        }
+        return 0.5 * (dim * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
+    }
+
+    private static double invertPositiveDefiniteFlat(final double[] matrix,
+                                                      final double[] inverseOut,
+                                                      final int dimension,
+                                                      final Workspace workspace) {
+        GaussianMatrixOps.copyMatrixFlat(matrix, workspace.matrix4, dimension);
+        symmetrizeSquareFlat(workspace.matrix4, dimension);
+        if (invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4)) {
+            return logDeterminantFlat(workspace.matrix5, dimension);
         }
 
-        GaussianMatrixOps.copyMatrix(workspace.matrix4, workspace.matrix3, dimension, dimension);
+        GaussianMatrixOps.copyMatrixFlat(workspace.matrix4, workspace.matrix3, dimension);
         final double jitterBase = Math.max(
                 SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(workspace.matrix3, dimension)));
+                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonalFlat(workspace.matrix3, dimension)));
 
         double jitter = 0.0;
         double lowerBound = Double.NaN;
         for (int attempt = 0; attempt < 12; ++attempt) {
-            GaussianMatrixOps.copyMatrix(workspace.matrix3, workspace.matrix4, dimension, dimension);
+            GaussianMatrixOps.copyMatrixFlat(workspace.matrix3, workspace.matrix4, dimension);
             if (jitter > 0.0) {
-                addDiagonalJitter(workspace.matrix4, jitter, dimension);
+                addDiagonalJitterFlat(workspace.matrix4, jitter, dimension);
             }
-            if (invertPositiveDefiniteFromSymmetricCopy(workspace.matrix4, inverseOut, dimension, workspace)) {
-                return logDeterminant(workspace.matrix5, dimension);
+            if (invertPositiveDefiniteFromSymmetricCopyFlat(
+                    workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4)) {
+                return logDeterminantFlat(workspace.matrix5, dimension);
             }
-
             if (jitter == 0.0) {
                 if (Double.isNaN(lowerBound)) {
-                    lowerBound = gershgorinLowerBound(workspace.matrix3, dimension);
+                    lowerBound = gershgorinLowerBoundFlat(workspace.matrix3, dimension);
                 }
                 jitter = lowerBound > 0.0 ? jitterBase : (-lowerBound + jitterBase);
             } else {
                 jitter *= 10.0;
             }
         }
-
         throw new IllegalArgumentException("Matrix is not positive definite (failed robust inversion retries)");
     }
 
-    private static boolean invertPositiveDefiniteFromSymmetricCopy(final double[][] matrix,
-                                                                   final double[][] inverseOut,
-                                                                   final int dimension,
-                                                                   final Workspace workspace) {
-        if (!GaussianMatrixOps.tryCholesky(matrix, workspace.matrix5, dimension)) {
+    private static double invertPositiveDefiniteFlatSubmatrix(final double[] matrix,
+                                                               final double[] inverseOut,
+                                                               final int dim,
+                                                               final Workspace workspace) {
+        System.arraycopy(matrix, 0, workspace.matrix3, 0, dim * dim);
+        symmetrizeSquareFlat(workspace.matrix3, dim);
+
+        if (invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix3, inverseOut, dim, workspace.matrix5, workspace.matrix4)) {
+            return logDeterminantFlat(workspace.matrix5, dim);
+        }
+
+        System.arraycopy(workspace.matrix3, 0, workspace.matrix4, 0, dim * dim);
+        addDiagonalJitterFlat(workspace.matrix4, SYMMETRIC_JITTER_ABSOLUTE, dim);
+        if (invertPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.matrix4, inverseOut, dim, workspace.matrix5, workspace.matrix4)) {
+            return logDeterminantFlat(workspace.matrix5, dim);
+        }
+
+        throw new IllegalArgumentException("Sub-matrix is not positive definite");
+    }
+
+    private static boolean invertPositiveDefiniteFromSymmetricCopyFlat(final double[] matrix,
+                                                                       final double[] inverseOut,
+                                                                       final int dimension,
+                                                                       final double[] choleskyScratch,
+                                                                       final double[] lowerInverseScratch) {
+        if (!GaussianMatrixOps.tryCholeskyFlat(matrix, choleskyScratch, dimension)) {
             return false;
         }
-        GaussianMatrixOps.invertPositiveDefiniteFromLowerTriangular(
-                inverseOut,
-                workspace.matrix5,
-                workspace.vector3,
-                dimension);
+        final int d = dimension;
+        for (int col = 0; col < d; ++col) {
+            for (int row = 0; row < d; ++row) {
+                double sum = (row == col) ? 1.0 : 0.0;
+                for (int k = 0; k < row; ++k) {
+                    sum -= choleskyScratch[row * d + k] * lowerInverseScratch[k * d + col];
+                }
+                final double denom = choleskyScratch[row * d + row];
+                if (denom == 0.0) return false;
+                lowerInverseScratch[row * d + col] = sum / denom;
+            }
+        }
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
+                }
+                inverseOut[i * d + j] = sum;
+            }
+        }
+        GaussianMatrixOps.symmetrizeFlat(inverseOut, d);
         return true;
     }
 
-    private static double logDeterminant(final double[][] lowerTriangular, final int dimension) {
+    private static double logDeterminantFlat(final double[] lowerTriangular, final int dimension) {
         double value = 0.0;
         for (int i = 0; i < dimension; ++i) {
-            value += 2.0 * Math.log(lowerTriangular[i][i]);
+            value += 2.0 * Math.log(lowerTriangular[i * dimension + i]);
         }
         return value;
     }
@@ -495,35 +570,35 @@ public final class CanonicalGaussianMessageOps {
                                                     final double[] observedValues,
                                                     final int[] observedIndices,
                                                     final int observedCount) {
+        final int d = transition.getDimension();
         double quadratic = 0.0;
-        double linear = 0.0;
+        double linear    = 0.0;
         for (int i = 0; i < observedCount; ++i) {
-            final int observedIndexI = observedIndices[i];
-            final double observedValueI = observedValues[observedIndexI];
-            linear += transition.informationY[observedIndexI] * observedValueI;
+            final int obsI = observedIndices[i];
+            final double valI = observedValues[obsI];
+            linear += transition.informationY[obsI] * valI;
             for (int j = 0; j < observedCount; ++j) {
-                final int observedIndexJ = observedIndices[j];
-                quadratic += observedValueI
-                        * transition.precisionYY[observedIndexI][observedIndexJ]
-                        * observedValues[observedIndexJ];
+                final int obsJ = observedIndices[j];
+                quadratic += valI * transition.precisionYY[obsI * d + obsJ] * observedValues[obsJ];
             }
         }
         return 0.5 * quadratic - linear;
     }
 
-    private static double quadraticForm(final double[][] matrix, final double[] vector, final int dim) {
+    private static double quadraticFormFlat(final double[] matrix, final double[] vector, final int dim) {
         double result = 0.0;
         for (int i = 0; i < dim; i++) {
+            final int iOff = i * dim;
             double row = 0.0;
             for (int j = 0; j < dim; j++) {
-                row += matrix[i][j] * vector[j];
+                row += matrix[iOff + j] * vector[j];
             }
             result += vector[i] * row;
         }
         return result;
     }
 
-    private static double dot(final double[] left, final double[] right, final int dim) {
+    private static double dotFlat(final double[] left, final double[] right, final int dim) {
         double sum = 0.0;
         for (int i = 0; i < dim; i++) {
             sum += left[i] * right[i];
@@ -531,49 +606,48 @@ public final class CanonicalGaussianMessageOps {
         return sum;
     }
 
-    private static void subtractMatrixInPlace(final double[][] target, final double[][] delta, final int dim) {
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                target[i][j] -= delta[i][j];
-            }
+    private static void subtractMatrixInPlaceFlat(final double[] target, final double[] delta, final int dim) {
+        final int d2 = dim * dim;
+        for (int k = 0; k < d2; k++) {
+            target[k] -= delta[k];
         }
     }
 
-    private static void fillUpperLeftBlock(final double[][] source, final int d, final double[][] out) {
+    // --- Block-extraction helpers (pair state has dimension 2d stored flat with stride 2d) ---
+
+    private static void fillUpperLeftBlockFlat(final double[] source, final int d, final double[] out) {
+        final int d2 = 2 * d;
         for (int i = 0; i < d; ++i) {
-            System.arraycopy(source[i], 0, out[i], 0, d);
+            System.arraycopy(source, i * d2, out, i * d, d);
         }
     }
 
-    private static void fillUpperRightBlock(final double[][] source, final int d, final double[][] out) {
+    private static void fillUpperRightBlockFlat(final double[] source, final int d, final double[] out) {
+        final int d2 = 2 * d;
         for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out[i][j] = source[i][d + j];
-            }
+            System.arraycopy(source, i * d2 + d, out, i * d, d);
         }
     }
 
-    private static void fillLowerLeftBlock(final double[][] source, final int d, final double[][] out) {
+    private static void fillLowerLeftBlockFlat(final double[] source, final int d, final double[] out) {
+        final int d2 = 2 * d;
         for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out[i][j] = source[d + i][j];
-            }
+            System.arraycopy(source, (d + i) * d2, out, i * d, d);
         }
     }
 
-    private static void fillLowerRightBlock(final double[][] source, final int d, final double[][] out) {
+    private static void fillLowerRightBlockFlat(final double[] source, final int d, final double[] out) {
+        final int d2 = 2 * d;
         for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out[i][j] = source[d + i][d + j];
-            }
+            System.arraycopy(source, (d + i) * d2 + d, out, i * d, d);
         }
     }
 
-    private static void fillFirstBlock(final double[] source, final int d, final double[] out) {
+    private static void fillFirstBlockFlat(final double[] source, final int d, final double[] out) {
         System.arraycopy(source, 0, out, 0, d);
     }
 
-    private static void fillSecondBlock(final double[] source, final int d, final double[] out) {
+    private static void fillSecondBlockFlat(final double[] source, final int d, final double[] out) {
         System.arraycopy(source, d, out, 0, d);
     }
 
@@ -584,58 +658,54 @@ public final class CanonicalGaussianMessageOps {
         }
     }
 
-    private static void addDiagonalJitter(final double[][] matrix,
-                                          final double jitter,
-                                          final int dimension) {
+    private static void addDiagonalJitterFlat(final double[] matrix,
+                                               final double jitter,
+                                               final int dimension) {
         for (int i = 0; i < dimension; ++i) {
-            matrix[i][i] += jitter;
+            matrix[i * dimension + i] += jitter;
         }
     }
 
-    private static double maxAbsDiagonal(final double[][] matrix, final int dimension) {
+    private static double maxAbsDiagonalFlat(final double[] matrix, final int dimension) {
         double max = 0.0;
         for (int i = 0; i < dimension; ++i) {
-            max = Math.max(max, Math.abs(matrix[i][i]));
+            max = Math.max(max, Math.abs(matrix[i * dimension + i]));
         }
         return max;
     }
 
-    private static double gershgorinLowerBound(final double[][] matrix, final int dimension) {
+    private static double gershgorinLowerBoundFlat(final double[] matrix, final int dimension) {
         double lowerBound = Double.POSITIVE_INFINITY;
         for (int i = 0; i < dimension; ++i) {
+            final int iOff = i * dimension;
             double radius = 0.0;
             for (int j = 0; j < dimension; ++j) {
-                if (i != j) {
-                    radius += Math.abs(matrix[i][j]);
-                }
+                if (i != j) radius += Math.abs(matrix[iOff + j]);
             }
-            lowerBound = Math.min(lowerBound, matrix[i][i] - radius);
+            lowerBound = Math.min(lowerBound, matrix[iOff + i] - radius);
         }
         return lowerBound;
     }
 
-    private static void symmetrizeSquare(final double[][] matrix, final int dimension) {
+    private static void symmetrizeSquareFlat(final double[] matrix, final int dimension) {
         for (int i = 0; i < dimension; ++i) {
             for (int j = i + 1; j < dimension; ++j) {
-                final double average = 0.5 * (matrix[i][j] + matrix[j][i]);
-                matrix[i][j] = average;
-                matrix[j][i] = average;
+                final double avg = 0.5 * (matrix[i * dimension + j] + matrix[j * dimension + i]);
+                matrix[i * dimension + j] = avg;
+                matrix[j * dimension + i] = avg;
             }
         }
     }
 
-    private static String formatSquare(final double[][] matrix, final int dimension) {
+    private static String formatVectorAsSquare(final double[] matrix, final int dimension) {
         final StringBuilder builder = new StringBuilder("[");
         for (int i = 0; i < dimension; ++i) {
-            if (i > 0) {
-                builder.append(", ");
-            }
+            if (i > 0) builder.append(", ");
             builder.append('[');
+            final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                if (j > 0) {
-                    builder.append(", ");
-                }
-                builder.append(matrix[i][j]);
+                if (j > 0) builder.append(", ");
+                builder.append(matrix[iOff + j]);
             }
             builder.append(']');
         }
@@ -646,9 +716,7 @@ public final class CanonicalGaussianMessageOps {
     private static String formatVector(final double[] vector, final int dimension) {
         final StringBuilder builder = new StringBuilder("[");
         for (int i = 0; i < dimension; ++i) {
-            if (i > 0) {
-                builder.append(", ");
-            }
+            if (i > 0) builder.append(", ");
             builder.append(vector[i]);
         }
         builder.append(']');

@@ -48,6 +48,7 @@ import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUMessagePasserComputer;
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalTipObservationAdapter;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
@@ -780,11 +781,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         final OUDiffusionModelDelegate ouDelegate = (OUDiffusionModelDelegate) diffusionProcessDelegate;
+        canonicalTipObservations = allocateCanonicalTipObservations(tree.getExternalNodeCount(), dimTrait);
+        CanonicalTipObservationAdapter.fillTipObservations(tree, dataModel, dimTrait, canonicalTipObservations);
         canonicalOUComputer = new CanonicalOUMessagePasserComputer(
                 tree,
                 ouDelegate.getElasticModel(),
                 getDiffusionModel(),
-                CanonicalTipObservationAdapter.extractTipObservations(tree, dataModel, dimTrait),
+                canonicalTipObservations,
                 rootPrior,
                 ouDelegate.getCanonicalStationaryMeanParameter(),
                 rateModel,
@@ -1180,6 +1183,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private boolean updateDiffusionModel;
     private boolean useCanonicalOULikelihood = false;
     private CanonicalOUMessagePasserComputer canonicalOUComputer;
+    private CanonicalTipObservation[] canonicalTipObservations;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
@@ -1336,7 +1340,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         if (!useCanonicalOULikelihood || canonicalOUComputer == null) {
             return;
         }
-        canonicalOUComputer.reloadTips(
-                CanonicalTipObservationAdapter.extractTipObservations(tree, dataModel, dimTrait));
+        CanonicalTipObservationAdapter.fillTipObservations(tree, dataModel, dimTrait, canonicalTipObservations);
+        canonicalOUComputer.reloadTips(canonicalTipObservations);
+    }
+
+    private static CanonicalTipObservation[] allocateCanonicalTipObservations(final int tipCount, final int dim) {
+        final CanonicalTipObservation[] observations = new CanonicalTipObservation[tipCount];
+        for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+            observations[tipIdx] = new CanonicalTipObservation(dim);
+        }
+        return observations;
     }
 }

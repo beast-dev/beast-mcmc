@@ -90,6 +90,161 @@ final class GaussianMatrixOps {
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Flat (row-major) variants – index convention: matrix[i * dim + j]
+    // -----------------------------------------------------------------------
+
+    static void multiplyMatrixMatrixFlat(final double[] left,
+                                         final double[] right,
+                                         final double[] out,
+                                         final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[iOff + k] * right[k * dim + j];
+                }
+                out[iOff + j] = sum;
+            }
+        }
+    }
+
+    static void multiplyMatrixVectorFlat(final double[] matrix,
+                                         final double[] vector,
+                                         final double[] out,
+                                         final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
+            double sum = 0.0;
+            for (int j = 0; j < dim; ++j) {
+                sum += matrix[iOff + j] * vector[j];
+            }
+            out[i] = sum;
+        }
+    }
+
+    static void symmetrizeFlat(final double[] matrix, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = i + 1; j < dim; ++j) {
+                final double avg = 0.5 * (matrix[i * dim + j] + matrix[j * dim + i]);
+                matrix[i * dim + j] = avg;
+                matrix[j * dim + i] = avg;
+            }
+        }
+    }
+
+    static void copyMatrixFlat(final double[] source, final double[] target, final int dim) {
+        System.arraycopy(source, 0, target, 0, dim * dim);
+    }
+
+    /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
+    static void copyMatrixToFlat(final double[][] source, final double[] target, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(source[i], 0, target, i * dim, dim);
+        }
+    }
+
+    /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
+    static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(source, i * dim, target[i], 0, dim);
+        }
+    }
+
+    /**
+     * Cholesky factorization of a flat row-major symmetric positive-definite matrix.
+     * Returns a {@link FlatCholeskyFactor}.
+     */
+    static FlatCholeskyFactor choleskyFlat(final double[] matrix, final int dim) {
+        final double[] lower = new double[dim * dim];
+        if (!tryCholeskyFlat(matrix, lower, dim)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        return new FlatCholeskyFactor(lower, dim);
+    }
+
+    static boolean tryCholeskyFlat(final double[] matrix,
+                                    final double[] lowerOut,
+                                    final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j <= i; ++j) {
+                double sum = matrix[i * dim + j];
+                for (int k = 0; k < j; ++k) {
+                    sum -= lowerOut[i * dim + k] * lowerOut[j * dim + k];
+                }
+                if (i == j) {
+                    if (sum <= 0.0) return false;
+                    lowerOut[i * dim + j] = Math.sqrt(sum);
+                } else {
+                    final double denom = lowerOut[j * dim + j];
+                    if (denom == 0.0) return false;
+                    lowerOut[i * dim + j] = sum / denom;
+                }
+            }
+            for (int j = i + 1; j < dim; ++j) {
+                lowerOut[i * dim + j] = 0.0;
+            }
+        }
+        return true;
+    }
+
+    static void invertPositiveDefiniteFromFlatCholesky(final double[] out,
+                                                        final FlatCholeskyFactor factor) {
+        final int dim = factor.dimension;
+        final double[] lowerInverse = new double[dim * dim];
+        final double[] solution = new double[dim];
+        final double[] basis = new double[dim];
+
+        for (int column = 0; column < dim; ++column) {
+            for (int i = 0; i < dim; ++i) basis[i] = 0.0;
+            basis[column] = 1.0;
+            factor.solveSymmetricSystem(basis, solution);
+            for (int row = 0; row < dim; ++row) {
+                lowerInverse[row * dim + column] = solution[row];
+            }
+        }
+        System.arraycopy(lowerInverse, 0, out, 0, dim * dim);
+        symmetrizeFlat(out, dim);
+    }
+
+    static final class FlatCholeskyFactor {
+        final double[] lower;
+        final int dimension;
+
+        FlatCholeskyFactor(final double[] lower, final int dimension) {
+            this.lower = lower;
+            this.dimension = dimension;
+        }
+
+        double logDeterminant() {
+            double value = 0.0;
+            for (int i = 0; i < dimension; ++i) {
+                value += 2.0 * Math.log(lower[i * dimension + i]);
+            }
+            return value;
+        }
+
+        void solveSymmetricSystem(final double[] rhs, final double[] out) {
+            final int dim = dimension;
+            final double[] y = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                double sum = rhs[i];
+                for (int j = 0; j < i; ++j) {
+                    sum -= lower[i * dim + j] * y[j];
+                }
+                y[i] = sum / lower[i * dim + i];
+            }
+            for (int i = dim - 1; i >= 0; --i) {
+                double sum = y[i];
+                for (int j = i + 1; j < dim; ++j) {
+                    sum -= lower[j * dim + i] * out[j];
+                }
+                out[i] = sum / lower[i * dim + i];
+            }
+        }
+    }
+
     static void identityMinus(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {

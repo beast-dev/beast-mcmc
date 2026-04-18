@@ -15,24 +15,34 @@ package dr.inference.timeseries.engine.gaussian;
  *   dL/dh =      E[z | Y]
  *   dL/dg =     -1
  * </pre>
+ *
+ * <p>Each block gradient matrix is stored row-major in a flat array of length
+ * {@code dim * dim}: element {@code (i, j)} is at index {@code i * dim + j}.
  */
 public final class CanonicalBranchMessageContribution {
 
-    public final double[][] dLogL_dPrecisionXX;
-    public final double[][] dLogL_dPrecisionXY;
-    public final double[][] dLogL_dPrecisionYX;
-    public final double[][] dLogL_dPrecisionYY;
+    public final double[] dLogL_dPrecisionXX;
+    public final double[] dLogL_dPrecisionXY;
+    public final double[] dLogL_dPrecisionYX;
+    public final double[] dLogL_dPrecisionYY;
     public final double[] dLogL_dInformationX;
     public final double[] dLogL_dInformationY;
     public double dLogL_dLogNormalizer;
 
+    private final int dimension;
+
     public CanonicalBranchMessageContribution(final int dimension) {
-        dLogL_dPrecisionXX = new double[dimension][dimension];
-        dLogL_dPrecisionXY = new double[dimension][dimension];
-        dLogL_dPrecisionYX = new double[dimension][dimension];
-        dLogL_dPrecisionYY = new double[dimension][dimension];
+        this.dimension = dimension;
+        dLogL_dPrecisionXX = new double[dimension * dimension];
+        dLogL_dPrecisionXY = new double[dimension * dimension];
+        dLogL_dPrecisionYX = new double[dimension * dimension];
+        dLogL_dPrecisionYY = new double[dimension * dimension];
         dLogL_dInformationX = new double[dimension];
         dLogL_dInformationY = new double[dimension];
         dLogL_dLogNormalizer = -1.0;
+    }
+
+    public int getDimension() {
+        return dimension;
     }
 }

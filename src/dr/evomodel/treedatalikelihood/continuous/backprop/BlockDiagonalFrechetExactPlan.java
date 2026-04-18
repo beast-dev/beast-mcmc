@@ -29,6 +29,8 @@ final class BlockDiagonalFrechetExactPlan {
     private static final int MAX_FACTORIAL_INDEX = 2 * SMALL_ROOT_SERIES_ORDER + 1;
     private static final double[] INVERSE_FACTORIALS = buildInverseFactorials(MAX_FACTORIAL_INDEX);
     private static final double[][] BINOMIAL = buildBinomialTable(MAX_SMALL_ROOT_DERIVATIVE_ORDER);
+    private static final ThreadLocal<BuildWorkspace> BUILD_WORKSPACE =
+            ThreadLocal.withInitial(BuildWorkspace::new);
     private static final ThreadLocal<ComplexWorkspace> COMPLEX_WORKSPACE =
             ThreadLocal.withInitial(ComplexWorkspace::new);
     private static final ThreadLocal<RealSeriesWorkspace> REAL_SERIES_WORKSPACE =
@@ -37,10 +39,11 @@ final class BlockDiagonalFrechetExactPlan {
     private BlockDiagonalFrechetExactPlan() {
     }
 
-    static Plan buildPlan(final BlockDiagonalExpSolver.BlockStructure structure,
-                          final double[] blockDParams,
-                          final double t) {
-        final int dim = structure.getDim();
+    static Plan createPlan(final BlockDiagonalExpSolver.BlockStructure structure) {
+        return new Plan(structure);
+    }
+
+    private static Entry[] buildEntries(final BlockDiagonalExpSolver.BlockStructure structure) {
         final int blockCount = structure.getNumBlocks();
         final Entry[] entries = new Entry[blockCount * blockCount];
         int entryIndex = 0;
@@ -55,18 +58,36 @@ final class BlockDiagonalFrechetExactPlan {
                         leftStart,
                         leftDim,
                         rightStart,
-                        rightDim,
-                        buildCoefficients(blockDParams, dim, leftStart, leftDim, rightStart, rightDim, t));
+                        rightDim);
             }
         }
-        return new Plan(entries);
+        return entries;
     }
 
     static final class Plan {
         private final Entry[] entries;
+        private final int dimension;
 
-        private Plan(final Entry[] entries) {
-            this.entries = entries;
+        private Plan(final BlockDiagonalExpSolver.BlockStructure structure) {
+            this.dimension = structure.getDim();
+            this.entries = buildEntries(structure);
+        }
+
+        void rebuild(final double[] blockDParams,
+                     final double t) {
+            final BuildWorkspace buildWorkspace = BUILD_WORKSPACE.get();
+            for (final Entry entry : entries) {
+                fillCoefficients(
+                        blockDParams,
+                        dimension,
+                        entry.leftStart,
+                        entry.leftDim,
+                        entry.rightStart,
+                        entry.rightDim,
+                        t,
+                        entry.coefficients,
+                        buildWorkspace);
+            }
         }
 
         void apply(final DenseMatrix64F input,
@@ -138,28 +159,29 @@ final class BlockDiagonalFrechetExactPlan {
         private Entry(final int leftStart,
                       final int leftDim,
                       final int rightStart,
-                      final int rightDim,
-                      final double[] coefficients) {
+                      final int rightDim) {
             this.leftStart = leftStart;
             this.leftDim = leftDim;
             this.rightStart = rightStart;
             this.rightDim = rightDim;
             this.size = leftDim * rightDim;
-            this.coefficients = coefficients;
+            this.coefficients = new double[size * size];
         }
     }
 
-    private static double[] buildCoefficients(final double[] blockDParams,
-                                              final int dimension,
-                                              final int leftStart,
-                                              final int leftDim,
-                                              final int rightStart,
-                                              final int rightDim,
-                                              final double t) {
-        final double[] left = new double[4];
-        final double[] right = new double[4];
-        final double[] leftExp = new double[4];
-        final double[] rightExp = new double[4];
+    private static void fillCoefficients(final double[] blockDParams,
+                                         final int dimension,
+                                         final int leftStart,
+                                         final int leftDim,
+                                         final int rightStart,
+                                         final int rightDim,
+                                         final double t,
+                                         final double[] out,
+                                         final BuildWorkspace workspace) {
+        final double[] left = workspace.left;
+        final double[] right = workspace.right;
+        final double[] leftExp = workspace.leftExp;
+        final double[] rightExp = workspace.rightExp;
 
         fillScaledBlock(blockDParams, dimension, leftStart, leftDim, -t, left);
         fillScaledBlock(blockDParams, dimension, rightStart, rightDim, -t, right);
@@ -167,16 +189,20 @@ final class BlockDiagonalFrechetExactPlan {
         fillSmallExponential(right, rightDim, rightExp);
 
         if (leftDim == 1 && rightDim == 1) {
-            return new double[]{dividedDifferenceExp(left[0], right[0])};
+            out[0] = dividedDifferenceExp(left[0], right[0]);
+            return;
         }
         if (leftDim == 1 && rightDim == 2) {
-            return buildOneByTwoCoefficient(left[0], right);
+            fillOneByTwoCoefficient(left[0], right, out, workspace);
+            return;
         }
         if (leftDim == 2 && rightDim == 1) {
-            return buildTwoByOneCoefficient(left, right[0]);
+            fillTwoByOneCoefficient(left, right[0], out, workspace);
+            return;
         }
         if (leftDim == 2 && rightDim == 2) {
-            return buildTwoByTwoCoefficient(left, right, leftExp, rightExp);
+            fillTwoByTwoCoefficient(left, right, leftExp, rightExp, out, workspace);
+            return;
         }
 
         throw new IllegalStateException("Unsupported block pair: " + leftDim + "x" + rightDim);
@@ -213,15 +239,16 @@ final class BlockDiagonalFrechetExactPlan {
                 1.0, out, 2, 0);
     }
 
-    private static double[] buildOneByTwoCoefficient(final double leftScalar,
-                                                     final double[] rightBlock) {
-        final double[] shifted = new double[]{
-                rightBlock[0] - leftScalar,
-                rightBlock[1],
-                rightBlock[2],
-                rightBlock[3] - leftScalar
-        };
-        final double[] phi = new double[4];
+    private static void fillOneByTwoCoefficient(final double leftScalar,
+                                                final double[] rightBlock,
+                                                final double[] out,
+                                                final BuildWorkspace workspace) {
+        final double[] shifted = workspace.shifted;
+        final double[] phi = workspace.phi;
+        shifted[0] = rightBlock[0] - leftScalar;
+        shifted[1] = rightBlock[1];
+        shifted[2] = rightBlock[2];
+        shifted[3] = rightBlock[3] - leftScalar;
         fillPhi2x2(shifted, phi);
 
         final double scale = Math.exp(leftScalar);
@@ -230,42 +257,47 @@ final class BlockDiagonalFrechetExactPlan {
         phi[2] *= scale;
         phi[3] *= scale;
 
-        return new double[]{
-                phi[0], phi[2],
-                phi[1], phi[3]
-        };
+        out[0] = phi[0];
+        out[1] = phi[2];
+        out[2] = phi[1];
+        out[3] = phi[3];
     }
 
-    private static double[] buildTwoByOneCoefficient(final double[] leftBlock,
-                                                     final double rightScalar) {
-        final double[] shifted = new double[]{
-                leftBlock[0] - rightScalar,
-                leftBlock[1],
-                leftBlock[2],
-                leftBlock[3] - rightScalar
-        };
-        final double[] phi = new double[4];
+    private static void fillTwoByOneCoefficient(final double[] leftBlock,
+                                                final double rightScalar,
+                                                final double[] out,
+                                                final BuildWorkspace workspace) {
+        final double[] shifted = workspace.shifted;
+        final double[] phi = workspace.phi;
+        shifted[0] = leftBlock[0] - rightScalar;
+        shifted[1] = leftBlock[1];
+        shifted[2] = leftBlock[2];
+        shifted[3] = leftBlock[3] - rightScalar;
         fillPhi2x2(shifted, phi);
 
         final double scale = Math.exp(rightScalar);
         for (int i = 0; i < 4; ++i) {
-            phi[i] *= scale;
+            out[i] = phi[i] * scale;
         }
-        return phi;
     }
 
-    private static double[] buildTwoByTwoCoefficient(final double[] leftBlock,
-                                                     final double[] rightBlock,
-                                                     final double[] leftExp,
-                                                     final double[] rightExp) {
+    private static void fillTwoByTwoCoefficient(final double[] leftBlock,
+                                                final double[] rightBlock,
+                                                final double[] leftExp,
+                                                final double[] rightExp,
+                                                final double[] out,
+                                                final BuildWorkspace workspace) {
         if (hasEqualDiagonals(leftBlock) && hasEqualDiagonals(rightBlock)) {
-            return buildTwoByTwoCoefficientEqualDiagonal(leftBlock, rightBlock);
+            fillTwoByTwoCoefficientEqualDiagonal(leftBlock, rightBlock, out, workspace);
+            return;
         }
-        return buildTwoByTwoCoefficientGeneric(leftBlock, rightBlock, leftExp, rightExp);
+        fillTwoByTwoCoefficientGeneric(leftBlock, rightBlock, leftExp, rightExp, out, workspace);
     }
 
-    private static double[] buildTwoByTwoCoefficientEqualDiagonal(final double[] leftBlock,
-                                                                  final double[] rightBlock) {
+    private static void fillTwoByTwoCoefficientEqualDiagonal(final double[] leftBlock,
+                                                             final double[] rightBlock,
+                                                             final double[] out,
+                                                             final BuildWorkspace workspace) {
         final double a = leftBlock[0];
         final double b = rightBlock[0];
         final double leftUpper = leftBlock[1];
@@ -281,106 +313,115 @@ final class BlockDiagonalFrechetExactPlan {
         final double qIm = rightProduct >= 0.0 ? 0.0 : Math.sqrt(-rightProduct);
         final double rAbs = Math.sqrt(Math.abs(leftProduct));
         final double qAbs = Math.sqrt(Math.abs(rightProduct));
-        final ComplexWorkspace workspace = COMPLEX_WORKSPACE.get();
+        final ComplexWorkspace complexWorkspace = COMPLEX_WORKSPACE.get();
+        final PreparedCoefficients prepared = workspace.prepared;
 
-        final EqualDiagonalCoefficients prepared;
         if (rAbs < SMALL_ROOT_SERIES_CUTOFF && qAbs < SMALL_ROOT_SERIES_CUTOFF) {
-            prepared = coefficientsBivariateSmallRootSeries(a, b, leftProduct, rightProduct);
+            fillCoefficientsBivariateSmallRootSeries(a, b, leftProduct, rightProduct, prepared);
         } else if (rAbs < SMALL_ROOT_SERIES_CUTOFF) {
-            prepared = coefficientsSmallLeftRootSeries(a, b, qRe, qIm, leftProduct, workspace);
+            fillCoefficientsSmallLeftRootSeries(a, b, qRe, qIm, leftProduct, prepared, complexWorkspace);
         } else if (qAbs < SMALL_ROOT_SERIES_CUTOFF) {
-            prepared = coefficientsSmallRightRootSeries(a, b, rRe, rIm, rightProduct, workspace);
+            fillCoefficientsSmallRightRootSeries(a, b, rRe, rIm, rightProduct, prepared, complexWorkspace);
         } else {
-            prepared = coefficientsDistinct(a, b, rRe, rIm, qRe, qIm, workspace);
+            fillCoefficientsDistinct(a, b, rRe, rIm, qRe, qIm, prepared, complexWorkspace);
         }
 
-        return buildTwoByTwoCoefficientFromPrepared(prepared, leftUpper, leftLower, rightUpper, rightLower);
+        fillTwoByTwoCoefficientFromPrepared(prepared, leftUpper, leftLower, rightUpper, rightLower, out, workspace);
     }
 
-    private static double[] buildTwoByTwoCoefficientGeneric(final double[] leftBlock,
-                                                            final double[] rightBlock,
-                                                            final double[] leftExp,
-                                                            final double[] rightExp) {
+    private static void fillTwoByTwoCoefficientGeneric(final double[] leftBlock,
+                                                       final double[] rightBlock,
+                                                       final double[] leftExp,
+                                                       final double[] rightExp,
+                                                       final double[] out,
+                                                       final BuildWorkspace workspace) {
         try {
-            final double[] sylvester = new double[16];
+            final double[] sylvester = workspace.sylvester;
             fillTwoByTwoSylvesterOperator(leftBlock, rightBlock, sylvester);
 
-            final double[] coefficients = new double[16];
-            final double[] rhs = new double[4];
-            final double[] solution = new double[4];
-            final double[] basisMatrix = new double[4];
+            final double[] rhs = workspace.rhs;
+            final double[] solution = workspace.solution;
+            final double[] basisMatrix = workspace.basis;
+            final double[] augmented = workspace.augmented;
 
             for (int basis = 0; basis < 4; ++basis) {
                 fillTwoByTwoBasisMatrix(basis, basisMatrix);
-                fillTwoByTwoRhs(leftExp, rightExp, basisMatrix, rhs);
-                solve4x4(sylvester, rhs, solution);
-                coefficients[basis] = solution[0];
-                coefficients[4 + basis] = solution[1];
-                coefficients[8 + basis] = solution[2];
-                coefficients[12 + basis] = solution[3];
+                fillTwoByTwoRhs(
+                        leftExp,
+                        rightExp,
+                        basisMatrix,
+                        rhs,
+                        workspace.leftProduct,
+                        workspace.rightProduct);
+                solve4x4(sylvester, rhs, solution, augmented);
+                out[basis] = solution[0];
+                out[4 + basis] = solution[1];
+                out[8 + basis] = solution[2];
+                out[12 + basis] = solution[3];
             }
-
-            return coefficients;
         } catch (final IllegalStateException degenerate) {
-            final Spectrum2x2 leftSpectrum = Spectrum2x2.decompose(leftBlock);
-            final Spectrum2x2 rightSpectrum = Spectrum2x2.decompose(rightBlock);
-            if (leftSpectrum.distinct && rightSpectrum.distinct) {
-                return buildTwoByTwoCoefficientSpectral(leftBlock, rightBlock, leftSpectrum, rightSpectrum);
+            fillSpectrum2x2(leftBlock, workspace.leftSpectrum);
+            fillSpectrum2x2(rightBlock, workspace.rightSpectrum);
+            if (workspace.leftSpectrum.distinct && workspace.rightSpectrum.distinct) {
+                fillTwoByTwoCoefficientSpectral(leftBlock, rightBlock, out, workspace);
+                return;
             }
             if (matricesEqual(leftBlock, rightBlock)) {
-                return buildTwoByTwoCoefficientRepeatedSame(leftBlock);
+                fillTwoByTwoCoefficientRepeatedSame(leftBlock, out, workspace);
+                return;
             }
             throw new IllegalStateException(
                     "Degenerate 2x2 Sylvester block pair left=[" + leftBlock[0] + ", " + leftBlock[1] + ", "
                             + leftBlock[2] + ", " + leftBlock[3] + "] right=["
                             + rightBlock[0] + ", " + rightBlock[1] + ", "
                             + rightBlock[2] + ", " + rightBlock[3] + "] leftDistinct="
-                            + leftSpectrum.distinct + " rightDistinct=" + rightSpectrum.distinct
+                            + workspace.leftSpectrum.distinct + " rightDistinct=" + workspace.rightSpectrum.distinct
                             + " equal=" + matricesEqual(leftBlock, rightBlock),
                     degenerate);
         }
     }
 
-    private static double[] buildTwoByTwoCoefficientFromPrepared(final EqualDiagonalCoefficients prepared,
-                                                                 final double leftUpper,
-                                                                 final double leftLower,
-                                                                 final double rightUpper,
-                                                                 final double rightLower) {
-        final double[] coefficients = new double[16];
-        final double[] basis = new double[4];
+    private static void fillTwoByTwoCoefficientFromPrepared(final PreparedCoefficients prepared,
+                                                            final double leftUpper,
+                                                            final double leftLower,
+                                                            final double rightUpper,
+                                                            final double rightLower,
+                                                            final double[] out,
+                                                            final BuildWorkspace workspace) {
+        final double[] basis = workspace.basis;
         for (int basisIndex = 0; basisIndex < 4; ++basisIndex) {
             fillTwoByTwoBasisMatrix(basisIndex, basis);
-            coefficients[basisIndex] =
+            out[basisIndex] =
                     prepared.alpha * basis[0]
                             + prepared.beta * (leftUpper * basis[2])
                             + prepared.gamma * (basis[1] * rightLower)
                             + prepared.eta * (leftUpper * basis[3] * rightLower);
-            coefficients[4 + basisIndex] =
+            out[4 + basisIndex] =
                     prepared.alpha * basis[1]
                             + prepared.beta * (leftUpper * basis[3])
                             + prepared.gamma * (basis[0] * rightUpper)
                             + prepared.eta * (leftUpper * basis[2] * rightUpper);
-            coefficients[8 + basisIndex] =
+            out[8 + basisIndex] =
                     prepared.alpha * basis[2]
                             + prepared.beta * (leftLower * basis[0])
                             + prepared.gamma * (basis[3] * rightLower)
                             + prepared.eta * (leftLower * basis[1] * rightLower);
-            coefficients[12 + basisIndex] =
+            out[12 + basisIndex] =
                     prepared.alpha * basis[3]
                             + prepared.beta * (leftLower * basis[1])
                             + prepared.gamma * (basis[2] * rightUpper)
                             + prepared.eta * (leftLower * basis[0] * rightUpper);
         }
-        return coefficients;
     }
 
-    private static EqualDiagonalCoefficients coefficientsDistinct(final double a,
-                                                                  final double b,
-                                                                  final double rRe,
-                                                                  final double rIm,
-                                                                  final double qRe,
-                                                                  final double qIm,
-                                                                  final ComplexWorkspace workspace) {
+    private static void fillCoefficientsDistinct(final double a,
+                                                 final double b,
+                                                 final double rRe,
+                                                 final double rIm,
+                                                 final double qRe,
+                                                 final double qIm,
+                                                 final PreparedCoefficients out,
+                                                 final ComplexWorkspace workspace) {
         final MutableComplex phiPP = workspace.c0;
         final MutableComplex phiPM = workspace.c1;
         final MutableComplex phiMP = workspace.c2;
@@ -411,15 +452,17 @@ final class BlockDiagonalFrechetExactPlan {
                 phiPP.re - phiPM.re - phiMP.re + phiMM.re,
                 phiPP.im - phiPM.im - phiMP.im + phiMM.im,
                 scratch.re, scratch.im, scratch);
-        final double eta = 0.25 * scratch.re;
-
-        return new EqualDiagonalCoefficients(alpha, beta, gamma, eta);
+        out.alpha = alpha;
+        out.beta = beta;
+        out.gamma = gamma;
+        out.eta = 0.25 * scratch.re;
     }
 
-    private static EqualDiagonalCoefficients coefficientsBivariateSmallRootSeries(final double a,
-                                                                                  final double b,
-                                                                                  final double rSquared,
-                                                                                  final double qSquared) {
+    private static void fillCoefficientsBivariateSmallRootSeries(final double a,
+                                                                 final double b,
+                                                                 final double rSquared,
+                                                                 final double qSquared,
+                                                                 final PreparedCoefficients out) {
         final RealSeriesWorkspace workspace = REAL_SERIES_WORKSPACE.get();
         fillRealMomentTable(b - a, workspace.moments);
         fillRealDerivativeTable(Math.exp(a), workspace.moments, workspace.derivatives);
@@ -449,15 +492,19 @@ final class BlockDiagonalFrechetExactPlan {
             rPower *= rSquared;
         }
 
-        return new EqualDiagonalCoefficients(alpha, beta, gamma, eta);
+        out.alpha = alpha;
+        out.beta = beta;
+        out.gamma = gamma;
+        out.eta = eta;
     }
 
-    private static EqualDiagonalCoefficients coefficientsSmallLeftRootSeries(final double a,
-                                                                             final double b,
-                                                                             final double qRe,
-                                                                             final double qIm,
-                                                                             final double rSquared,
-                                                                             final ComplexWorkspace workspace) {
+    private static void fillCoefficientsSmallLeftRootSeries(final double a,
+                                                            final double b,
+                                                            final double qRe,
+                                                            final double qIm,
+                                                            final double rSquared,
+                                                            final PreparedCoefficients out,
+                                                            final ComplexWorkspace workspace) {
         double alpha = 0.0;
         double beta = 0.0;
         double gamma = 0.0;
@@ -488,15 +535,19 @@ final class BlockDiagonalFrechetExactPlan {
             rPower *= rSquared;
         }
 
-        return new EqualDiagonalCoefficients(alpha, beta, gamma, eta);
+        out.alpha = alpha;
+        out.beta = beta;
+        out.gamma = gamma;
+        out.eta = eta;
     }
 
-    private static EqualDiagonalCoefficients coefficientsSmallRightRootSeries(final double a,
-                                                                              final double b,
-                                                                              final double rRe,
-                                                                              final double rIm,
-                                                                              final double qSquared,
-                                                                              final ComplexWorkspace workspace) {
+    private static void fillCoefficientsSmallRightRootSeries(final double a,
+                                                             final double b,
+                                                             final double rRe,
+                                                             final double rIm,
+                                                             final double qSquared,
+                                                             final PreparedCoefficients out,
+                                                             final ComplexWorkspace workspace) {
         double alpha = 0.0;
         double beta = 0.0;
         double gamma = 0.0;
@@ -527,7 +578,10 @@ final class BlockDiagonalFrechetExactPlan {
             qPower *= qSquared;
         }
 
-        return new EqualDiagonalCoefficients(alpha, beta, gamma, eta);
+        out.alpha = alpha;
+        out.beta = beta;
+        out.gamma = gamma;
+        out.eta = eta;
     }
 
     private static int derivativeIndex(final int leftOrder,
@@ -776,9 +830,9 @@ final class BlockDiagonalFrechetExactPlan {
     private static void fillTwoByTwoRhs(final double[] leftExp,
                                         final double[] rightExp,
                                         final double[] basis,
-                                        final double[] out) {
-        final double[] leftProduct = new double[4];
-        final double[] rightProduct = new double[4];
+                                        final double[] out,
+                                        final double[] leftProduct,
+                                        final double[] rightProduct) {
         multiply2x2(leftExp, basis, leftProduct);
         multiply2x2(basis, rightExp, rightProduct);
         out[0] = leftProduct[0] - rightProduct[0];
@@ -823,8 +877,8 @@ final class BlockDiagonalFrechetExactPlan {
 
     private static void solve4x4(final double[] matrix,
                                  final double[] rhs,
-                                 final double[] solution) {
-        final double[] augmented = new double[20];
+                                 final double[] solution,
+                                 final double[] augmented) {
         for (int row = 0; row < 4; ++row) {
             final int matrixOffset = 4 * row;
             final int augmentedOffset = 5 * row;
@@ -957,79 +1011,84 @@ final class BlockDiagonalFrechetExactPlan {
         return (Math.exp(value) * (value - 1.0) + 1.0) / (value * value);
     }
 
-    private static double[] buildTwoByTwoCoefficientSpectral(final double[] leftBlock,
-                                                             final double[] rightBlock,
-                                                             final Spectrum2x2 leftSpectrum,
-                                                             final Spectrum2x2 rightSpectrum) {
-        final ComplexNumber[] leftProjector0 =
-                buildProjector(leftBlock, leftSpectrum.lambda[0], leftSpectrum.lambda[1]);
-        final ComplexNumber[] leftProjector1 =
-                buildProjector(leftBlock, leftSpectrum.lambda[1], leftSpectrum.lambda[0]);
-        final ComplexNumber[] rightProjector0 =
-                buildProjector(rightBlock, rightSpectrum.lambda[0], rightSpectrum.lambda[1]);
-        final ComplexNumber[] rightProjector1 =
-                buildProjector(rightBlock, rightSpectrum.lambda[1], rightSpectrum.lambda[0]);
+    private static void fillTwoByTwoCoefficientSpectral(final double[] leftBlock,
+                                                        final double[] rightBlock,
+                                                        final double[] out,
+                                                        final BuildWorkspace workspace) {
+        final MutableSpectrum leftSpectrum = workspace.leftSpectrum;
+        final MutableSpectrum rightSpectrum = workspace.rightSpectrum;
+        fillProjector(leftBlock, leftSpectrum.lambda0, leftSpectrum.lambda1, workspace.leftProjector0);
+        fillProjector(leftBlock, leftSpectrum.lambda1, leftSpectrum.lambda0, workspace.leftProjector1);
+        fillProjector(rightBlock, rightSpectrum.lambda0, rightSpectrum.lambda1, workspace.rightProjector0);
+        fillProjector(rightBlock, rightSpectrum.lambda1, rightSpectrum.lambda0, workspace.rightProjector1);
 
-        final ComplexNumber[][] leftProjectors = new ComplexNumber[][]{leftProjector0, leftProjector1};
-        final ComplexNumber[][] rightProjectors = new ComplexNumber[][]{rightProjector0, rightProjector1};
-
-        final double[] coefficients = new double[16];
-        final double[] basis = new double[4];
         for (int basisIndex = 0; basisIndex < 4; ++basisIndex) {
-            fillTwoByTwoBasisMatrix(basisIndex, basis);
-            ComplexNumber[] blockSum = zeroComplexMatrix();
+            fillTwoByTwoBasisMatrix(basisIndex, workspace.basis);
+            clearComplexMatrix(workspace.complexAccumulator);
             for (int i = 0; i < 2; ++i) {
+                final ComplexMatrix leftProjector = i == 0 ? workspace.leftProjector0 : workspace.leftProjector1;
+                final MutableComplex leftLambda = i == 0 ? leftSpectrum.lambda0 : leftSpectrum.lambda1;
+                multiplyComplexReal(leftProjector, workspace.basis, workspace.leftTimesBasis);
                 for (int j = 0; j < 2; ++j) {
-                    final ComplexNumber weight =
-                            dividedDifferenceExp(leftSpectrum.lambda[i], rightSpectrum.lambda[j]);
-                    final ComplexNumber[] term =
-                            multiplyComplexMatrix(
-                                    multiplyComplexReal(leftProjectors[i], basis),
-                                    rightProjectors[j]);
-                    addScaledComplexMatrix(blockSum, term, weight);
+                    final ComplexMatrix rightProjector = j == 0 ? workspace.rightProjector0 : workspace.rightProjector1;
+                    final MutableComplex rightLambda = j == 0 ? rightSpectrum.lambda0 : rightSpectrum.lambda1;
+                    fillDividedDifferenceExpComplex(
+                            leftLambda.re, leftLambda.im,
+                            rightLambda.re, rightLambda.im,
+                            workspace.complexScalar);
+                    multiplyComplexMatrix(workspace.leftTimesBasis, rightProjector, workspace.complexTerm);
+                    addScaledComplexMatrix(
+                            workspace.complexAccumulator,
+                            workspace.complexTerm,
+                            workspace.complexScalar.re,
+                            workspace.complexScalar.im);
                 }
             }
-            coefficients[basisIndex] = blockSum[0].re;
-            coefficients[4 + basisIndex] = blockSum[1].re;
-            coefficients[8 + basisIndex] = blockSum[2].re;
-            coefficients[12 + basisIndex] = blockSum[3].re;
+            out[basisIndex] = workspace.complexAccumulator.data[0].re;
+            out[4 + basisIndex] = workspace.complexAccumulator.data[1].re;
+            out[8 + basisIndex] = workspace.complexAccumulator.data[2].re;
+            out[12 + basisIndex] = workspace.complexAccumulator.data[3].re;
         }
-        return coefficients;
     }
 
-    private static double[] buildTwoByTwoCoefficientRepeatedSame(final double[] block) {
+    private static void fillTwoByTwoCoefficientRepeatedSame(final double[] block,
+                                                            final double[] out,
+                                                            final BuildWorkspace workspace) {
         final double lambda = 0.5 * (block[0] + block[3]);
         final double expLambda = Math.exp(lambda);
-        final double[] nilpotent = new double[]{
-                block[0] - lambda,
-                block[1],
-                block[2],
-                block[3] - lambda
-        };
-
-        final double[] coefficients = new double[16];
-        final double[] basis = new double[4];
-        final double[] leftTerm = new double[4];
-        final double[] rightTerm = new double[4];
-        final double[] mixedTerm = new double[4];
+        final double[] nilpotent = workspace.nilpotent;
+        nilpotent[0] = block[0] - lambda;
+        nilpotent[1] = block[1];
+        nilpotent[2] = block[2];
+        nilpotent[3] = block[3] - lambda;
 
         for (int basisIndex = 0; basisIndex < 4; ++basisIndex) {
-            fillTwoByTwoBasisMatrix(basisIndex, basis);
-            multiply2x2(nilpotent, basis, leftTerm);
-            multiply2x2(basis, nilpotent, rightTerm);
-            multiply2x2(leftTerm, nilpotent, mixedTerm);
+            fillTwoByTwoBasisMatrix(basisIndex, workspace.basis);
+            multiply2x2(nilpotent, workspace.basis, workspace.leftTerm);
+            multiply2x2(workspace.basis, nilpotent, workspace.rightTerm);
+            multiply2x2(workspace.leftTerm, nilpotent, workspace.mixedTerm);
 
-            coefficients[basisIndex] =
-                    expLambda * (basis[0] + 0.5 * leftTerm[0] + 0.5 * rightTerm[0] + (1.0 / 6.0) * mixedTerm[0]);
-            coefficients[4 + basisIndex] =
-                    expLambda * (basis[1] + 0.5 * leftTerm[1] + 0.5 * rightTerm[1] + (1.0 / 6.0) * mixedTerm[1]);
-            coefficients[8 + basisIndex] =
-                    expLambda * (basis[2] + 0.5 * leftTerm[2] + 0.5 * rightTerm[2] + (1.0 / 6.0) * mixedTerm[2]);
-            coefficients[12 + basisIndex] =
-                    expLambda * (basis[3] + 0.5 * leftTerm[3] + 0.5 * rightTerm[3] + (1.0 / 6.0) * mixedTerm[3]);
+            out[basisIndex] =
+                    expLambda * (workspace.basis[0]
+                    + 0.5 * workspace.leftTerm[0]
+                    + 0.5 * workspace.rightTerm[0]
+                    + (1.0 / 6.0) * workspace.mixedTerm[0]);
+            out[4 + basisIndex] =
+                    expLambda * (workspace.basis[1]
+                    + 0.5 * workspace.leftTerm[1]
+                    + 0.5 * workspace.rightTerm[1]
+                    + (1.0 / 6.0) * workspace.mixedTerm[1]);
+            out[8 + basisIndex] =
+                    expLambda * (workspace.basis[2]
+                    + 0.5 * workspace.leftTerm[2]
+                    + 0.5 * workspace.rightTerm[2]
+                    + (1.0 / 6.0) * workspace.mixedTerm[2]);
+            out[12 + basisIndex] =
+                    expLambda * (workspace.basis[3]
+                    + 0.5 * workspace.leftTerm[3]
+                    + 0.5 * workspace.rightTerm[3]
+                    + (1.0 / 6.0) * workspace.mixedTerm[3]);
         }
-
-        return coefficients;
     }
 
     private static boolean matricesEqual(final double[] left,
@@ -1042,109 +1101,202 @@ final class BlockDiagonalFrechetExactPlan {
         return true;
     }
 
-    private static ComplexNumber[] buildProjector(final double[] block,
-                                                  final ComplexNumber lambda,
-                                                  final ComplexNumber other) {
-        final ComplexNumber denominator = lambda.subtract(other);
-        return new ComplexNumber[]{
-                ComplexNumber.real(block[0]).subtract(other).divide(denominator),
-                ComplexNumber.real(block[1]).divide(denominator),
-                ComplexNumber.real(block[2]).divide(denominator),
-                ComplexNumber.real(block[3]).subtract(other).divide(denominator)
-        };
+    private static void fillSpectrum2x2(final double[] block,
+                                        final MutableSpectrum out) {
+        final double trace = block[0] + block[3];
+        final double determinant = block[0] * block[3] - block[1] * block[2];
+        final double discriminant = trace * trace - 4.0 * determinant;
+        if (Math.abs(discriminant) < EPS) {
+            out.distinct = false;
+            setComplex(out.lambda0, 0.5 * trace, 0.0);
+            setComplex(out.lambda1, 0.5 * trace, 0.0);
+            return;
+        }
+        out.distinct = true;
+        if (discriminant > 0.0) {
+            final double root = Math.sqrt(discriminant);
+            setComplex(out.lambda0, 0.5 * (trace + root), 0.0);
+            setComplex(out.lambda1, 0.5 * (trace - root), 0.0);
+            return;
+        }
+        final double imag = 0.5 * Math.sqrt(-discriminant);
+        final double real = 0.5 * trace;
+        setComplex(out.lambda0, real, imag);
+        setComplex(out.lambda1, real, -imag);
     }
 
-    private static ComplexNumber[] multiplyComplexReal(final ComplexNumber[] left,
-                                                       final double[] right) {
-        return new ComplexNumber[]{
-                left[0].scale(right[0]).add(left[1].scale(right[2])),
-                left[0].scale(right[1]).add(left[1].scale(right[3])),
-                left[2].scale(right[0]).add(left[3].scale(right[2])),
-                left[2].scale(right[1]).add(left[3].scale(right[3]))
-        };
+    private static void fillProjector(final double[] block,
+                                      final MutableComplex lambda,
+                                      final MutableComplex other,
+                                      final ComplexMatrix out) {
+        final double denominatorRe = lambda.re - other.re;
+        final double denominatorIm = lambda.im - other.im;
+        divideComplex(block[0] - other.re, -other.im, denominatorRe, denominatorIm, out.data[0]);
+        divideComplex(block[1], 0.0, denominatorRe, denominatorIm, out.data[1]);
+        divideComplex(block[2], 0.0, denominatorRe, denominatorIm, out.data[2]);
+        divideComplex(block[3] - other.re, -other.im, denominatorRe, denominatorIm, out.data[3]);
     }
 
-    private static ComplexNumber[] multiplyComplexMatrix(final ComplexNumber[] left,
-                                                         final ComplexNumber[] right) {
-        return new ComplexNumber[]{
-                left[0].multiply(right[0]).add(left[1].multiply(right[2])),
-                left[0].multiply(right[1]).add(left[1].multiply(right[3])),
-                left[2].multiply(right[0]).add(left[3].multiply(right[2])),
-                left[2].multiply(right[1]).add(left[3].multiply(right[3]))
-        };
+    private static void multiplyComplexReal(final ComplexMatrix left,
+                                            final double[] right,
+                                            final ComplexMatrix out) {
+        final double r00 = right[0];
+        final double r01 = right[1];
+        final double r10 = right[2];
+        final double r11 = right[3];
+        setComplex(
+                out.data[0],
+                left.data[0].re * r00 + left.data[1].re * r10,
+                left.data[0].im * r00 + left.data[1].im * r10);
+        setComplex(
+                out.data[1],
+                left.data[0].re * r01 + left.data[1].re * r11,
+                left.data[0].im * r01 + left.data[1].im * r11);
+        setComplex(
+                out.data[2],
+                left.data[2].re * r00 + left.data[3].re * r10,
+                left.data[2].im * r00 + left.data[3].im * r10);
+        setComplex(
+                out.data[3],
+                left.data[2].re * r01 + left.data[3].re * r11,
+                left.data[2].im * r01 + left.data[3].im * r11);
     }
 
-    private static ComplexNumber[] zeroComplexMatrix() {
-        return new ComplexNumber[]{
-                ComplexNumber.ZERO,
-                ComplexNumber.ZERO,
-                ComplexNumber.ZERO,
-                ComplexNumber.ZERO
-        };
+    private static void multiplyComplexMatrix(final ComplexMatrix left,
+                                              final ComplexMatrix right,
+                                              final ComplexMatrix out) {
+        setComplex(
+                out.data[0],
+                left.data[0].re * right.data[0].re - left.data[0].im * right.data[0].im
+                        + left.data[1].re * right.data[2].re - left.data[1].im * right.data[2].im,
+                left.data[0].re * right.data[0].im + left.data[0].im * right.data[0].re
+                        + left.data[1].re * right.data[2].im + left.data[1].im * right.data[2].re);
+        setComplex(
+                out.data[1],
+                left.data[0].re * right.data[1].re - left.data[0].im * right.data[1].im
+                        + left.data[1].re * right.data[3].re - left.data[1].im * right.data[3].im,
+                left.data[0].re * right.data[1].im + left.data[0].im * right.data[1].re
+                        + left.data[1].re * right.data[3].im + left.data[1].im * right.data[3].re);
+        setComplex(
+                out.data[2],
+                left.data[2].re * right.data[0].re - left.data[2].im * right.data[0].im
+                        + left.data[3].re * right.data[2].re - left.data[3].im * right.data[2].im,
+                left.data[2].re * right.data[0].im + left.data[2].im * right.data[0].re
+                        + left.data[3].re * right.data[2].im + left.data[3].im * right.data[2].re);
+        setComplex(
+                out.data[3],
+                left.data[2].re * right.data[1].re - left.data[2].im * right.data[1].im
+                        + left.data[3].re * right.data[3].re - left.data[3].im * right.data[3].im,
+                left.data[2].re * right.data[1].im + left.data[2].im * right.data[1].re
+                        + left.data[3].re * right.data[3].im + left.data[3].im * right.data[3].re);
     }
 
-    private static void addScaledComplexMatrix(final ComplexNumber[] accumulator,
-                                               final ComplexNumber[] term,
-                                               final ComplexNumber scale) {
-        accumulator[0] = accumulator[0].add(scale.multiply(term[0]));
-        accumulator[1] = accumulator[1].add(scale.multiply(term[1]));
-        accumulator[2] = accumulator[2].add(scale.multiply(term[2]));
-        accumulator[3] = accumulator[3].add(scale.multiply(term[3]));
+    private static void clearComplexMatrix(final ComplexMatrix matrix) {
+        for (int i = 0; i < 4; ++i) {
+            matrix.data[i].re = 0.0;
+            matrix.data[i].im = 0.0;
+        }
     }
 
-    private static final class Spectrum2x2 {
-        private final boolean distinct;
-        private final ComplexNumber[] lambda;
+    private static void addScaledComplexMatrix(final ComplexMatrix accumulator,
+                                               final ComplexMatrix term,
+                                               final double scaleRe,
+                                               final double scaleIm) {
+        for (int i = 0; i < 4; ++i) {
+            final MutableComplex acc = accumulator.data[i];
+            final MutableComplex value = term.data[i];
+            final double re = scaleRe * value.re - scaleIm * value.im;
+            final double im = scaleRe * value.im + scaleIm * value.re;
+            acc.re += re;
+            acc.im += im;
+        }
+    }
 
-        private Spectrum2x2(final boolean distinct,
-                            final ComplexNumber[] lambda) {
-            this.distinct = distinct;
-            this.lambda = lambda;
+    private static void fillDividedDifferenceExpComplex(final double leftRe,
+                                                        final double leftIm,
+                                                        final double rightRe,
+                                                        final double rightIm,
+                                                        final MutableComplex out) {
+        final double deltaRe = leftRe - rightRe;
+        final double deltaIm = leftIm - rightIm;
+        if (deltaRe * deltaRe + deltaIm * deltaIm < EPS * EPS) {
+            fillExpComplex(leftRe, leftIm, out);
+            return;
         }
 
-        private static Spectrum2x2 decompose(final double[] block) {
-            final double trace = block[0] + block[3];
-            final double determinant = block[0] * block[3] - block[1] * block[2];
-            final double discriminant = trace * trace - 4.0 * determinant;
-            if (Math.abs(discriminant) < EPS) {
-                final ComplexNumber repeated = ComplexNumber.real(0.5 * trace);
-                return new Spectrum2x2(false, new ComplexNumber[]{repeated, repeated});
-            }
-            if (discriminant > 0.0) {
-                final double root = Math.sqrt(discriminant);
-                return new Spectrum2x2(
-                        true,
-                        new ComplexNumber[]{
-                                ComplexNumber.real(0.5 * (trace + root)),
-                                ComplexNumber.real(0.5 * (trace - root))
-                        });
-            }
-            final double imag = 0.5 * Math.sqrt(-discriminant);
-            final double real = 0.5 * trace;
-            return new Spectrum2x2(
-                    true,
-                    new ComplexNumber[]{
-                            new ComplexNumber(real, imag),
-                            new ComplexNumber(real, -imag)
-                    });
-        }
+        final double leftScale = Math.exp(leftRe);
+        final double rightScale = Math.exp(rightRe);
+        final double numeratorRe = leftScale * Math.cos(leftIm) - rightScale * Math.cos(rightIm);
+        final double numeratorIm = leftScale * Math.sin(leftIm) - rightScale * Math.sin(rightIm);
+        divideComplex(numeratorRe, numeratorIm, deltaRe, deltaIm, out);
     }
 
-    private static final class EqualDiagonalCoefficients {
-        private final double alpha;
-        private final double beta;
-        private final double gamma;
-        private final double eta;
+    private static void fillExpComplex(final double re,
+                                       final double im,
+                                       final MutableComplex out) {
+        final double scale = Math.exp(re);
+        out.re = scale * Math.cos(im);
+        out.im = scale * Math.sin(im);
+    }
 
-        private EqualDiagonalCoefficients(final double alpha,
-                                          final double beta,
-                                          final double gamma,
-                                          final double eta) {
-            this.alpha = alpha;
-            this.beta = beta;
-            this.gamma = gamma;
-            this.eta = eta;
-        }
+    private static void setComplex(final MutableComplex out,
+                                   final double re,
+                                   final double im) {
+        out.re = re;
+        out.im = im;
+    }
+
+    private static final class PreparedCoefficients {
+        private double alpha;
+        private double beta;
+        private double gamma;
+        private double eta;
+    }
+
+    private static final class MutableSpectrum {
+        private boolean distinct;
+        private final MutableComplex lambda0 = new MutableComplex();
+        private final MutableComplex lambda1 = new MutableComplex();
+    }
+
+    private static final class ComplexMatrix {
+        private final MutableComplex[] data = new MutableComplex[]{
+                new MutableComplex(),
+                new MutableComplex(),
+                new MutableComplex(),
+                new MutableComplex()
+        };
+    }
+
+    private static final class BuildWorkspace {
+        private final double[] left = new double[4];
+        private final double[] right = new double[4];
+        private final double[] leftExp = new double[4];
+        private final double[] rightExp = new double[4];
+        private final double[] shifted = new double[4];
+        private final double[] phi = new double[4];
+        private final double[] basis = new double[4];
+        private final double[] sylvester = new double[16];
+        private final double[] rhs = new double[4];
+        private final double[] solution = new double[4];
+        private final double[] augmented = new double[20];
+        private final double[] leftProduct = new double[4];
+        private final double[] rightProduct = new double[4];
+        private final double[] nilpotent = new double[4];
+        private final double[] leftTerm = new double[4];
+        private final double[] rightTerm = new double[4];
+        private final double[] mixedTerm = new double[4];
+        private final PreparedCoefficients prepared = new PreparedCoefficients();
+        private final MutableSpectrum leftSpectrum = new MutableSpectrum();
+        private final MutableSpectrum rightSpectrum = new MutableSpectrum();
+        private final ComplexMatrix leftProjector0 = new ComplexMatrix();
+        private final ComplexMatrix leftProjector1 = new ComplexMatrix();
+        private final ComplexMatrix rightProjector0 = new ComplexMatrix();
+        private final ComplexMatrix rightProjector1 = new ComplexMatrix();
+        private final ComplexMatrix leftTimesBasis = new ComplexMatrix();
+        private final ComplexMatrix complexTerm = new ComplexMatrix();
+        private final ComplexMatrix complexAccumulator = new ComplexMatrix();
+        private final MutableComplex complexScalar = new MutableComplex();
     }
 
     private static final class MutableComplex {
@@ -1167,88 +1319,5 @@ final class BlockDiagonalFrechetExactPlan {
         private final double[] moments = new double[MAX_SMALL_ROOT_MOMENT_POWER + 1];
         private final double[] derivatives =
                 new double[(MAX_SMALL_ROOT_DERIVATIVE_ORDER + 1) * (MAX_SMALL_ROOT_DERIVATIVE_ORDER + 1)];
-    }
-
-    private static final class ComplexNumber {
-        private static final ComplexNumber ZERO = new ComplexNumber(0.0, 0.0);
-        private static final ComplexNumber ONE = new ComplexNumber(1.0, 0.0);
-
-        private final double re;
-        private final double im;
-
-        private ComplexNumber(final double re,
-                              final double im) {
-            this.re = re;
-            this.im = im;
-        }
-
-        private static ComplexNumber real(final double value) {
-            return new ComplexNumber(value, 0.0);
-        }
-
-        private static ComplexNumber sqrtOfReal(final double value) {
-            if (value >= 0.0) {
-                return new ComplexNumber(Math.sqrt(value), 0.0);
-            }
-            return new ComplexNumber(0.0, Math.sqrt(-value));
-        }
-
-        private ComplexNumber add(final ComplexNumber other) {
-            return new ComplexNumber(re + other.re, im + other.im);
-        }
-
-        private ComplexNumber subtract(final ComplexNumber other) {
-            return new ComplexNumber(re - other.re, im - other.im);
-        }
-
-        private ComplexNumber scale(final double factor) {
-            return new ComplexNumber(re * factor, im * factor);
-        }
-
-        private ComplexNumber pow(final int exponent) {
-            if (exponent < 0) {
-                throw new IllegalArgumentException("Negative exponent: " + exponent);
-            }
-            ComplexNumber result = ONE;
-            for (int i = 0; i < exponent; ++i) {
-                result = result.multiply(this);
-            }
-            return result;
-        }
-
-        private ComplexNumber multiply(final ComplexNumber other) {
-            return new ComplexNumber(
-                    re * other.re - im * other.im,
-                    re * other.im + im * other.re);
-        }
-
-        private ComplexNumber divide(final ComplexNumber other) {
-            final double denom = other.re * other.re + other.im * other.im;
-            return new ComplexNumber(
-                    (re * other.re + im * other.im) / denom,
-                    (im * other.re - re * other.im) / denom);
-        }
-
-        private double absSquared() {
-            return re * re + im * im;
-        }
-
-        private double abs() {
-            return Math.sqrt(absSquared());
-        }
-
-        private ComplexNumber exp() {
-            final double scale = Math.exp(re);
-            return new ComplexNumber(scale * Math.cos(im), scale * Math.sin(im));
-        }
-    }
-
-    private static ComplexNumber dividedDifferenceExp(final ComplexNumber left,
-                                                      final ComplexNumber right) {
-        final ComplexNumber delta = left.subtract(right);
-        if (delta.absSquared() < EPS * EPS) {
-            return left.exp();
-        }
-        return left.exp().subtract(right.exp()).divide(delta);
     }
 }

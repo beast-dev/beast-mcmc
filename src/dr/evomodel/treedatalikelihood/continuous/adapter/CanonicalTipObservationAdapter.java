@@ -32,6 +32,8 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 
+import java.util.Arrays;
+
 /**
  * Converts BEAST tip partials into exact observed-or-missing canonical tips.
  *
@@ -43,58 +45,128 @@ public final class CanonicalTipObservationAdapter {
 
     private CanonicalTipObservationAdapter() { }
 
-    public static CanonicalTipObservation[] extractTipObservations(final Tree tree,
-                                                                   final ContinuousTraitPartialsProvider dataModel,
-                                                                   final int dim) {
+    public static void fillTipObservations(final Tree tree,
+                                           final ContinuousTraitPartialsProvider dataModel,
+                                           final int dim,
+                                           final CanonicalTipObservation[] observations) {
         if (dataModel.getTraitCount() != 1) {
             throw new UnsupportedOperationException(
                     "Canonical OU XML wiring currently supports only a single trait partition.");
         }
 
         final int tipCount = tree.getExternalNodeCount();
-        final CanonicalTipObservation[] observations = new CanonicalTipObservation[tipCount];
+        if (observations.length != tipCount) {
+            throw new IllegalArgumentException(
+                    "Tip observation count mismatch: " + observations.length + " vs " + tipCount);
+        }
         final PrecisionType precisionType = dataModel.getPrecisionType();
-        for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
-            final double[] rawPartial = dataModel.getTipPartial(tipIdx, false);
-            observations[tipIdx] = extractObservation(rawPartial, precisionType, dim);
-        }
-        return observations;
-    }
+        final int precisionOffset = precisionType.getPrecisionOffset(dim);
 
-    static CanonicalTipObservation extractObservation(final double[] raw,
-                                                      final PrecisionType precisionType,
-                                                      final int dim) {
-        final CanonicalTipObservation observation = new CanonicalTipObservation(dim);
-        final boolean[] observedMask = new boolean[dim];
-
-        for (int i = 0; i < dim; i++) {
-            observation.values[i] = raw[i];
-            observedMask[i] = isExactlyObserved(raw, precisionType, dim, i);
-        }
-        observation.setPartiallyObserved(observation.values, observedMask);
-        return observation;
-    }
-
-    private static boolean isExactlyObserved(final double[] raw,
-                                             final PrecisionType precisionType,
-                                             final int dim,
-                                             final int index) {
-        final double diagonalPrecision;
         switch (precisionType) {
             case FULL:
-                diagonalPrecision = raw[precisionType.getPrecisionOffset(dim) + index * dim + index];
+                for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+                    final CanonicalTipObservation observation = validateObservation(observations, tipIdx, dim);
+                    fillObservationFull(dataModel.getTipPartial(tipIdx, false), dim, precisionOffset, observation);
+                }
                 break;
             case MIXED:
-                diagonalPrecision = raw[precisionType.getPrecisionOffset(dim) + index];
+                for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+                    final CanonicalTipObservation observation = validateObservation(observations, tipIdx, dim);
+                    fillObservationMixed(dataModel.getTipPartial(tipIdx, false), dim, precisionOffset, observation);
+                }
                 break;
             case SCALAR:
-                diagonalPrecision = raw[precisionType.getPrecisionOffset(dim)];
+                for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+                    final CanonicalTipObservation observation = validateObservation(observations, tipIdx, dim);
+                    fillObservationScalar(dataModel.getTipPartial(tipIdx, false), dim, precisionOffset, observation);
+                }
                 break;
             default:
                 throw new UnsupportedOperationException(
                         "Canonical OU XML wiring does not support precision type " + precisionType.getTag());
         }
+    }
 
+    static void fillObservation(final double[] raw,
+                                final PrecisionType precisionType,
+                                final int dim,
+                                final CanonicalTipObservation observation) {
+        final int precisionOffset = precisionType.getPrecisionOffset(dim);
+        switch (precisionType) {
+            case FULL:
+                fillObservationFull(raw, dim, precisionOffset, observation);
+                return;
+            case MIXED:
+                fillObservationMixed(raw, dim, precisionOffset, observation);
+                return;
+            case SCALAR:
+                fillObservationScalar(raw, dim, precisionOffset, observation);
+                return;
+            default:
+                throw new UnsupportedOperationException(
+                        "Canonical OU XML wiring does not support precision type " + precisionType.getTag());
+        }
+    }
+
+    private static CanonicalTipObservation validateObservation(final CanonicalTipObservation[] observations,
+                                                               final int tipIdx,
+                                                               final int dim) {
+        final CanonicalTipObservation observation = observations[tipIdx];
+        if (observation == null) {
+            throw new IllegalArgumentException("observations[" + tipIdx + "] must not be null");
+        }
+        if (observation.dim != dim) {
+            throw new IllegalArgumentException(
+                    "Observation dimension mismatch at tip " + tipIdx + ": " + observation.dim + " vs " + dim);
+        }
+        return observation;
+    }
+
+    private static void fillObservationFull(final double[] raw,
+                                            final int dim,
+                                            final int precisionOffset,
+                                            final CanonicalTipObservation observation) {
+        System.arraycopy(raw, 0, observation.values, 0, dim);
+        int observedCount = 0;
+        int diagonalIndex = precisionOffset;
+        for (int i = 0; i < dim; i++, diagonalIndex += dim + 1) {
+            final boolean isObserved = decodeExactObservation(raw[diagonalIndex], i);
+            observation.observed[i] = isObserved;
+            if (isObserved) {
+                observedCount++;
+            }
+        }
+        observation.observedCount = observedCount;
+    }
+
+    private static void fillObservationMixed(final double[] raw,
+                                             final int dim,
+                                             final int precisionOffset,
+                                             final CanonicalTipObservation observation) {
+        System.arraycopy(raw, 0, observation.values, 0, dim);
+        int observedCount = 0;
+        for (int i = 0; i < dim; i++) {
+            final boolean isObserved = decodeExactObservation(raw[precisionOffset + i], i);
+            observation.observed[i] = isObserved;
+            if (isObserved) {
+                observedCount++;
+            }
+        }
+        observation.observedCount = observedCount;
+    }
+
+    private static void fillObservationScalar(final double[] raw,
+                                              final int dim,
+                                              final int precisionOffset,
+                                              final CanonicalTipObservation observation) {
+        System.arraycopy(raw, 0, observation.values, 0, dim);
+        final boolean isObserved = decodeExactObservation(raw[precisionOffset], 0);
+        Arrays.fill(observation.observed, isObserved);
+        observation.observedCount = isObserved ? dim : 0;
+    }
+
+    private static boolean decodeExactObservation(final double diagonalPrecision,
+                                                  final int index) {
         if (Double.isInfinite(diagonalPrecision)) {
             return true;
         }

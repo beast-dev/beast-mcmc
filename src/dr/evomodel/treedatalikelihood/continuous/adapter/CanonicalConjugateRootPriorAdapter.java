@@ -98,7 +98,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
             for (int i = 0; i < dim; i++) {
                 linear += rootMessage.information[i] * mean[i];
                 for (int j = 0; j < dim; j++) {
-                    quadratic += mean[i] * rootMessage.precision[i][j] * mean[j];
+                    quadratic += mean[i] * rootMessage.precision[i * dim + j] * mean[j];
                 }
             }
             return -0.5 * quadratic + linear - rootMessage.logNormalizer;
@@ -129,7 +129,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
             for (int i = 0; i < dim; i++) {
                 double gradient = rootMessage.information[i];
                 for (int j = 0; j < dim; j++) {
-                    gradient -= rootMessage.precision[i][j] * mean[j];
+                    gradient -= rootMessage.precision[i * dim + j] * mean[j];
                 }
                 gradOut[i] += gradient;
             }
@@ -145,7 +145,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
             double delta = scratchMean[i] - mean[i];
             double gradient = 0.0;
             for (int j = 0; j < dim; j++) {
-                gradient += scratchPriorState.precision[i][j] * (scratchMean[j] - mean[j]);
+                gradient += scratchPriorState.precision[i * dim + j] * (scratchMean[j] - mean[j]);
             }
             gradOut[i] += gradient;
         }

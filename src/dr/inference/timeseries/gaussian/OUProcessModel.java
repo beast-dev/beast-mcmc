@@ -115,6 +115,7 @@ public class OUProcessModel extends AbstractModel
     private final SelectionMatrixParameterization selectionMatrixParameterization;
     private final DiffusionMatrixParameterization diffusionMatrixParameterization;
     private final GaussianTransitionRepresentation transitionRepresentation;
+    private final Workspace workspace;
 
     /**
      * Constructs an OUProcessModel using the default covariance-adjoint strategy for the
@@ -187,6 +188,9 @@ public class OUProcessModel extends AbstractModel
                 DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
         this.transitionRepresentation =
                 new KernelBackedGaussianTransitionRepresentation(this);
+        this.workspace = new Workspace(
+                stateDimension,
+                covarianceGradientMethod == CovarianceGradientMethod.STATIONARY_LYAPUNOV);
 
         validateShapes();
 
@@ -328,8 +332,8 @@ public class OUProcessModel extends AbstractModel
 
     @Override
     public void fillInitialCanonicalState(final CanonicalGaussianState out) {
-        final double[] mean = new double[stateDimension];
-        final double[][] covariance = new double[stateDimension][stateDimension];
+        final double[] mean = workspace.vector0;
+        final double[][] covariance = workspace.squareMatrices[0];
         getInitialMean(mean);
         getInitialCovariance(covariance);
         CanonicalGaussianUtils.fillStateFromMoments(mean, covariance, out);
@@ -338,15 +342,15 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         if (selectionMatrixParameterization instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
-            final double[] mean = new double[stateDimension];
+            final double[] mean = workspace.vector0;
             getInitialMean(mean);
             ((OrthogonalBlockDiagonalSelectionMatrixParameterization) selectionMatrixParameterization)
                     .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
             return;
         }
-        final double[][] transitionMatrix = new double[stateDimension][stateDimension];
-        final double[] transitionOffset = new double[stateDimension];
-        final double[][] transitionCovariance = new double[stateDimension][stateDimension];
+        final double[][] transitionMatrix = workspace.squareMatrices[0];
+        final double[] transitionOffset = workspace.vector1;
+        final double[][] transitionCovariance = workspace.squareMatrices[1];
         fillTransitionMatrix(dt, transitionMatrix);
         fillTransitionOffset(dt, transitionOffset);
         fillTransitionCovariance(dt, transitionCovariance);
@@ -389,9 +393,9 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillTransitionOffset(final double dt, final double[] out) {
         checkVectorLength(out, stateDimension, "transition offset");
-        final double[][] transitionMatrix = new double[stateDimension][stateDimension];
-        final double[] mu = new double[stateDimension];
-        final double[] transformedMean = new double[stateDimension];
+        final double[][] transitionMatrix = workspace.squareMatrices[2];
+        final double[] mu = workspace.vector0;
+        final double[] transformedMean = workspace.vector2;
 
         fillTransitionMatrix(dt, transitionMatrix);
         getInitialMean(mu);
@@ -412,40 +416,35 @@ public class OUProcessModel extends AbstractModel
             return;
         }
 
-        final double[][] a = new double[stateDimension][stateDimension];
-        final double[][] q = new double[stateDimension][stateDimension];
+        final double[][] a = workspace.squareMatrices[2];
+        final double[][] q = workspace.squareMatrices[3];
         selectionMatrixParameterization.fillSelectionMatrix(a);
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
         final int blockDimension = 2 * stateDimension;
-        final double[][] vanLoan = new double[blockDimension][blockDimension];
-        final double[][] aTranspose = new double[stateDimension][stateDimension];
-        MatrixExponentialUtils.transpose(a, aTranspose);
+        final double[][] vanLoan = workspace.blockMatrices[0];
+        final double[][] vanLoanExp = workspace.blockMatrices[1];
 
         for (int i = 0; i < stateDimension; ++i) {
             for (int j = 0; j < stateDimension; ++j) {
                 vanLoan[i][j] = -dt * a[i][j];
                 vanLoan[i][j + stateDimension] = dt * q[i][j];
                 vanLoan[i + stateDimension][j] = 0.0;
-                vanLoan[i + stateDimension][j + stateDimension] = dt * aTranspose[i][j];
+                vanLoan[i + stateDimension][j + stateDimension] = dt * a[j][i];
             }
         }
 
-        final double[][] vanLoanExp = new double[blockDimension][blockDimension];
         MatrixExponentialUtils.expm(vanLoan, vanLoanExp);
 
-        final double[][] f = new double[stateDimension][stateDimension];
-        final double[][] g = new double[stateDimension][stateDimension];
         for (int i = 0; i < stateDimension; ++i) {
             for (int j = 0; j < stateDimension; ++j) {
-                f[i][j] = vanLoanExp[i][j];
-                g[i][j] = vanLoanExp[i][j + stateDimension];
+                double sum = 0.0;
+                for (int k = 0; k < stateDimension; ++k) {
+                    sum += vanLoanExp[i][k + stateDimension] * vanLoanExp[j][k];
+                }
+                out[i][j] = sum;
             }
         }
-
-        final double[][] fTranspose = new double[stateDimension][stateDimension];
-        MatrixExponentialUtils.transpose(f, fTranspose);
-        MatrixExponentialUtils.multiply(g, fTranspose, out);
         MatrixExponentialUtils.symmetrize(out);
     }
 
@@ -466,8 +465,8 @@ public class OUProcessModel extends AbstractModel
         final int d = stateDimension;
 
         // Read current parameter values into local arrays (shared by both strategies)
-        final double[][] a = new double[d][d];
-        final double[][] q = new double[d][d];
+        final double[][] a = workspace.squareMatrices[0];
+        final double[][] q = workspace.squareMatrices[1];
         selectionMatrixParameterization.fillSelectionMatrix(a);
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
@@ -491,12 +490,13 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
         final int d = stateDimension;
-        final double[][] a = new double[d][d];
-        final double[][] gSym = new double[d][d];
-        final double[][] fS = new double[d][d];
-        final double[][] fST = new double[d][d];
-        final double[][] tempDxD = new double[d][d];
-        final double[][] contrib = new double[d][d];
+        final double[][] a = workspace.squareMatrices[0];
+        final double[][] gSym = workspace.squareMatrices[2];
+        final double[][] fS = workspace.squareMatrices[3];
+        final double[][] fST = workspace.squareMatrices[4];
+        final double[][] tempDxD = workspace.squareMatrices[5];
+        final double[][] contrib = workspace.squareMatrices[6];
+        final double[][] expScratch = workspace.squareMatrices[7];
 
         selectionMatrixParameterization.fillSelectionMatrix(a);
         for (int i = 0; i < d; ++i) {
@@ -514,7 +514,7 @@ public class OUProcessModel extends AbstractModel
                 final double s = t0 + 0.5 * h * (GL5_NODES[idx] + 1.0);
                 final double scaledWeight = 0.5 * h * GL5_WEIGHTS[idx];
 
-                buildExpmMinusAs(s, a, d, fS);
+                buildExpmMinusAs(s, a, d, fS, expScratch);
                 MatrixExponentialUtils.transpose(fS, fST);
                 MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
                 MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
@@ -551,7 +551,7 @@ public class OUProcessModel extends AbstractModel
         final int blockDim = 2 * d;
 
         // Build Van Loan block M = [[-A dt, Q dt], [0, A^T dt]]
-        final double[][] vanLoanMatrix = new double[blockDim][blockDim];
+        final double[][] vanLoanMatrix = workspace.blockMatrices[0];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 vanLoanMatrix[i][j]         = -dt * a[i][j];
@@ -561,11 +561,11 @@ public class OUProcessModel extends AbstractModel
             }
         }
 
-        final double[][] vanLoanExp = new double[blockDim][blockDim];
+        final double[][] vanLoanExp = workspace.blockMatrices[1];
         MatrixExponentialUtils.expm(vanLoanMatrix, vanLoanExp);
 
         // GV_F = G_V · F = G_V · E_{00}
-        final double[][] gvF = new double[d][d];
+        final double[][] gvF = workspace.squareMatrices[2];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
@@ -577,7 +577,7 @@ public class OUProcessModel extends AbstractModel
         }
 
         // Recover V = E_{01} · F^T  (= E_{01} · E_{00}^T)
-        final double[][] v = new double[d][d];
+        final double[][] v = workspace.squareMatrices[3];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
@@ -589,7 +589,7 @@ public class OUProcessModel extends AbstractModel
         }
 
         // Upstream G_E on the 2d×2d block
-        final double[][] upstreamBlock = new double[blockDim][blockDim];
+        final double[][] upstreamBlock = workspace.blockMatrices[2];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 upstreamBlock[i][j + d] = gvF[i][j];             // top-right: G_V · F
@@ -601,7 +601,7 @@ public class OUProcessModel extends AbstractModel
             }
         }
 
-        final double[][] gradM = new double[blockDim][blockDim];
+        final double[][] gradM = workspace.blockMatrices[3];
         MatrixExponentialUtils.adjointExp(vanLoanMatrix, upstreamBlock, gradM);
 
         for (int k = 0; k < d; ++k) {
@@ -618,12 +618,13 @@ public class OUProcessModel extends AbstractModel
                                               final double[][] a, final double[][] q,
                                               final double[][] dLogL_dV,
                                               final double[] gradientAccumulator) {
-        final double[][] gSym = new double[d][d];
-        final double[][] fRemaining = new double[d][d];
-        final double[][] fRemainingT = new double[d][d];
-        final double[][] psi = new double[d][d];
-        final double[][] tempDxD = new double[d][d];
-        final double[][] vS = new double[d][d];
+        final double[][] gSym = workspace.squareMatrices[2];
+        final double[][] fRemaining = workspace.squareMatrices[3];
+        final double[][] fRemainingT = workspace.squareMatrices[4];
+        final double[][] psi = workspace.squareMatrices[5];
+        final double[][] tempDxD = workspace.squareMatrices[6];
+        final double[][] vS = workspace.squareMatrices[7];
+        final double[][] expScratch = workspace.squareMatrices[8];
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
@@ -635,11 +636,11 @@ public class OUProcessModel extends AbstractModel
             final double s = 0.5 * dt * (GL5_NODES[idx] + 1.0);
             final double scaledWeight = 0.5 * dt * GL5_WEIGHTS[idx];
 
-            buildExpmMinusAs(dt - s, a, d, fRemaining);
+            buildExpmMinusAs(dt - s, a, d, fRemaining, expScratch);
             MatrixExponentialUtils.transpose(fRemaining, fRemainingT);
             MatrixExponentialUtils.multiply(fRemainingT, gSym, tempDxD);
             MatrixExponentialUtils.multiply(tempDxD, fRemaining, psi);
-            buildVanLoanCovariance(s, a, q, d, vS);
+            buildVanLoanCovariance(s, a, q, d, vS, workspace.blockMatrices[0], workspace.blockMatrices[1]);
 
             MatrixExponentialUtils.multiply(vS, psi, tempDxD);
             for (int i = 0; i < d; ++i) {
@@ -654,22 +655,25 @@ public class OUProcessModel extends AbstractModel
                                                  final double[][] a, final double[][] q,
                                                  final double[][] dLogL_dV,
                                                  final double[] gradientAccumulator) {
-        final double[][] sStat = new double[d][d];
-        final double[][] f = new double[d][d];
-        final double[][] gV = new double[d][d];
-        final double[][] tempDxD = new double[d][d];
-        final double[][] gS = new double[d][d];
-        final double[][] y = new double[d][d];
-        final double[][] yT = new double[d][d];
-        final double[][] gAStationary = new double[d][d];
-        final double[][] sStatT = new double[d][d];
-        final double[][] gFCov = new double[d][d];
-        final double[][] gVT = new double[d][d];
-        final double[][] tempDxD2 = new double[d][d];
-        final double[][] gX = new double[d][d];
+        final double[][] sStat = workspace.squareMatrices[2];
+        final double[][] f = workspace.squareMatrices[3];
+        final double[][] gV = workspace.squareMatrices[4];
+        final double[][] tempDxD = workspace.squareMatrices[5];
+        final double[][] gS = workspace.squareMatrices[6];
+        final double[][] y = workspace.squareMatrices[7];
+        final double[][] yT = workspace.squareMatrices[8];
+        final double[][] gAStationary = workspace.squareMatrices[9];
+        final double[][] sStatT = workspace.squareMatrices[10];
+        final double[][] gFCov = workspace.squareMatrices[11];
+        final double[][] gVT = workspace.squareMatrices[12];
+        final double[][] tempDxD2 = workspace.squareMatrices[13];
+        final double[][] gX = workspace.squareMatrices[14];
+        final double[][] fT = workspace.squareMatrices[15];
+        final double[][] expScratch = workspace.squareMatrices[16];
+        final double[][] minusAdt = workspace.squareMatrices[17];
 
-        solveStationaryLyapunovDense(a, q, d, sStat);
-        buildExpmMinusAs(dt, a, d, f);
+        solveStationaryLyapunovDense(a, q, d, sStat, workspace);
+        buildExpmMinusAs(dt, a, d, f, expScratch);
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
@@ -678,7 +682,6 @@ public class OUProcessModel extends AbstractModel
         }
 
         // G_S = G_V - F^T G_V F
-        final double[][] fT = new double[d][d];
         MatrixExponentialUtils.transpose(f, fT);
         MatrixExponentialUtils.multiply(fT, gV, tempDxD);
         MatrixExponentialUtils.multiply(tempDxD, f, gS);
@@ -688,7 +691,7 @@ public class OUProcessModel extends AbstractModel
             }
         }
 
-        solveAdjointStationaryLyapunovDense(a, gS, d, y);
+        solveAdjointStationaryLyapunovDense(a, gS, d, y, workspace);
 
         // G_A^(S) = -(Y S + Y^T S)
         MatrixExponentialUtils.transpose(y, yT);
@@ -713,7 +716,6 @@ public class OUProcessModel extends AbstractModel
             }
         }
 
-        final double[][] minusAdt = new double[d][d];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 minusAdt[i][j] = -dt * a[i][j];
@@ -731,108 +733,21 @@ public class OUProcessModel extends AbstractModel
             }
         }
     }
-    private static boolean isZeroMatrix(double[][] a, int d) {
-        for (int i = 0; i < d; ++i)
-            for (int j = 0; j < d; ++j)
-                if (Math.abs(a[i][j]) > 1e-12) return false;
-        return true;
-    }
-
-    private static void computeTransitionPieces(final double t,
-                                                final double[][] a,
-                                                final double[][] q,
-                                                final int d,
-                                                final double[][] fOut,
-                                                final double[][] vOut) {
-        final int blockDim = 2 * d;
-        final double[][] vanLoan = new double[blockDim][blockDim];
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                vanLoan[i][j]         = -t * a[i][j];
-                vanLoan[i][j + d]     =  t * q[i][j];
-                vanLoan[i + d][j]     =  0.0;
-                vanLoan[i + d][j + d] =  t * a[j][i];
-            }
-        }
-
-        final double[][] exp = new double[blockDim][blockDim];
-        MatrixExponentialUtils.expm(vanLoan, exp);
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                fOut[i][j] = exp[i][j];
-            }
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += exp[i][k + d] * exp[j][k];
-                }
-                vOut[i][j] = sum;
-            }
-        }
-
-        MatrixExponentialUtils.symmetrize(vOut);
-    }
-
-    private static void solveAdjointLyapunovDense(final double[][] a,
-                                                  final double[][] g,
-                                                  final int d,
-                                                  final double[][] yOut) {
-        final int n = d * d;
-        final double[][] system = new double[n][n];
-        final double[] rhs = new double[n];
-
-        for (int j = 0; j < d; ++j) {
-            for (int i = 0; i < d; ++i) {
-                final int row = flatIndex(i, j, d);
-                rhs[row] = -g[i][j];
-
-                for (int q = 0; q < d; ++q) {
-                    for (int p = 0; p < d; ++p) {
-                        final int col = flatIndex(p, q, d);
-
-                        double value = 0.0;
-
-                        if (j == q) {
-                            value += a[p][i];
-                        }
-
-                        if (i == p) {
-                            value += a[q][j];
-                        }
-
-                        system[row][col] = value;
-                    }
-                }
-            }
-        }
-
-        final double[] yVec = solveLinearSystem(system, rhs);
-
-        for (int j = 0; j < d; ++j) {
-            for (int i = 0; i < d; ++i) {
-                yOut[i][j] = yVec[flatIndex(i, j, d)];
-            }
-        }
-    }
 
     private static void solveStationaryLyapunovDense(final double[][] a,
                                                      final double[][] q,
                                                      final int d,
-                                                     final double[][] sOut) {
+                                                     final double[][] sOut,
+                                                     final Workspace workspace) {
         final int n = d * d;
-        final double[][] system = new double[n][n];
-        final double[] rhs = new double[n];
+        final double[][] augmented = workspace.lyapunovAugmented;
+        if (augmented == null) {
+            throw new IllegalStateException("Stationary Lyapunov workspace is not available");
+        }
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 final int row = i * d + j;
-                rhs[row] = q[i][j];
-
                 for (int p = 0; p < d; ++p) {
                     for (int r = 0; r < d; ++r) {
                         final int col = p * d + r;
@@ -843,15 +758,15 @@ public class OUProcessModel extends AbstractModel
                         if (j == r) {
                             value += a[i][p];
                         }
-                        system[row][col] = value;
+                        augmented[row][col] = value;
                     }
                 }
+                augmented[row][n] = q[i][j];
             }
         }
 
-        final double[] sVec;
         try {
-            sVec = solveLinearSystem(system, rhs);
+            solveAugmentedLinearSystemInPlace(augmented);
         } catch (IllegalStateException e) {
             throw new IllegalArgumentException(
                     "Stationary covariance is only defined for stable drift matrices", e);
@@ -859,7 +774,7 @@ public class OUProcessModel extends AbstractModel
 
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
-                sOut[i][j] = sVec[i * d + j];
+                sOut[i][j] = augmented[i * d + j][n];
             }
         }
         MatrixExponentialUtils.symmetrize(sOut);
@@ -868,30 +783,20 @@ public class OUProcessModel extends AbstractModel
     private static void solveAdjointStationaryLyapunovDense(final double[][] a,
                                                             final double[][] gS,
                                                             final int d,
-                                                            final double[][] yOut) {
-        final double[][] aT = new double[d][d];
+                                                            final double[][] yOut,
+                                                            final Workspace workspace) {
+        final double[][] aT = workspace.squareMatrices[17];
         MatrixExponentialUtils.transpose(a, aT);
-        solveStationaryLyapunovDense(aT, gS, d, yOut);
+        solveStationaryLyapunovDense(aT, gS, d, yOut, workspace);
     }
 
-    private static int flatIndex(final int i, final int j, final int d) {
-        return i + j * d;
-    }
-
-    private static double[] solveLinearSystem(final double[][] a, final double[] b) {
-        final int n = b.length;
-        final double[][] aug = new double[n][n + 1];
-
-        for (int i = 0; i < n; ++i) {
-            System.arraycopy(a[i], 0, aug[i], 0, n);
-            aug[i][n] = b[i];
-        }
-
+    private static void solveAugmentedLinearSystemInPlace(final double[][] augmented) {
+        final int n = augmented.length;
         for (int col = 0; col < n; ++col) {
             int pivot = col;
-            double maxAbs = Math.abs(aug[col][col]);
+            double maxAbs = Math.abs(augmented[col][col]);
             for (int row = col + 1; row < n; ++row) {
-                final double abs = Math.abs(aug[row][col]);
+                final double abs = Math.abs(augmented[row][col]);
                 if (abs > maxAbs) {
                     maxAbs = abs;
                     pivot = row;
@@ -903,53 +808,49 @@ public class OUProcessModel extends AbstractModel
             }
 
             if (pivot != col) {
-                final double[] tmp = aug[col];
-                aug[col] = aug[pivot];
-                aug[pivot] = tmp;
+                final double[] tmp = augmented[col];
+                augmented[col] = augmented[pivot];
+                augmented[pivot] = tmp;
             }
 
-            final double diag = aug[col][col];
+            final double diag = augmented[col][col];
             for (int j = col; j <= n; ++j) {
-                aug[col][j] /= diag;
+                augmented[col][j] /= diag;
             }
 
             for (int row = 0; row < n; ++row) {
                 if (row == col) continue;
-                final double factor = aug[row][col];
+                final double factor = augmented[row][col];
                 if (factor == 0.0) continue;
                 for (int j = col; j <= n; ++j) {
-                    aug[row][j] -= factor * aug[col][j];
+                    augmented[row][j] -= factor * augmented[col][j];
                 }
             }
         }
-
-        final double[] x = new double[n];
-        for (int i = 0; i < n; ++i) {
-            x[i] = aug[i][n];
-        }
-        return x;
     }
 
     /** Computes out = expm(-A * t). */
     private static void buildExpmMinusAs(final double t, final double[][] a,
-                                          final int d, final double[][] out) {
-        final double[][] minusAt = new double[d][d];
+                                         final int d,
+                                         final double[][] out,
+                                         final double[][] scaledMinusA) {
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
-                minusAt[i][j] = -t * a[i][j];
+                scaledMinusA[i][j] = -t * a[i][j];
             }
         }
-        MatrixExponentialUtils.expm(minusAt, out);
+        MatrixExponentialUtils.expm(scaledMinusA, out);
     }
 
     /**
      * Computes out = V(t) = ∫₀ᵗ exp(−Au) Q exp(−Aᵀu) du via the Van Loan construction.
      */
     private static void buildVanLoanCovariance(final double t, final double[][] a,
-                                                final double[][] q, final int d,
-                                                final double[][] out) {
+                                               final double[][] q, final int d,
+                                               final double[][] out,
+                                               final double[][] vanLoan,
+                                               final double[][] exp) {
         final int blockDim = 2 * d;
-        final double[][] vanLoan = new double[blockDim][blockDim];
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 vanLoan[i][j]         = -t * a[i][j];
@@ -958,7 +859,6 @@ public class OUProcessModel extends AbstractModel
                 vanLoan[i + d][j + d] =  t * a[j][i];  // A^T
             }
         }
-        final double[][] exp = new double[blockDim][blockDim];
         MatrixExponentialUtils.expm(vanLoan, exp);
         // V = E_{01} · F^T = E_{01} · E_{00}^T
         for (int i = 0; i < d; ++i) {
@@ -1000,7 +900,7 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dF,
                                             final double[] dLogL_df,
                                             final double[] gradientAccumulator) {
-        final double[] mu = new double[stateDimension];
+        final double[] mu = workspace.vector0;
         getInitialMean(mu);
         accumulateSelectionGradient(dt, mu, dLogL_dF, dLogL_df, gradientAccumulator);
     }
@@ -1056,21 +956,6 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private static void multiply(final double[][] left,
-                                 final double[][] right,
-                                 final double[][] out) {
-        final int d = left.length;
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += left[i][k] * right[k][j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
     private static double validatedDelta(final TimeGrid timeGrid, final int fromIndex, final int toIndex) {
         final double dt = timeGrid.getDelta(fromIndex, toIndex);
         if (!(dt > 0.0)) {
@@ -1102,5 +987,48 @@ public class OUProcessModel extends AbstractModel
                 throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
             }
         }
+    }
+
+    private static final class Workspace {
+        private static final int SQUARE_MATRIX_COUNT = 18;
+        private static final int BLOCK_MATRIX_COUNT = 4;
+
+        private final double[][][] squareMatrices;
+        private final double[][][] blockMatrices;
+        private final double[] vector0;
+        private final double[] vector1;
+        private final double[] vector2;
+        private final double[][] lyapunovAugmented;
+
+        private Workspace(final int dimension,
+                          final boolean allocateStationaryLyapunov) {
+            this.squareMatrices = allocateMatrixStack(SQUARE_MATRIX_COUNT, dimension, dimension);
+            this.blockMatrices = allocateMatrixStack(BLOCK_MATRIX_COUNT, 2 * dimension, 2 * dimension);
+            this.vector0 = new double[dimension];
+            this.vector1 = new double[dimension];
+            this.vector2 = new double[dimension];
+            this.lyapunovAugmented = allocateStationaryLyapunov
+                    ? allocateMatrix(dimension * dimension, dimension * dimension + 1)
+                    : null;
+        }
+    }
+
+    private static double[][][] allocateMatrixStack(final int count,
+                                                    final int rows,
+                                                    final int cols) {
+        final double[][][] stack = new double[count][][];
+        for (int i = 0; i < count; ++i) {
+            stack[i] = allocateMatrix(rows, cols);
+        }
+        return stack;
+    }
+
+    private static double[][] allocateMatrix(final int rows,
+                                             final int cols) {
+        final double[][] matrix = new double[rows][];
+        for (int i = 0; i < rows; ++i) {
+            matrix[i] = new double[cols];
+        }
+        return matrix;
     }
 }

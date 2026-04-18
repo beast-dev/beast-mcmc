@@ -137,7 +137,8 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
 
             addMatrices(predictedState.precision, observationPrecisionContribution, filteredState.precision);
             addVectors(predictedState.information, observationInformation, filteredState.information);
-            filteredState.logNormalizer = normalizedLogNormalizer(filteredState.precision, filteredState.information);
+            filteredState.logNormalizer = CanonicalGaussianMessageOps.normalizedLogNormalizer(
+                    filteredState, messageWorkspace);
 
             value += filteredState.logNormalizer
                     - predictedState.logNormalizer
@@ -205,12 +206,15 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         return dt;
     }
 
-    private static void addMatrices(final double[][] left,
+    private static void addMatrices(final double[] left,
                                     final double[][] right,
-                                    final double[][] out) {
-        for (int i = 0; i < left.length; ++i) {
-            for (int j = 0; j < left[i].length; ++j) {
-                out[i][j] = left[i][j] + right[i][j];
+                                    final double[] out) {
+        final int rows = right.length;
+        final int cols = right[0].length;
+        for (int i = 0; i < rows; ++i) {
+            final int rowOffset = i * cols;
+            for (int j = 0; j < cols; ++j) {
+                out[rowOffset + j] = left[rowOffset + j] + right[i][j];
             }
         }
     }
@@ -233,7 +237,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
 
     private static void copyState(final CanonicalGaussianState source,
                                   final CanonicalGaussianState target) {
-        GaussianMatrixOps.copyMatrix(source.precision, target.precision);
+        System.arraycopy(source.precision, 0, target.precision, 0, source.precision.length);
         GaussianMatrixOps.copyVector(source.information, target.information);
         target.logNormalizer = source.logNormalizer;
     }

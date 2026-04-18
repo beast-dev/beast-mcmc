@@ -122,7 +122,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             // Branch-local canonical adjoints in the tree bridge use the opposite
             // covariance orientation relative to the orthogonal exact helper.
             // Match the same orientation convention used by the selection-covariance path.
-            transposeInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            transposeFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
             ((OrthogonalBlockDiagonalSelectionMatrixParameterization)
                     processModel.getSelectionMatrixParameterization())
                     .accumulateDiffusionGradient(
@@ -131,7 +131,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                             covarianceAdjointScratch,
                             matrixGradient);
         } else {
-            copyInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            copyFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
             processModel.accumulateDiffusionGradient(branchLength, covarianceAdjointScratch, matrixGradient);
         }
         return matrixGradient.clone();
@@ -252,7 +252,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         final double[] covarianceGradient = new double[matrixGradient.length];
         final double[] totalGradient = new double[matrixGradient.length];
 
-        copyInto(localAdjoints.dLogL_dF, transitionAdjointScratch);
+        copyFromFlatInto(localAdjoints.dLogL_dF, transitionAdjointScratch, dimension);
         processModel.accumulateSelectionGradient(
                 branchLength,
                 optimum,
@@ -260,9 +260,9 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                 localAdjoints.dLogL_df,
                 transitionGradient);
         if (Boolean.getBoolean(NO_TRANSPOSE_DOMEGA_PROPERTY)) {
-            copyInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            copyFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
         } else {
-            transposeInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch);
+            transposeFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
         }
         processModel.accumulateSelectionGradientFromCovariance(
                 branchLength,
@@ -300,7 +300,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             if (Boolean.getBoolean(DEBUG_NONORTH_OMEGA_PROPERTY)) {
                 fillLocalAdjoints(statistics, localAdjoints);
                 System.err.println("NONORTH OMEGA branchLength=" + branchLength
-                        + " dOmega=" + Arrays.deepToString(localAdjoints.dLogL_dOmega)
+                        + " dOmega=" + Arrays.toString(localAdjoints.dLogL_dOmega)
                         + " drift=" + Arrays.toString(processModel.getDriftMatrix().getParameterAsMatrix()[0]));
             }
             final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
@@ -390,7 +390,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         if (Boolean.getBoolean("beast.experimental.transposeNativeDF")) {
             final CanonicalLocalTransitionAdjoints transposed = new CanonicalLocalTransitionAdjoints(dimension);
             copyAdjoints(localAdjoints, transposed, true, true);
-            transposeInto(localAdjoints.dLogL_dF, transposed.dLogL_dF);
+            transposeFlatSquare(localAdjoints.dLogL_dF, transposed.dLogL_dF, dimension);
             adjointsForNative = transposed;
         } else {
             adjointsForNative = localAdjoints;
@@ -797,15 +797,39 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         }
     }
 
+    private static void copyFromFlatInto(final double[] in, final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(in, i * dim, out[i], 0, dim);
+        }
+    }
+
+    private static void transposeFromFlatInto(final double[] in, final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                out[j][i] = in[i * dim + j];
+            }
+        }
+    }
+
+    private static void transposeFlatSquare(final double[] in, final double[] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                out[j * dim + i] = in[i * dim + j];
+            }
+        }
+    }
+
     private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,
                                      final CanonicalLocalTransitionAdjoints target,
                                      final boolean includeTransition,
                                      final boolean includeCovariance) {
-        for (int i = 0; i < source.dLogL_dF.length; ++i) {
-            for (int j = 0; j < source.dLogL_dF[i].length; ++j) {
-                target.dLogL_dF[i][j] = includeTransition ? source.dLogL_dF[i][j] : 0.0;
-                target.dLogL_dOmega[i][j] = includeCovariance ? source.dLogL_dOmega[i][j] : 0.0;
-            }
+        final int matLen = source.dLogL_dF.length;
+        final int vecLen = source.dLogL_df.length;
+        for (int k = 0; k < matLen; ++k) {
+            target.dLogL_dF[k] = includeTransition ? source.dLogL_dF[k] : 0.0;
+            target.dLogL_dOmega[k] = includeCovariance ? source.dLogL_dOmega[k] : 0.0;
+        }
+        for (int i = 0; i < vecLen; ++i) {
             target.dLogL_df[i] = includeTransition ? source.dLogL_df[i] : 0.0;
         }
     }

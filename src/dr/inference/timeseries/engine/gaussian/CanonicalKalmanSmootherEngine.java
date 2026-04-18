@@ -249,9 +249,9 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                 observationModel.fillObservationVector(timeIndex, observationVector);
                 buildObservationInformation(observationVector);
 
-                addMatrices(predictedCanonical.precision, observationPrecisionContribution, filteredCanonical.precision);
+                addMatricesFlatAndRagged(predictedCanonical.precision, observationPrecisionContribution, filteredCanonical.precision, stateDimension);
                 addVectors(predictedCanonical.information, observationInformation, filteredCanonical.information);
-                filteredCanonical.logNormalizer = normalizedLogNormalizer(filteredCanonical.precision,
+                filteredCanonical.logNormalizer = normalizedLogNormalizerFlat(filteredCanonical.precision,
                         filteredCanonical.information);
 
                 value += filteredCanonical.logNormalizer
@@ -298,7 +298,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private void fillMomentsFromCanonical(final CanonicalGaussianState canonical,
                                           final double[] meanOut,
                                           final double[][] covarianceOut) {
-        invertPositiveDefinite(canonical.precision, covarianceOut, stateDimension);
+        invertPositiveDefiniteFlatInput(canonical.precision, covarianceOut, stateDimension);
         GaussianMatrixOps.multiplyMatrixVector(covarianceOut, canonical.information, meanOut,
                 stateDimension, stateDimension);
     }
@@ -335,6 +335,37 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                 stateDimension, stateDimension);
         final double quadratic = dot(information, stateVectorWorkspace);
         return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
+    }
+
+    private double normalizedLogNormalizerFlat(final double[] precision, final double[] information) {
+        final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(precision, stateDimension);
+        final double logDet = chol.logDeterminant();
+        final double[] flatInverse = new double[stateDimension * stateDimension];
+        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverse, chol);
+        GaussianMatrixOps.copyFlatToMatrix(flatInverse, stateWorkspace, stateDimension);
+        GaussianMatrixOps.multiplyMatrixVector(stateWorkspace, information, stateVectorWorkspace,
+                stateDimension, stateDimension);
+        final double quadratic = dot(information, stateVectorWorkspace);
+        return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
+    }
+
+    private void invertPositiveDefiniteFlatInput(final double[] matrix,
+                                                  final double[][] inverseOut,
+                                                  final int dimension) {
+        final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(matrix, dimension);
+        final double[] flatInverse = new double[dimension * dimension];
+        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverse, chol);
+        GaussianMatrixOps.copyFlatToMatrix(flatInverse, inverseOut, dimension);
+    }
+
+    private static void addMatricesFlatAndRagged(final double[] left, final double[][] right,
+                                                  final double[] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int rowOff = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                out[rowOff + j] = left[rowOff + j] + right[i][j];
+            }
+        }
     }
 
     private static double invertPositiveDefinite(final double[][] matrix,
@@ -379,17 +410,17 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     private static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {
-        GaussianMatrixOps.copyMatrix(source.precision, target.precision);
+        System.arraycopy(source.precision, 0, target.precision, 0, source.precision.length);
         GaussianMatrixOps.copyVector(source.information, target.information);
         target.logNormalizer = source.logNormalizer;
     }
 
     private static void copyTransition(final CanonicalGaussianTransition source,
                                        final CanonicalGaussianTransition target) {
-        GaussianMatrixOps.copyMatrix(source.precisionXX, target.precisionXX);
-        GaussianMatrixOps.copyMatrix(source.precisionXY, target.precisionXY);
-        GaussianMatrixOps.copyMatrix(source.precisionYX, target.precisionYX);
-        GaussianMatrixOps.copyMatrix(source.precisionYY, target.precisionYY);
+        System.arraycopy(source.precisionXX, 0, target.precisionXX, 0, source.precisionXX.length);
+        System.arraycopy(source.precisionXY, 0, target.precisionXY, 0, source.precisionXY.length);
+        System.arraycopy(source.precisionYX, 0, target.precisionYX, 0, source.precisionYX.length);
+        System.arraycopy(source.precisionYY, 0, target.precisionYY, 0, source.precisionYY.length);
         GaussianMatrixOps.copyVector(source.informationX, target.informationX);
         GaussianMatrixOps.copyVector(source.informationY, target.informationY);
         target.logNormalizer = source.logNormalizer;
@@ -401,7 +432,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         for (int i = 0; i < stateDimension; ++i) {
             out.information[i] = left.information[i] - right.information[i];
             for (int j = 0; j < stateDimension; ++j) {
-                out.precision[i][j] = left.precision[i][j] - right.precision[i][j];
+                out.precision[i * stateDimension + j] = left.precision[i * stateDimension + j] - right.precision[i * stateDimension + j];
             }
         }
         out.logNormalizer = left.logNormalizer - right.logNormalizer;

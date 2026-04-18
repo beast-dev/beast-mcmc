@@ -46,7 +46,6 @@ import dr.inference.timeseries.gaussian.OUProcessModel;
 import dr.inference.timeseries.representation.CanonicalGaussianState;
 import dr.inference.timeseries.representation.CanonicalGaussianTransition;
 import dr.inference.timeseries.representation.CanonicalGaussianUtils;
-import dr.math.matrixAlgebra.missingData.InversionResult;
 
 import java.util.Arrays;
 
@@ -58,14 +57,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
 
     private static final double BRANCH_LENGTH_FD_RELATIVE_STEP = 1.0e-6;
     private static final double BRANCH_LENGTH_FD_ABSOLUTE_STEP = 1.0e-8;
+    private static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
 
     private final Tree tree;
     private final int dim;
     private final int nodeCount;
     private final int tipCount;
 
-    private final CanonicalTipObservation[] tipObservations;
-    private final CanonicalTipObservation[] storedTipObservations;
+    private CanonicalTipObservation[] tipObservations;
+    private CanonicalTipObservation[] storedTipObservations;
     private CanonicalGaussianState[] postOrder;
     private CanonicalGaussianState[] storedPostOrder;
     private CanonicalGaussianState[] preOrder;
@@ -91,6 +91,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final CanonicalGaussianState scratchParentPosterior;
     private final CanonicalGaussianState scratchPairState;
     private final CanonicalGaussianMessageOps.Workspace workspace;
+    private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     private final CanonicalTransitionAdjointUtils.Workspace transitionAdjointWorkspace;
     private final CanonicalBranchMessageContribution scratchContribution;
     private final CanonicalLocalTransitionAdjoints scratchAdjoints;
@@ -99,8 +100,12 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final int[] reducedIndexByTraitScratch;
     private final double[] scratchMean;
     private final double[] scratchMean2;
-    private final double[] fixedRootValue;
-    private final double[] storedFixedRootValue;
+    private final double[] orthogonalStationaryMeanScratch;
+    private final double[] orthogonalCompressedGradientScratch;
+    private final double[] orthogonalNativeGradientScratch;
+    private final double[][] orthogonalRotationGradientScratch;
+    private double[] fixedRootValue;
+    private double[] storedFixedRootValue;
     private final double[][] scratchCovariance;
     private final double[][] scratchCovariance2;
     private final double[][] scratchTransitionMatrix;
@@ -109,8 +114,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final double[] scratchPrecisionFlat;
     private final double[] reducedPrecisionFlatScratch;
     private final double[] reducedCovarianceFlatScratch;
-    private final double[][] reducedPrecisionScratch;
-    private final double[][] reducedCovarianceScratch;
     private final double[] reducedInformationScratch;
     private final double[] reducedMeanScratch;
 
@@ -136,6 +139,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.scratchParentPosterior = new CanonicalGaussianState(dim);
         this.scratchPairState = new CanonicalGaussianState(2 * dim);
         this.workspace = new CanonicalGaussianMessageOps.Workspace(dim);
+        this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(dim);
         this.transitionAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(dim);
         this.scratchContribution = new CanonicalBranchMessageContribution(dim);
         this.scratchAdjoints = new CanonicalLocalTransitionAdjoints(dim);
@@ -144,6 +148,10 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.reducedIndexByTraitScratch = new int[dim];
         this.scratchMean = new double[dim];
         this.scratchMean2 = new double[dim];
+        this.orthogonalStationaryMeanScratch = new double[dim];
+        this.orthogonalCompressedGradientScratch = new double[dim + 2 * (dim / 2)];
+        this.orthogonalNativeGradientScratch = new double[((dim & 1) == 1 ? 1 : 0) + 3 * (dim / 2)];
+        this.orthogonalRotationGradientScratch = new double[dim][dim];
         this.fixedRootValue = new double[dim];
         this.storedFixedRootValue = new double[dim];
         this.scratchCovariance = new double[dim][dim];
@@ -154,8 +162,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.scratchPrecisionFlat = new double[dim * dim];
         this.reducedPrecisionFlatScratch = new double[4 * dim * dim];
         this.reducedCovarianceFlatScratch = new double[4 * dim * dim];
-        this.reducedPrecisionScratch = new double[2 * dim][2 * dim];
-        this.reducedCovarianceScratch = new double[2 * dim][2 * dim];
         this.reducedInformationScratch = new double[2 * dim];
         this.reducedMeanScratch = new double[2 * dim];
         this.hasPostOrderState = false;
@@ -254,16 +260,17 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 continue;
             }
             if (orthogonalSelection != null) {
-                transposeInto(scratchAdjoints.dLogL_dOmega, scratchCovarianceAdjoint);
+                transposeFromFlatInto(scratchAdjoints.dLogL_dOmega, scratchCovarianceAdjoint, dim);
                 orthogonalSelection.accumulateDiffusionGradient(
                         processModel.getDiffusionMatrix(),
                         transitionProvider.getEffectiveBranchLength(childIndex),
                         scratchCovarianceAdjoint,
                         gradQ);
             } else {
+                copyFlatToSquare(scratchAdjoints.dLogL_dOmega, scratchCovarianceAdjoint, dim);
                 processModel.accumulateDiffusionGradient(
                         transitionProvider.getEffectiveBranchLength(childIndex),
-                        scratchAdjoints.dLogL_dOmega,
+                        scratchCovarianceAdjoint,
                         gradQ);
             }
         }
@@ -324,13 +331,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             }
 
             final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+            copyFlatToSquare(scratchAdjoints.dLogL_dF, scratchTransitionMatrix, dim);
             processModel.accumulateSelectionGradient(
                     branchLength,
-                    scratchAdjoints.dLogL_dF,
+                    scratchTransitionMatrix,
                     scratchAdjoints.dLogL_df,
                     gradA);
 
-            transposeInto(scratchAdjoints.dLogL_dOmega, scratchCovarianceAdjoint);
+            transposeFromFlatInto(scratchAdjoints.dLogL_dOmega, scratchCovarianceAdjoint, dim);
             processModel.accumulateSelectionGradientFromCovariance(
                     branchLength,
                     scratchCovarianceAdjoint,
@@ -364,11 +372,19 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         }
 
         final int rootIndex = tree.getRoot().getNumber();
-        final double[] stationaryMean = new double[dim];
+        if (compressedBlockDim > orthogonalCompressedGradientScratch.length
+                || nativeBlockDim > orthogonalNativeGradientScratch.length) {
+            throw new IllegalStateException(
+                    "Orthogonal block scratch is too small for native gradient dimensions "
+                            + compressedBlockDim + " and " + nativeBlockDim + ".");
+        }
+        final double[] stationaryMean = orthogonalStationaryMeanScratch;
         processModel.getInitialMean(stationaryMean);
-        final double[] compressedBlockGradient = new double[compressedBlockDim];
-        final double[] nativeBlockGradient = new double[nativeBlockDim];
-        final double[][] rotationGradient = new double[dim][dim];
+        final double[] compressedBlockGradient = orthogonalCompressedGradientScratch;
+        Arrays.fill(compressedBlockGradient, 0, compressedBlockDim, 0.0);
+        final double[] nativeBlockGradient = orthogonalNativeGradientScratch;
+        final double[][] rotationGradient = orthogonalRotationGradientScratch;
+        clearSquare(rotationGradient);
 
         for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
             if (childIndex == rootIndex) {
@@ -464,18 +480,13 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         hasFixedRootValue = storedHasFixedRootValue;
         storedHasFixedRootValue = tmpHasFixedRoot;
 
-        for (int i = 0; i < dim; i++) {
-            final double tmpRootValue = fixedRootValue[i];
-            fixedRootValue[i] = storedFixedRootValue[i];
-            storedFixedRootValue[i] = tmpRootValue;
-        }
+        final double[] tmpRootValue = fixedRootValue;
+        fixedRootValue = storedFixedRootValue;
+        storedFixedRootValue = tmpRootValue;
 
-        for (int i = 0; i < nodeCount; i++) {
-            final CanonicalTipObservation tmpTip = new CanonicalTipObservation(dim);
-            tmpTip.copyFrom(tipObservations[i]);
-            tipObservations[i].copyFrom(storedTipObservations[i]);
-            storedTipObservations[i].copyFrom(tmpTip);
-        }
+        final CanonicalTipObservation[] tmpTips = tipObservations;
+        tipObservations = storedTipObservations;
+        storedTipObservations = tmpTips;
     }
 
     @Override
@@ -644,62 +655,81 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                       final OUProcessModel processModel,
                                                       final double branchLength,
                                                       final CanonicalGaussianState out) {
-        processModel.fillTransitionMatrix(branchLength, scratchTransitionMatrix);
-        processModel.fillTransitionOffset(branchLength, scratchMean);
-        processModel.fillTransitionCovariance(branchLength, scratchCovariance);
-
-        for (int i = 0; i < dim; ++i) {
-            scratchMean2[i] = tipObservation.observed[i]
-                    ? tipObservation.values[i] - scratchMean[i]
-                    : 0.0;
-
-            for (int j = 0; j < dim; ++j) {
-                double variance = scratchCovariance[i][j];
-                if (i == j && !tipObservation.observed[i]) {
-                    variance = Double.POSITIVE_INFINITY;
-                }
-                scratchVarianceFlat[i * dim + j] = variance;
-            }
-        }
-
-        final InversionResult inversion = MatrixUtils.safeInvertVariance(scratchVarianceFlat, scratchPrecisionFlat, dim);
-        if (inversion.getEffectiveDimension() == 0) {
+        final int observedCount = collectObservationPartition(tipObservation);
+        if (observedCount == 0) {
             clearState(out);
             return;
         }
 
-        MatrixUtils.matVec(scratchPrecisionFlat, scratchMean2, scratchMean, dim, dim);
-        for (int row = 0; row < dim; ++row) {
+        processModel.fillTransitionMatrix(branchLength, scratchTransitionMatrix);
+        processModel.fillTransitionOffset(branchLength, scratchMean);
+        processModel.fillTransitionCovariance(branchLength, scratchCovariance);
+
+        for (int observed = 0; observed < observedCount; ++observed) {
+            final int observedTrait = observedIndexScratch[observed];
+            scratchMean2[observed] = tipObservation.values[observedTrait] - scratchMean[observedTrait];
+            final int rowOffset = observed * observedCount;
+            for (int otherObserved = 0; otherObserved < observedCount; ++otherObserved) {
+                scratchVarianceFlat[rowOffset + otherObserved] =
+                        scratchCovariance[observedTrait][observedIndexScratch[otherObserved]];
+            }
+        }
+
+        final double logDetVariance = MatrixUtils.invertSymmetricPositiveDefiniteCompact(
+                scratchVarianceFlat,
+                scratchPrecisionFlat,
+                observedCount,
+                scratchMean,
+                reducedMeanScratch);
+
+        for (int row = 0; row < observedCount; ++row) {
+            double sum = 0.0;
+            final int rowOffset = row * observedCount;
+            for (int k = 0; k < observedCount; ++k) {
+                sum += scratchPrecisionFlat[rowOffset + k] * scratchMean2[k];
+            }
+            scratchMean[row] = sum;
+        }
+
+        for (int row = 0; row < observedCount; ++row) {
+            final int observedTrait = observedIndexScratch[row];
+            final int precisionRowOffset = row * observedCount;
+            final int projectedRowOffset = row * dim;
             for (int col = 0; col < dim; ++col) {
                 double sum = 0.0;
-                for (int k = 0; k < dim; ++k) {
-                    sum += scratchPrecisionFlat[row * dim + k] * scratchTransitionMatrix[k][col];
+                for (int k = 0; k < observedCount; ++k) {
+                    sum += scratchPrecisionFlat[precisionRowOffset + k]
+                            * scratchTransitionMatrix[observedIndexScratch[k]][col];
                 }
-                scratchCovariance2[row][col] = sum;
+                reducedPrecisionFlatScratch[projectedRowOffset + col] = sum;
             }
         }
 
         for (int i = 0; i < dim; ++i) {
             double information = 0.0;
-            for (int row = 0; row < dim; ++row) {
-                information += scratchTransitionMatrix[row][i] * scratchMean[row];
+            for (int observed = 0; observed < observedCount; ++observed) {
+                information += scratchTransitionMatrix[observedIndexScratch[observed]][i] * scratchMean[observed];
             }
             out.information[i] = information;
 
             for (int j = 0; j < dim; ++j) {
                 double precision = 0.0;
-                for (int row = 0; row < dim; ++row) {
-                    precision += scratchTransitionMatrix[row][i] * scratchCovariance2[row][j];
+                for (int observed = 0; observed < observedCount; ++observed) {
+                    precision += scratchTransitionMatrix[observedIndexScratch[observed]][i]
+                            * reducedPrecisionFlatScratch[observed * dim + j];
                 }
-                out.precision[i][j] = precision;
+                out.precision[i * dim + j] = precision;
             }
         }
-        symmetrizeSquare(out.precision);
+        symmetrizeFlatSquare(out.precision, dim);
 
-        final double quadratic = dot(scratchMean2, scratchMean);
+        double quadratic = 0.0;
+        for (int observed = 0; observed < observedCount; ++observed) {
+            quadratic += scratchMean2[observed] * scratchMean[observed];
+        }
         out.logNormalizer = 0.5 * (
-                inversion.getEffectiveDimension() * Math.log(2.0 * Math.PI)
-                        + inversion.getLogDeterminant()
+                observedCount * LOG_TWO_PI
+                        + logDetVariance
                         + quadratic);
     }
 
@@ -788,7 +818,10 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                     scratchTransition,
                     postOrder[childIndex],
                     scratchPairState);
-            CanonicalBranchMessageContributionUtils.fillFromPairState(scratchPairState, scratchContribution);
+            CanonicalBranchMessageContributionUtils.fillFromPairState(
+                    scratchPairState,
+                    contributionWorkspace,
+                    scratchContribution);
         }
 
         CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
@@ -804,10 +837,11 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                 final CanonicalTipObservation tipObservation) {
         for (int i = 0; i < dim; ++i) {
             double info = transition.informationX[i] + aboveState.information[i];
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                info -= transition.precisionXY[i][j] * tipObservation.values[j];
-                scratchParentPosterior.precision[i][j] =
-                        transition.precisionXX[i][j] + aboveState.precision[i][j];
+                info -= transition.precisionXY[iOff + j] * tipObservation.values[j];
+                scratchParentPosterior.precision[iOff + j] =
+                        transition.precisionXX[iOff + j] + aboveState.precision[iOff + j];
             }
             scratchParentPosterior.information[i] = info;
         }
@@ -821,14 +855,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             final double yi = tipObservation.values[i];
             scratchContribution.dLogL_dInformationX[i] = xi;
             scratchContribution.dLogL_dInformationY[i] = yi;
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = scratchMean[j];
                 final double yj = tipObservation.values[j];
                 final double exx = scratchCovariance[i][j] + xi * xj;
-                scratchContribution.dLogL_dPrecisionXX[i][j] = -0.5 * exx;
-                scratchContribution.dLogL_dPrecisionXY[i][j] = -0.5 * (xi * yj);
-                scratchContribution.dLogL_dPrecisionYX[i][j] = -0.5 * (yi * xj);
-                scratchContribution.dLogL_dPrecisionYY[i][j] = -0.5 * (yi * yj);
+                scratchContribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * exx;
+                scratchContribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
+                scratchContribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
+                scratchContribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * (yi * yj);
             }
         }
         scratchContribution.dLogL_dLogNormalizer = -1.0;
@@ -842,13 +877,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             final double yi = tipObservation.values[i];
             scratchContribution.dLogL_dInformationX[i] = xi;
             scratchContribution.dLogL_dInformationY[i] = yi;
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = fixedRootValue[j];
                 final double yj = tipObservation.values[j];
-                scratchContribution.dLogL_dPrecisionXX[i][j] = -0.5 * (xi * xj);
-                scratchContribution.dLogL_dPrecisionXY[i][j] = -0.5 * (xi * yj);
-                scratchContribution.dLogL_dPrecisionYX[i][j] = -0.5 * (yi * xj);
-                scratchContribution.dLogL_dPrecisionYY[i][j] = -0.5 * (yi * yj);
+                scratchContribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
+                scratchContribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
+                scratchContribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
+                scratchContribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * (yi * yj);
             }
         }
         scratchContribution.dLogL_dLogNormalizer = -1.0;
@@ -872,25 +908,25 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         for (int missing = 0; missing < missingCount; ++missing) {
             final int missingTrait = missingIndexScratch[missing];
             double info = scratchState.information[missingTrait];
+            final int missingTraitOff = missingTrait * dim;
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedTrait = observedIndexScratch[observed];
-                info -= scratchState.precision[missingTrait][observedTrait] * tipObservation.values[observedTrait];
+                info -= scratchState.precision[missingTraitOff + observedTrait] * tipObservation.values[observedTrait];
             }
             reducedInformationScratch[missing] = info;
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                reducedPrecisionScratch[missing][otherMissing] =
-                        scratchState.precision[missingTrait][missingIndexScratch[otherMissing]];
+                reducedPrecisionFlatScratch[missing * missingCount + otherMissing] =
+                        scratchState.precision[missingTraitOff + missingIndexScratch[otherMissing]];
             }
         }
 
-        flattenSquare(reducedPrecisionScratch, missingCount, reducedPrecisionFlatScratch);
         MatrixUtils.safeInvertPrecision(reducedPrecisionFlatScratch, reducedCovarianceFlatScratch, missingCount);
-        unflattenSquare(reducedCovarianceFlatScratch, missingCount, reducedCovarianceScratch);
 
         for (int missing = 0; missing < missingCount; ++missing) {
             double sum = 0.0;
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                sum += reducedCovarianceScratch[missing][otherMissing] * reducedInformationScratch[otherMissing];
+                sum += reducedCovarianceFlatScratch[missing * missingCount + otherMissing]
+                        * reducedInformationScratch[otherMissing];
             }
             scratchMean2[missing] = sum;
         }
@@ -907,18 +943,19 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             final double xi = fixedRootValue[i];
             final double yi = scratchContribution.dLogL_dInformationY[i];
             final int missingI = tipObservation.observed[i] ? -1 : reducedIndexByTraitScratch[i] - dim;
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = fixedRootValue[j];
                 final double yj = scratchContribution.dLogL_dInformationY[j];
                 final int missingJ = tipObservation.observed[j] ? -1 : reducedIndexByTraitScratch[j] - dim;
                 final double eyy = (missingI < 0 || missingJ < 0)
                         ? yi * yj
-                        : reducedCovarianceScratch[missingI][missingJ] + yi * yj;
+                        : reducedCovarianceFlatScratch[missingI * missingCount + missingJ] + yi * yj;
 
-                scratchContribution.dLogL_dPrecisionXX[i][j] = -0.5 * (xi * xj);
-                scratchContribution.dLogL_dPrecisionXY[i][j] = -0.5 * (xi * yj);
-                scratchContribution.dLogL_dPrecisionYX[i][j] = -0.5 * (yi * xj);
-                scratchContribution.dLogL_dPrecisionYY[i][j] = -0.5 * eyy;
+                scratchContribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
+                scratchContribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
+                scratchContribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
+                scratchContribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * eyy;
             }
         }
         scratchContribution.dLogL_dLogNormalizer = -1.0;
@@ -932,14 +969,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             final double yi = childMean[i];
             scratchContribution.dLogL_dInformationX[i] = xi;
             scratchContribution.dLogL_dInformationY[i] = yi;
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = fixedRootValue[j];
                 final double yj = childMean[j];
                 final double eyy = childCovariance[i][j] + yi * yj;
-                scratchContribution.dLogL_dPrecisionXX[i][j] = -0.5 * (xi * xj);
-                scratchContribution.dLogL_dPrecisionXY[i][j] = -0.5 * (xi * yj);
-                scratchContribution.dLogL_dPrecisionYX[i][j] = -0.5 * (yi * xj);
-                scratchContribution.dLogL_dPrecisionYY[i][j] = -0.5 * eyy;
+                scratchContribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
+                scratchContribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
+                scratchContribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
+                scratchContribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * eyy;
             }
         }
         scratchContribution.dLogL_dLogNormalizer = -1.0;
@@ -952,53 +990,50 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         final int missingCount = dim - observedCount;
         final int reducedDimension = dim + missingCount;
 
-        for (int i = 0; i < reducedDimension; ++i) {
-            Arrays.fill(reducedPrecisionScratch[i], 0, reducedDimension, 0.0);
-            reducedInformationScratch[i] = 0.0;
-        }
-
         for (int i = 0; i < dim; ++i) {
             double info = transition.informationX[i] + aboveState.information[i];
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                reducedPrecisionScratch[i][j] = transition.precisionXX[i][j] + aboveState.precision[i][j];
+                reducedPrecisionFlatScratch[i * reducedDimension + j] =
+                        transition.precisionXX[iOff + j] + aboveState.precision[iOff + j];
             }
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedIndex = observedIndexScratch[observed];
-                info -= transition.precisionXY[i][observedIndex] * tipObservation.values[observedIndex];
+                info -= transition.precisionXY[iOff + observedIndex] * tipObservation.values[observedIndex];
             }
             reducedInformationScratch[i] = info;
             for (int missing = 0; missing < missingCount; ++missing) {
-                reducedPrecisionScratch[i][dim + missing] =
-                        transition.precisionXY[i][missingIndexScratch[missing]];
+                reducedPrecisionFlatScratch[i * reducedDimension + dim + missing] =
+                        transition.precisionXY[iOff + missingIndexScratch[missing]];
             }
         }
 
         for (int missing = 0; missing < missingCount; ++missing) {
             final int childIndex = missingIndexScratch[missing];
             final int row = dim + missing;
+            final int childOff = childIndex * dim;
             double info = transition.informationY[childIndex];
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedIndex = observedIndexScratch[observed];
-                info -= transition.precisionYY[childIndex][observedIndex] * tipObservation.values[observedIndex];
+                info -= transition.precisionYY[childOff + observedIndex] * tipObservation.values[observedIndex];
             }
             reducedInformationScratch[row] = info;
             for (int j = 0; j < dim; ++j) {
-                reducedPrecisionScratch[row][j] = transition.precisionYX[childIndex][j];
+                reducedPrecisionFlatScratch[row * reducedDimension + j] =
+                        transition.precisionYX[childOff + j];
             }
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                reducedPrecisionScratch[row][dim + otherMissing] =
-                        transition.precisionYY[childIndex][missingIndexScratch[otherMissing]];
+                reducedPrecisionFlatScratch[row * reducedDimension + dim + otherMissing] =
+                        transition.precisionYY[childOff + missingIndexScratch[otherMissing]];
             }
         }
 
-        flattenSquare(reducedPrecisionScratch, reducedDimension, reducedPrecisionFlatScratch);
         MatrixUtils.safeInvertPrecision(reducedPrecisionFlatScratch, reducedCovarianceFlatScratch, reducedDimension);
-        unflattenSquare(reducedCovarianceFlatScratch, reducedDimension, reducedCovarianceScratch);
 
         for (int i = 0; i < reducedDimension; ++i) {
             double sum = 0.0;
             for (int j = 0; j < reducedDimension; ++j) {
-                sum += reducedCovarianceScratch[i][j] * reducedInformationScratch[j];
+                sum += reducedCovarianceFlatScratch[i * reducedDimension + j] * reducedInformationScratch[j];
             }
             reducedMeanScratch[i] = Double.isNaN(sum) ? 0.0 : sum;
         }
@@ -1020,37 +1055,34 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 final double yi = scratchContribution.dLogL_dInformationY[i];
                 final double yj = scratchContribution.dLogL_dInformationY[j];
 
-                final double exx = reducedCovarianceScratch[i][j] + xi * xj;
+                final double exx = reducedCovarianceFlatScratch[i * reducedDimension + j] + xi * xj;
                 final double exy = tipObservation.observed[j]
                         ? xi * yj
-                        : reducedCovarianceScratch[i][reducedJ] + xi * yj;
+                        : reducedCovarianceFlatScratch[i * reducedDimension + reducedJ] + xi * yj;
                 final double eyx = tipObservation.observed[i]
                         ? yi * xj
-                        : reducedCovarianceScratch[reducedI][j] + yi * xj;
+                        : reducedCovarianceFlatScratch[reducedI * reducedDimension + j] + yi * xj;
                 final double eyy = (tipObservation.observed[i] || tipObservation.observed[j])
                         ? yi * yj
-                        : reducedCovarianceScratch[reducedI][reducedJ] + yi * yj;
+                        : reducedCovarianceFlatScratch[reducedI * reducedDimension + reducedJ] + yi * yj;
 
-                scratchContribution.dLogL_dPrecisionXX[i][j] = -0.5 * exx;
-                scratchContribution.dLogL_dPrecisionXY[i][j] = -0.5 * exy;
-                scratchContribution.dLogL_dPrecisionYX[i][j] = -0.5 * eyx;
-                scratchContribution.dLogL_dPrecisionYY[i][j] = -0.5 * eyy;
+                final int ij = i * dim + j;
+                scratchContribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
+                scratchContribution.dLogL_dPrecisionXY[ij] = -0.5 * exy;
+                scratchContribution.dLogL_dPrecisionYX[ij] = -0.5 * eyx;
+                scratchContribution.dLogL_dPrecisionYY[ij] = -0.5 * eyy;
             }
         }
         scratchContribution.dLogL_dLogNormalizer = -1.0;
     }
 
     private void clearContribution() {
-        for (int i = 0; i < dim; ++i) {
-            scratchContribution.dLogL_dInformationX[i] = 0.0;
-            scratchContribution.dLogL_dInformationY[i] = 0.0;
-            for (int j = 0; j < dim; ++j) {
-                scratchContribution.dLogL_dPrecisionXX[i][j] = 0.0;
-                scratchContribution.dLogL_dPrecisionXY[i][j] = 0.0;
-                scratchContribution.dLogL_dPrecisionYX[i][j] = 0.0;
-                scratchContribution.dLogL_dPrecisionYY[i][j] = 0.0;
-            }
-        }
+        Arrays.fill(scratchContribution.dLogL_dInformationX, 0.0);
+        Arrays.fill(scratchContribution.dLogL_dInformationY, 0.0);
+        Arrays.fill(scratchContribution.dLogL_dPrecisionXX, 0.0);
+        Arrays.fill(scratchContribution.dLogL_dPrecisionXY, 0.0);
+        Arrays.fill(scratchContribution.dLogL_dPrecisionYX, 0.0);
+        Arrays.fill(scratchContribution.dLogL_dPrecisionYY, 0.0);
         scratchContribution.dLogL_dLogNormalizer = -1.0;
     }
 
@@ -1131,7 +1163,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         CanonicalGaussianUtils.fillMomentsFromCanonical(
                 preOrder[rootIndex], scratchMean2, scratchCovariance2);
 
-        final double[][] priorPrecision = preOrder[rootIndex].precision;
+        final double[] priorPrecision = preOrder[rootIndex].precision;
         for (int i = 0; i < dim; ++i) {
             final double deltaI = scratchMean[i] - scratchMean2[i];
             for (int j = 0; j < dim; ++j) {
@@ -1139,35 +1171,64 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             }
         }
 
-        multiplySquare(priorPrecision, scratchCovarianceAdjoint, scratchTransitionMatrix);
-        multiplySquare(scratchTransitionMatrix, priorPrecision, scratchCovarianceAdjoint);
+        multiplyFlatBySquare(priorPrecision, scratchCovarianceAdjoint, scratchTransitionMatrix, dim);
+        multiplySquareByFlat(scratchTransitionMatrix, priorPrecision, scratchCovarianceAdjoint, dim);
         for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                gradQ[i * dim + j] += lastRootDiffusionScale
-                        * (-0.5 * priorPrecision[i][j] + 0.5 * scratchCovarianceAdjoint[i][j]);
+                gradQ[iOff + j] += lastRootDiffusionScale
+                        * (-0.5 * priorPrecision[iOff + j] + 0.5 * scratchCovarianceAdjoint[i][j]);
             }
         }
     }
 
-    private static void multiplySquare(final double[][] left,
-                                       final double[][] right,
-                                       final double[][] out) {
-        final int d = left.length;
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
+    private static void transposeFromFlatInto(final double[] source, final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                out[j][i] = source[i * dim + j];
+            }
+        }
+    }
+
+    private static void copyFlatToSquare(final double[] source, final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            System.arraycopy(source, i * dim, out[i], 0, dim);
+        }
+    }
+
+    private static void symmetrizeFlatSquare(final double[] matrix, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = i + 1; j < dim; ++j) {
+                final double avg = 0.5 * (matrix[i * dim + j] + matrix[j * dim + i]);
+                matrix[i * dim + j] = avg;
+                matrix[j * dim + i] = avg;
+            }
+        }
+    }
+
+    private static void multiplyFlatBySquare(final double[] left, final double[][] right,
+                                              final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
+            for (int j = 0; j < dim; ++j) {
                 double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += left[i][k] * right[k][j];
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[iOff + k] * right[k][j];
                 }
                 out[i][j] = sum;
             }
         }
     }
 
-    private static void transposeInto(final double[][] source, final double[][] out) {
-        for (int i = 0; i < source.length; ++i) {
-            for (int j = 0; j < source[i].length; ++j) {
-                out[j][i] = source[i][j];
+    private static void multiplySquareByFlat(final double[][] left, final double[] right,
+                                              final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[i][k] * right[k * dim + j];
+                }
+                out[i][j] = sum;
             }
         }
     }
@@ -1202,65 +1263,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         return sum;
     }
 
-    private static void flattenSquare(final double[][] source,
-                                      final int dimension,
-                                      final double[] destination) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source[i], 0, destination, i * dimension, dimension);
-        }
-    }
-
-    private static void unflattenSquare(final double[] source,
-                                        final int dimension,
-                                        final double[][] destination) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source, i * dimension, destination[i], 0, dimension);
-        }
-    }
-
-    private static void invertPositiveDefinite(final double[][] matrix,
-                                               final int dimension,
-                                               final double[][] inverseOut) {
-        final double[][] chol = new double[dimension][dimension];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j <= i; ++j) {
-                double sum = matrix[i][j];
-                for (int k = 0; k < j; ++k) {
-                    sum -= chol[i][k] * chol[j][k];
-                }
-                if (!(sum > 0.0)) {
-                    throw new IllegalArgumentException("Matrix is not positive definite");
-                }
-                if (i == j) {
-                    chol[i][j] = Math.sqrt(sum);
-                } else {
-                    chol[i][j] = sum / chol[j][j];
-                }
-            }
-            for (int j = i + 1; j < dimension; ++j) {
-                chol[i][j] = 0.0;
-            }
-        }
-
-        final double[][] lowerInverse = new double[dimension][dimension];
-        for (int column = 0; column < dimension; ++column) {
-            for (int row = 0; row < dimension; ++row) {
-                double sum = row == column ? 1.0 : 0.0;
-                for (int k = 0; k < row; ++k) {
-                    sum -= chol[row][k] * lowerInverse[k][column];
-                }
-                lowerInverse[row][column] = sum / chol[row][row];
-            }
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += lowerInverse[k][i] * lowerInverse[k][j];
-                }
-                inverseOut[i][j] = sum;
-            }
+    private static void clearSquare(final double[][] matrix) {
+        for (int i = 0; i < matrix.length; ++i) {
+            Arrays.fill(matrix[i], 0.0);
         }
     }
 }

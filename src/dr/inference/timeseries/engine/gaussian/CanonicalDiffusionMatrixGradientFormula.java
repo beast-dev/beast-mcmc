@@ -20,6 +20,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
     private final CanonicalBranchMessageContribution localContribution;
     private final CanonicalLocalTransitionAdjoints localAdjoints;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
+    private final double[][] covarianceAdjointScratch;
 
     public CanonicalDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
                                                    final int stateDimension) {
@@ -43,6 +44,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+        this.covarianceAdjointScratch = new double[stateDimension][stateDimension];
     }
 
     @Override
@@ -69,15 +71,16 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
                     localContribution,
                     canonicalAdjointWorkspace,
                     localAdjoints);
+            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, d);
             if (orthogonalParameterization != null) {
                 orthogonalParameterization.accumulateDiffusionGradient(
                         processModel.getDiffusionMatrix(),
                         timeGrid.getDelta(t, t + 1),
-                        localAdjoints.dLogL_dOmega,
+                        covarianceAdjointScratch,
                         gradientAccumulator);
             } else {
                 repr.accumulateDiffusionGradient(
-                        t, t + 1, timeGrid, localAdjoints.dLogL_dOmega, gradientAccumulator);
+                        t, t + 1, timeGrid, covarianceAdjointScratch, gradientAccumulator);
             }
         }
 

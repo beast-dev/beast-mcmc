@@ -5,29 +5,39 @@ import dr.inference.timeseries.representation.CanonicalGaussianTransition;
 /**
  * Direct pullback from canonical transition blocks to moment-form transition
  * adjoints.
+ *
+ * <p>All matrix fields use flat row-major storage: element {@code (i, j)} of
+ * a {@code dim × dim} matrix is at index {@code i * dim + j}. Callers are
+ * expected to retain and reuse a {@link Workspace}; the hot-path methods in
+ * this helper do not allocate.
  */
 public final class CanonicalTransitionAdjointUtils {
 
     public static final class Workspace {
-        final double[][] omega;
-        final double[][] transitionMatrix;
+        final double[] omega;
+        final double[] transitionMatrix;
         final double[] transitionOffset;
-        final double[][] gXxPlusTranspose;
-        final double[][] temp1;
-        final double[][] temp2;
-        final double[][] gP;
+        final double[] gXxPlusTranspose;
+        final double[] temp1;
+        final double[] temp2;
+        final double[] gP;
         final double[] tempv;
+        private final int dimension;
 
         public Workspace(final int dimension) {
-            this.omega = new double[dimension][dimension];
-            this.transitionMatrix = new double[dimension][dimension];
-            this.transitionOffset = new double[dimension];
-            this.gXxPlusTranspose = new double[dimension][dimension];
-            this.temp1 = new double[dimension][dimension];
-            this.temp2 = new double[dimension][dimension];
-            this.gP = new double[dimension][dimension];
-            this.tempv = new double[dimension];
+            this.dimension = dimension;
+            final int d2 = dimension * dimension;
+            this.omega             = new double[d2];
+            this.transitionMatrix  = new double[d2];
+            this.transitionOffset  = new double[dimension];
+            this.gXxPlusTranspose  = new double[d2];
+            this.temp1             = new double[d2];
+            this.temp2             = new double[d2];
+            this.gP                = new double[d2];
+            this.tempv             = new double[dimension];
         }
+
+        public int getDimension() { return dimension; }
     }
 
     private CanonicalTransitionAdjointUtils() {
@@ -36,24 +46,18 @@ public final class CanonicalTransitionAdjointUtils {
 
     public static void fillFromCanonicalTransition(final CanonicalGaussianTransition transition,
                                                    final CanonicalBranchMessageContribution contribution,
-                                                   final CanonicalLocalTransitionAdjoints out) {
-        fillFromCanonicalTransition(transition, contribution, new Workspace(transition.getDimension()), out);
-    }
-
-    public static void fillFromCanonicalTransition(final CanonicalGaussianTransition transition,
-                                                   final CanonicalBranchMessageContribution contribution,
                                                    final Workspace workspace,
                                                    final CanonicalLocalTransitionAdjoints out) {
         final int d = transition.getDimension();
         ensureWorkspaceDimension(workspace, d);
-        invertPositiveDefinite(transition.precisionYY, workspace.omega);
+        invertPositiveDefiniteFlat(transition.precisionYY, workspace, workspace.omega, d);
 
-        multiply(workspace.omega, transition.precisionYX, workspace.transitionMatrix);
-        scaleInPlace(workspace.transitionMatrix, -1.0);
+        multiplyFlat(workspace.omega, transition.precisionYX, workspace.transitionMatrix, d);
+        scaleInPlaceFlat(workspace.transitionMatrix, -1.0, d * d);
 
-        multiply(workspace.omega, transition.informationY, workspace.transitionOffset);
+        multiplyMatVecFlat(workspace.omega, transition.informationY, workspace.transitionOffset, d);
 
-        fillFromMoments(
+        fillFromMomentsFlat(
                 transition.precisionYY,
                 workspace.omega,
                 workspace.transitionMatrix,
@@ -63,231 +67,201 @@ public final class CanonicalTransitionAdjointUtils {
                 out);
     }
 
-    public static void fillFromMoments(final double[][] precision,
-                                       final double[][] omega,
-                                       final double[][] transitionMatrix,
-                                       final double[] transitionOffset,
-                                       final CanonicalBranchMessageContribution contribution,
-                                       final CanonicalLocalTransitionAdjoints out) {
-        fillFromMoments(
-                precision,
-                omega,
-                transitionMatrix,
-                transitionOffset,
-                contribution,
-                new Workspace(transitionOffset.length),
-                out);
-    }
-
-    public static void fillFromMoments(final double[][] precision,
-                                       final double[][] omega,
-                                       final double[][] transitionMatrix,
+    public static void fillFromMoments(final double[] precision,
+                                       final double[] omega,
+                                       final double[] transitionMatrix,
                                        final double[] transitionOffset,
                                        final CanonicalBranchMessageContribution contribution,
                                        final Workspace workspace,
                                        final CanonicalLocalTransitionAdjoints out) {
+        fillFromMomentsFlat(precision, omega, transitionMatrix, transitionOffset,
+                contribution, workspace, out);
+    }
+
+    private static void fillFromMomentsFlat(final double[] precision,
+                                            final double[] omega,
+                                            final double[] transitionMatrix,
+                                            final double[] transitionOffset,
+                                            final CanonicalBranchMessageContribution contribution,
+                                            final Workspace workspace,
+                                            final CanonicalLocalTransitionAdjoints out) {
         final int d = transitionOffset.length;
         ensureWorkspaceDimension(workspace, d);
-        final double[][] gXx = contribution.dLogL_dPrecisionXX;
-        final double[][] gXy = contribution.dLogL_dPrecisionXY;
-        final double[][] gYx = contribution.dLogL_dPrecisionYX;
-        final double[][] gYy = contribution.dLogL_dPrecisionYY;
-        final double[] gX = contribution.dLogL_dInformationX;
-        final double[] gY = contribution.dLogL_dInformationY;
-        final double g0 = contribution.dLogL_dLogNormalizer;
+        final int d2 = d * d;
 
-        final double[][] gXxPlusTranspose = workspace.gXxPlusTranspose;
+        final double[] gXx = contribution.dLogL_dPrecisionXX;
+        final double[] gXy = contribution.dLogL_dPrecisionXY;
+        final double[] gYx = contribution.dLogL_dPrecisionYX;
+        final double[] gYy = contribution.dLogL_dPrecisionYY;
+        final double[] gX  = contribution.dLogL_dInformationX;
+        final double[] gY  = contribution.dLogL_dInformationY;
+        final double   g0  = contribution.dLogL_dLogNormalizer;
+
+        final double[] gXxPlusTranspose = workspace.gXxPlusTranspose;
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
-                gXxPlusTranspose[i][j] = gXx[i][j] + gXx[j][i];
+                gXxPlusTranspose[i * d + j] = gXx[i * d + j] + gXx[j * d + i];
             }
         }
 
-        final double[][] temp1 = workspace.temp1;
-        final double[][] temp2 = workspace.temp2;
-        multiply(transitionMatrix, gXxPlusTranspose, temp1);
-        multiply(precision, temp1, out.dLogL_dF);
+        final double[] temp1 = workspace.temp1;
+        final double[] temp2 = workspace.temp2;
 
-        transposeInto(gXy, temp1);
-        multiply(precision, temp1, temp2);
-        subtractInPlace(out.dLogL_dF, temp2);
+        // dLogL_dF: precision × (transitionMatrix × (gXx + gXx^T))^T - precision × gXy^T - precision × gYx - precision × (f ⊗ gX)^T
+        multiplyFlat(transitionMatrix, gXxPlusTranspose, temp1, d);
+        multiplyFlat(precision, temp1, out.dLogL_dF, d);
 
-        multiply(precision, gYx, temp2);
-        subtractInPlace(out.dLogL_dF, temp2);
+        transposeIntoFlat(gXy, temp1, d);
+        multiplyFlat(precision, temp1, temp2, d);
+        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
 
-        outerProduct(transitionOffset, gX, temp1);
-        multiply(precision, temp1, temp2);
-        subtractInPlace(out.dLogL_dF, temp2);
+        multiplyFlat(precision, gYx, temp2, d);
+        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
+
+        outerProductFlat(transitionOffset, gX, temp1, d);
+        multiplyFlat(precision, temp1, temp2, d);
+        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
 
         final double[] tempv = workspace.tempv;
-        multiply(transitionMatrix, gX, tempv);
+        multiplyMatVecFlat(transitionMatrix, gX, tempv, d);
         for (int i = 0; i < d; ++i) {
             tempv[i] = -tempv[i] + gY[i] + g0 * transitionOffset[i];
         }
-        multiply(precision, tempv, out.dLogL_df);
+        multiplyMatVecFlat(precision, tempv, out.dLogL_df, d);
 
-        final double[][] gP = workspace.gP;
-        multiply(transitionMatrix, gXx, temp1);
-        multiplyTransposedRight(temp1, transitionMatrix, gP);
+        final double[] gP = workspace.gP;
+        multiplyFlat(transitionMatrix, gXx, temp1, d);
+        multiplyTransposedRightFlat(temp1, transitionMatrix, gP, d);
 
-        multiply(transitionMatrix, gXy, temp1);
-        subtractInPlace(gP, temp1);
+        multiplyFlat(transitionMatrix, gXy, temp1, d);
+        subtractInPlaceFlat(gP, temp1, d2);
 
-        multiplyTransposedRight(gYx, transitionMatrix, temp1);
-        subtractInPlace(gP, temp1);
+        multiplyTransposedRightFlat(gYx, transitionMatrix, temp1, d);
+        subtractInPlaceFlat(gP, temp1, d2);
 
-        addInPlace(gP, gYy);
+        addInPlaceFlat(gP, gYy, d2);
 
-        outerProduct(gX, transitionOffset, temp1);
-        multiply(transitionMatrix, temp1, temp2);
-        subtractInPlace(gP, temp2);
+        outerProductFlat(gX, transitionOffset, temp1, d);
+        multiplyFlat(transitionMatrix, temp1, temp2, d);
+        subtractInPlaceFlat(gP, temp2, d2);
 
-        outerProduct(gY, transitionOffset, temp1);
-        addInPlace(gP, temp1);
+        outerProductFlat(gY, transitionOffset, temp1, d);
+        addInPlaceFlat(gP, temp1, d2);
 
-        outerProduct(transitionOffset, transitionOffset, temp1);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gP[i][j] += 0.5 * g0 * temp1[i][j];
-                gP[i][j] -= 0.5 * g0 * omega[i][j];
-            }
+        outerProductFlat(transitionOffset, transitionOffset, temp1, d);
+        for (int k = 0; k < d2; ++k) {
+            gP[k] += 0.5 * g0 * (temp1[k] - omega[k]);
         }
 
-        multiply(precision, gP, temp1);
-        multiply(temp1, precision, out.dLogL_dOmega);
-        scaleInPlace(out.dLogL_dOmega, -1.0);
-        symmetrize(out.dLogL_dOmega);
+        multiplyFlat(precision, gP, temp1, d);
+        multiplyFlat(temp1, precision, out.dLogL_dOmega, d);
+        scaleInPlaceFlat(out.dLogL_dOmega, -1.0, d2);
+        GaussianMatrixOps.symmetrizeFlat(out.dLogL_dOmega, d);
     }
 
     private static void ensureWorkspaceDimension(final Workspace workspace, final int dimension) {
-        if (workspace.omega.length != dimension) {
+        if (workspace.getDimension() != dimension) {
             throw new IllegalArgumentException("Workspace dimension mismatch");
         }
     }
 
-    private static void invertPositiveDefinite(final double[][] matrix, final double[][] out) {
-        final int d = matrix.length;
-        final double[][] work = new double[d][d];
-        for (int i = 0; i < d; ++i) {
-            System.arraycopy(matrix[i], 0, work[i], 0, d);
-        }
-        final double[][] chol = new double[d][d];
+    private static void invertPositiveDefiniteFlat(final double[] matrix,
+                                                   final Workspace workspace,
+                                                   final double[] out,
+                                                   final int d) {
+        final double[] chol = workspace.temp1;
+        final double[] lowerInverse = workspace.temp2;
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j <= i; ++j) {
-                double sum = work[i][j];
+                double sum = matrix[i * d + j];
                 for (int k = 0; k < j; ++k) {
-                    sum -= chol[i][k] * chol[j][k];
+                    sum -= chol[i * d + k] * chol[j * d + k];
                 }
                 if (i == j) {
-                    chol[i][j] = Math.sqrt(sum);
+                    chol[i * d + j] = Math.sqrt(sum);
                 } else {
-                    chol[i][j] = sum / chol[j][j];
+                    chol[i * d + j] = sum / chol[j * d + j];
                 }
             }
         }
-        final double[][] lowerInverse = new double[d][d];
         for (int col = 0; col < d; ++col) {
             for (int row = 0; row < d; ++row) {
                 double sum = (row == col) ? 1.0 : 0.0;
                 for (int k = 0; k < row; ++k) {
-                    sum -= chol[row][k] * lowerInverse[k][col];
+                    sum -= chol[row * d + k] * lowerInverse[k * d + col];
                 }
-                lowerInverse[row][col] = sum / chol[row][row];
+                lowerInverse[row * d + col] = sum / chol[row * d + row];
             }
         }
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    sum += lowerInverse[k][i] * lowerInverse[k][j];
+                    sum += lowerInverse[k * d + i] * lowerInverse[k * d + j];
                 }
-                out[i][j] = sum;
+                out[i * d + j] = sum;
             }
         }
-        symmetrize(out);
+        GaussianMatrixOps.symmetrizeFlat(out, d);
     }
 
-    private static void multiply(final double[][] left, final double[][] right, final double[][] out) {
-        for (int i = 0; i < left.length; ++i) {
-            for (int j = 0; j < right[0].length; ++j) {
+    private static void multiplyFlat(final double[] left, final double[] right,
+                                     final double[] out, final int d) {
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(left, right, out, d);
+    }
+
+    private static void multiplyMatVecFlat(final double[] matrix, final double[] vector,
+                                           final double[] out, final int d) {
+        GaussianMatrixOps.multiplyMatrixVectorFlat(matrix, vector, out, d);
+    }
+
+    private static void multiplyTransposedRightFlat(final double[] left, final double[] right,
+                                                    final double[] out, final int d) {
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
-                for (int k = 0; k < right.length; ++k) {
-                    sum += left[i][k] * right[k][j];
+                for (int k = 0; k < d; ++k) {
+                    sum += left[iOff + k] * right[j * d + k];
                 }
-                out[i][j] = sum;
+                out[iOff + j] = sum;
             }
         }
     }
 
-    private static void multiply(final double[][] matrix, final double[] vector, final double[] out) {
-        for (int i = 0; i < matrix.length; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < vector.length; ++j) {
-                sum += matrix[i][j] * vector[j];
-            }
-            out[i] = sum;
-        }
-    }
-
-    private static void multiplyTransposedRight(final double[][] left, final double[][] right, final double[][] out) {
-        for (int i = 0; i < left.length; ++i) {
-            for (int j = 0; j < right.length; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < left[0].length; ++k) {
-                    sum += left[i][k] * right[j][k];
-                }
-                out[i][j] = sum;
+    private static void outerProductFlat(final double[] left, final double[] right,
+                                         final double[] out, final int d) {
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                out[iOff + j] = left[i] * right[j];
             }
         }
     }
 
-    private static void outerProduct(final double[] left, final double[] right, final double[][] out) {
-        for (int i = 0; i < left.length; ++i) {
-            for (int j = 0; j < right.length; ++j) {
-                out[i][j] = left[i] * right[j];
+    private static void transposeIntoFlat(final double[] source, final double[] out, final int d) {
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                out[j * d + i] = source[i * d + j];
             }
         }
     }
 
-    private static void transposeInto(final double[][] source, final double[][] out) {
-        for (int i = 0; i < source.length; ++i) {
-            for (int j = 0; j < source[i].length; ++j) {
-                out[j][i] = source[i][j];
-            }
+    private static void addInPlaceFlat(final double[] target, final double[] delta, final int d2) {
+        for (int k = 0; k < d2; ++k) {
+            target[k] += delta[k];
         }
     }
 
-    private static void addInPlace(final double[][] target, final double[][] delta) {
-        for (int i = 0; i < target.length; ++i) {
-            for (int j = 0; j < target[i].length; ++j) {
-                target[i][j] += delta[i][j];
-            }
+    private static void subtractInPlaceFlat(final double[] target, final double[] delta, final int d2) {
+        for (int k = 0; k < d2; ++k) {
+            target[k] -= delta[k];
         }
     }
 
-    private static void subtractInPlace(final double[][] target, final double[][] delta) {
-        for (int i = 0; i < target.length; ++i) {
-            for (int j = 0; j < target[i].length; ++j) {
-                target[i][j] -= delta[i][j];
-            }
-        }
-    }
-
-    private static void scaleInPlace(final double[][] matrix, final double factor) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < matrix[i].length; ++j) {
-                matrix[i][j] *= factor;
-            }
-        }
-    }
-
-    private static void symmetrize(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = i + 1; j < matrix.length; ++j) {
-                final double average = 0.5 * (matrix[i][j] + matrix[j][i]);
-                matrix[i][j] = average;
-                matrix[j][i] = average;
-            }
+    private static void scaleInPlaceFlat(final double[] matrix, final double factor, final int d2) {
+        for (int k = 0; k < d2; ++k) {
+            matrix[k] *= factor;
         }
     }
 }

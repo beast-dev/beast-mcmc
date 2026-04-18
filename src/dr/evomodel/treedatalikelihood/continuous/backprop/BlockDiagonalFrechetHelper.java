@@ -30,7 +30,7 @@ public final class BlockDiagonalFrechetHelper {
     private final BlockDiagonalFrechetExactPlan.Workspace workspace;
 
     private final double[] cachedPlanParams;
-    private BlockDiagonalFrechetExactPlan.Plan cachedPlan;
+    private final BlockDiagonalFrechetExactPlan.Plan cachedPlan;
     private double cachedPlanT;
     private boolean cachedPlanValid;
 
@@ -42,7 +42,7 @@ public final class BlockDiagonalFrechetHelper {
         this.lastExp = new DenseMatrix64F(dim, dim);
         this.workspace = new BlockDiagonalFrechetExactPlan.Workspace();
         this.cachedPlanParams = new double[3 * dim - 2];
-        this.cachedPlan = null;
+        this.cachedPlan = BlockDiagonalFrechetExactPlan.createPlan(structure);
         this.cachedPlanT = Double.NaN;
         this.cachedPlanValid = false;
     }
@@ -204,7 +204,7 @@ public final class BlockDiagonalFrechetHelper {
         if (!cachedPlanValid
                 || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT)
                 || !Arrays.equals(blockDParams, cachedPlanParams)) {
-            cachedPlan = BlockDiagonalFrechetExactPlan.buildPlan(structure, blockDParams, t);
+            cachedPlan.rebuild(blockDParams, t);
             System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
             cachedPlanT = t;
             cachedPlanValid = true;

@@ -18,11 +18,11 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
     public void testExactFrechetTransitionGradientMatchesDenseFallback() {
         final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization = buildParameterization();
 
-        final double[][] dLogL_dF = new double[][]{
-                {0.10, -0.25, 0.08, 0.03},
-                {-0.07, 0.18, -0.11, 0.04},
-                {0.06, -0.02, 0.21, -0.09},
-                {-0.04, 0.05, -0.13, 0.17}
+        final double[] dLogL_dF = new double[]{
+                 0.10, -0.25,  0.08,  0.03,
+                -0.07,  0.18, -0.11,  0.04,
+                 0.06, -0.02,  0.21, -0.09,
+                -0.04,  0.05, -0.13,  0.17
         };
         final double[] dLogL_df = new double[]{0.14, -0.09, 0.07, -0.03};
         final double[] stationaryMean = new double[]{0.3, -0.4, 0.8, -0.2};
@@ -38,11 +38,11 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
     public void testExactFrechetCovarianceGradientMatchesDenseFallback() {
         final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization = buildParameterization();
         final MatrixParameter diffusionMatrix = buildDiffusionMatrix();
-        final double[][] dLogL_dV = new double[][]{
-                {0.40, -0.06, 0.03, 0.01},
-                {-0.06, 0.28, -0.04, 0.02},
-                {0.03, -0.04, 0.35, -0.07},
-                {0.01, 0.02, -0.07, 0.31}
+        final double[] dLogL_dV = new double[]{
+                0.40, -0.06,  0.03,  0.01,
+               -0.06,  0.28, -0.04,  0.02,
+                0.03, -0.04,  0.35, -0.07,
+                0.01,  0.02, -0.07,  0.31
         };
         final double dt = 0.29;
 
@@ -68,11 +68,11 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
                         -rho2 * Math.sin(theta2) + small
                 });
 
-        final double[][] dLogL_dF = new double[][]{
-                {0.12, -0.09, 0.04, 0.01},
-                {-0.05, 0.17, -0.08, 0.03},
-                {0.03, -0.07, 0.19, -0.06},
-                {-0.02, 0.04, -0.05, 0.14}
+        final double[] dLogL_dF = new double[]{
+                 0.12, -0.09,  0.04,  0.01,
+                -0.05,  0.17, -0.08,  0.03,
+                 0.03, -0.07,  0.19, -0.06,
+                -0.02,  0.04, -0.05,  0.14
         };
         final double[] dLogL_df = new double[]{0.11, -0.07, 0.05, -0.02};
         final double[] stationaryMean = new double[]{0.2, -0.3, 0.6, -0.1};
@@ -87,7 +87,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
     private Result computeTransitionGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
                                              final double[] stationaryMean,
-                                             final double[][] dLogL_dF,
+                                             final double[] dLogL_dF,
                                              final double[] dLogL_df,
                                              final double dt,
                                              final boolean forceDense) {
@@ -110,7 +110,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
     private Result computeCovarianceGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
                                              final MatrixParameter diffusionMatrix,
-                                             final double[][] dLogL_dV,
+                                             final double[] dLogL_dV,
                                              final double dt,
                                              final boolean forceDense) {
         final String previous = System.getProperty(FORCE_DENSE_PROPERTY);

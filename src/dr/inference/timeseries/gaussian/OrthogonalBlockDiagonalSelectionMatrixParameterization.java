@@ -55,8 +55,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private final DenseMatrix64F stationaryCovDBasis;
     private final DenseMatrix64F transitionCovDBasis;
     private final DenseMatrix64F transitionCovariance;
-    private final double[][] transitionMatrixArrayScratch;
-    private final double[][] transitionCovarianceArrayScratch;
+    private final double[] transitionMatrixArrayScratch;
+    private final double[] transitionCovarianceArrayScratch;
+    private final double[] precisionFlat;
     private final double[] transitionOffsetScratch;
     private final double[][] scaledNegativeBlockDScratch;
     private final double[][] denseAdjointScratch;
@@ -117,8 +118,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         this.stationaryCovDBasis = new DenseMatrix64F(d, d);
         this.transitionCovDBasis = new DenseMatrix64F(d, d);
         this.transitionCovariance = new DenseMatrix64F(d, d);
-        this.transitionMatrixArrayScratch = new double[d][d];
-        this.transitionCovarianceArrayScratch = new double[d][d];
+        this.transitionMatrixArrayScratch = new double[d * d];
+        this.transitionCovarianceArrayScratch = new double[d * d];
+        this.precisionFlat = new double[d * d];
         this.transitionOffsetScratch = new double[d];
         this.scaledNegativeBlockDScratch = new double[d][d];
         this.denseAdjointScratch = new double[d][d];
@@ -175,13 +177,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                            final CanonicalLocalTransitionAdjoints out) {
         refreshBasisCaches(dt);
         fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        copyDenseMatrixToArray(transitionMatrix, transitionMatrixArrayScratch);
+        copyDenseMatrixToFlat(transitionMatrix, transitionMatrixArrayScratch);
         fillTransitionOffset(stationaryMean, transitionOffsetScratch);
 
-        final double[][] precision = workMatrix;
-        copyAndInvertPositiveDefinite(transitionCovariance, transitionCovarianceArrayScratch, precision);
+        copyAndInvertPositiveDefiniteFlat(transitionCovariance, transitionCovarianceArrayScratch, precisionFlat);
         CanonicalTransitionAdjointUtils.fillFromMoments(
-                precision,
+                precisionFlat,
                 transitionCovarianceArrayScratch,
                 transitionMatrixArrayScratch,
                 transitionOffsetScratch,
@@ -213,28 +214,27 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         final double[] transitionOffset = transitionOffsetScratch;
         fillTransitionOffset(stationaryMean, transitionOffset);
 
-        final double logDet = copyAndInvertPositiveDefinite(
+        final double logDet = copyAndInvertPositiveDefiniteFlat(
                 transitionCovariance,
                 transitionCovarianceArrayScratch,
                 out.precisionYY);
 
         // J_yx = -P F
         for (int i = 0; i < d; ++i) {
-            final double[] pRow = out.precisionYY[i];
-            final double[] jyxRow = out.precisionYX[i];
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    sum += pRow[k] * transitionData[k * d + j];
+                    sum += out.precisionYY[iOff + k] * transitionData[k * d + j];
                 }
-                jyxRow[j] = -sum;
+                out.precisionYX[iOff + j] = -sum;
             }
         }
 
         // J_xy = J_yx^T
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
-                out.precisionXY[i][j] = out.precisionYX[j][i];
+                out.precisionXY[i * d + j] = out.precisionYX[j * d + i];
             }
         }
 
@@ -243,18 +243,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             for (int j = 0; j < d; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    sum -= transitionData[k * d + i] * out.precisionYX[k][j];
+                    sum -= transitionData[k * d + i] * out.precisionYX[k * d + j];
                 }
-                out.precisionXX[i][j] = sum;
+                out.precisionXX[i * d + j] = sum;
             }
         }
 
         // h_y = P f
         for (int i = 0; i < d; ++i) {
             double sum = 0.0;
-            final double[] pRow = out.precisionYY[i];
+            final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
-                sum += pRow[j] * transitionOffset[j];
+                sum += out.precisionYY[iOff + j] * transitionOffset[j];
             }
             out.informationY[i] = sum;
         }
@@ -281,6 +281,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                                        final double[] dLogL_df,
                                                        final double[] compressedDAccumulator,
                                                        final double[][] rotationAccumulator) {
+        copySquareMatrixToFlat(dLogL_dF, transitionMatrixArrayScratch);
+        accumulateNativeGradientFromTransition(
+                dt, stationaryMean, transitionMatrixArrayScratch, dLogL_df,
+                compressedDAccumulator, rotationAccumulator);
+    }
+
+    public void accumulateNativeGradientFromTransition(final double dt,
+                                                       final double[] stationaryMean,
+                                                       final double[] dLogL_dF,
+                                                       final double[] dLogL_df,
+                                                       final double[] compressedDAccumulator,
+                                                       final double[][] rotationAccumulator) {
         refreshBasisCaches(dt);
         accumulateNativeGradientFromTransitionCached(
                 dt, stationaryMean, dLogL_dF, dLogL_df, compressedDAccumulator, rotationAccumulator);
@@ -289,6 +301,17 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
                                                                  final double dt,
                                                                  final double[][] dLogL_dV,
+                                                                 final double[] compressedDAccumulator,
+                                                                 final double[][] rotationAccumulator) {
+        copySquareMatrixToFlat(dLogL_dV, transitionCovarianceArrayScratch);
+        accumulateNativeGradientFromCovarianceStationary(
+                diffusionMatrix, dt, transitionCovarianceArrayScratch,
+                compressedDAccumulator, rotationAccumulator);
+    }
+
+    public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
+                                                                 final double dt,
+                                                                 final double[] dLogL_dV,
                                                                  final double[] compressedDAccumulator,
                                                                  final double[][] rotationAccumulator) {
         refreshBasisCaches(dt);
@@ -354,13 +377,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                                                   final double[][] rotationAccumulator) {
         refreshBasisCaches(dt);
         fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        copyDenseMatrixToArray(transitionMatrix, transitionMatrixArrayScratch);
+        copyDenseMatrixToFlat(transitionMatrix, transitionMatrixArrayScratch);
         fillTransitionOffset(stationaryMean, transitionOffsetScratch);
 
-        final double[][] precision = workMatrix;
-        copyAndInvertPositiveDefinite(transitionCovariance, transitionCovarianceArrayScratch, precision);
+        copyAndInvertPositiveDefiniteFlat(transitionCovariance, transitionCovarianceArrayScratch, precisionFlat);
         CanonicalTransitionAdjointUtils.fillFromMoments(
-                precision,
+                precisionFlat,
                 transitionCovarianceArrayScratch,
                 transitionMatrixArrayScratch,
                 transitionOffsetScratch,
@@ -445,7 +467,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
 
     private void accumulateNativeGradientFromTransitionCached(final double dt,
                                                               final double[] stationaryMean,
-                                                              final double[][] dLogL_dF,
+                                                              final double[] dLogL_dF,
                                                               final double[] dLogL_df,
                                                               final double[] compressedDAccumulator,
                                                               final double[][] rotationAccumulator) {
@@ -497,11 +519,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     }
 
     private void accumulateNativeGradientFromCovarianceStationaryCached(final double dt,
-                                                                        final double[][] dLogL_dV,
+                                                                        final double[] dLogL_dV,
                                                                         final double[] compressedDAccumulator,
                                                                         final double[][] rotationAccumulator) {
         final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
-        fillSymmetricDenseMatrix(dLogL_dV, gV);
+        fillSymmetricDenseMatrixFlat(dLogL_dV, gV);
 
         CommonOps.mult(rtMatrix, gV, temp1);
         CommonOps.mult(temp1, rMatrix, hDBasis);
@@ -695,15 +717,16 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     }
 
     private void fillTotalUpstreamOnTransition(final double[] stationaryMean,
-                                               final double[][] dLogL_dF,
+                                               final double[] dLogL_dF,
                                                final double[] dLogL_df,
                                                final DenseMatrix64F out) {
         final int dimension = getDimension();
         final double[] outData = out.data;
         for (int row = 0; row < dimension; ++row) {
+            final int rowOff = row * dimension;
             for (int col = 0; col < dimension; ++col) {
-                outData[row * dimension + col] =
-                        dLogL_dF[row][col] - dLogL_df[row] * stationaryMean[col];
+                outData[rowOff + col] =
+                        dLogL_dF[rowOff + col] - dLogL_df[row] * stationaryMean[col];
             }
         }
     }
@@ -776,6 +799,27 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
                 out[i][j] = data[i * dimension + j];
+            }
+        }
+    }
+
+    private static void copyDenseMatrixToFlat(final DenseMatrix64F source, final double[] out) {
+        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
+    }
+
+    private static void copySquareMatrixToFlat(final double[][] source, final double[] out) {
+        final int dimension = source.length;
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source[i], 0, out, i * dimension, dimension);
+        }
+    }
+
+    private static void fillSymmetricDenseMatrixFlat(final double[] source, final DenseMatrix64F out) {
+        final int dimension = out.numRows;
+        final double[] data = out.data;
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = 0; j < dimension; ++j) {
+                data[i * dimension + j] = 0.5 * (source[i * dimension + j] + source[j * dimension + i]);
             }
         }
     }
@@ -885,6 +929,85 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                     sum += lowerInverseScratch[k][i] * lowerInverseScratch[k][j];
                 }
                 inverseOut[i][j] = sum;
+            }
+        }
+        return 2.0 * logDet;
+    }
+
+    private double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,
+                                                     final double[] matrixOut,
+                                                     final double[] inverseOut) {
+        final int d = source.numRows;
+        final double[] sourceData = source.data;
+        double maxAbsDiagonal = 0.0;
+        for (int i = 0; i < d; ++i) {
+            final double[] cholRow = choleskyScratch[i];
+            final int rowOffset = i * d;
+            for (int j = 0; j < d; ++j) {
+                final double value = 0.5 * (sourceData[rowOffset + j] + sourceData[j * d + i]);
+                matrixOut[rowOffset + j] = value;
+                cholRow[j] = value;
+            }
+            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixOut[rowOffset + i]));
+        }
+
+        final double pivotFloor = Math.max(
+                SPD_JITTER_ABSOLUTE,
+                SPD_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal));
+        int clippedPivotCount = 0;
+        double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
+        double logDet = 0.0;
+        for (int i = 0; i < d; ++i) {
+            final double[] cholRow = choleskyScratch[i];
+            for (int j = 0; j <= i; ++j) {
+                double sum = cholRow[j];
+                for (int k = 0; k < j; ++k) {
+                    sum -= cholRow[k] * choleskyScratch[j][k];
+                }
+                if (i == j) {
+                    minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
+                    if (sum < pivotFloor) {
+                        clippedPivotCount++;
+                        sum = pivotFloor;
+                    }
+                    cholRow[j] = Math.sqrt(sum);
+                    logDet += Math.log(cholRow[j]);
+                } else {
+                    final double denominator = Math.max(choleskyScratch[j][j], Math.sqrt(pivotFloor));
+                    cholRow[j] = sum / denominator;
+                }
+            }
+            for (int j = i + 1; j < d; ++j) {
+                cholRow[j] = 0.0;
+            }
+        }
+        if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
+            System.err.println(
+                    "pdPivotFloorDebug clipped=" + clippedPivotCount
+                            + " dim=" + d
+                            + " minPivotBeforeFloor=" + minPivotBeforeFloor
+                            + " pivotFloor=" + pivotFloor
+                            + " maxAbsDiagonal=" + maxAbsDiagonal);
+        }
+
+        for (int col = 0; col < d; ++col) {
+            for (int row = 0; row < d; ++row) {
+                double sum = (row == col) ? 1.0 : 0.0;
+                for (int k = 0; k < row; ++k) {
+                    sum -= choleskyScratch[row][k] * lowerInverseScratch[k][col];
+                }
+                final double denominator = Math.max(choleskyScratch[row][row], Math.sqrt(pivotFloor));
+                lowerInverseScratch[row][col] = sum / denominator;
+            }
+        }
+
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    sum += lowerInverseScratch[k][i] * lowerInverseScratch[k][j];
+                }
+                inverseOut[i * d + j] = sum;
             }
         }
         return 2.0 * logDet;

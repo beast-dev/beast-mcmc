@@ -241,9 +241,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             final double[] information = new double[dimension];
             for (int i = 0; i < dimension; ++i) {
                 double info = transition.informationX[i] + aboveInformation[i];
+                final int iOffset = i * dimension;
                 for (int j = 0; j < dimension; ++j) {
-                    precision[i][j] = transition.precisionXX[i][j] + parentAbovePrecision.unsafe_get(i, j);
-                    info -= transition.precisionXY[i][j] * observed.unsafe_get(j, 0);
+                    precision[i][j] = transition.precisionXX[iOffset + j] + parentAbovePrecision.unsafe_get(i, j);
+                    info -= transition.precisionXY[iOffset + j] * observed.unsafe_get(j, 0);
                 }
                 information[i] = info;
             }
@@ -267,12 +268,13 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         for (int i = 0; i < dimension; ++i) {
             information[i] = transition.informationX[i] + aboveInformation[i];
             information[dimension + i] = transition.informationY[i] + belowInformation[i];
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                precision[i][j] = transition.precisionXX[i][j] + parentAbovePrecision.unsafe_get(i, j);
-                precision[i][dimension + j] = transition.precisionXY[i][j];
-                precision[dimension + i][j] = transition.precisionYX[i][j];
+                precision[i][j] = transition.precisionXX[iOffset + j] + parentAbovePrecision.unsafe_get(i, j);
+                precision[i][dimension + j] = transition.precisionXY[iOffset + j];
+                precision[dimension + i][j] = transition.precisionYX[iOffset + j];
                 precision[dimension + i][dimension + j] =
-                        transition.precisionYY[i][j] + below.getRawPrecision().unsafe_get(i, j);
+                        transition.precisionYY[iOffset + j] + below.getRawPrecision().unsafe_get(i, j);
             }
         }
         return normalizedLogNormalizer(precision, information, doubled) - transition.logNormalizer;
@@ -327,9 +329,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             final double fTerm = adjoints.dLogL_df[i] * transitionOffset[i];
             score += fTerm;
             fContribution += fTerm;
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                final double matrixTerm = adjoints.dLogL_dF[i][j] * transitionMatrix[i][j];
-                final double covarianceTerm = adjoints.dLogL_dOmega[i][j] * transitionCovariance[i][j];
+                final double matrixTerm = adjoints.dLogL_dF[iOffset + j] * transitionMatrix[i][j];
+                final double covarianceTerm = adjoints.dLogL_dOmega[iOffset + j] * transitionCovariance[i][j];
                 score += matrixTerm;
                 score += covarianceTerm;
                 matrixContribution += matrixTerm;
@@ -372,12 +375,14 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
         for (int i = 0; i < dimension; ++i) {
             double infoY = 0.0;
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 final double p = branchPrecisionMatrix.unsafe_get(i, j);
-                transition.precisionYY[i][j] = p;
-                transition.precisionYX[i][j] = -multiplyEntry(branchPrecisionMatrix, actualization, i, j);
-                transition.precisionXY[j][i] = transition.precisionYX[i][j];
-                transition.precisionXX[i][j] = multiplyEntryTranspose(actualization, branchPrecisionMatrix, actualization, i, j);
+                transition.precisionYY[iOffset + j] = p;
+                transition.precisionYX[iOffset + j] = -multiplyEntry(branchPrecisionMatrix, actualization, i, j);
+                transition.precisionXY[j * dimension + i] = transition.precisionYX[iOffset + j];
+                transition.precisionXX[iOffset + j] =
+                        multiplyEntryTranspose(actualization, branchPrecisionMatrix, actualization, i, j);
                 infoY += p * displacement.unsafe_get(j, 0);
             }
             transition.informationY[i] = infoY;
@@ -421,12 +426,14 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             // numerically consistent.
             for (int i = 0; i < dimension; ++i) {
                 double infoY = 0.0;
+                final int iOffset = i * dimension;
                 for (int j = 0; j < dimension; ++j) {
                     final double p = branchPrecisionMatrix.unsafe_get(i, j);
-                    transition.precisionYY[i][j] = p;
-                    transition.precisionYX[i][j] = -multiplyEntry(branchPrecisionMatrix, actualizationMatrix, i, j);
-                    transition.precisionXY[j][i] = transition.precisionYX[i][j];
-                    transition.precisionXX[i][j] = multiplyEntryTranspose(actualizationMatrix, branchPrecisionMatrix, actualizationMatrix, i, j);
+                    transition.precisionYY[iOffset + j] = p;
+                    transition.precisionYX[iOffset + j] = -multiplyEntry(branchPrecisionMatrix, actualizationMatrix, i, j);
+                    transition.precisionXY[j * dimension + i] = transition.precisionYX[iOffset + j];
+                    transition.precisionXX[iOffset + j] =
+                            multiplyEntryTranspose(actualizationMatrix, branchPrecisionMatrix, actualizationMatrix, i, j);
                     infoY += p * displacementVector.unsafe_get(j, 0);
                 }
                 transition.informationY[i] = infoY;
@@ -457,10 +464,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         multiply(tmp, transitionMatrix, out.precisionXX, dimension);
 
         multiply(transitionTranspose, precision, out.precisionXY, dimension);
-        scaleInPlace(out.precisionXY, -1.0, dimension);
+        scaleInPlace(out.precisionXY, -1.0, dimension * dimension);
 
         multiply(precision, transitionMatrix, out.precisionYX, dimension);
-        scaleInPlace(out.precisionYX, -1.0, dimension);
+        scaleInPlace(out.precisionYX, -1.0, dimension * dimension);
 
         copyMatrix(precision, out.precisionYY, dimension);
 
@@ -557,11 +564,35 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         }
     }
 
+    private static void multiply(final double[][] left,
+                                 final double[][] right,
+                                 final double[] out,
+                                 final int dimensionUsed) {
+        for (int i = 0; i < dimensionUsed; ++i) {
+            final int iOffset = i * dimensionUsed;
+            for (int j = 0; j < dimensionUsed; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dimensionUsed; ++k) {
+                    sum += left[i][k] * right[k][j];
+                }
+                out[iOffset + j] = sum;
+            }
+        }
+    }
+
     private static void copyMatrix(final double[][] source,
                                    final double[][] target,
                                    final int dimensionUsed) {
         for (int i = 0; i < dimensionUsed; ++i) {
             System.arraycopy(source[i], 0, target[i], 0, dimensionUsed);
+        }
+    }
+
+    private static void copyMatrix(final double[][] source,
+                                   final double[] target,
+                                   final int dimensionUsed) {
+        for (int i = 0; i < dimensionUsed; ++i) {
+            System.arraycopy(source[i], 0, target, i * dimensionUsed, dimensionUsed);
         }
     }
 
@@ -608,16 +639,22 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         fillInformation(abovePrecision, aboveMean, aboveInformation);
         fillInformation(belowPrecision, belowMean, belowInformation);
 
+        final int pairDimension = pairPosterior.getDimension();
         for (int i = 0; i < dimension; ++i) {
             pairPosterior.information[i] = transition.informationX[i] + aboveInformation[i];
             pairPosterior.information[dimension + i] = transition.informationY[i] + belowInformation[i];
+            final int pairRowOffset = i * pairDimension;
+            final int transitionRowOffset = i * dimension;
+            final int lowerRowOffset = (dimension + i) * pairDimension;
             for (int j = 0; j < dimension; ++j) {
-                pairPosterior.precision[i][j] =
-                        transition.precisionXX[i][j] + abovePrecision.unsafe_get(i, j);
-                pairPosterior.precision[i][dimension + j] = transition.precisionXY[i][j];
-                pairPosterior.precision[dimension + i][j] = transition.precisionYX[i][j];
-                pairPosterior.precision[dimension + i][dimension + j] =
-                        transition.precisionYY[i][j] + belowPrecision.unsafe_get(i, j);
+                pairPosterior.precision[pairRowOffset + j] =
+                        transition.precisionXX[transitionRowOffset + j] + abovePrecision.unsafe_get(i, j);
+                pairPosterior.precision[pairRowOffset + dimension + j] =
+                        transition.precisionXY[transitionRowOffset + j];
+                pairPosterior.precision[lowerRowOffset + j] =
+                        transition.precisionYX[transitionRowOffset + j];
+                pairPosterior.precision[lowerRowOffset + dimension + j] =
+                        transition.precisionYY[transitionRowOffset + j] + belowPrecision.unsafe_get(i, j);
             }
         }
         pairPosterior.logNormalizer = 0.0;
@@ -647,10 +684,11 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
         for (int i = 0; i < dimension; ++i) {
             double info = transition.informationX[i] + aboveInformation[i];
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                info -= transition.precisionXY[i][j] * observedChild.unsafe_get(j, 0);
-                currentPosterior.precision[i][j] =
-                        transition.precisionXX[i][j] + abovePrecision.unsafe_get(i, j);
+                info -= transition.precisionXY[iOffset + j] * observedChild.unsafe_get(j, 0);
+                currentPosterior.precision[iOffset + j] =
+                        transition.precisionXX[iOffset + j] + abovePrecision.unsafe_get(i, j);
             }
             currentPosterior.information[i] = info;
         }
@@ -667,10 +705,11 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                 final double xj = currentMeanScratch[j];
                 final double yj = observedChild.unsafe_get(j, 0);
                 final double exx = currentCovarianceScratch[i][j] + xi * xj;
-                contribution.dLogL_dPrecisionXX[i][j] = -0.5 * exx;
-                contribution.dLogL_dPrecisionXY[i][j] = -0.5 * (xi * yj);
-                contribution.dLogL_dPrecisionYX[i][j] = -0.5 * (yi * xj);
-                contribution.dLogL_dPrecisionYY[i][j] = -0.5 * (yi * yj);
+                final int ij = i * dimension + j;
+                contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
+                contribution.dLogL_dPrecisionXY[ij] = -0.5 * (xi * yj);
+                contribution.dLogL_dPrecisionYX[ij] = -0.5 * (yi * xj);
+                contribution.dLogL_dPrecisionYY[ij] = -0.5 * (yi * yj);
             }
         }
         contribution.dLogL_dLogNormalizer = -1.0;
@@ -730,10 +769,11 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                         ? yi * yj
                         : reducedCovariance[reducedI][reducedJ] + yi * yj;
 
-                contribution.dLogL_dPrecisionXX[i][j] = -0.5 * exx;
-                contribution.dLogL_dPrecisionXY[i][j] = -0.5 * exy;
-                contribution.dLogL_dPrecisionYX[i][j] = -0.5 * eyx;
-                contribution.dLogL_dPrecisionYY[i][j] = -0.5 * eyy;
+                final int ij = i * dimension + j;
+                contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
+                contribution.dLogL_dPrecisionXY[ij] = -0.5 * exy;
+                contribution.dLogL_dPrecisionYX[ij] = -0.5 * eyx;
+                contribution.dLogL_dPrecisionYY[ij] = -0.5 * eyy;
             }
         }
         contribution.dLogL_dLogNormalizer = -1.0;
@@ -758,11 +798,12 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                         reducedCovarianceScratch[d + i][j] + nextMeanI * currentMeanJ;
                 final double nextSecondMoment =
                         reducedCovarianceScratch[d + i][d + j] + nextMeanI * nextMeanJ;
-                contribution.dLogL_dPrecisionXX[i][j] = -0.5 * currentSecondMoment;
-                contribution.dLogL_dPrecisionXY[i][j] =
+                final int ij = i * d + j;
+                contribution.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
+                contribution.dLogL_dPrecisionXY[ij] =
                         -0.5 * (reducedCovarianceScratch[i][d + j] + currentMeanI * nextMeanJ);
-                contribution.dLogL_dPrecisionYX[i][j] = -0.5 * crossSecondMoment;
-                contribution.dLogL_dPrecisionYY[i][j] = -0.5 * nextSecondMoment;
+                contribution.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
+                contribution.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
             }
         }
         contribution.dLogL_dLogNormalizer = -1.0;
@@ -1353,17 +1394,18 @@ public final class TimeSeriesOUCanonicalBranchWiring {
                                             final double[] reducedInformation) {
         for (int i = 0; i < dimension; ++i) {
             double information = transition.informationX[i] + aboveInformation[i];
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                reducedPrecision[i][j] = transition.precisionXX[i][j] + abovePrecision.unsafe_get(i, j);
+                reducedPrecision[i][j] = transition.precisionXX[iOffset + j] + abovePrecision.unsafe_get(i, j);
             }
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
                 final int observedIndex = observedIndexScratch[observed];
-                information -= transition.precisionXY[i][observedIndex] * observedChild.unsafe_get(observedIndex, 0);
+                information -= transition.precisionXY[iOffset + observedIndex] * observedChild.unsafe_get(observedIndex, 0);
             }
             reducedInformation[i] = information;
             for (int missing = 0; missing < missingCount; ++missing) {
                 reducedPrecision[i][dimension + missing] =
-                        transition.precisionXY[i][missingIndexScratch[missing]];
+                        transition.precisionXY[iOffset + missingIndexScratch[missing]];
             }
         }
 
@@ -1371,17 +1413,18 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             final int childIndex = missingIndexScratch[missing];
             final int row = dimension + missing;
             double information = transition.informationY[childIndex];
+            final int childOffset = childIndex * dimension;
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
                 final int observedIndex = observedIndexScratch[observed];
-                information -= transition.precisionYY[childIndex][observedIndex] * observedChild.unsafe_get(observedIndex, 0);
+                information -= transition.precisionYY[childOffset + observedIndex] * observedChild.unsafe_get(observedIndex, 0);
             }
             reducedInformation[row] = information;
             for (int j = 0; j < dimension; ++j) {
-                reducedPrecision[row][j] = transition.precisionYX[childIndex][j];
+                reducedPrecision[row][j] = transition.precisionYX[childOffset + j];
             }
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
                 reducedPrecision[row][dimension + otherMissing] =
-                        transition.precisionYY[childIndex][missingIndexScratch[otherMissing]];
+                        transition.precisionYY[childOffset + missingIndexScratch[otherMissing]];
             }
         }
     }
@@ -1401,9 +1444,10 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             final int i = observedIndexScratch[oi];
             final double yi = observedChild.unsafe_get(i, 0);
             observedLinear += transition.informationY[i] * yi;
+            final int iOffset = i * dimension;
             for (int oj = 0; oj < observedCount; ++oj) {
                 final int j = observedIndexScratch[oj];
-                observedQuadratic += yi * transition.precisionYY[i][j] * observedChild.unsafe_get(j, 0);
+                observedQuadratic += yi * transition.precisionYY[iOffset + j] * observedChild.unsafe_get(j, 0);
             }
         }
 
@@ -1414,16 +1458,12 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     }
 
     private void clearContribution() {
-        for (int i = 0; i < dimension; ++i) {
-            contribution.dLogL_dInformationX[i] = 0.0;
-            contribution.dLogL_dInformationY[i] = 0.0;
-            for (int j = 0; j < dimension; ++j) {
-                contribution.dLogL_dPrecisionXX[i][j] = 0.0;
-                contribution.dLogL_dPrecisionXY[i][j] = 0.0;
-                contribution.dLogL_dPrecisionYX[i][j] = 0.0;
-                contribution.dLogL_dPrecisionYY[i][j] = 0.0;
-            }
-        }
+        zero(contribution.dLogL_dInformationX);
+        zero(contribution.dLogL_dInformationY);
+        zero(contribution.dLogL_dPrecisionXX);
+        zero(contribution.dLogL_dPrecisionXY);
+        zero(contribution.dLogL_dPrecisionYX);
+        zero(contribution.dLogL_dPrecisionYY);
         contribution.dLogL_dLogNormalizer = 0.0;
     }
 
@@ -1585,6 +1625,28 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             }
         }
         return logDet;
+    }
+
+    private double invertSymmetricPositiveDefinite(final double[] matrix,
+                                                   final int dimensionUsed,
+                                                   final double[][] inverseOut) {
+        final double[][] square = reducedPrecisionScratch;
+        for (int i = 0; i < dimensionUsed; ++i) {
+            System.arraycopy(matrix, i * dimensionUsed, square[i], 0, dimensionUsed);
+        }
+        return invertSymmetricPositiveDefinite(square, dimensionUsed, inverseOut);
+    }
+
+    private static double quadraticForm(final double[] matrix, final DenseMatrix64F vector) {
+        double sum = 0.0;
+        final int dimensionUsed = vector.numRows;
+        for (int i = 0; i < dimensionUsed; ++i) {
+            final int iOffset = i * dimensionUsed;
+            for (int j = 0; j < dimensionUsed; ++j) {
+                sum += vector.unsafe_get(i, 0) * matrix[iOffset + j] * vector.unsafe_get(j, 0);
+            }
+        }
+        return sum;
     }
 
     private static double quadraticForm(final double[][] matrix, final DenseMatrix64F vector) {

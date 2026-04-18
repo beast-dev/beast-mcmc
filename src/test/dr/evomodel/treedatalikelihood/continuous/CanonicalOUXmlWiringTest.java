@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUMessagePasserComputer;
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalTipObservationAdapter;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
@@ -222,12 +223,15 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
         final TreeDataLikelihood treeDataLikelihood =
                 new TreeDataLikelihood(delegate, treeModel, rateModel);
 
+        final CanonicalTipObservation[] tipObservations =
+                allocateCanonicalTipObservations(treeModel.getExternalNodeCount(), dimTrait);
+        CanonicalTipObservationAdapter.fillTipObservations(treeModel, dataModel, dimTrait, tipObservations);
         final CanonicalOUMessagePasserComputer standaloneComputer =
                 new CanonicalOUMessagePasserComputer(
                         treeModel,
                         diffusionDelegate.getElasticModel(),
                         diffusionModel,
-                        CanonicalTipObservationAdapter.extractTipObservations(treeModel, dataModel, dimTrait),
+                        tipObservations,
                         rootPrior,
                         diffusionDelegate.getCanonicalStationaryMeanParameter(),
                         rateModel,
@@ -352,6 +356,14 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                 new TreeDataLikelihood(delegate, treeModel, rateModel);
 
         return new XmlStyleCanonicalPrecisionSetup(precisionMatrix, delegate, treeDataLikelihood);
+    }
+
+    private static CanonicalTipObservation[] allocateCanonicalTipObservations(final int tipCount, final int dim) {
+        final CanonicalTipObservation[] observations = new CanonicalTipObservation[tipCount];
+        for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+            observations[tipIdx] = new CanonicalTipObservation(dim);
+        }
+        return observations;
     }
 
     private static final class XmlStyleCanonicalOUSetup {

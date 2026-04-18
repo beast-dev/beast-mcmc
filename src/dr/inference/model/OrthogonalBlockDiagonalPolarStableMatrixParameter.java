@@ -57,11 +57,10 @@ public final class OrthogonalBlockDiagonalPolarStableMatrixParameter
 
     @Override
     protected void fillTwoByTwoBlock(final int blockIndex,
-                                     final double[][] blockParameterValues,
                                      final double[] outBlock) {
-        final double rho = blockParameterValues[0][blockIndex];
-        final double theta = blockParameterValues[1][blockIndex];
-        final double t = blockParameterValues[2][blockIndex];
+        final double rho = getTwoByTwoBlockParameterValue(0, blockIndex);
+        final double theta = getTwoByTwoBlockParameterValue(1, blockIndex);
+        final double t = getTwoByTwoBlockParameterValue(2, blockIndex);
 
         final double cos = Math.cos(theta);
         final double sin = Math.sin(theta);
@@ -78,11 +77,10 @@ public final class OrthogonalBlockDiagonalPolarStableMatrixParameter
                                               final double g01,
                                               final double g10,
                                               final double g11,
-                                              final double[][] blockParameterValues,
                                               final double[] out,
                                               final int baseOffset) {
-        final double rho = blockParameterValues[0][blockIndex];
-        final double theta = blockParameterValues[1][blockIndex];
+        final double rho = getTwoByTwoBlockParameterValue(0, blockIndex);
+        final double theta = getTwoByTwoBlockParameterValue(1, blockIndex);
 
         final double cos = Math.cos(theta);
         final double sin = Math.sin(theta);

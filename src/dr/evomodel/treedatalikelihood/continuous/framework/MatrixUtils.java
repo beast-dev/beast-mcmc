@@ -32,6 +32,8 @@ import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
+
 /**
  * Stateless matrix utilities used internally by the framework.
  *
@@ -68,6 +70,94 @@ public final class MatrixUtils {
         boolean ok = CommonOps.invert(m, inv);
         if (!ok) throw new IllegalArgumentException("Matrix is not invertible (singular or ill-conditioned).");
         System.arraycopy(inv.data, 0, dst, 0, dim * dim);
+    }
+
+    /**
+     * Inverts a compact symmetric positive-definite matrix without dynamic allocation.
+     *
+     * <p>The leading {@code dim x dim} block of {@code src} is interpreted as a row-major
+     * compact matrix and is overwritten with its lower-triangular Cholesky factor. The
+     * leading {@code dim x dim} block of {@code dst} receives the inverse matrix.
+     *
+     * <p>The returned value is {@code log |src|}, i.e. the log-determinant of the original
+     * variance matrix before overwrite.
+     *
+     * @param src row-major compact SPD matrix, overwritten in-place with its Cholesky factor
+     * @param dst output inverse matrix buffer; may be larger than {@code dim x dim}
+     * @param dim compact matrix dimension
+     * @param forwardWork temporary vector of length at least {@code dim}
+     * @param backwardWork temporary vector of length at least {@code dim}
+     * @return {@code log |src|}
+     */
+    public static double invertSymmetricPositiveDefiniteCompact(final double[] src,
+                                                                final double[] dst,
+                                                                final int dim,
+                                                                final double[] forwardWork,
+                                                                final double[] backwardWork) {
+        if (forwardWork.length < dim || backwardWork.length < dim) {
+            throw new IllegalArgumentException("workspace vectors are too small for compact inversion");
+        }
+        if (src.length < dim * dim || dst.length < dim * dim) {
+            throw new IllegalArgumentException("matrix buffers are too small for compact inversion");
+        }
+
+        double logDeterminant = 0.0;
+        for (int row = 0; row < dim; ++row) {
+            final int rowOffset = row * dim;
+            for (int col = 0; col <= row; ++col) {
+                double sum = src[rowOffset + col];
+                final int colOffset = col * dim;
+                for (int k = 0; k < col; ++k) {
+                    sum -= src[rowOffset + k] * src[colOffset + k];
+                }
+                if (row == col) {
+                    if (!(sum > 0.0) || Double.isNaN(sum)) {
+                        throw new IllegalArgumentException("Matrix is not symmetric positive definite.");
+                    }
+                    final double diagonal = Math.sqrt(sum);
+                    src[rowOffset + row] = diagonal;
+                    logDeterminant += 2.0 * Math.log(diagonal);
+                } else {
+                    src[rowOffset + col] = sum / src[colOffset + col];
+                }
+            }
+            Arrays.fill(src, rowOffset + row + 1, rowOffset + dim, 0.0);
+        }
+
+        Arrays.fill(dst, 0, dim * dim, 0.0);
+        for (int column = 0; column < dim; ++column) {
+            for (int row = 0; row < dim; ++row) {
+                double sum = row == column ? 1.0 : 0.0;
+                final int rowOffset = row * dim;
+                for (int k = 0; k < row; ++k) {
+                    sum -= src[rowOffset + k] * forwardWork[k];
+                }
+                forwardWork[row] = sum / src[rowOffset + row];
+            }
+
+            for (int row = dim - 1; row >= 0; --row) {
+                double sum = forwardWork[row];
+                for (int k = row + 1; k < dim; ++k) {
+                    sum -= src[k * dim + row] * backwardWork[k];
+                }
+                backwardWork[row] = sum / src[row * dim + row];
+            }
+
+            for (int row = 0; row < dim; ++row) {
+                dst[row * dim + column] = backwardWork[row];
+            }
+        }
+
+        for (int row = 0; row < dim; ++row) {
+            final int rowOffset = row * dim;
+            for (int col = row + 1; col < dim; ++col) {
+                final double sym = 0.5 * (dst[rowOffset + col] + dst[col * dim + row]);
+                dst[rowOffset + col] = sym;
+                dst[col * dim + row] = sym;
+            }
+        }
+
+        return logDeterminant;
     }
 
     /**

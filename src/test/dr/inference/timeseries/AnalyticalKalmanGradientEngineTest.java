@@ -121,7 +121,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
             linear += state.information[i] * value[i];
             double row = 0.0;
             for (int j = 0; j < d; ++j) {
-                row += state.precision[i][j] * value[j];
+                row += state.precision[i * d + j] * value[j];
             }
             quadratic += value[i] * row;
         }
@@ -163,15 +163,28 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
             double yx = 0.0;
             double yy = 0.0;
             for (int j = 0; j < d; ++j) {
-                xx += transition.precisionXX[i][j] * previousState[j];
-                xy += transition.precisionXY[i][j] * nextState[j];
-                yx += transition.precisionYX[i][j] * previousState[j];
-                yy += transition.precisionYY[i][j] * nextState[j];
+                final int ij = i * d + j;
+                xx += transition.precisionXX[ij] * previousState[j];
+                xy += transition.precisionXY[ij] * nextState[j];
+                yx += transition.precisionYX[ij] * previousState[j];
+                yy += transition.precisionYY[ij] * nextState[j];
             }
             quadratic += previousState[i] * (xx + xy);
             quadratic += nextState[i] * (yx + yy);
         }
         return -0.5 * quadratic + linear - transition.logNormalizer;
+    }
+
+    private static double[][] toMatrix(final double[] flat, final int dimension) {
+        final double[][] out = new double[dimension][dimension];
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(flat, i * dimension, out[i], 0, dimension);
+        }
+        return out;
+    }
+
+    private static double flatEntry(final double[] flat, final int dimension, final int row, final int column) {
+        return flat[row * dimension + column];
     }
 
     private static double[][] invertSymmetricPositiveDefinite(double[][] matrix) {
@@ -285,6 +298,8 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final int dimension = process.getStateDimension();
         final double[] mean = new double[dimension];
         final CanonicalBranchMessageContribution contribution = new CanonicalBranchMessageContribution(dimension);
+        final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace =
+                new CanonicalBranchMessageContributionUtils.Workspace(dimension);
         final CanonicalLocalTransitionAdjoints adjoints = new CanonicalLocalTransitionAdjoints(dimension);
         final CanonicalTransitionAdjointUtils.Workspace workspace =
                 new CanonicalTransitionAdjointUtils.Workspace(dimension);
@@ -293,19 +308,19 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         process.getInitialMean(mean);
         for (int timeIndex = 0; timeIndex < trajectory.timeCount - 1; ++timeIndex) {
             CanonicalBranchMessageContributionUtils.fillFromPairState(
-                    trajectory.branchPairStates[timeIndex], contribution);
+                    trajectory.branchPairStates[timeIndex], contributionWorkspace, contribution);
             CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                     trajectory.transitions[timeIndex], contribution, workspace, adjoints);
             final double dt = grid.getDelta(timeIndex, timeIndex + 1);
             process.accumulateSelectionGradient(
                     dt,
                     mean,
-                    adjoints.dLogL_dF,
+                    toMatrix(adjoints.dLogL_dF, dimension),
                     adjoints.dLogL_df,
                     gradient);
             process.accumulateSelectionGradientFromCovariance(
                     dt,
-                    adjoints.dLogL_dOmega,
+                    toMatrix(adjoints.dLogL_dOmega, dimension),
                     gradient);
         }
         return gradient;
@@ -2237,13 +2252,17 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                     denseTransition.informationY[i], orthogonalTransition.informationY[i], 1e-10);
             for (int j = 0; j < 2; ++j) {
                 assertEquals("Orthogonal block canonical Jxx must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionXX[i][j], orthogonalTransition.precisionXX[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionXX, 2, i, j),
+                        flatEntry(orthogonalTransition.precisionXX, 2, i, j), 1e-10);
                 assertEquals("Orthogonal block canonical Jxy must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionXY[i][j], orthogonalTransition.precisionXY[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionXY, 2, i, j),
+                        flatEntry(orthogonalTransition.precisionXY, 2, i, j), 1e-10);
                 assertEquals("Orthogonal block canonical Jyx must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionYX[i][j], orthogonalTransition.precisionYX[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionYX, 2, i, j),
+                        flatEntry(orthogonalTransition.precisionYX, 2, i, j), 1e-10);
                 assertEquals("Orthogonal block canonical Jyy must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionYY[i][j], orthogonalTransition.precisionYY[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionYY, 2, i, j),
+                        flatEntry(orthogonalTransition.precisionYY, 2, i, j), 1e-10);
             }
         }
         assertEquals("Orthogonal block canonical log-normalizer must match dense",
@@ -2327,13 +2346,17 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                     denseTransition.informationY[i], orthogonalTransition.informationY[i], 1e-10);
             for (int j = 0; j < 4; ++j) {
                 assertEquals("Orthogonal block 4D canonical Jxx must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionXX[i][j], orthogonalTransition.precisionXX[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionXX, 4, i, j),
+                        flatEntry(orthogonalTransition.precisionXX, 4, i, j), 1e-10);
                 assertEquals("Orthogonal block 4D canonical Jxy must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionXY[i][j], orthogonalTransition.precisionXY[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionXY, 4, i, j),
+                        flatEntry(orthogonalTransition.precisionXY, 4, i, j), 1e-10);
                 assertEquals("Orthogonal block 4D canonical Jyx must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionYX[i][j], orthogonalTransition.precisionYX[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionYX, 4, i, j),
+                        flatEntry(orthogonalTransition.precisionYX, 4, i, j), 1e-10);
                 assertEquals("Orthogonal block 4D canonical Jyy must match dense at [" + i + "," + j + "]",
-                        denseTransition.precisionYY[i][j], orthogonalTransition.precisionYY[i][j], 1e-10);
+                        flatEntry(denseTransition.precisionYY, 4, i, j),
+                        flatEntry(orthogonalTransition.precisionYY, 4, i, j), 1e-10);
             }
         }
         assertEquals("Orthogonal block 4D canonical log-normalizer must match dense",
@@ -2385,15 +2408,21 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         orthogonalSmoother.getLogLikelihood();
 
         final CanonicalBranchMessageContribution contribution = new CanonicalBranchMessageContribution(2);
+        final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace2D =
+                new CanonicalBranchMessageContributionUtils.Workspace(2);
         CanonicalBranchMessageContributionUtils.fillFromPairState(
                 orthogonalSmoother.getCanonicalTrajectory().branchPairStates[0],
+                contributionWorkspace2D,
                 contribution);
 
         final CanonicalGaussianTransition denseTransition = new CanonicalGaussianTransition(2);
         denseModel.process.getRepresentation(CanonicalGaussianBranchTransitionKernel.class)
                 .fillCanonicalTransition(dt, denseTransition);
         final CanonicalLocalTransitionAdjoints denseAdjoints = new CanonicalLocalTransitionAdjoints(2);
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(denseTransition, contribution, denseAdjoints);
+        final CanonicalTransitionAdjointUtils.Workspace denseAdjointWorkspace2D =
+                new CanonicalTransitionAdjointUtils.Workspace(2);
+        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                denseTransition, contribution, denseAdjointWorkspace2D, denseAdjoints);
 
         final double[] stationaryMean = new double[2];
         orthogonalModel.process.getInitialMean(stationaryMean);
@@ -2413,9 +2442,11 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                     denseAdjoints.dLogL_df[i], fastAdjoints.dLogL_df[i], 1e-10);
             for (int j = 0; j < 2; ++j) {
                 assertEquals("Orthogonal block local canonical dF adjoint must match dense at [" + i + "," + j + "]",
-                        denseAdjoints.dLogL_dF[i][j], fastAdjoints.dLogL_dF[i][j], 1e-10);
+                        flatEntry(denseAdjoints.dLogL_dF, 2, i, j),
+                        flatEntry(fastAdjoints.dLogL_dF, 2, i, j), 1e-10);
                 assertEquals("Orthogonal block local canonical dOmega adjoint must match dense at [" + i + "," + j + "]",
-                        denseAdjoints.dLogL_dOmega[i][j], fastAdjoints.dLogL_dOmega[i][j], 1e-10);
+                        flatEntry(denseAdjoints.dLogL_dOmega, 2, i, j),
+                        flatEntry(fastAdjoints.dLogL_dOmega, 2, i, j), 1e-10);
             }
         }
     }
@@ -2488,15 +2519,21 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         orthogonalSmoother.getLogLikelihood();
 
         final CanonicalBranchMessageContribution contribution = new CanonicalBranchMessageContribution(4);
+        final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace4D =
+                new CanonicalBranchMessageContributionUtils.Workspace(4);
         CanonicalBranchMessageContributionUtils.fillFromPairState(
                 orthogonalSmoother.getCanonicalTrajectory().branchPairStates[0],
+                contributionWorkspace4D,
                 contribution);
 
         final CanonicalGaussianTransition denseTransition = new CanonicalGaussianTransition(4);
         denseModel.process.getRepresentation(CanonicalGaussianBranchTransitionKernel.class)
                 .fillCanonicalTransition(dt, denseTransition);
         final CanonicalLocalTransitionAdjoints denseAdjoints = new CanonicalLocalTransitionAdjoints(4);
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(denseTransition, contribution, denseAdjoints);
+        final CanonicalTransitionAdjointUtils.Workspace denseAdjointWorkspace4D =
+                new CanonicalTransitionAdjointUtils.Workspace(4);
+        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                denseTransition, contribution, denseAdjointWorkspace4D, denseAdjoints);
 
         final double[] stationaryMean = new double[4];
         orthogonalModel.process.getInitialMean(stationaryMean);
@@ -2516,9 +2553,11 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                     denseAdjoints.dLogL_df[i], fastAdjoints.dLogL_df[i], 1e-10);
             for (int j = 0; j < 4; ++j) {
                 assertEquals("Orthogonal block 4D local canonical dF adjoint must match dense at [" + i + "," + j + "]",
-                        denseAdjoints.dLogL_dF[i][j], fastAdjoints.dLogL_dF[i][j], 1e-10);
+                        flatEntry(denseAdjoints.dLogL_dF, 4, i, j),
+                        flatEntry(fastAdjoints.dLogL_dF, 4, i, j), 1e-10);
                 assertEquals("Orthogonal block 4D local canonical dOmega adjoint must match dense at [" + i + "," + j + "]",
-                        denseAdjoints.dLogL_dOmega[i][j], fastAdjoints.dLogL_dOmega[i][j], 1e-10);
+                        flatEntry(denseAdjoints.dLogL_dOmega, 4, i, j),
+                        flatEntry(fastAdjoints.dLogL_dOmega, 4, i, j), 1e-10);
             }
         }
     }

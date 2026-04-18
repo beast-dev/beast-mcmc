@@ -23,15 +23,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final CanonicalBranchPosterior branchPosterior;
-    private final double[][] stepCovInv;
-    private final double[][] tempDxD;
     private final CanonicalBranchMessageContribution localContribution;
+    private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     private final CanonicalLocalTransitionAdjoints localAdjoints;
-    private final double[][] branchTransitionMatrix;
-    private final double[] branchTransitionOffset;
-    private final double[][] tempDxD2;
-    private final double[] dLogL_df;
+    private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final double[][] dLogL_dF;
     private final double[][] dLogL_dV;
     private final double[] nativeCompressedGradientScratch;
@@ -56,15 +51,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.stateDimension = stateDimension;
         this.processModel = processModel;
 
-        this.branchPosterior = new CanonicalBranchPosterior(stateDimension);
-        this.stepCovInv = new double[stateDimension][stateDimension];
-        this.tempDxD = new double[stateDimension][stateDimension];
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
+        this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
-        this.branchTransitionMatrix = new double[stateDimension][stateDimension];
-        this.branchTransitionOffset = new double[stateDimension];
-        this.tempDxD2 = new double[stateDimension][stateDimension];
-        this.dLogL_df = new double[stateDimension];
+        this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
         this.dLogL_dF = new double[stateDimension][stateDimension];
         this.dLogL_dV = new double[stateDimension][stateDimension];
         this.nativeCompressedGradientScratch = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
@@ -123,13 +113,20 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         final double[] gradientAccumulator = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
-            branchPosterior.fillFromCanonicalPairState(trajectory.branchPairStates[t]);
-            branchPosterior.fillLocalMessageContribution(localContribution);
-            fillTransitionMoments(trajectory.transitions[t]);
-            fillSelectionTransitionAdjoints(trajectory.transitions[t]);
-            repr.accumulateSelectionGradient(t, t + 1, timeGrid, dLogL_dF, dLogL_df, gradientAccumulator);
+            CanonicalBranchMessageContributionUtils.fillFromPairState(
+                    trajectory.branchPairStates[t],
+                    contributionWorkspace,
+                    localContribution);
+            CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                    trajectory.transitions[t],
+                    localContribution,
+                    canonicalAdjointWorkspace,
+                    localAdjoints);
+            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dF, dLogL_dF, d);
+            repr.accumulateSelectionGradient(
+                    t, t + 1, timeGrid, dLogL_dF, localAdjoints.dLogL_df, gradientAccumulator);
 
-            fillCovarianceAdjoint(trajectory.transitions[t]);
+            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dOmega, dLogL_dV, d);
             repr.accumulateSelectionGradientFromCovariance(t, t + 1, timeGrid, dLogL_dV, gradientAccumulator);
         }
 
@@ -168,6 +165,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
             final double dt = timeGrid.getDelta(t, t + 1);
             CanonicalBranchMessageContributionUtils.fillFromPairState(
                     trajectory.branchPairStates[t],
+                    contributionWorkspace,
                     localContribution);
             orthogonalParameterization.accumulateNativeGradientFromCanonicalContribution(
                     processModel.getDiffusionMatrix(),
@@ -181,89 +179,6 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
         return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradient);
-    }
-
-    private void fillTransitionMoments(final dr.inference.timeseries.representation.CanonicalGaussianTransition transition) {
-        GaussianMatrixOps.copyMatrix(transition.precisionYY, stepCovInv);
-        final GaussianMatrixOps.CholeskyFactor stepChol =
-                GaussianMatrixOps.cholesky(stepCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-
-        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, transition.precisionYX, branchTransitionMatrix);
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                branchTransitionMatrix[i][j] = -branchTransitionMatrix[i][j];
-            }
-        }
-        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, transition.informationY, branchTransitionOffset);
-    }
-
-    private void fillSelectionTransitionAdjoints(final dr.inference.timeseries.representation.CanonicalGaussianTransition transition) {
-        final int d = stateDimension;
-        final double[][] gXx = localContribution.dLogL_dPrecisionXX;
-        final double[][] gXy = localContribution.dLogL_dPrecisionXY;
-        final double[][] gYx = localContribution.dLogL_dPrecisionYX;
-        final double[] gX = localContribution.dLogL_dInformationX;
-        final double[] gY = localContribution.dLogL_dInformationY;
-
-        for (int i = 0; i < d; ++i) {
-            double sum = 0.0;
-            for (int k = 0; k < d; ++k) {
-                sum += transition.precisionYX[i][k] * gX[k];
-                sum += transition.precisionYY[i][k] * gY[k];
-            }
-            dLogL_df[i] = sum + localContribution.dLogL_dLogNormalizer * transition.informationY[i];
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = -transition.informationY[i] * gX[j];
-                for (int k = 0; k < d; ++k) {
-                    sum -= transition.precisionYX[i][k] * gXx[k][j];
-                    sum -= transition.precisionYX[i][k] * gXx[j][k];
-                    sum -= transition.precisionYY[i][k] * gXy[j][k];
-                    sum -= transition.precisionYY[i][k] * gYx[k][j];
-                }
-                dLogL_dF[i][j] = sum;
-            }
-        }
-    }
-
-    private void fillCovarianceAdjoint(final dr.inference.timeseries.representation.CanonicalGaussianTransition transition) {
-        final int d = stateDimension;
-        final double[][] gXx = localContribution.dLogL_dPrecisionXX;
-        final double[][] gXy = localContribution.dLogL_dPrecisionXY;
-        final double[][] gYx = localContribution.dLogL_dPrecisionYX;
-        final double[][] gYy = localContribution.dLogL_dPrecisionYY;
-        final double[] gX = localContribution.dLogL_dInformationX;
-        final double[] gY = localContribution.dLogL_dInformationY;
-        final double g0 = localContribution.dLogL_dLogNormalizer;
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = gYy[i][j]
-                        + gY[i] * branchTransitionOffset[j]
-                        + 0.5 * g0 * (branchTransitionOffset[i] * branchTransitionOffset[j] - stepCovInv[i][j]);
-                for (int a = 0; a < d; ++a) {
-                    sum -= branchTransitionMatrix[i][a] * gXy[a][j];
-                    sum -= gYx[i][a] * branchTransitionMatrix[j][a];
-                    sum -= branchTransitionMatrix[i][a] * gX[a] * branchTransitionOffset[j];
-                    for (int b = 0; b < d; ++b) {
-                        sum += branchTransitionMatrix[i][a] * gXx[a][b] * branchTransitionMatrix[j][b];
-                    }
-                }
-                tempDxD[i][j] = sum;
-            }
-        }
-
-        GaussianMatrixOps.multiplyMatrixMatrix(transition.precisionYY, tempDxD, tempDxD2);
-        GaussianMatrixOps.multiplyMatrixMatrix(tempDxD2, transition.precisionYY, dLogL_dV);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                dLogL_dV[i][j] = -dLogL_dV[i][j];
-            }
-        }
-        GaussianMatrixOps.symmetrize(dLogL_dV);
     }
 
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,

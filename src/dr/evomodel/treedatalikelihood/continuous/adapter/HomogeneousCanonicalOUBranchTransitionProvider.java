@@ -207,16 +207,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     private static void copyTransition(final CanonicalGaussianTransition source,
                                        final CanonicalGaussianTransition target) {
         final int dimension = source.getDimension();
-        for (int i = 0; i < dimension; i++) {
-            target.informationX[i] = source.informationX[i];
-            target.informationY[i] = source.informationY[i];
-            for (int j = 0; j < dimension; j++) {
-                target.precisionXX[i][j] = source.precisionXX[i][j];
-                target.precisionXY[i][j] = source.precisionXY[i][j];
-                target.precisionYX[i][j] = source.precisionYX[i][j];
-                target.precisionYY[i][j] = source.precisionYY[i][j];
-            }
-        }
+        System.arraycopy(source.informationX, 0, target.informationX, 0, dimension);
+        System.arraycopy(source.informationY, 0, target.informationY, 0, dimension);
+        System.arraycopy(source.precisionXX, 0, target.precisionXX, 0, dimension * dimension);
+        System.arraycopy(source.precisionXY, 0, target.precisionXY, 0, dimension * dimension);
+        System.arraycopy(source.precisionYX, 0, target.precisionYX, 0, dimension * dimension);
+        System.arraycopy(source.precisionYY, 0, target.precisionYY, 0, dimension * dimension);
         target.logNormalizer = source.logNormalizer;
     }
 

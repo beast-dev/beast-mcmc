@@ -67,8 +67,12 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
     protected final double[] rinvData;
     protected final double[] aData;
     private final double[] temp;
+    private final double[] rawBlockScratch;
     private final double[] savedRData;
     private final double[] savedRinvData;
+    private final DenseMatrix64F rMatrixView;
+    private final DenseMatrix64F rinvMatrixView;
+    private final WrappedMatrix reportMatrixView;
     private boolean savedRAndRinvKnown = false;
 
     private boolean rAndRinvKnown = false;
@@ -139,8 +143,12 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
         this.rinvData = new double[matrixSize];
         this.aData = new double[matrixSize];
         this.temp = new double[matrixSize];
+        this.rawBlockScratch = new double[4];
         this.savedRData = new double[matrixSize];
         this.savedRinvData = new double[matrixSize];
+        this.rMatrixView = DenseMatrix64F.wrap(dim, dim, rData);
+        this.rinvMatrixView = DenseMatrix64F.wrap(dim, dim, rinvData);
+        this.reportMatrixView = new WrappedMatrix.Raw(aData, 0, dim, dim);
 
         this.compoundParameter = new CompoundParameter(getClass().getSimpleName());
         this.compoundParameter.addParameter(scalarBlockParam);
@@ -211,9 +219,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
             }
         }
 
-        final DenseMatrix64F Rmat = DenseMatrix64F.wrap(dim, dim, rData);
-        final DenseMatrix64F RinvMat = DenseMatrix64F.wrap(dim, dim, rinvData);
-        if (!CommonOps.invert(Rmat, RinvMat)) {
+        if (!CommonOps.invert(rMatrixView, rinvMatrixView)) {
             throw new IllegalArgumentException("R is singular and cannot be inverted");
         }
 
@@ -230,9 +236,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
 
     private void computeA() {
         Arrays.fill(temp, 0.0);
-
-        final double[][] blockParamValues = getTwoByTwoBlockParameterValues();
-        final double[] rawBlock = new double[4]; // [d00, d01, d10, d11]
+        final double[] rawBlock = rawBlockScratch;
 
         int block2x2Idx = 0;
         for (int b = 0; b < numBlocks; b++) {
@@ -248,7 +252,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
                 continue;
             }
 
-            fillTwoByTwoBlock(block2x2Idx, blockParamValues, rawBlock);
+            fillTwoByTwoBlock(block2x2Idx, rawBlock);
 
             final double d00 = rawBlock[0];
             final double d01 = rawBlock[1];
@@ -306,8 +310,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
         final int upperOffset = dim;
         final int lowerOffset = dim + (dim - 1);
 
-        final double[][] blockParamValues = getTwoByTwoBlockParameterValues();
-        final double[] rawBlock = new double[4];
+        final double[] rawBlock = rawBlockScratch;
 
         int block2x2Idx = 0;
         for (int b = 0; b < numBlocks; b++) {
@@ -319,7 +322,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
                 continue;
             }
 
-            fillTwoByTwoBlock(block2x2Idx, blockParamValues, rawBlock);
+            fillTwoByTwoBlock(block2x2Idx, rawBlock);
 
             out[start] = rawBlock[0];
             out[start + 1] = rawBlock[3];
@@ -359,8 +362,6 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
 
         Arrays.fill(out, 0.0);
 
-        final double[][] blockParamValues = getTwoByTwoBlockParameterValues();
-
         final int scalarBase = 0;
         final int twoByTwoBase = hasLeadingOneByOneBlock ? 1 : 0;
 
@@ -385,21 +386,11 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
             chainTwoByTwoBlockGradient(
                     block2x2Idx,
                     g00, g01, g10, g11,
-                    blockParamValues,
                     out,
                     twoByTwoBase);
 
             block2x2Idx++;
         }
-    }
-
-    private double[][] getTwoByTwoBlockParameterValues() {
-        final int k = twoByTwoBlockParams.length;
-        final double[][] values = new double[k][];
-        for (int i = 0; i < k; i++) {
-            values[i] = twoByTwoBlockParams[i].getParameterValues();
-        }
-        return values;
     }
 
     public int[] getBlockStarts() {
@@ -477,7 +468,8 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
 
     @Override
     public String getReport() {
-        return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
+        ensureUpToDate();
+        return reportMatrixView.toString();
     }
 
     @Override
@@ -547,6 +539,11 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
      */
     protected abstract String getTwoByTwoBlockParameterName(int k);
 
+    protected final double getTwoByTwoBlockParameterValue(final int parameterIndex,
+                                                          final int blockIndex) {
+        return twoByTwoBlockParams[parameterIndex].getParameterValue(blockIndex);
+    }
+
     /**
      * Build the raw 2x2 block for block index b in row-major order:
      *
@@ -556,7 +553,6 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
      * outBlock[3] = d11
      */
     protected abstract void fillTwoByTwoBlock(int blockIndex,
-                                              double[][] blockParameterValues,
                                               double[] outBlock);
 
     /**
@@ -575,7 +571,6 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
                                                        double g01,
                                                        double g10,
                                                        double g11,
-                                                       double[][] blockParameterValues,
                                                        double[] out,
                                                        int baseOffset);
 

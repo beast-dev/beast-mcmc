@@ -613,6 +613,21 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         }
     }
 
+    private static void assertMatricesClose(final double[] actual,
+                                            final double[] expected,
+                                            final double tolerance) {
+        assertEquals("flat matrix dimension", expected.length, actual.length);
+        final int dimension = (int) Math.round(Math.sqrt(expected.length));
+        assertEquals("flat matrix must be square", expected.length, dimension * dimension);
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                assertEquals("matrix[" + i + "][" + j + "]",
+                        expected[rowOffset + j], actual[rowOffset + j], tolerance);
+            }
+        }
+    }
+
     private static void assertVectorsClose(final double[] actual,
                                            final double[] expected,
                                            final double tolerance) {

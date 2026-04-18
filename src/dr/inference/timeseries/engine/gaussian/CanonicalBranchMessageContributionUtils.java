@@ -6,26 +6,48 @@ import dr.inference.timeseries.representation.CanonicalGaussianUtils;
 /**
  * Utilities for recovering local canonical branch contributions from canonical
  * pair states.
+ *
+ * <p>Callers are expected to retain and reuse a {@link Workspace}; the hot-path
+ * method in this helper does not allocate.
  */
 public final class CanonicalBranchMessageContributionUtils {
+
+    public static final class Workspace {
+        final double[] jointMean;
+        final double[][] jointCovariance;
+        private final int stateDimension;
+
+        public Workspace(final int stateDimension) {
+            this.stateDimension = stateDimension;
+            final int pairDimension = 2 * stateDimension;
+            this.jointMean = new double[pairDimension];
+            this.jointCovariance = new double[pairDimension][pairDimension];
+        }
+
+        public int getStateDimension() {
+            return stateDimension;
+        }
+    }
 
     private CanonicalBranchMessageContributionUtils() {
         // no instances
     }
 
     public static void fillFromPairState(final CanonicalGaussianState pairState,
+                                         final Workspace workspace,
                                          final CanonicalBranchMessageContribution out) {
         final int pairDimension = pairState.getDimension();
         if ((pairDimension & 1) != 0) {
             throw new IllegalArgumentException("pairState dimension must be even");
         }
         final int d = pairDimension / 2;
-        if (out.dLogL_dInformationX.length != d) {
+        ensureWorkspaceDimension(workspace, d);
+        if (out.getDimension() != d) {
             throw new IllegalArgumentException("Contribution dimension mismatch");
         }
 
-        final double[] jointMean = new double[pairDimension];
-        final double[][] jointCovariance = new double[pairDimension][pairDimension];
+        final double[] jointMean = workspace.jointMean;
+        final double[][] jointCovariance = workspace.jointCovariance;
         CanonicalGaussianUtils.fillMomentsFromCanonical(pairState, jointMean, jointCovariance);
 
         for (int i = 0; i < d; ++i) {
@@ -39,12 +61,19 @@ public final class CanonicalBranchMessageContributionUtils {
                 final double currentSecondMoment = jointCovariance[i][j] + currentMeanI * currentMeanJ;
                 final double crossSecondMoment = jointCovariance[d + i][j] + nextMeanI * currentMeanJ;
                 final double nextSecondMoment = jointCovariance[d + i][d + j] + nextMeanI * nextMeanJ;
-                out.dLogL_dPrecisionXX[i][j] = -0.5 * currentSecondMoment;
-                out.dLogL_dPrecisionXY[i][j] = -0.5 * (jointCovariance[i][d + j] + currentMeanI * nextMeanJ);
-                out.dLogL_dPrecisionYX[i][j] = -0.5 * crossSecondMoment;
-                out.dLogL_dPrecisionYY[i][j] = -0.5 * nextSecondMoment;
+                final int ij = i * d + j;
+                out.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
+                out.dLogL_dPrecisionXY[ij] = -0.5 * (jointCovariance[i][d + j] + currentMeanI * nextMeanJ);
+                out.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
+                out.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
             }
         }
         out.dLogL_dLogNormalizer = -1.0;
+    }
+
+    private static void ensureWorkspaceDimension(final Workspace workspace, final int stateDimension) {
+        if (workspace.getStateDimension() != stateDimension) {
+            throw new IllegalArgumentException("Workspace dimension mismatch");
+        }
     }
 }

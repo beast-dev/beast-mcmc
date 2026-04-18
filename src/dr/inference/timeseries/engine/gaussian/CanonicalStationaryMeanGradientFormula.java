@@ -19,6 +19,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
     private final OUProcessModel processModel;
 
     private final CanonicalBranchMessageContribution localContribution;
+    private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     private final CanonicalLocalTransitionAdjoints localAdjoints;
     private final CanonicalTransitionAdjointUtils.Workspace transitionWorkspace;
     private final double[] currentMean;
@@ -53,6 +54,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         this.stateDimension = stateDimension;
 
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
+        this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
         this.transitionWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
         this.currentMean = new double[stateDimension];
@@ -86,6 +88,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         for (int t = 0; t < timeCount - 1; ++t) {
             CanonicalBranchMessageContributionUtils.fillFromPairState(
                     trajectory.branchPairStates[t],
+                    contributionWorkspace,
                     localContribution);
             CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                     trajectory.transitions[t],
@@ -136,6 +139,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         for (int t = 0; t < timeCount - 1; ++t) {
             CanonicalBranchMessageContributionUtils.fillFromPairState(
                     trajectory.branchPairStates[t],
+                    contributionWorkspace,
                     localContribution);
             CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                     trajectory.transitions[t],
@@ -211,27 +215,27 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         return new double[]{sum};
     }
 
-    private static void accumulateBranchMeanGradient(final double[][] transitionMatrix,
+    private static void accumulateBranchMeanGradient(final double[] transitionMatrix,
                                                      final double[] dLogL_df,
                                                      final double[] accumulator) {
         final int d = dLogL_df.length;
         for (int j = 0; j < d; ++j) {
             double sum = dLogL_df[j];
             for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
+                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
             }
             accumulator[j] += sum;
         }
     }
 
-    private static double accumulateScalarBranchMeanGradient(final double[][] transitionMatrix,
+    private static double accumulateScalarBranchMeanGradient(final double[] transitionMatrix,
                                                              final double[] dLogL_df) {
         final int d = dLogL_df.length;
         double accumulator = 0.0;
         for (int j = 0; j < d; ++j) {
             double sum = dLogL_df[j];
             for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
+                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
             }
             accumulator += sum;
         }

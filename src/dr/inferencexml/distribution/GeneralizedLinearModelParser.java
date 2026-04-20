@@ -60,6 +60,8 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public static final String CHECK_IDENTIFIABILITY = "checkIdentifiability";
     public static final String CHECK_FULL_RANK = "checkFullRank";
 
+    private static final String INTERCEPT = "intercept";
+
     public String getParserName() {
         return GLM_LIKELIHOOD;
     }
@@ -116,6 +118,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
             glm.addScaleParameter(scaleParameter, scaleDesign);
         }
+        addIntercept(xo, glm, dependentParam);
 //        System.err.println("START 0");
         addIndependentParameters(xo, glm, dependentParam);
 //        System.err.println("START 1");
@@ -145,6 +148,26 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 checkRandomEffectsDimensions(randomEffect, dependentParam);
                 glm.addRandomEffectsParameter(randomEffect);
             }
+        }
+    }
+
+    public void addIntercept(XMLObject xo, GeneralizedLinearModel glm,
+                             Parameter dependentParam) throws XMLParseException {
+
+        XMLObject cxo = xo.getChild(INTERCEPT);
+        if (cxo != null) {
+            Parameter intercept = (Parameter) cxo.getChild(Parameter.class);
+            if (intercept.getDimension() != 1) {
+                throw new XMLParseException("Intercept can only be 1-dimensional");
+            }
+
+            int dim = dependentParam.getDimension();
+            DesignMatrix designMatrix = new DesignMatrix(INTERCEPT, false);
+            Parameter onesColumn = new Parameter.Default(dim);
+            onesColumn.setId("onesColumn");
+            designMatrix.addParameter(onesColumn);
+
+            glm.addIndependentParameter(intercept, designMatrix, null);
         }
     }
 
@@ -266,9 +289,13 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                                     }, true),
                     }, 0, 10),
             new ElementRule(RANDOM_EFFECTS,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
-//				new ElementRule(BASIS_MATRIX,
-//						new XMLSyntaxRule[]{new ElementRule(DesignMatrix.class)})
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }, 0, 3),
+            new ElementRule(INTERCEPT,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, 0, 1),
     };
 
     public String getParserDescription() {

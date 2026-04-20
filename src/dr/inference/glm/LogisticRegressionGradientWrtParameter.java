@@ -35,8 +35,8 @@ public class LogisticRegressionGradientWrtParameter extends AbstractLogisticRegr
 
         for (int i = 0; i < n; i++) {
             double y = dependent.getParameterValue(i);
-            if (!Double.isNaN(y)) {
-                double eta = xBeta[i];
+            double eta = xBeta[i];
+            if (!Double.isNaN(y) && !Double.isNaN(eta)) {
                 double p_i = logistic(eta);
                 double residual = y - p_i;
 

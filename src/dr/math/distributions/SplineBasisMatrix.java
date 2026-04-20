@@ -117,6 +117,12 @@ public class SplineBasisMatrix extends DesignMatrix {
         }
     }
 
+    public Parameter getKnots() { return k; }
+
+    public int getDegree() { return degree; }
+
+    public boolean getIncludeIntercept() { return intercept; }
+
     private double getSplineBasis(int i, int d, double x, double[] knots) {
         if (d == 0) {
             if (knots[i] <= x && x < knots[i + 1]) {
@@ -154,11 +160,17 @@ public class SplineBasisMatrix extends DesignMatrix {
 
             for (int r = 0; r < rowDimension; r++) {
                 final double v = x.getParameterValue(r);
-                if (v < lower || v > upper) {
-                    throw new RuntimeException("Out of spline bounds");
-                }
-                for (int i = offset; i < knots.length - order; i++) {
-                    basisMatrix[r][i - offset] = getSplineBasis(i, degree, v, knots);
+                if (Double.isFinite(v)) {
+                    if (v < lower || v > upper) {
+                        throw new RuntimeException("Out of spline bounds");
+                    }
+                    for (int i = offset; i < knots.length - order; i++) {
+                        basisMatrix[r][i - offset] = getSplineBasis(i, degree, v, knots);
+                    }
+                } else {
+                    for (int i = offset; i < knots.length - order; ++i) {
+                        basisMatrix[r][i - offset] = Double.NaN;
+                    }
                 }
             }
             basisMatrixKnown = true;

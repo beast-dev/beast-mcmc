@@ -73,8 +73,9 @@ public class LogisticRegression extends GeneralizedLinearModel {
 
 		for (int i = 0; i < N; i++) {
 			double y = dependentParam.getParameterValue(i);
-			if (!Double.isNaN(y)) {
-				logLikelihood += y * xBeta[i] - Math.log(1.0 + Math.exp(xBeta[i]));
+			double eta = xBeta[i];
+			if (!Double.isNaN(y) && !Double.isNaN(eta)) {
+				logLikelihood += y * eta - Math.log(1.0 + Math.exp(eta));
 			}
 		}
 		return logLikelihood;

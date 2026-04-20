@@ -173,7 +173,7 @@ public class MaximizerWrtParameter implements Reportable {
         } else {
 
             if (transform != null) {
-                sb.append("Gradient is taken with respect to the transformed paramter values.\n");
+                sb.append("Gradient is taken with respect to the transformed parameter values.\n");
                 sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
@@ -212,6 +212,7 @@ public class MaximizerWrtParameter implements Reportable {
                 setParameter(new WrappedVector.Raw(argument), parameter);
 
                 if (settings.includeJacobian) {
+                    assert transform != null;
                     return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
                 }
                 return -evaluateLogLikelihood();
@@ -301,7 +302,7 @@ public class MaximizerWrtParameter implements Reportable {
         ANALYTIC("analytic"),
         NUMERICAL("numerical");
 
-        private String type;
+        private final String type;
 
         GradientType(String type) {
             this.type = type;

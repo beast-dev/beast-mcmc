@@ -20,6 +20,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
     Parameter tauStep;
     int numGridPoints;
     double cutOff;
+    //Parameter epsilon;
 
     public SIRCompartmentalModel(
             Parameter transmissionRate,
@@ -31,6 +32,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             Parameter numR,
             Parameter origin,
             Parameter tauStep,
+            //Parameter epsilon,
             int numGridPoints,
             double cutOff) {
 
@@ -54,6 +56,8 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         addVariable(origin);
         this.tauStep = tauStep;
         addVariable(tauStep);
+        //this.epsilon = epsilon;
+        //addVariable(epsilon);
 
         this.numGridPoints = numGridPoints;
         this.cutOff = cutOff;
@@ -97,7 +101,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         int nextRecordIndex = 1;
 
         // Simulate until we fill the grid (interval starts)
-        while (time < T - 1e-12) {
+        while (time < T) {
 
             int K = numGridPoints;
 
@@ -115,6 +119,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             double gamma = recoveryRate.getParameterValue(0);
             double omega = resusRate.getParameterValue(0);
 
+
             // --------------------------------------------------------------------
             // TAU SELECTION
             // --------------------------------------------------------------------
@@ -123,7 +128,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
             double epsilon = 0.03;
             // a reaction is critical if there are fewer than criticalNumber left in that compartment
             // critical number usually between 2 and 20
-            int criticalNumber = 10;
+            int criticalNumber = 5;
 
             // g_i's determined by using the highest order of reaction of species i
             double g_S = 2.0;
@@ -184,6 +189,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
 
             double[] a = new double[]{a_SI, a_IR, a_RS};
 
+            //check on a_0 <= 0
             if (a_0 <= 0.0) {
                 while (nextRecordIndex < K) {
                     S_traj[nextRecordIndex] = S_i;
@@ -246,6 +252,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
 
             double tau_prime;
 
+            //check this
             if (ncr.isEmpty()) {
                 tau_prime = Double.POSITIVE_INFINITY;
             } else {
@@ -307,7 +314,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
                     double timeToRxn = -Math.log(MathUtils.nextDouble()) / a_0;
 
                     // if the next reaction is beyond the next grid boundary, just record current state there
-                    if (time + timeToRxn >= nextBoundary - 1e-12) {
+                    if (time + timeToRxn >= nextBoundary) {
                         while (nextRecordIndex < K && timeIntervals[nextRecordIndex] <= Math.min(time + timeToRxn, T)) {
                             S_traj[nextRecordIndex] = S_i;
                             I_traj[nextRecordIndex] = I_i;
@@ -605,7 +612,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
                 I_i = I_new;
                 R_i = R_new;
 
-                while (nextRecordIndex < K && timeIntervals[nextRecordIndex] <= time_new + 1e-12) {
+                while (nextRecordIndex < K && timeIntervals[nextRecordIndex] <= time_new) {
                     S_traj[nextRecordIndex] = S_i;
                     I_traj[nextRecordIndex] = I_i;
                     R_traj[nextRecordIndex] = R_i;

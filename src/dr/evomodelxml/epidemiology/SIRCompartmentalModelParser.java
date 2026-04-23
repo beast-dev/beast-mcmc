@@ -18,6 +18,7 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
     public static final String TAUSTEP = "tauStep";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
+    //public static final String EPSILON = "epsilon";
 
 
     public String getParserName() {
@@ -34,6 +35,7 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
         Parameter numI = (Parameter) xo.getChild(NUM_I).getChild(Parameter.class);
         Parameter numR = (Parameter) xo.getChild(NUM_R).getChild(Parameter.class);
         Parameter origin = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
+        //Parameter epsilon = (Parameter) xo.getChild(EPSILON).getChild(Parameter.class); new Parameter.Default(0.3);
         Parameter tauStep = (Parameter) xo.getChild(TAUSTEP).getChild(Parameter.class); new Parameter.Default(1.0);
         final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
         final Parameter cutOff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
@@ -100,6 +102,10 @@ public class SIRCompartmentalModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
+            //new ElementRule(EPSILON,
+            //        new XMLSyntaxRule[]{
+            //                new ElementRule(Parameter.class),
+            //        })
     };
 
 }

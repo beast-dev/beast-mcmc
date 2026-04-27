@@ -77,7 +77,7 @@ public class NumericalDerivative
 		return (f.evaluate(x + h) - 2.0*f.evaluate(x) + f.evaluate(x - h))/(h*h);
 	}
 
-	
+
 	/**
 	 * determine gradient
 	 *
@@ -110,12 +110,12 @@ public class NumericalDerivative
 	 * @param x argument vector
 	 * @param grad vector for gradient
 	 */
-	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
-	{	
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad, double stepSizeRatio)
+	{
 		for (int i = 0; i < f.getNumArguments(); i++)
 		{
-			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
-		
+			double h = stepSizeRatio * Math.max(Math.abs(x[i]), 1.0);
+
 			double oldx = x[i];
 			x[i] = oldx + h;
 			double fxplus = f.evaluate(x);
@@ -126,6 +126,18 @@ public class NumericalDerivative
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
 		}
+	}
+
+	/**
+	 * determine gradient
+	 *
+	 * @param f multivariate function
+	 * @param x argument vector
+	 * @param grad vector for gradient
+	 */
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
+	{
+		gradient(f, x, grad, Math.pow(MachineAccuracy.EPSILON, 0.333));
 	}
 
 	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {
@@ -163,7 +175,7 @@ public class NumericalDerivative
 		for (int i = 0; i < len; i++)
 		{
 			double h = MachineAccuracy.SQRT_SQRT_EPSILON*(Math.abs(x[i]) + 1.0);
-		
+
 			double oldx = x[i];
 			x[i] = oldx + h;
 			double fxplus = f.evaluate(x);
@@ -175,7 +187,7 @@ public class NumericalDerivative
 			// Centered second derivative
 			result[i] = (fxplus - 2.0*fx + fxminus)/(h*h);
 		}
-		
+
 		return result;
 	}
 

@@ -65,12 +65,14 @@ public class MaximizerWrtParameter implements Reportable {
 
     public static class Settings {
         int numberIterations;
+        double stepSize;
         boolean startAtCurrentState;
         boolean printToScreen;
         boolean includeJacobian;
 
-        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
+        public Settings(int numberIterations, double stepSize, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this.numberIterations = numberIterations;
+            this.stepSize = stepSize;
             this.startAtCurrentState = startAtCurrentState;
             this.printToScreen = printToScreen;
             this.includeJacobian = includeJacobian;
@@ -293,7 +295,9 @@ public class MaximizerWrtParameter implements Reportable {
 
             @Override
             public double[] getGradientLogDensity() {
-                return NumericalDerivative.gradient(function, parameter.getParameterValues());
+                double[] gradient = new double[parameter.getDimension()];
+                NumericalDerivative.gradient(function, parameter.getParameterValues(), gradient, settings.stepSize);
+                return gradient;
             }
         };
     }

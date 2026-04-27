@@ -29,6 +29,7 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.NumericGradientStepSizeProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
@@ -73,8 +74,10 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         Transform transform = (Transform) xo.getChild(Transform.class);
 
+        final double numericGradientStepSize = NumericGradientStepSizeProvider.parseStepSizeRatio(xo);
+
         MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
-                new MaximizerWrtParameter.Settings(nIterations, initialGuess, printScreen, includeJacobian));
+                new MaximizerWrtParameter.Settings(nIterations, numericGradientStepSize, initialGuess, printScreen, includeJacobian));
         maximizer.maximize();
 
         return maximizer;

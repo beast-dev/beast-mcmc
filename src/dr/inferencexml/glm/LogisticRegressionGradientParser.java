@@ -30,10 +30,12 @@ package dr.inferencexml.glm;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogisticRegression;
 import dr.inference.glm.ExperimentalGeneralizedLinearModel;
+import dr.inference.glm.LogisticRegressionDesignMatrixGradient;
 import dr.inference.glm.LogisticRegressionGradientWrtParameter;
 import dr.inference.glm.LogisticRegressionRandomEffectsGradientWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
+import dr.math.distributions.SplineBasisMatrix;
 import dr.xml.*;
 
 import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.MASK;
@@ -72,8 +74,19 @@ public class LogisticRegressionGradientParser extends AbstractXMLObjectParser {
                 gradient = new LogisticRegressionRandomEffectsGradientWrtParameter(
                         (LogisticRegression) glm, parameter);
             } else {
-                throw new XMLParseException("Unable to find independent parameter '" + parameter.getId() +
-                        "' in '" + xo.getId() + "'");
+                for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+                    if (glm.getDesignMatrix(i) == parameter) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index >= 0) {
+                    gradient = new LogisticRegressionDesignMatrixGradient(
+                            (LogisticRegression) glm, (SplineBasisMatrix) parameter);
+                } else {
+                    throw new XMLParseException("Unable to find independent parameter '" + parameter.getId() +
+                            "' in '" + xo.getId() + "'");
+                }
             }
         }
 

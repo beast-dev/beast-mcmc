@@ -104,6 +104,6 @@ public class SplinePredictionLogger implements Loggable, VariableListener {
     private SplineBasisMatrix makePredictionBasis(Parameter x) {
         return new SplineBasisMatrix(name, x,
                 originalBasis.getKnots(), originalBasis.getDegree(), originalBasis.getIncludeIntercept(),
-                null, null);
+                null, null, false);
     }
 }

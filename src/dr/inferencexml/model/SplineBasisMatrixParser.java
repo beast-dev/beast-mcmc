@@ -44,6 +44,7 @@ public class SplineBasisMatrixParser extends AbstractXMLObjectParser {
     private final static String INTERCEPT = "includeIntercept";
     private final static String LOWER_BOUND = "lowerBound";
     private final static String UPPER_BOUND = "upperBound";
+    private final static String ZERO_OUT_OF_BOUNDS = "zeroOutOfBounds";
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Parameter.class),
@@ -54,6 +55,7 @@ public class SplineBasisMatrixParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(INTERCEPT, true),
             AttributeRule.newDoubleRule(LOWER_BOUND, true),
             AttributeRule.newDoubleRule(UPPER_BOUND, true),
+            AttributeRule.newBooleanRule(ZERO_OUT_OF_BOUNDS, true),
     };
 
     @Override
@@ -79,9 +81,10 @@ public class SplineBasisMatrixParser extends AbstractXMLObjectParser {
             upperBound = xo.getDoubleAttribute(UPPER_BOUND);
         }
 
+        boolean zeroOfOutBounds = xo.getAttribute(ZERO_OUT_OF_BOUNDS, false);
 
         return new SplineBasisMatrix(xo.getId(), evaluationPoints, knots,
-                degree, includeIntercept, lowerBound, upperBound);
+                degree, includeIntercept, lowerBound, upperBound, zeroOfOutBounds);
     }
 
     @Override

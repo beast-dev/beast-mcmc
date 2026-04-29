@@ -84,6 +84,42 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         checkGradientMu(buildOUSetup("canonGradMu_partial", buildPartiallyObservedTips()), "partially observed");
     }
 
+    public void testGradientRootMeanConjugateRootPartiallyObservedMatchesNumerical() {
+        System.out.println("\nTest: canonical OU ∂logL/∂rootMean analytic vs numerical (conjugate root, partially observed)");
+
+        final OUSetup setup = buildOUSetup("canonGradRootMean_partial", buildPartiallyObservedTips());
+        setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
+        final double[][] traitCovariance = new double[dimTrait][dimTrait];
+        setup.provider.fillTraitCovariance(traitCovariance);
+        final double[] gradAnalytic = new double[dimTrait];
+        setup.rootPrior.accumulateRootMeanGradient(
+                setup.passer.getPostOrderState(treeModel.getRoot().getNumber()),
+                traitCovariance,
+                gradAnalytic);
+
+        final double[] gradNumeric = new double[dimTrait];
+        final dr.inference.model.Parameter rootMean = rootPrior.getMeanParameter();
+        for (int i = 0; i < dimTrait; i++) {
+            final double original = rootMean.getParameterValue(i);
+
+            rootMean.setParameterValue(i, original + FD_DELTA);
+            final double logLPlus = setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
+
+            rootMean.setParameterValue(i, original - FD_DELTA);
+            final double logLMinus = setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
+
+            rootMean.setParameterValue(i, original);
+            gradNumeric[i] = (logLPlus - logLMinus) / (2.0 * FD_DELTA);
+        }
+
+        System.out.printf("  Analytic ∂logL/∂rootMean: %s%n", java.util.Arrays.toString(gradAnalytic));
+        System.out.printf("  Numeric  ∂logL/∂rootMean: %s%n", java.util.Arrays.toString(gradNumeric));
+        for (int i = 0; i < dimTrait; i++) {
+            assertEquals("∂logL/∂rootMean[" + i + "] (partially observed)",
+                    gradNumeric[i], gradAnalytic[i], TOL);
+        }
+    }
+
     public void testGradientBranchLengthsConjugateRootPartiallyObservedMatchesNumerical() {
         System.out.println("\nTest: canonical OU ∂logL/∂t analytic vs numerical (conjugate root, partially observed)");
         checkGradientBranchLengths(buildOUSetup("canonGradT_partial", buildPartiallyObservedTips()), "partially observed");

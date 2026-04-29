@@ -29,6 +29,10 @@ package test.dr.util;
 
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+import dr.util.UnitSimplexToRealsTransform;
 import dr.util.UnitSimplexViaSoftmaxToRealsTransform;
 import test.dr.math.MathTestCase;
 
@@ -41,18 +45,18 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
     public void testGetGradientLogDetJacobian() {
 
         System.out.println("\nTest gradient of log-det Jacobian");
-        int simplexDim = 4;
-        double[] valuesOnReals = new double[] { -1.0, 1.0, 3.0 };
+        double[] valuesOnReals = new double[] { -1.0, 1.0, 3.0, 2.0 };
+        int dim = valuesOnReals.length;
 
-        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(simplexDim);
+        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(dim);
         double[] numericalGradient = NumericalDerivative.gradient(new MultivariateFunction() {
             @Override
             public double evaluate(double[] argument) {
-                return -transform.getLogJacobian(transform.inverse(argument, 0, argument.length));
+                return -transform.getLogJacobian(transform.inverse(valuesOnReals, 0, dim));
             }
 
             @Override
-            public int getNumArguments() { return valuesOnReals.length; }
+            public int getNumArguments() { return dim; }
 
             @Override
             public double getLowerBound(int n) { return Double.NEGATIVE_INFINITY; }
@@ -71,10 +75,10 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
 
         System.out.println("\nTest Unit-Simplex transform.");
 
-        double[] valuesOnReals = new double[]{ 0.0, 0.0 };
+        double[] valuesOnReals = new double[]{ -1.0, 1.0, Double.NaN };
         double[] valuesOnSimplex = new double[]{ 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
 
-        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(valuesOnSimplex.length);
+        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(valuesOnReals.length);
         double[] result1 = transform.inverse(valuesOnReals, 0, valuesOnReals.length);
 
         assertEquals(result1, valuesOnSimplex, 1E-10);

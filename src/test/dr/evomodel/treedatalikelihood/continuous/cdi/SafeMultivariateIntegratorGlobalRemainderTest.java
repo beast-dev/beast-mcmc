@@ -25,8 +25,10 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous.cdi;
+package test.dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import junit.framework.TestCase;
 
 public class SafeMultivariateIntegratorGlobalRemainderTest extends TestCase {

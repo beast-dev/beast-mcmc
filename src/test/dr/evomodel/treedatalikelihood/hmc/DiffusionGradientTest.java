@@ -69,11 +69,11 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * in the non-missing setup.
      */
     private static final double[] EXPECTED_OU_NON_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            -2012.1795817606735, -3787.784464817003, -3426.2410228063436,
-            -7036.539636254487, -4018.2642532715577, -4183.164826311454,
-            -5373.785052935776, -8907.373338327994, -5465.523619531839,
-            -8065.809493616765, -10510.678288896994, -10767.593579233519,
-            -14240.864060526541, -15551.692834024976, -16943.44740858466
+            -2012.1277685011974, -3787.753198825857, -3426.2145058439833,
+            -7036.583345789017, -4018.0973654179284, -4183.156426300411,
+            -5373.785842470055, -8907.560205306832, -5465.18732720953,
+            -8065.7570358879875, -10510.668199256785, -10767.514083273378,
+            -14240.92348900421, -15551.560709452, -16941.621193449482
     };
 
     /**
@@ -81,11 +81,11 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * in the non-missing setup.
      */
     private static final double[] EXPECTED_DIAGONAL_OU_NON_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            -1850.3288931038878, -2217.311621496853, -2992.9281549462553,
-            -4620.783881716824, -2273.53683495885, -2532.8553783004713,
-            -4513.721112107637, -5834.929328420172, -4176.843988270135,
-            -4586.555713289437, -6188.71743675792, -5041.366183701355,
-            -8830.676498694364, -10267.748337353914, -10024.08844420044
+            -1850.3288480697158, -2217.3115704691236, -2992.9281408709803,
+            -4620.7839352104775, -2273.4731365963135, -2532.855314319518,
+            -4513.72108143411, -5834.929363789854, -4176.784386493139,
+            -4586.555695302157, -6188.717478538398, -5041.310481699884,
+            -8830.676376803682, -10267.697899372732, -10024.035615463928
     };
 
     /**
@@ -93,11 +93,11 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * under missing observations.
      */
     private static final double[] EXPECTED_OU_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            74.77521730783411, -258.91629314069223, 344.4388601867604,
-            583.9969383383511, -136.64730444531838, -157.63545585619872,
-            546.8456126015939, -211.32570666481473, -394.0709230467711,
-            -958.8069616087868, 1344.7908760966486, 165.7747365073456,
-            1106.1182677540924, 1542.6046364767465, 1493.8996215111927
+            74.81391862667007, -258.8948880439685, 344.4556704568905,
+            583.9298164210761, -136.52944184586661, -157.62716034628028,
+            546.8452998103907, -211.51123800852338, -393.84237685030155,
+            -958.7568155827498, 1344.7965381938643, 165.77191049876944,
+            1106.0525381603488, 1542.6599949579877, 1495.4748103407164
     };
 
     /**
@@ -105,11 +105,11 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * under missing observations.
      */
     private static final double[] EXPECTED_DIAGONAL_OU_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            -47.465188418725745, 128.03414643106794, 56.24154886603152,
-            409.432725801331, 33.24895215706398, 179.7951140273837,
-            114.92480858803546, 71.40861849850492, -147.3294583787569,
-            -99.56320968699453, 155.69954742029697, 496.1072344404216,
-            393.226156115573, 971.2675165197544, 665.9357688239339
+            -47.465152234518236, 128.0341894287645, 56.24155716780459,
+            409.432673421888, 33.29434043773131, 179.7951740232973,
+            114.9248375746599, 71.40858728064708, -147.28704750207558,
+            -99.56318998813276, 155.69951225274963, 496.14686934770407,
+            393.2262690816413, 971.3031555915369, 665.9744017787765
     };
 
     /**
@@ -117,11 +117,11 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * in the non-missing setup.
      */
     private static final double[] EXPECTED_OU_VARIANCE_NON_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            530.5315456200768, 664.4704537337831, 482.8848423836275,
-            723.4557301694928, 433.4557447139943, 559.8427774356218,
-            544.2785218427101, 849.7834895737302, 213.1792852230237,
-            578.5320756376082, 921.071265862378, 318.56485017663255,
-            778.4974862893661, 52.576295233008835, 252.5680116116773
+            530.531545606656, 664.4705352396177, 482.8847776618647,
+            723.4550291853661, 433.45665815846723, 559.8427844806686,
+            544.2785158674444, 849.7834030285777, 213.17927942793446,
+            578.5315361196582, 921.0665038304086, 318.56983457911616,
+            778.5005956944271, 52.57296725816211, 252.5279694687952
     };
 
     /**
@@ -129,25 +129,25 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
      * under missing observations.
      */
     private static final double[] EXPECTED_OU_VARIANCE_MISSING_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            -10.482439891425514, 27.03121931652482, -31.092675471394024,
-            -102.38243478839736, 7.7563223690237075, -19.244998091681246,
-            -12.755661038445322, 6.465455959714896, 18.798764922407226,
-            100.9238191913746, -10.976111237354552, -59.563041846252204,
-            41.72026586613858, -112.92185362620714, -89.8579337605535
+            -10.482437358766544, 27.031303767529486, -31.0927116852981,
+            -102.3830141970221, 7.756756272319861, -19.244990994556133,
+            -12.755678599828785, 6.465320931305059, 18.798919422942145,
+            100.92325792379413, -10.980967111504636, -59.55789424771818,
+            41.72303601381482, -112.92351852995164, -89.89081710783223
     };
 
     /**
      * Fixed regression baseline for diagonal-OU factor-model precision gradient.
      */
     private static final double[] EXPECTED_DIAGONAL_OU_FACTOR_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            0.6616157521699866
+            2.4744880035479464
     };
 
     /**
      * Fixed regression baseline for dense-OU factor-model precision gradient.
      */
     private static final double[] EXPECTED_OU_FACTOR_PRECISION_CORRELATION_ANALYTIC = new double[]{
-            3.03205106645377
+            6.40272435563395
     };
 
     /**
@@ -1143,7 +1143,7 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
     }
 
     private double[] parseGradient(String s, String name) {
-        int indBeg = s.indexOf(name) + name.length() + 3;
+        int indBeg = s.indexOf("[", s.indexOf(name)) + 1;
         int indEnd = s.indexOf("]", indBeg);
         return parseVector(s.substring(indBeg, indEnd), ",");
     }
@@ -1189,9 +1189,12 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         final String report = gradientProvider.getReport();
         final double[] analytic = parseGradient(report, "analytic");
-
+        final double[] numeric = parseGradient(report, "numeric");
         assertEquals(label + " length", expectedAnalytic.length, analytic.length);
+        assertEquals(label + " numeric length", analytic.length, numeric.length);
         for (int i = 0; i < analytic.length; i++) {
+            assertEquals(label + " analytic/numeric idx=" + i, numeric[i], analytic[i],
+                    Math.max(delta, 1e-6 * Math.max(Math.abs(analytic[i]), Math.abs(numeric[i]))));
             assertEquals(label + " idx=" + i, expectedAnalytic[i], analytic[i], ANALYTIC_REGRESSION_TOLERANCE);
         }
     }

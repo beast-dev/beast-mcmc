@@ -524,7 +524,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         }
 
         // A. Get current precision of i and j
-        DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+        final DenseMatrix64F Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
 
         if (TIMING) {
             endTime("peel1");
@@ -542,10 +542,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
             if (allZeroOrInfinite(Vip)) {
-                Pi = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
-                CommonOps.scale(1.0, Pi, Pip);  // Pip := Pi
-                return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY);
-//                throw new RuntimeException("Zero-length branch on data is not allowed.");
+                throw new RuntimeException("Zero-length branch on data is not allowed.");
             }
             ci = safeInvert2(Vip, Pip, getDeterminant);
 

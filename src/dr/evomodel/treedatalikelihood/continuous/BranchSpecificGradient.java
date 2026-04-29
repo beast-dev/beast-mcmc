@@ -131,10 +131,6 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
     public double[] getGradientLogDensity() {
 
         int dimGradient = branchProvider.getDimension();
-        // Ensure branch sufficient statistics are evaluated at the current model state.
-        // This avoids one-call stale gradients after parameter updates during HMC checks.
-        treeDataLikelihood.getLogLikelihood();
-
         double[] result = new double[parameter.getDimension()];
         final boolean debugPerBranchComparison =
                 shouldEmitBranchDebugForCurrentParameter(Boolean.getBoolean(BRANCH_DEBUG_PROPERTY));
@@ -148,7 +144,7 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
-            if (!shouldIncludeNodeForAccumulation(node)) {
+            if (debugPerBranchComparison && !shouldIncludeNodeForAccumulation(node)) {
                 continue;
             }
 
@@ -160,20 +156,9 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
 
             double[] gradient;
 //                for (int trait = 0; trait < nTraits; ++trait) { // TODO deal with several traits
-            try {
-                gradient = branchProvider.getGradientForBranch(statisticsForNode.get(0), node);
-            } catch (RuntimeException ex) {
-                final BranchSufficientStatistics failingStats = statisticsForNode.get(0);
-                throw new IllegalStateException(
-                        "Branch gradient failure"
-                                + " node=" + node.getNumber()
-                                + " isRoot=" + tree.isRoot(node)
-                                + " isExternal=" + tree.isExternal(node)
-                                + " parameterName=" + parameter.getParameterName()
-                                + " parameterValues=" + Arrays.toString(parameter.getParameterValues())
-                                + " statsSummary={" + summarizeBranchStatistics(failingStats) + "}",
-                        ex);
-            }
+            gradient = debugPerBranchComparison
+                    ? getGradientForBranchWithDebugContext(statisticsForNode.get(0), node)
+                    : branchProvider.getGradientForBranch(statisticsForNode.get(0), node);
 //                }
 
             final int destinationIndex = getParameterIndexFromNode(node);
@@ -221,6 +206,23 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
         }
 
         return result;
+    }
+
+    private double[] getGradientForBranchWithDebugContext(final BranchSufficientStatistics statistics,
+                                                          final NodeRef node) {
+        try {
+            return branchProvider.getGradientForBranch(statistics, node);
+        } catch (RuntimeException ex) {
+            throw new IllegalStateException(
+                    "Branch gradient failure"
+                            + " node=" + node.getNumber()
+                            + " isRoot=" + tree.isRoot(node)
+                            + " isExternal=" + tree.isExternal(node)
+                            + " parameterName=" + parameter.getParameterName()
+                            + " parameterValues=" + Arrays.toString(parameter.getParameterValues())
+                            + " statsSummary={" + summarizeBranchStatistics(statistics) + "}",
+                    ex);
+        }
     }
 
     private static String summarizeBranchStatistics(final BranchSufficientStatistics statistics) {

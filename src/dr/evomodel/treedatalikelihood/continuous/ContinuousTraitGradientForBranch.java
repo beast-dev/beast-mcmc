@@ -420,7 +420,6 @@ public interface ContinuousTraitGradientForBranch {
 
 //            cdi.getVariancePreOrderDerivative(statistics, gradQ);
             removeMissing(gradQInv, statistics.getMissing());
-            removeMissingVector(gradN, statistics.getMissing());
 
             double[] gradient = new double[getDimension()];
             int offset = 0;
@@ -437,9 +436,6 @@ public interface ContinuousTraitGradientForBranch {
         @Override
         public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
                                       DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
-
-            removeMissing(gradQInv, statistics.getMissing());
-            removeMissingVector(gradN, statistics.getMissing());
 
             double[] gradient = new double[getDimension()];
             int offset = 0;
@@ -458,17 +454,6 @@ public interface ContinuousTraitGradientForBranch {
                 for (int j = 0; j < M.getNumCols(); j++) {
                     M.unsafe_set(m, j, 0.0);
                     M.unsafe_set(j, m, 0.0);
-                }
-            }
-        }
-
-        private static void removeMissingVector(DenseMatrix64F v, int[] missing) {
-            if (v.getNumCols() != 1) {
-                return;
-            }
-            for (int m : missing) {
-                if (m >= 0 && m < v.getNumRows()) {
-                    v.unsafe_set(m, 0, 0.0);
                 }
             }
         }

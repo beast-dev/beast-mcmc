@@ -567,10 +567,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
-            // Keep report diagnostics aligned with the runtime pruning likelihood path.
-            // The report-side closed form is useful for inspection but can drift from runtime in
-            // some OU pathways where branch-level kernels are computed through CDI updates.
-            logDensity = callbackLikelihood.getLogLikelihood();
+            if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                // Keep OU report diagnostics aligned with the runtime pruning likelihood path.
+                // The report-side closed form is useful for inspection but can drift from runtime in
+                // some OU pathways where branch-level kernels are computed through CDI updates.
+                logDensity = callbackLikelihood.getLogLikelihood();
+            }
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
 

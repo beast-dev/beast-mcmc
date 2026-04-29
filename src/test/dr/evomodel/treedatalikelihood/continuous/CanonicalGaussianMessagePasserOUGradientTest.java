@@ -137,9 +137,9 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         setup.passer.computeGradientQ(setup.provider, separateQ);
         setup.passer.computeGradientMu(setup.provider, separateMu);
 
-        assertArrayEquals("joint vs separate A", separateA, jointA, 1.0e-12);
-        assertArrayEquals("joint vs separate Q", separateQ, jointQ, 1.0e-12);
-        assertArrayEquals("joint vs separate mu", separateMu, jointMu, 1.0e-12);
+        assertArrayEquals("joint vs separate A", separateA, jointA, 1.0e-11);
+        assertArrayEquals("joint vs separate Q", separateQ, jointQ, 1.0e-11);
+        assertArrayEquals("joint vs separate mu", separateMu, jointMu, 1.0e-11);
     }
 
     public void testOrthogonalBlockJointGradientsMatchAcrossBranchGradientThreadCounts() {

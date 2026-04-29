@@ -455,7 +455,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.fixedRootValue = new double[dim];
         this.storedFixedRootValue = new double[dim];
         this.branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
-        this.branchGradientWorkspaces = new BranchGradientWorkspace[branchGradientTaskPool.getNumThreads()];
+        final int branchGradientWorkspaceCount =
+                branchGradientTaskPool.getNumThreads() <= 1 ? 1 : branchGradientTaskPool.getNumThreads() + 1;
+        this.branchGradientWorkspaces = new BranchGradientWorkspace[branchGradientWorkspaceCount];
         for (int i = 0; i < branchGradientWorkspaces.length; ++i) {
             branchGradientWorkspaces[i] = new BranchGradientWorkspace(dim);
         }
@@ -479,6 +481,23 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             }
         }
         return Math.max(1, Runtime.getRuntime().availableProcessors());
+    }
+
+    private int branchGradientChunkSize(final int taskLimit,
+                                        final int targetChunksPerWorker,
+                                        final int maxChunkSize) {
+        final int workerCount = Math.max(1, branchGradientWorkspaces.length);
+        final int suggested =
+                (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
+        return Math.max(1, Math.min(maxChunkSize, suggested));
+    }
+
+    private int branchGradientPreparationChunkSize(final int taskLimit) {
+        return branchGradientChunkSize(taskLimit, 2, 16);
+    }
+
+    private int branchGradientJointChunkSize(final int taskLimit) {
+        return branchGradientChunkSize(taskLimit, 3, 8);
     }
 
     @Override
@@ -805,7 +824,10 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                         orthogonalStationaryMean);
             }
         } else {
-            branchGradientTaskPool.fork((childIndex, thread) -> {
+            branchGradientTaskPool.forkDynamicBalanced(
+                    nodeCount,
+                    branchGradientPreparationChunkSize(nodeCount),
+                    (childIndex, thread) -> {
                 if (childIndex == rootIndex) {
                     out.clearStagedBranch(childIndex);
                     return;
@@ -823,7 +845,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                         workspace.adjoints,
                         null,
                         null);
-            });
+                    });
             out.compactStagedBranches(rootIndex, false);
             out.prepareOrthogonalBasisForActiveBranches(orthogonalSelection, orthogonalStationaryMean);
         }
@@ -921,11 +943,10 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             clearSquare(reductionWorkspace.orthogonalRotationGradientScratch);
         }
 
-        branchGradientTaskPool.fork((activeIndex, thread) -> {
-            if (activeIndex >= inputs.activeBranchCount) {
-                return;
-            }
-
+        branchGradientTaskPool.forkDynamicBalanced(
+                inputs.activeBranchCount,
+                branchGradientJointChunkSize(inputs.activeBranchCount),
+                (activeIndex, thread) -> {
             final BranchGradientWorkspace workspace = branchGradientWorkspaces[thread];
             copyAdjoints(inputs.activeAdjoints[activeIndex], workspace.adjoints);
 
@@ -938,7 +959,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                     workspace.localGradientA,
                     workspace.localGradientQ,
                     workspace.localGradientMu(gradMu.length, dim));
-        });
+                });
 
         for (int worker = 0; worker < branchGradientWorkspaces.length; ++worker) {
             final BranchGradientWorkspace workspace = branchGradientWorkspaces[worker];

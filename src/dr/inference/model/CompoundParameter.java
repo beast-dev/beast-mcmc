@@ -29,7 +29,6 @@ package dr.inference.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A multidimensional parameter constructed from its component parameters.
@@ -38,7 +37,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Andrew Rambaut
  */
 public class CompoundParameter extends Parameter.Abstract implements VariableListener {
-    private static final AtomicLong DEBUG_EVENT_COUNTER = new AtomicLong(0L);
 
     public CompoundParameter(String name, Parameter[] params) {
         this(name);
@@ -60,10 +58,6 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     public CompoundParameter(String name) {
         this.name = name;
         dimension = 0;
-        if (Boolean.getBoolean("beast.debug.compoundParameter.construct")) {
-            System.err.println("compoundParameterConstruct name=" + name
-                    + " id=" + System.identityHashCode(this));
-        }
     }
 
     private void labelParameter(Parameter parameter) {
@@ -195,14 +189,12 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public void fireParameterChangedEvent() {
-        maybeEmitDebugEvent("fireParameterChangedEvent.begin", null, -1, ChangeType.ALL_VALUES_CHANGED);
         doNotPropagateChangeUp = true;
-        for (Parameter p : uniqueParameters) {
+        for (Parameter p : parameters) {
             p.fireParameterChangedEvent();
         }
         doNotPropagateChangeUp = false;
         fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
-        maybeEmitDebugEvent("fireParameterChangedEvent.end", null, -1, ChangeType.ALL_VALUES_CHANGED);
     }
 
     public double getParameterValue(int dim) {
@@ -281,57 +273,18 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     // ****************************************************************
 
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        maybeEmitDebugEvent("variableChangedEvent.in", variable, index, type);
 
         int dim = 0;
         if (!doNotPropagateChangeUp) {
             for (Parameter parameter1 : uniqueParameters) {
                 if (variable == parameter1) {
                     int subparameterIndex = (index == -1) ? -1 : dim + index;
-                    maybeEmitDebugEvent("variableChangedEvent.out", variable, subparameterIndex, type);
                     fireParameterChangedEvent(subparameterIndex, type);
                     break;
                 }
                 dim += parameter1.getDimension();
             }
         }
-    }
-
-    private void maybeEmitDebugEvent(final String phase,
-                                     final Variable variable,
-                                     final int index,
-                                     final Parameter.ChangeType type) {
-        if (!Boolean.getBoolean("beast.debug.compoundParameter.events")) {
-            return;
-        }
-        final String selfName = getParameterName() == null ? "<null>" : getParameterName();
-        final String filter = System.getProperty(
-                "beast.debug.compoundParameter.events.filter",
-                "OrthogonalBlockDiagonalPolarStableMatrixParameter.native"
-        );
-        if (filter != null && !filter.isEmpty() && !selfName.contains(filter)) {
-            return;
-        }
-        final long seq = DEBUG_EVENT_COUNTER.incrementAndGet();
-        final String variableName;
-        if (variable instanceof Parameter) {
-            variableName = ((Parameter) variable).getParameterName();
-        } else if (variable == null) {
-            variableName = "<null>";
-        } else {
-            variableName = variable.getVariableName();
-        }
-        System.err.println("compoundParameterEvent seq=" + seq
-                + " phase=" + phase
-                + " selfName=" + selfName
-                + " selfId=" + System.identityHashCode(this)
-                + " variableName=" + variableName
-                + " variableId=" + (variable == null ? -1 : System.identityHashCode(variable))
-                + " index=" + index
-                + " type=" + type
-                + " doNotPropagateChangeUp=" + doNotPropagateChangeUp
-                + " uniqueCount=" + uniqueParameters.size()
-                + " dimension=" + dimension);
     }
 
     public double getParameterValue(int index, int parameter) {

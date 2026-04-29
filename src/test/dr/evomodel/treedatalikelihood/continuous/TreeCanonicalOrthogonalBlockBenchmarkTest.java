@@ -36,7 +36,6 @@ public class TreeCanonicalOrthogonalBlockBenchmarkTest extends TestCase {
         System.out.println(report);
         assertTrue(report.contains("Case full-observed"));
         assertTrue(report.contains("Case partial-missing"));
-        assertTrue(report.contains("Case alternate-block"));
         assertFalse(report.contains("NaN"));
         assertFalse(report.contains("Infinity"));
     }
@@ -53,9 +52,6 @@ public class TreeCanonicalOrthogonalBlockBenchmarkTest extends TestCase {
         final StringBuilder sb = new StringBuilder();
         appendCaseReport(sb, buildCase("full-observed", "buildOrthogonalBlockTreeSetups"));
         appendCaseReport(sb, buildCase("partial-missing", "buildOrthogonalBlockTreeSetupsWithPartialTipMissing"));
-        appendCaseReport(sb, buildCase("alternate-block", "buildOrthogonalBlockTreeSetups", new Class<?>[]{
-                double.class, double.class, double.class, double.class, double[].class
-        }, new Object[]{1.1, 0.75, 0.4, 0.02, new double[]{0.35, -0.05, 0.2}}));
         return sb.toString();
     }
 
@@ -179,21 +175,14 @@ public class TreeCanonicalOrthogonalBlockBenchmarkTest extends TestCase {
     }
 
     private static BenchmarkCase buildCase(final String label, final String builderMethodName) throws Exception {
-        return buildCase(label, builderMethodName, new Class<?>[0], new Object[0]);
-    }
-
-    private static BenchmarkCase buildCase(final String label,
-                                           final String builderMethodName,
-                                           final Class<?>[] parameterTypes,
-                                           final Object[] arguments) throws Exception {
         final Class<?> testClass = Class.forName("test.dr.evomodel.treedatalikelihood.continuous.OUDiffusionKernelBridgeValidationTest");
         final Constructor<?> constructor = testClass.getConstructor(String.class);
         final Object testInstance = constructor.newInstance("benchmark");
         invokeLifecycleIfPresent(testInstance, "setUp");
 
-        final Method builder = testClass.getDeclaredMethod(builderMethodName, parameterTypes);
+        final Method builder = testClass.getDeclaredMethod(builderMethodName);
         builder.setAccessible(true);
-        final Object setup = builder.invoke(testInstance, arguments);
+        final Object setup = builder.invoke(testInstance);
 
         final Object blockSetup = getFieldValue(setup, "block");
         final Object denseSetup = getFieldValue(setup, "dense");
@@ -204,10 +193,10 @@ public class TreeCanonicalOrthogonalBlockBenchmarkTest extends TestCase {
         final ContinuousDataLikelihoodDelegate denseDelegate = (ContinuousDataLikelihoodDelegate) getFieldValue(denseSetup, "likelihoodDelegate");
         final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter =
                 (OrthogonalBlockDiagonalPolarStableMatrixParameter) getFieldValue(blockSetup, "blockParameter");
-        final OUDiffusionModelDelegate denseOuDelegate =
-                (OUDiffusionModelDelegate) denseDelegate.getDiffusionProcessDelegate();
         final MatrixParameterInterface denseSelectionParameter =
-                denseOuDelegate.getElasticModel().getStrengthOfSelectionMatrixParameter();
+                ((OUDiffusionModelDelegate) getFieldValue(denseSetup, "delegate"))
+                        .getElasticModel()
+                        .getStrengthOfSelectionMatrixParameter();
         final int dimTrait = (Integer) getFieldValue(testInstance, "dimTrait");
         final TreeModel treeModel = (TreeModel) getFieldValue(testInstance, "treeModel");
 

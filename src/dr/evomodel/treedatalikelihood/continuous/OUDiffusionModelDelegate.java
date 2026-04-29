@@ -145,10 +145,6 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         return branchTransitionProvider;
     }
 
-    public Parameter getCanonicalStationaryMeanParameter() {
-        return getCanonicalConstantDriftParameter();
-    }
-
     public OUStrategyBundle getOUStrategyBundle() {
         return OUActualizationStrategies.bundleFor(elasticModel);
     }
@@ -187,6 +183,21 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     public boolean isExternalNode(final NodeRef node) {
         return tree.isExternal(node);
+    }
+
+    public boolean usesCanonicalVarianceGradient() {
+        return elasticModel.hasBlockStructure();
+    }
+
+    public double[] getGradientVarianceForBranch(final BranchSufficientStatistics statistics,
+                                                 final NodeRef node,
+                                                 final ContinuousDiffusionIntegrator cdi,
+                                                 final ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                 final DenseMatrix64F gradQInv) {
+        if (usesCanonicalVarianceGradient()) {
+            return getCanonicalGradientVarianceForBranch(statistics, node, cdi);
+        }
+        return getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv).getData();
     }
 
     public double[] getCanonicalGradientVarianceForBranch(final BranchSufficientStatistics statistics,

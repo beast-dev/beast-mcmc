@@ -420,6 +420,7 @@ public interface ContinuousTraitGradientForBranch {
 
 //            cdi.getVariancePreOrderDerivative(statistics, gradQ);
             removeMissing(gradQInv, statistics.getMissing());
+            removeMissingVector(gradN, statistics.getMissing());
 
             double[] gradient = new double[getDimension()];
             int offset = 0;
@@ -436,6 +437,9 @@ public interface ContinuousTraitGradientForBranch {
         @Override
         public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
                                       DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+
+            removeMissing(gradQInv, statistics.getMissing());
+            removeMissingVector(gradN, statistics.getMissing());
 
             double[] gradient = new double[getDimension()];
             int offset = 0;
@@ -458,14 +462,23 @@ public interface ContinuousTraitGradientForBranch {
             }
         }
 
+        private static void removeMissingVector(DenseMatrix64F v, int[] missing) {
+            if (v.getNumCols() != 1) {
+                return;
+            }
+            for (int m : missing) {
+                if (m >= 0 && m < v.getNumRows()) {
+                    v.unsafe_set(m, 0, 0.0);
+                }
+            }
+        }
+
         List<DerivationParameter> getDerivationParameter() {
             return derivationParameter;
         }
 
         public enum DerivationParameter {
             WRT_VARIANCE {
-                private static final String USE_LEGACY_OU_VARIANCE_GRADIENT_PROPERTY =
-                        "beast.experimental.ouVarianceLegacy";
                 @Override
                 public double[] chainRule(ContinuousDiffusionIntegrator cdi,
                                           DiffusionProcessDelegate diffusionProcessDelegate,
@@ -473,13 +486,8 @@ public interface ContinuousTraitGradientForBranch {
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
                     if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                        if (Boolean.getBoolean(USE_LEGACY_OU_VARIANCE_GRADIENT_PROPERTY)) {
-                            return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
-                                    .getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv)
-                                    .getData();
-                        }
                         return ((OUDiffusionModelDelegate) diffusionProcessDelegate)
-                                .getCanonicalGradientVarianceForBranch(statistics, node, cdi);
+                                .getGradientVarianceForBranch(statistics, node, cdi, likelihoodDelegate, gradQInv);
                     }
 
                     DenseMatrix64F gradient = diffusionProcessDelegate.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv);

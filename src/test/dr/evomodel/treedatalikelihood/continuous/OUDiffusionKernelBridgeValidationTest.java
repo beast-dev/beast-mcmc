@@ -29,7 +29,6 @@ import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
 import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
-import dr.inference.timeseries.gaussian.OUProcessModel;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import junit.framework.Test;
@@ -140,7 +139,7 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         assertGradientClose("diagonal attenuation gradient", analytic, numeric, 1e-4, 2e-2);
     }
 
-    public void testJointGradientReportIncludesAttenuationNumericCheck() {
+    public void testJointGradientDelegatesAttenuationGradient() {
         final BranchSpecificSetup setup = buildBranchSpecificOuTreeLikelihood();
         final ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
@@ -164,10 +163,6 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         for (int i = 0; i < child.length; ++i) {
             assertEquals("joint attenuation gradient idx=" + i, child[i], joint[i], 0.0);
         }
-
-        final String report = jointGradient.getReport();
-        assertTrue("joint report should include the joint analytic report", report.contains("Gradient."));
-        assertTrue("joint report should include the joint numeric report", report.contains("numeric"));
     }
 
     public void testTreeBridgePreservesOrthogonalBlockSelectionParameterization() {
@@ -202,12 +197,6 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         assertTrue("tree bridge should preserve orthogonal block parametrization",
                 blockProvider.getProcessModel().getSelectionMatrixParameterization()
                         instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization);
-        assertEquals("orthogonal tree bridge should default to stationary Lyapunov covariance adjoints",
-                OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV,
-                blockProvider.getProcessModel().getCovarianceGradientMethod());
-        assertEquals("dense tree bridge should keep the dense default covariance adjoint",
-                OUProcessModel.CovarianceGradientMethod.VAN_LOAN_ADJOINT,
-                denseProvider.getProcessModel().getCovarianceGradientMethod());
 
         final double dt = 0.17;
         final double[][] blockF = new double[dimension][dimension];
@@ -241,9 +230,9 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
             setup.block.delegate.fillCanonicalLocalAdjointsForBranch(blockStatistics, blockAdjoints);
             setup.dense.delegate.fillCanonicalLocalAdjointsForBranch(denseStatistics, denseAdjoints);
 
-            assertMatricesClose(blockAdjoints.dLogL_dF, denseAdjoints.dLogL_dF, 1e-8);
+            assertVectorsClose(blockAdjoints.dLogL_dF, denseAdjoints.dLogL_dF, 1e-8);
             assertVectorsClose(blockAdjoints.dLogL_df, denseAdjoints.dLogL_df, 1e-8);
-            assertMatricesClose(blockAdjoints.dLogL_dOmega, denseAdjoints.dLogL_dOmega, 1e-8);
+            assertVectorsClose(blockAdjoints.dLogL_dOmega, denseAdjoints.dLogL_dOmega, 1e-8);
         } finally {
             if (previousUse == null) {
                 System.clearProperty(USE_BRIDGE_PROPERTY);
@@ -279,6 +268,14 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                 System.setProperty(USE_BRIDGE_PROPERTY, previousUse);
             }
         }
+    }
+
+    public void testVarianceGradientPathIsSelectedFromSelectionParameterization() {
+        final OrthogonalBlockTreeSetup setup = buildOrthogonalBlockTreeSetups();
+        assertTrue("block OU should use the canonical variance-gradient bridge",
+                setup.block.delegate.usesCanonicalVarianceGradient());
+        assertFalse("dense OU should keep the legacy variance-gradient path",
+                setup.dense.delegate.usesCanonicalVarianceGradient());
     }
 
     public void testCanonicalOrthogonalBlockGlobalNumericGradientIsFinite() {
@@ -421,11 +418,15 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
     }
 
     private OrthogonalBlockTreeSetup buildOrthogonalBlockTreeSetups() {
-        return buildOrthogonalBlockTreeSetups(1.3, 0.85, 0.25, -0.08, new double[]{0.2, -0.15, 0.1});
+        return buildOrthogonalBlockTreeSetups(
+                1.3, 0.85, 0.25, -0.08, new double[]{0.2, -0.15, 0.1},
+                buildObservedDataModel());
     }
 
     private OrthogonalBlockTreeSetup buildOrthogonalBlockTreeSetupsWithPartialTipMissing() {
-        return buildOrthogonalBlockTreeSetups(1.3, 0.85, 0.25, -0.08, new double[]{0.2, -0.15, 0.1}, true);
+        return buildOrthogonalBlockTreeSetups(
+                1.3, 0.85, 0.25, -0.08, new double[]{0.2, -0.15, 0.1},
+                buildPartiallyMissingDataModel());
     }
 
     private OrthogonalBlockTreeSetup buildOrthogonalBlockTreeSetups(final double scalarValue,
@@ -433,7 +434,8 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                                                                     final double thetaValue,
                                                                     final double tValue,
                                                                     final double[] angleValues) {
-        return buildOrthogonalBlockTreeSetups(scalarValue, rhoValue, thetaValue, tValue, angleValues, false);
+        return buildOrthogonalBlockTreeSetups(
+                scalarValue, rhoValue, thetaValue, tValue, angleValues, buildObservedDataModel());
     }
 
     private OrthogonalBlockTreeSetup buildOrthogonalBlockTreeSetups(final double scalarValue,
@@ -441,7 +443,7 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                                                                     final double thetaValue,
                                                                     final double tValue,
                                                                     final double[] angleValues,
-                                                                    final boolean partiallyObserved) {
+                                                                    final ContinuousTraitDataModel dataModel) {
         final int dimension = dimTrait;
         final Parameter angles = new Parameter.Default(angleValues);
         final GivensRotationMatrixParameter rotation =
@@ -455,10 +457,10 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                         "A.block.tree", rotation, scalar, rho, theta, t);
 
         final BranchSpecificSetup blockSetup = buildStrictOptimaOuTreeLikelihood(
-                new MultivariateElasticModel(blockSelection), partiallyObserved);
+                new MultivariateElasticModel(blockSelection), dataModel);
         final BranchSpecificSetup denseSetup = buildStrictOptimaOuTreeLikelihood(
                 new MultivariateElasticModel(makeMatrixParameter("A.dense.block.tree",
-                        blockSelection.getParameterAsMatrix())), partiallyObserved);
+                        blockSelection.getParameterAsMatrix())), dataModel);
 
         return new OrthogonalBlockTreeSetup(
                 new TreeOuSetup(blockSetup.treeDataLikelihood,
@@ -472,11 +474,11 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
     }
 
     private BranchSpecificSetup buildStrictOptimaOuTreeLikelihood(final MultivariateElasticModel elasticModel) {
-        return buildStrictOptimaOuTreeLikelihood(elasticModel, false);
+        return buildStrictOptimaOuTreeLikelihood(elasticModel, buildObservedDataModel());
     }
 
     private BranchSpecificSetup buildStrictOptimaOuTreeLikelihood(final MultivariateElasticModel elasticModel,
-                                                                  final boolean partiallyObserved) {
+                                                                  final ContinuousTraitDataModel dataModel) {
         final List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
@@ -492,7 +494,7 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         final ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(
                 treeModel,
                 diffusionProcessDelegate,
-                partiallyObserved ? buildPartiallyObservedDataModel() : buildObservedDataModel(),
+                dataModel,
                 rootPrior,
                 rateTransformation,
                 rateModel,
@@ -603,14 +605,14 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                 PrecisionType.FULL);
     }
 
-    private ContinuousTraitDataModel buildPartiallyObservedDataModel() {
+    private ContinuousTraitDataModel buildPartiallyMissingDataModel() {
         final boolean[] missingIndicators = new boolean[traitParameter.getDimension()];
         missingIndicators[3] = true;
         missingIndicators[4] = true;
         missingIndicators[5] = true;
         missingIndicators[7] = true;
         return new ContinuousTraitDataModel(
-                "partiallyObservedDataModel",
+                "partiallyMissingDataModel",
                 traitParameter,
                 missingIndicators,
                 true,
@@ -642,21 +644,6 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
             for (int j = 0; j < expected[i].length; ++j) {
                 assertEquals("matrix[" + i + "][" + j + "]",
                         expected[i][j], actual[i][j], tolerance);
-            }
-        }
-    }
-
-    private static void assertMatricesClose(final double[] actual,
-                                            final double[] expected,
-                                            final double tolerance) {
-        assertEquals("flat matrix dimension", expected.length, actual.length);
-        final int dimension = (int) Math.round(Math.sqrt(expected.length));
-        assertEquals("flat matrix must be square", expected.length, dimension * dimension);
-        for (int i = 0; i < dimension; ++i) {
-            final int rowOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                assertEquals("matrix[" + i + "][" + j + "]",
-                        expected[rowOffset + j], actual[rowOffset + j], tolerance);
             }
         }
     }

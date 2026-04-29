@@ -518,6 +518,16 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                                               final DenseMatrix64F Pdi,
                                               final DenseMatrix64F Pip,
                                               final boolean getDeterminant) {
+        return increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, getDeterminant, false);
+    }
+
+    private InversionResult increaseVariances(int ibo,
+                                              int iBuffer,
+                                              final DenseMatrix64F Vdi,
+                                              final DenseMatrix64F Pdi,
+                                              final DenseMatrix64F Pip,
+                                              final boolean getDeterminant,
+                                              final boolean allowZeroLengthObservedBranch) {
 
         if (TIMING) {
             startTime("peel1");
@@ -542,6 +552,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
             if (allZeroOrInfinite(Vip)) {
+                if (allowZeroLengthObservedBranch) {
+                    CommonOps.scale(1.0, Pi, Pip);
+                    return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY);
+                }
                 throw new RuntimeException("Zero-length branch on data is not allowed.");
             }
             ci = safeInvert2(Vip, Pip, getDeterminant);
@@ -817,7 +831,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
         for (int trait = 0; trait < numTraits; ++trait) {
             final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
-            final InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
+            final InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true, true);
 
             if (ci.getReturnCode() == NOT_OBSERVED) {
                 ibo += dimPartialForTrait;

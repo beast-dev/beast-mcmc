@@ -46,6 +46,8 @@ public class AbstractComputedCompoundMatrixRestoreTest extends MathTestCase {
         final Parameter.Default source = new Parameter.Default(1.0);
         final OneByOneComputedMatrix computed = new OneByOneComputedMatrix(source);
 
+        assertTrue(computed.isImmutable());
+
         // Ensure computed cache is initialized and marked known before store.
         assertEquals(1.0, computed.getParameterValue(0, 0), 1e-15);
 
@@ -64,4 +66,3 @@ public class AbstractComputedCompoundMatrixRestoreTest extends MathTestCase {
         assertEquals(1.0, computed.getParameterValue(0, 0), 1e-15);
     }
 }
-

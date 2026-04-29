@@ -231,6 +231,11 @@ public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
                         "Modify the underlying parameters instead.");
     }
 
+    @Override
+    public final boolean isImmutable() {
+        return true;
+    }
+
     // ================================================================
     // Dimension queries
     // ================================================================

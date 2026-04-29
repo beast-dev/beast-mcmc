@@ -158,6 +158,10 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         return elasticModel;
     }
 
+    public Parameter getCanonicalStationaryMeanParameter() {
+        return getCanonicalConstantDriftParameter();
+    }
+
     public int getDimTrait() {
         return dim;
     }

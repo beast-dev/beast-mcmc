@@ -41,11 +41,8 @@ import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractDiffusionGradient implements GradientWrtParameterProvider, Reportable {
-    private static final double REPORT_SMALL_COMPONENT_THRESHOLD = 5.0e-3;
-    private static final AtomicLong DEBUG_PARAMETER_DIFFUSION_CALL_COUNTER = new AtomicLong(0L);
 
     private final Likelihood likelihood;
     //    private final Parameter parameter;
@@ -131,8 +128,8 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this,
-                lowerBound, upperBound, TOLERANCE, REPORT_SMALL_COMPONENT_THRESHOLD)
-                + "\n" + checkNumeric(getGradientLogDensity());
+                lowerBound, upperBound, TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
 //    @Override
@@ -206,78 +203,6 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
         return getReportString(analytic, testGradient);
     }
 
-    double[] numericGradientRespectingBounds(double lower, double upper) {
-        final Parameter parameter = getNumericalParameter();
-        final double[] storedValues = parameter.getParameterValues();
-        final double[] testGradient = new double[storedValues.length];
-
-        for (int i = 0; i < storedValues.length; ++i) {
-            final double x = storedValues[i];
-            final double h = Math.pow(dr.math.MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x), 1.0);
-
-            final double forward = x + h;
-            final double backward = x - h;
-
-            if (backward >= lower && forward <= upper) {
-                storedValues[i] = forward;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fxPlus = likelihood.getLogLikelihood();
-
-                storedValues[i] = backward;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fxMinus = likelihood.getLogLikelihood();
-
-                testGradient[i] = (fxPlus - fxMinus) / (2.0 * h);
-            } else if (forward <= upper) {
-                final double localH = Math.min(h, upper - x);
-                storedValues[i] = x;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fx = likelihood.getLogLikelihood();
-
-                storedValues[i] = x + localH;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fxPlus = likelihood.getLogLikelihood();
-
-                testGradient[i] = (fxPlus - fx) / localH;
-            } else if (backward >= lower) {
-                final double localH = Math.min(h, x - lower);
-                storedValues[i] = x;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fx = likelihood.getLogLikelihood();
-
-                storedValues[i] = x - localH;
-                parameter.setParameterValue(i, storedValues[i]);
-                likelihood.makeDirty();
-                final double fxMinus = likelihood.getLogLikelihood();
-
-                testGradient[i] = (fx - fxMinus) / localH;
-            } else {
-                testGradient[i] = Double.NaN;
-            }
-
-            storedValues[i] = x;
-            parameter.setParameterValue(i, x);
-        }
-
-        likelihood.makeDirty();
-        return testGradient;
-    }
-
-    String checkNumericRespectingBounds(double[] analytic, double lower, double upper) {
-
-        System.err.println("Numeric at: \n" + new Vector(getNumericalParameter().getParameterValues()));
-        final double[] testGradient = numericGradientRespectingBounds(lower, upper);
-        return "analytic: " + new Vector(analytic) +
-                "\n" +
-                "numeric : " + new Vector(testGradient) +
-                "\n";
-    }
-
     // Default branch specific class
     public static class ParameterDiffusionGradient extends AbstractDiffusionGradient implements Reportable {
 
@@ -320,70 +245,16 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
 
         @Override
         public double[] getGradientLogDensity() {
-            if (Boolean.getBoolean("beast.debug.parameterDiffusion.refreshLikelihoodBeforeAnalytic")) {
-                getLikelihood().makeDirty();
-                getLikelihood().getLogLikelihood();
-            }
             double[] gradient = getFullBranchGradient();
-            final double[] extracted = getGradientLogDensity(gradient);
-            maybeEmitParameterDiffusionSliceDebug(gradient, extracted);
-            maybeEmitRecomputeConsistencyDebug(gradient, extracted);
-            return extracted;
+            return getGradientLogDensity(gradient);
         }
 
         protected double[] getFullBranchGradient() {
-            if (Boolean.getBoolean("beast.gradientHook.parameterDiffusion.useFreshSnapshot")) {
-                return branchSpecificGradient.getGradientLogDensityFromFreshLikelihoodSnapshot();
-            }
             return branchSpecificGradient.getGradientLogDensity();
         }
 
         public double[] getGradientLogDensity(double[] gradient) {
             return extractSourceGradient(gradient, dim);
-        }
-
-        private void maybeEmitParameterDiffusionSliceDebug(final double[] fullAnalyticGradient,
-                                                           final double[] extractedAnalyticSlice) {
-            if (!Boolean.getBoolean("beast.debug.parameterDiffusionSlice")) {
-                return;
-            }
-            final String rawName = rawParameter == null ? "<null>" : rawParameter.getParameterName();
-            final String filter = System.getProperty(
-                    "beast.debug.parameterDiffusionSlice.onlyParameterContains",
-                    "OrthogonalBlockDiagonalPolarStableMatrixParameter.native"
-            );
-            if (filter != null && !filter.isEmpty() && !rawName.contains(filter)) {
-                return;
-            }
-            final long call = DEBUG_PARAMETER_DIFFUSION_CALL_COUNTER.incrementAndGet();
-            final int stride = Integer.getInteger("beast.debug.parameterDiffusionSliceStride", 1);
-            if (stride <= 0 || (call % stride != 0)) {
-                return;
-            }
-
-            final int[] focus = parseFocusIndices();
-            final double[] fullNumericGradient = branchSpecificGradient.getNumericalGradientLogDensityDebug();
-            final double[] extractedNumericSlice = extractSourceGradient(fullNumericGradient, dim);
-
-            final StringBuilder sb = new StringBuilder();
-            sb.append("parameterDiffusionSliceDebug call=").append(call)
-                    .append(" rawParameter=").append(rawName)
-                    .append(" sourceOffset=").append(getSourceOffset())
-                    .append(" dim=").append(dim)
-                    .append('\n');
-            sb.append("\tfullAnalytic");
-            appendIndexValues(sb, fullAnalyticGradient, focus);
-            sb.append('\n');
-            sb.append("\tfullNumeric ");
-            appendIndexValues(sb, fullNumericGradient, focus);
-            sb.append('\n');
-            sb.append("\tfullAbsDiff");
-            appendIndexAbsDiff(sb, fullAnalyticGradient, fullNumericGradient, focus);
-            sb.append('\n');
-            sb.append("\textractedAnalytic=").append(new Vector(extractedAnalyticSlice)).append('\n');
-            sb.append("\textractedNumeric =").append(new Vector(extractedNumericSlice)).append('\n');
-            sb.append("\textractedAbsDiff=").append(new Vector(absDiff(extractedAnalyticSlice, extractedNumericSlice))).append('\n');
-            System.err.print(sb.toString());
         }
 
         /**
@@ -520,64 +391,6 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
             return out;
         }
 
-        private void maybeEmitRecomputeConsistencyDebug(final double[] baselineFullGradient,
-                                                        final double[] baselineExtractedSlice) {
-            if (!Boolean.getBoolean("beast.debug.parameterDiffusionRecomputeConsistency")) {
-                return;
-            }
-            final String rawName = rawParameter == null ? "<null>" : rawParameter.getParameterName();
-            final String filter = System.getProperty(
-                    "beast.debug.parameterDiffusionRecomputeConsistency.onlyParameterContains",
-                    ""
-            );
-            if (filter != null && !filter.isEmpty() && !rawName.contains(filter)) {
-                return;
-            }
-
-            final long call = DEBUG_PARAMETER_DIFFUSION_CALL_COUNTER.incrementAndGet();
-            final int stride = Integer.getInteger("beast.debug.parameterDiffusionRecomputeConsistencyStride", 1);
-            if (stride <= 0 || (call % stride != 0)) {
-                return;
-            }
-
-            getLikelihood().makeDirty();
-            if (Boolean.getBoolean("beast.debug.parameterDiffusionRecomputeConsistencyForceLikelihood")) {
-                getLikelihood().getLogLikelihood();
-            }
-            final double[] recomputedFullGradient = getFullBranchGradient();
-            final double[] recomputedExtractedSlice = getGradientLogDensity(recomputedFullGradient);
-
-            double maxAbsFull = 0.0;
-            int maxIdxFull = -1;
-            final int nFull = Math.min(baselineFullGradient.length, recomputedFullGradient.length);
-            for (int i = 0; i < nFull; ++i) {
-                final double d = Math.abs(baselineFullGradient[i] - recomputedFullGradient[i]);
-                if (d > maxAbsFull) {
-                    maxAbsFull = d;
-                    maxIdxFull = i;
-                }
-            }
-
-            double maxAbsSlice = 0.0;
-            int maxIdxSlice = -1;
-            final int nSlice = Math.min(baselineExtractedSlice.length, recomputedExtractedSlice.length);
-            for (int i = 0; i < nSlice; ++i) {
-                final double d = Math.abs(baselineExtractedSlice[i] - recomputedExtractedSlice[i]);
-                if (d > maxAbsSlice) {
-                    maxAbsSlice = d;
-                    maxIdxSlice = i;
-                }
-            }
-
-            System.err.println("parameterDiffusionRecomputeConsistency call=" + call
-                    + " rawParameter=" + rawName
-                    + " sourceOffset=" + getSourceOffset()
-                    + " maxAbsFull=" + maxAbsFull
-                    + " maxIdxFull=" + maxIdxFull
-                    + " maxAbsSlice=" + maxAbsSlice
-                    + " maxIdxSlice=" + maxIdxSlice);
-        }
-
         @Override
         public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
             List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> derList = branchSpecificGradient.getDerivationParameter();
@@ -610,51 +423,13 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
                     branchSpecificGradient, likelihood,
                     ((DiagonalMatrix) attenuation).getDiagonalParameter(),
                     (DiagonalMatrix) attenuation,
-                    Double.POSITIVE_INFINITY, 1.0e-12) {
-                @Override
-                public String getReport() {
-                    final double[] analytic = getGradientLogDensity();
-                    System.err.println("Numeric at: \n" + new Vector(getNumericalParameter().getParameterValues()));
-                    final double[] numeric = numericGradientRespectingBounds(1.0e-12, Double.POSITIVE_INFINITY);
-                    return "Gradient." + getRawParameter().getParameterName() + "\n" +
-                            "Gradient\n" +
-                            "analytic: " + new Vector(analytic) + "\n" +
-                            "numeric : " + new Vector(numeric) + "\n\n" +
-                            AbstractDiffusionGradient.ParameterDiffusionGradient.class.getCanonicalName() + "\n" +
-                            "analytic: " + new Vector(analytic) + "\n" +
-                            "numeric: " + new Vector(numeric) + "\n";
-                }
-            };
+                    Double.POSITIVE_INFINITY, 1.0e-12);
         }
 
         public static ParameterDiffusionGradient createSelectionParameterGradient(final BranchSpecificGradient branchSpecificGradient,
                                                                                  final Likelihood likelihood,
                                                                                  final Parameter parameter,
                                                                                  final AbstractBlockDiagonalTwoByTwoMatrixParameter rawParameter) {
-            final boolean useFreshSnapshotHook =
-                    Boolean.getBoolean("beast.gradientHook.selection.useFreshSnapshot");
-
-            if (useFreshSnapshotHook) {
-                return new ParameterDiffusionGradient(
-                        branchSpecificGradient,
-                        likelihood,
-                        parameter,
-                        rawParameter.getParameter(),
-                        Double.POSITIVE_INFINITY,
-                        Double.NEGATIVE_INFINITY) {
-                    @Override
-                    protected double[] getFullBranchGradient() {
-                        return branchSpecificGradient.getGradientLogDensityFromFreshLikelihoodSnapshot();
-                    }
-
-                    @Override
-                    public String getReport() {
-                        return "Gradient." + getRawParameter().getParameterName() + " (freshSnapshotHook)\n" +
-                                super.getReport();
-                    }
-                };
-            }
-
             return new ParameterDiffusionGradient(
                     branchSpecificGradient,
                     likelihood,

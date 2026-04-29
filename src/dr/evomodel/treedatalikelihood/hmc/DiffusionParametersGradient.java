@@ -38,15 +38,10 @@ import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class DiffusionParametersGradient implements GradientWrtParameterProvider, Reportable {
-    private static final AtomicLong DEBUG_CALL_COUNTER = new AtomicLong(0L);
 
     private final TreeDataLikelihood likelihood;
     private final int dim;
@@ -65,10 +60,6 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
         this.gradientSlices = buildGradientSlices(parametersGradients, compoundParameter);
         this.dim = sumResultDimensions(gradientSlices);
         validateDerivationOrder();
-
-        if (Boolean.getBoolean("beast.debug.compoundParameter.identitySummary")) {
-            emitCompoundParameterIdentitySummary("DiffusionParametersGradient", compoundParameter);
-        }
 
     }
 
@@ -187,14 +178,7 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
 
     @Override
     public double[] getGradientLogDensity() {
-        if (Boolean.getBoolean("beast.gradientHook.diffusionParametersGradient.forceDirtyBeforeAnalytic")) {
-            likelihood.makeDirty();
-            if (Boolean.getBoolean("beast.gradientHook.diffusionParametersGradient.forceLikelihoodEval")) {
-                likelihood.getLogLikelihood();
-            }
-        }
         double[] gradient = branchSpecificGradient.getGradientLogDensity();
-        maybeEmitRecomputeConsistencyDebug(gradient);
         return getGradientLogDensity(gradient);
     }
 
@@ -209,151 +193,7 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
                     slice.resultDimension
             );
         }
-        maybeEmitSliceDebug(gradient, result);
         return result;
-    }
-
-    private void maybeEmitSliceDebug(final double[] fullSourceGradient,
-                                     final double[] slicedResultGradient) {
-        if (!Boolean.getBoolean("beast.debug.diffusionSlice")) {
-            return;
-        }
-        final long call = DEBUG_CALL_COUNTER.incrementAndGet();
-        final int stride = Integer.getInteger("beast.debug.diffusionSliceStride", 1);
-        if (stride <= 0 || (call % stride != 0)) {
-            return;
-        }
-
-        final int[] focus = parseFocusIndices();
-        final String focusParamContains = System.getProperty(
-                "beast.debug.diffusionSlice.onlyParameterContains",
-                "OrthogonalBlockDiagonalPolarStableMatrixParameter.native"
-        );
-        final double[] numericFull = branchSpecificGradient.getNumericalGradientLogDensityDebug();
-
-        final StringBuilder sb = new StringBuilder();
-        sb.append("diffusionSliceDebug call=").append(call).append('\n');
-        sb.append("\tfullSource(analytic)");
-        appendIndexValues(sb, fullSourceGradient, focus);
-        sb.append('\n');
-        sb.append("\tfullSource(numeric )");
-        appendIndexValues(sb, numericFull, focus);
-        sb.append('\n');
-        sb.append("\tfullSource(absDiff)");
-        appendIndexDiffs(sb, fullSourceGradient, numericFull, focus);
-        sb.append('\n');
-
-        for (GradientSlice slice : gradientSlices) {
-            final String rawName = slice.gradientProvider.getRawParameter() == null
-                    ? "<null>"
-                    : slice.gradientProvider.getRawParameter().getParameterName();
-            if (focusParamContains != null && !focusParamContains.isEmpty() && !rawName.contains(focusParamContains)) {
-                continue;
-            }
-            final double[] analyticSlice = slice.gradientProvider.getGradientLogDensity(fullSourceGradient, slice.sourceOffset);
-            final double[] numericSlice = slice.gradientProvider.getGradientLogDensity(numericFull, slice.sourceOffset);
-            sb.append("\tslice parameter=").append(rawName)
-                    .append(" sourceOffset=").append(slice.sourceOffset)
-                    .append(" sourceDim=").append(slice.sourceDimension)
-                    .append(" resultOffset=").append(slice.resultOffset)
-                    .append(" resultDim=").append(slice.resultDimension)
-                    .append('\n');
-            sb.append("\t\tanalyticSlice=").append(Arrays.toString(analyticSlice)).append('\n');
-            sb.append("\t\tnumericSlice =").append(Arrays.toString(numericSlice)).append('\n');
-            sb.append("\t\tabsDiffSlice =").append(Arrays.toString(absDiff(analyticSlice, numericSlice))).append('\n');
-        }
-
-        System.err.print(sb.toString());
-    }
-
-    private int[] parseFocusIndices() {
-        final String raw = System.getProperty("beast.debug.diffusionSlice.indices", "6,7,8");
-        final String[] tokens = raw.split(",");
-        final List<Integer> parsed = new ArrayList<>();
-        for (String token : tokens) {
-            final String t = token.trim();
-            if (t.isEmpty()) {
-                continue;
-            }
-            try {
-                parsed.add(Integer.parseInt(t));
-            } catch (NumberFormatException ignored) {
-                // debug-only parsing
-            }
-        }
-        if (parsed.isEmpty()) {
-            parsed.add(6);
-            parsed.add(7);
-            parsed.add(8);
-        }
-        final int[] out = new int[parsed.size()];
-        for (int i = 0; i < parsed.size(); ++i) {
-            out[i] = parsed.get(i);
-        }
-        return out;
-    }
-
-    private void appendIndexValues(final StringBuilder sb, final double[] vector, final int[] indices) {
-        for (int idx : indices) {
-            if (idx >= 0 && idx < vector.length) {
-                sb.append(" i").append(idx).append('=').append(vector[idx]);
-            } else {
-                sb.append(" i").append(idx).append("=<oob>");
-            }
-        }
-    }
-
-    private void appendIndexDiffs(final StringBuilder sb, final double[] left, final double[] right, final int[] indices) {
-        for (int idx : indices) {
-            if (idx >= 0 && idx < left.length && idx < right.length) {
-                sb.append(" i").append(idx).append('=').append(Math.abs(left[idx] - right[idx]));
-            } else {
-                sb.append(" i").append(idx).append("=<oob>");
-            }
-        }
-    }
-
-    private double[] absDiff(final double[] a, final double[] b) {
-        final int n = Math.min(a.length, b.length);
-        final double[] out = new double[n];
-        for (int i = 0; i < n; ++i) {
-            out[i] = Math.abs(a[i] - b[i]);
-        }
-        return out;
-    }
-
-    private void maybeEmitRecomputeConsistencyDebug(final double[] baselineGradient) {
-        if (!Boolean.getBoolean("beast.debug.diffusionRecomputeConsistency")) {
-            return;
-        }
-        final long call = DEBUG_CALL_COUNTER.incrementAndGet();
-        final int stride = Integer.getInteger("beast.debug.diffusionRecomputeConsistencyStride", 1);
-        if (stride <= 0 || (call % stride != 0)) {
-            return;
-        }
-
-        likelihood.makeDirty();
-        if (Boolean.getBoolean("beast.debug.diffusionRecomputeConsistencyForceLikelihood")) {
-            likelihood.getLogLikelihood();
-        }
-        final double[] recomputedGradient = branchSpecificGradient.getGradientLogDensity();
-
-        double maxAbs = 0.0;
-        int maxIdx = -1;
-        final int n = Math.min(baselineGradient.length, recomputedGradient.length);
-        for (int i = 0; i < n; ++i) {
-            final double diff = Math.abs(baselineGradient[i] - recomputedGradient[i]);
-            if (diff > maxAbs) {
-                maxAbs = diff;
-                maxIdx = i;
-            }
-        }
-
-        System.err.println("diffusionRecomputeConsistency call=" + call
-                + " maxAbsDiff=" + maxAbs
-                + " maxIdx=" + maxIdx
-                + " baseline=" + (maxIdx >= 0 ? baselineGradient[maxIdx] : Double.NaN)
-                + " recomputed=" + (maxIdx >= 0 ? recomputedGradient[maxIdx] : Double.NaN));
     }
 
     @Override
@@ -361,7 +201,8 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
         return "diffusionGradient." + compoundParameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                         Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.TOLERANCE);
+                GradientWrtParameterProvider.TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
     private static final class GradientSlice {
@@ -384,25 +225,4 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
         }
     }
 
-    private static void emitCompoundParameterIdentitySummary(final String label,
-                                                             final CompoundParameter compoundParameter) {
-        final Map<Parameter, Integer> multiplicity = new IdentityHashMap<Parameter, Integer>();
-        for (int i = 0; i < compoundParameter.getParameterCount(); ++i) {
-            final Parameter child = compoundParameter.getParameter(i);
-            final Integer previous = multiplicity.get(child);
-            multiplicity.put(child, previous == null ? 1 : previous + 1);
-        }
-        int duplicatedChildRefs = 0;
-        for (Integer count : multiplicity.values()) {
-            if (count != null && count > 1) {
-                duplicatedChildRefs++;
-            }
-        }
-        System.err.println("compoundParameterIdentitySummary label=" + label
-                + " id=" + System.identityHashCode(compoundParameter)
-                + " parameterCount=" + compoundParameter.getParameterCount()
-                + " identityUniqueCount=" + multiplicity.size()
-                + " duplicatedChildRefs=" + duplicatedChildRefs
-                + " dimension=" + compoundParameter.getDimension());
-    }
 }

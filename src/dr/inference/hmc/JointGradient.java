@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Max Tolkoff
@@ -52,7 +51,6 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
     final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
-    private static final AtomicLong DEBUG_SERIAL_CALL_COUNTER = new AtomicLong(0L);
 
     public JointGradient(List<GradientWrtParameterProvider> derivativeList) {
         this(derivativeList, 0);
@@ -238,79 +236,16 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
         final double[] derivative = derivativeType.getDerivativeLogDensity(derivativeList.get(0));
 
-        if (derivativeType == DerivativeType.GRADIENT && Boolean.getBoolean("beast.debug.jointGradientContrib")) {
-            final long call = DEBUG_SERIAL_CALL_COUNTER.incrementAndGet();
-            final int stride = Integer.getInteger("beast.debug.jointGradientContribStride", 1);
-            if (stride > 0 && (call % stride == 0)) {
-                emitJointGradientDebug(call, 0, derivativeList.get(0), derivative);
-            }
-        }
-
         for (int i = 1; i < size; i++) {
 
             final double[] temp = derivativeType.getDerivativeLogDensity(derivativeList.get(i));
-
-            if (derivativeType == DerivativeType.GRADIENT && Boolean.getBoolean("beast.debug.jointGradientContrib")) {
-                final long call = DEBUG_SERIAL_CALL_COUNTER.get();
-                final int stride = Integer.getInteger("beast.debug.jointGradientContribStride", 1);
-                if (stride > 0 && (call % stride == 0)) {
-                    emitJointGradientDebug(call, i, derivativeList.get(i), temp);
-                }
-            }
 
             for (int j = 0; j < temp.length; j++) {
                 derivative[j] += temp[j];
             }
         }
 
-        if (derivativeType == DerivativeType.GRADIENT && Boolean.getBoolean("beast.debug.jointGradientContrib")) {
-            final long call = DEBUG_SERIAL_CALL_COUNTER.get();
-            final int stride = Integer.getInteger("beast.debug.jointGradientContribStride", 1);
-            if (stride > 0 && (call % stride == 0)) {
-                emitJointGradientDebug(call, -1, null, derivative);
-            }
-        }
-
         return derivative;
-    }
-
-    private void emitJointGradientDebug(final long call,
-                                        final int providerIndex,
-                                        final GradientWrtParameterProvider provider,
-                                        final double[] gradient) {
-        final int[] indices = parseDebugIndices();
-        final StringBuilder sb = new StringBuilder();
-        sb.append("jointGradientContrib call=").append(call);
-        if (providerIndex >= 0) {
-            sb.append(" providerIndex=").append(providerIndex);
-            sb.append(" providerClass=").append(provider.getClass().getSimpleName());
-            sb.append(" parameter=");
-            sb.append(provider.getParameter() == null ? "<null>" : provider.getParameter().getParameterName());
-        } else {
-            sb.append(" providerIndex=sum");
-        }
-        for (int idx : indices) {
-            if (idx >= 0 && idx < gradient.length) {
-                sb.append(" i").append(idx).append("=").append(gradient[idx]);
-            } else {
-                sb.append(" i").append(idx).append("=<oob>");
-            }
-        }
-        System.err.println(sb.toString());
-    }
-
-    private int[] parseDebugIndices() {
-        final String raw = System.getProperty("beast.debug.jointGradient.indices", "6,7,8");
-        final String[] tokens = raw.split(",");
-        final int[] out = new int[tokens.length];
-        for (int i = 0; i < tokens.length; ++i) {
-            try {
-                out[i] = Integer.parseInt(tokens[i].trim());
-            } catch (NumberFormatException nfe) {
-                out[i] = -1;
-            }
-        }
-        return out;
     }
 
     @Override
@@ -323,20 +258,11 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
     @Override
     public String getReport() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("jointGradient.").append(parameter.getParameterName()).append("\n");
-        builder.append(GradientWrtParameterProvider.getReportAndCheckForError(this,
+        return  "jointGradient." + parameter.getParameterName() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.TOLERANCE));
-
-        for (final GradientWrtParameterProvider provider : derivativeList) {
-            if (provider instanceof Reportable) {
-                builder.append("\nchildReport.\n");
-                builder.append(((Reportable) provider).getReport());
-            }
-        }
-
-        return builder.toString();
+                GradientWrtParameterProvider.TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
     enum DerivativeType {

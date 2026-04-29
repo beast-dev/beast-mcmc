@@ -162,12 +162,6 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 
     @Override
     public double[] getGradientLogDensity() {
-        if (Boolean.getBoolean("beast.gradientHook.precisionGradient.forceDirtyBeforeAnalytic")) {
-            getLikelihood().makeDirty();
-            if (Boolean.getBoolean("beast.gradientHook.precisionGradient.forceLikelihoodEval")) {
-                getLikelihood().getLogLikelihood();
-            }
-        }
         double[] gradient = (gradientWrtPrecisionProvider.getBranchSpecificGradient() == null) ? null : gradientWrtPrecisionProvider.getBranchSpecificGradient().getGradientLogDensity(); // Get gradient wrt variance
         return getGradientLogDensity(gradient);
     }

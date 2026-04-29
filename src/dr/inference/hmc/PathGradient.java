@@ -148,14 +148,4 @@ public class PathGradient implements HessianWrtParameterProvider, PathDependent 
     public double[][] getHessianLogDensity() {
         throw new RuntimeException("Not yet implemented");
     }
-
-    // Debug/support accessors for downstream tooling (e.g. HMC provider-breakdown).
-    // These are read-only and do not alter path-gradient behavior.
-    public GradientWrtParameterProvider getSourceGradientProvider() {
-        return source;
-    }
-
-    public GradientWrtParameterProvider getDestinationGradientProvider() {
-        return destination;
-    }
 }

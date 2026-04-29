@@ -96,19 +96,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
 
     @Override
     public String getReport() {
-        final double[] analytic = getGradientLogDensity();
-        final String numericDetails = checkNumeric(analytic);
-
-        final double[] storedValues = getNumericalParameter().getParameterValues();
-        final double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
-        for (int i = 0; i < storedValues.length; ++i) {
-            getNumericalParameter().setParameterValue(i, storedValues[i]);
-        }
-
         return "correlationGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
-                "Gradient\n" +
-                "analytic: " + new Vector(analytic) + "\n" +
-                "numeric : " + new Vector(testGradient) + "\n\n" +
-                numericDetails;
+                super.getReport();
     }
 }

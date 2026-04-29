@@ -42,7 +42,6 @@ import java.util.logging.Logger;
  * @author Marc A. Suchard
  */
 public interface GradientWrtParameterProvider {
-    double NUMERICAL_CHECK_ABSOLUTE_EPSILON = 1E-3;
 
     Likelihood getLikelihood();
 
@@ -205,62 +204,9 @@ public interface GradientWrtParameterProvider {
         }
 
         public double[] getNumericalGradient() {
-            final double[] savedValues = parameter.getParameterValues();
-            final double[] testGradient = new double[savedValues.length];
 
-            for (int i = 0; i < savedValues.length; ++i) {
-                final double x = savedValues[i];
-                final double h = Math.pow(dr.math.MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x), 1.0);
-
-                final double forward = x + h;
-                final double backward = x - h;
-
-                if (backward >= lowerBound && forward <= upperBound) {
-                    savedValues[i] = forward;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fxPlus = provider.getLikelihood().getLogLikelihood();
-
-                    savedValues[i] = backward;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fxMinus = provider.getLikelihood().getLogLikelihood();
-
-                    testGradient[i] = (fxPlus - fxMinus) / (2.0 * h);
-                } else if (forward <= upperBound) {
-                    final double localH = Math.min(h, upperBound - x);
-
-                    savedValues[i] = x;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fx = provider.getLikelihood().getLogLikelihood();
-
-                    savedValues[i] = x + localH;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fxPlus = provider.getLikelihood().getLogLikelihood();
-
-                    testGradient[i] = (fxPlus - fx) / localH;
-                } else if (backward >= lowerBound) {
-                    final double localH = Math.min(h, x - lowerBound);
-
-                    savedValues[i] = x;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fx = provider.getLikelihood().getLogLikelihood();
-
-                    savedValues[i] = x - localH;
-                    setParameter(savedValues);
-                    provider.getLikelihood().makeDirty();
-                    final double fxMinus = provider.getLikelihood().getLogLikelihood();
-
-                    testGradient[i] = (fx - fxMinus) / localH;
-                } else {
-                    testGradient[i] = Double.NaN;
-                }
-
-                savedValues[i] = x;
-            }
+            double[] savedValues = parameter.getParameterValues();
+            double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
 
             setParameter(savedValues);
             provider.getLikelihood().makeDirty();
@@ -292,9 +238,7 @@ public interface GradientWrtParameterProvider {
         if (checkValues) {
             for (int i = 0; i < analytic.length; ++i) {
                 double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
-                double absoluteDifference = Math.abs(analytic[i] - numeric[i]);
                 boolean testFailed = Math.abs(relativeDifference) > tolerance &&
-                        absoluteDifference > Math.max(NUMERICAL_CHECK_ABSOLUTE_EPSILON, smallNumberThreshold) &&
                         Math.abs(analytic[i]) > smallNumberThreshold && Math.abs(numeric[i]) > smallNumberThreshold ||
                         ((analytic[i] == 0.0 || numeric[i] == 0.0) && Math.abs(analytic[i] + numeric[i]) > tolerance);
 
@@ -342,4 +286,5 @@ public interface GradientWrtParameterProvider {
     }
 
     Double TOLERANCE = 1E-1;
+    Double SMALL_NUMBER_THRESHOLD = 1E-5;
 }

@@ -15,9 +15,17 @@ public interface SelectionMatrixParameterization {
 
     void fillTransitionMatrix(double dt, double[][] out);
 
+    void fillTransitionMatrixFlat(double dt, double[] out);
+
     void accumulateGradientFromTransition(double dt,
                                           double[] stationaryMean,
                                           double[][] dLogL_dF,
                                           double[] dLogL_df,
                                           double[] gradientAccumulator);
+
+    void accumulateGradientFromTransitionFlat(double dt,
+                                              double[] stationaryMean,
+                                              double[] dLogL_dF,
+                                              double[] dLogL_df,
+                                              double[] gradientAccumulator);
 }

@@ -35,8 +35,10 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonicalOUMessagePasser;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
@@ -371,8 +373,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (cacheDiagnosticReportCounter % CACHE_DIAGNOSTIC_REPORT_INTERVAL != 0) {
             return;
         }
-        if (transitionProvider instanceof HomogeneousCanonicalOUBranchTransitionProvider) {
-            ((HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider)
+        if (transitionProvider instanceof CanonicalTransitionCacheDiagnostics) {
+            ((CanonicalTransitionCacheDiagnostics) transitionProvider)
                     .reportTransitionCacheDiagnostics(label);
         }
     }
@@ -390,13 +392,13 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
 
     private static int inferSelectionGradientDimension(final CanonicalBranchTransitionProvider transitionProvider,
                                                        final CanonicalTreeMessagePasser passer) {
-        if (!(transitionProvider instanceof HomogeneousCanonicalOUBranchTransitionProvider)) {
+        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)) {
             final int dim = passer.getDimension();
             return dim * dim;
         }
 
         final OUProcessModel processModel =
-                ((HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider).getProcessModel();
+                ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
         if (processModel.getSelectionMatrixParameterization()
                 instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
             final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization =

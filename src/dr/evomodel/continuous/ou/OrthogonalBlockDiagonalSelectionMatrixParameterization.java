@@ -255,6 +255,16 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         copyDenseMatrixToArray(transitionMatrix, out);
     }
 
+    @Override
+    public void fillTransitionMatrixFlat(final double dt, final double[] out) {
+        if (out == null || out.length != getDimension() * getDimension()) {
+            throw new IllegalArgumentException(
+                    "transition matrix must have length " + (getDimension() * getDimension()));
+        }
+        refreshBasisCaches(dt);
+        copyDenseMatrixToFlat(transitionMatrix, out);
+    }
+
     public void fillTransitionCovariance(final MatrixParameterInterface diffusionMatrix,
                                          final double dt,
                                          final double[][] out) {
@@ -373,6 +383,38 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
+    public void accumulateNativeGradientFromAdjointsPreparedFlat(final PreparedBranchBasis prepared,
+                                                                 final MatrixParameterInterface diffusionMatrix,
+                                                                 final CanonicalLocalTransitionAdjoints localAdjoints,
+                                                                 final BranchGradientWorkspace workspace,
+                                                                 final double[] compressedDAccumulator,
+                                                                 final double[] rotationAccumulator) {
+        loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
+
+        accumulateNativeGradientFromTransitionPreparedFlat(
+                prepared,
+                localAdjoints.dLogL_dF,
+                localAdjoints.dLogL_df,
+                workspace,
+                compressedDAccumulator,
+                rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException(
+                    "Non-finite orthogonal native transition contribution at dt=" + prepared.dt);
+        }
+
+        accumulateNativeGradientFromCovarianceStationaryPreparedFlat(
+                prepared,
+                localAdjoints.dLogL_dOmega,
+                workspace,
+                compressedDAccumulator,
+                rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException(
+                    "Non-finite orthogonal native covariance contribution at dt=" + prepared.dt);
+        }
+    }
+
     private void loadOrFillPreparedCovariance(final PreparedBranchBasis prepared,
                                               final MatrixParameterInterface diffusionMatrix,
                                               final BranchGradientWorkspace workspace) {
@@ -416,7 +458,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                                     final double[] gradientAccumulator,
                                                     final BranchGradientWorkspace workspace) {
         fillSymmetricDenseMatrix(dLogL_dV, workspace.gV);
+        accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
+    }
 
+    public void accumulateDiffusionGradientPreparedFlat(final PreparedBranchBasis prepared,
+                                                        final double[] dLogL_dV,
+                                                        final boolean transposeAdjoint,
+                                                        final double[] gradientAccumulator,
+                                                        final BranchGradientWorkspace workspace) {
+        fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
+        accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
+    }
+
+    private void accumulateDiffusionGradientPreparedSymmetric(final PreparedBranchBasis prepared,
+                                                              final double[] gradientAccumulator,
+                                                              final BranchGradientWorkspace workspace) {
         CommonOps.mult(prepared.rtMatrix, workspace.gV, workspace.temp1);
         CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.hDBasis);
         symmetrize(workspace.hDBasis);
@@ -562,6 +618,24 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                 compressedDAccumulator, rotationAccumulator);
     }
 
+    @Override
+    public void accumulateGradientFromTransition(final double dt,
+                                                 final double[] stationaryMean,
+                                                 final double[][] dLogL_dF,
+                                                 final double[] dLogL_df,
+                                                 final double[] gradientAccumulator) {
+        final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
+        final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
+        if (gradientAccumulator.length != nativeBlockDim + angleDim) {
+            super.accumulateGradientFromTransition(
+                    dt, stationaryMean, dLogL_dF, dLogL_df, gradientAccumulator);
+            return;
+        }
+        copySquareMatrixToFlat(dLogL_dF, transitionCovarianceArrayScratch);
+        accumulateGradientFromTransitionFlat(
+                dt, stationaryMean, transitionCovarianceArrayScratch, dLogL_df, gradientAccumulator);
+    }
+
     public void accumulateNativeGradientFromTransition(final double dt,
                                                        final double[] stationaryMean,
                                                        final double[] dLogL_dF,
@@ -571,6 +645,44 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         refreshBasisCaches(dt);
         accumulateNativeGradientFromTransitionCached(
                 dt, stationaryMean, dLogL_dF, dLogL_df, compressedDAccumulator, rotationAccumulator);
+    }
+
+    @Override
+    public void accumulateGradientFromTransitionFlat(final double dt,
+                                                     final double[] stationaryMean,
+                                                     final double[] dLogL_dF,
+                                                     final double[] dLogL_df,
+                                                     final double[] gradientAccumulator) {
+        final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
+        final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
+        final int nativeDim = nativeBlockDim + angleDim;
+        if (gradientAccumulator.length != nativeDim) {
+            super.accumulateGradientFromTransitionFlat(
+                    dt, stationaryMean, dLogL_dF, dLogL_df, gradientAccumulator);
+            return;
+        }
+
+        final int compressedDim = blockParameter.getCompressedDDimension();
+        Arrays.fill(transitionMatrixArrayScratch, 0, compressedDim, 0.0);
+        Arrays.fill(precisionFlat, 0, nativeBlockDim, 0.0);
+        clearSquare(denseAdjointScratch);
+
+        accumulateNativeGradientFromTransition(
+                dt,
+                stationaryMean,
+                dLogL_dF,
+                dLogL_df,
+                transitionMatrixArrayScratch,
+                denseAdjointScratch);
+
+        blockParameter.chainGradient(transitionMatrixArrayScratch, precisionFlat);
+        final double[] angleGradient = orthogonalRotation.pullBackGradient(denseAdjointScratch);
+        for (int i = 0; i < nativeBlockDim; ++i) {
+            gradientAccumulator[i] += precisionFlat[i];
+        }
+        for (int i = 0; i < angleGradient.length; ++i) {
+            gradientAccumulator[nativeBlockDim + i] += angleGradient[i];
+        }
     }
 
     public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
@@ -938,6 +1050,68 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         addDenseMatrixToArray(workspace.gradR, rotationAccumulator);
     }
 
+    private void accumulateNativeGradientFromTransitionPreparedFlat(final PreparedBranchBasis prepared,
+                                                                    final double[] dLogL_dF,
+                                                                    final double[] dLogL_df,
+                                                                    final BranchGradientWorkspace workspace,
+                                                                    final double[] compressedDAccumulator,
+                                                                    final double[] rotationAccumulator) {
+        fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
+        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+
+        CommonOps.mult(prepared.rtMatrix, workspace.upstreamF, workspace.temp1);
+        CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.upstreamFD);
+        if (forceDenseAdjointExp) {
+            fillScaledNegativeBlockDMatrix(
+                    prepared.blockDParams,
+                    prepared.dt,
+                    workspace.scaledNegativeBlockDScratch,
+                    prepared.dimension);
+            copyDenseMatrixToArray(workspace.upstreamFD, workspace.denseAdjointScratch);
+            MatrixExponentialUtils.adjointExp(
+                    workspace.scaledNegativeBlockDScratch,
+                    workspace.denseAdjointScratch,
+                    workspace.denseAdjointScratch);
+            fillDenseMatrix(workspace.denseAdjointScratch, workspace.gradD);
+            transposeInPlace(workspace.gradD);
+            CommonOps.scale(-prepared.dt, workspace.gradD);
+        } else {
+            final DenseMatrix64F frechetInputTransition;
+            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+                CommonOps.transpose(workspace.upstreamFD, workspace.temp3);
+                frechetInputTransition = workspace.temp3;
+            } else {
+                frechetInputTransition = workspace.upstreamFD;
+            }
+            workspace.frechetHelper.frechetAdjointExpInDBasis(
+                    prepared.blockDParams, frechetInputTransition, prepared.dt, workspace.gradD);
+            transposeInPlace(workspace.gradD);
+            if (!isFinite(workspace.gradD.data)) {
+                fillScaledNegativeBlockDMatrix(
+                        prepared.blockDParams,
+                        prepared.dt,
+                        workspace.scaledNegativeBlockDScratch,
+                        prepared.dimension);
+                copyDenseMatrixToArray(workspace.upstreamFD, workspace.denseAdjointScratch);
+                MatrixExponentialUtils.adjointExp(
+                        workspace.scaledNegativeBlockDScratch,
+                        workspace.denseAdjointScratch,
+                        workspace.denseAdjointScratch);
+                fillDenseMatrix(workspace.denseAdjointScratch, workspace.gradD);
+                transposeInPlace(workspace.gradD);
+                CommonOps.scale(-prepared.dt, workspace.gradD);
+            }
+        }
+        accumulateCompressedGradient(workspace.gradD, compressedDAccumulator);
+
+        CommonOps.multTransB(prepared.rMatrix, prepared.expD, workspace.temp1);
+        CommonOps.mult(workspace.upstreamF, workspace.temp1, workspace.gradR);
+        CommonOps.multTransA(workspace.upstreamF, prepared.rMatrix, workspace.temp1);
+        CommonOps.mult(workspace.temp1, prepared.expD, workspace.temp2);
+        CommonOps.addEquals(workspace.gradR, workspace.temp2);
+        addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
+    }
+
     private void accumulateNativeGradientFromCovarianceStationaryPrepared(final PreparedBranchBasis prepared,
                                                                           final double[] dLogL_dV,
                                                                           final BranchGradientWorkspace workspace,
@@ -1008,6 +1182,78 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         CommonOps.mult(workspace.temp2, workspace.transitionCovDBasis, workspace.temp3);
         CommonOps.addEquals(workspace.gradR, workspace.temp3);
         addDenseMatrixToArray(workspace.gradR, rotationAccumulator);
+    }
+
+    private void accumulateNativeGradientFromCovarianceStationaryPreparedFlat(final PreparedBranchBasis prepared,
+                                                                              final double[] dLogL_dV,
+                                                                              final BranchGradientWorkspace workspace,
+                                                                              final double[] compressedDAccumulator,
+                                                                              final double[] rotationAccumulator) {
+        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
+
+        CommonOps.mult(prepared.rtMatrix, workspace.gV, workspace.temp1);
+        CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.hDBasis);
+        symmetrize(workspace.hDBasis);
+
+        CommonOps.multTransA(prepared.expD, workspace.hDBasis, workspace.temp1);
+        CommonOps.mult(workspace.temp1, prepared.expD, workspace.gS);
+        CommonOps.changeSign(workspace.gS);
+        CommonOps.addEquals(workspace.gS, workspace.hDBasis);
+
+        CommonOps.fill(workspace.gradD, 0.0);
+        workspace.lyapunovAdjointHelper.accumulateLyapunovContributionInDBasis(
+                workspace.stationaryCovDBasis, workspace.gS, prepared.blockDParams, workspace.gradD);
+        accumulateCompressedGradient(workspace.gradD, compressedDAccumulator);
+
+        workspace.lyapunovAdjointHelper.solveAdjointInDBasis(
+                workspace.gS, prepared.blockDParams, workspace.yAdjoint);
+
+        CommonOps.mult(workspace.qMatrix, prepared.rMatrix, workspace.temp1);
+        CommonOps.multTransB(workspace.temp1, workspace.yAdjoint, workspace.gradR);
+        CommonOps.multTransA(workspace.qMatrix, prepared.rMatrix, workspace.temp1);
+        CommonOps.mult(workspace.temp1, workspace.yAdjoint, workspace.temp2);
+        CommonOps.addEquals(workspace.gradR, workspace.temp2);
+        CommonOps.scale(-1.0, workspace.gradR);
+        addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
+
+        CommonOps.mult(workspace.hDBasis, prepared.expD, workspace.temp1);
+        CommonOps.mult(workspace.temp1, workspace.stationaryCovDBasis, workspace.gECov);
+        CommonOps.scale(-2.0, workspace.gECov);
+        if (forceDenseAdjointExp) {
+            fillScaledNegativeBlockDMatrix(
+                    prepared.blockDParams,
+                    prepared.dt,
+                    workspace.scaledNegativeBlockDScratch,
+                    prepared.dimension);
+            copyDenseMatrixToArray(workspace.gECov, workspace.denseAdjointScratch);
+            MatrixExponentialUtils.adjointExp(
+                    workspace.scaledNegativeBlockDScratch,
+                    workspace.denseAdjointScratch,
+                    workspace.denseAdjointScratch);
+            fillDenseMatrix(workspace.denseAdjointScratch, workspace.gradD);
+            transposeInPlace(workspace.gradD);
+            CommonOps.scale(-prepared.dt, workspace.gradD);
+        } else {
+            final DenseMatrix64F frechetInputCov;
+            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+                CommonOps.transpose(workspace.gECov, workspace.temp3);
+                frechetInputCov = workspace.temp3;
+            } else {
+                frechetInputCov = workspace.gECov;
+            }
+            workspace.frechetHelper.frechetAdjointExpInDBasis(
+                    prepared.blockDParams, frechetInputCov, prepared.dt, workspace.gradD);
+            transposeInPlace(workspace.gradD);
+        }
+        accumulateCompressedGradient(workspace.gradD, compressedDAccumulator);
+
+        CommonOps.mult(workspace.gV, prepared.rMatrix, workspace.temp1);
+        CommonOps.mult(workspace.temp1, workspace.transitionCovDBasis, workspace.gradR);
+        CommonOps.multTransA(workspace.gV, prepared.rMatrix, workspace.temp2);
+        CommonOps.mult(workspace.temp2, workspace.transitionCovDBasis, workspace.temp3);
+        CommonOps.addEquals(workspace.gradR, workspace.temp3);
+        addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
     }
 
     private void accumulateNativeGradientFromCovarianceStationaryCached(final double dt,
@@ -1270,6 +1516,14 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
+    private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {
+        final int length = src.numRows * src.numCols;
+        final double[] data = src.data;
+        for (int i = 0; i < length; ++i) {
+            dest[i] += data[i];
+        }
+    }
+
     private void applyBlockDiagonalTransposeExp(final double[] in,
                                                 final double[] out) {
         for (int b = 0; b < blockParameter.getNumBlocks(); ++b) {
@@ -1340,6 +1594,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         final int dimension = source.length;
         for (int i = 0; i < dimension; ++i) {
             System.arraycopy(source[i], 0, out, i * dimension, dimension);
+        }
+    }
+
+    private static void clearSquare(final double[][] matrix) {
+        for (double[] row : matrix) {
+            Arrays.fill(row, 0.0);
         }
     }
 

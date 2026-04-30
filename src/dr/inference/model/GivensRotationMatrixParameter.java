@@ -175,6 +175,106 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
         return gradients;
     }
 
+    @Override
+    public double[] pullBackGradientFlat(final double[] gradientWrtMatrixRowMajor,
+                                         final int dimension) {
+        if (dimension != dim || gradientWrtMatrixRowMajor == null
+                || gradientWrtMatrixRowMajor.length != dim * dim) {
+            throw new IllegalArgumentException(
+                    "gradientWrtMatrixRowMajor must have length " + (dim * dim));
+        }
+        if (!Boolean.getBoolean("beast.experimental.projectedFlatGivensPullback")) {
+            return pullBackGradientFlatExact(gradientWrtMatrixRowMajor);
+        }
+
+        getParameterValue(0, 0);
+        final int angleCount = angleParameter.getDimension();
+        final int matrixLength = dim * dim;
+        final double[] gradients = new double[angleCount];
+        final double[] prefixes = new double[(angleCount + 1) * matrixLength];
+        final double[] suffixes = new double[(angleCount + 1) * matrixLength];
+        final double[] givens = new double[matrixLength];
+
+        fillIdentity(prefixes, 0, dim);
+        for (int k = 0; k < angleCount; ++k) {
+            fillGivens(k, givens);
+            multiplyFlat(prefixes, k * matrixLength, givens, 0,
+                    prefixes, (k + 1) * matrixLength, dim);
+        }
+
+        fillIdentity(suffixes, angleCount * matrixLength, dim);
+        for (int k = angleCount - 1; k >= 0; --k) {
+            fillGivens(k, givens);
+            multiplyFlat(givens, 0, suffixes, (k + 1) * matrixLength,
+                    suffixes, k * matrixLength, dim);
+        }
+
+        for (int k = 0; k < angleCount; ++k) {
+            final int i = pairI[k];
+            final int j = pairJ[k];
+            final double theta = angleParameter.getParameterValue(k);
+            final double c = Math.cos(theta);
+            final double s = Math.sin(theta);
+            final int prefixOffset = k * matrixLength;
+            final int suffixOffset = (k + 1) * matrixLength;
+
+            gradients[k] =
+                    -s * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, i, i, dim)
+                            - c * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, i, j, dim)
+                            + c * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, j, i, dim)
+                            - s * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, j, j, dim);
+        }
+
+        return gradients;
+    }
+
+    private double[] pullBackGradientFlatExact(final double[] gradientWrtMatrixRowMajor) {
+        getParameterValue(0, 0);
+        final int angleCount = angleParameter.getDimension();
+        final int matrixLength = dim * dim;
+        final double[] gradients = new double[angleCount];
+        final double[] prefixes = new double[(angleCount + 1) * matrixLength];
+        final double[] suffixes = new double[(angleCount + 1) * matrixLength];
+        final double[] givens = new double[matrixLength];
+        final double[] dG = new double[matrixLength];
+
+        fillIdentity(prefixes, 0, dim);
+        for (int k = 0; k < angleCount; ++k) {
+            fillGivens(k, givens);
+            multiplyFlat(prefixes, k * matrixLength, givens, 0,
+                    prefixes, (k + 1) * matrixLength, dim);
+        }
+
+        fillIdentity(suffixes, angleCount * matrixLength, dim);
+        for (int k = angleCount - 1; k >= 0; --k) {
+            fillGivens(k, givens);
+            multiplyFlat(givens, 0, suffixes, (k + 1) * matrixLength,
+                    suffixes, k * matrixLength, dim);
+        }
+
+        final double[] tempLeft = new double[matrixLength];
+        final double[] temp = new double[matrixLength];
+        final double[] suffixTranspose = new double[matrixLength];
+        for (int k = 0; k < angleCount; ++k) {
+            fillGivensDerivative(k, dG);
+            transposeFlat(prefixes, k * matrixLength, tempLeft, 0, dim);
+            multiplyFlat(tempLeft, 0, gradientWrtMatrixRowMajor, 0, temp, 0, dim);
+            transposeFlat(suffixes, (k + 1) * matrixLength, suffixTranspose, 0, dim);
+            multiplyFlat(temp, 0, suffixTranspose, 0, tempLeft, 0, dim);
+
+            double grad = 0.0;
+            for (int i = 0; i < matrixLength; ++i) {
+                grad += tempLeft[i] * dG[i];
+            }
+            gradients[k] = grad;
+        }
+        return gradients;
+    }
+
     public Parameter getAngleParameter() {
         return angleParameter;
     }
@@ -222,6 +322,45 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
         }
     }
 
+    private static void fillIdentity(final double[] matrix,
+                                     final int offset,
+                                     final int dimension) {
+        for (int i = 0; i < dimension * dimension; ++i) {
+            matrix[offset + i] = 0.0;
+        }
+        for (int i = 0; i < dimension; ++i) {
+            matrix[offset + i * dimension + i] = 1.0;
+        }
+    }
+
+    private void fillGivens(final int index, final double[] out) {
+        fillIdentity(out, dim);
+        final int i = pairI[index];
+        final int j = pairJ[index];
+        final double theta = angleParameter.getParameterValue(index);
+        final double c = Math.cos(theta);
+        final double s = Math.sin(theta);
+        out[i * dim + i] = c;
+        out[i * dim + j] = -s;
+        out[j * dim + i] = s;
+        out[j * dim + j] = c;
+    }
+
+    private void fillGivensDerivative(final int index, final double[] out) {
+        for (int i = 0; i < out.length; ++i) {
+            out[i] = 0.0;
+        }
+        final int i = pairI[index];
+        final int j = pairJ[index];
+        final double theta = angleParameter.getParameterValue(index);
+        final double c = Math.cos(theta);
+        final double s = Math.sin(theta);
+        out[i * dim + i] = -s;
+        out[i * dim + j] = -c;
+        out[j * dim + i] = c;
+        out[j * dim + j] = -s;
+    }
+
     private static void fillIdentity(final double[][] matrix, final int dimension) {
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
@@ -234,6 +373,18 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
                 out[i * dimension + j] = in[j * dimension + i];
+            }
+        }
+    }
+
+    private static void transposeFlat(final double[] in,
+                                      final int inOffset,
+                                      final double[] out,
+                                      final int outOffset,
+                                      final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = 0; j < dimension; ++j) {
+                out[outOffset + i * dimension + j] = in[inOffset + j * dimension + i];
             }
         }
     }
@@ -259,6 +410,46 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
                 out[i][j] = sum;
             }
         }
+    }
+
+    private static void multiplyFlat(final double[] left,
+                                     final int leftOffset,
+                                     final double[] right,
+                                     final int rightOffset,
+                                     final double[] out,
+                                     final int outOffset,
+                                     final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dimension; ++k) {
+                    sum += left[leftOffset + rowOffset + k]
+                            * right[rightOffset + k * dimension + j];
+                }
+                out[outOffset + rowOffset + j] = sum;
+            }
+        }
+    }
+
+    private static double projectedGradientEntry(final double[] prefix,
+                                                 final int prefixOffset,
+                                                 final double[] gradient,
+                                                 final double[] suffix,
+                                                 final int suffixOffset,
+                                                 final int row,
+                                                 final int col,
+                                                 final int dimension) {
+        double sum = 0.0;
+        for (int p = 0; p < dimension; ++p) {
+            final double prefixValue = prefix[prefixOffset + p * dimension + row];
+            final int gradientRowOffset = p * dimension;
+            for (int q = 0; q < dimension; ++q) {
+                sum += prefixValue * gradient[gradientRowOffset + q]
+                        * suffix[suffixOffset + col * dimension + q];
+            }
+        }
+        return sum;
     }
 
     public static final XMLObjectParser PARSER = new AbstractXMLObjectParser() {

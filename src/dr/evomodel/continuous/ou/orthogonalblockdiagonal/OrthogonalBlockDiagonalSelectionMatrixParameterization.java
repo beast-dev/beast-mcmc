@@ -58,6 +58,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     private final double[] transitionMatrixArrayScratch;
     private final double[] transitionCovarianceArrayScratch;
     private final double[] precisionFlat;
+    private final double[] nativeBlockGradientScratch;
     private final double[] transitionOffsetScratch;
     private final double[][] scaledNegativeBlockDScratch;
     private final double[][] denseAdjointScratch;
@@ -121,6 +122,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         this.transitionMatrixArrayScratch = new double[d * d];
         this.transitionCovarianceArrayScratch = new double[d * d];
         this.precisionFlat = new double[d * d];
+        this.nativeBlockGradientScratch = new double[blockParameter.getBlockDiagonalNParameters()];
         this.transitionOffsetScratch = new double[d];
         this.scaledNegativeBlockDScratch = new double[d][d];
         this.denseAdjointScratch = new double[d][d];
@@ -452,7 +454,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                  final double[] gradientAccumulator) {
         final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
         final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
-        if (gradientAccumulator.length != nativeBlockDim + angleDim) {
+        final int nativeDim = nativeBlockDim + angleDim;
+        if (gradientAccumulator.length != nativeDim || nativeDim == getDimension() * getDimension()) {
             super.accumulateGradientFromTransition(
                     dt, stationaryMean, dLogL_dF, dLogL_df, gradientAccumulator);
             return;
@@ -482,7 +485,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
         final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
         final int nativeDim = nativeBlockDim + angleDim;
-        if (gradientAccumulator.length != nativeDim) {
+        if (gradientAccumulator.length != nativeDim || nativeDim == getDimension() * getDimension()) {
             super.accumulateGradientFromTransitionFlat(
                     dt, stationaryMean, dLogL_dF, dLogL_df, gradientAccumulator);
             return;
@@ -506,7 +509,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 orthogonalRotation,
                 transitionMatrixArrayScratch,
                 denseAdjointScratch,
-                precisionFlat,
+                nativeBlockGradientScratch,
                 gradientAccumulator);
     }
 

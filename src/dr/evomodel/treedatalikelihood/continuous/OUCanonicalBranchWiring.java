@@ -11,12 +11,9 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumericsOptions;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * Self-contained local tree-to-time-series canonical wiring for one OU branch.
@@ -30,12 +27,8 @@ import java.nio.file.Paths;
 public final class OUCanonicalBranchWiring {
     private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY =
             "beast.experimental.disableExactTipShortcut";
-    private static final String SPD_DEBUG_DUMP_PROPERTY =
-            "beast.debug.ou.spdDump";
     private static final String NONFINITE_BRANCH_STATS_DEBUG_PROPERTY =
             "beast.debug.ou.nonfiniteBranchStats";
-    private static final String FORCE_STRICT_SPD_INVERSION_PROPERTY =
-            "beast.debug.ou.forceStrictSpdInverse";
     private static final String COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY =
             "beast.debug.ou.compareParentAboveRecovered";
     private static final String COMPARE_PARENT_ABOVE_RECOVERED_FAIL_PROPERTY =
@@ -49,8 +42,7 @@ public final class OUCanonicalBranchWiring {
     private static final String ALLOW_INFINITE_PARENT_ABOVE_RECOVERY_PROPERTY =
             "beast.debug.ou.allowInfiniteParentAboveRecovery";
 
-    private static final double SYMMETRIC_JITTER_RELATIVE = 1.0e-12;
-    private static final double SYMMETRIC_JITTER_ABSOLUTE = 1.0e-12;
+    private static final CanonicalNumericsOptions NUMERICS_OPTIONS = CanonicalNumericsOptions.OU_TREE;
 
     private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
@@ -438,21 +430,11 @@ public final class OUCanonicalBranchWiring {
     }
 
     private static boolean isFinite(final double[] values) {
-        for (double value : values) {
-            if (!Double.isFinite(value)) {
-                return false;
-            }
-        }
-        return true;
+        return CanonicalNumerics.isFinite(values);
     }
 
     private static boolean isFinite(final double[][] values) {
-        for (double[] row : values) {
-            if (!isFinite(row)) {
-                return false;
-            }
-        }
-        return true;
+        return CanonicalNumerics.isFinite(values);
     }
 
     private static double maxAbs(final double[] values) {
@@ -841,10 +823,9 @@ public final class OUCanonicalBranchWiring {
         // always regularize/invert the same stabilized actualization matrix
         // instead of branching between solve/fallback paths.
         secondaryScratchMatrix.set(actualizationMatrix);
-        final double solveJitter = Math.max(
-                SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(secondaryScratchMatrix)));
-        addDiagonalJitter(secondaryScratchMatrix, solveJitter);
+        final double solveJitter = NUMERICS_OPTIONS.jitterBase(
+                CanonicalNumerics.maxAbsDiagonal(secondaryScratchMatrix));
+        CanonicalNumerics.addDiagonalJitter(secondaryScratchMatrix, solveJitter);
         safeInvert(secondaryScratchMatrix, actualizationInverseMatrix);
         CommonOps.mult(actualizationInverseMatrix, centeredChildMeanVector, aboveParentMeanVector);
 
@@ -897,286 +878,44 @@ public final class OUCanonicalBranchWiring {
     private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
                                                      final DenseMatrix64F inverseOut,
                                                      final String context) {
-        symmetrizeCopy(source, scratchMatrix);
-        final double jitterBase = Math.max(
-                SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(scratchMatrix)));
-
-        if (Boolean.getBoolean(FORCE_STRICT_SPD_INVERSION_PROPERTY)) {
-            if (invertSymmetricPositiveDefiniteStrictFallback(scratchMatrix, inverseOut, jitterBase)) {
-                return;
-            }
-            emitSpdFailureDebugDump(context, source, scratchMatrix, jitterBase);
-            throw new IllegalStateException(
-                    "Failed strict SPD inversion with fallback; context=" + context);
-        }
-
-        double jitter = 0.0;
-        for (int attempt = 0; attempt < 8; ++attempt) {
-            secondaryScratchMatrix.set(scratchMatrix);
-            if (jitter > 0.0) {
-                addDiagonalJitter(secondaryScratchMatrix, jitter);
-            }
-            if (CommonOps.invert(secondaryScratchMatrix, inverseOut) && isFinite(inverseOut)) {
-                symmetrizeInPlace(inverseOut);
-                return;
-            }
-            jitter = jitter == 0.0 ? jitterBase : 10.0 * jitter;
-        }
-        if (invertSymmetricPositiveDefiniteStrictFallback(scratchMatrix, inverseOut, jitterBase)) {
-            return;
-        }
-        emitSpdFailureDebugDump(context, source, scratchMatrix, jitterBase);
-        throw new IllegalStateException(
-                "Failed to invert symmetric positive definite matrix stably; context=" + context);
-    }
-
-    private boolean invertSymmetricPositiveDefiniteStrictFallback(final DenseMatrix64F symmetricSource,
-                                                                  final DenseMatrix64F inverseOut,
-                                                                  final double jitterBase) {
-        final int d = symmetricSource.numRows;
-        final double[][] symmetric = reducedPrecisionScratch;
-        final double[][] adjusted = reducedCovarianceScratch;
-        final double[][] cholesky = reducedCholeskyScratch;
-        final double[][] lowerInverse = reducedLowerInverseScratch;
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                symmetric[i][j] = symmetricSource.unsafe_get(i, j);
-            }
-        }
-
-        double jitter = 0.0;
-        for (int attempt = 0; attempt < 12; ++attempt) {
-            copySquare(symmetric, adjusted, d);
-            if (jitter > 0.0) {
-                for (int i = 0; i < d; ++i) {
-                    adjusted[i][i] += jitter;
-                }
-            }
-            if (invertSymmetricPositiveDefiniteStrict(adjusted, cholesky, lowerInverse, inverseOut, d)) {
-                symmetrizeInPlace(inverseOut);
-                return true;
-            }
-            jitter = jitter == 0.0 ? jitterBase : 10.0 * jitter;
-        }
-        return false;
-    }
-
-    private static boolean invertSymmetricPositiveDefiniteStrict(final double[][] matrix,
-                                                                 final double[][] cholesky,
-                                                                 final double[][] lowerInverse,
-                                                                 final DenseMatrix64F inverseOut,
-                                                                 final int dimensionUsed) {
-        final int d = dimensionUsed;
-        copySquare(matrix, cholesky, d);
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j <= i; ++j) {
-                double sum = cholesky[i][j];
-                for (int k = 0; k < j; ++k) {
-                    sum -= cholesky[i][k] * cholesky[j][k];
-                }
-                if (i == j) {
-                    if (!(sum > 0.0) || !Double.isFinite(sum)) {
-                        return false;
-                    }
-                    cholesky[i][j] = Math.sqrt(sum);
-                } else {
-                    cholesky[i][j] = sum / cholesky[j][j];
-                }
-            }
-            for (int j = i + 1; j < d; ++j) {
-                cholesky[i][j] = 0.0;
-            }
-        }
-
-        for (int column = 0; column < d; ++column) {
-            for (int row = 0; row < d; ++row) {
-                double sum = row == column ? 1.0 : 0.0;
-                for (int k = 0; k < row; ++k) {
-                    sum -= cholesky[row][k] * lowerInverse[k][column];
-                }
-                lowerInverse[row][column] = sum / cholesky[row][row];
-            }
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += lowerInverse[k][i] * lowerInverse[k][j];
-                }
-                inverseOut.unsafe_set(i, j, sum);
-            }
-        }
-        return isFinite(inverseOut);
+        CanonicalNumerics.safeInvertSymmetricPositiveDefinite(
+                source,
+                inverseOut,
+                scratchMatrix,
+                secondaryScratchMatrix,
+                reducedPrecisionScratch,
+                reducedCovarianceScratch,
+                reducedCholeskyScratch,
+                reducedLowerInverseScratch,
+                NUMERICS_OPTIONS,
+                context,
+                this::appendSpdFailureDebugDump);
     }
 
     private void safeInvert(final DenseMatrix64F source,
                             final DenseMatrix64F inverseOut) {
-        final double jitterBase = Math.max(
-                SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(source)));
-        double jitter = jitterBase;
-        for (int attempt = 0; attempt < 8; ++attempt) {
-            secondaryScratchMatrix.set(source);
-            addDiagonalJitter(secondaryScratchMatrix, jitter);
-            if (CommonOps.invert(secondaryScratchMatrix, inverseOut) && isFinite(inverseOut)) {
-                return;
-            }
-            jitter *= 10.0;
-        }
-        throw new IllegalStateException("Failed to invert matrix stably");
-    }
-
-    private static void symmetrizeCopy(final DenseMatrix64F source,
-                                       final DenseMatrix64F destination) {
-        final int d = source.numRows;
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                destination.unsafe_set(i, j,
-                        0.5 * (source.unsafe_get(i, j) + source.unsafe_get(j, i)));
-            }
-        }
+        CanonicalNumerics.safeInvertWithJitter(
+                source, inverseOut, secondaryScratchMatrix, NUMERICS_OPTIONS);
     }
 
     private static void symmetrizeInPlace(final DenseMatrix64F matrix) {
-        final int d = matrix.numRows;
-        for (int i = 0; i < d; ++i) {
-            for (int j = i + 1; j < d; ++j) {
-                final double value = 0.5 * (matrix.unsafe_get(i, j) + matrix.unsafe_get(j, i));
-                matrix.unsafe_set(i, j, value);
-                matrix.unsafe_set(j, i, value);
-            }
-        }
-    }
-
-    private static void addDiagonalJitter(final DenseMatrix64F matrix,
-                                          final double jitter) {
-        for (int i = 0; i < matrix.numRows; ++i) {
-            matrix.unsafe_set(i, i, matrix.unsafe_get(i, i) + jitter);
-        }
-    }
-
-    private static double maxAbsDiagonal(final DenseMatrix64F matrix) {
-        double max = 0.0;
-        for (int i = 0; i < matrix.numRows; ++i) {
-            max = Math.max(max, Math.abs(matrix.unsafe_get(i, i)));
-        }
-        return max;
+        CanonicalNumerics.symmetrizeInPlace(matrix);
     }
 
     private static boolean isFinite(final DenseMatrix64F matrix) {
-        final double[] data = matrix.getData();
-        for (double value : data) {
-            if (!Double.isFinite(value)) {
-                return false;
-            }
-        }
-        return true;
+        return CanonicalNumerics.isFinite(matrix);
     }
 
     private static boolean hasNaN(final DenseMatrix64F matrix) {
-        final double[] data = matrix.getData();
-        for (double value : data) {
-            if (Double.isNaN(value)) {
-                return true;
-            }
-        }
-        return false;
+        return CanonicalNumerics.hasNaN(matrix);
     }
 
     private static boolean hasInfinity(final DenseMatrix64F matrix) {
-        final double[] data = matrix.getData();
-        for (double value : data) {
-            if (Double.isInfinite(value)) {
-                return true;
-            }
-        }
-        return false;
+        return CanonicalNumerics.hasInfinity(matrix);
     }
 
     private static String summarizeDenseMatrix(final DenseMatrix64F matrix) {
-        int nanCount = 0;
-        int posInfCount = 0;
-        int negInfCount = 0;
-        double minFinite = Double.POSITIVE_INFINITY;
-        double maxFinite = Double.NEGATIVE_INFINITY;
-        final double[] data = matrix.getData();
-        for (double value : data) {
-            if (Double.isNaN(value)) {
-                nanCount++;
-            } else if (value == Double.POSITIVE_INFINITY) {
-                posInfCount++;
-            } else if (value == Double.NEGATIVE_INFINITY) {
-                negInfCount++;
-            } else {
-                minFinite = Math.min(minFinite, value);
-                maxFinite = Math.max(maxFinite, value);
-            }
-        }
-        if (minFinite == Double.POSITIVE_INFINITY) {
-            minFinite = Double.NaN;
-            maxFinite = Double.NaN;
-        }
-        return "{rows=" + matrix.numRows
-                + ",cols=" + matrix.numCols
-                + ",nan=" + nanCount
-                + ",posInf=" + posInfCount
-                + ",negInf=" + negInfCount
-                + ",minFinite=" + minFinite
-                + ",maxFinite=" + maxFinite
-                + "}";
-    }
-
-    private static void copySquare(final double[][] source,
-                                   final double[][] target,
-                                   final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            System.arraycopy(source[i], 0, target[i], 0, dimensionUsed);
-        }
-    }
-
-    private static void symmetrizeInPlace(final double[][] matrix,
-                                          final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = i + 1; j < dimensionUsed; ++j) {
-                final double value = 0.5 * (matrix[i][j] + matrix[j][i]);
-                matrix[i][j] = value;
-                matrix[j][i] = value;
-            }
-        }
-    }
-
-    private static boolean isFinite(final double[][] matrix,
-                                    final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                if (!Double.isFinite(matrix[i][j])) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private static double maxAbsDiagonal(final double[][] matrix,
-                                         final int dimensionUsed) {
-        double max = 0.0;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            max = Math.max(max, Math.abs(matrix[i][i]));
-        }
-        return max;
-    }
-
-    private static double minDiagonal(final double[][] matrix,
-                                      final int dimensionUsed) {
-        double min = Double.POSITIVE_INFINITY;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            min = Math.min(min, matrix[i][i]);
-        }
-        return min;
+        return CanonicalNumerics.summarizeDenseMatrix(matrix);
     }
 
     private static void fillInformation(final DenseMatrix64F precision,
@@ -1414,110 +1153,19 @@ public final class OUCanonicalBranchWiring {
         return sum;
     }
 
-    private static double gershgorinLowerBound(final double[][] matrix, final int dimensionUsed) {
-        double lowerBound = Double.POSITIVE_INFINITY;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            double radius = 0.0;
-            for (int j = 0; j < dimensionUsed; ++j) {
-                if (i != j) {
-                    radius += Math.abs(matrix[i][j]);
-                }
-            }
-            lowerBound = Math.min(lowerBound, matrix[i][i] - radius);
-        }
-        return lowerBound;
-    }
-
-    private void emitSpdFailureDebugDump(final String context,
-                                         final DenseMatrix64F originalSource,
-                                         final DenseMatrix64F symmetrizedSource,
-                                         final double jitterBase) {
-        if (!Boolean.getBoolean(SPD_DEBUG_DUMP_PROPERTY)) {
-            return;
-        }
-        final String path = "/tmp/ou_spd_failure_" + System.nanoTime() + ".json";
-        try {
-            final StringBuilder sb = new StringBuilder(8192);
-            sb.append("{\n");
-            sb.append("\"context\":\"").append(context).append("\",\n");
-            sb.append("\"dimension\":").append(symmetrizedSource.numRows).append(",\n");
-            sb.append("\"jitterBase\":").append(jitterBase).append(",\n");
-            sb.append("\"minDiagonal\":").append(minDiagonal(symmetrizedSource)).append(",\n");
-            sb.append("\"maxAbsDiagonal\":").append(maxAbsDiagonal(symmetrizedSource)).append(",\n");
-            sb.append("\"gershgorinLowerBound\":").append(gershgorinLowerBound(symmetrizedSource)).append(",\n");
-            sb.append("\"originalSource\":").append(jsonMatrix(originalSource)).append(",\n");
-            sb.append("\"symmetrizedSource\":").append(jsonMatrix(symmetrizedSource)).append(",\n");
-            sb.append("\"actualization\":").append(jsonMatrix(actualizationMatrix)).append(",\n");
-            sb.append("\"displacement\":").append(jsonVector(displacementVector)).append(",\n");
-            sb.append("\"branchPrecisionBuffer\":").append(jsonMatrix(branchPrecisionMatrix)).append(",\n");
-            sb.append("\"branchCovarianceBuffer\":").append(jsonMatrix(branchCovarianceMatrix)).append(",\n");
-            sb.append("\"aboveChildPrecisionBuffer\":").append(jsonMatrix(aboveChildPrecisionMatrix)).append(",\n");
-            sb.append("\"aboveChildCovarianceBuffer\":").append(jsonMatrix(aboveChildCovarianceMatrix)).append(",\n");
-            sb.append("\"aboveParentPrecisionBuffer\":").append(jsonMatrix(aboveParentPrecisionMatrix)).append(",\n");
-            sb.append("\"aboveParentCovarianceBuffer\":").append(jsonMatrix(aboveParentCovarianceMatrix)).append("\n");
-            sb.append("}\n");
-
-            Files.write(Paths.get(path), sb.toString().getBytes(StandardCharsets.UTF_8));
-            System.err.println("OU_SPD_FAILURE_DUMP " + path);
-        } catch (final Exception e) {
-            System.err.println("OU_SPD_FAILURE_DUMP_FAILED context=" + context + " reason=" + e.getMessage());
-        }
-    }
-
-    private static String jsonMatrix(final DenseMatrix64F matrix) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        for (int i = 0; i < matrix.numRows; ++i) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append("[");
-            for (int j = 0; j < matrix.numCols; ++j) {
-                if (j > 0) {
-                    sb.append(",");
-                }
-                sb.append(matrix.unsafe_get(i, j));
-            }
-            sb.append("]");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    private static String jsonVector(final DenseMatrix64F vector) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        for (int i = 0; i < vector.numRows; ++i) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append(vector.unsafe_get(i, 0));
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    private static double minDiagonal(final DenseMatrix64F matrix) {
-        final int d = Math.min(matrix.numRows, matrix.numCols);
-        double min = Double.POSITIVE_INFINITY;
-        for (int i = 0; i < d; ++i) {
-            min = Math.min(min, matrix.unsafe_get(i, i));
-        }
-        return min;
-    }
-
-    private static double gershgorinLowerBound(final DenseMatrix64F matrix) {
-        final int d = Math.min(matrix.numRows, matrix.numCols);
-        double lowerBound = Double.POSITIVE_INFINITY;
-        for (int i = 0; i < d; ++i) {
-            double radius = 0.0;
-            for (int j = 0; j < d; ++j) {
-                if (i != j) {
-                    radius += Math.abs(matrix.unsafe_get(i, j));
-                }
-            }
-            lowerBound = Math.min(lowerBound, matrix.unsafe_get(i, i) - radius);
-        }
-        return lowerBound;
+    private void appendSpdFailureDebugDump(final StringBuilder sb,
+                                           final String context,
+                                           final DenseMatrix64F originalSource,
+                                           final DenseMatrix64F symmetrizedSource,
+                                           final double jitterBase) {
+        sb.append(",\n");
+        sb.append("\"actualization\":").append(CanonicalNumerics.jsonMatrix(actualizationMatrix)).append(",\n");
+        sb.append("\"displacement\":").append(CanonicalNumerics.jsonVector(displacementVector)).append(",\n");
+        sb.append("\"branchPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(branchPrecisionMatrix)).append(",\n");
+        sb.append("\"branchCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(branchCovarianceMatrix)).append(",\n");
+        sb.append("\"aboveChildPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveChildPrecisionMatrix)).append(",\n");
+        sb.append("\"aboveChildCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveChildCovarianceMatrix)).append(",\n");
+        sb.append("\"aboveParentPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveParentPrecisionMatrix)).append(",\n");
+        sb.append("\"aboveParentCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveParentCovarianceMatrix)).append("\n");
     }
 }

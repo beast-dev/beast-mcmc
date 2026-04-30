@@ -77,7 +77,8 @@ final class CanonicalTreeGradientEngine {
         Arrays.fill(gradMu, 0.0);
         inputs.checkCompatible(branchCapacity, dimension);
 
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
         final CanonicalSelectionGradientPullback selectionPullback =
                 CanonicalSelectionGradientPullbacks.create(processModel, dimension, gradA, mainWorkspace);
@@ -221,16 +222,6 @@ final class CanonicalTreeGradientEngine {
                         * (-0.5 * priorPrecision[iOff + j] + 0.5 * gradient.covarianceAdjoint[i][j]);
             }
         }
-    }
-
-    private static CanonicalOUTransitionProvider requireOUProvider(
-            final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)) {
-            throw new UnsupportedOperationException(
-                    "Not yet implemented: canonical OU gradients currently support only "
-                            + "CanonicalOUTransitionProvider implementations.");
-        }
-        return (CanonicalOUTransitionProvider) transitionProvider;
     }
 
     private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,

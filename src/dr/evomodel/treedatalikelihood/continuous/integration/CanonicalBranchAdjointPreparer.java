@@ -76,7 +76,8 @@ final class CanonicalBranchAdjointPreparer {
         out.checkCompatible(Math.max(0, nodeCount - 1), dimension);
         out.clear();
 
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
         final CanonicalPreparedTransitionCapability preparedTransition =
                 processModel.getSelectionMatrixParameterization()
@@ -137,16 +138,6 @@ final class CanonicalBranchAdjointPreparer {
         final int suggested =
                 (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
         return Math.max(1, Math.min(maxChunkSize, suggested));
-    }
-
-    private static CanonicalOUTransitionProvider requireOUProvider(
-            final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)) {
-            throw new UnsupportedOperationException(
-                    "Not yet implemented: canonical OU gradients currently support only "
-                            + "CanonicalOUTransitionProvider implementations.");
-        }
-        return (CanonicalOUTransitionProvider) transitionProvider;
     }
 
     private static CanonicalPreparedBranchSnapshotProvider requirePreparedBranchSnapshotProvider(

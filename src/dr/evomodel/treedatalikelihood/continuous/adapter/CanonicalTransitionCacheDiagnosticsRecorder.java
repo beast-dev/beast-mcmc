@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.adapter;
 
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCachePhases;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 final class CanonicalTransitionCacheDiagnosticsRecorder {
@@ -201,32 +203,32 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
     }
 
     private AtomicLong phaseRequestCounter(final String currentPhase) {
-        if ("postorder".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.POSTORDER.equals(currentPhase)) {
             return postOrderRequests;
         }
-        if ("preorder".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.PREORDER.equals(currentPhase)) {
             return preOrderRequests;
         }
-        if ("gradientPrep".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.GRADIENT_PREP.equals(currentPhase)) {
             return gradientPrepRequests;
         }
-        if ("branchLengthGradient".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT.equals(currentPhase)) {
             return branchLengthRequests;
         }
         return otherRequests;
     }
 
     private AtomicLong phaseMissCounter(final String currentPhase) {
-        if ("postorder".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.POSTORDER.equals(currentPhase)) {
             return postOrderMisses;
         }
-        if ("preorder".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.PREORDER.equals(currentPhase)) {
             return preOrderMisses;
         }
-        if ("gradientPrep".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.GRADIENT_PREP.equals(currentPhase)) {
             return gradientPrepMisses;
         }
-        if ("branchLengthGradient".equals(currentPhase)) {
+        if (CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT.equals(currentPhase)) {
             return branchLengthMisses;
         }
         return otherMisses;

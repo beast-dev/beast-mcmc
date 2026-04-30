@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransition
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonicalOUMessagePasser;
 import dr.inference.model.Parameter;
@@ -257,7 +258,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         passer.computePreOrder(transitionProvider, rootPrior);
         modelDirty = false;
         passer.computeGradientBranchLengths(transitionProvider, gradT);
-        reportTransitionCacheDiagnostics("branchLengthGradient");
+        reportTransitionCacheDiagnostics(CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT);
     }
 
     public void reloadTips(final CanonicalTipObservation[] tipObservations) {

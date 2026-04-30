@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
@@ -50,10 +51,6 @@ import java.util.Arrays;
  */
 public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMessagePasser {
 
-    private static final String PHASE_POSTORDER = "postorder";
-    private static final String PHASE_PREORDER = "preorder";
-    private static final String PHASE_GRADIENT_PREP = "gradientPrep";
-    private static final String PHASE_BRANCH_LENGTH_GRADIENT = "branchLengthGradient";
     private static final double BRANCH_LENGTH_FD_RELATIVE_STEP = 1.0e-6;
     private static final double BRANCH_LENGTH_FD_ABSOLUTE_STEP = 1.0e-8;
 
@@ -160,7 +157,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     public double computePostOrderLogLikelihood(final CanonicalBranchTransitionProvider transitionProvider,
                                                 final CanonicalRootPrior rootPrior) {
-        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_POSTORDER);
+        final String previousPhase = pushTransitionCachePhase(
+                transitionProvider, CanonicalTransitionCachePhases.POSTORDER);
         try {
             return treeTraversal.computePostOrderLogLikelihood(
                     transitionProvider,
@@ -180,7 +178,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     public void computePreOrder(final CanonicalBranchTransitionProvider transitionProvider,
                                 final CanonicalRootPrior rootPrior) {
-        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_PREORDER);
+        final String previousPhase = pushTransitionCachePhase(
+                transitionProvider, CanonicalTransitionCachePhases.PREORDER);
         try {
             treeTraversal.computePreOrder(
                     transitionProvider,
@@ -202,7 +201,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
         ensureGradientState();
 
-        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
+        final String previousPhase = pushTransitionCachePhase(
+                transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP);
         try {
             legacyGradientCompatibility.computeGradientQ(transitionProvider, gradQ);
         } finally {
@@ -215,15 +215,21 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                              final double[] gradT) {
         ensureGradientState();
 
-        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
+        final String previousPhase = pushTransitionCachePhase(
+                transitionProvider, CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT);
         try {
-            final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+            final CanonicalOUTransitionProvider ouProvider =
+                    CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
             if (!fallbackPolicy.useBranchLengthFiniteDifference()) {
                 final long missesBefore =
-                        transitionCacheMisses(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
+                        transitionCacheMisses(
+                                transitionProvider,
+                                CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT);
                 branchAdjointPreparer.prepare(transitionProvider, stateStore, preparedBranchGradientInputs);
                 assertNoGradientTransitionMisses(
-                        transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT, missesBefore);
+                        transitionProvider,
+                        CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT,
+                        missesBefore);
                 branchLengthGradientEngine.compute(
                         ouProvider.getProcessModel(),
                         preparedBranchGradientInputs,
@@ -287,12 +293,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
 
     public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
                                             final BranchGradientInputs out) {
-        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
+        final String previousPhase = pushTransitionCachePhase(
+                transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP);
         try {
             ensureGradientState();
-            final long missesBefore = transitionCacheMisses(transitionProvider, PHASE_GRADIENT_PREP);
+            final long missesBefore = transitionCacheMisses(
+                    transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP);
             branchAdjointPreparer.prepare(transitionProvider, stateStore, out);
-            assertNoGradientTransitionMisses(transitionProvider, PHASE_GRADIENT_PREP, missesBefore);
+            assertNoGradientTransitionMisses(
+                    transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP, missesBefore);
         } finally {
             popTransitionCachePhase(transitionProvider, previousPhase);
         }
@@ -359,16 +368,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             throw new IllegalStateException(
                     "Canonical gradients require both computePostOrderLogLikelihood and computePreOrder to have been called.");
         }
-    }
-
-    private CanonicalOUTransitionProvider requireOUProvider(
-            final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)) {
-            throw new UnsupportedOperationException(
-                    "Not yet implemented: canonical OU gradients currently support only "
-                            + "CanonicalOUTransitionProvider implementations.");
-        }
-        return (CanonicalOUTransitionProvider) transitionProvider;
     }
 
     private String pushTransitionCachePhase(final CanonicalBranchTransitionProvider transitionProvider,

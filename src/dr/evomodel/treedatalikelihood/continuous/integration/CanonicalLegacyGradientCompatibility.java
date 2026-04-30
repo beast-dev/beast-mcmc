@@ -42,7 +42,8 @@ final class CanonicalLegacyGradientCompatibility {
     void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
         Arrays.fill(gradQ, 0.0);
 
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
         final OrthogonalBlockCanonicalParameterization orthogonalSelection =
                 processModel.getSelectionMatrixParameterization()
@@ -84,7 +85,8 @@ final class CanonicalLegacyGradientCompatibility {
     void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
         Arrays.fill(gradA, 0.0);
 
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
         if (processModel.getSelectionMatrixParameterization()
                 instanceof OrthogonalBlockCanonicalParameterization) {
@@ -128,7 +130,8 @@ final class CanonicalLegacyGradientCompatibility {
     void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
         Arrays.fill(gradMu, 0.0);
 
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
         final int rootIndex = tree.getRoot().getNumber();
 
@@ -270,16 +273,6 @@ final class CanonicalLegacyGradientCompatibility {
                         * (-0.5 * priorPrecision[iOff + j] + 0.5 * workspace.covarianceAdjoint[i][j]);
             }
         }
-    }
-
-    private static CanonicalOUTransitionProvider requireOUProvider(
-            final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)) {
-            throw new UnsupportedOperationException(
-                    "Not yet implemented: canonical OU gradients currently support only "
-                            + "CanonicalOUTransitionProvider implementations.");
-        }
-        return (CanonicalOUTransitionProvider) transitionProvider;
     }
 
     private static void clearSquare(final double[][] matrix) {

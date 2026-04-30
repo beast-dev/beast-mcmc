@@ -27,29 +27,15 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         extends DenseSelectionMatrixParameterization
         implements OrthogonalBlockCanonicalParameterization {
 
-    private static final String NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY =
-            "beast.experimental.nativeForceDenseAdjointExp";
-    private static final String TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY =
-            "beast.experimental.transposeNativeFrechetInput";
-    private static final String DEBUG_NATIVE_R_CONSISTENCY_PROPERTY =
-            "beast.debug.nativeRConsistency";
-
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final OrthogonalMatrixProvider orthogonalRotation;
     private final BlockDiagonalExpSolver expSolver;
     private final BlockDiagonalFrechetHelper frechetHelper;
     private final BlockDiagonalLyapunovSolver lyapunovSolver;
     private final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper;
-    private final double[] rData;
-    private final double[] rtData;
-    private final double[] blockDParams;
-    private final double[] cachedRData;
-    private final double[] cachedRtData;
-    private final double[] cachedBlockDParams;
-    private final DenseMatrix64F expD;
-    private final DenseMatrix64F rMatrix;
-    private final DenseMatrix64F rtMatrix;
-    private final DenseMatrix64F transitionMatrix;
+    private final OrthogonalBlockBasisCache basisCache;
+    private final OrthogonalBlockTransitionFactory transitionFactory;
+    private final OrthogonalBlockDenseFallbackPolicy denseFallbackPolicy;
     private final DenseMatrix64F qMatrix;
     private final DenseMatrix64F qDBasis;
     private final DenseMatrix64F stationaryCovDBasis;
@@ -74,16 +60,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     private final DenseMatrix64F temp1;
     private final DenseMatrix64F temp2;
     private final DenseMatrix64F temp3;
-    private final double[][] workMatrix;
     private final double[] choleskyScratch;
     private final double[] lowerInverseScratch;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final double[] tempVector1;
     private final double[] tempVector2;
-    private boolean expCacheValid;
-    private boolean basisCacheValid;
-    private double cachedExpDt;
-    private double cachedBasisDt;
 
     public OrthogonalBlockDiagonalSelectionMatrixParameterization(
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
@@ -96,24 +77,17 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                         blockParameter.getRowDimension(),
                         blockParameter.getBlockStarts(),
                         blockParameter.getBlockSizes()));
+        this.basisCache = new OrthogonalBlockBasisCache(blockParameter, orthogonalRotation, expSolver);
         this.frechetHelper = new BlockDiagonalFrechetHelper(expSolver.getStructure());
         this.lyapunovSolver = new BlockDiagonalLyapunovSolver(
                 getDimension(),
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes());
         this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(getDimension(), lyapunovSolver);
+        this.transitionFactory = new OrthogonalBlockTransitionFactory(getDimension(), lyapunovSolver);
+        this.denseFallbackPolicy = new OrthogonalBlockDenseFallbackPolicy();
 
         final int d = getDimension();
-        this.rData = new double[d * d];
-        this.rtData = new double[d * d];
-        this.blockDParams = new double[blockParameter.getTridiagonalDDimension()];
-        this.cachedRData = new double[d * d];
-        this.cachedRtData = new double[d * d];
-        this.cachedBlockDParams = new double[blockParameter.getTridiagonalDDimension()];
-        this.expD = new DenseMatrix64F(d, d);
-        this.rMatrix = new DenseMatrix64F(d, d);
-        this.rtMatrix = new DenseMatrix64F(d, d);
-        this.transitionMatrix = new DenseMatrix64F(d, d);
         this.qMatrix = new DenseMatrix64F(d, d);
         this.qDBasis = new DenseMatrix64F(d, d);
         this.stationaryCovDBasis = new DenseMatrix64F(d, d);
@@ -138,22 +112,17 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         this.temp1 = new DenseMatrix64F(d, d);
         this.temp2 = new DenseMatrix64F(d, d);
         this.temp3 = new DenseMatrix64F(d, d);
-        this.workMatrix = new double[d][d];
         this.choleskyScratch = new double[d * d];
         this.lowerInverseScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
         this.tempVector1 = new double[d];
         this.tempVector2 = new double[d];
-        this.expCacheValid = false;
-        this.basisCacheValid = false;
-        this.cachedExpDt = Double.NaN;
-        this.cachedBasisDt = Double.NaN;
     }
 
     @Override
     public void fillTransitionMatrix(final double dt, final double[][] out) {
         refreshBasisCaches(dt);
-        copyDenseMatrixToArray(transitionMatrix, out);
+        copyDenseMatrixToArray(basisCache.transitionMatrix, out);
     }
 
     @Override
@@ -163,14 +132,14 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                     "transition matrix must have length " + (getDimension() * getDimension()));
         }
         refreshBasisCaches(dt);
-        copyDenseMatrixToFlat(transitionMatrix, out);
+        copyDenseMatrixToFlat(basisCache.transitionMatrix, out);
     }
 
     public void fillTransitionCovariance(final MatrixParameterInterface diffusionMatrix,
                                          final double dt,
                                          final double[][] out) {
-        fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        copyDenseMatrixToArray(transitionCovariance, out);
+        refreshBasisCaches(dt);
+        transitionFactory.fillTransitionCovariance(diffusionMatrix, basisCache, out);
     }
 
     public void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,
@@ -178,8 +147,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                         final double dt,
                                         final CanonicalGaussianTransition out) {
         refreshBasisCaches(dt);
-        fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        fillCanonicalTransitionDirect(stationaryMean, out);
+        transitionFactory.fillCanonicalTransition(diffusionMatrix, stationaryMean, basisCache, out);
     }
 
     public OrthogonalBlockPreparedBranchBasis prepareBranchBasis(final double dt,
@@ -386,19 +354,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                            final CanonicalBranchMessageContribution contribution,
                                            final CanonicalLocalTransitionAdjoints out) {
         refreshBasisCaches(dt);
-        fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        copyDenseMatrixToFlat(transitionMatrix, transitionMatrixArrayScratch);
-        fillTransitionOffset(stationaryMean, transitionOffsetScratch);
-
-        copyAndInvertPositiveDefiniteFlat(transitionCovariance, transitionCovarianceArrayScratch, precisionFlat);
-        CanonicalTransitionAdjointUtils.fillFromMoments(
-                precisionFlat,
-                transitionCovarianceArrayScratch,
-                transitionMatrixArrayScratch,
-                transitionOffsetScratch,
-                contribution,
-                canonicalAdjointWorkspace,
-                out);
+        transitionFactory.fillCanonicalLocalAdjoints(
+                diffusionMatrix, stationaryMean, basisCache, contribution, out);
     }
 
     private void fillTransitionCovarianceMatrix(final MatrixParameterInterface diffusionMatrix,
@@ -407,10 +364,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         refreshBasisCaches(dt);
         OrthogonalBlockTransitionCovarianceSolver.fillTransitionCovariance(
                 diffusionMatrix,
-                rMatrix,
-                rtMatrix,
-                expD,
-                blockDParams,
+                basisCache.rMatrix,
+                basisCache.rtMatrix,
+                basisCache.expD,
+                basisCache.blockDParams,
                 lyapunovSolver,
                 qMatrix,
                 qDBasis,
@@ -419,19 +376,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 temp1,
                 out,
                 false);
-    }
-
-    private void fillCanonicalTransitionDirect(final double[] stationaryMean,
-                                               final CanonicalGaussianTransition out) {
-        OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
-                transitionMatrix,
-                transitionCovariance,
-                stationaryMean,
-                transitionOffsetScratch,
-                transitionCovarianceArrayScratch,
-                choleskyScratch,
-                lowerInverseScratch,
-                out);
     }
 
     public void accumulateNativeGradientFromTransition(final double dt,
@@ -531,11 +475,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                  final double[][] rotationAccumulator) {
         refreshBasisCaches(dt);
         fillDenseMatrix(diffusionMatrix, qMatrix);
-        CommonOps.mult(rtMatrix, qMatrix, temp1);
-        CommonOps.mult(temp1, rMatrix, qDBasis);
-        lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, temp1);
-        CommonOps.multTransB(temp1, expD, transitionCovDBasis);
+        CommonOps.mult(basisCache.rtMatrix, qMatrix, temp1);
+        CommonOps.mult(temp1, basisCache.rMatrix, qDBasis);
+        lyapunovSolver.solve(basisCache.blockDParams, qDBasis, stationaryCovDBasis);
+        CommonOps.mult(basisCache.expD, stationaryCovDBasis, temp1);
+        CommonOps.multTransB(temp1, basisCache.expD, transitionCovDBasis);
         CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         symmetrize(transitionCovDBasis);
         accumulateNativeGradientFromCovarianceStationaryCached(
@@ -550,8 +494,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         fillSymmetricDenseMatrix(dLogL_dV, gV);
 
         // Map covariance adjoint to block-D basis: G_V^D = R^T G_V R.
-        CommonOps.mult(rtMatrix, gV, temp1);
-        CommonOps.mult(temp1, rMatrix, hDBasis);
+        CommonOps.mult(basisCache.rtMatrix, gV, temp1);
+        CommonOps.mult(temp1, basisCache.rMatrix, hDBasis);
         symmetrize(hDBasis);
 
         // For V = R (S - E S E^T) R^T with D S + S D^T = Q_D, the exact adjoint is:
@@ -559,18 +503,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         //   D^T Y + Y D = G_S
         //   G_Q^D = Y
         //   G_Q = R G_Q^D R^T
-        CommonOps.multTransA(expD, hDBasis, temp1); // E^T G_V^D
-        CommonOps.mult(temp1, expD, gS);            // E^T G_V^D E
+        CommonOps.multTransA(basisCache.expD, hDBasis, temp1); // E^T G_V^D
+        CommonOps.mult(temp1, basisCache.expD, gS);            // E^T G_V^D E
         CommonOps.subtract(hDBasis, gS, gS);        // G_S
         symmetrize(gS);
 
         // Helper solves D^T Y + Y D = -hBlock, so pass hBlock = -G_S.
         yAdjoint.set(gS);
         CommonOps.scale(-1.0, yAdjoint);
-        lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);
+        lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, basisCache.blockDParams, yAdjoint);
 
-        CommonOps.mult(rMatrix, yAdjoint, temp1);
-        CommonOps.mult(temp1, rtMatrix, temp2);
+        CommonOps.mult(basisCache.rMatrix, yAdjoint, temp1);
+        CommonOps.mult(temp1, basisCache.rtMatrix, temp2);
         symmetrize(temp2);
 
         final int d = getDimension();
@@ -592,7 +536,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                   final double[][] rotationAccumulator) {
         refreshBasisCaches(dt);
         fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
-        copyDenseMatrixToFlat(transitionMatrix, transitionMatrixArrayScratch);
+        copyDenseMatrixToFlat(basisCache.transitionMatrix, transitionMatrixArrayScratch);
         fillTransitionOffset(stationaryMean, transitionOffsetScratch);
 
         copyAndInvertPositiveDefiniteFlat(transitionCovariance, transitionCovarianceArrayScratch, precisionFlat);
@@ -687,10 +631,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                               final double[] compressedDAccumulator,
                                                               final double[][] rotationAccumulator) {
         fillTotalUpstreamOnTransition(stationaryMean, dLogL_dF, dLogL_df, upstreamF);
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
 
-        CommonOps.mult(rtMatrix, upstreamF, temp1);
-        CommonOps.mult(temp1, rMatrix, upstreamFD);
+        CommonOps.mult(basisCache.rtMatrix, upstreamF, temp1);
+        CommonOps.mult(temp1, basisCache.rMatrix, upstreamFD);
         if (forceDenseAdjointExp) {
             fillScaledNegativeBlockDMatrix(dt, scaledNegativeBlockDScratch);
             copyDenseMatrixToArray(upstreamFD, denseAdjointScratch);
@@ -703,13 +647,13 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-dt, gradD);
         } else {
             final DenseMatrix64F frechetInputTransition;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(upstreamFD, temp3);
                 frechetInputTransition = temp3;
             } else {
                 frechetInputTransition = upstreamFD;
             }
-            frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputTransition, dt, gradD);
+            frechetHelper.frechetAdjointExpInDBasis(basisCache.blockDParams, frechetInputTransition, dt, gradD);
             transposeInPlace(gradD);
             if (!isFinite(gradD.data)) {
                 fillScaledNegativeBlockDMatrix(dt, scaledNegativeBlockDScratch);
@@ -725,10 +669,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        CommonOps.multTransB(rMatrix, expD, temp1);     // R * E^T
+        CommonOps.multTransB(basisCache.rMatrix, basisCache.expD, temp1);     // R * E^T
         CommonOps.mult(upstreamF, temp1, gradR);        // U * R * E^T
-        CommonOps.multTransA(upstreamF, rMatrix, temp1);// U^T * R
-        CommonOps.mult(temp1, expD, temp2);             // U^T * R * E
+        CommonOps.multTransA(upstreamF, basisCache.rMatrix, temp1);// U^T * R
+        CommonOps.mult(temp1, basisCache.expD, temp2);             // U^T * R * E
         CommonOps.addEquals(gradR, temp2);
         addDenseMatrixToArray(gradR, rotationAccumulator);
     }
@@ -775,7 +719,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                 final double[] compressedDAccumulator,
                                                                 final double[][] rotationAccumulator) {
         fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
 
         CommonOps.mult(prepared.rtMatrix, workspace.upstreamF, workspace.temp1);
         CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.upstreamFD);
@@ -795,7 +739,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-prepared.dt, workspace.gradD);
         } else {
             final DenseMatrix64F frechetInputTransition;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(workspace.upstreamFD, workspace.temp3);
                 frechetInputTransition = workspace.temp3;
             } else {
@@ -837,7 +781,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                     final double[] compressedDAccumulator,
                                                                     final double[] rotationAccumulator) {
         fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
 
         CommonOps.mult(prepared.rtMatrix, workspace.upstreamF, workspace.temp1);
         CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.upstreamFD);
@@ -857,7 +801,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-prepared.dt, workspace.gradD);
         } else {
             final DenseMatrix64F frechetInputTransition;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(workspace.upstreamFD, workspace.temp3);
                 frechetInputTransition = workspace.temp3;
             } else {
@@ -897,7 +841,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                           final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                           final double[] compressedDAccumulator,
                                                                           final double[][] rotationAccumulator) {
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
         fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
 
         CommonOps.mult(prepared.rtMatrix, workspace.gV, workspace.temp1);
@@ -944,7 +888,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-prepared.dt, workspace.gradD);
         } else {
             final DenseMatrix64F frechetInputCov;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(workspace.gECov, workspace.temp3);
                 frechetInputCov = workspace.temp3;
             } else {
@@ -969,7 +913,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                               final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                               final double[] compressedDAccumulator,
                                                                               final double[] rotationAccumulator) {
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
         fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
 
         CommonOps.mult(prepared.rtMatrix, workspace.gV, workspace.temp1);
@@ -1016,7 +960,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-prepared.dt, workspace.gradD);
         } else {
             final DenseMatrix64F frechetInputCov;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(workspace.gECov, workspace.temp3);
                 frechetInputCov = workspace.temp3;
             } else {
@@ -1040,38 +984,38 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                                         final double[] dLogL_dV,
                                                                         final double[] compressedDAccumulator,
                                                                         final double[][] rotationAccumulator) {
-        final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
+        final boolean forceDenseAdjointExp = denseFallbackPolicy.forceDenseAdjointExp();
         fillSymmetricDenseMatrixFlat(dLogL_dV, gV);
 
-        CommonOps.mult(rtMatrix, gV, temp1);
-        CommonOps.mult(temp1, rMatrix, hDBasis);
+        CommonOps.mult(basisCache.rtMatrix, gV, temp1);
+        CommonOps.mult(temp1, basisCache.rMatrix, hDBasis);
         symmetrize(hDBasis);
 
-        CommonOps.multTransA(expD, hDBasis, temp1);     // E^T H
-        CommonOps.mult(temp1, expD, gS);                // E^T H E
+        CommonOps.multTransA(basisCache.expD, hDBasis, temp1);     // E^T H
+        CommonOps.mult(temp1, basisCache.expD, gS);                // E^T H E
         CommonOps.changeSign(gS);
         CommonOps.addEquals(gS, hDBasis);               // H - E^T H E
 
         CommonOps.fill(gradD, 0.0);
         lyapunovAdjointHelper.accumulateLyapunovContributionInDBasis(
-                stationaryCovDBasis, gS, blockDParams, gradD);
+                stationaryCovDBasis, gS, basisCache.blockDParams, gradD);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        lyapunovAdjointHelper.solveAdjointInDBasis(gS, blockDParams, yAdjoint);
+        lyapunovAdjointHelper.solveAdjointInDBasis(gS, basisCache.blockDParams, yAdjoint);
 
         // Q-basis contribution: helper returns yAdjoint = -Y, where Y solves
         // D^T Y + Y D = G_S.  Since Q_D = R^T Q R, the raw R gradient is
         // Q R Y^T + Q^T R Y = -(Q R yAdjoint^T + Q^T R yAdjoint).
-        CommonOps.mult(qMatrix, rMatrix, temp1);
+        CommonOps.mult(qMatrix, basisCache.rMatrix, temp1);
         CommonOps.multTransB(temp1, yAdjoint, gradR);   // Q R y^T
-        CommonOps.multTransA(qMatrix, rMatrix, temp1);  // Q^T R
+        CommonOps.multTransA(qMatrix, basisCache.rMatrix, temp1);  // Q^T R
         CommonOps.mult(temp1, yAdjoint, temp2);         // Q^T R y
         CommonOps.addEquals(gradR, temp2);
         CommonOps.scale(-1.0, gradR);
         addDenseMatrixToArray(gradR, rotationAccumulator);
 
         // E-inside-V contribution.
-        CommonOps.mult(hDBasis, expD, temp1);
+        CommonOps.mult(hDBasis, basisCache.expD, temp1);
         CommonOps.mult(temp1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
         if (forceDenseAdjointExp) {
@@ -1086,21 +1030,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             CommonOps.scale(-dt, gradD);
         } else {
             final DenseMatrix64F frechetInputCov;
-            if (Boolean.getBoolean(TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY)) {
+            if (denseFallbackPolicy.transposeNativeFrechetInput()) {
                 CommonOps.transpose(gECov, temp3);
                 frechetInputCov = temp3;
             } else {
                 frechetInputCov = gECov;
             }
-            frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputCov, dt, gradD);
+            frechetHelper.frechetAdjointExpInDBasis(basisCache.blockDParams, frechetInputCov, dt, gradD);
             transposeInPlace(gradD);
         }
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         // Outer basis reconstruction V = R V_D R^T.
-        CommonOps.mult(gV, rMatrix, temp1);
+        CommonOps.mult(gV, basisCache.rMatrix, temp1);
         CommonOps.mult(temp1, transitionCovDBasis, gradR);
-        CommonOps.multTransA(gV, rMatrix, temp2);
+        CommonOps.multTransA(gV, basisCache.rMatrix, temp2);
         CommonOps.mult(temp2, transitionCovDBasis, temp3);
         CommonOps.addEquals(gradR, temp3);
         addDenseMatrixToArray(gradR, rotationAccumulator);
@@ -1109,7 +1053,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     private void fillTransitionOffset(final double[] stationaryMean,
                                       final double[] out) {
         final int dimension = getDimension();
-        final double[] transitionData = transitionMatrix.data;
+        final double[] transitionData = basisCache.transitionMatrix.data;
         for (int i = 0; i < dimension; ++i) {
             double transformedMean = 0.0;
             final int rowOffset = i * dimension;
@@ -1121,76 +1065,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     }
 
     private void refreshBasisCaches(final double dt) {
-        final int d = getDimension();
-        orthogonalRotation.fillOrthogonalMatrix(rData);
-        orthogonalRotation.fillOrthogonalTranspose(rtData);
-        blockParameter.fillBlockDiagonalElements(blockDParams);
-
-        final boolean expNeedsRefresh = !expCacheValid
-                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
-                || !Arrays.equals(blockDParams, cachedBlockDParams);
-        if (Boolean.getBoolean(DEBUG_NATIVE_R_CONSISTENCY_PROPERTY)) {
-            final double[] blockR = new double[d * d];
-            final double[] blockRinv = new double[d * d];
-            blockParameter.fillRAndRinv(blockR, blockRinv);
-            double maxR = 0.0;
-            double maxRt = 0.0;
-            double maxRinvVsTranspose = 0.0;
-            for (int i = 0; i < d * d; ++i) {
-                maxR = Math.max(maxR, Math.abs(rData[i] - blockR[i]));
-                maxRt = Math.max(maxRt, Math.abs(rtData[i] - blockRinv[i]));
-            }
-            for (int r = 0; r < d; ++r) {
-                for (int c = 0; c < d; ++c) {
-                    final int rc = r * d + c;
-                    final int cr = c * d + r;
-                    maxRinvVsTranspose = Math.max(
-                            maxRinvVsTranspose,
-                            Math.abs(blockRinv[rc] - blockR[cr]));
-                }
-            }
-            System.err.println("nativeRConsistencyDebug dt=" + dt
-                    + " maxAbsRDiff=" + maxR
-                    + " maxAbsRtDiff=" + maxRt
-                    + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);
-        }
-        final boolean basisNeedsRefresh = expNeedsRefresh
-                || !basisCacheValid
-                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedBasisDt)
-                || !Arrays.equals(rData, cachedRData)
-                || !Arrays.equals(rtData, cachedRtData);
-        if (!basisNeedsRefresh) {
-            return;
-        }
-
-        if (expNeedsRefresh) {
-            expSolver.compute(blockDParams, dt, expD);
-            System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
-            cachedExpDt = dt;
-            expCacheValid = true;
-        }
-
-        System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
-        System.arraycopy(rtData, 0, rtMatrix.data, 0, d * d);
-        OrthogonalBlockPreparedBasisBuilder.fillTransitionMatrix(
-                rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
-        System.arraycopy(rData, 0, cachedRData, 0, rData.length);
-        System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
-        cachedBasisDt = dt;
-        basisCacheValid = true;
+        basisCache.refresh(dt);
     }
 
     private void refreshMeanGradientCaches(final double dt) {
-        blockParameter.fillBlockDiagonalElements(blockDParams);
-        if (!expCacheValid
-                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
-                || !Arrays.equals(blockDParams, cachedBlockDParams)) {
-            expSolver.compute(blockDParams, dt, expD);
-            System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
-            cachedExpDt = dt;
-            expCacheValid = true;
-            basisCacheValid = false;
-        }
+        basisCache.refreshExpOnly(dt);
     }
 
     private static void fillDenseMatrix(final MatrixParameterInterface parameter, final DenseMatrix64F out) {
@@ -1264,14 +1143,14 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             final int start = blockParameter.getBlockStarts()[b];
             final int size = blockParameter.getBlockSizes()[b];
             if (size == 1) {
-                out[start] = expD.data[start * getDimension() + start] * in[start];
+                out[start] = basisCache.expD.data[start * getDimension() + start] * in[start];
             } else {
                 final int row0 = start * getDimension();
                 final int row1 = (start + 1) * getDimension();
-                final double e00 = expD.data[row0 + start];
-                final double e01 = expD.data[row0 + start + 1];
-                final double e10 = expD.data[row1 + start];
-                final double e11 = expD.data[row1 + start + 1];
+                final double e00 = basisCache.expD.data[row0 + start];
+                final double e01 = basisCache.expD.data[row0 + start + 1];
+                final double e10 = basisCache.expD.data[row1 + start];
+                final double e11 = basisCache.expD.data[row1 + start + 1];
                 out[start] = e00 * in[start] + e10 * in[start + 1];
                 out[start + 1] = e01 * in[start] + e11 * in[start + 1];
             }
@@ -1358,10 +1237,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         final int upperOffset = d;
         final int lowerOffset = d + (d - 1);
         for (int i = 0; i < d; ++i) {
-            out[i][i] = -dt * blockDParams[i];
+            out[i][i] = -dt * basisCache.blockDParams[i];
             if (i < d - 1) {
-                out[i][i + 1] = -dt * blockDParams[upperOffset + i];
-                out[i + 1][i] = -dt * blockDParams[lowerOffset + i];
+                out[i][i + 1] = -dt * basisCache.blockDParams[upperOffset + i];
+                out[i + 1][i] = -dt * basisCache.blockDParams[lowerOffset + i];
             }
         }
     }

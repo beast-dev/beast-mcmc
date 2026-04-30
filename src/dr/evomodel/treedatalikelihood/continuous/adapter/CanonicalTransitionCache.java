@@ -34,8 +34,6 @@ import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPrepared
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Per-branch canonical transition cache for homogeneous OU providers.
  */
@@ -45,46 +43,36 @@ final class CanonicalTransitionCache {
         double getEffectiveBranchLength(int childNodeIndex);
     }
 
-    private static final String PHASE_OTHER = "other";
-
     private final int dimension;
     private final OUProcessModel processModel;
     private final BranchLengthProvider branchLengthProvider;
-    private final CanonicalGaussianTransition[] transitions;
-    private final CanonicalPreparedBranchSnapshot[] snapshots;
-    private final double[] cachedEffectiveBranchLength;
-    private final boolean[] valid;
+    private final BranchCacheEntry[] entries;
     private final OrthogonalBlockCanonicalParameterization orthogonalSelection;
-    private final OrthogonalBlockPreparedBranchBasis[] orthogonalPreparedCache;
     private final ThreadLocal<OrthogonalBlockBranchGradientWorkspace>
             orthogonalWorkspace;
     private final double[] stationaryMeanScratch;
-    private final CacheDiagnostics diagnostics;
+    private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
 
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
                              final OUProcessModel processModel,
                              final OrthogonalBlockCanonicalParameterization orthogonalSelection,
                              final BranchLengthProvider branchLengthProvider,
-                             final boolean diagnosticsEnabled) {
+                             final CanonicalTransitionCacheOptions options) {
         this.dimension = dimension;
         this.processModel = processModel;
         this.branchLengthProvider = branchLengthProvider;
-        this.transitions = new CanonicalGaussianTransition[nodeCount];
-        this.snapshots = new CanonicalPreparedBranchSnapshot[nodeCount];
-        this.cachedEffectiveBranchLength = new double[nodeCount];
-        this.valid = new boolean[nodeCount];
+        this.entries = new BranchCacheEntry[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            this.entries[i] = new BranchCacheEntry();
+        }
         this.orthogonalSelection = orthogonalSelection;
-        this.orthogonalPreparedCache =
-                orthogonalSelection == null
-                        ? null
-                        : new OrthogonalBlockPreparedBranchBasis[nodeCount];
         this.orthogonalWorkspace =
                 orthogonalSelection == null
                         ? null
                         : ThreadLocal.withInitial(orthogonalSelection::createBranchGradientWorkspace);
         this.stationaryMeanScratch = orthogonalSelection == null ? null : new double[dimension];
-        this.diagnostics = diagnosticsEnabled ? new CacheDiagnostics() : null;
+        this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
     }
 
     void fillTransition(final int childNodeIndex, final CanonicalGaussianTransition out) {
@@ -98,111 +86,83 @@ final class CanonicalTransitionCache {
     }
 
     CanonicalPreparedBranchSnapshot getPreparedBranchSnapshot(final int childNodeIndex) {
-        if (orthogonalSelection == null) {
-            ensureTransition(childNodeIndex);
-            return snapshots[childNodeIndex];
-        }
         ensureTransition(childNodeIndex);
-        return snapshots[childNodeIndex];
+        return entries[childNodeIndex].snapshot;
     }
 
-    void clear() {
-        recordClear();
-        for (int i = 0; i < valid.length; i++) {
-            valid[i] = false;
+    void clear(final CanonicalTransitionCacheInvalidationReason reason) {
+        diagnostics.recordClear(reason);
+        for (int i = 0; i < entries.length; i++) {
+            entries[i].valid = false;
         }
     }
 
     String pushDiagnosticPhase(final String phase) {
-        if (diagnostics == null) {
-            return null;
-        }
-        final String previous = diagnostics.phase.get();
-        diagnostics.phase.set(phase);
-        return previous;
+        return diagnostics.pushPhase(phase);
     }
 
     void popDiagnosticPhase(final String previous) {
-        if (diagnostics == null) {
-            return;
-        }
-        if (previous == null) {
-            diagnostics.phase.remove();
-        } else {
-            diagnostics.phase.set(previous);
-        }
+        diagnostics.popPhase(previous);
     }
 
     void recordSnapshotRefresh() {
-        if (diagnostics != null) {
-            diagnostics.recordSnapshotRefresh();
-        }
+        diagnostics.recordSnapshotRefresh();
     }
 
     void recordStore() {
-        if (diagnostics != null) {
-            diagnostics.recordStore();
-        }
+        diagnostics.recordStore();
     }
 
     void recordRestore() {
-        if (diagnostics != null) {
-            diagnostics.recordRestore();
-        }
+        diagnostics.recordRestore();
     }
 
     void recordAccept() {
-        if (diagnostics != null) {
-            diagnostics.recordAccept();
-        }
+        diagnostics.recordAccept();
     }
 
     void report(final String label) {
-        if (diagnostics != null) {
-            diagnostics.report(label);
-        }
+        diagnostics.report(label);
     }
 
     private CanonicalGaussianTransition ensureTransition(final int childNodeIndex) {
         recordRequest();
+        final BranchCacheEntry entry = entries[childNodeIndex];
         final double effectiveBranchLength = branchLengthProvider.getEffectiveBranchLength(childNodeIndex);
-        if (!valid[childNodeIndex]
-                || Double.doubleToLongBits(cachedEffectiveBranchLength[childNodeIndex])
+        if (!entry.valid
+                || Double.doubleToLongBits(entry.effectiveBranchLength)
                 != Double.doubleToLongBits(effectiveBranchLength)) {
             recordMiss();
-            CanonicalGaussianTransition cached = transitions[childNodeIndex];
-            if (cached == null) {
-                cached = new CanonicalGaussianTransition(dimension);
-                transitions[childNodeIndex] = cached;
+            if (entry.transition == null) {
+                entry.transition = new CanonicalGaussianTransition(dimension);
             }
             final OrthogonalBlockPreparedBranchBasis prepared =
-                    fillCachedTransition(childNodeIndex, effectiveBranchLength, cached);
-            snapshots[childNodeIndex] = new CanonicalPreparedBranchSnapshot(
+                    fillCachedTransition(entry, effectiveBranchLength);
+            entry.snapshot = new CanonicalPreparedBranchSnapshot(
                     childNodeIndex,
                     effectiveBranchLength,
-                    cached,
+                    entry.transition,
                     prepared);
-            cachedEffectiveBranchLength[childNodeIndex] = effectiveBranchLength;
-            valid[childNodeIndex] = true;
+            entry.effectiveBranchLength = effectiveBranchLength;
+            entry.valid = true;
         } else {
             recordHit();
         }
-        return transitions[childNodeIndex];
+        return entry.transition;
     }
 
-    private OrthogonalBlockPreparedBranchBasis fillCachedTransition(final int childNodeIndex,
-                                                                    final double effectiveBranchLength,
-                                                                    final CanonicalGaussianTransition cached) {
+    private OrthogonalBlockPreparedBranchBasis fillCachedTransition(final BranchCacheEntry entry,
+                                                                    final double effectiveBranchLength) {
         if (orthogonalSelection == null) {
-            processModel.fillCanonicalTransition(effectiveBranchLength, cached);
+            processModel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
             return null;
         }
 
         OrthogonalBlockPreparedBranchBasis prepared =
-                orthogonalPreparedCache[childNodeIndex];
+                entry.orthogonalPreparedBasis;
         if (prepared == null) {
             prepared = orthogonalSelection.createPreparedBranchBasis();
-            orthogonalPreparedCache[childNodeIndex] = prepared;
+            entry.orthogonalPreparedBasis = prepared;
         }
         processModel.getInitialMean(stationaryMeanScratch);
         orthogonalSelection.prepareBranchBasis(effectiveBranchLength, stationaryMeanScratch, prepared);
@@ -210,37 +170,24 @@ final class CanonicalTransitionCache {
                 prepared,
                 processModel.getDiffusionMatrix(),
                 orthogonalWorkspace.get(),
-                cached);
+                entry.transition);
         return prepared;
     }
 
     private void recordRequest() {
-        if (diagnostics != null) {
-            diagnostics.recordRequest(currentDiagnosticPhase());
-        }
+        diagnostics.recordRequest(currentDiagnosticPhase());
     }
 
     private void recordHit() {
-        if (diagnostics != null) {
-            diagnostics.recordHit();
-        }
+        diagnostics.recordHit();
     }
 
     private void recordMiss() {
-        if (diagnostics != null) {
-            diagnostics.recordMiss(currentDiagnosticPhase());
-        }
-    }
-
-    private void recordClear() {
-        if (diagnostics != null) {
-            diagnostics.recordClear();
-        }
+        diagnostics.recordMiss(currentDiagnosticPhase());
     }
 
     private String currentDiagnosticPhase() {
-        final String phase = diagnostics.phase.get();
-        return phase == null ? PHASE_OTHER : phase;
+        return diagnostics.currentPhase();
     }
 
     private static void copyTransition(final CanonicalGaussianTransition source,
@@ -255,113 +202,12 @@ final class CanonicalTransitionCache {
         target.logNormalizer = source.logNormalizer;
     }
 
-    private static final class CacheDiagnostics {
-        private final ThreadLocal<String> phase = new ThreadLocal<>();
-        private final AtomicLong requests = new AtomicLong();
-        private final AtomicLong hits = new AtomicLong();
-        private final AtomicLong misses = new AtomicLong();
-        private final AtomicLong clears = new AtomicLong();
-        private final AtomicLong snapshotRefreshes = new AtomicLong();
-        private final AtomicLong stores = new AtomicLong();
-        private final AtomicLong restores = new AtomicLong();
-        private final AtomicLong accepts = new AtomicLong();
-        private final AtomicLong postOrderRequests = new AtomicLong();
-        private final AtomicLong postOrderMisses = new AtomicLong();
-        private final AtomicLong preOrderRequests = new AtomicLong();
-        private final AtomicLong preOrderMisses = new AtomicLong();
-        private final AtomicLong gradientPrepRequests = new AtomicLong();
-        private final AtomicLong gradientPrepMisses = new AtomicLong();
-        private final AtomicLong branchLengthRequests = new AtomicLong();
-        private final AtomicLong branchLengthMisses = new AtomicLong();
-        private final AtomicLong otherRequests = new AtomicLong();
-        private final AtomicLong otherMisses = new AtomicLong();
-
-        private void recordRequest(final String phase) {
-            requests.incrementAndGet();
-            phaseRequestCounter(phase).incrementAndGet();
-        }
-
-        private void recordHit() {
-            hits.incrementAndGet();
-        }
-
-        private void recordMiss(final String phase) {
-            misses.incrementAndGet();
-            phaseMissCounter(phase).incrementAndGet();
-        }
-
-        private void recordClear() {
-            clears.incrementAndGet();
-        }
-
-        private void recordSnapshotRefresh() {
-            snapshotRefreshes.incrementAndGet();
-        }
-
-        private void recordStore() {
-            stores.incrementAndGet();
-        }
-
-        private void recordRestore() {
-            restores.incrementAndGet();
-        }
-
-        private void recordAccept() {
-            accepts.incrementAndGet();
-        }
-
-        private AtomicLong phaseRequestCounter(final String phase) {
-            if ("postorder".equals(phase)) {
-                return postOrderRequests;
-            }
-            if ("preorder".equals(phase)) {
-                return preOrderRequests;
-            }
-            if ("gradientPrep".equals(phase)) {
-                return gradientPrepRequests;
-            }
-            if ("branchLengthGradient".equals(phase)) {
-                return branchLengthRequests;
-            }
-            return otherRequests;
-        }
-
-        private AtomicLong phaseMissCounter(final String phase) {
-            if ("postorder".equals(phase)) {
-                return postOrderMisses;
-            }
-            if ("preorder".equals(phase)) {
-                return preOrderMisses;
-            }
-            if ("gradientPrep".equals(phase)) {
-                return gradientPrepMisses;
-            }
-            if ("branchLengthGradient".equals(phase)) {
-                return branchLengthMisses;
-            }
-            return otherMisses;
-        }
-
-        private void report(final String label) {
-            System.err.println("[canonical-transition-cache] " + label
-                    + " requests=" + requests.get()
-                    + " hits=" + hits.get()
-                    + " misses=" + misses.get()
-                    + " clears=" + clears.get()
-                    + " snapshots=" + snapshotRefreshes.get()
-                    + " store/restore/accept=" + stores.get()
-                    + "/" + restores.get()
-                    + "/" + accepts.get()
-                    + " postorder=" + postOrderRequests.get()
-                    + "/" + postOrderMisses.get()
-                    + " preorder=" + preOrderRequests.get()
-                    + "/" + preOrderMisses.get()
-                    + " gradientPrep=" + gradientPrepRequests.get()
-                    + "/" + gradientPrepMisses.get()
-                    + " branchLength=" + branchLengthRequests.get()
-                    + "/" + branchLengthMisses.get()
-                    + " other=" + otherRequests.get()
-                    + "/" + otherMisses.get());
-        }
+    private static final class BranchCacheEntry {
+        private CanonicalGaussianTransition transition;
+        private CanonicalPreparedBranchSnapshot snapshot;
+        private OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis;
+        private double effectiveBranchLength;
+        private boolean valid;
     }
+
 }

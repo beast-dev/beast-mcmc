@@ -62,9 +62,6 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         CanonicalPreparedBranchSnapshotProvider,
         CanonicalTransitionCacheDiagnostics {
 
-    private static final String DEBUG_CACHE_PROPERTY = "beast.debug.canonicalTransitionCache";
-    private static final boolean DEBUG_CACHE = Boolean.getBoolean(DEBUG_CACHE_PROPERTY);
-
     private final Tree tree;
     private final int dimension;
     private final BranchRateModel rateModel;
@@ -128,7 +125,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 processModel,
                 orthogonalSelection,
                 this::getEffectiveBranchLength,
-                DEBUG_CACHE);
+                CanonicalTransitionCacheOptions.fromSystemProperties());
 
         this.ejmlPrecision = new DenseMatrix64F(dimension, dimension);
         this.ejmlCovariance = new DenseMatrix64F(dimension, dimension);
@@ -226,7 +223,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         }
         refreshSnapshot();
         dirty = false;
-        transitionCache.clear();
+        transitionCache.clear(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
     }
 
     private void refreshSnapshot() {
@@ -280,6 +277,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     @Override
     public void restoreState() {
         transitionCache.recordRestore();
+        transitionCache.clear(CanonicalTransitionCacheInvalidationReason.RESTORE_STATE);
         dirty = true;
     }
 

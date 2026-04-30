@@ -40,20 +40,12 @@ public final class OUCanonicalBranchWiring {
     private final CanonicalGaussianState currentPosterior;
     private final CanonicalBranchMessageContribution contribution;
     private final CanonicalTransitionAdjointUtils.Workspace workspace;
+    private final OUCanonicalTransitionState transitionState;
+    private final OUCanonicalFrozenLocalFactorEvaluator frozenLocalFactorEvaluator;
 
     private final double[] aboveInformation;
     private final double[] belowInformation;
-    private final boolean[] exactObservationMask;
-    private final int[] observedIndexScratch;
-    private final int[] missingIndexScratch;
-    private final int[] reducedIndexByTrait;
-    private final DenseMatrix64F actualizationMatrix;
-    private final DenseMatrix64F displacementVector;
-    private final DenseMatrix64F branchPrecisionMatrix;
-    private final DenseMatrix64F branchCovarianceMatrix;
-    private final OUCanonicalParentAboveResolver parentAboveResolver;
-    private final DenseMatrix64F scratchMatrix;
-    private final DenseMatrix64F secondaryScratchMatrix;
+    private final OUCanonicalObservationPattern observationPattern;
     private final double[][] reducedPrecisionScratch;
     private final double[][] reducedCovarianceScratch;
     private final double[] reducedInformationScratch;
@@ -62,9 +54,6 @@ public final class OUCanonicalBranchWiring {
     private final double[][] currentCovarianceScratch;
     private final double[][] reducedCholeskyScratch;
     private final double[][] reducedLowerInverseScratch;
-    private final double[][] transitionMatrixScratch;
-    private final double[][] transitionCovarianceScratch;
-    private final double[] transitionOffsetScratch;
 
     public OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
         if (branchTransitionProvider == null) {
@@ -78,25 +67,17 @@ public final class OUCanonicalBranchWiring {
         this.currentPosterior = new CanonicalGaussianState(dimension);
         this.contribution = new CanonicalBranchMessageContribution(dimension);
         this.workspace = new CanonicalTransitionAdjointUtils.Workspace(dimension);
+        this.observationPattern = new OUCanonicalObservationPattern(dimension);
+        this.transitionState = new OUCanonicalTransitionState(
+                branchTransitionProvider,
+                transition,
+                NUMERICS_OPTIONS);
+        this.frozenLocalFactorEvaluator = new OUCanonicalFrozenLocalFactorEvaluator(
+                dimension,
+                transition,
+                observationPattern);
         this.aboveInformation = new double[dimension];
         this.belowInformation = new double[dimension];
-        this.exactObservationMask = new boolean[dimension];
-        this.observedIndexScratch = new int[dimension];
-        this.missingIndexScratch = new int[dimension];
-        this.reducedIndexByTrait = new int[dimension];
-        this.actualizationMatrix = new DenseMatrix64F(dimension, dimension);
-        this.displacementVector = new DenseMatrix64F(dimension, 1);
-        this.branchPrecisionMatrix = new DenseMatrix64F(dimension, dimension);
-        this.branchCovarianceMatrix = new DenseMatrix64F(dimension, dimension);
-        this.parentAboveResolver = new OUCanonicalParentAboveResolver(
-                dimension,
-                actualizationMatrix,
-                displacementVector,
-                branchPrecisionMatrix,
-                branchCovarianceMatrix,
-                NUMERICS_OPTIONS);
-        this.scratchMatrix = new DenseMatrix64F(dimension, dimension);
-        this.secondaryScratchMatrix = new DenseMatrix64F(dimension, dimension);
         final int maxReducedDimension = 2 * dimension;
         this.reducedPrecisionScratch = new double[maxReducedDimension][maxReducedDimension];
         this.reducedCovarianceScratch = new double[maxReducedDimension][maxReducedDimension];
@@ -106,9 +87,6 @@ public final class OUCanonicalBranchWiring {
         this.currentCovarianceScratch = new double[dimension][dimension];
         this.reducedCholeskyScratch = new double[maxReducedDimension][maxReducedDimension];
         this.reducedLowerInverseScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.transitionMatrixScratch = new double[dimension][dimension];
-        this.transitionCovarianceScratch = new double[dimension][dimension];
-        this.transitionOffsetScratch = new double[dimension];
     }
 
     public TimeSeriesOUGaussianBranchTransitionProvider getBranchTransitionProvider() {
@@ -184,10 +162,10 @@ public final class OUCanonicalBranchWiring {
                                                final double[] optimum,
                                                final NormalSufficientStatistics aboveChild,
                                                final NormalSufficientStatistics below) {
-        fillCanonicalTransitionFromKernel(branchLength, optimum);
+        transitionState.fillFromKernel(branchLength, optimum);
         final DenseMatrix64F parentAbovePrecision = recoverParentAbovePrecision(aboveChild);
-        final DenseMatrix64F parentAboveMean = parentAboveResolver.getAboveParentMeanVector();
-        return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
+        final DenseMatrix64F parentAboveMean = transitionState.getAboveParentMeanVector();
+        return frozenLocalFactorEvaluator.evaluate(parentAbovePrecision, parentAboveMean, below);
     }
 
     public double evaluateFrozenLocalLogFactor(final double branchLength,
@@ -195,62 +173,10 @@ public final class OUCanonicalBranchWiring {
                                                final NormalSufficientStatistics aboveChild,
                                                final NormalSufficientStatistics aboveParent,
                                                final NormalSufficientStatistics below) {
-        fillCanonicalTransitionFromKernel(branchLength, optimum);
+        transitionState.fillFromKernel(branchLength, optimum);
         final DenseMatrix64F parentAbovePrecision = recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
-        final DenseMatrix64F parentAboveMean = parentAboveResolver.getAboveParentMeanVector();
-        return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
-    }
-
-    private double evaluateFrozenLocalLogFactorWithResolvedParentPrecision(
-            final DenseMatrix64F parentAbovePrecision,
-            final DenseMatrix64F parentAboveMean,
-            final NormalSufficientStatistics below) {
-        fillInformation(parentAbovePrecision, parentAboveMean, aboveInformation);
-
-        final int observedCount = classifyExactObservationPattern(below);
-        if (observedCount == dimension) {
-            final DenseMatrix64F observed = below.getRawMean();
-            final double[][] precision = new double[dimension][dimension];
-            final double[] information = new double[dimension];
-            for (int i = 0; i < dimension; ++i) {
-                double info = transition.informationX[i] + aboveInformation[i];
-                final int iOffset = i * dimension;
-                for (int j = 0; j < dimension; ++j) {
-                    precision[i][j] = transition.precisionXX[iOffset + j] + parentAbovePrecision.unsafe_get(i, j);
-                    info -= transition.precisionXY[iOffset + j] * observed.unsafe_get(j, 0);
-                }
-                information[i] = info;
-            }
-            return normalizedLogNormalizer(precision, information, dimension)
-                    - transition.logNormalizer
-                    - 0.5 * quadraticForm(transition.precisionYY, observed)
-                    + dot(transition.informationY, observed);
-        }
-
-        if (observedCount > 0) {
-            return evaluateFrozenPartiallyObservedLocalLogFactor(
-                    parentAbovePrecision,
-                    below.getRawMean(),
-                    observedCount);
-        }
-
-        fillInformation(below.getRawPrecision(), below.getRawMean(), belowInformation);
-        final int doubled = 2 * dimension;
-        final double[][] precision = new double[doubled][doubled];
-        final double[] information = new double[doubled];
-        for (int i = 0; i < dimension; ++i) {
-            information[i] = transition.informationX[i] + aboveInformation[i];
-            information[dimension + i] = transition.informationY[i] + belowInformation[i];
-            final int iOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                precision[i][j] = transition.precisionXX[iOffset + j] + parentAbovePrecision.unsafe_get(i, j);
-                precision[i][dimension + j] = transition.precisionXY[iOffset + j];
-                precision[dimension + i][j] = transition.precisionYX[iOffset + j];
-                precision[dimension + i][dimension + j] =
-                        transition.precisionYY[iOffset + j] + below.getRawPrecision().unsafe_get(i, j);
-            }
-        }
-        return normalizedLogNormalizer(precision, information, doubled) - transition.logNormalizer;
+        final DenseMatrix64F parentAboveMean = transitionState.getAboveParentMeanVector();
+        return frozenLocalFactorEvaluator.evaluate(parentAbovePrecision, parentAboveMean, below);
     }
 
     public void fillTransitionMomentsFromKernel(final double branchLength,
@@ -258,9 +184,12 @@ public final class OUCanonicalBranchWiring {
                                                 final double[][] transitionMatrixOut,
                                                 final double[] transitionOffsetOut,
                                                 final double[][] transitionCovarianceOut) {
-        branchTransitionProvider.fillBranchTransitionMatrix(branchLength, transitionMatrixOut);
-        branchTransitionProvider.fillBranchTransitionCovariance(branchLength, transitionCovarianceOut);
-        fillTransitionOffset(transitionMatrixOut, optimum, transitionOffsetOut);
+        transitionState.fillTransitionMomentsFromKernel(
+                branchLength,
+                optimum,
+                transitionMatrixOut,
+                transitionOffsetOut,
+                transitionCovarianceOut);
     }
 
     public void accumulateBranchMeanGradient(final MatrixSufficientStatistics branchStatistics,
@@ -329,78 +258,12 @@ public final class OUCanonicalBranchWiring {
     }
 
     private void fillCanonicalTransition(final MatrixSufficientStatistics branchStatistics) {
-        final DenseMatrix64F actualization = branchStatistics.getRawActualization();
-        final DenseMatrix64F displacement = branchStatistics.getRawDisplacement();
-        final DenseMatrix64F precision = branchStatistics.getRawPrecision();
-
-        if (!isFinite(actualization) || !isFinite(displacement) || !isFinite(precision)) {
-            throw new IllegalStateException(
-                    "Non-finite branch transition statistics in fillCanonicalTransition"
-                            + "; actualizationFinite=" + isFinite(actualization)
-                            + "; displacementFinite=" + isFinite(displacement)
-                            + "; precisionFinite=" + isFinite(precision));
-        }
-
-        actualizationMatrix.set(actualization);
-        displacementVector.set(displacement);
-        branchPrecisionMatrix.set(precision);
-        canonicalizeBranchPrecisionCovariancePair("fillCanonicalTransition");
-        OUCanonicalTransitionBuilder.fillFromPrecisionMoments(
-                actualizationMatrix, displacementVector, branchPrecisionMatrix, transition);
+        transitionState.fillFromStatistics(branchStatistics);
     }
 
     private void fillCanonicalTransitionFromKernel(final double branchLength,
                                                    final double[] optimum) {
-        final double[][] transitionMatrix = transitionMatrixScratch;
-        final double[][] transitionCovariance = transitionCovarianceScratch;
-        final double[] transitionOffset = transitionOffsetScratch;
-        fillTransitionMomentsFromKernel(branchLength, optimum, transitionMatrix, transitionOffset, transitionCovariance);
-
-        // Keep branch moment buffers in sync with kernel-generated transition moments.
-        // Several local-factor paths (e.g. recoverParentAbovePrecision) read these buffers.
-        for (int i = 0; i < dimension; ++i) {
-            displacementVector.unsafe_set(i, 0, transitionOffset[i]);
-            for (int j = 0; j < dimension; ++j) {
-                actualizationMatrix.unsafe_set(i, j, transitionMatrix[i][j]);
-                branchCovarianceMatrix.unsafe_set(i, j, transitionCovariance[i][j]);
-            }
-        }
-        canonicalizeBranchCovariancePrecisionPair(
-                "fillCanonicalTransitionFromKernel(branchLength=" + branchLength + ")");
-
-        if (branchLength <= 0.0) {
-            // Zero-length branches can have singular covariance; use the local jittered path.
-            OUCanonicalTransitionBuilder.fillFromMoments(
-                    transitionMatrix,
-                    transitionOffset,
-                    transitionCovariance,
-                    transition,
-                    reducedCovarianceScratch,
-                    reducedCholeskyScratch,
-                    reducedPrecisionScratch,
-                    reducedLowerInverseScratch,
-                    reducedPrecisionScratch,
-                    currentCovarianceScratch);
-        } else {
-            // Build canonical transition from the canonicalized precision pair to keep
-            // all downstream consumers (local factors and parent-recovery algebra)
-            // numerically consistent.
-            OUCanonicalTransitionBuilder.fillFromPrecisionMoments(
-                    actualizationMatrix, displacementVector, branchPrecisionMatrix, transition);
-        }
-    }
-
-    private static void fillTransitionOffset(final double[][] transitionMatrix,
-                                             final double[] optimum,
-                                             final double[] out) {
-        final int d = out.length;
-        for (int i = 0; i < d; ++i) {
-            double sum = optimum[i];
-            for (int j = 0; j < d; ++j) {
-                sum -= transitionMatrix[i][j] * optimum[j];
-            }
-            out[i] = sum;
-        }
+        transitionState.fillFromKernel(branchLength, optimum);
     }
 
     private static void zero(final double[] vector) {
@@ -443,7 +306,7 @@ public final class OUCanonicalBranchWiring {
                                    final NormalSufficientStatistics aboveParent,
                                    final NormalSufficientStatistics below) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
+        final DenseMatrix64F aboveMean = transitionState.getAboveParentMeanVector();
         final DenseMatrix64F belowPrecision = below.getRawPrecision();
         final DenseMatrix64F belowMean = below.getRawMean();
 
@@ -488,7 +351,7 @@ public final class OUCanonicalBranchWiring {
                                                 final NormalSufficientStatistics aboveParent,
                                                 final NormalSufficientStatistics below) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
+        final DenseMatrix64F aboveMean = transitionState.getAboveParentMeanVector();
         final DenseMatrix64F observedChild = below.getRawMean();
 
         fillInformation(abovePrecision, aboveMean, aboveInformation);
@@ -507,23 +370,12 @@ public final class OUCanonicalBranchWiring {
 
         CanonicalGaussianUtils.fillMomentsFromCanonical(currentPosterior, currentMeanScratch, currentCovarianceScratch);
 
-        for (int i = 0; i < dimension; ++i) {
-            final double xi = currentMeanScratch[i];
-            final double yi = observedChild.unsafe_get(i, 0);
-            contribution.dLogL_dInformationX[i] = xi;
-            contribution.dLogL_dInformationY[i] = yi;
-            for (int j = 0; j < dimension; ++j) {
-                final double xj = currentMeanScratch[j];
-                final double yj = observedChild.unsafe_get(j, 0);
-                final double exx = currentCovarianceScratch[i][j] + xi * xj;
-                final int ij = i * dimension + j;
-                contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
-                contribution.dLogL_dPrecisionXY[ij] = -0.5 * (xi * yj);
-                contribution.dLogL_dPrecisionYX[ij] = -0.5 * (yi * xj);
-                contribution.dLogL_dPrecisionYY[ij] = -0.5 * (yi * yj);
-            }
-        }
-        contribution.dLogL_dLogNormalizer = -1.0;
+        OUCanonicalBranchContributionBuilder.fillObservedTipContribution(
+                dimension,
+                currentMeanScratch,
+                currentCovarianceScratch,
+                observedChild,
+                contribution);
     }
 
     private void fillContributionForPartiallyObservedTip(final NormalSufficientStatistics above,
@@ -531,7 +383,7 @@ public final class OUCanonicalBranchWiring {
                                                          final NormalSufficientStatistics below,
                                                          final int observedCount) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
+        final DenseMatrix64F aboveMean = transitionState.getAboveParentMeanVector();
         final DenseMatrix64F observedChild = below.getRawMean();
 
         fillInformation(abovePrecision, aboveMean, aboveInformation);
@@ -552,135 +404,32 @@ public final class OUCanonicalBranchWiring {
             reducedMean[i] = sum;
         }
 
-        clearContribution();
-        for (int i = 0; i < dimension; ++i) {
-            contribution.dLogL_dInformationX[i] = reducedMean[i];
-            contribution.dLogL_dInformationY[i] = exactObservationMask[i]
-                    ? observedChild.unsafe_get(i, 0)
-                    : reducedMean[reducedIndexByTrait[i]];
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            final double xi = reducedMean[i];
-            final int reducedI = reducedIndexByTrait[i];
-            for (int j = 0; j < dimension; ++j) {
-                final double xj = reducedMean[j];
-                final int reducedJ = reducedIndexByTrait[j];
-                final double yi = contribution.dLogL_dInformationY[i];
-                final double yj = contribution.dLogL_dInformationY[j];
-
-                final double exx = reducedCovariance[i][j] + xi * xj;
-                final double exy = exactObservationMask[j]
-                        ? xi * yj
-                        : reducedCovariance[i][reducedJ] + xi * yj;
-                final double eyx = exactObservationMask[i]
-                        ? yi * xj
-                        : reducedCovariance[reducedI][j] + yi * xj;
-                final double eyy = (exactObservationMask[i] || exactObservationMask[j])
-                        ? yi * yj
-                        : reducedCovariance[reducedI][reducedJ] + yi * yj;
-
-                final int ij = i * dimension + j;
-                contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
-                contribution.dLogL_dPrecisionXY[ij] = -0.5 * exy;
-                contribution.dLogL_dPrecisionYX[ij] = -0.5 * eyx;
-                contribution.dLogL_dPrecisionYY[ij] = -0.5 * eyy;
-            }
-        }
-        contribution.dLogL_dLogNormalizer = -1.0;
+        OUCanonicalBranchContributionBuilder.fillPartiallyObservedTipContribution(
+                dimension,
+                observationPattern,
+                observedChild,
+                reducedMean,
+                reducedCovariance,
+                contribution);
     }
 
     private void fillContributionFromPairPosterior() {
-        final int pairDimension = pairPosterior.getDimension();
-        final int d = pairDimension / 2;
         fillMomentsFromCanonicalLocally(pairPosterior, reducedMeanScratch, reducedCovarianceScratch);
 
-        for (int i = 0; i < d; ++i) {
-            final double currentMeanI = reducedMeanScratch[i];
-            final double nextMeanI = reducedMeanScratch[d + i];
-            contribution.dLogL_dInformationX[i] = currentMeanI;
-            contribution.dLogL_dInformationY[i] = nextMeanI;
-            for (int j = 0; j < d; ++j) {
-                final double currentMeanJ = reducedMeanScratch[j];
-                final double nextMeanJ = reducedMeanScratch[d + j];
-                final double currentSecondMoment =
-                        reducedCovarianceScratch[i][j] + currentMeanI * currentMeanJ;
-                final double crossSecondMoment =
-                        reducedCovarianceScratch[d + i][j] + nextMeanI * currentMeanJ;
-                final double nextSecondMoment =
-                        reducedCovarianceScratch[d + i][d + j] + nextMeanI * nextMeanJ;
-                final int ij = i * d + j;
-                contribution.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
-                contribution.dLogL_dPrecisionXY[ij] =
-                        -0.5 * (reducedCovarianceScratch[i][d + j] + currentMeanI * nextMeanJ);
-                contribution.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
-                contribution.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
-            }
-        }
-        contribution.dLogL_dLogNormalizer = -1.0;
+        OUCanonicalBranchContributionBuilder.fillPairPosteriorContribution(
+                dimension,
+                reducedMeanScratch,
+                reducedCovarianceScratch,
+                contribution);
     }
 
     private DenseMatrix64F recoverOrUseParentAbovePrecision(final NormalSufficientStatistics aboveChild,
                                                             final NormalSufficientStatistics aboveParent) {
-        return parentAboveResolver.recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
+        return transitionState.recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
     }
 
     private DenseMatrix64F recoverParentAbovePrecision(final NormalSufficientStatistics above) {
-        return parentAboveResolver.recoverParentAbovePrecision(above);
-    }
-
-    private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
-                                                     final DenseMatrix64F inverseOut) {
-        safeInvertSymmetricPositiveDefinite(source, inverseOut, "unspecified");
-    }
-
-    private void canonicalizeBranchPrecisionCovariancePair(final String context) {
-        symmetrizeInPlace(branchPrecisionMatrix);
-        safeInvertSymmetricPositiveDefinite(
-                branchPrecisionMatrix,
-                branchCovarianceMatrix,
-                context + ":branchPrecision->branchCovariance");
-        safeInvertSymmetricPositiveDefinite(
-                branchCovarianceMatrix,
-                branchPrecisionMatrix,
-                context + ":branchCovariance->branchPrecision");
-        symmetrizeInPlace(branchPrecisionMatrix);
-        symmetrizeInPlace(branchCovarianceMatrix);
-    }
-
-    private void canonicalizeBranchCovariancePrecisionPair(final String context) {
-        symmetrizeInPlace(branchCovarianceMatrix);
-        safeInvertSymmetricPositiveDefinite(
-                branchCovarianceMatrix,
-                branchPrecisionMatrix,
-                context + ":branchCovariance->branchPrecision");
-        safeInvertSymmetricPositiveDefinite(
-                branchPrecisionMatrix,
-                branchCovarianceMatrix,
-                context + ":branchPrecision->branchCovariance");
-        symmetrizeInPlace(branchPrecisionMatrix);
-        symmetrizeInPlace(branchCovarianceMatrix);
-    }
-
-    private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
-                                                     final DenseMatrix64F inverseOut,
-                                                     final String context) {
-        CanonicalNumerics.safeInvertSymmetricPositiveDefinite(
-                source,
-                inverseOut,
-                scratchMatrix,
-                secondaryScratchMatrix,
-                reducedPrecisionScratch,
-                reducedCovarianceScratch,
-                reducedCholeskyScratch,
-                reducedLowerInverseScratch,
-                NUMERICS_OPTIONS,
-                context,
-                parentAboveResolver.getSpdFailureDump());
-    }
-
-    private static void symmetrizeInPlace(final DenseMatrix64F matrix) {
-        CanonicalNumerics.symmetrizeInPlace(matrix);
+        return transitionState.recoverParentAbovePrecision(above);
     }
 
     private static boolean isFinite(final DenseMatrix64F matrix) {
@@ -701,47 +450,11 @@ public final class OUCanonicalBranchWiring {
     }
 
     private int classifyExactObservationPattern(final NormalSufficientStatistics below) {
-        final DenseMatrix64F precision = below.getRawPrecision();
-        int observedCount = 0;
-        for (int i = 0; i < dimension; ++i) {
-            final double diagonal = precision.unsafe_get(i, i);
-            if (Double.isInfinite(diagonal) && diagonal > 0.0) {
-                exactObservationMask[i] = true;
-                observedCount++;
-            } else if (diagonal == 0.0) {
-                exactObservationMask[i] = false;
-            } else {
-                return -1;
-            }
-            for (int j = 0; j < dimension; ++j) {
-                if (i == j) {
-                    continue;
-                }
-                if (precision.unsafe_get(i, j) != 0.0) {
-                    return -1;
-                }
-            }
-        }
-        return observedCount;
+        return observationPattern.classify(below);
     }
 
     private int collectObservationPartition(final int observedCount) {
-        int observedCursor = 0;
-        int missingCursor = 0;
-        for (int i = 0; i < dimension; ++i) {
-            if (exactObservationMask[i]) {
-                observedIndexScratch[observedCursor++] = i;
-                reducedIndexByTrait[i] = -1;
-            } else {
-                missingIndexScratch[missingCursor] = i;
-                reducedIndexByTrait[i] = dimension + missingCursor;
-                missingCursor++;
-            }
-        }
-        if (observedCursor != observedCount) {
-            throw new IllegalStateException("Observation partition count mismatch");
-        }
-        return missingCursor;
+        return observationPattern.collectPartition(observedCount);
     }
 
     private void fillReducedCanonicalSystem(final DenseMatrix64F abovePrecision,
@@ -756,23 +469,23 @@ public final class OUCanonicalBranchWiring {
                 reducedPrecision[i][j] = transition.precisionXX[iOffset + j] + abovePrecision.unsafe_get(i, j);
             }
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
-                final int observedIndex = observedIndexScratch[observed];
+                final int observedIndex = observationPattern.observedIndex(observed);
                 information -= transition.precisionXY[iOffset + observedIndex] * observedChild.unsafe_get(observedIndex, 0);
             }
             reducedInformation[i] = information;
             for (int missing = 0; missing < missingCount; ++missing) {
                 reducedPrecision[i][dimension + missing] =
-                        transition.precisionXY[iOffset + missingIndexScratch[missing]];
+                        transition.precisionXY[iOffset + observationPattern.missingIndex(missing)];
             }
         }
 
         for (int missing = 0; missing < missingCount; ++missing) {
-            final int childIndex = missingIndexScratch[missing];
+            final int childIndex = observationPattern.missingIndex(missing);
             final int row = dimension + missing;
             double information = transition.informationY[childIndex];
             final int childOffset = childIndex * dimension;
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
-                final int observedIndex = observedIndexScratch[observed];
+                final int observedIndex = observationPattern.observedIndex(observed);
                 information -= transition.precisionYY[childOffset + observedIndex] * observedChild.unsafe_get(observedIndex, 0);
             }
             reducedInformation[row] = information;
@@ -781,63 +494,9 @@ public final class OUCanonicalBranchWiring {
             }
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
                 reducedPrecision[row][dimension + otherMissing] =
-                        transition.precisionYY[childOffset + missingIndexScratch[otherMissing]];
+                        transition.precisionYY[childOffset + observationPattern.missingIndex(otherMissing)];
             }
         }
-    }
-
-    private double evaluateFrozenPartiallyObservedLocalLogFactor(final DenseMatrix64F parentAbovePrecision,
-                                                                 final DenseMatrix64F observedChild,
-                                                                 final int observedCount) {
-        final int missingCount = collectObservationPartition(observedCount);
-        final int reducedDimension = dimension + missingCount;
-        final double[][] reducedPrecision = reducedPrecisionScratch;
-        final double[] reducedInformation = reducedInformationScratch;
-        fillReducedCanonicalSystem(parentAbovePrecision, observedChild, missingCount, reducedPrecision, reducedInformation);
-
-        double observedQuadratic = 0.0;
-        double observedLinear = 0.0;
-        for (int oi = 0; oi < observedCount; ++oi) {
-            final int i = observedIndexScratch[oi];
-            final double yi = observedChild.unsafe_get(i, 0);
-            observedLinear += transition.informationY[i] * yi;
-            final int iOffset = i * dimension;
-            for (int oj = 0; oj < observedCount; ++oj) {
-                final int j = observedIndexScratch[oj];
-                observedQuadratic += yi * transition.precisionYY[iOffset + j] * observedChild.unsafe_get(j, 0);
-            }
-        }
-
-        return normalizedLogNormalizer(reducedPrecision, reducedInformation, reducedDimension)
-                - transition.logNormalizer
-                - 0.5 * observedQuadratic
-                + observedLinear;
-    }
-
-    private void clearContribution() {
-        zero(contribution.dLogL_dInformationX);
-        zero(contribution.dLogL_dInformationY);
-        zero(contribution.dLogL_dPrecisionXX);
-        zero(contribution.dLogL_dPrecisionXY);
-        zero(contribution.dLogL_dPrecisionYX);
-        zero(contribution.dLogL_dPrecisionYY);
-        contribution.dLogL_dLogNormalizer = 0.0;
-    }
-
-    private double normalizedLogNormalizer(final double[][] precision,
-                                           final double[] information,
-                                           final int dimensionUsed) {
-        final double[][] inverse = reducedCovarianceScratch;
-        final double[] mean = reducedMeanScratch;
-        final double logDet = invertSymmetricPositiveDefinite(precision, dimensionUsed, inverse);
-        for (int i = 0; i < dimensionUsed; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < dimensionUsed; ++j) {
-                sum += inverse[i][j] * information[j];
-            }
-            mean[i] = sum;
-        }
-        return 0.5 * (dimensionUsed * Math.log(2.0 * Math.PI) - logDet + dot(information, mean, dimensionUsed));
     }
 
     private void fillMomentsFromCanonicalLocally(final CanonicalGaussianState state,
@@ -874,52 +533,6 @@ public final class OUCanonicalBranchWiring {
             System.arraycopy(matrix, i * dimensionUsed, square[i], 0, dimensionUsed);
         }
         return invertSymmetricPositiveDefinite(square, dimensionUsed, inverseOut);
-    }
-
-    private static double quadraticForm(final double[] matrix, final DenseMatrix64F vector) {
-        double sum = 0.0;
-        final int dimensionUsed = vector.numRows;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            final int iOffset = i * dimensionUsed;
-            for (int j = 0; j < dimensionUsed; ++j) {
-                sum += vector.unsafe_get(i, 0) * matrix[iOffset + j] * vector.unsafe_get(j, 0);
-            }
-        }
-        return sum;
-    }
-
-    private static double quadraticForm(final double[][] matrix, final DenseMatrix64F vector) {
-        double sum = 0.0;
-        for (int i = 0; i < vector.numRows; ++i) {
-            for (int j = 0; j < vector.numRows; ++j) {
-                sum += vector.unsafe_get(i, 0) * matrix[i][j] * vector.unsafe_get(j, 0);
-            }
-        }
-        return sum;
-    }
-
-    private static double dot(final double[] left, final DenseMatrix64F right) {
-        double sum = 0.0;
-        for (int i = 0; i < left.length; ++i) {
-            sum += left[i] * right.unsafe_get(i, 0);
-        }
-        return sum;
-    }
-
-    private static double dot(final double[] left, final double[] right) {
-        double sum = 0.0;
-        for (int i = 0; i < left.length; ++i) {
-            sum += left[i] * right[i];
-        }
-        return sum;
-    }
-
-    private static double dot(final double[] left, final double[] right, final int dimensionUsed) {
-        double sum = 0.0;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            sum += left[i] * right[i];
-        }
-        return sum;
     }
 
 }

@@ -1,0 +1,141 @@
+package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+
+import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.OrthogonalMatrixProvider;
+import org.ejml.data.DenseMatrix64F;
+
+import java.util.Arrays;
+
+/**
+ * Reusable branch-length dependent basis cache for orthogonal block OU paths.
+ */
+final class OrthogonalBlockBasisCache {
+
+    private static final String DEBUG_NATIVE_R_CONSISTENCY_PROPERTY =
+            "beast.debug.nativeRConsistency";
+
+    final double[] rData;
+    final double[] rtData;
+    final double[] blockDParams;
+    final DenseMatrix64F expD;
+    final DenseMatrix64F rMatrix;
+    final DenseMatrix64F rtMatrix;
+    final DenseMatrix64F transitionMatrix;
+
+    private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
+    private final OrthogonalMatrixProvider orthogonalRotation;
+    private final BlockDiagonalExpSolver expSolver;
+    private final double[] cachedRData;
+    private final double[] cachedRtData;
+    private final double[] cachedBlockDParams;
+    private final double[][] workMatrix;
+    private boolean expCacheValid;
+    private boolean basisCacheValid;
+    private double cachedExpDt;
+    private double cachedBasisDt;
+
+    OrthogonalBlockBasisCache(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+                              final OrthogonalMatrixProvider orthogonalRotation,
+                              final BlockDiagonalExpSolver expSolver) {
+        this.blockParameter = blockParameter;
+        this.orthogonalRotation = orthogonalRotation;
+        this.expSolver = expSolver;
+        final int d = blockParameter.getRowDimension();
+        this.rData = new double[d * d];
+        this.rtData = new double[d * d];
+        this.blockDParams = new double[blockParameter.getTridiagonalDDimension()];
+        this.cachedRData = new double[d * d];
+        this.cachedRtData = new double[d * d];
+        this.cachedBlockDParams = new double[blockParameter.getTridiagonalDDimension()];
+        this.expD = new DenseMatrix64F(d, d);
+        this.rMatrix = new DenseMatrix64F(d, d);
+        this.rtMatrix = new DenseMatrix64F(d, d);
+        this.transitionMatrix = new DenseMatrix64F(d, d);
+        this.workMatrix = new double[d][d];
+        this.expCacheValid = false;
+        this.basisCacheValid = false;
+        this.cachedExpDt = Double.NaN;
+        this.cachedBasisDt = Double.NaN;
+    }
+
+    void refresh(final double dt) {
+        final int d = blockParameter.getRowDimension();
+        orthogonalRotation.fillOrthogonalMatrix(rData);
+        orthogonalRotation.fillOrthogonalTranspose(rtData);
+        blockParameter.fillBlockDiagonalElements(blockDParams);
+
+        final boolean expNeedsRefresh = expNeedsRefresh(dt);
+        if (Boolean.getBoolean(DEBUG_NATIVE_R_CONSISTENCY_PROPERTY)) {
+            reportNativeRConsistency(dt, d);
+        }
+        final boolean basisNeedsRefresh = expNeedsRefresh
+                || !basisCacheValid
+                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedBasisDt)
+                || !Arrays.equals(rData, cachedRData)
+                || !Arrays.equals(rtData, cachedRtData);
+        if (!basisNeedsRefresh) {
+            return;
+        }
+
+        if (expNeedsRefresh) {
+            refreshExp(dt);
+        }
+
+        System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
+        System.arraycopy(rtData, 0, rtMatrix.data, 0, d * d);
+        OrthogonalBlockPreparedBasisBuilder.fillTransitionMatrix(
+                rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
+        System.arraycopy(rData, 0, cachedRData, 0, rData.length);
+        System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
+        cachedBasisDt = dt;
+        basisCacheValid = true;
+    }
+
+    void refreshExpOnly(final double dt) {
+        blockParameter.fillBlockDiagonalElements(blockDParams);
+        if (expNeedsRefresh(dt)) {
+            refreshExp(dt);
+            basisCacheValid = false;
+        }
+    }
+
+    private boolean expNeedsRefresh(final double dt) {
+        return !expCacheValid
+                || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
+                || !Arrays.equals(blockDParams, cachedBlockDParams);
+    }
+
+    private void refreshExp(final double dt) {
+        expSolver.compute(blockDParams, dt, expD);
+        System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
+        cachedExpDt = dt;
+        expCacheValid = true;
+    }
+
+    private void reportNativeRConsistency(final double dt, final int d) {
+        final double[] blockR = new double[d * d];
+        final double[] blockRinv = new double[d * d];
+        blockParameter.fillRAndRinv(blockR, blockRinv);
+        double maxR = 0.0;
+        double maxRt = 0.0;
+        double maxRinvVsTranspose = 0.0;
+        for (int i = 0; i < d * d; ++i) {
+            maxR = Math.max(maxR, Math.abs(rData[i] - blockR[i]));
+            maxRt = Math.max(maxRt, Math.abs(rtData[i] - blockRinv[i]));
+        }
+        for (int r = 0; r < d; ++r) {
+            for (int c = 0; c < d; ++c) {
+                final int rc = r * d + c;
+                final int cr = c * d + r;
+                maxRinvVsTranspose = Math.max(
+                        maxRinvVsTranspose,
+                        Math.abs(blockRinv[rc] - blockR[cr]));
+            }
+        }
+        System.err.println("nativeRConsistencyDebug dt=" + dt
+                + " maxAbsRDiff=" + maxR
+                + " maxAbsRtDiff=" + maxRt
+                + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);
+    }
+}

@@ -2,16 +2,14 @@ package dr.evomodel.continuous.ou;
 
 interface OUCovarianceGradientStrategy {
 
-    void accumulate(OUProcessModel model,
-                    double dt,
+    void accumulate(double dt,
                     int dimension,
                     double[][] selection,
                     double[][] diffusion,
                     double[][] covarianceAdjoint,
                     double[] gradientAccumulator);
 
-    void accumulateFlat(OUProcessModel model,
-                        double dt,
+    void accumulateFlat(double dt,
                         int dimension,
                         double[][] selection,
                         double[][] diffusion,

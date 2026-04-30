@@ -18,8 +18,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransiti
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
-import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
-import dr.evomodel.continuous.ou.SelectionMatrixParameterizationFactory;
 import dr.inference.timeseries.representation.GaussianComputationMode;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
@@ -78,37 +76,11 @@ public class OUProcessModel extends AbstractModel
     /**
      * Strategy for computing the V-path contribution of ∂logL/∂A.
      */
-//    public enum CovarianceGradientMethod {
-//        /**
-//         * Backpropagates through the 2d×2d Van Loan block-exponential using the
-//         * Fréchet-adjoint identity. Exact and efficient (one expm(2d×2d) call per branch).
-//         */
-//        VAN_LOAN_ADJOINT,
-//        /**
-//         * Numerically integrates the adjoint Lyapunov ODE via 5-point Gauss–Legendre
-//         * quadrature: ∂logL/∂A ≈ -2∫₀^{dt} Ψ(s)V(s) ds, where
-//         * Ψ(s) = F(dt−s)ᵀ G_V F(dt−s).  Mathematically equivalent to VAN_LOAN_ADJOINT;
-//         * more expensive but useful as an independent numerical check.
-//         */
-//        LYAPUNOV_ADJOINT
-//    }
     public enum CovarianceGradientMethod {
         VAN_LOAN_ADJOINT,
         LYAPUNOV_ADJOINT,
         STATIONARY_LYAPUNOV
     }
-
-    // ── 5-point Gauss–Legendre nodes and weights on [-1, 1] ─────────────────────────
-    private static final double[] GL5_NODES = {
-            0.0,
-            -0.5384693101056831,  0.5384693101056831,
-            -0.9061798459386640,  0.9061798459386640
-    };
-    private static final double[] GL5_WEIGHTS = {
-            0.5688888888888889,
-            0.4786286704993665,  0.4786286704993665,
-            0.2369268850561891,  0.2369268850561891
-    };
 
     private final int stateDimension;
     private final MatrixParameterInterface driftMatrix;
@@ -195,12 +167,10 @@ public class OUProcessModel extends AbstractModel
                 DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
         this.transitionRepresentation =
                 new KernelBackedGaussianTransitionRepresentation(this);
-        final boolean allocateStationaryLyapunov =
-                covarianceGradientMethod == CovarianceGradientMethod.STATIONARY_LYAPUNOV;
         this.workspaceLocal = new ThreadLocal<Workspace>() {
             @Override
             protected Workspace initialValue() {
-                return new Workspace(stateDimension, allocateStationaryLyapunov);
+                return new Workspace(stateDimension);
             }
         };
 
@@ -491,6 +461,8 @@ public class OUProcessModel extends AbstractModel
      *       2d×2d Van Loan block-exponential (exact, one expm(2d×2d) call).</li>
      *   <li>{@link CovarianceGradientMethod#LYAPUNOV_ADJOINT}: 5-point Gauss–Legendre
      *       numerical integration of the adjoint Lyapunov ODE.</li>
+     *   <li>{@link CovarianceGradientMethod#STATIONARY_LYAPUNOV}: stationary covariance
+     *       Lyapunov adjoint for stable drift matrices.</li>
      * </ul>
      */
     @Override
@@ -506,7 +478,7 @@ public class OUProcessModel extends AbstractModel
         selectionMatrixParameterization.fillSelectionMatrix(a);
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
-        covarianceGradientStrategy.accumulate(this, dt, d, a, q, dLogL_dV, gradientAccumulator);
+        covarianceGradientStrategy.accumulate(dt, d, a, q, dLogL_dV, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
@@ -523,7 +495,7 @@ public class OUProcessModel extends AbstractModel
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
         covarianceGradientStrategy.accumulateFlat(
-                this, dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
+                dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
     }
 
     @Override
@@ -552,11 +524,11 @@ public class OUProcessModel extends AbstractModel
         final double h = dt / substeps;
         for (int sub = 0; sub < substeps; ++sub) {
             final double t0 = sub * h;
-            for (int idx = 0; idx < GL5_NODES.length; ++idx) {
-                final double s = t0 + 0.5 * h * (GL5_NODES[idx] + 1.0);
-                final double scaledWeight = 0.5 * h * GL5_WEIGHTS[idx];
+            for (int idx = 0; idx < OUCovarianceGradientMath.GL5_NODES.length; ++idx) {
+                final double s = t0 + 0.5 * h * (OUCovarianceGradientMath.GL5_NODES[idx] + 1.0);
+                final double scaledWeight = 0.5 * h * OUCovarianceGradientMath.GL5_WEIGHTS[idx];
 
-                buildExpmMinusAs(s, a, d, fS, expScratch);
+                OUCovarianceGradientMath.buildExpmMinusAs(s, a, d, fS, expScratch);
                 MatrixExponentialUtils.transpose(fS, fST);
                 MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
                 MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
@@ -593,11 +565,11 @@ public class OUProcessModel extends AbstractModel
         final double h = dt / substeps;
         for (int sub = 0; sub < substeps; ++sub) {
             final double t0 = sub * h;
-            for (int idx = 0; idx < GL5_NODES.length; ++idx) {
-                final double s = t0 + 0.5 * h * (GL5_NODES[idx] + 1.0);
-                final double scaledWeight = 0.5 * h * GL5_WEIGHTS[idx];
+            for (int idx = 0; idx < OUCovarianceGradientMath.GL5_NODES.length; ++idx) {
+                final double s = t0 + 0.5 * h * (OUCovarianceGradientMath.GL5_NODES[idx] + 1.0);
+                final double scaledWeight = 0.5 * h * OUCovarianceGradientMath.GL5_WEIGHTS[idx];
 
-                buildExpmMinusAs(s, a, d, fS, expScratch);
+                OUCovarianceGradientMath.buildExpmMinusAs(s, a, d, fS, expScratch);
                 MatrixExponentialUtils.transpose(fS, fST);
                 MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
                 MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
@@ -677,471 +649,6 @@ public class OUProcessModel extends AbstractModel
         }
 
         return score;
-    }
-
-    /**
-     * V-path gradient via Van Loan adjoint backpropagation.
-     *
-     * <p>The Van Loan block and its exponential are:
-     * <pre>
-     *   M   = [[-A dt,  Q dt], [0,  A^T dt]]
-     *   E   = expm(M) = [[F,  V·F^{-T}], [0,  F^{-T}]]
-     * </pre>
-     * so  V = E_{01} · F^T.  Differentiating:
-     * <pre>
-     *   G_E = [[  0,       G_V · F  ],
-     *          [  0,   −V · G_V · F ]]
-     *   G_M = adjointExp(M, G_E)
-     *   ∂logL/∂A_{kl} += −dt · G_M[k][l]  +  dt · G_M[d+l][d+k]
-     * </pre>
-     */
-    void accumulateViaVanLoanAdjoint(final double dt, final int d,
-                                              final double[][] a, final double[][] q,
-                                              final double[][] dLogL_dV,
-                                              final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final int blockDim = 2 * d;
-
-        // Build Van Loan block M = [[-A dt, Q dt], [0, A^T dt]]
-        final double[][] vanLoanMatrix = workspace.blockMatrices[0];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                vanLoanMatrix[i][j]         = -dt * a[i][j];
-                vanLoanMatrix[i][j + d]     =  dt * q[i][j];
-                vanLoanMatrix[i + d][j]     =  0.0;
-                vanLoanMatrix[i + d][j + d] =  dt * a[j][i];   // A^T_{ij} = A_{ji}
-            }
-        }
-
-        final double[][] vanLoanExp = workspace.blockMatrices[1];
-        MatrixExponentialUtils.expm(vanLoanMatrix, vanLoanExp);
-
-        // GV_F = G_V · F = G_V · E_{00}
-        final double[][] gvF = workspace.squareMatrices[2];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += dLogL_dV[i][k] * vanLoanExp[k][j];
-                }
-                gvF[i][j] = sum;
-            }
-        }
-
-        // Recover V = E_{01} · F^T  (= E_{01} · E_{00}^T)
-        final double[][] v = workspace.squareMatrices[3];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += vanLoanExp[i][k + d] * vanLoanExp[j][k];
-                }
-                v[i][j] = sum;
-            }
-        }
-
-        // Upstream G_E on the 2d×2d block
-        final double[][] upstreamBlock = workspace.blockMatrices[2];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                upstreamBlock[i][j + d] = gvF[i][j];             // top-right: G_V · F
-                double vgvf = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    vgvf += v[i][k] * gvF[k][j];
-                }
-                upstreamBlock[i + d][j + d] = -vgvf;             // bot-right: −V · G_V · F
-            }
-        }
-
-        final double[][] gradM = workspace.blockMatrices[3];
-        MatrixExponentialUtils.adjointExp(vanLoanMatrix, upstreamBlock, gradM);
-
-        for (int k = 0; k < d; ++k) {
-            for (int l = 0; l < d; ++l) {
-                gradientAccumulator[k * d + l] +=
-                        -dt * gradM[k][l] + dt * gradM[d + l][d + k];
-            }
-        }
-    }
-
-    void accumulateViaVanLoanAdjointFlat(final double dt, final int d,
-                                                 final double[][] a, final double[][] q,
-                                                 final double[] dLogL_dV,
-                                                 final boolean transposeAdjoint,
-                                                 final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-
-        final double[][] vanLoanMatrix = workspace.blockMatrices[0];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                vanLoanMatrix[i][j] = -dt * a[i][j];
-                vanLoanMatrix[i][j + d] = dt * q[i][j];
-                vanLoanMatrix[i + d][j] = 0.0;
-                vanLoanMatrix[i + d][j + d] = dt * a[j][i];
-            }
-        }
-
-        final double[][] vanLoanExp = workspace.blockMatrices[1];
-        MatrixExponentialUtils.expm(vanLoanMatrix, vanLoanExp);
-
-        final double[][] gvF = workspace.squareMatrices[2];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += flatSquareValue(dLogL_dV, i, k, d, transposeAdjoint) * vanLoanExp[k][j];
-                }
-                gvF[i][j] = sum;
-            }
-        }
-
-        final double[][] v = workspace.squareMatrices[3];
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += vanLoanExp[i][k + d] * vanLoanExp[j][k];
-                }
-                v[i][j] = sum;
-            }
-        }
-
-        final double[][] upstreamBlock = workspace.blockMatrices[2];
-        clearSquare(upstreamBlock);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                upstreamBlock[i][j + d] = gvF[i][j];
-                double vgvf = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    vgvf += v[i][k] * gvF[k][j];
-                }
-                upstreamBlock[i + d][j + d] = -vgvf;
-            }
-        }
-
-        final double[][] gradM = workspace.blockMatrices[3];
-        MatrixExponentialUtils.adjointExp(vanLoanMatrix, upstreamBlock, gradM);
-
-        for (int k = 0; k < d; ++k) {
-            for (int l = 0; l < d; ++l) {
-                gradientAccumulator[k * d + l] +=
-                        -dt * gradM[k][l] + dt * gradM[d + l][d + k];
-            }
-        }
-    }
-
-    void accumulateViaLyapunovAdjoint(final double dt, final int d,
-                                              final double[][] a, final double[][] q,
-                                              final double[][] dLogL_dV,
-                                              final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[][] gSym = workspace.squareMatrices[2];
-        final double[][] fRemaining = workspace.squareMatrices[3];
-        final double[][] fRemainingT = workspace.squareMatrices[4];
-        final double[][] psi = workspace.squareMatrices[5];
-        final double[][] tempDxD = workspace.squareMatrices[6];
-        final double[][] vS = workspace.squareMatrices[7];
-        final double[][] expScratch = workspace.squareMatrices[8];
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gSym[i][j] = 0.5 * (dLogL_dV[i][j] + dLogL_dV[j][i]);
-            }
-        }
-
-        for (int idx = 0; idx < GL5_NODES.length; ++idx) {
-            final double s = 0.5 * dt * (GL5_NODES[idx] + 1.0);
-            final double scaledWeight = 0.5 * dt * GL5_WEIGHTS[idx];
-
-            buildExpmMinusAs(dt - s, a, d, fRemaining, expScratch);
-            MatrixExponentialUtils.transpose(fRemaining, fRemainingT);
-            MatrixExponentialUtils.multiply(fRemainingT, gSym, tempDxD);
-            MatrixExponentialUtils.multiply(tempDxD, fRemaining, psi);
-            buildVanLoanCovariance(s, a, q, d, vS, workspace.blockMatrices[0], workspace.blockMatrices[1]);
-
-            MatrixExponentialUtils.multiply(vS, psi, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    gradientAccumulator[i * d + j] += -2.0 * scaledWeight * tempDxD[i][j];
-                }
-            }
-        }
-    }
-
-    void accumulateViaLyapunovAdjointFlat(final double dt, final int d,
-                                                  final double[][] a, final double[][] q,
-                                                  final double[] dLogL_dV,
-                                                  final boolean transposeAdjoint,
-                                                  final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[][] gSym = workspace.squareMatrices[2];
-        final double[][] fRemaining = workspace.squareMatrices[3];
-        final double[][] fRemainingT = workspace.squareMatrices[4];
-        final double[][] psi = workspace.squareMatrices[5];
-        final double[][] tempDxD = workspace.squareMatrices[6];
-        final double[][] vS = workspace.squareMatrices[7];
-        final double[][] expScratch = workspace.squareMatrices[8];
-
-        fillSymmetricFromFlat(dLogL_dV, transposeAdjoint, d, gSym);
-
-        for (int idx = 0; idx < GL5_NODES.length; ++idx) {
-            final double s = 0.5 * dt * (GL5_NODES[idx] + 1.0);
-            final double scaledWeight = 0.5 * dt * GL5_WEIGHTS[idx];
-
-            buildExpmMinusAs(dt - s, a, d, fRemaining, expScratch);
-            MatrixExponentialUtils.transpose(fRemaining, fRemainingT);
-            MatrixExponentialUtils.multiply(fRemainingT, gSym, tempDxD);
-            MatrixExponentialUtils.multiply(tempDxD, fRemaining, psi);
-            buildVanLoanCovariance(s, a, q, d, vS, workspace.blockMatrices[0], workspace.blockMatrices[1]);
-
-            MatrixExponentialUtils.multiply(vS, psi, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    gradientAccumulator[i * d + j] += -2.0 * scaledWeight * tempDxD[i][j];
-                }
-            }
-        }
-    }
-
-    void accumulateViaStationaryLyapunov(final double dt, final int d,
-                                                 final double[][] a, final double[][] q,
-                                                 final double[][] dLogL_dV,
-                                                 final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[][] gV = workspace.squareMatrices[4];
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gV[i][j] = 0.5 * (dLogL_dV[i][j] + dLogL_dV[j][i]);
-            }
-        }
-        accumulateViaStationaryLyapunovSymmetric(dt, d, a, q, gV, gradientAccumulator);
-    }
-
-    void accumulateViaStationaryLyapunovFlat(final double dt, final int d,
-                                                     final double[][] a, final double[][] q,
-                                                     final double[] dLogL_dV,
-                                                     final boolean transposeAdjoint,
-                                                     final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[][] gV = workspace.squareMatrices[4];
-        fillSymmetricFromFlat(dLogL_dV, transposeAdjoint, d, gV);
-        accumulateViaStationaryLyapunovSymmetric(dt, d, a, q, gV, gradientAccumulator);
-    }
-
-    private void accumulateViaStationaryLyapunovSymmetric(final double dt, final int d,
-                                                          final double[][] a, final double[][] q,
-                                                          final double[][] gV,
-                                                          final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[][] sStat = workspace.squareMatrices[2];
-        final double[][] f = workspace.squareMatrices[3];
-        final double[][] tempDxD = workspace.squareMatrices[5];
-        final double[][] gS = workspace.squareMatrices[6];
-        final double[][] y = workspace.squareMatrices[7];
-        final double[][] yT = workspace.squareMatrices[8];
-        final double[][] gAStationary = workspace.squareMatrices[9];
-        final double[][] sStatT = workspace.squareMatrices[10];
-        final double[][] gFCov = workspace.squareMatrices[11];
-        final double[][] gVT = workspace.squareMatrices[12];
-        final double[][] tempDxD2 = workspace.squareMatrices[13];
-        final double[][] gX = workspace.squareMatrices[14];
-        final double[][] fT = workspace.squareMatrices[15];
-        final double[][] expScratch = workspace.squareMatrices[16];
-        final double[][] minusAdt = workspace.squareMatrices[17];
-
-        solveStationaryLyapunovDense(a, q, d, sStat, workspace);
-        buildExpmMinusAs(dt, a, d, f, expScratch);
-
-        // G_S = G_V - F^T G_V F
-        MatrixExponentialUtils.transpose(f, fT);
-        MatrixExponentialUtils.multiply(fT, gV, tempDxD);
-        MatrixExponentialUtils.multiply(tempDxD, f, gS);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gS[i][j] = gV[i][j] - gS[i][j];
-            }
-        }
-
-        solveAdjointStationaryLyapunovDense(a, gS, d, y, workspace);
-
-        // G_A^(S) = -(Y S + Y^T S)
-        MatrixExponentialUtils.transpose(y, yT);
-        MatrixExponentialUtils.multiply(y, sStat, gAStationary);
-        MatrixExponentialUtils.multiply(yT, sStat, tempDxD);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gAStationary[i][j] = -(gAStationary[i][j] + tempDxD[i][j]);
-            }
-        }
-
-        // G_F^(cov) = -(G_V F S + G_V^T F S^T)
-        MatrixExponentialUtils.transpose(sStat, sStatT);
-        MatrixExponentialUtils.multiply(gV, f, tempDxD);
-        MatrixExponentialUtils.multiply(tempDxD, sStat, gFCov);
-        MatrixExponentialUtils.transpose(gV, gVT);
-        MatrixExponentialUtils.multiply(gVT, f, tempDxD2);
-        MatrixExponentialUtils.multiply(tempDxD2, sStatT, tempDxD);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gFCov[i][j] = -(gFCov[i][j] + tempDxD[i][j]);
-            }
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                minusAdt[i][j] = -dt * a[i][j];
-            }
-        }
-        MatrixExponentialUtils.adjointExp(minusAdt, gFCov, gX);
-
-        // Shared accumulator uses row-major flattening of the raw [d×d] contribution.
-        // The stationary covariance path contributes the transpose of
-        // (G_A^(S) - dt * G_X^T) to match the parameter-indexing convention used
-        // by the rest of the analytical engine.
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gradientAccumulator[i * d + j] += gAStationary[j][i] - dt * gX[i][j];
-            }
-        }
-    }
-
-    private static void solveStationaryLyapunovDense(final double[][] a,
-                                                     final double[][] q,
-                                                     final int d,
-                                                     final double[][] sOut,
-                                                     final Workspace workspace) {
-        final int n = d * d;
-        final double[][] augmented = workspace.lyapunovAugmented;
-        if (augmented == null) {
-            throw new IllegalStateException("Stationary Lyapunov workspace is not available");
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                final int row = i * d + j;
-                for (int p = 0; p < d; ++p) {
-                    for (int r = 0; r < d; ++r) {
-                        final int col = p * d + r;
-                        double value = 0.0;
-                        if (i == p) {
-                            value += a[j][r];
-                        }
-                        if (j == r) {
-                            value += a[i][p];
-                        }
-                        augmented[row][col] = value;
-                    }
-                }
-                augmented[row][n] = q[i][j];
-            }
-        }
-
-        try {
-            solveAugmentedLinearSystemInPlace(augmented);
-        } catch (IllegalStateException e) {
-            throw new IllegalArgumentException(
-                    "Stationary covariance is only defined for stable drift matrices", e);
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                sOut[i][j] = augmented[i * d + j][n];
-            }
-        }
-        MatrixExponentialUtils.symmetrize(sOut);
-    }
-
-    private static void solveAdjointStationaryLyapunovDense(final double[][] a,
-                                                            final double[][] gS,
-                                                            final int d,
-                                                            final double[][] yOut,
-                                                            final Workspace workspace) {
-        final double[][] aT = workspace.squareMatrices[17];
-        MatrixExponentialUtils.transpose(a, aT);
-        solveStationaryLyapunovDense(aT, gS, d, yOut, workspace);
-    }
-
-    private static void solveAugmentedLinearSystemInPlace(final double[][] augmented) {
-        final int n = augmented.length;
-        for (int col = 0; col < n; ++col) {
-            int pivot = col;
-            double maxAbs = Math.abs(augmented[col][col]);
-            for (int row = col + 1; row < n; ++row) {
-                final double abs = Math.abs(augmented[row][col]);
-                if (abs > maxAbs) {
-                    maxAbs = abs;
-                    pivot = row;
-                }
-            }
-
-            if (maxAbs <= 1e-14) {
-                throw new IllegalStateException("Singular system");
-            }
-
-            if (pivot != col) {
-                final double[] tmp = augmented[col];
-                augmented[col] = augmented[pivot];
-                augmented[pivot] = tmp;
-            }
-
-            final double diag = augmented[col][col];
-            for (int j = col; j <= n; ++j) {
-                augmented[col][j] /= diag;
-            }
-
-            for (int row = 0; row < n; ++row) {
-                if (row == col) continue;
-                final double factor = augmented[row][col];
-                if (factor == 0.0) continue;
-                for (int j = col; j <= n; ++j) {
-                    augmented[row][j] -= factor * augmented[col][j];
-                }
-            }
-        }
-    }
-
-    /** Computes out = expm(-A * t). */
-    private static void buildExpmMinusAs(final double t, final double[][] a,
-                                         final int d,
-                                         final double[][] out,
-                                         final double[][] scaledMinusA) {
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                scaledMinusA[i][j] = -t * a[i][j];
-            }
-        }
-        MatrixExponentialUtils.expm(scaledMinusA, out);
-    }
-
-    /**
-     * Computes out = V(t) = ∫₀ᵗ exp(−Au) Q exp(−Aᵀu) du via the Van Loan construction.
-     */
-    private static void buildVanLoanCovariance(final double t, final double[][] a,
-                                               final double[][] q, final int d,
-                                               final double[][] out,
-                                               final double[][] vanLoan,
-                                               final double[][] exp) {
-        final int blockDim = 2 * d;
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                vanLoan[i][j]         = -t * a[i][j];
-                vanLoan[i][j + d]     =  t * q[i][j];
-                vanLoan[i + d][j]     =  0.0;
-                vanLoan[i + d][j + d] =  t * a[j][i];  // A^T
-            }
-        }
-        MatrixExponentialUtils.expm(vanLoan, exp);
-        // V = E_{01} · F^T = E_{01} · E_{00}^T
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += exp[i][k + d] * exp[j][k];
-                }
-                out[i][j] = sum;
-            }
-        }
     }
 
     /**
@@ -1316,37 +823,22 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private static void clearSquare(final double[][] matrix) {
-        for (double[] row : matrix) {
-            for (int j = 0; j < row.length; ++j) {
-                row[j] = 0.0;
-            }
-        }
-    }
-
     private static final class Workspace {
-        private static final int SQUARE_MATRIX_COUNT = 18;
-        private static final int BLOCK_MATRIX_COUNT = 4;
+        private static final int SQUARE_MATRIX_COUNT = 8;
+        private static final int BLOCK_MATRIX_COUNT = 2;
 
         private final double[][][] squareMatrices;
         private final double[][][] blockMatrices;
-        private final double[][] flatAdapterMatrix;
         private final double[] vector0;
         private final double[] vector1;
         private final double[] vector2;
-        private final double[][] lyapunovAugmented;
 
-        private Workspace(final int dimension,
-                          final boolean allocateStationaryLyapunov) {
+        private Workspace(final int dimension) {
             this.squareMatrices = allocateMatrixStack(SQUARE_MATRIX_COUNT, dimension, dimension);
             this.blockMatrices = allocateMatrixStack(BLOCK_MATRIX_COUNT, 2 * dimension, 2 * dimension);
-            this.flatAdapterMatrix = allocateMatrix(dimension, dimension);
             this.vector0 = new double[dimension];
             this.vector1 = new double[dimension];
             this.vector2 = new double[dimension];
-            this.lyapunovAugmented = allocateStationaryLyapunov
-                    ? allocateMatrix(dimension * dimension, dimension * dimension + 1)
-                    : null;
         }
     }
 

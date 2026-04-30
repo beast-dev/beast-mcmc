@@ -41,7 +41,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
     private final int dimension;
-    private final TimeSeriesOUCanonicalBranchWiring branchWiring;
+    private final OUCanonicalBranchWiring branchWiring;
 
     private final CanonicalLocalTransitionAdjoints localAdjoints;
 
@@ -60,7 +60,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             throw new IllegalArgumentException("branchTransitionProvider must not be null");
         }
         this.branchTransitionProvider = branchTransitionProvider;
-        this.branchWiring = new TimeSeriesOUCanonicalBranchWiring(branchTransitionProvider);
+        this.branchWiring = new OUCanonicalBranchWiring(branchTransitionProvider);
         this.processModel = branchWiring.getProcessModel();
         this.dimension = branchWiring.getDimension();
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(dimension);

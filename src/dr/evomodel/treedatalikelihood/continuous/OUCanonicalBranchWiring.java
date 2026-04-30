@@ -10,6 +10,7 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -26,7 +27,7 @@ import java.nio.file.Paths;
  * transition adjoints. That keeps the branch factor construction explicit and testable
  * outside the larger delegate/gradient classes.</p>
  */
-public final class TimeSeriesOUCanonicalBranchWiring {
+public final class OUCanonicalBranchWiring {
     private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY =
             "beast.experimental.disableExactTipShortcut";
     private static final String SPD_DEBUG_DUMP_PROPERTY =
@@ -93,7 +94,7 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     private final double[] transitionOffsetScratch;
     private int parentAboveCompareReportCount = 0;
 
-    public TimeSeriesOUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
+    public OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
         if (branchTransitionProvider == null) {
             throw new IllegalArgumentException("branchTransitionProvider must not be null");
         }
@@ -372,29 +373,8 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         displacementVector.set(displacement);
         branchPrecisionMatrix.set(precision);
         canonicalizeBranchPrecisionCovariancePair("fillCanonicalTransition");
-
-        for (int i = 0; i < dimension; ++i) {
-            double infoY = 0.0;
-            final int iOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                final double p = branchPrecisionMatrix.unsafe_get(i, j);
-                transition.precisionYY[iOffset + j] = p;
-                transition.precisionYX[iOffset + j] = -multiplyEntry(branchPrecisionMatrix, actualization, i, j);
-                transition.precisionXY[j * dimension + i] = transition.precisionYX[iOffset + j];
-                transition.precisionXX[iOffset + j] =
-                        multiplyEntryTranspose(actualization, branchPrecisionMatrix, actualization, i, j);
-                infoY += p * displacement.unsafe_get(j, 0);
-            }
-            transition.informationY[i] = infoY;
-        }
-        for (int i = 0; i < dimension; ++i) {
-            double infoX = 0.0;
-            for (int j = 0; j < dimension; ++j) {
-                infoX -= actualization.unsafe_get(j, i) * transition.informationY[j];
-            }
-            transition.informationX[i] = infoX;
-        }
-        transition.logNormalizer = 0.0;
+        OUCanonicalTransitionBuilder.fillFromPrecisionMoments(
+                actualizationMatrix, displacementVector, branchPrecisionMatrix, transition);
     }
 
     private void fillCanonicalTransitionFromKernel(final double branchLength,
@@ -418,67 +398,24 @@ public final class TimeSeriesOUCanonicalBranchWiring {
 
         if (branchLength <= 0.0) {
             // Zero-length branches can have singular covariance; use the local jittered path.
-            fillTransitionFromMomentsLocally(
-                    transitionMatrix, transitionOffset, transitionCovariance, transition);
+            OUCanonicalTransitionBuilder.fillFromMoments(
+                    transitionMatrix,
+                    transitionOffset,
+                    transitionCovariance,
+                    transition,
+                    reducedCovarianceScratch,
+                    reducedCholeskyScratch,
+                    reducedPrecisionScratch,
+                    reducedLowerInverseScratch,
+                    reducedPrecisionScratch,
+                    currentCovarianceScratch);
         } else {
             // Build canonical transition from the canonicalized precision pair to keep
             // all downstream consumers (local factors and parent-recovery algebra)
             // numerically consistent.
-            for (int i = 0; i < dimension; ++i) {
-                double infoY = 0.0;
-                final int iOffset = i * dimension;
-                for (int j = 0; j < dimension; ++j) {
-                    final double p = branchPrecisionMatrix.unsafe_get(i, j);
-                    transition.precisionYY[iOffset + j] = p;
-                    transition.precisionYX[iOffset + j] = -multiplyEntry(branchPrecisionMatrix, actualizationMatrix, i, j);
-                    transition.precisionXY[j * dimension + i] = transition.precisionYX[iOffset + j];
-                    transition.precisionXX[iOffset + j] =
-                            multiplyEntryTranspose(actualizationMatrix, branchPrecisionMatrix, actualizationMatrix, i, j);
-                    infoY += p * displacementVector.unsafe_get(j, 0);
-                }
-                transition.informationY[i] = infoY;
-            }
-            for (int i = 0; i < dimension; ++i) {
-                double infoX = 0.0;
-                for (int j = 0; j < dimension; ++j) {
-                    infoX -= actualizationMatrix.unsafe_get(j, i) * transition.informationY[j];
-                }
-                transition.informationX[i] = infoX;
-            }
-            transition.logNormalizer = 0.0;
+            OUCanonicalTransitionBuilder.fillFromPrecisionMoments(
+                    actualizationMatrix, displacementVector, branchPrecisionMatrix, transition);
         }
-    }
-
-    private void fillTransitionFromMomentsLocally(final double[][] transitionMatrix,
-                                                  final double[] transitionOffset,
-                                                  final double[][] transitionCovariance,
-                                                  final CanonicalGaussianTransition out) {
-        final double[][] precision = reducedCovarianceScratch;
-        final double[][] transitionTranspose = reducedPrecisionScratch;
-        final double[][] tmp = currentCovarianceScratch;
-
-        final double logDet = invertSymmetricPositiveDefinite(transitionCovariance, dimension, precision);
-        transpose(transitionMatrix, transitionTranspose, dimension);
-
-        multiply(transitionTranspose, precision, tmp, dimension);
-        multiply(tmp, transitionMatrix, out.precisionXX, dimension);
-
-        multiply(transitionTranspose, precision, out.precisionXY, dimension);
-        scaleInPlace(out.precisionXY, -1.0, dimension * dimension);
-
-        multiply(precision, transitionMatrix, out.precisionYX, dimension);
-        scaleInPlace(out.precisionYX, -1.0, dimension * dimension);
-
-        copyMatrix(precision, out.precisionYY, dimension);
-
-        multiply(precision, transitionOffset, out.informationY, dimension);
-        multiply(transitionTranspose, out.informationY, out.informationX, dimension);
-        scaleInPlace(out.informationX, -1.0, dimension);
-
-        out.logNormalizer =
-                0.5 * (dimension * Math.log(2.0 * Math.PI)
-                        + logDet
-                        + dot(transitionOffset, out.informationY, dimension));
     }
 
     private static void fillTransitionOffset(final double[][] transitionMatrix,
@@ -524,94 +461,6 @@ public final class TimeSeriesOUCanonicalBranchWiring {
             max = Math.max(max, Math.abs(value));
         }
         return max;
-    }
-
-    private static void transpose(final double[][] source,
-                                  final double[][] target,
-                                  final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                target[j][i] = source[i][j];
-            }
-        }
-    }
-
-    private static void multiply(final double[][] left,
-                                 final double[][] right,
-                                 final double[][] out,
-                                 final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimensionUsed; ++k) {
-                    sum += left[i][k] * right[k][j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private static void multiply(final double[][] matrix,
-                                 final double[] vector,
-                                 final double[] out,
-                                 final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < dimensionUsed; ++j) {
-                sum += matrix[i][j] * vector[j];
-            }
-            out[i] = sum;
-        }
-    }
-
-    private static void multiply(final double[][] left,
-                                 final double[][] right,
-                                 final double[] out,
-                                 final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            final int iOffset = i * dimensionUsed;
-            for (int j = 0; j < dimensionUsed; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimensionUsed; ++k) {
-                    sum += left[i][k] * right[k][j];
-                }
-                out[iOffset + j] = sum;
-            }
-        }
-    }
-
-    private static void copyMatrix(final double[][] source,
-                                   final double[][] target,
-                                   final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            System.arraycopy(source[i], 0, target[i], 0, dimensionUsed);
-        }
-    }
-
-    private static void copyMatrix(final double[][] source,
-                                   final double[] target,
-                                   final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            System.arraycopy(source[i], 0, target, i * dimensionUsed, dimensionUsed);
-        }
-    }
-
-    private static void scaleInPlace(final double[][] matrix,
-                                     final double factor,
-                                     final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                matrix[i][j] *= factor;
-            }
-        }
-    }
-
-    private static void scaleInPlace(final double[] vector,
-                                     final double factor,
-                                     final int dimensionUsed) {
-        for (int i = 0; i < dimensionUsed; ++i) {
-            vector[i] *= factor;
-        }
     }
 
     private static boolean hasFiniteBranchTransitionStatistics(final MatrixSufficientStatistics branch) {
@@ -1467,35 +1316,6 @@ public final class TimeSeriesOUCanonicalBranchWiring {
         contribution.dLogL_dLogNormalizer = 0.0;
     }
 
-    private static double multiplyEntry(final DenseMatrix64F left,
-                                        final DenseMatrix64F right,
-                                        final int row,
-                                        final int column) {
-        double sum = 0.0;
-        final int inner = left.numCols;
-        for (int k = 0; k < inner; ++k) {
-            sum += left.unsafe_get(row, k) * right.unsafe_get(k, column);
-        }
-        return sum;
-    }
-
-    private static double multiplyEntryTranspose(final DenseMatrix64F left,
-                                                 final DenseMatrix64F middle,
-                                                 final DenseMatrix64F right,
-                                                 final int row,
-                                                 final int column) {
-        double sum = 0.0;
-        final int inner = middle.numRows;
-        for (int i = 0; i < inner; ++i) {
-            double leftMiddle = 0.0;
-            for (int k = 0; k < inner; ++k) {
-                leftMiddle += left.unsafe_get(k, row) * middle.unsafe_get(k, i);
-            }
-            sum += leftMiddle * right.unsafe_get(i, column);
-        }
-        return sum;
-    }
-
     private double normalizedLogNormalizer(final double[][] precision,
                                            final double[] information,
                                            final int dimensionUsed) {
@@ -1529,102 +1349,13 @@ public final class TimeSeriesOUCanonicalBranchWiring {
     private double invertSymmetricPositiveDefinite(final double[][] matrix,
                                                    final int dimensionUsed,
                                                    final double[][] inverseOut) {
-        // Keep source symmetrization and inversion output on disjoint buffers.
-        // Some call sites pass `reducedCovarianceScratch` as inverseOut; using it as
-        // the symmetrized source can corrupt retry attempts after a failed factorization.
-        final double[][] symmetric = reducedCholeskyScratch;
-        final double[][] cholesky = reducedPrecisionScratch;
-        final double[][] lowerInverse = reducedLowerInverseScratch;
-
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                symmetric[i][j] = 0.5 * (matrix[i][j] + matrix[j][i]);
-            }
-        }
-
-        final double jitterBase = Math.max(
-                SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal(symmetric, dimensionUsed)));
-
-        final double lowerBound = gershgorinLowerBound(symmetric, dimensionUsed);
-        double jitter = 0.0;
-        for (int attempt = 0; attempt < 12; ++attempt) {
-            for (int i = 0; i < dimensionUsed; ++i) {
-                System.arraycopy(symmetric[i], 0, cholesky[i], 0, dimensionUsed);
-            }
-            if (jitter > 0.0) {
-                for (int i = 0; i < dimensionUsed; ++i) {
-                    cholesky[i][i] += jitter;
-                }
-            }
-            final double logDet = invertSymmetricPositiveDefiniteStrict(cholesky, lowerInverse, inverseOut, dimensionUsed);
-            if (Double.isFinite(logDet) && isFinite(inverseOut, dimensionUsed)) {
-                symmetrizeInPlace(inverseOut, dimensionUsed);
-                return logDet;
-            }
-            if (jitter == 0.0) {
-                jitter = lowerBound > 0.0 ? jitterBase : (-lowerBound + jitterBase);
-            } else {
-                jitter *= 10.0;
-            }
-        }
-        throw new IllegalStateException(
-                "Failed to invert symmetric positive definite matrix stably"
-                        + "; dim=" + dimensionUsed
-                        + "; finite=" + isFinite(symmetric, dimensionUsed)
-                        + "; gershgorinLowerBound=" + gershgorinLowerBound(symmetric, dimensionUsed)
-                        + "; minDiag=" + minDiagonal(symmetric, dimensionUsed)
-                        + "; maxAbsDiag=" + maxAbsDiagonal(symmetric, dimensionUsed));
-    }
-
-    private double invertSymmetricPositiveDefiniteStrict(final double[][] cholesky,
-                                                         final double[][] lowerInverse,
-                                                         final double[][] inverseOut,
-                                                         final int dimensionUsed) {
-        double logDet = 0.0;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j <= i; ++j) {
-                double sum = cholesky[i][j];
-                for (int k = 0; k < j; ++k) {
-                    sum -= cholesky[i][k] * cholesky[j][k];
-                }
-                if (i == j) {
-                    if (!(sum > 0.0) || !Double.isFinite(sum)) {
-                        return Double.NaN;
-                    }
-                    final double diag = Math.sqrt(sum);
-                    cholesky[i][j] = diag;
-                    logDet += Math.log(diag);
-                } else {
-                    cholesky[i][j] = sum / cholesky[j][j];
-                }
-            }
-            for (int j = i + 1; j < dimensionUsed; ++j) {
-                cholesky[i][j] = 0.0;
-            }
-        }
-        logDet *= 2.0;
-
-        for (int column = 0; column < dimensionUsed; ++column) {
-            for (int row = 0; row < dimensionUsed; ++row) {
-                double sum = row == column ? 1.0 : 0.0;
-                for (int k = 0; k < row; ++k) {
-                    sum -= cholesky[row][k] * lowerInverse[k][column];
-                }
-                lowerInverse[row][column] = sum / cholesky[row][row];
-            }
-        }
-
-        for (int i = 0; i < dimensionUsed; ++i) {
-            for (int j = 0; j < dimensionUsed; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimensionUsed; ++k) {
-                    sum += lowerInverse[k][i] * lowerInverse[k][j];
-                }
-                inverseOut[i][j] = sum;
-            }
-        }
-        return logDet;
+        return CanonicalNumerics.invertSymmetricPositiveDefinite(
+                matrix,
+                dimensionUsed,
+                inverseOut,
+                reducedCholeskyScratch,
+                reducedPrecisionScratch,
+                reducedLowerInverseScratch);
     }
 
     private double invertSymmetricPositiveDefinite(final double[] matrix,

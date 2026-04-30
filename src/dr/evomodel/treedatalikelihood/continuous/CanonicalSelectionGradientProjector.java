@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
@@ -104,24 +105,14 @@ final class CanonicalSelectionGradientProjector {
     private static double[] flattenColumnMajor(final double[][] matrix) {
         final int d = matrix.length;
         final double[] out = new double[d * d];
-        int index = 0;
-        for (int col = 0; col < d; ++col) {
-            for (int row = 0; row < d; ++row) {
-                out[index++] = matrix[row][col];
-            }
-        }
+        GaussianMatrixOps.matrixToColumnMajorParameter(matrix, out, d);
         return out;
     }
 
     private static double[] flattenRowMajor(final double[][] matrix) {
         final int d = matrix.length;
         final double[] out = new double[d * d];
-        int index = 0;
-        for (int row = 0; row < d; ++row) {
-            for (int col = 0; col < d; ++col) {
-                out[index++] = matrix[row][col];
-            }
-        }
+        GaussianMatrixOps.matrixToRowMajor(matrix, out, d);
         return out;
     }
 

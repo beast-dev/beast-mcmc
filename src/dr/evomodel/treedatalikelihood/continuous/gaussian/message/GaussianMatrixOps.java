@@ -139,6 +139,11 @@ public final class GaussianMatrixOps {
 
     /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
     public static void copyMatrixToFlat(final double[][] source, final double[] target, final int dim) {
+        matrixToRowMajor(source, target, dim);
+    }
+
+    /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
+    public static void matrixToRowMajor(final double[][] source, final double[] target, final int dim) {
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(source[i], 0, target, i * dim, dim);
         }
@@ -146,8 +151,47 @@ public final class GaussianMatrixOps {
 
     /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
     public static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+        rowMajorToMatrix(source, target, dim);
+    }
+
+    /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
+    public static void rowMajorToMatrix(final double[] source, final double[][] target, final int dim) {
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(source, i * dim, target[i], 0, dim);
+        }
+    }
+
+    /** Copy a flat row-major square matrix into flat column-major parameter order. */
+    public static void rowMajorToColumnMajorParameter(final double[] source,
+                                                      final double[] target,
+                                                      final int dim) {
+        for (int row = 0; row < dim; ++row) {
+            for (int col = 0; col < dim; ++col) {
+                target[col * dim + row] = source[row * dim + col];
+            }
+        }
+    }
+
+    /** Copy a 2-D row-major square matrix into flat column-major parameter order. */
+    public static void matrixToColumnMajorParameter(final double[][] source,
+                                                    final double[] target,
+                                                    final int dim) {
+        int index = 0;
+        for (int col = 0; col < dim; ++col) {
+            for (int row = 0; row < dim; ++row) {
+                target[index++] = source[row][col];
+            }
+        }
+    }
+
+    /** Copy a flat column-major parameter vector into flat row-major square-matrix order. */
+    public static void columnMajorParameterToRowMajor(final double[] source,
+                                                      final double[] target,
+                                                      final int dim) {
+        for (int row = 0; row < dim; ++row) {
+            for (int col = 0; col < dim; ++col) {
+                target[row * dim + col] = source[col * dim + row];
+            }
         }
     }
 

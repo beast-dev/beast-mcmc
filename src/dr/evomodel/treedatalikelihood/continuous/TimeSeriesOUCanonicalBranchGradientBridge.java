@@ -6,6 +6,7 @@ import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import org.ejml.data.DenseMatrix64F;
@@ -809,25 +810,15 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     }
 
     private static void copyFromFlatInto(final double[] in, final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(in, i * dim, out[i], 0, dim);
-        }
+        GaussianMatrixOps.rowMajorToMatrix(in, out, dim);
     }
 
     private static void transposeFromFlatInto(final double[] in, final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                out[j][i] = in[i * dim + j];
-            }
-        }
+        GaussianMatrixOps.transposeFlatToMatrix(in, out, dim);
     }
 
     private static void transposeFlatSquare(final double[] in, final double[] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                out[j * dim + i] = in[i * dim + j];
-            }
-        }
+        GaussianMatrixOps.rowMajorToColumnMajorParameter(in, out, dim);
     }
 
     private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,

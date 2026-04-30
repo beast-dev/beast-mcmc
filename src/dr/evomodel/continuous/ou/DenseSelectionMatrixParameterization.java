@@ -1,5 +1,6 @@
 package dr.evomodel.continuous.ou;
 
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 
 /**
@@ -54,7 +55,7 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
         checkFlatSquare(out, "transition matrix");
         final Workspace workspace = workspace();
         fillTransitionMatrix(dt, workspace.transitionMatrix);
-        copySquareToFlat(workspace.transitionMatrix, out);
+        GaussianMatrixOps.matrixToRowMajor(workspace.transitionMatrix, out, dimension);
     }
 
     @Override
@@ -131,13 +132,6 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
             throw new IllegalArgumentException(
                     label + " must have length " + (dimension * dimension)
                             + " for a " + dimension + "x" + dimension + " matrix");
-        }
-    }
-
-    private static void copySquareToFlat(final double[][] source, final double[] out) {
-        final int dimension = source.length;
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source[i], 0, out, i * dimension, dimension);
         }
     }
 

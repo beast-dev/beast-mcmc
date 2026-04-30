@@ -119,6 +119,7 @@ jobs:
     # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
     test-xml-long-load-state:
         needs: [build, test-xml-short-load-state]
+        if: ${{ needs.build.outputs.xml-long-load-state-matrix != '[]' }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false

@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 
 interface CanonicalSelectionGradientPullback {
 
@@ -17,6 +18,7 @@ interface CanonicalSelectionGradientPullback {
     void accumulateForBranch(OUProcessModel processModel,
                              BranchGradientInputs inputs,
                              int activeIndex,
+                             CanonicalLocalTransitionAdjoints localAdjoints,
                              BranchGradientWorkspace workspace,
                              double[] gradA,
                              double[] gradQ,

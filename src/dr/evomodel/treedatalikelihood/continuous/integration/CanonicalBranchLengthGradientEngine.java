@@ -16,9 +16,9 @@ final class CanonicalBranchLengthGradientEngine {
             gradT[inputs.getActiveChildIndex(activeIndex)] =
                     kernel.contractBranchLengthGradientFlat(
                             inputs.getBranchLength(activeIndex),
-                            inputs.getLocalAdjoints(activeIndex).dLogL_dF,
-                            inputs.getLocalAdjoints(activeIndex).dLogL_df,
-                            inputs.getLocalAdjoints(activeIndex).dLogL_dOmega,
+                            inputs.getTransitionMatrixAdjointFlat(activeIndex),
+                            inputs.getTransitionOffsetAdjoint(activeIndex),
+                            inputs.getTransitionCovarianceAdjointFlat(activeIndex),
                             false);
         }
     }

@@ -2,6 +2,7 @@ package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evomodel.continuous.ou.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 
 final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
@@ -31,6 +32,7 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
     public void accumulateForBranch(final OUProcessModel processModel,
                                     final BranchGradientInputs inputs,
                                     final int activeIndex,
+                                    final CanonicalLocalTransitionAdjoints localAdjoints,
                                     final BranchGradientWorkspace workspace,
                                     final double[] gradA,
                                     final double[] gradQ,
@@ -41,26 +43,26 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
 
         kernel.accumulateSelectionGradientFlat(
                 branchLength,
-                workspace.adjoints.dLogL_dF,
-                workspace.adjoints.dLogL_df,
+                localAdjoints.dLogL_dF,
+                localAdjoints.dLogL_df,
                 gradA);
 
         kernel.accumulateSelectionGradientFromCovarianceFlat(
                 branchLength,
-                workspace.adjoints.dLogL_dOmega,
+                localAdjoints.dLogL_dOmega,
                 true,
                 gradA);
 
         kernel.accumulateDiffusionGradientFlat(
                 branchLength,
-                workspace.adjoints.dLogL_dOmega,
+                localAdjoints.dLogL_dOmega,
                 false,
                 gradQ);
 
         kernel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
         accumulateStationaryMeanGradientFlat(
                 gradient.transitionMatrixFlat,
-                workspace.adjoints.dLogL_df,
+                localAdjoints.dLogL_df,
                 gradMu);
     }
 

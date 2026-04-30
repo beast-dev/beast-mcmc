@@ -33,7 +33,6 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransition
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.util.TaskPool;
 
@@ -100,11 +99,11 @@ final class CanonicalTreeGradientEngine {
         selectionPullback.initialize(workspace, gradA, gradMu);
 
         for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
-            copyAdjoints(inputs.getLocalAdjoints(activeIndex), workspace.adjoints);
             selectionPullback.accumulateForBranch(
                     processModel,
                     inputs,
                     activeIndex,
+                    inputs.getLocalAdjoints(activeIndex),
                     workspace,
                     gradA,
                     gradQ,
@@ -135,12 +134,12 @@ final class CanonicalTreeGradientEngine {
                 branchGradientJointChunkSize(inputs.getActiveBranchCount()),
                 (activeIndex, thread) -> {
                     final BranchGradientWorkspace workspace = workspaces[thread];
-                    copyAdjoints(inputs.getLocalAdjoints(activeIndex), workspace.adjoints);
 
                     selectionPullback.accumulateForBranch(
                             processModel,
                             inputs,
                             activeIndex,
+                            inputs.getLocalAdjoints(activeIndex),
                             workspace,
                             workspace.localGradientA,
                             workspace.localGradientQ,
@@ -222,13 +221,6 @@ final class CanonicalTreeGradientEngine {
                         * (-0.5 * priorPrecision[iOff + j] + 0.5 * gradient.covarianceAdjoint[i][j]);
             }
         }
-    }
-
-    private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,
-                                     final CanonicalLocalTransitionAdjoints target) {
-        System.arraycopy(source.dLogL_dF, 0, target.dLogL_dF, 0, source.dLogL_dF.length);
-        System.arraycopy(source.dLogL_df, 0, target.dLogL_df, 0, source.dLogL_df.length);
-        System.arraycopy(source.dLogL_dOmega, 0, target.dLogL_dOmega, 0, source.dLogL_dOmega.length);
     }
 
     private static void accumulateVectorInPlace(final double[] target,

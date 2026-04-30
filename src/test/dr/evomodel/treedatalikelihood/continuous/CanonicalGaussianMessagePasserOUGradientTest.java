@@ -34,6 +34,8 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 
 /**
  * Validates canonical OU tree-passer gradients against numerical finite differences.
@@ -283,7 +285,7 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         assertSame("prepared branch snapshot reused on cache hit", first, second);
         assertSame("orthogonal prepared basis reused on cache hit",
-                first.getOrthogonalPreparedBasis(), second.getOrthogonalPreparedBasis());
+                orthogonalPreparedBasis(first), orthogonalPreparedBasis(second));
 
         setup.orthogonal.branchScale[childNodeIndex] += 0.125;
         final CanonicalPreparedBranchSnapshot afterLengthChange =
@@ -291,7 +293,14 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         assertNotSame("branch length change refreshes snapshot", first, afterLengthChange);
         assertSame("prepared basis buffer is retained across snapshot refresh",
-                first.getOrthogonalPreparedBasis(), afterLengthChange.getOrthogonalPreparedBasis());
+                orthogonalPreparedBasis(first), orthogonalPreparedBasis(afterLengthChange));
+    }
+
+    private OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis(
+            final CanonicalPreparedBranchSnapshot snapshot) {
+        assertTrue("expected an orthogonal-block prepared branch handle",
+                snapshot.getPreparedBranchHandle() instanceof OrthogonalBlockPreparedBranchHandle);
+        return ((OrthogonalBlockPreparedBranchHandle) snapshot.getPreparedBranchHandle()).getBasis();
     }
 
     private int firstNonRootNodeIndex() {

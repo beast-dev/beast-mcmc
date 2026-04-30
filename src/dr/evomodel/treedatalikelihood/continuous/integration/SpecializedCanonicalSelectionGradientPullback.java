@@ -4,6 +4,7 @@ import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 
 import java.util.Arrays;
 
@@ -69,6 +70,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
     public void accumulateForBranch(final OUProcessModel processModel,
                                     final BranchGradientInputs inputs,
                                     final int activeIndex,
+                                    final CanonicalLocalTransitionAdjoints localAdjoints,
                                     final BranchGradientWorkspace workspace,
                                     final double[] gradA,
                                     final double[] gradQ,
@@ -81,21 +83,21 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         selection.accumulateNativeGradientFromAdjointsPreparedFlat(
                 prepared,
                 processModel.getDiffusionMatrix(),
-                workspace.adjoints,
+                localAdjoints,
                 specializedWorkspace,
                 gradient.orthogonalCompressedGradientScratch,
                 gradient.orthogonalRotationGradientFlatScratch);
 
         selection.accumulateDiffusionGradientPreparedFlat(
                 prepared,
-                workspace.adjoints.dLogL_dOmega,
+                localAdjoints.dLogL_dOmega,
                 true,
                 gradQ,
                 specializedWorkspace);
 
         selection.accumulateMeanGradientPrepared(
                 prepared,
-                workspace.adjoints.dLogL_df,
+                localAdjoints.dLogL_df,
                 gradMu,
                 specializedWorkspace);
     }

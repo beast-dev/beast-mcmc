@@ -32,8 +32,6 @@ import dr.evomodel.continuous.ou.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
@@ -89,15 +87,6 @@ final class CanonicalTransitionCache {
 
     CanonicalGaussianTransition getTransitionView(final int childNodeIndex) {
         return ensureTransition(childNodeIndex);
-    }
-
-    OrthogonalBlockPreparedBranchBasis
-    getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
-        final CanonicalPreparedBranchHandle handle = getPreparedBranchHandle(childNodeIndex);
-        if (handle instanceof OrthogonalBlockPreparedBranchHandle) {
-            return ((OrthogonalBlockPreparedBranchHandle) handle).getBasis();
-        }
-        return null;
     }
 
     CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {

@@ -36,7 +36,6 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransi
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
@@ -47,7 +46,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
 /**
@@ -56,7 +54,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTrans
 public final class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractModel
         implements CanonicalBranchTransitionProvider,
         CanonicalOUTransitionProvider,
-        CanonicalPreparedBranchBasisProvider,
         CanonicalPreparedBranchSnapshotProvider,
         CanonicalTransitionCacheDiagnostics {
 
@@ -173,17 +170,9 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         processModel.fillTransitionCovariance(branchLength, out);
     }
 
-    @Override
     public CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {
         ensureCurrentSnapshot();
         return transitionCache.getPreparedBranchHandle(childNodeIndex);
-    }
-
-    @Override
-    public OrthogonalBlockPreparedBranchBasis
-    getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
-        ensureCurrentSnapshot();
-        return transitionCache.getOrthogonalPreparedBranchBasis(childNodeIndex);
     }
 
     @Override

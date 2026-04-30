@@ -77,6 +77,18 @@ public final class BranchGradientInputs {
         return activeAdjoints[activeIndex];
     }
 
+    public double[] getTransitionMatrixAdjointFlat(final int activeIndex) {
+        return getLocalAdjoints(activeIndex).dLogL_dF;
+    }
+
+    public double[] getTransitionOffsetAdjoint(final int activeIndex) {
+        return getLocalAdjoints(activeIndex).dLogL_df;
+    }
+
+    public double[] getTransitionCovarianceAdjointFlat(final int activeIndex) {
+        return getLocalAdjoints(activeIndex).dLogL_dOmega;
+    }
+
     public double getRootDiffusionScale() {
         return rootDiffusionScale;
     }

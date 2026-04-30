@@ -15,8 +15,8 @@ final class GradientPullbackWorkspace {
     final double[][] orthogonalRotationGradientScratch;
     final double[][] covariance2;
     final double[] transitionMatrixFlat;
-    final double[][] transitionMatrix;
-    final double[][] covarianceAdjoint;
+    final double[] covarianceAdjointFlat;
+    final double[] matrixProductFlat;
     final double[] localGradientA;
     final double[] localGradientQ;
     final double[] localGradientMuVector;
@@ -31,8 +31,8 @@ final class GradientPullbackWorkspace {
         this.orthogonalRotationGradientScratch = new double[dim][dim];
         this.covariance2 = new double[dim][dim];
         this.transitionMatrixFlat = new double[dim * dim];
-        this.transitionMatrix = new double[dim][dim];
-        this.covarianceAdjoint = new double[dim][dim];
+        this.covarianceAdjointFlat = new double[dim * dim];
+        this.matrixProductFlat = new double[dim * dim];
         this.localGradientA = new double[dim * dim];
         this.localGradientQ = new double[dim * dim];
         this.localGradientMuVector = new double[dim];

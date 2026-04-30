@@ -159,6 +159,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     @Override
+    public void fillTransitionMatrixFlat(final double branchLength, final double[] out) {
+        ensureCurrentSnapshot();
+        processModel.fillTransitionMatrixFlat(branchLength, out);
+    }
+
+    @Override
     public void fillTransitionOffset(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
         processModel.fillTransitionOffset(branchLength, out);
@@ -168,6 +174,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public void fillTransitionCovariance(final double branchLength, final double[][] out) {
         ensureCurrentSnapshot();
         processModel.fillTransitionCovariance(branchLength, out);
+    }
+
+    @Override
+    public void fillTransitionCovarianceFlat(final double branchLength, final double[] out) {
+        ensureCurrentSnapshot();
+        processModel.fillTransitionCovarianceFlat(branchLength, out);
     }
 
     public CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {

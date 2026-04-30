@@ -35,7 +35,11 @@ public interface CanonicalTransitionMomentProvider {
 
     void fillTransitionMatrix(double branchLength, double[][] out);
 
+    void fillTransitionMatrixFlat(double branchLength, double[] out);
+
     void fillTransitionOffset(double branchLength, double[] out);
 
     void fillTransitionCovariance(double branchLength, double[][] out);
+
+    void fillTransitionCovarianceFlat(double branchLength, double[] out);
 }

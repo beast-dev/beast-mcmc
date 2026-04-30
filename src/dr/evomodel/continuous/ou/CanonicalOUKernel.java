@@ -5,6 +5,7 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 
@@ -114,6 +115,14 @@ public final class CanonicalOUKernel
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
         checkFlatSquare(out, stateDimension, "transition matrix");
         selectionMatrixParameterization.fillTransitionMatrixFlat(dt, out);
+    }
+
+    public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
+        checkFlatSquare(out, stateDimension, "transition covariance");
+        final Workspace workspace = workspace();
+        final double[][] transitionCovariance = workspace.squareMatrices[1];
+        fillTransitionCovariance(dt, transitionCovariance);
+        GaussianMatrixOps.matrixToRowMajor(transitionCovariance, out, stateDimension);
     }
 
     @Override

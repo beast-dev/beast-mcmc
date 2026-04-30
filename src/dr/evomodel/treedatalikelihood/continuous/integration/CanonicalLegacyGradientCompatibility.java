@@ -69,10 +69,10 @@ final class CanonicalLegacyGradientCompatibility {
                         workspace.covarianceAdjoint,
                         gradQ);
             } else {
-                GaussianMatrixOps.copyFlatToMatrix(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-                processModel.accumulateDiffusionGradient(
+                processModel.accumulateDiffusionGradientFlat(
                         transitionProvider.getEffectiveBranchLength(childIndex),
-                        workspace.covarianceAdjoint,
+                        workspace.adjoints.dLogL_dOmega,
+                        false,
                         gradQ);
             }
         }
@@ -109,18 +109,16 @@ final class CanonicalLegacyGradientCompatibility {
             }
 
             final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            GaussianMatrixOps.copyFlatToMatrix(workspace.adjoints.dLogL_dF, workspace.transitionMatrix, dim);
-            processModel.accumulateSelectionGradient(
+            processModel.accumulateSelectionGradientFlat(
                     branchLength,
-                    workspace.transitionMatrix,
+                    workspace.adjoints.dLogL_dF,
                     workspace.adjoints.dLogL_df,
                     gradA);
 
-            GaussianMatrixOps.transposeFlatToMatrix(
-                    workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-            processModel.accumulateSelectionGradientFromCovariance(
+            processModel.accumulateSelectionGradientFromCovarianceFlat(
                     branchLength,
-                    workspace.covarianceAdjoint,
+                    workspace.adjoints.dLogL_dOmega,
+                    true,
                     gradA);
         }
 
@@ -144,9 +142,9 @@ final class CanonicalLegacyGradientCompatibility {
             }
 
             final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            processModel.fillTransitionMatrix(branchLength, workspace.transitionMatrix);
+            processModel.fillTransitionMatrixFlat(branchLength, workspace.transitionMatrixFlat);
             accumulateStationaryMeanGradient(
-                    workspace.transitionMatrix,
+                    workspace.transitionMatrixFlat,
                     workspace.adjoints.dLogL_df,
                     gradMu);
         }
@@ -214,7 +212,7 @@ final class CanonicalLegacyGradientCompatibility {
         System.arraycopy(angleGradient, 0, gradA, nativeBlockDim, angleGradient.length);
     }
 
-    private void accumulateStationaryMeanGradient(final double[][] transitionMatrix,
+    private void accumulateStationaryMeanGradient(final double[] transitionMatrix,
                                                   final double[] adjointB,
                                                   final double[] gradient) {
         if (gradient.length == 1) {
@@ -222,7 +220,7 @@ final class CanonicalLegacyGradientCompatibility {
             for (int i = 0; i < dim; ++i) {
                 double ftAdjoint = 0.0;
                 for (int j = 0; j < dim; ++j) {
-                    ftAdjoint += transitionMatrix[j][i] * adjointB[j];
+                    ftAdjoint += transitionMatrix[j * dim + i] * adjointB[j];
                 }
                 sum += adjointB[i] - ftAdjoint;
             }
@@ -237,7 +235,7 @@ final class CanonicalLegacyGradientCompatibility {
         for (int i = 0; i < dim; ++i) {
             double ftAdjoint = 0.0;
             for (int j = 0; j < dim; ++j) {
-                ftAdjoint += transitionMatrix[j][i] * adjointB[j];
+                ftAdjoint += transitionMatrix[j * dim + i] * adjointB[j];
             }
             gradient[i] += adjointB[i] - ftAdjoint;
         }
@@ -256,21 +254,23 @@ final class CanonicalLegacyGradientCompatibility {
         final double[] priorPrecision = stateStore.preOrder[rootIndex].precision;
         for (int i = 0; i < dim; ++i) {
             final double deltaI = workspace.mean[i] - workspace.mean2[i];
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                workspace.covarianceAdjoint[i][j] =
+                workspace.covarianceAdjointFlat[iOff + j] =
                         workspace.covariance[i][j] + deltaI * (workspace.mean[j] - workspace.mean2[j]);
             }
         }
 
-        GaussianMatrixOps.multiplyFlatByMatrix(
-                priorPrecision, workspace.covarianceAdjoint, workspace.transitionMatrix, dim);
-        GaussianMatrixOps.multiplyMatrixByFlat(
-                workspace.transitionMatrix, priorPrecision, workspace.covarianceAdjoint, dim);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+                priorPrecision, workspace.covarianceAdjointFlat, workspace.matrixProductFlat, dim);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+                workspace.matrixProductFlat, priorPrecision, workspace.covarianceAdjointFlat, dim);
         for (int i = 0; i < dim; ++i) {
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
+                final int ij = iOff + j;
                 gradQ[iOff + j] += stateStore.lastRootDiffusionScale
-                        * (-0.5 * priorPrecision[iOff + j] + 0.5 * workspace.covarianceAdjoint[i][j]);
+                        * (-0.5 * priorPrecision[ij] + 0.5 * workspace.covarianceAdjointFlat[ij]);
             }
         }
     }

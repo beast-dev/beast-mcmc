@@ -49,8 +49,8 @@ final class CanonicalTipProjector {
     private final double[] precisionFlatScratch;
     private final double[] projectedPrecisionScratch;
     private final double[] choleskyScratch;
-    private final double[][] transitionMatrix;
-    private final double[][] covariance;
+    private final double[] transitionMatrixFlat;
+    private final double[] covarianceFlat;
     private final double[] transitionOffset;
 
     CanonicalTipProjector(final int dimension) {
@@ -62,8 +62,8 @@ final class CanonicalTipProjector {
         this.precisionFlatScratch = new double[dimension * dimension];
         this.projectedPrecisionScratch = new double[dimension * dimension];
         this.choleskyScratch = new double[dimension * dimension];
-        this.transitionMatrix = new double[dimension][dimension];
-        this.covariance = new double[dimension][dimension];
+        this.transitionMatrixFlat = new double[dimension * dimension];
+        this.covarianceFlat = new double[dimension * dimension];
         this.transitionOffset = new double[dimension];
     }
 
@@ -77,9 +77,9 @@ final class CanonicalTipProjector {
             return;
         }
 
-        transitionMomentProvider.fillTransitionMatrix(branchLength, transitionMatrix);
+        transitionMomentProvider.fillTransitionMatrixFlat(branchLength, transitionMatrixFlat);
         transitionMomentProvider.fillTransitionOffset(branchLength, transitionOffset);
-        transitionMomentProvider.fillTransitionCovariance(branchLength, covariance);
+        transitionMomentProvider.fillTransitionCovarianceFlat(branchLength, covarianceFlat);
 
         for (int observed = 0; observed < observedCount; ++observed) {
             final int observedTrait = observedIndexScratch[observed];
@@ -88,7 +88,7 @@ final class CanonicalTipProjector {
             final int rowOffset = observed * observedCount;
             for (int otherObserved = 0; otherObserved < observedCount; ++otherObserved) {
                 varianceFlatScratch[rowOffset + otherObserved] =
-                        covariance[observedTrait][observedIndexScratch[otherObserved]];
+                        covarianceFlat[observedTrait * dimension + observedIndexScratch[otherObserved]];
             }
         }
 
@@ -115,7 +115,7 @@ final class CanonicalTipProjector {
                 double sum = 0.0;
                 for (int k = 0; k < observedCount; ++k) {
                     sum += precisionFlatScratch[precisionRowOffset + k]
-                            * transitionMatrix[observedIndexScratch[k]][col];
+                            * transitionMatrixFlat[observedIndexScratch[k] * dimension + col];
                 }
                 projectedPrecisionScratch[projectedRowOffset + col] = sum;
             }
@@ -124,7 +124,7 @@ final class CanonicalTipProjector {
         for (int i = 0; i < dimension; ++i) {
             double information = 0.0;
             for (int observed = 0; observed < observedCount; ++observed) {
-                information += transitionMatrix[observedIndexScratch[observed]][i]
+                information += transitionMatrixFlat[observedIndexScratch[observed] * dimension + i]
                         * precisionTimesShiftedScratch[observed];
             }
             out.information[i] = information;
@@ -132,7 +132,7 @@ final class CanonicalTipProjector {
             for (int j = 0; j < dimension; ++j) {
                 double precision = 0.0;
                 for (int observed = 0; observed < observedCount; ++observed) {
-                    precision += transitionMatrix[observedIndexScratch[observed]][i]
+                    precision += transitionMatrixFlat[observedIndexScratch[observed] * dimension + i]
                             * projectedPrecisionScratch[observed * dimension + j];
                 }
                 out.precision[i * dimension + j] = precision;

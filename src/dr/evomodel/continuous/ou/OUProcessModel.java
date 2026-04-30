@@ -377,6 +377,10 @@ public class OUProcessModel extends AbstractModel
         canonicalKernel.fillTransitionCovariance(dt, out);
     }
 
+    public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
+        canonicalKernel.fillTransitionCovarianceFlat(dt, out);
+    }
+
     /**
      * Accumulates the V-path contribution of ∂logL/∂A by dispatching to the
      * strategy selected at construction time:

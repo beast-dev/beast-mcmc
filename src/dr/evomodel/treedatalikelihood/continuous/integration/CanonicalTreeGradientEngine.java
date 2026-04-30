@@ -204,21 +204,23 @@ final class CanonicalTreeGradientEngine {
         final double[] priorPrecision = rootPreOrder.precision;
         for (int i = 0; i < dimension; ++i) {
             final double deltaI = adjoint.mean[i] - adjoint.mean2[i];
+            final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                gradient.covarianceAdjoint[i][j] =
+                gradient.covarianceAdjointFlat[iOff + j] =
                         adjoint.covariance[i][j] + deltaI * (adjoint.mean[j] - adjoint.mean2[j]);
             }
         }
 
-        GaussianMatrixOps.multiplyFlatByMatrix(
-                priorPrecision, gradient.covarianceAdjoint, gradient.transitionMatrix, dimension);
-        GaussianMatrixOps.multiplyMatrixByFlat(
-                gradient.transitionMatrix, priorPrecision, gradient.covarianceAdjoint, dimension);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+                priorPrecision, gradient.covarianceAdjointFlat, gradient.matrixProductFlat, dimension);
+        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+                gradient.matrixProductFlat, priorPrecision, gradient.covarianceAdjointFlat, dimension);
         for (int i = 0; i < dimension; ++i) {
             final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
+                final int ij = iOff + j;
                 gradQ[iOff + j] += rootDiffusionScale
-                        * (-0.5 * priorPrecision[iOff + j] + 0.5 * gradient.covarianceAdjoint[i][j]);
+                        * (-0.5 * priorPrecision[ij] + 0.5 * gradient.covarianceAdjointFlat[ij]);
             }
         }
     }

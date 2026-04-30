@@ -43,8 +43,8 @@ final class BranchGradientWorkspace {
     final double[][] covariance;
     final double[][] covariance2;
     final double[] transitionMatrixFlat;
-    final double[][] transitionMatrix;
-    final double[][] covarianceAdjoint;
+    final double[] covarianceAdjointFlat;
+    final double[] matrixProductFlat;
     final double[] varianceFlat;
     final double[] precisionFlat;
     final double[] reducedPrecisionFlatScratch;
@@ -95,8 +95,8 @@ final class BranchGradientWorkspace {
         this.orthogonalRotationGradientScratch = gradient.orthogonalRotationGradientScratch;
         this.covariance2 = gradient.covariance2;
         this.transitionMatrixFlat = gradient.transitionMatrixFlat;
-        this.transitionMatrix = gradient.transitionMatrix;
-        this.covarianceAdjoint = gradient.covarianceAdjoint;
+        this.covarianceAdjointFlat = gradient.covarianceAdjointFlat;
+        this.matrixProductFlat = gradient.matrixProductFlat;
         this.localGradientA = gradient.localGradientA;
         this.localGradientQ = gradient.localGradientQ;
         this.localGradientMuVector = gradient.localGradientMuVector;

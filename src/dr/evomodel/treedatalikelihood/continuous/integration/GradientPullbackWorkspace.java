@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
+import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 
@@ -19,7 +21,7 @@ final class GradientPullbackWorkspace {
     final double[] localGradientQ;
     final double[] localGradientMuVector;
     final double[] localGradientMuScalar;
-    OrthogonalBlockBranchGradientWorkspace orthogonalBranchWorkspace;
+    CanonicalBranchWorkspace specializedBranchWorkspace;
 
     GradientPullbackWorkspace(final int dim) {
         this.orthogonalStationaryMeanScratch = new double[dim];
@@ -67,9 +69,17 @@ final class GradientPullbackWorkspace {
 
     OrthogonalBlockBranchGradientWorkspace
     ensureOrthogonalBranchWorkspace(final OrthogonalBlockCanonicalParameterization orthogonalSelection) {
-        if (orthogonalBranchWorkspace == null) {
-            orthogonalBranchWorkspace = orthogonalSelection.createBranchGradientWorkspace();
+        if (specializedBranchWorkspace == null) {
+            specializedBranchWorkspace = orthogonalSelection.createBranchGradientWorkspace();
         }
-        return orthogonalBranchWorkspace;
+        return (OrthogonalBlockBranchGradientWorkspace) specializedBranchWorkspace;
+    }
+
+    CanonicalBranchWorkspace
+    ensureSpecializedBranchWorkspace(final SpecializedCanonicalSelectionParameterization selection) {
+        if (specializedBranchWorkspace == null) {
+            specializedBranchWorkspace = selection.createBranchWorkspace();
+        }
+        return specializedBranchWorkspace;
     }
 }

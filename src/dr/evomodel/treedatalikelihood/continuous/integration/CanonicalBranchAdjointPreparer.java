@@ -29,7 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
@@ -78,10 +78,10 @@ final class CanonicalBranchAdjointPreparer {
 
         final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
-        final OrthogonalBlockCanonicalParameterization orthogonalSelection =
+        final SpecializedCanonicalSelectionParameterization specializedSelection =
                 processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockCanonicalParameterization
-                        ? (OrthogonalBlockCanonicalParameterization)
+                        instanceof SpecializedCanonicalSelectionParameterization
+                        ? (SpecializedCanonicalSelectionParameterization)
                         processModel.getSelectionMatrixParameterization()
                         : null;
         final CanonicalPreparedBranchSnapshotProvider snapshotProvider =
@@ -117,7 +117,7 @@ final class CanonicalBranchAdjointPreparer {
                                 requireSnapshot(snapshotProvider, childIndex),
                                 workspace.adjoints);
                     });
-            out.compactStagedBranches(rootIndex, orthogonalSelection != null);
+            out.compactStagedBranches(rootIndex, specializedSelection != null);
         }
 
         out.setRoot(

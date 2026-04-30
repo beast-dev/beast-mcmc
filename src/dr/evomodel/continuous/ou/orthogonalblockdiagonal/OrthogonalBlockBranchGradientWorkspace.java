@@ -1,5 +1,6 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
+import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
@@ -9,7 +10,7 @@ import org.ejml.data.DenseMatrix64F;
 /**
  * Caller-owned buffers for orthogonal block-diagonal branch gradient pullbacks.
  */
-public final class OrthogonalBlockBranchGradientWorkspace {
+public final class OrthogonalBlockBranchGradientWorkspace implements CanonicalBranchWorkspace {
     final BlockDiagonalFrechetHelper frechetHelper;
     final BlockDiagonalLyapunovSolver lyapunovSolver;
     final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper;

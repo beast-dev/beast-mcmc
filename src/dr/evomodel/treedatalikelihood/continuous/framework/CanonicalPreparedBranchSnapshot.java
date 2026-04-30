@@ -27,7 +27,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous.framework;
 
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
 /**
@@ -38,16 +40,16 @@ public final class CanonicalPreparedBranchSnapshot {
     private final int childNodeIndex;
     private final double effectiveBranchLength;
     private final CanonicalGaussianTransition transition;
-    private final OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis;
+    private final CanonicalPreparedBranchHandle preparedBranchHandle;
 
     public CanonicalPreparedBranchSnapshot(final int childNodeIndex,
                                            final double effectiveBranchLength,
                                            final CanonicalGaussianTransition transition,
-                                           final OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis) {
+                                           final CanonicalPreparedBranchHandle preparedBranchHandle) {
         this.childNodeIndex = childNodeIndex;
         this.effectiveBranchLength = effectiveBranchLength;
         this.transition = transition;
-        this.orthogonalPreparedBasis = orthogonalPreparedBasis;
+        this.preparedBranchHandle = preparedBranchHandle;
     }
 
     public int getChildNodeIndex() {
@@ -62,7 +64,19 @@ public final class CanonicalPreparedBranchSnapshot {
         return transition;
     }
 
+    public CanonicalPreparedBranchHandle getPreparedBranchHandle() {
+        return preparedBranchHandle;
+    }
+
+    /**
+     * Backward-compatible test/diagnostic accessor. Runtime code should use
+     * {@link #getPreparedBranchHandle()} instead.
+     */
+    @Deprecated
     public OrthogonalBlockPreparedBranchBasis getOrthogonalPreparedBasis() {
-        return orthogonalPreparedBasis;
+        if (preparedBranchHandle instanceof OrthogonalBlockPreparedBranchHandle) {
+            return ((OrthogonalBlockPreparedBranchHandle) preparedBranchHandle).getBasis();
+        }
+        return null;
     }
 }

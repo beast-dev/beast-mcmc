@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
@@ -18,16 +18,16 @@ public final class BranchGradientInputs {
     private final int[] activeChildIndices;
     private final double[] activeBranchLengths;
     private final CanonicalLocalTransitionAdjoints[] activeAdjoints;
-    private final OrthogonalBlockPreparedBranchBasis[] activeOrthogonalPreparedBasis;
+    private final CanonicalPreparedBranchHandle[] activePreparedBranchHandles;
     private final boolean[] stagedActiveByChild;
     private final double[] stagedBranchLengthsByChild;
     private final CanonicalLocalTransitionAdjoints[] stagedAdjointsByChild;
-    private final OrthogonalBlockPreparedBranchBasis[] stagedOrthogonalPreparedBasisByChild;
+    private final CanonicalPreparedBranchHandle[] stagedPreparedBranchHandlesByChild;
     private final CanonicalGaussianState rootPreOrder;
     private final CanonicalGaussianState rootPostOrder;
     private int activeBranchCount;
     private double rootDiffusionScale;
-    private boolean hasOrthogonalPreparedBasis;
+    private boolean hasPreparedBranchHandles;
 
     BranchGradientInputs(final int capacity, final int dimension) {
         this.dimension = dimension;
@@ -36,11 +36,11 @@ public final class BranchGradientInputs {
         this.activeChildIndices = new int[capacity];
         this.activeBranchLengths = new double[capacity];
         this.activeAdjoints = new CanonicalLocalTransitionAdjoints[capacity];
-        this.activeOrthogonalPreparedBasis = new OrthogonalBlockPreparedBranchBasis[capacity];
+        this.activePreparedBranchHandles = new CanonicalPreparedBranchHandle[capacity];
         this.stagedActiveByChild = new boolean[nodeSlotCount];
         this.stagedBranchLengthsByChild = new double[nodeSlotCount];
         this.stagedAdjointsByChild = new CanonicalLocalTransitionAdjoints[nodeSlotCount];
-        this.stagedOrthogonalPreparedBasisByChild = new OrthogonalBlockPreparedBranchBasis[nodeSlotCount];
+        this.stagedPreparedBranchHandlesByChild = new CanonicalPreparedBranchHandle[nodeSlotCount];
         for (int i = 0; i < capacity; ++i) {
             this.activeAdjoints[i] = new CanonicalLocalTransitionAdjoints(dimension);
         }
@@ -51,7 +51,7 @@ public final class BranchGradientInputs {
         this.rootPostOrder = new CanonicalGaussianState(dimension);
         this.activeBranchCount = 0;
         this.rootDiffusionScale = 0.0;
-        this.hasOrthogonalPreparedBasis = false;
+        this.hasPreparedBranchHandles = false;
     }
 
     public int getDimension() {
@@ -91,9 +91,11 @@ public final class BranchGradientInputs {
 
     void clear() {
         Arrays.fill(stagedActiveByChild, false);
+        Arrays.fill(stagedPreparedBranchHandlesByChild, null);
+        Arrays.fill(activePreparedBranchHandles, null);
         activeBranchCount = 0;
         rootDiffusionScale = 0.0;
-        hasOrthogonalPreparedBasis = false;
+        hasPreparedBranchHandles = false;
     }
 
     void checkCompatible(final int expectedCapacity,
@@ -113,13 +115,13 @@ public final class BranchGradientInputs {
     void addBranch(final int childIndex,
                    final double branchLength,
                    final CanonicalLocalTransitionAdjoints source,
-                   final OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis) {
+                   final CanonicalPreparedBranchHandle preparedBranchHandle) {
         if (activeBranchCount >= capacity) {
             throw new IllegalStateException("BranchGradientInputs capacity exceeded.");
         }
-        if (orthogonalPreparedBasis != null) {
-            hasOrthogonalPreparedBasis = true;
-            activeOrthogonalPreparedBasis[activeBranchCount] = orthogonalPreparedBasis;
+        activePreparedBranchHandles[activeBranchCount] = preparedBranchHandle;
+        if (preparedBranchHandle != null) {
+            hasPreparedBranchHandles = true;
         }
         activeChildIndices[activeBranchCount] = childIndex;
         activeBranchLengths[activeBranchCount] = branchLength;
@@ -133,7 +135,7 @@ public final class BranchGradientInputs {
                 snapshot.getChildNodeIndex(),
                 snapshot.getEffectiveBranchLength(),
                 source,
-                snapshot.getOrthogonalPreparedBasis());
+                snapshot.getPreparedBranchHandle());
     }
 
     void stageBranch(final CanonicalPreparedBranchSnapshot snapshot,
@@ -142,17 +144,18 @@ public final class BranchGradientInputs {
         checkChildIndex(childIndex);
         stagedBranchLengthsByChild[childIndex] = snapshot.getEffectiveBranchLength();
         copyAdjoints(source, stagedAdjointsByChild[childIndex]);
-        stagedOrthogonalPreparedBasisByChild[childIndex] = snapshot.getOrthogonalPreparedBasis();
+        stagedPreparedBranchHandlesByChild[childIndex] = snapshot.getPreparedBranchHandle();
         stagedActiveByChild[childIndex] = true;
     }
 
     void clearStagedBranch(final int childIndex) {
         checkChildIndex(childIndex);
         stagedActiveByChild[childIndex] = false;
+        stagedPreparedBranchHandlesByChild[childIndex] = null;
     }
 
     void compactStagedBranches(final int rootIndex,
-                               final boolean useOrthogonalPreparedBasis) {
+                               final boolean usePreparedBranchHandles) {
         checkChildIndex(rootIndex);
         activeBranchCount = 0;
         for (int childIndex = 0; childIndex < nodeSlotCount; ++childIndex) {
@@ -165,21 +168,19 @@ public final class BranchGradientInputs {
             activeChildIndices[activeBranchCount] = childIndex;
             activeBranchLengths[activeBranchCount] = stagedBranchLengthsByChild[childIndex];
             activeAdjoints[activeBranchCount] = stagedAdjointsByChild[childIndex];
-            if (useOrthogonalPreparedBasis) {
-                activeOrthogonalPreparedBasis[activeBranchCount] =
-                        stagedOrthogonalPreparedBasisByChild[childIndex];
-            }
+            activePreparedBranchHandles[activeBranchCount] =
+                    usePreparedBranchHandles ? stagedPreparedBranchHandlesByChild[childIndex] : null;
             activeBranchCount++;
         }
-        hasOrthogonalPreparedBasis = useOrthogonalPreparedBasis && activeBranchCount > 0;
+        hasPreparedBranchHandles = usePreparedBranchHandles && activeBranchCount > 0;
     }
 
-    OrthogonalBlockPreparedBranchBasis getOrthogonalPreparedBasis(final int activeIndex) {
+    CanonicalPreparedBranchHandle getPreparedBranchHandle(final int activeIndex) {
         checkActiveIndex(activeIndex);
-        if (!hasOrthogonalPreparedBasis) {
-            throw new IllegalStateException("No orthogonal prepared branch basis is available.");
+        if (!hasPreparedBranchHandles) {
+            throw new IllegalStateException("No prepared branch handle is available.");
         }
-        return activeOrthogonalPreparedBasis[activeIndex];
+        return activePreparedBranchHandles[activeIndex];
     }
 
     void setRoot(final double rootDiffusionScale,

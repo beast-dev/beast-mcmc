@@ -15,7 +15,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.representation.GaussianComputationMode;
@@ -339,10 +338,10 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         final Workspace workspace = workspace();
-        if (selectionMatrixParameterization instanceof OrthogonalBlockCanonicalParameterization) {
+        if (selectionMatrixParameterization instanceof SpecializedCanonicalSelectionParameterization) {
             final double[] mean = workspace.vector0;
             getInitialMean(mean);
-            ((OrthogonalBlockCanonicalParameterization) selectionMatrixParameterization)
+            ((SpecializedCanonicalSelectionParameterization) selectionMatrixParameterization)
                     .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
             return;
         }
@@ -415,8 +414,8 @@ public class OUProcessModel extends AbstractModel
         checkSquareMatrix(out, stateDimension, "transition covariance");
         final Workspace workspace = workspace();
 
-        if (selectionMatrixParameterization instanceof OrthogonalBlockCanonicalParameterization) {
-            ((OrthogonalBlockCanonicalParameterization) selectionMatrixParameterization)
+        if (selectionMatrixParameterization instanceof SpecializedCanonicalSelectionParameterization) {
+            ((SpecializedCanonicalSelectionParameterization) selectionMatrixParameterization)
                     .fillTransitionCovariance(diffusionMatrix, dt, out);
             return;
         }

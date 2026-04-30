@@ -1,5 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
+import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
@@ -129,6 +131,52 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         return new OrthogonalBlockPreparedBranchBasis(dimension, blockParameter.getTridiagonalDDimension());
     }
 
+    @Override
+    public CanonicalPreparedBranchHandle createPreparedBranchHandle() {
+        return new OrthogonalBlockPreparedBranchHandle(createPreparedBranchBasis());
+    }
+
+    @Override
+    public int getSelectionGradientDimension() {
+        return blockParameter.getBlockDiagonalNParameters()
+                + orthogonalRotation.getOrthogonalParameter().getDimension();
+    }
+
+    @Override
+    public int getCompressedSelectionGradientDimension() {
+        return blockParameter.getCompressedDDimension();
+    }
+
+    @Override
+    public int getNativeSelectionGradientScratchDimension() {
+        return blockParameter.getBlockDiagonalNParameters();
+    }
+
+    @Override
+    public void finishNativeSelectionGradient(final double[] compressedGradient,
+                                             final double[] nativeGradientScratch,
+                                             final double[] rotationGradientFlat,
+                                             final double[] gradientOut) {
+        final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
+        blockParameter.chainGradient(compressedGradient, nativeGradientScratch);
+        final double[] angleGradient =
+                orthogonalRotation.pullBackGradientFlat(rotationGradientFlat, getDimension());
+        System.arraycopy(nativeGradientScratch, 0, gradientOut, 0, nativeBlockDim);
+        System.arraycopy(angleGradient, 0, gradientOut, nativeBlockDim, angleGradient.length);
+    }
+
+    @Override
+    public CanonicalBranchWorkspace createBranchWorkspace() {
+        return createBranchGradientWorkspace();
+    }
+
+    @Override
+    public void prepareBranch(final double dt,
+                              final double[] stationaryMean,
+                              final CanonicalPreparedBranchHandle prepared) {
+        prepareBranchBasis(dt, stationaryMean, asPreparedBasis(prepared));
+    }
+
     public void prepareBranchBasis(final double dt,
                                    final double[] stationaryMean,
                                    final OrthogonalBlockPreparedBranchBasis prepared) {
@@ -159,6 +207,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                 final CanonicalGaussianTransition out) {
         loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
         fillCanonicalTransitionDirectPrepared(prepared, workspace.transitionCovariance, workspace, out);
+    }
+
+    @Override
+    public void fillCanonicalTransitionPrepared(final CanonicalPreparedBranchHandle prepared,
+                                                final MatrixParameterInterface diffusionMatrix,
+                                                final CanonicalBranchWorkspace workspace,
+                                                final CanonicalGaussianTransition out) {
+        fillCanonicalTransitionPrepared(
+                asPreparedBasis(prepared),
+                diffusionMatrix,
+                asBranchWorkspace(workspace),
+                out);
     }
 
     public void prepareBranchCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -232,6 +292,22 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
     }
 
+    @Override
+    public void accumulateNativeGradientFromAdjointsPreparedFlat(final CanonicalPreparedBranchHandle prepared,
+                                                                 final MatrixParameterInterface diffusionMatrix,
+                                                                 final CanonicalLocalTransitionAdjoints localAdjoints,
+                                                                 final CanonicalBranchWorkspace workspace,
+                                                                 final double[] compressedDAccumulator,
+                                                                 final double[] rotationAccumulator) {
+        accumulateNativeGradientFromAdjointsPreparedFlat(
+                asPreparedBasis(prepared),
+                diffusionMatrix,
+                localAdjoints,
+                asBranchWorkspace(workspace),
+                compressedDAccumulator,
+                rotationAccumulator);
+    }
+
     private void loadOrFillPreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
                                               final MatrixParameterInterface diffusionMatrix,
                                               final OrthogonalBlockBranchGradientWorkspace workspace) {
@@ -248,6 +324,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                final OrthogonalBlockBranchGradientWorkspace workspace) {
         selectionAdjoint.accumulateMeanGradientPrepared(
                 prepared, dLogL_df, gradientAccumulator, workspace);
+    }
+
+    @Override
+    public void accumulateMeanGradientPrepared(final CanonicalPreparedBranchHandle prepared,
+                                               final double[] dLogL_df,
+                                               final double[] gradientAccumulator,
+                                               final CanonicalBranchWorkspace workspace) {
+        accumulateMeanGradientPrepared(
+                asPreparedBasis(prepared),
+                dLogL_df,
+                gradientAccumulator,
+                asBranchWorkspace(workspace));
     }
 
     public void accumulateDiffusionGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -267,6 +355,20 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 prepared, dLogL_dV, gradientAccumulator, workspace);
     }
 
+    @Override
+    public void accumulateDiffusionGradientPreparedFlat(final CanonicalPreparedBranchHandle prepared,
+                                                        final double[] dLogL_dV,
+                                                        final boolean transposeAdjoint,
+                                                        final double[] gradientAccumulator,
+                                                        final CanonicalBranchWorkspace workspace) {
+        accumulateDiffusionGradientPreparedFlat(
+                asPreparedBasis(prepared),
+                dLogL_dV,
+                transposeAdjoint,
+                gradientAccumulator,
+                asBranchWorkspace(workspace));
+    }
+
     public void fillCanonicalLocalAdjoints(final MatrixParameterInterface diffusionMatrix,
                                            final double[] stationaryMean,
                                            final double dt,
@@ -275,6 +377,22 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         refreshBasisCaches(dt);
         transitionFactory.fillCanonicalLocalAdjoints(
                 diffusionMatrix, stationaryMean, basisCache, contribution, out);
+    }
+
+    private static OrthogonalBlockPreparedBranchBasis asPreparedBasis(
+            final CanonicalPreparedBranchHandle prepared) {
+        if (!(prepared instanceof OrthogonalBlockPreparedBranchHandle)) {
+            throw new IllegalArgumentException("Expected an OrthogonalBlockPreparedBranchHandle.");
+        }
+        return ((OrthogonalBlockPreparedBranchHandle) prepared).getBasis();
+    }
+
+    private static OrthogonalBlockBranchGradientWorkspace asBranchWorkspace(
+            final CanonicalBranchWorkspace workspace) {
+        if (!(workspace instanceof OrthogonalBlockBranchGradientWorkspace)) {
+            throw new IllegalArgumentException("Expected an OrthogonalBlockBranchGradientWorkspace.");
+        }
+        return (OrthogonalBlockBranchGradientWorkspace) workspace;
     }
 
     private void fillTransitionCovarianceMatrix(final MatrixParameterInterface diffusionMatrix,

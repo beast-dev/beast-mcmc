@@ -27,6 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.framework;
 
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 
 /**
@@ -34,6 +35,12 @@ import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPrepared
  */
 public interface CanonicalPreparedBranchBasisProvider {
 
+    CanonicalPreparedBranchHandle getPreparedBranchHandle(int childNodeIndex);
+
+    /**
+     * Backward-compatible orthogonal-specific accessor.
+     */
+    @Deprecated
     OrthogonalBlockPreparedBranchBasis
     getOrthogonalPreparedBranchBasis(int childNodeIndex);
 }

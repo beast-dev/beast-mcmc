@@ -40,6 +40,7 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.framework.MatrixUtils;
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -47,7 +48,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
@@ -118,17 +119,17 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 initialCovariance);
         addModel(processModel);
 
-        final OrthogonalBlockCanonicalParameterization orthogonalSelection =
+        final SpecializedCanonicalSelectionParameterization specializedSelection =
                 processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockCanonicalParameterization
-                        ? (OrthogonalBlockCanonicalParameterization)
+                        instanceof SpecializedCanonicalSelectionParameterization
+                        ? (SpecializedCanonicalSelectionParameterization)
                         processModel.getSelectionMatrixParameterization()
                         : null;
         this.transitionCache = new CanonicalTransitionCache(
                 dimension,
                 tree.getNodeCount(),
                 processModel,
-                orthogonalSelection,
+                specializedSelection,
                 this::getEffectiveBranchLength,
                 CanonicalTransitionCacheOptions.fromSystemProperties());
 
@@ -175,6 +176,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public void fillTransitionCovariance(final double branchLength, final double[][] out) {
         ensureCurrentSnapshot();
         processModel.fillTransitionCovariance(branchLength, out);
+    }
+
+    @Override
+    public CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {
+        ensureCurrentSnapshot();
+        return transitionCache.getPreparedBranchHandle(childNodeIndex);
     }
 
     @Override

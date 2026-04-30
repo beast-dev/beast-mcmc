@@ -41,11 +41,10 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservati
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonicalOUMessagePasser;
-import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 
 /**
  * Integrator-style backend for the canonical OU tree passer path.
@@ -399,25 +398,15 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
 
         final OUProcessModel processModel =
                 ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization) {
-            final OrthogonalBlockCanonicalParameterization parameterization =
-                    (OrthogonalBlockCanonicalParameterization)
-                            processModel.getSelectionMatrixParameterization();
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
-                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameterization.getMatrixParameter();
-            if (!(blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider)) {
-                throw new IllegalStateException(
-                        "Orthogonal block native gradient requires an OrthogonalMatrixProvider rotation parameter.");
-            }
-            final OrthogonalMatrixProvider orthogonalRotation =
-                    (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
-            return blockParameter.getBlockDiagonalNParameters()
-                    + orthogonalRotation.getOrthogonalParameter().getDimension();
+        final SelectionMatrixParameterization parameterization =
+                processModel.getSelectionMatrixParameterization();
+        if (parameterization instanceof SpecializedCanonicalSelectionParameterization) {
+            return ((SpecializedCanonicalSelectionParameterization) parameterization)
+                    .getSelectionGradientDimension();
         }
 
-        return processModel.getSelectionMatrixParameterization().getMatrixParameter().getRowDimension()
-                * processModel.getSelectionMatrixParameterization().getMatrixParameter().getColumnDimension();
+        return parameterization.getMatrixParameter().getRowDimension()
+                * parameterization.getMatrixParameter().getColumnDimension();
     }
 
     private static CanonicalTipObservation[] allocateCanonicalTipObservations(final int tipCount, final int dim) {

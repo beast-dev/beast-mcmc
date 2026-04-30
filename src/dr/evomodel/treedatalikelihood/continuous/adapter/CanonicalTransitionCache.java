@@ -27,10 +27,12 @@
 
 package dr.evomodel.treedatalikelihood.continuous.adapter;
 
+import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
+import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
@@ -47,9 +49,8 @@ final class CanonicalTransitionCache {
     private final OUProcessModel processModel;
     private final BranchLengthProvider branchLengthProvider;
     private final BranchCacheEntry[] entries;
-    private final OrthogonalBlockCanonicalParameterization orthogonalSelection;
-    private final ThreadLocal<OrthogonalBlockBranchGradientWorkspace>
-            orthogonalWorkspace;
+    private final SpecializedCanonicalSelectionParameterization specializedSelection;
+    private final ThreadLocal<CanonicalBranchWorkspace> specializedWorkspace;
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
     private boolean stationaryMeanSnapshotValid;
@@ -57,7 +58,7 @@ final class CanonicalTransitionCache {
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
                              final OUProcessModel processModel,
-                             final OrthogonalBlockCanonicalParameterization orthogonalSelection,
+                             final SpecializedCanonicalSelectionParameterization specializedSelection,
                              final BranchLengthProvider branchLengthProvider,
                              final CanonicalTransitionCacheOptions options) {
         this.dimension = dimension;
@@ -67,12 +68,12 @@ final class CanonicalTransitionCache {
         for (int i = 0; i < nodeCount; i++) {
             this.entries[i] = new BranchCacheEntry();
         }
-        this.orthogonalSelection = orthogonalSelection;
-        this.orthogonalWorkspace =
-                orthogonalSelection == null
+        this.specializedSelection = specializedSelection;
+        this.specializedWorkspace =
+                specializedSelection == null
                         ? null
-                        : ThreadLocal.withInitial(orthogonalSelection::createBranchGradientWorkspace);
-        this.stationaryMeanScratch = orthogonalSelection == null ? null : new double[dimension];
+                        : ThreadLocal.withInitial(specializedSelection::createBranchWorkspace);
+        this.stationaryMeanScratch = specializedSelection == null ? null : new double[dimension];
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
         this.stationaryMeanSnapshotValid = false;
     }
@@ -83,8 +84,16 @@ final class CanonicalTransitionCache {
 
     OrthogonalBlockPreparedBranchBasis
     getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
+        final CanonicalPreparedBranchHandle handle = getPreparedBranchHandle(childNodeIndex);
+        if (handle instanceof OrthogonalBlockPreparedBranchHandle) {
+            return ((OrthogonalBlockPreparedBranchHandle) handle).getBasis();
+        }
+        return null;
+    }
+
+    CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {
         final CanonicalPreparedBranchSnapshot snapshot = getPreparedBranchSnapshot(childNodeIndex);
-        return snapshot == null ? null : snapshot.getOrthogonalPreparedBasis();
+        return snapshot == null ? null : snapshot.getPreparedBranchHandle();
     }
 
     CanonicalPreparedBranchSnapshot getPreparedBranchSnapshot(final int childNodeIndex) {
@@ -143,7 +152,7 @@ final class CanonicalTransitionCache {
                     != Double.doubleToLongBits(effectiveBranchLength)) {
                 entry.preparedBasisValid = false;
             }
-            final OrthogonalBlockPreparedBranchBasis prepared =
+            final CanonicalPreparedBranchHandle prepared =
                     fillCachedTransition(entry, effectiveBranchLength);
             entry.snapshot = new CanonicalPreparedBranchSnapshot(
                     childNodeIndex,
@@ -158,29 +167,29 @@ final class CanonicalTransitionCache {
         return entry.transition;
     }
 
-    private OrthogonalBlockPreparedBranchBasis fillCachedTransition(final BranchCacheEntry entry,
-                                                                    final double effectiveBranchLength) {
-        if (orthogonalSelection == null) {
+    private CanonicalPreparedBranchHandle fillCachedTransition(final BranchCacheEntry entry,
+                                                               final double effectiveBranchLength) {
+        if (specializedSelection == null) {
             processModel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
             return null;
         }
 
-        OrthogonalBlockPreparedBranchBasis prepared =
-                entry.orthogonalPreparedBasis;
+        CanonicalPreparedBranchHandle prepared =
+                entry.preparedBranchHandle;
         if (prepared == null) {
-            prepared = orthogonalSelection.createPreparedBranchBasis();
-            entry.orthogonalPreparedBasis = prepared;
+            prepared = specializedSelection.createPreparedBranchHandle();
+            entry.preparedBranchHandle = prepared;
             entry.preparedBasisValid = false;
         }
         ensureStationaryMeanSnapshot();
         if (!entry.preparedBasisValid) {
-            orthogonalSelection.prepareBranchBasis(effectiveBranchLength, stationaryMeanScratch, prepared);
+            specializedSelection.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
             entry.preparedBasisValid = true;
         }
-        orthogonalSelection.fillCanonicalTransitionPrepared(
+        specializedSelection.fillCanonicalTransitionPrepared(
                 prepared,
                 processModel.getDiffusionMatrix(),
-                orthogonalWorkspace.get(),
+                specializedWorkspace.get(),
                 entry.transition);
         return prepared;
     }
@@ -212,23 +221,23 @@ final class CanonicalTransitionCache {
     private static final class BranchCacheEntry {
         private CanonicalGaussianTransition transition;
         private CanonicalPreparedBranchSnapshot snapshot;
-        private OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis;
+        private CanonicalPreparedBranchHandle preparedBranchHandle;
         private double effectiveBranchLength;
         private boolean valid;
         private boolean preparedBasisValid;
 
         private void invalidate(final CanonicalTransitionCacheInvalidationReason reason) {
             valid = false;
-            if (orthogonalPreparedBasis == null) {
+            if (preparedBranchHandle == null) {
                 preparedBasisValid = false;
                 return;
             }
             if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
-                orthogonalPreparedBasis.invalidateCovariance();
+                preparedBranchHandle.invalidateCovariance();
                 return;
             }
             preparedBasisValid = false;
-            orthogonalPreparedBasis.invalidateCovariance();
+            preparedBranchHandle.invalidateCovariance();
         }
     }
 

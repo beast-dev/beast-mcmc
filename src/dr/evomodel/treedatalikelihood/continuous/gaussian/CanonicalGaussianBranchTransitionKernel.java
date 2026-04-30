@@ -1,7 +1,4 @@
-package dr.inference.timeseries.representation;
-
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+package dr.evomodel.treedatalikelihood.continuous.gaussian;
 
 /**
  * Branch-length API for linear Gaussian transitions in canonical form.

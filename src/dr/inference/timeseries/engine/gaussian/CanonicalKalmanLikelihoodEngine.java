@@ -7,7 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGauss
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 

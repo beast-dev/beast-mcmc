@@ -38,7 +38,7 @@ import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
 import dr.inference.timeseries.likelihood.GaussianTimeSeriesLikelihoodFactory;
 import dr.inference.timeseries.likelihood.TimeSeriesLikelihood;
-import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

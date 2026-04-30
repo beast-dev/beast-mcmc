@@ -10,7 +10,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;

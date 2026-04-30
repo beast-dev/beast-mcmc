@@ -23,7 +23,7 @@ import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 

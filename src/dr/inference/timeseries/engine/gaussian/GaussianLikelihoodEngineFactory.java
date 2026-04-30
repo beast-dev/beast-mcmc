@@ -3,7 +3,7 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 

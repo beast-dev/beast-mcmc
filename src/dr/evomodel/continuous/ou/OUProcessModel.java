@@ -611,6 +611,74 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
+    public double contractBranchLengthGradientFlat(final double dt,
+                                                   final double[] dLogL_dF,
+                                                   final double[] dLogL_df,
+                                                   final double[] dLogL_dV,
+                                                   final boolean transposeCovarianceAdjoint) {
+        checkFlatSquare(dLogL_dF, stateDimension, "transition adjoint");
+        checkVectorLength(dLogL_df, stateDimension, "transition offset adjoint");
+        checkFlatSquare(dLogL_dV, stateDimension, "covariance adjoint");
+
+        final int d = stateDimension;
+        final Workspace workspace = workspace();
+        final double[][] a = workspace.squareMatrices[0];
+        final double[][] q = workspace.squareMatrices[1];
+        final double[][] f = workspace.squareMatrices[2];
+        final double[][] dFdt = workspace.squareMatrices[3];
+        final double[][] fq = workspace.squareMatrices[4];
+        final double[] mu = workspace.vector0;
+
+        selectionMatrixParameterization.fillSelectionMatrix(a);
+        diffusionMatrixParameterization.fillDiffusionMatrix(q);
+        fillTransitionMatrix(dt, f);
+        getInitialMean(mu);
+
+        double score = 0.0;
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                double value = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    value -= a[i][k] * f[k][j];
+                }
+                dFdt[i][j] = value;
+                score += dLogL_dF[iOff + j] * value;
+            }
+        }
+
+        for (int i = 0; i < d; ++i) {
+            double dfdt = 0.0;
+            for (int j = 0; j < d; ++j) {
+                dfdt -= dFdt[i][j] * mu[j];
+            }
+            score += dLogL_df[i] * dfdt;
+        }
+
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                double value = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    value += f[i][k] * q[k][j];
+                }
+                fq[i][j] = value;
+            }
+        }
+
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                double value = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    value += fq[i][k] * f[j][k];
+                }
+                score += flatSquareValue(dLogL_dV, i, j, d, transposeCovarianceAdjoint) * value;
+            }
+        }
+
+        return score;
+    }
+
     /**
      * V-path gradient via Van Loan adjoint backpropagation.
      *

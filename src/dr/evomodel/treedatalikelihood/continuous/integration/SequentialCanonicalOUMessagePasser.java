@@ -56,6 +56,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private static final double BRANCH_LENGTH_FD_ABSOLUTE_STEP = 1.0e-8;
     private static final String BRANCH_GRADIENT_THREADS_PROPERTY =
             "beast.experimental.canonicalBranchGradientThreads";
+    private static final String BRANCH_LENGTH_FD_FALLBACK_PROPERTY =
+            "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
 
     private final Tree tree;
     private final int dim;
@@ -71,6 +73,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final BranchGradientWorkspace[] branchGradientWorkspaces;
     private final CanonicalBranchAdjointPreparer branchAdjointPreparer;
     private final CanonicalTreeGradientEngine treeGradientEngine;
+    private final CanonicalBranchLengthGradientEngine branchLengthGradientEngine;
     private final CanonicalLegacyGradientCompatibility legacyGradientCompatibility;
 
     public SequentialCanonicalOUMessagePasser(final Tree tree, final int dim) {
@@ -110,6 +113,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 branchGradientTaskPool,
                 mainWorkspace,
                 branchGradientWorkspaces);
+        this.branchLengthGradientEngine = new CanonicalBranchLengthGradientEngine();
         this.legacyGradientCompatibility = new CanonicalLegacyGradientCompatibility(
                 tree,
                 dim,
@@ -201,12 +205,21 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                              final double[] gradT) {
-        Arrays.fill(gradT, 0.0);
         ensureGradientState();
 
         final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
         try {
             final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+            if (!Boolean.getBoolean(BRANCH_LENGTH_FD_FALLBACK_PROPERTY)) {
+                branchAdjointPreparer.prepare(transitionProvider, stateStore, preparedBranchGradientInputs);
+                branchLengthGradientEngine.compute(
+                        ouProvider.getProcessModel(),
+                        preparedBranchGradientInputs,
+                        gradT);
+                return;
+            }
+
+            Arrays.fill(gradT, 0.0);
             final int rootIndex = tree.getRoot().getNumber();
             for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
                 if (childIndex == rootIndex) {

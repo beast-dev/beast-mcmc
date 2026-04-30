@@ -200,28 +200,13 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             throw new IllegalArgumentException(
                     "prepared basis dimension must be " + dimension + " but is " + prepared.dimension);
         }
-        if (stationaryMean.length != dimension) {
-            throw new IllegalArgumentException(
-                    "stationaryMean must have length " + dimension + " but has " + stationaryMean.length);
-        }
-
-        prepared.dt = dt;
-        System.arraycopy(stationaryMean, 0, prepared.stationaryMean, 0, dimension);
-        orthogonalRotation.fillOrthogonalMatrix(prepared.rMatrix.data);
-        orthogonalRotation.fillOrthogonalTranspose(prepared.rtMatrix.data);
-        blockParameter.fillBlockDiagonalElements(prepared.blockDParams);
-        expSolver.compute(prepared.blockDParams, dt, prepared.expD);
-        multiplyRowMajor(
-                prepared.rMatrix.data,
-                prepared.expD.data,
-                dimension,
-                prepared.workMatrix);
-        multiply(
-                prepared.workMatrix,
-                prepared.rtMatrix.data,
-                dimension,
-                prepared.transitionMatrix);
-        prepared.covariancePrepared = false;
+        OrthogonalBlockPreparedBasisBuilder.prepare(
+                blockParameter,
+                orthogonalRotation,
+                expSolver,
+                dt,
+                stationaryMean,
+                prepared);
     }
 
     public OrthogonalBlockBranchGradientWorkspace createBranchGradientWorkspace() {
@@ -243,11 +228,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                         final MatrixParameterInterface diffusionMatrix,
                                         final OrthogonalBlockBranchGradientWorkspace workspace) {
         fillTransitionCovarianceMatrixPrepared(prepared, diffusionMatrix, workspace, workspace.transitionCovariance);
-        prepared.qMatrix.set(workspace.qMatrix);
-        prepared.stationaryCovDBasis.set(workspace.stationaryCovDBasis);
-        prepared.transitionCovDBasis.set(workspace.transitionCovDBasis);
-        prepared.transitionCovariance.set(workspace.transitionCovariance);
-        prepared.covariancePrepared = true;
+        OrthogonalBlockTransitionCovarianceSolver.storePreparedCovariance(prepared, workspace);
     }
 
     public void accumulateNativeGradientFromAdjointsPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -321,10 +302,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             prepareBranchCovariance(prepared, diffusionMatrix, workspace);
             return;
         }
-        workspace.qMatrix.set(prepared.qMatrix);
-        workspace.stationaryCovDBasis.set(prepared.stationaryCovDBasis);
-        workspace.transitionCovDBasis.set(prepared.transitionCovDBasis);
-        workspace.transitionCovariance.set(prepared.transitionCovariance);
+        OrthogonalBlockTransitionCovarianceSolver.copyPreparedCovariance(prepared, workspace);
     }
 
     public void accumulateMeanGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -425,84 +403,33 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                 final double dt,
                                                 final DenseMatrix64F out) {
         refreshBasisCaches(dt);
-        fillDenseMatrix(diffusionMatrix, qMatrix);
-        CommonOps.mult(rtMatrix, qMatrix, temp1);
-        CommonOps.mult(temp1, rMatrix, qDBasis);
-        lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, temp1);
-        CommonOps.multTransB(temp1, expD, transitionCovDBasis);
-        CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
-        CommonOps.mult(rMatrix, transitionCovDBasis, temp1);
-        CommonOps.mult(temp1, rtMatrix, out);
-        symmetrize(out);
+        OrthogonalBlockTransitionCovarianceSolver.fillTransitionCovariance(
+                diffusionMatrix,
+                rMatrix,
+                rtMatrix,
+                expD,
+                blockDParams,
+                lyapunovSolver,
+                qMatrix,
+                qDBasis,
+                stationaryCovDBasis,
+                transitionCovDBasis,
+                temp1,
+                out,
+                false);
     }
 
     private void fillCanonicalTransitionDirect(final double[] stationaryMean,
                                                final CanonicalGaussianTransition out) {
-        final int d = getDimension();
-        final double[] transitionData = transitionMatrix.data;
-        final double[] transitionOffset = transitionOffsetScratch;
-        fillTransitionOffset(stationaryMean, transitionOffset);
-
-        final double logDet = copyAndInvertPositiveDefiniteFlat(
+        OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
+                transitionMatrix,
                 transitionCovariance,
+                stationaryMean,
+                transitionOffsetScratch,
                 transitionCovarianceArrayScratch,
-                out.precisionYY);
-
-        // J_yx = -P F
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += out.precisionYY[iOff + k] * transitionData[k * d + j];
-                }
-                out.precisionYX[iOff + j] = -sum;
-            }
-        }
-
-        // J_xy = J_yx^T
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out.precisionXY[i * d + j] = out.precisionYX[j * d + i];
-            }
-        }
-
-        // J_xx = F^T P F = -(F^T J_yx)
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum -= transitionData[k * d + i] * out.precisionYX[k * d + j];
-                }
-                out.precisionXX[i * d + j] = sum;
-            }
-        }
-
-        // h_y = P f
-        for (int i = 0; i < d; ++i) {
-            double sum = 0.0;
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                sum += out.precisionYY[iOff + j] * transitionOffset[j];
-            }
-            out.informationY[i] = sum;
-        }
-
-        // h_x = -F^T h_y
-        for (int i = 0; i < d; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < d; ++j) {
-                sum += transitionData[j * d + i] * out.informationY[j];
-            }
-            out.informationX[i] = -sum;
-        }
-
-        double quadratic = 0.0;
-        for (int i = 0; i < d; ++i) {
-            quadratic += transitionOffset[i] * out.informationY[i];
-        }
-        out.logNormalizer = 0.5 * (d * Math.log(2.0 * Math.PI) + logDet + quadratic);
+                choleskyScratch,
+                lowerInverseScratch,
+                out);
     }
 
     public void accumulateNativeGradientFromTransition(final double dt,
@@ -574,14 +501,13 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 transitionMatrixArrayScratch,
                 denseAdjointScratch);
 
-        blockParameter.chainGradient(transitionMatrixArrayScratch, precisionFlat);
-        final double[] angleGradient = orthogonalRotation.pullBackGradient(denseAdjointScratch);
-        for (int i = 0; i < nativeBlockDim; ++i) {
-            gradientAccumulator[i] += precisionFlat[i];
-        }
-        for (int i = 0; i < angleGradient.length; ++i) {
-            gradientAccumulator[nativeBlockDim + i] += angleGradient[i];
-        }
+        OrthogonalBlockGradientPullback.accumulateNativeParameterGradient(
+                blockParameter,
+                orthogonalRotation,
+                transitionMatrixArrayScratch,
+                denseAdjointScratch,
+                precisionFlat,
+                gradientAccumulator);
     }
 
     public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
@@ -808,83 +734,35 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                         final MatrixParameterInterface diffusionMatrix,
                                                         final OrthogonalBlockBranchGradientWorkspace workspace,
                                                         final DenseMatrix64F out) {
-        fillDenseMatrix(diffusionMatrix, workspace.qMatrix);
-        CommonOps.mult(prepared.rtMatrix, workspace.qMatrix, workspace.temp1);
-        CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.qDBasis);
-        workspace.lyapunovSolver.solve(prepared.blockDParams, workspace.qDBasis, workspace.stationaryCovDBasis);
-        CommonOps.mult(prepared.expD, workspace.stationaryCovDBasis, workspace.temp1);
-        CommonOps.multTransB(workspace.temp1, prepared.expD, workspace.transitionCovDBasis);
-        CommonOps.subtract(workspace.stationaryCovDBasis, workspace.transitionCovDBasis, workspace.transitionCovDBasis);
-        symmetrize(workspace.transitionCovDBasis);
-        CommonOps.mult(prepared.rMatrix, workspace.transitionCovDBasis, workspace.temp1);
-        CommonOps.mult(workspace.temp1, prepared.rtMatrix, out);
-        symmetrize(out);
+        OrthogonalBlockTransitionCovarianceSolver.fillTransitionCovariance(
+                diffusionMatrix,
+                prepared.rMatrix,
+                prepared.rtMatrix,
+                prepared.expD,
+                prepared.blockDParams,
+                workspace.lyapunovSolver,
+                workspace.qMatrix,
+                workspace.qDBasis,
+                workspace.stationaryCovDBasis,
+                workspace.transitionCovDBasis,
+                workspace.temp1,
+                out,
+                true);
     }
 
     private void fillCanonicalTransitionDirectPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                        final DenseMatrix64F transitionCovariance,
                                                        final OrthogonalBlockBranchGradientWorkspace workspace,
                                                        final CanonicalGaussianTransition out) {
-        final int dimension = prepared.dimension;
-        final double[] transitionData = prepared.transitionMatrix.data;
-        fillTransitionOffset(prepared.transitionMatrix, prepared.stationaryMean, workspace.transitionOffsetScratch);
-
-        final double logDet = OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
+        OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
+                prepared.transitionMatrix,
                 transitionCovariance,
+                prepared.stationaryMean,
+                workspace.transitionOffsetScratch,
                 workspace.transitionCovarianceArrayScratch,
-                out.precisionYY,
                 workspace.choleskyScratch,
-                workspace.lowerInverseScratch);
-
-        for (int i = 0; i < dimension; ++i) {
-            final int iOff = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += out.precisionYY[iOff + k] * transitionData[k * dimension + j];
-                }
-                out.precisionYX[iOff + j] = -sum;
-            }
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out.precisionXY[i * dimension + j] = out.precisionYX[j * dimension + i];
-            }
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum -= transitionData[k * dimension + i] * out.precisionYX[k * dimension + j];
-                }
-                out.precisionXX[i * dimension + j] = sum;
-            }
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            double sum = 0.0;
-            final int iOff = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                sum += out.precisionYY[iOff + j] * workspace.transitionOffsetScratch[j];
-            }
-            out.informationY[i] = sum;
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < dimension; ++j) {
-                sum += transitionData[j * dimension + i] * out.informationY[j];
-            }
-            out.informationX[i] = -sum;
-        }
-
-        double quadratic = 0.0;
-        for (int i = 0; i < dimension; ++i) {
-            quadratic += workspace.transitionOffsetScratch[i] * out.informationY[i];
-        }
-        out.logNormalizer = 0.5 * (dimension * Math.log(2.0 * Math.PI) + logDet + quadratic);
+                workspace.lowerInverseScratch,
+                out);
     }
 
     private void accumulateNativeGradientFromTransitionPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -1239,21 +1117,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
     }
 
-    private static void fillTransitionOffset(final DenseMatrix64F transitionMatrix,
-                                             final double[] stationaryMean,
-                                             final double[] out) {
-        final int dimension = transitionMatrix.numRows;
-        final double[] transitionData = transitionMatrix.data;
-        for (int i = 0; i < dimension; ++i) {
-            double transformedMean = 0.0;
-            final int rowOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                transformedMean += transitionData[rowOffset + j] * stationaryMean[j];
-            }
-            out[i] = stationaryMean[i] - transformedMean;
-        }
-    }
-
     private void refreshBasisCaches(final double dt) {
         final int d = getDimension();
         orthogonalRotation.fillOrthogonalMatrix(rData);
@@ -1306,8 +1169,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
 
         System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
         System.arraycopy(rtData, 0, rtMatrix.data, 0, d * d);
-        multiplyRowMajor(rData, expD.data, d, workMatrix);
-        multiply(workMatrix, rtData, d, transitionMatrix);
+        OrthogonalBlockPreparedBasisBuilder.fillTransitionMatrix(
+                rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
         System.arraycopy(rData, 0, cachedRData, 0, rData.length);
         System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
         cachedBasisDt = dt;
@@ -1324,37 +1187,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             cachedExpDt = dt;
             expCacheValid = true;
             basisCacheValid = false;
-        }
-    }
-
-    private static void multiplyRowMajor(final double[] leftRowMajor,
-                                         final double[] rightRowMajor,
-                                         final int dimension,
-                                         final double[][] out) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += leftRowMajor[i * dimension + k] * rightRowMajor[k * dimension + j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private static void multiply(final double[][] left,
-                                 final double[] rightRowMajor,
-                                 final int dimension,
-                                 final DenseMatrix64F out) {
-        final double[] outData = out.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += left[i][k] * rightRowMajor[k * dimension + j];
-                }
-                outData[i * dimension + j] = sum;
-            }
         }
     }
 
@@ -1574,17 +1406,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 data[i * dimension + j] = source[i][j];
             }
         }
-    }
-
-    private double copyAndInvertPositiveDefinite(final DenseMatrix64F source,
-                                                 final double[][] matrixOut,
-                                                 final double[][] inverseOut) {
-        return OrthogonalBlockPositiveDefiniteInverter.copyAndInvert(
-                source,
-                matrixOut,
-                inverseOut,
-                choleskyScratch,
-                lowerInverseScratch);
     }
 
     private double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,

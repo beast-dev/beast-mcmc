@@ -29,6 +29,7 @@ package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
@@ -166,16 +167,14 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertEquals("joint branch-adjoint reuse", 1, countingPasser.jointGradientCalls);
 
         refreshMessages(setup);
-        final double[] separateA = new double[dimTrait * dimTrait];
-        final double[] separateQ = new double[dimTrait * dimTrait];
-        final double[] separateMu = new double[dimTrait];
-        setup.passer.computeGradientA(setup.provider, separateA);
-        setup.passer.computeGradientQ(setup.provider, separateQ);
-        setup.passer.computeGradientMu(setup.provider, separateMu);
+        final double[] directA = new double[dimTrait * dimTrait];
+        final double[] directQ = new double[dimTrait * dimTrait];
+        final double[] directMu = new double[dimTrait];
+        setup.passer.computeJointGradients(setup.provider, directA, directQ, directMu);
 
-        assertArrayEquals("joint vs separate A", separateA, jointA, 1.0e-11);
-        assertArrayEquals("joint vs separate Q", separateQ, jointQ, 1.0e-11);
-        assertArrayEquals("joint vs separate mu", separateMu, jointMu, 1.0e-11);
+        assertArrayEquals("cached vs direct joint A", directA, jointA, 1.0e-11);
+        assertArrayEquals("cached vs direct joint Q", directQ, jointQ, 1.0e-11);
+        assertArrayEquals("cached vs direct joint mu", directMu, jointMu, 1.0e-11);
     }
 
     public void testStandaloneIntegratorModelDirtyInvalidatesJointGradientCache() {
@@ -268,6 +267,41 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertArrayEquals("orthogonal joint A threads", sequentialA, parallelA, 1.0e-11);
         assertArrayEquals("orthogonal joint Q threads", sequentialQ, parallelQ, 1.0e-11);
         assertArrayEquals("orthogonal joint mu threads", sequentialMu, parallelMu, 1.0e-11);
+    }
+
+    public void testOrthogonalBlockPreparedBranchSnapshotReusedUntilBranchLengthChanges() {
+        System.out.println("\nTest: orthogonal-block prepared branch snapshot cache reuse and branch-length invalidation");
+
+        final OrthogonalBlockOUSetup setup =
+                buildOrthogonalBlockOUSetup("canonOrthSnapshotCache_partial", buildPartiallyObservedTips());
+        final int childNodeIndex = firstNonRootNodeIndex();
+
+        final CanonicalPreparedBranchSnapshot first =
+                setup.orthogonal.provider.getPreparedBranchSnapshot(childNodeIndex);
+        final CanonicalPreparedBranchSnapshot second =
+                setup.orthogonal.provider.getPreparedBranchSnapshot(childNodeIndex);
+
+        assertSame("prepared branch snapshot reused on cache hit", first, second);
+        assertSame("orthogonal prepared basis reused on cache hit",
+                first.getOrthogonalPreparedBasis(), second.getOrthogonalPreparedBasis());
+
+        setup.orthogonal.branchScale[childNodeIndex] += 0.125;
+        final CanonicalPreparedBranchSnapshot afterLengthChange =
+                setup.orthogonal.provider.getPreparedBranchSnapshot(childNodeIndex);
+
+        assertNotSame("branch length change refreshes snapshot", first, afterLengthChange);
+        assertSame("prepared basis buffer is retained across snapshot refresh",
+                first.getOrthogonalPreparedBasis(), afterLengthChange.getOrthogonalPreparedBasis());
+    }
+
+    private int firstNonRootNodeIndex() {
+        final int rootIndex = treeModel.getRoot().getNumber();
+        for (int nodeIndex = 0; nodeIndex < treeModel.getNodeCount(); ++nodeIndex) {
+            if (nodeIndex != rootIndex) {
+                return nodeIndex;
+            }
+        }
+        throw new IllegalStateException("Tree has no non-root node");
     }
 
     private void assertArrayEquals(final String label,

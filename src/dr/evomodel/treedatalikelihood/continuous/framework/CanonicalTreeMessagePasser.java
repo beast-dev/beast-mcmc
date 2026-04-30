@@ -81,14 +81,10 @@ public interface CanonicalTreeMessagePasser {
     @Deprecated
     void computeGradientMu(CanonicalBranchTransitionProvider transitionProvider, double[] gradMu);
 
-    default void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
-                                       final double[] gradA,
-                                       final double[] gradQ,
-                                       final double[] gradMu) {
-        computeGradientA(transitionProvider, gradA);
-        computeGradientQ(transitionProvider, gradQ);
-        computeGradientMu(transitionProvider, gradMu);
-    }
+    void computeJointGradients(CanonicalBranchTransitionProvider transitionProvider,
+                               double[] gradA,
+                               double[] gradQ,
+                               double[] gradMu);
 
     void storeState();
 

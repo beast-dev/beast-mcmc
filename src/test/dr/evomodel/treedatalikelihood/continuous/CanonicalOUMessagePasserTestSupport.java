@@ -84,7 +84,7 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
 
         refreshMessages(setup);
         final double[] gradAnalytic = new double[d2];
-        setup.passer.computeGradientQ(setup.provider, gradAnalytic);
+        computeJointGradientQ(setup, gradAnalytic, d2);
 
         final double[] gradNumeric = new double[d2];
         final double[] gradAnalyticSymmetric = new double[d2];
@@ -152,7 +152,7 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
 
         refreshMessages(setup);
         final double[] gradAnalytic = new double[d2];
-        setup.passer.computeGradientA(setup.provider, gradAnalytic);
+        computeJointGradientA(setup, gradAnalytic);
 
         final double[] gradNumeric = new double[d2];
         for (int ij = 0; ij < d2; ij++) {
@@ -181,7 +181,7 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
     protected void checkGradientMu(final OUSetup setup, final String label) {
         refreshMessages(setup);
         final double[] gradAnalytic = new double[dimTrait];
-        setup.passer.computeGradientMu(setup.provider, gradAnalytic);
+        computeJointGradientMu(setup, gradAnalytic, dimTrait * dimTrait);
 
         final double[] gradNumeric = new double[dimTrait];
         for (int i = 0; i < dimTrait; i++) {
@@ -249,6 +249,34 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         setup.passer.computePreOrder(setup.provider, setup.rootPrior);
     }
 
+    protected void computeJointGradientA(final OUSetup setup, final double[] gradA) {
+        setup.passer.computeJointGradients(
+                setup.provider,
+                gradA,
+                new double[dimTrait * dimTrait],
+                new double[dimTrait]);
+    }
+
+    protected void computeJointGradientQ(final OUSetup setup,
+                                         final double[] gradQ,
+                                         final int selectionGradientDimension) {
+        setup.passer.computeJointGradients(
+                setup.provider,
+                new double[selectionGradientDimension],
+                gradQ,
+                new double[dimTrait]);
+    }
+
+    protected void computeJointGradientMu(final OUSetup setup,
+                                          final double[] gradMu,
+                                          final int selectionGradientDimension) {
+        setup.passer.computeJointGradients(
+                setup.provider,
+                new double[selectionGradientDimension],
+                new double[dimTrait * dimTrait],
+                gradMu);
+    }
+
     protected void checkOrthogonalBlockLikelihoodMatchesDense(final OrthogonalBlockOUSetup setup,
                                                               final String label) {
         final double orthogonalLogLikelihood =
@@ -266,7 +294,7 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         refreshMessages(setup.orthogonal);
         final int dimension = setup.nativeParameter.getDimension();
         final double[] gradAnalytic = new double[dimension];
-        setup.orthogonal.passer.computeGradientA(setup.orthogonal.provider, gradAnalytic);
+        computeJointGradientA(setup.orthogonal, gradAnalytic);
 
         final double[] gradNumeric = new double[dimension];
         for (int i = 0; i < dimension; i++) {
@@ -300,8 +328,8 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         final int d2 = dimTrait * dimTrait;
         final double[] orthogonalGradient = new double[d2];
         final double[] denseGradient = new double[d2];
-        setup.orthogonal.passer.computeGradientQ(setup.orthogonal.provider, orthogonalGradient);
-        setup.dense.passer.computeGradientQ(setup.dense.provider, denseGradient);
+        computeJointGradientQ(setup.orthogonal, orthogonalGradient, setup.nativeParameter.getDimension());
+        computeJointGradientQ(setup.dense, denseGradient, d2);
 
         System.out.printf("  Orthogonal ∂logL/∂Q: %s%n", Arrays.toString(orthogonalGradient));
         System.out.printf("  Dense      ∂logL/∂Q: %s%n", Arrays.toString(denseGradient));

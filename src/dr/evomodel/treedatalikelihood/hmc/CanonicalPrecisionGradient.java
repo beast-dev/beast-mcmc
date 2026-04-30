@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.MatrixParameterInterface;
 
 /**
@@ -37,20 +38,20 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public final class CanonicalPrecisionGradient extends PrecisionGradient {
 
-    private final ContinuousDataLikelihoodDelegate continuousData;
+    private final CanonicalOUGradientAdapter gradientAdapter;
     private final MatrixParameterInterface sourceMatrixParameter;
 
     public CanonicalPrecisionGradient(final TreeDataLikelihood likelihood,
                                       final ContinuousDataLikelihoodDelegate continuousData,
                                       final MatrixParameterInterface parameter) {
         super(new CanonicalGradientWrtPrecisionProvider(parameter.getColumnDimension()), likelihood, parameter);
-        this.continuousData = continuousData;
+        this.gradientAdapter = continuousData.getCanonicalOUGradientAdapter();
         this.sourceMatrixParameter = parameter;
     }
 
     @Override
     public double[] getGradientLogDensity() {
         return super.getGradientLogDensity(
-                continuousData.getCanonicalPrecisionSourceGradient(sourceMatrixParameter));
+                gradientAdapter.getPrecisionSourceGradient(sourceMatrixParameter));
     }
 }

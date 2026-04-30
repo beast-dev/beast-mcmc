@@ -56,6 +56,10 @@ import java.util.Arrays;
  */
 public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMessagePasser {
 
+    private static final String PHASE_POSTORDER = "postorder";
+    private static final String PHASE_PREORDER = "preorder";
+    private static final String PHASE_GRADIENT_PREP = "gradientPrep";
+    private static final String PHASE_BRANCH_LENGTH_GRADIENT = "branchLengthGradient";
     private static final double BRANCH_LENGTH_FD_RELATIVE_STEP = 1.0e-6;
     private static final double BRANCH_LENGTH_FD_ABSOLUTE_STEP = 1.0e-8;
     private static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
@@ -202,20 +206,13 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         private void addBranch(final int childIndex,
                                final double branchLength,
                                final CanonicalLocalTransitionAdjoints source,
-                               final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection,
-                               final double[] stationaryMean) {
+                               final OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis orthogonalPreparedBasis) {
             if (activeBranchCount >= capacity) {
                 throw new IllegalStateException("BranchGradientInputs capacity exceeded.");
             }
-            if (orthogonalSelection != null) {
+            if (orthogonalPreparedBasis != null) {
                 hasOrthogonalPreparedBasis = true;
-                OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis prepared =
-                        activeOrthogonalPreparedBasis[activeBranchCount];
-                if (prepared == null) {
-                    prepared = orthogonalSelection.createPreparedBranchBasis();
-                    activeOrthogonalPreparedBasis[activeBranchCount] = prepared;
-                }
-                orthogonalSelection.prepareBranchBasis(branchLength, stationaryMean, prepared);
+                activeOrthogonalPreparedBasis[activeBranchCount] = orthogonalPreparedBasis;
             }
             activeChildIndices[activeBranchCount] = childIndex;
             activeBranchLengths[activeBranchCount] = branchLength;
@@ -272,21 +269,20 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         }
 
         private void prepareOrthogonalBasisForActiveBranches(
-                final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection,
-                final double[] stationaryMean) {
-            if (orthogonalSelection == null) {
+                final HomogeneousCanonicalOUBranchTransitionProvider provider) {
+            if (provider == null) {
                 hasOrthogonalPreparedBasis = false;
                 return;
             }
 
             for (int activeIndex = 0; activeIndex < activeBranchCount; ++activeIndex) {
-                OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis prepared =
-                        activeOrthogonalPreparedBasis[activeIndex];
+                final OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis prepared =
+                        provider.getOrthogonalPreparedBranchBasis(activeChildIndices[activeIndex]);
                 if (prepared == null) {
-                    prepared = orthogonalSelection.createPreparedBranchBasis();
-                    activeOrthogonalPreparedBasis[activeIndex] = prepared;
+                    hasOrthogonalPreparedBasis = false;
+                    return;
                 }
-                orthogonalSelection.prepareBranchBasis(activeBranchLengths[activeIndex], stationaryMean, prepared);
+                activeOrthogonalPreparedBasis[activeIndex] = prepared;
             }
             hasOrthogonalPreparedBasis = activeBranchCount > 0;
         }
@@ -477,10 +473,10 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             try {
                 return Math.max(1, Integer.parseInt(propertyValue));
             } catch (NumberFormatException ignored) {
-                // Fall back to the default hardware-concurrency choice below.
+                // Fall back to the reproducible default below.
             }
         }
-        return Math.max(1, Runtime.getRuntime().availableProcessors());
+        return 1;
     }
 
     private int branchGradientChunkSize(final int taskLimit,
@@ -522,16 +518,21 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             throw new UnsupportedOperationException("Single-node trees are not yet supported by the canonical OU passer.");
         }
 
-        for (int i = 0; i < nodeCount; i++) {
-            if (!tree.isExternal(tree.getNode(i))) {
-                computePostOrderAtInternalNode(i, transitionProvider, mainWorkspace);
+        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_POSTORDER);
+        try {
+            for (int i = 0; i < nodeCount; i++) {
+                if (!tree.isExternal(tree.getNode(i))) {
+                    computePostOrderAtInternalNode(i, transitionProvider, mainWorkspace);
+                }
             }
-        }
 
-        final int rootIndex = tree.getRoot().getNumber();
-        transitionProvider.fillTraitCovariance(mainWorkspace.traitCovariance);
-        hasPostOrderState = true;
-        return rootPrior.computeLogMarginalLikelihood(postOrder[rootIndex], mainWorkspace.traitCovariance);
+            final int rootIndex = tree.getRoot().getNumber();
+            transitionProvider.fillTraitCovariance(mainWorkspace.traitCovariance);
+            hasPostOrderState = true;
+            return rootPrior.computeLogMarginalLikelihood(postOrder[rootIndex], mainWorkspace.traitCovariance);
+        } finally {
+            popTransitionCachePhase(transitionProvider, previousPhase);
+        }
     }
 
     @Override
@@ -542,20 +543,25 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     public void computePreOrder(final CanonicalBranchTransitionProvider transitionProvider,
                                 final CanonicalRootPrior rootPrior) {
-        final int rootIndex = tree.getRoot().getNumber();
-        transitionProvider.fillTraitCovariance(mainWorkspace.traitCovariance);
-        CanonicalGaussianMessageOps.clearState(preOrder[rootIndex]);
-        hasFixedRootValue = rootPrior.isFixedRoot();
-        if (hasFixedRootValue) {
-            rootPrior.fillFixedRootValue(fixedRootValue);
-            lastRootDiffusionScale = 0.0;
-        } else {
-            rootPrior.fillRootPriorState(mainWorkspace.traitCovariance, preOrder[rootIndex]);
-            lastRootDiffusionScale = rootPrior.getDiffusionScale();
+        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_PREORDER);
+        try {
+            final int rootIndex = tree.getRoot().getNumber();
+            transitionProvider.fillTraitCovariance(mainWorkspace.traitCovariance);
+            CanonicalGaussianMessageOps.clearState(preOrder[rootIndex]);
+            hasFixedRootValue = rootPrior.isFixedRoot();
+            if (hasFixedRootValue) {
+                rootPrior.fillFixedRootValue(fixedRootValue);
+                lastRootDiffusionScale = 0.0;
+            } else {
+                rootPrior.fillRootPriorState(mainWorkspace.traitCovariance, preOrder[rootIndex]);
+                lastRootDiffusionScale = rootPrior.getDiffusionScale();
+            }
+            clearState(branchAboveParent[rootIndex]);
+            computePreOrderRecursive(tree.getRoot().getNumber(), transitionProvider, mainWorkspace);
+            hasPreOrderState = true;
+        } finally {
+            popTransitionCachePhase(transitionProvider, previousPhase);
         }
-        clearState(branchAboveParent[rootIndex]);
-        computePreOrderRecursive(tree.getRoot().getNumber(), transitionProvider, mainWorkspace);
-        hasPreOrderState = true;
     }
 
     @Override
@@ -564,46 +570,52 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
+    @Deprecated
     public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
         Arrays.fill(gradQ, 0.0);
         ensureGradientState();
 
-        final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization
-                        ? (OrthogonalBlockDiagonalSelectionMatrixParameterization)
-                        processModel.getSelectionMatrixParameterization()
-                        : null;
-        final int rootIndex = tree.getRoot().getNumber();
-        final BranchGradientWorkspace workspace = mainWorkspace;
+        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
+        try {
+            final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+            final OUProcessModel processModel = ouProvider.getProcessModel();
+            final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection =
+                    processModel.getSelectionMatrixParameterization()
+                            instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization
+                            ? (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                            processModel.getSelectionMatrixParameterization()
+                            : null;
+            final int rootIndex = tree.getRoot().getNumber();
+            final BranchGradientWorkspace workspace = mainWorkspace;
 
-        for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-            if (childIndex == rootIndex) {
-                continue;
+            for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
+                if (childIndex == rootIndex) {
+                    continue;
+                }
+                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
+                    continue;
+                }
+                if (orthogonalSelection != null) {
+                    transposeFromFlatInto(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
+                    orthogonalSelection.accumulateDiffusionGradient(
+                            processModel.getDiffusionMatrix(),
+                            transitionProvider.getEffectiveBranchLength(childIndex),
+                            workspace.covarianceAdjoint,
+                            gradQ);
+                } else {
+                    copyFlatToSquare(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
+                    processModel.accumulateDiffusionGradient(
+                            transitionProvider.getEffectiveBranchLength(childIndex),
+                            workspace.covarianceAdjoint,
+                            gradQ);
+                }
             }
-            if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                continue;
-            }
-            if (orthogonalSelection != null) {
-                transposeFromFlatInto(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-                orthogonalSelection.accumulateDiffusionGradient(
-                        processModel.getDiffusionMatrix(),
-                        transitionProvider.getEffectiveBranchLength(childIndex),
-                        workspace.covarianceAdjoint,
-                        gradQ);
-            } else {
-                copyFlatToSquare(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-                processModel.accumulateDiffusionGradient(
-                        transitionProvider.getEffectiveBranchLength(childIndex),
-                        workspace.covarianceAdjoint,
-                        gradQ);
-            }
-        }
 
-        if (lastRootDiffusionScale > 0.0) {
-            accumulateRootDiffusionGradient(gradQ, workspace);
+            if (lastRootDiffusionScale > 0.0) {
+                accumulateRootDiffusionGradient(gradQ, workspace);
+            }
+        } finally {
+            popTransitionCachePhase(transitionProvider, previousPhase);
         }
     }
 
@@ -613,24 +625,30 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         Arrays.fill(gradT, 0.0);
         ensureGradientState();
 
-        final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-        final int rootIndex = tree.getRoot().getNumber();
-        for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-            if (childIndex == rootIndex) {
-                continue;
+        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
+        try {
+            final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+            final int rootIndex = tree.getRoot().getNumber();
+            for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
+                if (childIndex == rootIndex) {
+                    continue;
+                }
+                final CanonicalTipObservation tipObservation =
+                        tree.isExternal(tree.getNode(childIndex)) ? tipObservations[childIndex] : null;
+                if (tipObservation != null && tipObservation.observedCount == 0) {
+                    gradT[childIndex] = 0.0;
+                    continue;
+                }
+                final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+                gradT[childIndex] = finiteDifferenceBranchLengthGradient(childIndex, ouProvider, branchLength);
             }
-            final CanonicalTipObservation tipObservation =
-                    tree.isExternal(tree.getNode(childIndex)) ? tipObservations[childIndex] : null;
-            if (tipObservation != null && tipObservation.observedCount == 0) {
-                gradT[childIndex] = 0.0;
-                continue;
-            }
-            final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            gradT[childIndex] = finiteDifferenceBranchLengthGradient(childIndex, ouProvider, branchLength);
+        } finally {
+            popTransitionCachePhase(transitionProvider, previousPhase);
         }
     }
 
     @Override
+    @Deprecated
     public void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
         Arrays.fill(gradA, 0.0);
         ensureGradientState();
@@ -740,6 +758,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
+    @Deprecated
     public void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
         Arrays.fill(gradMu, 0.0);
         ensureGradientState();
@@ -788,71 +807,71 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
 
     public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
                                             final BranchGradientInputs out) {
-        ensureGradientState();
-        out.checkCompatible(Math.max(0, nodeCount - 1), dim);
-        out.clear();
+        final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
+        try {
+            ensureGradientState();
+            out.checkCompatible(Math.max(0, nodeCount - 1), dim);
+            out.clear();
 
-        final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization
-                        ? (OrthogonalBlockDiagonalSelectionMatrixParameterization)
-                        processModel.getSelectionMatrixParameterization()
-                        : null;
-        final double[] orthogonalStationaryMean =
-                orthogonalSelection == null ? null : mainWorkspace.orthogonalStationaryMeanScratch;
-        if (orthogonalSelection != null) {
-            processModel.getInitialMean(orthogonalStationaryMean);
-        }
+            final HomogeneousCanonicalOUBranchTransitionProvider ouProvider = requireOUProvider(transitionProvider);
+            final OUProcessModel processModel = ouProvider.getProcessModel();
+            final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection =
+                    processModel.getSelectionMatrixParameterization()
+                            instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization
+                            ? (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                            processModel.getSelectionMatrixParameterization()
+                            : null;
+            final int rootIndex = tree.getRoot().getNumber();
+            if (branchGradientWorkspaces.length <= 1 || nodeCount <= 2) {
+                for (int childIndex = 0; childIndex < nodeCount; ++childIndex) {
+                    if (childIndex == rootIndex) {
+                        continue;
+                    }
+                    if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
+                        continue;
+                    }
+                    final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+                    out.addBranch(
+                            childIndex,
+                            branchLength,
+                            mainWorkspace.adjoints,
+                            orthogonalSelection == null
+                                    ? null
+                                    : ouProvider.getOrthogonalPreparedBranchBasis(childIndex));
+                }
+            } else {
+                branchGradientTaskPool.forkDynamicBalanced(
+                        nodeCount,
+                        branchGradientPreparationChunkSize(nodeCount),
+                        (childIndex, thread) -> {
+                    if (childIndex == rootIndex) {
+                        out.clearStagedBranch(childIndex);
+                        return;
+                    }
 
-        final int rootIndex = tree.getRoot().getNumber();
-        if (branchGradientWorkspaces.length <= 1 || nodeCount <= 2) {
-            for (int childIndex = 0; childIndex < nodeCount; ++childIndex) {
-                if (childIndex == rootIndex) {
-                    continue;
-                }
-                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
-                    continue;
-                }
-                final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-                out.addBranch(
-                        childIndex,
-                        branchLength,
-                        mainWorkspace.adjoints,
-                        orthogonalSelection,
-                        orthogonalStationaryMean);
+                    final BranchGradientWorkspace workspace = branchGradientWorkspaces[thread];
+                    if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
+                        out.clearStagedBranch(childIndex);
+                        return;
+                    }
+
+                    out.stageBranch(
+                            childIndex,
+                            transitionProvider.getEffectiveBranchLength(childIndex),
+                            workspace.adjoints,
+                            null,
+                            null);
+                        });
+                out.compactStagedBranches(rootIndex, false);
+                out.prepareOrthogonalBasisForActiveBranches(orthogonalSelection == null ? null : ouProvider);
             }
-        } else {
-            branchGradientTaskPool.forkDynamicBalanced(
-                    nodeCount,
-                    branchGradientPreparationChunkSize(nodeCount),
-                    (childIndex, thread) -> {
-                if (childIndex == rootIndex) {
-                    out.clearStagedBranch(childIndex);
-                    return;
-                }
 
-                final BranchGradientWorkspace workspace = branchGradientWorkspaces[thread];
-                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                    out.clearStagedBranch(childIndex);
-                    return;
-                }
-
-                out.stageBranch(
-                        childIndex,
-                        transitionProvider.getEffectiveBranchLength(childIndex),
-                        workspace.adjoints,
-                        null,
-                        null);
-                    });
-            out.compactStagedBranches(rootIndex, false);
-            out.prepareOrthogonalBasisForActiveBranches(orthogonalSelection, orthogonalStationaryMean);
+            out.rootDiffusionScale = lastRootDiffusionScale;
+            copyState(preOrder[rootIndex], out.rootPreOrder);
+            copyState(postOrder[rootIndex], out.rootPostOrder);
+        } finally {
+            popTransitionCachePhase(transitionProvider, previousPhase);
         }
-
-        out.rootDiffusionScale = lastRootDiffusionScale;
-        copyState(preOrder[rootIndex], out.rootPreOrder);
-        copyState(postOrder[rootIndex], out.rootPostOrder);
     }
 
     public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
@@ -1499,6 +1518,21 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                             + "CanonicalBranchTransitionProvider implementations are not yet supported.");
         }
         return (HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider;
+    }
+
+    private String pushTransitionCachePhase(final CanonicalBranchTransitionProvider transitionProvider,
+                                            final String phase) {
+        if (transitionProvider instanceof HomogeneousCanonicalOUBranchTransitionProvider) {
+            return ((HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider).pushDiagnosticPhase(phase);
+        }
+        return null;
+    }
+
+    private void popTransitionCachePhase(final CanonicalBranchTransitionProvider transitionProvider,
+                                         final String previousPhase) {
+        if (transitionProvider instanceof HomogeneousCanonicalOUBranchTransitionProvider) {
+            ((HomogeneousCanonicalOUBranchTransitionProvider) transitionProvider).popDiagnosticPhase(previousPhase);
+        }
     }
 
     private boolean fillLocalAdjointsForBranch(final int childIndex,

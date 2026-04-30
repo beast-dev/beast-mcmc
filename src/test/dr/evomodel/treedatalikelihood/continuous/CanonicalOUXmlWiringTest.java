@@ -34,7 +34,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
-import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUMessagePasserComputer;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalTipObservationAdapter;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
@@ -67,11 +67,31 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
         super(name);
     }
 
-    public void testCanonicalDelegateLikelihoodMatchesStandaloneComputerWithMissingData() {
+    public void testCanonicalDelegateLikelihoodMatchesStandaloneIntegratorWithMissingData() {
         final XmlStyleCanonicalOUSetup setup = buildCanonicalSetup("xmlCanonLike");
         final double delegateLogLikelihood = setup.treeDataLikelihood.getLogLikelihood();
-        final double standaloneLogLikelihood = setup.standaloneComputer.computeLogLikelihood();
+        final double standaloneLogLikelihood = setup.standaloneIntegrator.calculateLogLikelihood();
         assertEquals("canonical XML-style delegate log-likelihood", standaloneLogLikelihood, delegateLogLikelihood, 1.0e-8);
+    }
+
+    public void testCanonicalDelegateRefreshesBackendOwnedTipObservationsAfterDataChangeAndRestore() {
+        final XmlStyleCanonicalOUSetup setup = buildCanonicalSetup("xmlCanonTipRefresh");
+        final int observedTraitIndex = 0;
+        final double original = traitParameter.getParameterValue(observedTraitIndex);
+        final double baseline = setup.treeDataLikelihood.getLogLikelihood();
+
+        setup.treeDataLikelihood.storeModelState();
+
+        traitParameter.setParameterValue(observedTraitIndex, original + 0.75);
+        final double changed = setup.treeDataLikelihood.getLogLikelihood();
+        assertTrue("canonical likelihood should respond to observed tip-data changes",
+                Math.abs(changed - baseline) > 1.0e-8);
+
+        setup.treeDataLikelihood.restoreModelState();
+        setup.treeDataLikelihood.makeDirty();
+        final double restored = setup.treeDataLikelihood.getLogLikelihood();
+        assertEquals("canonical likelihood should recompute from restored tip observations",
+                baseline, restored, 1.0e-8);
     }
 
     public void testCanonicalDelegateOrthogonalBlockSelectionGradientMatchesFiniteDifferenceWithMissingData() {
@@ -226,8 +246,8 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
         final CanonicalTipObservation[] tipObservations =
                 allocateCanonicalTipObservations(treeModel.getExternalNodeCount(), dimTrait);
         CanonicalTipObservationAdapter.fillTipObservations(treeModel, dataModel, dimTrait, tipObservations);
-        final CanonicalOUMessagePasserComputer standaloneComputer =
-                new CanonicalOUMessagePasserComputer(
+        final CanonicalOUTreeLikelihoodIntegrator standaloneIntegrator =
+                new CanonicalOUTreeLikelihoodIntegrator(
                         treeModel,
                         diffusionDelegate.getElasticModel(),
                         diffusionModel,
@@ -242,7 +262,7 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                 blockSelection.getParameter(),
                 delegate,
                 treeDataLikelihood,
-                standaloneComputer);
+                standaloneIntegrator);
     }
 
     private XmlStyleCanonicalMeanSetup buildCanonicalFixedRootMeanSetup(final String tag) {
@@ -371,18 +391,18 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
         final Parameter nativeParameter;
         final ContinuousDataLikelihoodDelegate delegate;
         final TreeDataLikelihood treeDataLikelihood;
-        final CanonicalOUMessagePasserComputer standaloneComputer;
+        final CanonicalOUTreeLikelihoodIntegrator standaloneIntegrator;
 
         private XmlStyleCanonicalOUSetup(final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection,
                                          final Parameter nativeParameter,
                                          final ContinuousDataLikelihoodDelegate delegate,
                                          final TreeDataLikelihood treeDataLikelihood,
-                                         final CanonicalOUMessagePasserComputer standaloneComputer) {
+                                         final CanonicalOUTreeLikelihoodIntegrator standaloneIntegrator) {
             this.blockSelection = blockSelection;
             this.nativeParameter = nativeParameter;
             this.delegate = delegate;
             this.treeDataLikelihood = treeDataLikelihood;
-            this.standaloneComputer = standaloneComputer;
+            this.standaloneIntegrator = standaloneIntegrator;
         }
     }
 

@@ -27,7 +27,7 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUMessagePasserComputer;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
@@ -146,20 +146,20 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                 "partially observed");
     }
 
-    public void testStandaloneComputerReusesOneJointGradientPassAcrossAQMu() {
-        System.out.println("\nTest: canonical OU computer reuses one joint A/Q/mu gradient pass");
+    public void testStandaloneIntegratorReusesOneJointGradientPassAcrossAQMu() {
+        System.out.println("\nTest: canonical OU integrator reuses one joint A/Q/mu gradient pass");
 
         final OUSetup setup = buildOUSetup("canonJointGradReuse_partial", buildPartiallyObservedTips());
         final CountingPasser countingPasser = new CountingPasser(setup.passer);
-        final CanonicalOUMessagePasserComputer computer =
-                new CanonicalOUMessagePasserComputer(countingPasser, setup.provider, setup.rootPrior);
+        final CanonicalOUTreeLikelihoodIntegrator integrator =
+                new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
 
         final double[] jointA = new double[dimTrait * dimTrait];
         final double[] jointQ = new double[dimTrait * dimTrait];
         final double[] jointMu = new double[dimTrait];
-        computer.computeGradientA(jointA);
-        computer.computeGradientQ(jointQ);
-        computer.computeGradientMu(jointMu);
+        integrator.computeSelectionGradient(jointA);
+        integrator.computeDiffusionGradient(jointQ);
+        integrator.computeStationaryMeanGradient(jointMu);
 
         assertEquals("joint post-order reuse", 1, countingPasser.postOrderCalls);
         assertEquals("joint pre-order reuse", 1, countingPasser.preOrderCalls);
@@ -176,6 +176,60 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertArrayEquals("joint vs separate A", separateA, jointA, 1.0e-11);
         assertArrayEquals("joint vs separate Q", separateQ, jointQ, 1.0e-11);
         assertArrayEquals("joint vs separate mu", separateMu, jointMu, 1.0e-11);
+    }
+
+    public void testStandaloneIntegratorModelDirtyInvalidatesJointGradientCache() {
+        System.out.println("\nTest: canonical OU integrator model dirty invalidates joint gradient cache");
+
+        final OUSetup setup = buildOUSetup("canonJointGradModelDirty_partial", buildPartiallyObservedTips());
+        final CountingPasser countingPasser = new CountingPasser(setup.passer);
+        final CanonicalOUTreeLikelihoodIntegrator integrator =
+                new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
+
+        integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
+        integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+
+        integrator.markModelDirty();
+        integrator.computeStationaryMeanGradient(new double[dimTrait]);
+        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientCalls);
+    }
+
+    public void testStandaloneIntegratorReloadedTipsInvalidateJointGradientCache() {
+        System.out.println("\nTest: canonical OU integrator tip reload invalidates joint gradient cache");
+
+        final OUSetup setup = buildOUSetup("canonJointGradTipReload_partial", buildPartiallyObservedTips());
+        final CountingPasser countingPasser = new CountingPasser(setup.passer);
+        final CanonicalOUTreeLikelihoodIntegrator integrator =
+                new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
+
+        integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+
+        integrator.reloadTips(buildFullyObservedTips());
+        integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
+        assertEquals("joint gradient recomputed after tip reload", 2, countingPasser.jointGradientCalls);
+    }
+
+    public void testStandaloneIntegratorStoreRestorePreservesCachedJointGradients() {
+        System.out.println("\nTest: canonical OU integrator store/restore preserves cached joint gradients");
+
+        final OUSetup setup = buildOUSetup("canonJointGradStoreRestore_partial", buildPartiallyObservedTips());
+        final CountingPasser countingPasser = new CountingPasser(setup.passer);
+        final CanonicalOUTreeLikelihoodIntegrator integrator =
+                new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
+
+        integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+
+        integrator.storeState();
+        integrator.markModelDirty();
+        integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
+        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientCalls);
+
+        integrator.restoreState();
+        integrator.computeStationaryMeanGradient(new double[dimTrait]);
+        assertEquals("restored cached joint gradient reused", 2, countingPasser.jointGradientCalls);
     }
 
     public void testOrthogonalBlockJointGradientsMatchAcrossBranchGradientThreadCounts() {
@@ -277,7 +331,7 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         @Override
         public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
-            throw new AssertionError("Standalone computer should route canonical gradients through computeJointGradients");
+            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
         }
 
         @Override
@@ -288,12 +342,12 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         @Override
         public void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
-            throw new AssertionError("Standalone computer should route canonical gradients through computeJointGradients");
+            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
         }
 
         @Override
         public void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
-            throw new AssertionError("Standalone computer should route canonical gradients through computeJointGradients");
+            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
         }
 
         @Override

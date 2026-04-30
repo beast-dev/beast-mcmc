@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 
@@ -38,7 +39,7 @@ import dr.inference.model.Parameter;
  */
 public final class CanonicalSelectionParameterGradient extends AbstractDiffusionGradient {
 
-    private final ContinuousDataLikelihoodDelegate continuousData;
+    private final CanonicalOUGradientAdapter gradientAdapter;
     private final Parameter parameter;
     private final Parameter rawParameter;
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter;
@@ -48,7 +49,7 @@ public final class CanonicalSelectionParameterGradient extends AbstractDiffusion
                                                final Parameter parameter,
                                                final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
         super(likelihood, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
-        this.continuousData = continuousData;
+        this.gradientAdapter = continuousData.getCanonicalOUGradientAdapter();
         this.parameter = parameter;
         this.rawParameter = nativeBlockParameter.getParameter();
         this.nativeBlockParameter = nativeBlockParameter;
@@ -56,7 +57,7 @@ public final class CanonicalSelectionParameterGradient extends AbstractDiffusion
 
     @Override
     public double[] getGradientLogDensity() {
-        return continuousData.getCanonicalSelectionGradient(parameter, nativeBlockParameter);
+        return gradientAdapter.getSelectionGradient(parameter, nativeBlockParameter);
     }
 
     @Override

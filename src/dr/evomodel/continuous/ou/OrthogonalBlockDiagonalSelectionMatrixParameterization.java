@@ -93,7 +93,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         private final DenseMatrix64F rMatrix;
         private final DenseMatrix64F rtMatrix;
         private final DenseMatrix64F transitionMatrix;
+        private final DenseMatrix64F qMatrix;
+        private final DenseMatrix64F stationaryCovDBasis;
+        private final DenseMatrix64F transitionCovDBasis;
+        private final DenseMatrix64F transitionCovariance;
         private final double[][] workMatrix;
+        private boolean covariancePrepared;
 
         private PreparedBranchBasis(final int dimension,
                                     final int blockDParamDimension) {
@@ -105,7 +110,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             this.rMatrix = new DenseMatrix64F(dimension, dimension);
             this.rtMatrix = new DenseMatrix64F(dimension, dimension);
             this.transitionMatrix = new DenseMatrix64F(dimension, dimension);
+            this.qMatrix = new DenseMatrix64F(dimension, dimension);
+            this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);
+            this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
+            this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
             this.workMatrix = new double[dimension][dimension];
+            this.covariancePrepared = false;
         }
     }
 
@@ -302,6 +312,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                 prepared.rtMatrix.data,
                 dimension,
                 prepared.transitionMatrix);
+        prepared.covariancePrepared = false;
     }
 
     public BranchGradientWorkspace createBranchGradientWorkspace() {
@@ -315,8 +326,19 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                                 final MatrixParameterInterface diffusionMatrix,
                                                 final BranchGradientWorkspace workspace,
                                                 final CanonicalGaussianTransition out) {
-        fillTransitionCovarianceMatrixPrepared(prepared, diffusionMatrix, workspace, workspace.transitionCovariance);
+        loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
         fillCanonicalTransitionDirectPrepared(prepared, workspace.transitionCovariance, workspace, out);
+    }
+
+    public void prepareBranchCovariance(final PreparedBranchBasis prepared,
+                                        final MatrixParameterInterface diffusionMatrix,
+                                        final BranchGradientWorkspace workspace) {
+        fillTransitionCovarianceMatrixPrepared(prepared, diffusionMatrix, workspace, workspace.transitionCovariance);
+        prepared.qMatrix.set(workspace.qMatrix);
+        prepared.stationaryCovDBasis.set(workspace.stationaryCovDBasis);
+        prepared.transitionCovDBasis.set(workspace.transitionCovDBasis);
+        prepared.transitionCovariance.set(workspace.transitionCovariance);
+        prepared.covariancePrepared = true;
     }
 
     public void accumulateNativeGradientFromAdjointsPrepared(final PreparedBranchBasis prepared,
@@ -325,7 +347,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
                                                              final BranchGradientWorkspace workspace,
                                                              final double[] compressedDAccumulator,
                                                              final double[][] rotationAccumulator) {
-        fillTransitionCovarianceMatrixPrepared(prepared, diffusionMatrix, workspace, workspace.transitionCovariance);
+        loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
 
         accumulateNativeGradientFromTransitionPrepared(
                 prepared,
@@ -349,6 +371,19 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
             throw new IllegalStateException(
                     "Non-finite orthogonal native covariance contribution at dt=" + prepared.dt);
         }
+    }
+
+    private void loadOrFillPreparedCovariance(final PreparedBranchBasis prepared,
+                                              final MatrixParameterInterface diffusionMatrix,
+                                              final BranchGradientWorkspace workspace) {
+        if (!prepared.covariancePrepared) {
+            prepareBranchCovariance(prepared, diffusionMatrix, workspace);
+            return;
+        }
+        workspace.qMatrix.set(prepared.qMatrix);
+        workspace.stationaryCovDBasis.set(prepared.stationaryCovDBasis);
+        workspace.transitionCovDBasis.set(prepared.transitionCovDBasis);
+        workspace.transitionCovariance.set(prepared.transitionCovariance);
     }
 
     public void accumulateMeanGradientPrepared(final PreparedBranchBasis prepared,

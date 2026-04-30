@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.Parameter;
 
 /**
@@ -37,7 +38,7 @@ import dr.inference.model.Parameter;
  */
 public final class CanonicalMeanParameterGradient extends AbstractDiffusionGradient {
 
-    private final ContinuousDataLikelihoodDelegate continuousData;
+    private final CanonicalOUGradientAdapter gradientAdapter;
     private final Parameter parameter;
     private final boolean includeStationaryMean;
     private final boolean includeRootMean;
@@ -48,7 +49,7 @@ public final class CanonicalMeanParameterGradient extends AbstractDiffusionGradi
                                           final boolean includeStationaryMean,
                                           final boolean includeRootMean) {
         super(likelihood, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
-        this.continuousData = continuousData;
+        this.gradientAdapter = continuousData.getCanonicalOUGradientAdapter();
         this.parameter = parameter;
         this.includeStationaryMean = includeStationaryMean;
         this.includeRootMean = includeRootMean;
@@ -56,7 +57,7 @@ public final class CanonicalMeanParameterGradient extends AbstractDiffusionGradi
 
     @Override
     public double[] getGradientLogDensity() {
-        return continuousData.getCanonicalMeanGradient(
+        return gradientAdapter.getMeanGradient(
                 parameter,
                 includeStationaryMean,
                 includeRootMean);

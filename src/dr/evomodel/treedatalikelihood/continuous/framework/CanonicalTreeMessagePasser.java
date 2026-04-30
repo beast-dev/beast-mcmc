@@ -32,10 +32,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 /**
  * Canonical-form tree message passer contract.
  *
- * <p>This interface is the canonical analogue of {@link TreeMessagePasser} for
- * process families whose natural tree-side algebra is precision/information form
- * rather than mean/covariance form. The initial implementation target is exact OU.
- *
  * <p>The canonical node messages are represented directly by
  * {@link CanonicalGaussianState}. Exact tip observations are supplied through
  * {@link CanonicalTipObservation}, which keeps the canonical pathway free of the
@@ -59,12 +55,30 @@ public interface CanonicalTreeMessagePasser {
 
     CanonicalGaussianState getPreOrderState(int nodeIndex);
 
+    /**
+     * Legacy single-target gradient entry point. Production canonical OU callers
+     * should prefer {@link #computeJointGradients} through the integrator so
+     * shared branch adjoints are prepared once.
+     */
+    @Deprecated
     void computeGradientQ(CanonicalBranchTransitionProvider transitionProvider, double[] gradQ);
 
     void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider, double[] gradT);
 
+    /**
+     * Legacy single-target gradient entry point. Production canonical OU callers
+     * should prefer {@link #computeJointGradients} through the integrator so
+     * shared branch adjoints are prepared once.
+     */
+    @Deprecated
     void computeGradientA(CanonicalBranchTransitionProvider transitionProvider, double[] gradA);
 
+    /**
+     * Legacy single-target gradient entry point. Production canonical OU callers
+     * should prefer {@link #computeJointGradients} through the integrator so
+     * shared branch adjoints are prepared once.
+     */
+    @Deprecated
     void computeGradientMu(CanonicalBranchTransitionProvider transitionProvider, double[] gradMu);
 
     default void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,

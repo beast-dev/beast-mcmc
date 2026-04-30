@@ -41,7 +41,7 @@ import java.util.logging.Logger;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public interface GradientWrtParameterProvider {
+public interface GradientWrtParameterProvider extends NumericGradientStepSizeProvider {
 
     Likelihood getLikelihood();
 
@@ -151,6 +151,7 @@ public interface GradientWrtParameterProvider {
         private final boolean checkValues;
         private final double tolerance;
         private final double smallThreshold;
+        private final double numericStepSize;
 
         CheckGradientNumerically(GradientWrtParameterProvider provider,
                                  double lowerBound, double upperBound,
@@ -165,6 +166,7 @@ public interface GradientWrtParameterProvider {
             this.tolerance = checkValues ? nullableTolerance : 0.0;
 
             this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : 0.0;
+            this.numericStepSize = provider.getNumericGradientStepSize();
         }
 
 
@@ -205,7 +207,8 @@ public interface GradientWrtParameterProvider {
         public double[] getNumericalGradient() {
 
             double[] savedValues = parameter.getParameterValues();
-            double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+            double[] testGradient = new double[parameter.getDimension()];
+            NumericalDerivative.gradient(numeric, parameter.getParameterValues(), testGradient, numericStepSize);
 
             setParameter(savedValues);
             return testGradient;

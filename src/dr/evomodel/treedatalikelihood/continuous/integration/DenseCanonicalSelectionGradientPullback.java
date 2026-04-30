@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
+import dr.evomodel.continuous.ou.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 
@@ -35,27 +36,28 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
                                     final double[] gradQ,
                                     final double[] gradMu) {
         final GradientPullbackWorkspace gradient = workspace.gradient;
+        final CanonicalOUKernel kernel = processModel.getCanonicalKernel();
         final double branchLength = inputs.getBranchLength(activeIndex);
 
-        processModel.accumulateSelectionGradientFlat(
+        kernel.accumulateSelectionGradientFlat(
                 branchLength,
                 workspace.adjoints.dLogL_dF,
                 workspace.adjoints.dLogL_df,
                 gradA);
 
-        processModel.accumulateSelectionGradientFromCovarianceFlat(
+        kernel.accumulateSelectionGradientFromCovarianceFlat(
                 branchLength,
                 workspace.adjoints.dLogL_dOmega,
                 true,
                 gradA);
 
-        processModel.accumulateDiffusionGradientFlat(
+        kernel.accumulateDiffusionGradientFlat(
                 branchLength,
                 workspace.adjoints.dLogL_dOmega,
                 false,
                 gradQ);
 
-        processModel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
+        kernel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
         accumulateStationaryMeanGradientFlat(
                 gradient.transitionMatrixFlat,
                 workspace.adjoints.dLogL_df,

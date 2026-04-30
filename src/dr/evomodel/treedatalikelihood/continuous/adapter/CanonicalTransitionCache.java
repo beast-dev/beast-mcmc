@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood.continuous.adapter;
 
 import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -47,6 +48,7 @@ final class CanonicalTransitionCache {
 
     private final int dimension;
     private final OUProcessModel processModel;
+    private final CanonicalOUKernel kernel;
     private final BranchLengthProvider branchLengthProvider;
     private final BranchCacheEntry[] entries;
     private final CanonicalPreparedTransitionCapability preparedTransition;
@@ -64,6 +66,7 @@ final class CanonicalTransitionCache {
                              final CanonicalTransitionCacheOptions options) {
         this.dimension = dimension;
         this.processModel = processModel;
+        this.kernel = processModel.getCanonicalKernel();
         this.branchLengthProvider = branchLengthProvider;
         this.entries = new BranchCacheEntry[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
@@ -183,7 +186,7 @@ final class CanonicalTransitionCache {
     private CanonicalPreparedBranchHandle fillCachedTransition(final BranchCacheEntry entry,
                                                                final double effectiveBranchLength) {
         if (preparedTransition == null) {
-            processModel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
+            kernel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
             return null;
         }
 
@@ -212,7 +215,7 @@ final class CanonicalTransitionCache {
         if (stationaryMeanSnapshotValid) {
             return;
         }
-        processModel.getInitialMean(stationaryMeanScratch);
+        kernel.getInitialMean(stationaryMeanScratch);
         stationaryMeanSnapshotValid = true;
     }
 

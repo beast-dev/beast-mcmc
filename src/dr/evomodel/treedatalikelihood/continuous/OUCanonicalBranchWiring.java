@@ -13,7 +13,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumericsOptions;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 /**
  * Self-contained local tree-to-time-series canonical wiring for one OU branch.
@@ -29,18 +28,6 @@ public final class OUCanonicalBranchWiring {
             "beast.experimental.disableExactTipShortcut";
     private static final String NONFINITE_BRANCH_STATS_DEBUG_PROPERTY =
             "beast.debug.ou.nonfiniteBranchStats";
-    private static final String COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY =
-            "beast.debug.ou.compareParentAboveRecovered";
-    private static final String COMPARE_PARENT_ABOVE_RECOVERED_FAIL_PROPERTY =
-            "beast.debug.ou.compareParentAboveRecovered.failOnMismatch";
-    private static final String COMPARE_PARENT_ABOVE_RECOVERED_TOLERANCE_PROPERTY =
-            "beast.debug.ou.compareParentAboveRecovered.tolerance";
-    private static final String COMPARE_PARENT_ABOVE_RECOVERED_MAX_REPORTS_PROPERTY =
-            "beast.debug.ou.compareParentAboveRecovered.maxReports";
-    private static final String FORCE_RECOVER_PARENT_ABOVE_FROM_CHILD_PROPERTY =
-            "beast.debug.ou.forceRecoverParentAboveFromChild";
-    private static final String ALLOW_INFINITE_PARENT_ABOVE_RECOVERY_PROPERTY =
-            "beast.debug.ou.allowInfiniteParentAboveRecovery";
 
     private static final CanonicalNumericsOptions NUMERICS_OPTIONS = CanonicalNumericsOptions.OU_TREE;
 
@@ -64,13 +51,7 @@ public final class OUCanonicalBranchWiring {
     private final DenseMatrix64F displacementVector;
     private final DenseMatrix64F branchPrecisionMatrix;
     private final DenseMatrix64F branchCovarianceMatrix;
-    private final DenseMatrix64F aboveChildPrecisionMatrix;
-    private final DenseMatrix64F aboveChildCovarianceMatrix;
-    private final DenseMatrix64F aboveParentPrecisionMatrix;
-    private final DenseMatrix64F aboveParentCovarianceMatrix;
-    private final DenseMatrix64F actualizationInverseMatrix;
-    private final DenseMatrix64F aboveParentMeanVector;
-    private final DenseMatrix64F centeredChildMeanVector;
+    private final OUCanonicalParentAboveResolver parentAboveResolver;
     private final DenseMatrix64F scratchMatrix;
     private final DenseMatrix64F secondaryScratchMatrix;
     private final double[][] reducedPrecisionScratch;
@@ -84,7 +65,6 @@ public final class OUCanonicalBranchWiring {
     private final double[][] transitionMatrixScratch;
     private final double[][] transitionCovarianceScratch;
     private final double[] transitionOffsetScratch;
-    private int parentAboveCompareReportCount = 0;
 
     public OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
         if (branchTransitionProvider == null) {
@@ -108,13 +88,13 @@ public final class OUCanonicalBranchWiring {
         this.displacementVector = new DenseMatrix64F(dimension, 1);
         this.branchPrecisionMatrix = new DenseMatrix64F(dimension, dimension);
         this.branchCovarianceMatrix = new DenseMatrix64F(dimension, dimension);
-        this.aboveChildPrecisionMatrix = new DenseMatrix64F(dimension, dimension);
-        this.aboveChildCovarianceMatrix = new DenseMatrix64F(dimension, dimension);
-        this.aboveParentPrecisionMatrix = new DenseMatrix64F(dimension, dimension);
-        this.aboveParentCovarianceMatrix = new DenseMatrix64F(dimension, dimension);
-        this.actualizationInverseMatrix = new DenseMatrix64F(dimension, dimension);
-        this.aboveParentMeanVector = new DenseMatrix64F(dimension, 1);
-        this.centeredChildMeanVector = new DenseMatrix64F(dimension, 1);
+        this.parentAboveResolver = new OUCanonicalParentAboveResolver(
+                dimension,
+                actualizationMatrix,
+                displacementVector,
+                branchPrecisionMatrix,
+                branchCovarianceMatrix,
+                NUMERICS_OPTIONS);
         this.scratchMatrix = new DenseMatrix64F(dimension, dimension);
         this.secondaryScratchMatrix = new DenseMatrix64F(dimension, dimension);
         final int maxReducedDimension = 2 * dimension;
@@ -206,7 +186,7 @@ public final class OUCanonicalBranchWiring {
                                                final NormalSufficientStatistics below) {
         fillCanonicalTransitionFromKernel(branchLength, optimum);
         final DenseMatrix64F parentAbovePrecision = recoverParentAbovePrecision(aboveChild);
-        final DenseMatrix64F parentAboveMean = aboveParentMeanVector;
+        final DenseMatrix64F parentAboveMean = parentAboveResolver.getAboveParentMeanVector();
         return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
     }
 
@@ -217,7 +197,7 @@ public final class OUCanonicalBranchWiring {
                                                final NormalSufficientStatistics below) {
         fillCanonicalTransitionFromKernel(branchLength, optimum);
         final DenseMatrix64F parentAbovePrecision = recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
-        final DenseMatrix64F parentAboveMean = aboveParentMeanVector;
+        final DenseMatrix64F parentAboveMean = parentAboveResolver.getAboveParentMeanVector();
         return evaluateFrozenLocalLogFactorWithResolvedParentPrecision(parentAbovePrecision, parentAboveMean, below);
     }
 
@@ -463,7 +443,7 @@ public final class OUCanonicalBranchWiring {
                                    final NormalSufficientStatistics aboveParent,
                                    final NormalSufficientStatistics below) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = aboveParentMeanVector;
+        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
         final DenseMatrix64F belowPrecision = below.getRawPrecision();
         final DenseMatrix64F belowMean = below.getRawMean();
 
@@ -508,7 +488,7 @@ public final class OUCanonicalBranchWiring {
                                                 final NormalSufficientStatistics aboveParent,
                                                 final NormalSufficientStatistics below) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = aboveParentMeanVector;
+        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
         final DenseMatrix64F observedChild = below.getRawMean();
 
         fillInformation(abovePrecision, aboveMean, aboveInformation);
@@ -551,7 +531,7 @@ public final class OUCanonicalBranchWiring {
                                                          final NormalSufficientStatistics below,
                                                          final int observedCount) {
         final DenseMatrix64F abovePrecision = recoverOrUseParentAbovePrecision(above, aboveParent);
-        final DenseMatrix64F aboveMean = aboveParentMeanVector;
+        final DenseMatrix64F aboveMean = parentAboveResolver.getAboveParentMeanVector();
         final DenseMatrix64F observedChild = below.getRawMean();
 
         fillInformation(abovePrecision, aboveMean, aboveInformation);
@@ -642,204 +622,11 @@ public final class OUCanonicalBranchWiring {
 
     private DenseMatrix64F recoverOrUseParentAbovePrecision(final NormalSufficientStatistics aboveChild,
                                                             final NormalSufficientStatistics aboveParent) {
-        if (Boolean.getBoolean(FORCE_RECOVER_PARENT_ABOVE_FROM_CHILD_PROPERTY)) {
-            return recoverParentAbovePrecision(aboveChild);
-        }
-        if (aboveParent == null) {
-            throw new IllegalStateException(
-                    "Missing parent-above message for canonical branch contribution."
-                            + " childAbovePrecisionFinite=" + isFinite(aboveChild.getRawPrecision())
-                            + " childAboveMeanFinite=" + isFinite(aboveChild.getRawMean()));
-        }
-        if (Boolean.getBoolean(COMPARE_PARENT_ABOVE_RECOVERED_PROPERTY)) {
-            compareParentAboveAgainstRecovered(aboveChild, aboveParent);
-        }
-        final DenseMatrix64F parentPrecisionRaw = aboveParent.getRawPrecision();
-        final DenseMatrix64F parentMeanRaw = aboveParent.getRawMean();
-        final boolean parentMeanFinite = isFinite(parentMeanRaw);
-        final boolean parentPrecisionHasNaN = hasNaN(parentPrecisionRaw);
-        final boolean parentPrecisionHasInfinity = hasInfinity(parentPrecisionRaw);
-        if (!parentMeanFinite || parentPrecisionHasNaN) {
-            throw new IllegalStateException(
-                    "Invalid parent-above message."
-                            + " parentMeanFinite=" + parentMeanFinite
-                            + " parentPrecisionHasNaN=" + parentPrecisionHasNaN
-                            + " parentPrecisionHasInfinity=" + parentPrecisionHasInfinity
-                            + " parentPrecisionSummary=" + summarizeDenseMatrix(parentPrecisionRaw)
-                            + " parentMeanSummary=" + summarizeDenseMatrix(parentMeanRaw)
-                            + " childAbovePrecisionFinite=" + isFinite(aboveChild.getRawPrecision())
-                            + " childAboveMeanFinite=" + isFinite(aboveChild.getRawMean())
-                            + " childAbovePrecisionSummary=" + summarizeDenseMatrix(aboveChild.getRawPrecision())
-                            + " childAboveMeanSummary=" + summarizeDenseMatrix(aboveChild.getRawMean()));
-        }
-        if (parentPrecisionHasInfinity) {
-            if (!Boolean.parseBoolean(System.getProperty(ALLOW_INFINITE_PARENT_ABOVE_RECOVERY_PROPERTY, "true"))) {
-                throw new IllegalStateException(
-                        "Parent-above precision contains infinite entries and infinite-recovery is disabled."
-                                + " parentPrecisionSummary=" + summarizeDenseMatrix(parentPrecisionRaw)
-                                + " parentMeanSummary=" + summarizeDenseMatrix(parentMeanRaw));
-            }
-            // Parent-above messages can be represented as exact constraints (infinite precision)
-            // in mixed missing-data paths. Convert to a finite equivalent recovered from child-above
-            // for stable downstream canonical algebra. Keep the supplied parent mean fixed:
-            // recovering mean from child-above introduces parameter dependence that is not
-            // part of the original parent-above message.
-            final DenseMatrix64F recoveredPrecision = recoverParentAbovePrecision(aboveChild);
-            aboveParentMeanVector.set(parentMeanRaw);
-            return recoveredPrecision;
-        }
-        aboveParentPrecisionMatrix.set(parentPrecisionRaw);
-        aboveParentMeanVector.set(parentMeanRaw);
-        return aboveParentPrecisionMatrix;
-    }
-
-    private void compareParentAboveAgainstRecovered(final NormalSufficientStatistics aboveChild,
-                                                    final NormalSufficientStatistics aboveParent) {
-        final DenseMatrix64F suppliedPrecision = aboveParent.getRawPrecision();
-        final DenseMatrix64F suppliedMean = aboveParent.getRawMean();
-
-        final DenseMatrix64F recoveredPrecision = recoverParentAbovePrecision(aboveChild);
-        final DenseMatrix64F recoveredMean = aboveParentMeanVector;
-
-        final MatrixComparison precisionComparison = compareMatricesAllowingInf(suppliedPrecision, recoveredPrecision);
-        final MatrixComparison meanComparison = compareMatricesAllowingInf(suppliedMean, recoveredMean);
-
-        final double tolerance = Double.parseDouble(
-                System.getProperty(COMPARE_PARENT_ABOVE_RECOVERED_TOLERANCE_PROPERTY, "1e-6"));
-        final boolean mismatch =
-                precisionComparison.infPatternMismatchCount > 0
-                        || precisionComparison.nanPatternMismatchCount > 0
-                        || precisionComparison.maxFiniteAbsDiff > tolerance
-                        || meanComparison.infPatternMismatchCount > 0
-                        || meanComparison.nanPatternMismatchCount > 0
-                        || meanComparison.maxFiniteAbsDiff > tolerance;
-
-        final int maxReports = Integer.parseInt(
-                System.getProperty(COMPARE_PARENT_ABOVE_RECOVERED_MAX_REPORTS_PROPERTY, "20"));
-        if (mismatch || parentAboveCompareReportCount < maxReports) {
-            if (parentAboveCompareReportCount < maxReports) {
-                parentAboveCompareReportCount++;
-                System.err.println(
-                        "parentAboveCompare"
-                                + " call=" + parentAboveCompareReportCount
-                                + " precision=" + precisionComparison
-                                + " mean=" + meanComparison
-                                + " tolerance=" + tolerance);
-            }
-        }
-
-        if (mismatch && Boolean.getBoolean(COMPARE_PARENT_ABOVE_RECOVERED_FAIL_PROPERTY)) {
-            throw new IllegalStateException(
-                    "parent-above supplied vs recovered mismatch"
-                            + " precision=" + precisionComparison
-                            + " mean=" + meanComparison
-                            + " tolerance=" + tolerance);
-        }
-    }
-
-    private static MatrixComparison compareMatricesAllowingInf(final DenseMatrix64F supplied,
-                                                               final DenseMatrix64F recovered) {
-        final double[] suppliedData = supplied.getData();
-        final double[] recoveredData = recovered.getData();
-        final int length = suppliedData.length;
-
-        int finitePairCount = 0;
-        int infPatternMismatchCount = 0;
-        int nanPatternMismatchCount = 0;
-        double maxFiniteAbsDiff = 0.0;
-
-        for (int i = 0; i < length; ++i) {
-            final double a = suppliedData[i];
-            final double b = recoveredData[i];
-
-            final boolean aNaN = Double.isNaN(a);
-            final boolean bNaN = Double.isNaN(b);
-            if (aNaN || bNaN) {
-                if (!(aNaN && bNaN)) {
-                    nanPatternMismatchCount++;
-                }
-                continue;
-            }
-
-            final boolean aInf = Double.isInfinite(a);
-            final boolean bInf = Double.isInfinite(b);
-            if (aInf || bInf) {
-                if (!(aInf && bInf && Math.signum(a) == Math.signum(b))) {
-                    infPatternMismatchCount++;
-                }
-                continue;
-            }
-
-            finitePairCount++;
-            maxFiniteAbsDiff = Math.max(maxFiniteAbsDiff, Math.abs(a - b));
-        }
-
-        return new MatrixComparison(
-                maxFiniteAbsDiff,
-                finitePairCount,
-                infPatternMismatchCount,
-                nanPatternMismatchCount);
-    }
-
-    private static final class MatrixComparison {
-        private final double maxFiniteAbsDiff;
-        private final int finitePairCount;
-        private final int infPatternMismatchCount;
-        private final int nanPatternMismatchCount;
-
-        private MatrixComparison(final double maxFiniteAbsDiff,
-                                 final int finitePairCount,
-                                 final int infPatternMismatchCount,
-                                 final int nanPatternMismatchCount) {
-            this.maxFiniteAbsDiff = maxFiniteAbsDiff;
-            this.finitePairCount = finitePairCount;
-            this.infPatternMismatchCount = infPatternMismatchCount;
-            this.nanPatternMismatchCount = nanPatternMismatchCount;
-        }
-
-        @Override
-        public String toString() {
-            return "{maxFiniteAbsDiff=" + maxFiniteAbsDiff
-                    + ",finitePairCount=" + finitePairCount
-                    + ",infPatternMismatchCount=" + infPatternMismatchCount
-                    + ",nanPatternMismatchCount=" + nanPatternMismatchCount
-                    + "}";
-        }
+        return parentAboveResolver.recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
     }
 
     private DenseMatrix64F recoverParentAbovePrecision(final NormalSufficientStatistics above) {
-        aboveChildPrecisionMatrix.set(above.getRawPrecision());
-        safeInvertSymmetricPositiveDefinite(
-                aboveChildPrecisionMatrix,
-                aboveChildCovarianceMatrix,
-                "recoverParentAbovePrecision:aboveChildPrecision->aboveChildCovariance");
-
-        for (int i = 0; i < dimension; ++i) {
-            centeredChildMeanVector.unsafe_set(i, 0,
-                    above.getRawMean().unsafe_get(i, 0) - displacementVector.unsafe_get(i, 0));
-        }
-
-        // Keep this path smooth and deterministic:
-        // always regularize/invert the same stabilized actualization matrix
-        // instead of branching between solve/fallback paths.
-        secondaryScratchMatrix.set(actualizationMatrix);
-        final double solveJitter = NUMERICS_OPTIONS.jitterBase(
-                CanonicalNumerics.maxAbsDiagonal(secondaryScratchMatrix));
-        CanonicalNumerics.addDiagonalJitter(secondaryScratchMatrix, solveJitter);
-        safeInvert(secondaryScratchMatrix, actualizationInverseMatrix);
-        CommonOps.mult(actualizationInverseMatrix, centeredChildMeanVector, aboveParentMeanVector);
-
-        aboveParentCovarianceMatrix.set(aboveChildCovarianceMatrix);
-        CommonOps.subtractEquals(aboveParentCovarianceMatrix, branchCovarianceMatrix);
-        symmetrizeInPlace(aboveParentCovarianceMatrix);
-        CommonOps.mult(actualizationInverseMatrix, aboveParentCovarianceMatrix, scratchMatrix);
-        CommonOps.multTransB(scratchMatrix, actualizationInverseMatrix, aboveParentCovarianceMatrix);
-        symmetrizeInPlace(aboveParentCovarianceMatrix);
-        safeInvertSymmetricPositiveDefinite(
-                aboveParentCovarianceMatrix,
-                aboveParentPrecisionMatrix,
-                "recoverParentAbovePrecision:aboveParentCovariance->aboveParentPrecision");
-        return aboveParentPrecisionMatrix;
+        return parentAboveResolver.recoverParentAbovePrecision(above);
     }
 
     private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
@@ -889,13 +676,7 @@ public final class OUCanonicalBranchWiring {
                 reducedLowerInverseScratch,
                 NUMERICS_OPTIONS,
                 context,
-                this::appendSpdFailureDebugDump);
-    }
-
-    private void safeInvert(final DenseMatrix64F source,
-                            final DenseMatrix64F inverseOut) {
-        CanonicalNumerics.safeInvertWithJitter(
-                source, inverseOut, secondaryScratchMatrix, NUMERICS_OPTIONS);
+                parentAboveResolver.getSpdFailureDump());
     }
 
     private static void symmetrizeInPlace(final DenseMatrix64F matrix) {
@@ -904,18 +685,6 @@ public final class OUCanonicalBranchWiring {
 
     private static boolean isFinite(final DenseMatrix64F matrix) {
         return CanonicalNumerics.isFinite(matrix);
-    }
-
-    private static boolean hasNaN(final DenseMatrix64F matrix) {
-        return CanonicalNumerics.hasNaN(matrix);
-    }
-
-    private static boolean hasInfinity(final DenseMatrix64F matrix) {
-        return CanonicalNumerics.hasInfinity(matrix);
-    }
-
-    private static String summarizeDenseMatrix(final DenseMatrix64F matrix) {
-        return CanonicalNumerics.summarizeDenseMatrix(matrix);
     }
 
     private static void fillInformation(final DenseMatrix64F precision,
@@ -1153,19 +922,4 @@ public final class OUCanonicalBranchWiring {
         return sum;
     }
 
-    private void appendSpdFailureDebugDump(final StringBuilder sb,
-                                           final String context,
-                                           final DenseMatrix64F originalSource,
-                                           final DenseMatrix64F symmetrizedSource,
-                                           final double jitterBase) {
-        sb.append(",\n");
-        sb.append("\"actualization\":").append(CanonicalNumerics.jsonMatrix(actualizationMatrix)).append(",\n");
-        sb.append("\"displacement\":").append(CanonicalNumerics.jsonVector(displacementVector)).append(",\n");
-        sb.append("\"branchPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(branchPrecisionMatrix)).append(",\n");
-        sb.append("\"branchCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(branchCovarianceMatrix)).append(",\n");
-        sb.append("\"aboveChildPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveChildPrecisionMatrix)).append(",\n");
-        sb.append("\"aboveChildCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveChildCovarianceMatrix)).append(",\n");
-        sb.append("\"aboveParentPrecisionBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveParentPrecisionMatrix)).append(",\n");
-        sb.append("\"aboveParentCovarianceBuffer\":").append(CanonicalNumerics.jsonMatrix(aboveParentCovarianceMatrix)).append("\n");
-    }
 }

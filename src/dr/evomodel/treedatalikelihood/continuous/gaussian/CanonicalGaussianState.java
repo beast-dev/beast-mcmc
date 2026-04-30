@@ -1,4 +1,4 @@
-package dr.inference.timeseries.representation;
+package dr.evomodel.treedatalikelihood.continuous.gaussian;
 
 /**
  * Canonical-form representation of a Gaussian state density.

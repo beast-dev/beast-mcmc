@@ -6,10 +6,10 @@ import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransposedMatrixParameter;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContribution;
-import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
-import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;

@@ -29,9 +29,9 @@ package dr.evomodel.treedatalikelihood.continuous.adapter;
 
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
-import dr.inference.timeseries.engine.gaussian.CanonicalGaussianMessageOps;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 
 /**
  * Canonical-form adapter over {@link ConjugateRootTraitPrior}.

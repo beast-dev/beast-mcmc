@@ -1,4 +1,4 @@
-package dr.inference.timeseries.gaussian;
+package dr.evomodel.continuous.ou;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
@@ -7,11 +7,12 @@ import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovS
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContribution;
-import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
-import dr.inference.timeseries.engine.gaussian.CanonicalTransitionAdjointUtils;
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
+import dr.inference.timeseries.gaussian.DenseSelectionMatrixParameterization;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 

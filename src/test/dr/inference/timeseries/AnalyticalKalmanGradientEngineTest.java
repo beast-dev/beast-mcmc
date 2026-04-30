@@ -14,13 +14,13 @@ import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContribution;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContributionUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContributionUtils;
 import dr.inference.timeseries.engine.gaussian.CanonicalForwardTrajectory;
 import dr.inference.timeseries.engine.gaussian.CanonicalKalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.gaussian.CanonicalKalmanSmootherEngine;
-import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
-import dr.inference.timeseries.engine.gaussian.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
 import dr.inference.timeseries.engine.gaussian.DiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
 import dr.inference.timeseries.engine.gaussian.GaussianLikelihoodEngineFactory;
@@ -30,17 +30,17 @@ import dr.inference.timeseries.engine.gaussian.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
-import dr.inference.timeseries.gaussian.OUProcessModel;
-import dr.inference.timeseries.gaussian.OUProcessModel.CovarianceGradientMethod;
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel.CovarianceGradientMethod;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
 import dr.inference.timeseries.likelihood.GaussianTimeSeriesLikelihoodFactory;
 import dr.inference.timeseries.likelihood.TimeSeriesLikelihood;
 import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -1784,8 +1784,8 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final OUProcessModel process = new OUProcessModel(
                 "ouCanonicalExact", 2, drift, diffusion, mean, initCov, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
 
-        final dr.inference.timeseries.representation.GaussianBranchTransitionKernel expectationKernel =
-                process.getRepresentation(dr.inference.timeseries.representation.GaussianBranchTransitionKernel.class);
+        final dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel expectationKernel =
+                process.getRepresentation(dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel.class);
         final CanonicalGaussianBranchTransitionKernel canonicalKernel =
                 process.getRepresentation(CanonicalGaussianBranchTransitionKernel.class);
 
@@ -1837,8 +1837,8 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final EulerOUProcessModel process = new EulerOUProcessModel(
                 "ouCanonicalEuler", 2, drift, diffusion, mean, initCov);
 
-        final dr.inference.timeseries.representation.GaussianBranchTransitionKernel expectationKernel =
-                process.getRepresentation(dr.inference.timeseries.representation.GaussianBranchTransitionKernel.class);
+        final dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel expectationKernel =
+                process.getRepresentation(dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel.class);
         final CanonicalGaussianBranchTransitionKernel canonicalKernel =
                 process.getRepresentation(CanonicalGaussianBranchTransitionKernel.class);
 
@@ -3116,11 +3116,11 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final double[][] fExpected = new double[2][2];
         final double[] bExpected = new double[2];
         final double[][] vExpected = new double[2][2];
-        timeSeriesProcess.getRepresentation(dr.inference.timeseries.representation.GaussianBranchTransitionKernel.class)
+        timeSeriesProcess.getRepresentation(dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel.class)
                 .fillTransitionMatrix(dt, fExpected);
-        timeSeriesProcess.getRepresentation(dr.inference.timeseries.representation.GaussianBranchTransitionKernel.class)
+        timeSeriesProcess.getRepresentation(dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel.class)
                 .fillTransitionOffset(dt, bExpected);
-        timeSeriesProcess.getRepresentation(dr.inference.timeseries.representation.GaussianBranchTransitionKernel.class)
+        timeSeriesProcess.getRepresentation(dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel.class)
                 .fillTransitionCovariance(dt, vExpected);
 
         final double[][] fObserved = new double[2][2];

@@ -1,4 +1,4 @@
-package dr.inference.timeseries.gaussian;
+package dr.evomodel.continuous.ou;
 
 import dr.inference.model.AbstractModel;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
@@ -11,10 +11,14 @@ import dr.inference.model.Variable;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
-import dr.inference.timeseries.representation.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
+import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
+import dr.inference.timeseries.gaussian.SelectionMatrixParameterization;
+import dr.inference.timeseries.gaussian.SelectionMatrixParameterizationFactory;
 import dr.inference.timeseries.representation.GaussianComputationMode;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;

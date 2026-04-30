@@ -3,7 +3,7 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 
 /**
  * Gradient engine for the Kalman likelihood path.

@@ -1,10 +1,10 @@
-package dr.inference.timeseries.gaussian;
+package dr.evomodel.continuous.ou;
 
 /**
  * Dense matrix helpers for exact OU transitions.
  *
- * <p>This utility is intentionally self-contained so the exact transition logic can live
- * inside the time-series module without adding a new linear-algebra dependency.
+ * <p>This utility is intentionally self-contained so exact OU transition logic can live
+ * without adding a new linear-algebra dependency.
  * The matrix exponential uses scaling-and-squaring with the order-13 Pad\'e approximant.
  *
  * <p>For selection-matrix gradients we expose an <em>adjoint</em> (backpropagation) helper
@@ -20,7 +20,7 @@ package dr.inference.timeseries.gaussian;
  * evaluates this adjoint via the standard block-exponential identity rather than by explicit
  * forward-direction loops over basis matrices.
  */
-final class MatrixExponentialUtils {
+public final class MatrixExponentialUtils {
 
     private static final double THETA_13 = 5.371920351148152;
 
@@ -28,7 +28,7 @@ final class MatrixExponentialUtils {
         // no instances
     }
 
-    static void setIdentity(final double[][] matrix) {
+    public static void setIdentity(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {
                 matrix[i][j] = (i == j) ? 1.0 : 0.0;
@@ -36,7 +36,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void fill(final double[][] matrix, final double value) {
+    public static void fill(final double[][] matrix, final double value) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {
                 matrix[i][j] = value;
@@ -44,13 +44,13 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void copy(final double[][] source, final double[][] target) {
+    public static void copy(final double[][] source, final double[][] target) {
         for (int i = 0; i < source.length; ++i) {
             System.arraycopy(source[i], 0, target[i], 0, source[i].length);
         }
     }
 
-    static void transpose(final double[][] source, final double[][] out) {
+    public static void transpose(final double[][] source, final double[][] out) {
         for (int i = 0; i < source.length; ++i) {
             for (int j = 0; j < source[i].length; ++j) {
                 out[j][i] = source[i][j];
@@ -58,7 +58,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void scale(final double[][] matrix, final double scalar, final double[][] out) {
+    public static void scale(final double[][] matrix, final double scalar, final double[][] out) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {
                 out[i][j] = scalar * matrix[i][j];
@@ -66,7 +66,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void add(final double[][] left, final double[][] right, final double[][] out) {
+    public static void add(final double[][] left, final double[][] right, final double[][] out) {
         for (int i = 0; i < left.length; ++i) {
             for (int j = 0; j < left[i].length; ++j) {
                 out[i][j] = left[i][j] + right[i][j];
@@ -74,7 +74,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void subtract(final double[][] left, final double[][] right, final double[][] out) {
+    public static void subtract(final double[][] left, final double[][] right, final double[][] out) {
         for (int i = 0; i < left.length; ++i) {
             for (int j = 0; j < left[i].length; ++j) {
                 out[i][j] = left[i][j] - right[i][j];
@@ -82,7 +82,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void addScaledInPlace(final double[][] accumulator, final double[][] increment, final double scale) {
+    public static void addScaledInPlace(final double[][] accumulator, final double[][] increment, final double scale) {
         for (int i = 0; i < accumulator.length; ++i) {
             for (int j = 0; j < accumulator[i].length; ++j) {
                 accumulator[i][j] += scale * increment[i][j];
@@ -90,7 +90,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void multiply(final double[][] left, final double[][] right, final double[][] out) {
+    public static void multiply(final double[][] left, final double[][] right, final double[][] out) {
         final int rows = left.length;
         final int inner = right.length;
         final int cols = right[0].length;
@@ -105,7 +105,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void multiply(final double[][] matrix, final double[] vector, final double[] out) {
+    public static void multiply(final double[][] matrix, final double[] vector, final double[] out) {
         for (int i = 0; i < matrix.length; ++i) {
             double sum = 0.0;
             for (int j = 0; j < vector.length; ++j) {
@@ -115,7 +115,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void outerProduct(final double[] left, final double[] right, final double[][] out) {
+    public static void outerProduct(final double[] left, final double[] right, final double[][] out) {
         for (int i = 0; i < left.length; ++i) {
             for (int j = 0; j < right.length; ++j) {
                 out[i][j] = left[i] * right[j];
@@ -123,7 +123,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static void symmetrize(final double[][] matrix) {
+    public static void symmetrize(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = i + 1; j < matrix[i].length; ++j) {
                 final double average = 0.5 * (matrix[i][j] + matrix[j][i]);
@@ -133,7 +133,7 @@ final class MatrixExponentialUtils {
         }
     }
 
-    static double norm1(final double[][] matrix) {
+    public static double norm1(final double[][] matrix) {
         double best = 0.0;
         for (int j = 0; j < matrix[0].length; ++j) {
             double sum = 0.0;
@@ -147,7 +147,7 @@ final class MatrixExponentialUtils {
         return best;
     }
 
-    static void solve(final double[][] left, final double[][] right, final double[][] out) {
+    public static void solve(final double[][] left, final double[][] right, final double[][] out) {
         final int n = left.length;
         final int m = right[0].length;
         final double[][] a = new double[n][n];
@@ -205,7 +205,7 @@ final class MatrixExponentialUtils {
         copy(b, out);
     }
 
-    static void expm(final double[][] matrix, final double[][] out) {
+    public static void expm(final double[][] matrix, final double[][] out) {
         final int n = matrix.length;
         final double[][] a = new double[n][n];
         copy(matrix, a);
@@ -295,7 +295,7 @@ final class MatrixExponentialUtils {
      *   exp([[X, E], [0, X]]) = [[exp(X), L_exp(X, E)], [0, exp(X)]].
      * </pre>
      */
-    static void frechetExp(final double[][] x, final double[][] direction, final double[][] out) {
+    public static void frechetExp(final double[][] x, final double[][] direction, final double[][] out) {
         final int n = x.length;
         final int twoN = 2 * n;
         final double[][] block = new double[twoN][twoN];
@@ -326,7 +326,7 @@ final class MatrixExponentialUtils {
      *   dL/dX = L_exp(X^T, upstream)^T.
      * </pre>
      */
-    static void adjointExp(final double[][] x, final double[][] upstream, final double[][] out) {
+    public static void adjointExp(final double[][] x, final double[][] upstream, final double[][] out) {
         final int n = x.length;
         final double[][] xTranspose = new double[n][n];
         final double[][] tmp = new double[n][n];

@@ -40,7 +40,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalAct
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.missingData.MissingOps;

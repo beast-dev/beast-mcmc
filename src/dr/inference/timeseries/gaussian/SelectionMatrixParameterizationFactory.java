@@ -1,5 +1,6 @@
 package dr.inference.timeseries.gaussian;
 
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;

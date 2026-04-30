@@ -1,7 +1,9 @@
 package dr.inference.timeseries.engine.gaussian;
 
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 
 /**
  * Joint posterior statistics for a single branch pair {@code (x_t, x_{t+1})}.

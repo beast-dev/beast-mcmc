@@ -36,16 +36,16 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessageP
 import dr.evomodel.treedatalikelihood.continuous.framework.MatrixUtils;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContribution;
-import dr.inference.timeseries.engine.gaussian.CanonicalBranchMessageContributionUtils;
-import dr.inference.timeseries.engine.gaussian.CanonicalGaussianMessageOps;
-import dr.inference.timeseries.engine.gaussian.CanonicalLocalTransitionAdjoints;
-import dr.inference.timeseries.engine.gaussian.CanonicalTransitionAdjointUtils;
-import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
-import dr.inference.timeseries.gaussian.OUProcessModel;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContributionUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.util.TaskPool;
 
 import java.util.Arrays;

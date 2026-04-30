@@ -1,7 +1,7 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 

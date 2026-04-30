@@ -32,7 +32,7 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransi
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 
 /**
  * Validates canonical OU tree-passer gradients against numerical finite differences.

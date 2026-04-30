@@ -5,8 +5,8 @@ import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.timeseries.gaussian.OUProcessModel;
-import dr.inference.timeseries.representation.GaussianBranchTransitionKernel;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 

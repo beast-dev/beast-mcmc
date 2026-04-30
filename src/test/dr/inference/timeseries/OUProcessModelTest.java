@@ -7,7 +7,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
 import junit.framework.TestCase;

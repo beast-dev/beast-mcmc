@@ -1,7 +1,7 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.evomodel.treedatalikelihood.continuous.gaussian.message;
 
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 
 /**
  * Utilities for recovering local canonical branch contributions from canonical

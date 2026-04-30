@@ -7,7 +7,7 @@ import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.gaussian.KalmanGradientEngine;
 import dr.inference.timeseries.engine.gaussian.KalmanLikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
 import junit.framework.TestCase;

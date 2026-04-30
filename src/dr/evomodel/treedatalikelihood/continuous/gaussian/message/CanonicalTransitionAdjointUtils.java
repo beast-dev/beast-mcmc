@@ -1,6 +1,6 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.evomodel.treedatalikelihood.continuous.gaussian.message;
 
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
 /**
  * Direct pullback from canonical transition blocks to moment-form transition
@@ -15,7 +15,7 @@ public final class CanonicalTransitionAdjointUtils {
 
     public static final class Workspace {
         final double[] omega;
-        final double[] transitionMatrix;
+        public final double[] transitionMatrix;
         final double[] transitionOffset;
         final double[] gXxPlusTranspose;
         final double[] temp1;

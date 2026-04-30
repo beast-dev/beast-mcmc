@@ -41,8 +41,8 @@ import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonical
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
-import dr.inference.timeseries.gaussian.OUProcessModel;
-import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 
 /**
  * Wiring class for the canonical OU tree passer path.

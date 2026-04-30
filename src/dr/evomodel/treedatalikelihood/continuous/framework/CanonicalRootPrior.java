@@ -27,7 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.framework;
 
-import dr.inference.timeseries.representation.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 
 /**
  * Canonical-form analogue of {@link RootPrior}.

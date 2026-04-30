@@ -1,5 +1,7 @@
 package dr.inference.timeseries.engine.gaussian;
 
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;

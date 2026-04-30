@@ -2,7 +2,7 @@ package dr.inferencexml.timeseries;
 
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;

@@ -1,4 +1,4 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.evomodel.treedatalikelihood.continuous.gaussian.message;
 
 /**
  * Local canonical adjoints for a single branch factor

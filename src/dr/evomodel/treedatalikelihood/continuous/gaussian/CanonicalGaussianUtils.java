@@ -1,4 +1,4 @@
-package dr.inference.timeseries.representation;
+package dr.evomodel.treedatalikelihood.continuous.gaussian;
 
 /**
  * Utilities for converting expectation-form Gaussian quantities into canonical form.

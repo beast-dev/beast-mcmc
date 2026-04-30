@@ -8,7 +8,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.gaussian.BlockDiagonalSelectionMatrixParameterization;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 public class CompareFastBlockPieces {

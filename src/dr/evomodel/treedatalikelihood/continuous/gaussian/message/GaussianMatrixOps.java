@@ -1,4 +1,4 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.evomodel.treedatalikelihood.continuous.gaussian.message;
 
 /**
  * Shared dense linear-algebra utilities for Gaussian likelihood engines.
@@ -7,22 +7,22 @@ package dr.inference.timeseries.engine.gaussian;
  * expectation-form and canonical-form Gaussian engines. Keeping them here avoids
  * coupling canonical code to {@link KalmanLikelihoodEngine} by name.
  */
-final class GaussianMatrixOps {
+public final class GaussianMatrixOps {
 
-    static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
-    static final double MIN_DIAGONAL_JITTER = 1E-10;
+    public static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
+    public static final double MIN_DIAGONAL_JITTER = 1E-10;
 
     private static final double SYMMETRY_TOLERANCE = 1E-12;
 
     private GaussianMatrixOps() { }
 
-    static void multiplyMatrixVector(final double[][] matrix,
+    public static void multiplyMatrixVector(final double[][] matrix,
                                      final double[] vector,
                                      final double[] out) {
         multiplyMatrixVector(matrix, vector, out, matrix.length, vector.length);
     }
 
-    static void multiplyMatrixVector(final double[][] matrix,
+    public static void multiplyMatrixVector(final double[][] matrix,
                                      final double[] vector,
                                      final double[] out,
                                      final int rows,
@@ -36,13 +36,13 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void multiplyMatrixMatrix(final double[][] left,
+    public static void multiplyMatrixMatrix(final double[][] left,
                                      final double[][] right,
                                      final double[][] out) {
         multiplyMatrixMatrix(left, right, out, left.length, right.length, right[0].length);
     }
 
-    static void multiplyMatrixMatrix(final double[][] left,
+    public static void multiplyMatrixMatrix(final double[][] left,
                                      final double[][] right,
                                      final double[][] out,
                                      final int rows,
@@ -59,7 +59,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void multiplyMatrixMatrixTransposedRight(final double[][] left,
+    public static void multiplyMatrixMatrixTransposedRight(final double[][] left,
                                                     final double[][] right,
                                                     final double[][] out) {
         final int rows = left.length;
@@ -76,7 +76,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void addMatrixInPlace(final double[][] accumulator, final double[][] increment) {
+    public static void addMatrixInPlace(final double[][] accumulator, final double[][] increment) {
         for (int i = 0; i < accumulator.length; ++i) {
             for (int j = 0; j < accumulator[i].length; ++j) {
                 accumulator[i][j] += increment[i][j];
@@ -84,7 +84,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void addInPlace(final double[] accumulator, final double[] increment) {
+    public static void addInPlace(final double[] accumulator, final double[] increment) {
         for (int i = 0; i < accumulator.length; ++i) {
             accumulator[i] += increment[i];
         }
@@ -94,7 +94,7 @@ final class GaussianMatrixOps {
     // Flat (row-major) variants – index convention: matrix[i * dim + j]
     // -----------------------------------------------------------------------
 
-    static void multiplyMatrixMatrixFlat(final double[] left,
+    public static void multiplyMatrixMatrixFlat(final double[] left,
                                          final double[] right,
                                          final double[] out,
                                          final int dim) {
@@ -110,7 +110,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void multiplyMatrixVectorFlat(final double[] matrix,
+    public static void multiplyMatrixVectorFlat(final double[] matrix,
                                          final double[] vector,
                                          final double[] out,
                                          final int dim) {
@@ -124,7 +124,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void symmetrizeFlat(final double[] matrix, final int dim) {
+    public static void symmetrizeFlat(final double[] matrix, final int dim) {
         for (int i = 0; i < dim; ++i) {
             for (int j = i + 1; j < dim; ++j) {
                 final double avg = 0.5 * (matrix[i * dim + j] + matrix[j * dim + i]);
@@ -134,19 +134,19 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void copyMatrixFlat(final double[] source, final double[] target, final int dim) {
+    public static void copyMatrixFlat(final double[] source, final double[] target, final int dim) {
         System.arraycopy(source, 0, target, 0, dim * dim);
     }
 
     /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
-    static void copyMatrixToFlat(final double[][] source, final double[] target, final int dim) {
+    public static void copyMatrixToFlat(final double[][] source, final double[] target, final int dim) {
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(source[i], 0, target, i * dim, dim);
         }
     }
 
     /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
-    static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+    public static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(source, i * dim, target[i], 0, dim);
         }
@@ -156,7 +156,7 @@ final class GaussianMatrixOps {
      * Cholesky factorization of a flat row-major symmetric positive-definite matrix.
      * Returns a {@link FlatCholeskyFactor}.
      */
-    static FlatCholeskyFactor choleskyFlat(final double[] matrix, final int dim) {
+    public static FlatCholeskyFactor choleskyFlat(final double[] matrix, final int dim) {
         final double[] lower = new double[dim * dim];
         if (!tryCholeskyFlat(matrix, lower, dim)) {
             throw new IllegalArgumentException("Matrix is not positive definite");
@@ -164,7 +164,7 @@ final class GaussianMatrixOps {
         return new FlatCholeskyFactor(lower, dim);
     }
 
-    static boolean tryCholeskyFlat(final double[] matrix,
+    public static boolean tryCholeskyFlat(final double[] matrix,
                                     final double[] lowerOut,
                                     final int dim) {
         for (int i = 0; i < dim; ++i) {
@@ -189,7 +189,7 @@ final class GaussianMatrixOps {
         return true;
     }
 
-    static void invertPositiveDefiniteFromFlatCholesky(final double[] out,
+    public static void invertPositiveDefiniteFromFlatCholesky(final double[] out,
                                                         final FlatCholeskyFactor factor) {
         final int dim = factor.dimension;
         final double[] lowerInverse = new double[dim * dim];
@@ -208,7 +208,7 @@ final class GaussianMatrixOps {
         symmetrizeFlat(out, dim);
     }
 
-    static final class FlatCholeskyFactor {
+    public static final class FlatCholeskyFactor {
         final double[] lower;
         final int dimension;
 
@@ -217,7 +217,7 @@ final class GaussianMatrixOps {
             this.dimension = dimension;
         }
 
-        double logDeterminant() {
+        public double logDeterminant() {
             double value = 0.0;
             for (int i = 0; i < dimension; ++i) {
                 value += 2.0 * Math.log(lower[i * dimension + i]);
@@ -225,7 +225,7 @@ final class GaussianMatrixOps {
             return value;
         }
 
-        void solveSymmetricSystem(final double[] rhs, final double[] out) {
+        public void solveSymmetricSystem(final double[] rhs, final double[] out) {
             final int dim = dimension;
             final double[] y = new double[dim];
             for (int i = 0; i < dim; ++i) {
@@ -245,7 +245,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void identityMinus(final double[][] matrix) {
+    public static void identityMinus(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {
                 matrix[i][j] = (i == j ? 1.0 : 0.0) - matrix[i][j];
@@ -253,15 +253,15 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void copyVector(final double[] source, final double[] target) {
+    public static void copyVector(final double[] source, final double[] target) {
         System.arraycopy(source, 0, target, 0, source.length);
     }
 
-    static void copyMatrix(final double[][] source, final double[][] target) {
+    public static void copyMatrix(final double[][] source, final double[][] target) {
         copyMatrix(source, target, source.length, source[0].length);
     }
 
-    static void copyMatrix(final double[][] source,
+    public static void copyMatrix(final double[][] source,
                            final double[][] target,
                            final int rows,
                            final int cols) {
@@ -270,7 +270,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void symmetrize(final double[][] matrix) {
+    public static void symmetrize(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = i + 1; j < matrix[i].length; ++j) {
                 final double average = 0.5 * (matrix[i][j] + matrix[j][i]);
@@ -280,7 +280,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static void addJitterToDiagonal(final double[][] matrix, final double minimumJitter) {
+    public static void addJitterToDiagonal(final double[][] matrix, final double minimumJitter) {
         for (int i = 0; i < matrix.length; ++i) {
             if (matrix[i][i] < minimumJitter) {
                 matrix[i][i] = minimumJitter;
@@ -288,7 +288,7 @@ final class GaussianMatrixOps {
         }
     }
 
-    static double quadraticForm(final double[][] matrix, final double[] vector) {
+    public static double quadraticForm(final double[][] matrix, final double[] vector) {
         double result = 0.0;
         for (int i = 0; i < vector.length; ++i) {
             double rowSum = 0.0;
@@ -300,7 +300,7 @@ final class GaussianMatrixOps {
         return result;
     }
 
-    static CholeskyFactor cholesky(final double[][] matrix) {
+    public static CholeskyFactor cholesky(final double[][] matrix) {
         final int dim = matrix.length;
         final double[][] lower = new double[dim][dim];
 
@@ -311,7 +311,7 @@ final class GaussianMatrixOps {
         return new CholeskyFactor(lower);
     }
 
-    static boolean tryCholesky(final double[][] matrix,
+    public static boolean tryCholesky(final double[][] matrix,
                                final double[][] lowerOut,
                                final int dimension) {
         for (int i = 0; i < dimension; ++i) {
@@ -347,7 +347,7 @@ final class GaussianMatrixOps {
         return true;
     }
 
-    static void invertPositiveDefiniteFromCholesky(final double[][] out,
+    public static void invertPositiveDefiniteFromCholesky(final double[][] out,
                                                    final CholeskyFactor factor) {
         final int dim = out.length;
         final double[][] inverse = new double[dim][dim];
@@ -369,7 +369,7 @@ final class GaussianMatrixOps {
         symmetrize(out);
     }
 
-    static void invertPositiveDefiniteFromLowerTriangular(final double[][] inverseOut,
+    public static void invertPositiveDefiniteFromLowerTriangular(final double[][] inverseOut,
                                                           final double[][] lowerTriangular,
                                                           final double[] yScratch,
                                                           final int dimension) {
@@ -393,14 +393,14 @@ final class GaussianMatrixOps {
         symmetrize(inverseOut);
     }
 
-    static final class CholeskyFactor {
+    public static final class CholeskyFactor {
         private final double[][] lower;
 
         CholeskyFactor(final double[][] lower) {
             this.lower = lower;
         }
 
-        double logDeterminant() {
+        public double logDeterminant() {
             double value = 0.0;
             for (int i = 0; i < lower.length; ++i) {
                 value += 2.0 * Math.log(lower[i][i]);
@@ -408,7 +408,7 @@ final class GaussianMatrixOps {
             return value;
         }
 
-        void solveSymmetricSystem(final double[] rhs, final double[] out) {
+        public void solveSymmetricSystem(final double[] rhs, final double[] out) {
             final int dim = lower.length;
             final double[] y = new double[dim];
 

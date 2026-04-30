@@ -1,10 +1,14 @@
 package dr.inference.timeseries.engine.gaussian;
 
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
+
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.inference.timeseries.representation.CanonicalGaussianBranchTransitionKernel;
-import dr.inference.timeseries.representation.CanonicalGaussianState;
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

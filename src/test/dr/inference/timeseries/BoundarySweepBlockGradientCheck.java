@@ -10,7 +10,7 @@ import dr.inference.timeseries.engine.gaussian.KalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.gaussian.KalmanSmootherEngine;
 import dr.inference.timeseries.engine.gaussian.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.inference.timeseries.gaussian.OUProcessModel;
+import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 public class BoundarySweepBlockGradientCheck {

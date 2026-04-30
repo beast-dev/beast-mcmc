@@ -27,7 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.framework;
 
-import dr.inference.timeseries.representation.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
 /**
  * Tree-side provider of canonical branch transitions.

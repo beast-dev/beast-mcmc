@@ -32,7 +32,7 @@ import java.util.Arrays;
 /**
  * Exact tip observation for the canonical OU tree pathway.
  *
- * <p>This type is intentionally not a {@link dr.inference.timeseries.representation.CanonicalGaussianState}.
+ * <p>This type is intentionally not a {@link dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState}.
  * Exact observations and missing coordinates are constraint-like factors rather than
  * ordinary finite normalized Gaussian states. Observed coordinates carry exact values;
  * unobserved coordinates are marked explicitly through {@link #observed}.

@@ -3,8 +3,8 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.gaussian.OUProcessModel;
-import dr.inference.timeseries.gaussian.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

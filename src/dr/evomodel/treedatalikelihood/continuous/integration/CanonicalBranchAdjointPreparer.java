@@ -32,7 +32,8 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshotProvider;
 import dr.util.TaskPool;
 
 /**
@@ -83,8 +84,8 @@ final class CanonicalBranchAdjointPreparer {
                         ? (OrthogonalBlockCanonicalParameterization)
                         processModel.getSelectionMatrixParameterization()
                         : null;
-        final CanonicalPreparedBranchBasisProvider preparedBasisProvider =
-                orthogonalSelection == null ? null : requirePreparedBranchBasisProvider(transitionProvider);
+        final CanonicalPreparedBranchSnapshotProvider snapshotProvider =
+                requirePreparedBranchSnapshotProvider(transitionProvider);
         final int rootIndex = tree.getRoot().getNumber();
         if (workspaces.length <= 1 || nodeCount <= 2) {
             for (int childIndex = 0; childIndex < nodeCount; ++childIndex) {
@@ -94,14 +95,7 @@ final class CanonicalBranchAdjointPreparer {
                 if (!source.fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
                     continue;
                 }
-                final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-                out.addBranch(
-                        childIndex,
-                        branchLength,
-                        mainWorkspace.adjoints,
-                        orthogonalSelection == null
-                                ? null
-                                : preparedBasisProvider.getOrthogonalPreparedBranchBasis(childIndex));
+                out.addBranch(requireSnapshot(snapshotProvider, childIndex), mainWorkspace.adjoints);
             }
         } else {
             taskPool.forkDynamicBalanced(
@@ -120,14 +114,10 @@ final class CanonicalBranchAdjointPreparer {
                         }
 
                         out.stageBranch(
-                                childIndex,
-                                transitionProvider.getEffectiveBranchLength(childIndex),
-                                workspace.adjoints,
-                                null,
-                                null);
+                                requireSnapshot(snapshotProvider, childIndex),
+                                workspace.adjoints);
                     });
-            out.compactStagedBranches(rootIndex, false);
-            out.prepareOrthogonalBasisForActiveBranches(preparedBasisProvider);
+            out.compactStagedBranches(rootIndex, orthogonalSelection != null);
         }
 
         out.setRoot(
@@ -159,12 +149,22 @@ final class CanonicalBranchAdjointPreparer {
         return (CanonicalOUTransitionProvider) transitionProvider;
     }
 
-    private static CanonicalPreparedBranchBasisProvider requirePreparedBranchBasisProvider(
+    private static CanonicalPreparedBranchSnapshotProvider requirePreparedBranchSnapshotProvider(
             final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalPreparedBranchBasisProvider)) {
+        if (!(transitionProvider instanceof CanonicalPreparedBranchSnapshotProvider)) {
             throw new UnsupportedOperationException(
-                    "Canonical orthogonal OU gradients require CanonicalPreparedBranchBasisProvider.");
+                    "Canonical OU gradients require CanonicalPreparedBranchSnapshotProvider.");
         }
-        return (CanonicalPreparedBranchBasisProvider) transitionProvider;
+        return (CanonicalPreparedBranchSnapshotProvider) transitionProvider;
+    }
+
+    private static CanonicalPreparedBranchSnapshot requireSnapshot(
+            final CanonicalPreparedBranchSnapshotProvider snapshotProvider,
+            final int childIndex) {
+        final CanonicalPreparedBranchSnapshot snapshot = snapshotProvider.getPreparedBranchSnapshot(childIndex);
+        if (snapshot == null) {
+            throw new IllegalStateException("Missing prepared canonical branch snapshot for child " + childIndex);
+        }
+        return snapshot;
     }
 }

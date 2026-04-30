@@ -37,6 +37,7 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.util.TaskPool;
@@ -311,7 +312,7 @@ final class CanonicalTreeGradientEngine {
             System.arraycopy(gradient.orthogonalNativeGradientScratch, 0, gradA, 0, orthogonalLayout.nativeBlockDim);
             System.arraycopy(angleGradient, 0, gradA, orthogonalLayout.nativeBlockDim, angleGradient.length);
         } else {
-            transposeFlatSquareInPlace(gradA);
+            GaussianMatrixOps.transposeFlatSquareInPlace(gradA, dimension);
         }
 
         if (inputs.getRootDiffusionScale() > 0.0) {
@@ -427,8 +428,10 @@ final class CanonicalTreeGradientEngine {
             }
         }
 
-        multiplyFlatBySquare(priorPrecision, gradient.covarianceAdjoint, gradient.transitionMatrix);
-        multiplySquareByFlat(gradient.transitionMatrix, priorPrecision, gradient.covarianceAdjoint);
+        GaussianMatrixOps.multiplyFlatByMatrix(
+                priorPrecision, gradient.covarianceAdjoint, gradient.transitionMatrix, dimension);
+        GaussianMatrixOps.multiplyMatrixByFlat(
+                gradient.transitionMatrix, priorPrecision, gradient.covarianceAdjoint, dimension);
         for (int i = 0; i < dimension; ++i) {
             final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
@@ -453,43 +456,6 @@ final class CanonicalTreeGradientEngine {
         System.arraycopy(source.dLogL_dF, 0, target.dLogL_dF, 0, source.dLogL_dF.length);
         System.arraycopy(source.dLogL_df, 0, target.dLogL_df, 0, source.dLogL_df.length);
         System.arraycopy(source.dLogL_dOmega, 0, target.dLogL_dOmega, 0, source.dLogL_dOmega.length);
-    }
-
-    private void multiplyFlatBySquare(final double[] left, final double[][] right, final double[][] out) {
-        for (int i = 0; i < dimension; ++i) {
-            final int iOff = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += left[iOff + k] * right[k][j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private void multiplySquareByFlat(final double[][] left, final double[] right, final double[][] out) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += left[i][k] * right[k * dimension + j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private void transposeFlatSquareInPlace(final double[] matrix) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = i + 1; j < dimension; ++j) {
-                final int ij = i * dimension + j;
-                final int ji = j * dimension + i;
-                final double tmp = matrix[ij];
-                matrix[ij] = matrix[ji];
-                matrix[ji] = tmp;
-            }
-        }
     }
 
     private static void accumulateVectorInPlace(final double[] target,

@@ -30,27 +30,14 @@ package dr.evomodel.treedatalikelihood.continuous.integration;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.framework.MatrixUtils;
-import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalMatrixProvider;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
-import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.util.TaskPool;
 
 import java.util.Arrays;
@@ -77,12 +64,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final CanonicalTreeStateStore stateStore;
     private final CanonicalTipProjector tipProjector;
     private final CanonicalTreeTraversal treeTraversal;
+    private final CanonicalBranchContributionAssembler branchContributionAssembler;
     private final BranchGradientInputs preparedBranchGradientInputs;
     private final BranchGradientWorkspace mainWorkspace;
     private final TaskPool branchGradientTaskPool;
     private final BranchGradientWorkspace[] branchGradientWorkspaces;
     private final CanonicalBranchAdjointPreparer branchAdjointPreparer;
     private final CanonicalTreeGradientEngine treeGradientEngine;
+    private final CanonicalLegacyGradientCompatibility legacyGradientCompatibility;
 
     public SequentialCanonicalOUMessagePasser(final Tree tree, final int dim) {
         this(tree, dim, resolveBranchGradientParallelism());
@@ -98,6 +87,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.stateStore = new CanonicalTreeStateStore(nodeCount, dim);
         this.tipProjector = new CanonicalTipProjector(dim);
         this.treeTraversal = new CanonicalTreeTraversal(tree, dim, tipProjector);
+        this.branchContributionAssembler = new CanonicalBranchContributionAssembler(tree, dim, stateStore);
         this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
         this.mainWorkspace = new BranchGradientWorkspace(dim);
         this.branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
@@ -113,13 +103,19 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 branchGradientTaskPool,
                 mainWorkspace,
                 branchGradientWorkspaces,
-                this::fillLocalAdjointsForBranch);
+                branchContributionAssembler::fillLocalAdjointsForBranch);
         this.treeGradientEngine = new CanonicalTreeGradientEngine(
                 dim,
                 Math.max(0, nodeCount - 1),
                 branchGradientTaskPool,
                 mainWorkspace,
                 branchGradientWorkspaces);
+        this.legacyGradientCompatibility = new CanonicalLegacyGradientCompatibility(
+                tree,
+                dim,
+                stateStore,
+                mainWorkspace,
+                branchContributionAssembler);
     }
 
     private static int resolveBranchGradientParallelism() {
@@ -192,48 +188,11 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     @Deprecated
     public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
-        Arrays.fill(gradQ, 0.0);
         ensureGradientState();
 
         final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
         try {
-            final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-            final OUProcessModel processModel = ouProvider.getProcessModel();
-            final OrthogonalBlockCanonicalParameterization orthogonalSelection =
-                    processModel.getSelectionMatrixParameterization()
-                            instanceof OrthogonalBlockCanonicalParameterization
-                            ? (OrthogonalBlockCanonicalParameterization)
-                            processModel.getSelectionMatrixParameterization()
-                            : null;
-            final int rootIndex = tree.getRoot().getNumber();
-            final BranchGradientWorkspace workspace = mainWorkspace;
-
-            for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-                if (childIndex == rootIndex) {
-                    continue;
-                }
-                if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                    continue;
-                }
-                if (orthogonalSelection != null) {
-                    transposeFromFlatInto(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-                    orthogonalSelection.accumulateDiffusionGradient(
-                            processModel.getDiffusionMatrix(),
-                            transitionProvider.getEffectiveBranchLength(childIndex),
-                            workspace.covarianceAdjoint,
-                            gradQ);
-                } else {
-                    copyFlatToSquare(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-                    processModel.accumulateDiffusionGradient(
-                            transitionProvider.getEffectiveBranchLength(childIndex),
-                            workspace.covarianceAdjoint,
-                            gradQ);
-                }
-            }
-
-            if (stateStore.lastRootDiffusionScale > 0.0) {
-                accumulateRootDiffusionGradient(gradQ, workspace);
-            }
+            legacyGradientCompatibility.computeGradientQ(transitionProvider, gradQ);
         } finally {
             popTransitionCachePhase(transitionProvider, previousPhase);
         }
@@ -270,139 +229,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     @Deprecated
     public void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
-        Arrays.fill(gradA, 0.0);
         ensureGradientState();
-
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization) {
-            computeOrthogonalBlockGradientA(
-                    transitionProvider,
-                    processModel,
-                    (OrthogonalBlockCanonicalParameterization)
-                            processModel.getSelectionMatrixParameterization(),
-                    gradA);
-            return;
-        }
-        final int rootIndex = tree.getRoot().getNumber();
-        final BranchGradientWorkspace workspace = mainWorkspace;
-
-        for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-            if (childIndex == rootIndex) {
-                continue;
-            }
-            if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                continue;
-            }
-
-            final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            copyFlatToSquare(workspace.adjoints.dLogL_dF, workspace.transitionMatrix, dim);
-            processModel.accumulateSelectionGradient(
-                    branchLength,
-                    workspace.transitionMatrix,
-                    workspace.adjoints.dLogL_df,
-                    gradA);
-
-            transposeFromFlatInto(workspace.adjoints.dLogL_dOmega, workspace.covarianceAdjoint, dim);
-            processModel.accumulateSelectionGradientFromCovariance(
-                    branchLength,
-                    workspace.covarianceAdjoint,
-                    gradA);
-        }
-
-        transposeFlatSquareInPlace(gradA, dim);
-    }
-
-    private void computeOrthogonalBlockGradientA(final CanonicalBranchTransitionProvider transitionProvider,
-                                                 final OUProcessModel processModel,
-                                                 final OrthogonalBlockCanonicalParameterization parameterization,
-                                                 final double[] gradA) {
-        final BranchGradientWorkspace workspace = mainWorkspace;
-        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
-                (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameterization.getMatrixParameter();
-        if (!(blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider)) {
-            throw new IllegalStateException(
-                    "Orthogonal block native gradient requires an OrthogonalMatrixProvider rotation parameter.");
-        }
-
-        final int compressedBlockDim = blockParameter.getCompressedDDimension();
-        final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
-        final OrthogonalMatrixProvider orthogonalRotation =
-                (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
-        final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
-        final int nativeDim = nativeBlockDim + angleDim;
-        if (gradA.length != nativeDim) {
-            throw new IllegalArgumentException(
-                    "Orthogonal block selection gradient expects native parameter length "
-                            + nativeDim + ", found " + gradA.length);
-        }
-
-        final int rootIndex = tree.getRoot().getNumber();
-        if (compressedBlockDim > workspace.orthogonalCompressedGradientScratch.length
-                || nativeBlockDim > workspace.orthogonalNativeGradientScratch.length) {
-            throw new IllegalStateException(
-                    "Orthogonal block scratch is too small for native gradient dimensions "
-                            + compressedBlockDim + " and " + nativeBlockDim + ".");
-        }
-        final double[] stationaryMean = workspace.orthogonalStationaryMeanScratch;
-        processModel.getInitialMean(stationaryMean);
-        final double[] compressedBlockGradient = workspace.orthogonalCompressedGradientScratch;
-        Arrays.fill(compressedBlockGradient, 0, compressedBlockDim, 0.0);
-        final double[] nativeBlockGradient = workspace.orthogonalNativeGradientScratch;
-        Arrays.fill(nativeBlockGradient, 0, nativeBlockDim, 0.0);
-        final double[][] rotationGradient = workspace.orthogonalRotationGradientScratch;
-        clearSquare(rotationGradient);
-
-        for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-            if (childIndex == rootIndex) {
-                continue;
-            }
-            if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                continue;
-            }
-
-            parameterization.accumulateNativeGradientFromAdjoints(
-                    processModel.getDiffusionMatrix(),
-                    stationaryMean,
-                    transitionProvider.getEffectiveBranchLength(childIndex),
-                    workspace.adjoints,
-                    compressedBlockGradient,
-                    rotationGradient);
-        }
-
-        blockParameter.chainGradient(compressedBlockGradient, nativeBlockGradient);
-        final double[] angleGradient = orthogonalRotation.pullBackGradient(rotationGradient);
-        System.arraycopy(nativeBlockGradient, 0, gradA, 0, nativeBlockDim);
-        System.arraycopy(angleGradient, 0, gradA, nativeBlockDim, angleGradient.length);
+        legacyGradientCompatibility.computeGradientA(transitionProvider, gradA);
     }
 
     @Override
     @Deprecated
     public void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
-        Arrays.fill(gradMu, 0.0);
         ensureGradientState();
-
-        final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
-        final int rootIndex = tree.getRoot().getNumber();
-        final BranchGradientWorkspace workspace = mainWorkspace;
-
-        for (int childIndex = 0; childIndex < nodeCount; childIndex++) {
-            if (childIndex == rootIndex) {
-                continue;
-            }
-            if (!fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
-                continue;
-            }
-
-            final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
-            processModel.fillTransitionMatrix(branchLength, workspace.transitionMatrix);
-            accumulateStationaryMeanGradient(
-                    workspace.transitionMatrix,
-                    workspace.adjoints.dLogL_df,
-                    gradMu);
-        }
+        legacyGradientCompatibility.computeGradientMu(transitionProvider, gradMu);
     }
 
     @Override
@@ -492,28 +327,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         tipProjector.projectObservedChildToParent(tipObservation, transitionMomentProvider, branchLength, out);
     }
 
-    private int collectObservationPartition(final CanonicalTipObservation tipObservation,
-                                            final BranchGradientWorkspace workspace) {
-        int observedCount = 0;
-        int missingCount = 0;
-
-        for (int i = 0; i < dim; i++) {
-            if (tipObservation.observed[i]) {
-                workspace.observedIndexScratch[observedCount++] = i;
-                workspace.reducedIndexByTraitScratch[i] = -1;
-            } else {
-                workspace.missingIndexScratch[missingCount++] = i;
-                workspace.reducedIndexByTraitScratch[i] = dim + missingCount - 1;
-            }
-        }
-
-        if (observedCount != tipObservation.observedCount || observedCount + missingCount != dim) {
-            throw new UnsupportedOperationException(
-                    "Canonical tip observation partition is inconsistent with observedCount.");
-        }
-        return observedCount;
-    }
-
     private void ensureGradientState() {
         if (!stateStore.hasPostOrderState || !stateStore.hasPreOrderState) {
             throw new IllegalStateException(
@@ -549,329 +362,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private boolean fillLocalAdjointsForBranch(final int childIndex,
                                                final CanonicalBranchTransitionProvider transitionProvider,
                                                final BranchGradientWorkspace workspace) {
-        transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
-        if (stateStore.hasFixedRootValue && tree.isRoot(tree.getParent(tree.getNode(childIndex)))) {
-            if (tree.isExternal(tree.getNode(childIndex))) {
-                final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-                if (tipObservation.observedCount == 0) {
-                    return false;
-                }
-                final int observedCount = collectObservationPartition(tipObservation, workspace);
-                if (observedCount == dim) {
-                    fillContributionForFixedParentObservedTip(workspace.transition, tipObservation, workspace);
-                } else {
-                    fillContributionForFixedParentPartiallyObservedTip(
-                            workspace.transition, tipObservation, observedCount, workspace);
-                }
-            } else {
-                fillContributionForFixedParentInternalNode(workspace.transition, stateStore.postOrder[childIndex], workspace);
-            }
-
-            CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                    workspace.transition,
-                    workspace.contribution,
-                    workspace.transitionAdjointWorkspace,
-                    workspace.adjoints);
-            return true;
-        }
-
-        if (tree.isExternal(tree.getNode(childIndex))) {
-            final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-            if (tipObservation.observedCount == 0) {
-                return false;
-            }
-            final int observedCount = collectObservationPartition(tipObservation, workspace);
-            if (observedCount == dim) {
-                fillContributionForObservedTip(stateStore.branchAboveParent[childIndex], workspace.transition, tipObservation, workspace);
-            } else {
-                fillContributionForPartiallyObservedTip(
-                        stateStore.branchAboveParent[childIndex], workspace.transition, tipObservation, observedCount, workspace);
-            }
-        } else {
-            CanonicalGaussianMessageOps.buildPairPosterior(
-                    stateStore.branchAboveParent[childIndex],
-                    workspace.transition,
-                    stateStore.postOrder[childIndex],
-                    workspace.pairState);
-            CanonicalBranchMessageContributionUtils.fillFromPairState(
-                    workspace.pairState,
-                    workspace.contributionWorkspace,
-                    workspace.contribution);
-        }
-
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                workspace.transition,
-                workspace.contribution,
-                workspace.transitionAdjointWorkspace,
-                workspace.adjoints);
-        return true;
-    }
-
-    private void fillContributionForObservedTip(final CanonicalGaussianState aboveState,
-                                                final CanonicalGaussianTransition transition,
-                                                final CanonicalTipObservation tipObservation,
-                                                final BranchGradientWorkspace workspace) {
-        for (int i = 0; i < dim; ++i) {
-            double info = transition.informationX[i] + aboveState.information[i];
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                info -= transition.precisionXY[iOff + j] * tipObservation.values[j];
-                workspace.parentPosterior.precision[iOff + j] =
-                        transition.precisionXX[iOff + j] + aboveState.precision[iOff + j];
-            }
-            workspace.parentPosterior.information[i] = info;
-        }
-        workspace.parentPosterior.logNormalizer = 0.0;
-
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                workspace.parentPosterior, workspace.mean, workspace.covariance);
-
-        for (int i = 0; i < dim; ++i) {
-            final double xi = workspace.mean[i];
-            final double yi = tipObservation.values[i];
-            workspace.contribution.dLogL_dInformationX[i] = xi;
-            workspace.contribution.dLogL_dInformationY[i] = yi;
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                final double xj = workspace.mean[j];
-                final double yj = tipObservation.values[j];
-                final double exx = workspace.covariance[i][j] + xi * xj;
-                workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * exx;
-                workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
-                workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
-                workspace.contribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * (yi * yj);
-            }
-        }
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
-    }
-
-    private void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
-                                                           final CanonicalTipObservation tipObservation,
-                                                           final BranchGradientWorkspace workspace) {
-        clearContribution(workspace);
-        for (int i = 0; i < dim; ++i) {
-            final double xi = stateStore.fixedRootValue[i];
-            final double yi = tipObservation.values[i];
-            workspace.contribution.dLogL_dInformationX[i] = xi;
-            workspace.contribution.dLogL_dInformationY[i] = yi;
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                final double xj = stateStore.fixedRootValue[j];
-                final double yj = tipObservation.values[j];
-                workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
-                workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
-                workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
-                workspace.contribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * (yi * yj);
-            }
-        }
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
-    }
-
-    private void fillContributionForFixedParentInternalNode(final CanonicalGaussianTransition transition,
-                                                            final CanonicalGaussianState childMessage,
-                                                            final BranchGradientWorkspace workspace) {
-        CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(transition, stateStore.fixedRootValue, workspace.state);
-        CanonicalGaussianMessageOps.combineStates(workspace.state, childMessage, workspace.parentPosterior);
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                workspace.parentPosterior, workspace.mean, workspace.covariance);
-        fillContributionFromFixedParentChildMoments(workspace.mean, workspace.covariance, workspace);
-    }
-
-    private void fillContributionForFixedParentPartiallyObservedTip(final CanonicalGaussianTransition transition,
-                                                                    final CanonicalTipObservation tipObservation,
-                                                                    final int observedCount,
-                                                                    final BranchGradientWorkspace workspace) {
-        final int missingCount = dim - observedCount;
-        CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(transition, stateStore.fixedRootValue, workspace.state);
-
-        for (int missing = 0; missing < missingCount; ++missing) {
-            final int missingTrait = workspace.missingIndexScratch[missing];
-            double info = workspace.state.information[missingTrait];
-            final int missingTraitOff = missingTrait * dim;
-            for (int observed = 0; observed < observedCount; ++observed) {
-                final int observedTrait = workspace.observedIndexScratch[observed];
-                info -= workspace.state.precision[missingTraitOff + observedTrait] * tipObservation.values[observedTrait];
-            }
-            workspace.reducedInformationScratch[missing] = info;
-            for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                workspace.reducedPrecisionFlatScratch[missing * missingCount + otherMissing] =
-                        workspace.state.precision[missingTraitOff + workspace.missingIndexScratch[otherMissing]];
-            }
-        }
-
-        MatrixUtils.safeInvertPrecision(
-                workspace.reducedPrecisionFlatScratch,
-                workspace.reducedCovarianceFlatScratch,
-                missingCount);
-
-        for (int missing = 0; missing < missingCount; ++missing) {
-            double sum = 0.0;
-            for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                sum += workspace.reducedCovarianceFlatScratch[missing * missingCount + otherMissing]
-                        * workspace.reducedInformationScratch[otherMissing];
-            }
-            workspace.mean2[missing] = sum;
-        }
-
-        clearContribution(workspace);
-        for (int i = 0; i < dim; ++i) {
-            workspace.contribution.dLogL_dInformationX[i] = stateStore.fixedRootValue[i];
-            workspace.contribution.dLogL_dInformationY[i] = tipObservation.observed[i]
-                    ? tipObservation.values[i]
-                    : workspace.mean2[workspace.reducedIndexByTraitScratch[i] - dim];
-        }
-
-        for (int i = 0; i < dim; ++i) {
-            final double xi = stateStore.fixedRootValue[i];
-            final double yi = workspace.contribution.dLogL_dInformationY[i];
-            final int missingI = tipObservation.observed[i] ? -1 : workspace.reducedIndexByTraitScratch[i] - dim;
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                final double xj = stateStore.fixedRootValue[j];
-                final double yj = workspace.contribution.dLogL_dInformationY[j];
-                final int missingJ = tipObservation.observed[j] ? -1 : workspace.reducedIndexByTraitScratch[j] - dim;
-                final double eyy = (missingI < 0 || missingJ < 0)
-                        ? yi * yj
-                        : workspace.reducedCovarianceFlatScratch[missingI * missingCount + missingJ] + yi * yj;
-
-                workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
-                workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
-                workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
-                workspace.contribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * eyy;
-            }
-        }
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
-    }
-
-    private void fillContributionFromFixedParentChildMoments(final double[] childMean,
-                                                             final double[][] childCovariance,
-                                                             final BranchGradientWorkspace workspace) {
-        clearContribution(workspace);
-        for (int i = 0; i < dim; ++i) {
-            final double xi = stateStore.fixedRootValue[i];
-            final double yi = childMean[i];
-            workspace.contribution.dLogL_dInformationX[i] = xi;
-            workspace.contribution.dLogL_dInformationY[i] = yi;
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                final double xj = stateStore.fixedRootValue[j];
-                final double yj = childMean[j];
-                final double eyy = childCovariance[i][j] + yi * yj;
-                workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
-                workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
-                workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
-                workspace.contribution.dLogL_dPrecisionYY[iOff + j] = -0.5 * eyy;
-            }
-        }
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
-    }
-
-    private void fillContributionForPartiallyObservedTip(final CanonicalGaussianState aboveState,
-                                                         final CanonicalGaussianTransition transition,
-                                                         final CanonicalTipObservation tipObservation,
-                                                         final int observedCount,
-                                                         final BranchGradientWorkspace workspace) {
-        final int missingCount = dim - observedCount;
-        final int reducedDimension = dim + missingCount;
-
-        for (int i = 0; i < dim; ++i) {
-            double info = transition.informationX[i] + aboveState.information[i];
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                workspace.reducedPrecisionFlatScratch[i * reducedDimension + j] =
-                        transition.precisionXX[iOff + j] + aboveState.precision[iOff + j];
-            }
-            for (int observed = 0; observed < observedCount; ++observed) {
-                final int observedIndex = workspace.observedIndexScratch[observed];
-                info -= transition.precisionXY[iOff + observedIndex] * tipObservation.values[observedIndex];
-            }
-            workspace.reducedInformationScratch[i] = info;
-            for (int missing = 0; missing < missingCount; ++missing) {
-                workspace.reducedPrecisionFlatScratch[i * reducedDimension + dim + missing] =
-                        transition.precisionXY[iOff + workspace.missingIndexScratch[missing]];
-            }
-        }
-
-        for (int missing = 0; missing < missingCount; ++missing) {
-            final int childIndex = workspace.missingIndexScratch[missing];
-            final int row = dim + missing;
-            final int childOff = childIndex * dim;
-            double info = transition.informationY[childIndex];
-            for (int observed = 0; observed < observedCount; ++observed) {
-                final int observedIndex = workspace.observedIndexScratch[observed];
-                info -= transition.precisionYY[childOff + observedIndex] * tipObservation.values[observedIndex];
-            }
-            workspace.reducedInformationScratch[row] = info;
-            for (int j = 0; j < dim; ++j) {
-                workspace.reducedPrecisionFlatScratch[row * reducedDimension + j] =
-                        transition.precisionYX[childOff + j];
-            }
-            for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                workspace.reducedPrecisionFlatScratch[row * reducedDimension + dim + otherMissing] =
-                        transition.precisionYY[childOff + workspace.missingIndexScratch[otherMissing]];
-            }
-        }
-
-        MatrixUtils.safeInvertPrecision(
-                workspace.reducedPrecisionFlatScratch,
-                workspace.reducedCovarianceFlatScratch,
-                reducedDimension);
-
-        for (int i = 0; i < reducedDimension; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < reducedDimension; ++j) {
-                sum += workspace.reducedCovarianceFlatScratch[i * reducedDimension + j]
-                        * workspace.reducedInformationScratch[j];
-            }
-            workspace.reducedMeanScratch[i] = Double.isNaN(sum) ? 0.0 : sum;
-        }
-
-        clearContribution(workspace);
-        for (int i = 0; i < dim; ++i) {
-            workspace.contribution.dLogL_dInformationX[i] = workspace.reducedMeanScratch[i];
-            workspace.contribution.dLogL_dInformationY[i] = tipObservation.observed[i]
-                    ? tipObservation.values[i]
-                    : workspace.reducedMeanScratch[workspace.reducedIndexByTraitScratch[i]];
-        }
-
-        for (int i = 0; i < dim; ++i) {
-            final double xi = workspace.reducedMeanScratch[i];
-            final int reducedI = workspace.reducedIndexByTraitScratch[i];
-            for (int j = 0; j < dim; ++j) {
-                final double xj = workspace.reducedMeanScratch[j];
-                final int reducedJ = workspace.reducedIndexByTraitScratch[j];
-                final double yi = workspace.contribution.dLogL_dInformationY[i];
-                final double yj = workspace.contribution.dLogL_dInformationY[j];
-
-                final double exx = workspace.reducedCovarianceFlatScratch[i * reducedDimension + j] + xi * xj;
-                final double exy = tipObservation.observed[j]
-                        ? xi * yj
-                        : workspace.reducedCovarianceFlatScratch[i * reducedDimension + reducedJ] + xi * yj;
-                final double eyx = tipObservation.observed[i]
-                        ? yi * xj
-                        : workspace.reducedCovarianceFlatScratch[reducedI * reducedDimension + j] + yi * xj;
-                final double eyy = (tipObservation.observed[i] || tipObservation.observed[j])
-                        ? yi * yj
-                        : workspace.reducedCovarianceFlatScratch[reducedI * reducedDimension + reducedJ] + yi * yj;
-
-                final int ij = i * dim + j;
-                workspace.contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
-                workspace.contribution.dLogL_dPrecisionXY[ij] = -0.5 * exy;
-                workspace.contribution.dLogL_dPrecisionYX[ij] = -0.5 * eyx;
-                workspace.contribution.dLogL_dPrecisionYY[ij] = -0.5 * eyy;
-            }
-        }
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
-    }
-
-    private void clearContribution(final BranchGradientWorkspace workspace) {
-        Arrays.fill(workspace.contribution.dLogL_dInformationX, 0.0);
-        Arrays.fill(workspace.contribution.dLogL_dInformationY, 0.0);
-        Arrays.fill(workspace.contribution.dLogL_dPrecisionXX, 0.0);
-        Arrays.fill(workspace.contribution.dLogL_dPrecisionXY, 0.0);
-        Arrays.fill(workspace.contribution.dLogL_dPrecisionYX, 0.0);
-        Arrays.fill(workspace.contribution.dLogL_dPrecisionYY, 0.0);
-        workspace.contribution.dLogL_dLogNormalizer = -1.0;
+        return branchContributionAssembler.fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace);
     }
 
     private double finiteDifferenceBranchLengthGradient(
@@ -914,151 +405,4 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         return CanonicalGaussianMessageOps.normalizationShift(workspace.combinedState, workspace.gaussianWorkspace);
     }
 
-    private void accumulateStationaryMeanGradient(final double[][] transitionMatrix,
-                                                  final double[] adjointB,
-                                                  final double[] gradient) {
-        if (gradient.length == 1) {
-            double sum = 0.0;
-            for (int i = 0; i < dim; ++i) {
-                double ftAdjoint = 0.0;
-                for (int j = 0; j < dim; ++j) {
-                    ftAdjoint += transitionMatrix[j][i] * adjointB[j];
-                }
-                sum += adjointB[i] - ftAdjoint;
-            }
-            gradient[0] += sum;
-            return;
-        }
-        if (gradient.length != dim) {
-            throw new IllegalArgumentException(
-                    "Stationary-mean gradient length must be 1 or " + dim + ", found " + gradient.length);
-        }
-
-        for (int i = 0; i < dim; ++i) {
-            double ftAdjoint = 0.0;
-            for (int j = 0; j < dim; ++j) {
-                ftAdjoint += transitionMatrix[j][i] * adjointB[j];
-            }
-            gradient[i] += adjointB[i] - ftAdjoint;
-        }
-    }
-
-    private void accumulateRootDiffusionGradient(final double[] gradQ,
-                                                 final BranchGradientWorkspace workspace) {
-        final int rootIndex = tree.getRoot().getNumber();
-        accumulateRootDiffusionGradient(
-                stateStore.preOrder[rootIndex],
-                stateStore.postOrder[rootIndex],
-                stateStore.lastRootDiffusionScale,
-                gradQ,
-                workspace);
-    }
-
-    private void accumulateRootDiffusionGradient(final CanonicalGaussianState rootPreOrder,
-                                                 final CanonicalGaussianState rootPostOrder,
-                                                 final double rootDiffusionScale,
-                                                 final double[] gradQ,
-                                                 final BranchGradientWorkspace workspace) {
-        CanonicalGaussianMessageOps.combineStates(rootPreOrder, rootPostOrder, workspace.combinedState);
-
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                workspace.combinedState, workspace.mean, workspace.covariance);
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                rootPreOrder, workspace.mean2, workspace.covariance2);
-
-        final double[] priorPrecision = rootPreOrder.precision;
-        for (int i = 0; i < dim; ++i) {
-            final double deltaI = workspace.mean[i] - workspace.mean2[i];
-            for (int j = 0; j < dim; ++j) {
-                workspace.covarianceAdjoint[i][j] =
-                        workspace.covariance[i][j] + deltaI * (workspace.mean[j] - workspace.mean2[j]);
-            }
-        }
-
-        multiplyFlatBySquare(priorPrecision, workspace.covarianceAdjoint, workspace.transitionMatrix, dim);
-        multiplySquareByFlat(workspace.transitionMatrix, priorPrecision, workspace.covarianceAdjoint, dim);
-        for (int i = 0; i < dim; ++i) {
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                gradQ[iOff + j] += rootDiffusionScale
-                        * (-0.5 * priorPrecision[iOff + j] + 0.5 * workspace.covarianceAdjoint[i][j]);
-            }
-        }
-    }
-
-    private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,
-                                     final CanonicalLocalTransitionAdjoints target) {
-        System.arraycopy(source.dLogL_dF, 0, target.dLogL_dF, 0, source.dLogL_dF.length);
-        System.arraycopy(source.dLogL_df, 0, target.dLogL_df, 0, source.dLogL_df.length);
-        System.arraycopy(source.dLogL_dOmega, 0, target.dLogL_dOmega, 0, source.dLogL_dOmega.length);
-    }
-
-    private static void transposeFromFlatInto(final double[] source, final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                out[j][i] = source[i * dim + j];
-            }
-        }
-    }
-
-    private static void copyFlatToSquare(final double[] source, final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(source, i * dim, out[i], 0, dim);
-        }
-    }
-
-    private static void symmetrizeFlatSquare(final double[] matrix, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = i + 1; j < dim; ++j) {
-                final double avg = 0.5 * (matrix[i * dim + j] + matrix[j * dim + i]);
-                matrix[i * dim + j] = avg;
-                matrix[j * dim + i] = avg;
-            }
-        }
-    }
-
-    private static void multiplyFlatBySquare(final double[] left, final double[][] right,
-                                              final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dim; ++k) {
-                    sum += left[iOff + k] * right[k][j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private static void multiplySquareByFlat(final double[][] left, final double[] right,
-                                              final double[][] out, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dim; ++k) {
-                    sum += left[i][k] * right[k * dim + j];
-                }
-                out[i][j] = sum;
-            }
-        }
-    }
-
-    private static void transposeFlatSquareInPlace(final double[] matrix, final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = i + 1; j < dimension; ++j) {
-                final int ij = i * dimension + j;
-                final int ji = j * dimension + i;
-                final double tmp = matrix[ij];
-                matrix[ij] = matrix[ji];
-                matrix[ji] = tmp;
-            }
-        }
-    }
-
-    private static void clearSquare(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            Arrays.fill(matrix[i], 0.0);
-        }
-    }
 }

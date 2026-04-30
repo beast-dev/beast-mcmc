@@ -35,6 +35,8 @@ import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.inference.model.AbstractModel;
@@ -57,6 +59,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         implements CanonicalBranchTransitionProvider,
         CanonicalOUTransitionProvider,
         CanonicalPreparedBranchBasisProvider,
+        CanonicalPreparedBranchSnapshotProvider,
         CanonicalTransitionCacheDiagnostics {
 
     private static final String DEBUG_CACHE_PROPERTY = "beast.debug.canonicalTransitionCache";
@@ -173,6 +176,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
         ensureCurrentSnapshot();
         return transitionCache.getOrthogonalPreparedBranchBasis(childNodeIndex);
+    }
+
+    @Override
+    public CanonicalPreparedBranchSnapshot getPreparedBranchSnapshot(final int childNodeIndex) {
+        ensureCurrentSnapshot();
+        return transitionCache.getPreparedBranchSnapshot(childNodeIndex);
     }
 
     @Override

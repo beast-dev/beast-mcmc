@@ -1,8 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
@@ -128,22 +127,22 @@ public final class BranchGradientInputs {
         activeBranchCount++;
     }
 
-    void stageBranch(final int childIndex,
-                     final double branchLength,
-                     final CanonicalLocalTransitionAdjoints source,
-                     final OrthogonalBlockCanonicalParameterization orthogonalSelection,
-                     final double[] stationaryMean) {
+    void addBranch(final CanonicalPreparedBranchSnapshot snapshot,
+                   final CanonicalLocalTransitionAdjoints source) {
+        addBranch(
+                snapshot.getChildNodeIndex(),
+                snapshot.getEffectiveBranchLength(),
+                source,
+                snapshot.getOrthogonalPreparedBasis());
+    }
+
+    void stageBranch(final CanonicalPreparedBranchSnapshot snapshot,
+                     final CanonicalLocalTransitionAdjoints source) {
+        final int childIndex = snapshot.getChildNodeIndex();
         checkChildIndex(childIndex);
-        stagedBranchLengthsByChild[childIndex] = branchLength;
+        stagedBranchLengthsByChild[childIndex] = snapshot.getEffectiveBranchLength();
         copyAdjoints(source, stagedAdjointsByChild[childIndex]);
-        if (orthogonalSelection != null) {
-            OrthogonalBlockPreparedBranchBasis prepared = stagedOrthogonalPreparedBasisByChild[childIndex];
-            if (prepared == null) {
-                prepared = orthogonalSelection.createPreparedBranchBasis();
-                stagedOrthogonalPreparedBasisByChild[childIndex] = prepared;
-            }
-            orthogonalSelection.prepareBranchBasis(branchLength, stationaryMean, prepared);
-        }
+        stagedOrthogonalPreparedBasisByChild[childIndex] = snapshot.getOrthogonalPreparedBasis();
         stagedActiveByChild[childIndex] = true;
     }
 
@@ -173,23 +172,6 @@ public final class BranchGradientInputs {
             activeBranchCount++;
         }
         hasOrthogonalPreparedBasis = useOrthogonalPreparedBasis && activeBranchCount > 0;
-    }
-
-    void prepareOrthogonalBasisForActiveBranches(final CanonicalPreparedBranchBasisProvider provider) {
-        if (provider == null) {
-            hasOrthogonalPreparedBasis = false;
-            return;
-        }
-        for (int activeIndex = 0; activeIndex < activeBranchCount; ++activeIndex) {
-            final OrthogonalBlockPreparedBranchBasis prepared =
-                    provider.getOrthogonalPreparedBranchBasis(activeChildIndices[activeIndex]);
-            if (prepared == null) {
-                hasOrthogonalPreparedBasis = false;
-                return;
-            }
-            activeOrthogonalPreparedBasis[activeIndex] = prepared;
-        }
-        hasOrthogonalPreparedBasis = activeBranchCount > 0;
     }
 
     OrthogonalBlockPreparedBranchBasis getOrthogonalPreparedBasis(final int activeIndex) {

@@ -31,6 +31,7 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,6 +51,7 @@ final class CanonicalTransitionCache {
     private final OUProcessModel processModel;
     private final BranchLengthProvider branchLengthProvider;
     private final CanonicalGaussianTransition[] transitions;
+    private final CanonicalPreparedBranchSnapshot[] snapshots;
     private final double[] cachedEffectiveBranchLength;
     private final boolean[] valid;
     private final OrthogonalBlockCanonicalParameterization orthogonalSelection;
@@ -69,6 +71,7 @@ final class CanonicalTransitionCache {
         this.processModel = processModel;
         this.branchLengthProvider = branchLengthProvider;
         this.transitions = new CanonicalGaussianTransition[nodeCount];
+        this.snapshots = new CanonicalPreparedBranchSnapshot[nodeCount];
         this.cachedEffectiveBranchLength = new double[nodeCount];
         this.valid = new boolean[nodeCount];
         this.orthogonalSelection = orthogonalSelection;
@@ -90,11 +93,17 @@ final class CanonicalTransitionCache {
 
     OrthogonalBlockPreparedBranchBasis
     getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
+        final CanonicalPreparedBranchSnapshot snapshot = getPreparedBranchSnapshot(childNodeIndex);
+        return snapshot == null ? null : snapshot.getOrthogonalPreparedBasis();
+    }
+
+    CanonicalPreparedBranchSnapshot getPreparedBranchSnapshot(final int childNodeIndex) {
         if (orthogonalSelection == null) {
-            return null;
+            ensureTransition(childNodeIndex);
+            return snapshots[childNodeIndex];
         }
         ensureTransition(childNodeIndex);
-        return orthogonalPreparedCache[childNodeIndex];
+        return snapshots[childNodeIndex];
     }
 
     void clear() {
@@ -166,7 +175,13 @@ final class CanonicalTransitionCache {
                 cached = new CanonicalGaussianTransition(dimension);
                 transitions[childNodeIndex] = cached;
             }
-            fillCachedTransition(childNodeIndex, effectiveBranchLength, cached);
+            final OrthogonalBlockPreparedBranchBasis prepared =
+                    fillCachedTransition(childNodeIndex, effectiveBranchLength, cached);
+            snapshots[childNodeIndex] = new CanonicalPreparedBranchSnapshot(
+                    childNodeIndex,
+                    effectiveBranchLength,
+                    cached,
+                    prepared);
             cachedEffectiveBranchLength[childNodeIndex] = effectiveBranchLength;
             valid[childNodeIndex] = true;
         } else {
@@ -175,12 +190,12 @@ final class CanonicalTransitionCache {
         return transitions[childNodeIndex];
     }
 
-    private void fillCachedTransition(final int childNodeIndex,
-                                      final double effectiveBranchLength,
-                                      final CanonicalGaussianTransition cached) {
+    private OrthogonalBlockPreparedBranchBasis fillCachedTransition(final int childNodeIndex,
+                                                                    final double effectiveBranchLength,
+                                                                    final CanonicalGaussianTransition cached) {
         if (orthogonalSelection == null) {
             processModel.fillCanonicalTransition(effectiveBranchLength, cached);
-            return;
+            return null;
         }
 
         OrthogonalBlockPreparedBranchBasis prepared =
@@ -196,6 +211,7 @@ final class CanonicalTransitionCache {
                 processModel.getDiffusionMatrix(),
                 orthogonalWorkspace.get(),
                 cached);
+        return prepared;
     }
 
     private void recordRequest() {

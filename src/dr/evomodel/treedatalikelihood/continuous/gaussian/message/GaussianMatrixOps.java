@@ -4,8 +4,7 @@ package dr.evomodel.treedatalikelihood.continuous.gaussian.message;
  * Shared dense linear-algebra utilities for Gaussian likelihood engines.
  *
  * <p>This helper centralizes the matrix and Cholesky routines that are shared by
- * expectation-form and canonical-form Gaussian engines. Keeping them here avoids
- * coupling canonical code to {@link KalmanLikelihoodEngine} by name.
+ * expectation-form and canonical-form Gaussian engines.
  */
 public final class GaussianMatrixOps {
 
@@ -149,6 +148,54 @@ public final class GaussianMatrixOps {
     public static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
         for (int i = 0; i < dim; ++i) {
             System.arraycopy(source, i * dim, target[i], 0, dim);
+        }
+    }
+
+    /** Copy the transpose of a flat row-major square matrix into a 2-D matrix. */
+    public static void transposeFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                target[j][i] = source[i * dim + j];
+            }
+        }
+    }
+
+    public static void transposeFlatSquareInPlace(final double[] matrix, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = i + 1; j < dim; ++j) {
+                final int ij = i * dim + j;
+                final int ji = j * dim + i;
+                final double tmp = matrix[ij];
+                matrix[ij] = matrix[ji];
+                matrix[ji] = tmp;
+            }
+        }
+    }
+
+    public static void multiplyFlatByMatrix(final double[] left, final double[][] right,
+                                            final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[iOff + k] * right[k][j];
+                }
+                out[i][j] = sum;
+            }
+        }
+    }
+
+    public static void multiplyMatrixByFlat(final double[][] left, final double[] right,
+                                            final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[i][k] * right[k * dim + j];
+                }
+                out[i][j] = sum;
+            }
         }
     }
 

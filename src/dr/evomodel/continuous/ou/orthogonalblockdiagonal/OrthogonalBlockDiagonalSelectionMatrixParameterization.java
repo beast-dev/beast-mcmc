@@ -27,16 +27,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         extends DenseSelectionMatrixParameterization
         implements OrthogonalBlockCanonicalParameterization {
 
-    private static final double SPD_JITTER_RELATIVE = 1.0e-14;
-    private static final double SPD_JITTER_ABSOLUTE = 1.0e-14;
     private static final String NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY =
             "beast.experimental.nativeForceDenseAdjointExp";
     private static final String TRANSPOSE_NATIVE_FRECHET_INPUT_PROPERTY =
             "beast.experimental.transposeNativeFrechetInput";
     private static final String DEBUG_NATIVE_R_CONSISTENCY_PROPERTY =
             "beast.debug.nativeRConsistency";
-    private static final String DEBUG_PD_PIVOT_FLOOR_PROPERTY =
-            "beast.debug.pdPivotFloor";
 
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final OrthogonalMatrixProvider orthogonalRotation;
@@ -833,7 +829,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         final double[] transitionData = prepared.transitionMatrix.data;
         fillTransitionOffset(prepared.transitionMatrix, prepared.stationaryMean, workspace.transitionOffsetScratch);
 
-        final double logDet = copyAndInvertPositiveDefiniteFlat(
+        final double logDet = OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
                 transitionCovariance,
                 workspace.transitionCovarianceArrayScratch,
                 out.precisionYY,
@@ -1583,163 +1579,19 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     private double copyAndInvertPositiveDefinite(final DenseMatrix64F source,
                                                  final double[][] matrixOut,
                                                  final double[][] inverseOut) {
-        final int d = source.numRows;
-        final double[] sourceData = source.data;
-        double maxAbsDiagonal = 0.0;
-        for (int i = 0; i < d; ++i) {
-            final double[] matrixRow = matrixOut[i];
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                final double value = 0.5 * (sourceData[iOff + j] + sourceData[j * d + i]);
-                matrixRow[j] = value;
-                choleskyScratch[iOff + j] = value;
-            }
-            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixRow[i]));
-        }
-
-        final double pivotFloor = Math.max(
-                SPD_JITTER_ABSOLUTE,
-                SPD_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal));
-        int clippedPivotCount = 0;
-        double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
-        double logDet = 0.0;
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j <= i; ++j) {
-                double sum = choleskyScratch[iOff + j];
-                for (int k = 0; k < j; ++k) {
-                    sum -= choleskyScratch[iOff + k] * choleskyScratch[j * d + k];
-                }
-                if (i == j) {
-                    minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
-                    if (sum < pivotFloor) {
-                        clippedPivotCount++;
-                        sum = pivotFloor;
-                    }
-                    choleskyScratch[iOff + i] = Math.sqrt(sum);
-                    logDet += Math.log(choleskyScratch[iOff + i]);
-                } else {
-                    final double denominator = Math.max(choleskyScratch[j * d + j], Math.sqrt(pivotFloor));
-                    choleskyScratch[iOff + j] = sum / denominator;
-                }
-            }
-        }
-        if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
-            System.err.println(
-                    "pdPivotFloorDebug clipped=" + clippedPivotCount
-                            + " dim=" + d
-                            + " minPivotBeforeFloor=" + minPivotBeforeFloor
-                            + " pivotFloor=" + pivotFloor
-                            + " maxAbsDiagonal=" + maxAbsDiagonal);
-        }
-
-        for (int col = 0; col < d; ++col) {
-            for (int row = 0; row < d; ++row) {
-                double sum = (row == col) ? 1.0 : 0.0;
-                final int rowOff = row * d;
-                for (int k = 0; k < row; ++k) {
-                    sum -= choleskyScratch[rowOff + k] * lowerInverseScratch[k * d + col];
-                }
-                final double denominator = Math.max(choleskyScratch[rowOff + row], Math.sqrt(pivotFloor));
-                lowerInverseScratch[rowOff + col] = sum / denominator;
-            }
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
-                }
-                inverseOut[i][j] = sum;
-            }
-        }
-        return 2.0 * logDet;
+        return OrthogonalBlockPositiveDefiniteInverter.copyAndInvert(
+                source,
+                matrixOut,
+                inverseOut,
+                choleskyScratch,
+                lowerInverseScratch);
     }
 
     private double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,
                                                      final double[] matrixOut,
                                                      final double[] inverseOut) {
-        return copyAndInvertPositiveDefiniteFlat(
+        return OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
                 source, matrixOut, inverseOut, choleskyScratch, lowerInverseScratch);
-    }
-
-    private static double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,
-                                                            final double[] matrixOut,
-                                                            final double[] inverseOut,
-                                                            final double[] choleskyScratch,
-                                                            final double[] lowerInverseScratch) {
-        final int d = source.numRows;
-        final double[] sourceData = source.data;
-        double maxAbsDiagonal = 0.0;
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                final double value = 0.5 * (sourceData[iOff + j] + sourceData[j * d + i]);
-                matrixOut[iOff + j] = value;
-                choleskyScratch[iOff + j] = value;
-            }
-            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixOut[iOff + i]));
-        }
-
-        final double pivotFloor = Math.max(
-                SPD_JITTER_ABSOLUTE,
-                SPD_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonal));
-        int clippedPivotCount = 0;
-        double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
-        double logDet = 0.0;
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j <= i; ++j) {
-                double sum = choleskyScratch[iOff + j];
-                for (int k = 0; k < j; ++k) {
-                    sum -= choleskyScratch[iOff + k] * choleskyScratch[j * d + k];
-                }
-                if (i == j) {
-                    minPivotBeforeFloor = Math.min(minPivotBeforeFloor, sum);
-                    if (sum < pivotFloor) {
-                        clippedPivotCount++;
-                        sum = pivotFloor;
-                    }
-                    choleskyScratch[iOff + i] = Math.sqrt(sum);
-                    logDet += Math.log(choleskyScratch[iOff + i]);
-                } else {
-                    final double denominator = Math.max(choleskyScratch[j * d + j], Math.sqrt(pivotFloor));
-                    choleskyScratch[iOff + j] = sum / denominator;
-                }
-            }
-        }
-        if (Boolean.getBoolean(DEBUG_PD_PIVOT_FLOOR_PROPERTY) && clippedPivotCount > 0) {
-            System.err.println(
-                    "pdPivotFloorDebug clipped=" + clippedPivotCount
-                            + " dim=" + d
-                            + " minPivotBeforeFloor=" + minPivotBeforeFloor
-                            + " pivotFloor=" + pivotFloor
-                            + " maxAbsDiagonal=" + maxAbsDiagonal);
-        }
-
-        for (int col = 0; col < d; ++col) {
-            for (int row = 0; row < d; ++row) {
-                double sum = (row == col) ? 1.0 : 0.0;
-                final int rowOff = row * d;
-                for (int k = 0; k < row; ++k) {
-                    sum -= choleskyScratch[rowOff + k] * lowerInverseScratch[k * d + col];
-                }
-                final double denominator = Math.max(choleskyScratch[rowOff + row], Math.sqrt(pivotFloor));
-                lowerInverseScratch[rowOff + col] = sum / denominator;
-            }
-        }
-
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
-                }
-                inverseOut[i * d + j] = sum;
-            }
-        }
-        return 2.0 * logDet;
     }
 
     private static void symmetrize(final DenseMatrix64F matrix) {

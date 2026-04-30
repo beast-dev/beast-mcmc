@@ -1,5 +1,6 @@
 package dr.inference.timeseries.gaussian;
 
+import dr.evomodel.continuous.ou.DenseSelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;

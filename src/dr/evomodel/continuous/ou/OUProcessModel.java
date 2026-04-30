@@ -17,8 +17,8 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils
 import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
-import dr.inference.timeseries.gaussian.SelectionMatrixParameterization;
-import dr.inference.timeseries.gaussian.SelectionMatrixParameterizationFactory;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterizationFactory;
 import dr.inference.timeseries.representation.GaussianComputationMode;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;

@@ -12,7 +12,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocal
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
-import dr.inference.timeseries.gaussian.DenseSelectionMatrixParameterization;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 

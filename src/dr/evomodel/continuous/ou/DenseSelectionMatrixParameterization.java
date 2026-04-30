@@ -1,6 +1,5 @@
-package dr.inference.timeseries.gaussian;
+package dr.evomodel.continuous.ou;
 
-import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.inference.model.MatrixParameterInterface;
 
 /**

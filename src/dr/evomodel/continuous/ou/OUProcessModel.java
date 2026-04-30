@@ -338,10 +338,10 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         final Workspace workspace = workspace();
-        if (selectionMatrixParameterization instanceof SpecializedCanonicalSelectionParameterization) {
+        if (selectionMatrixParameterization instanceof CanonicalPreparedTransitionCapability) {
             final double[] mean = workspace.vector0;
             getInitialMean(mean);
-            ((SpecializedCanonicalSelectionParameterization) selectionMatrixParameterization)
+            ((CanonicalPreparedTransitionCapability) selectionMatrixParameterization)
                     .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
             return;
         }
@@ -414,8 +414,8 @@ public class OUProcessModel extends AbstractModel
         checkSquareMatrix(out, stateDimension, "transition covariance");
         final Workspace workspace = workspace();
 
-        if (selectionMatrixParameterization instanceof SpecializedCanonicalSelectionParameterization) {
-            ((SpecializedCanonicalSelectionParameterization) selectionMatrixParameterization)
+        if (selectionMatrixParameterization instanceof CanonicalPreparedTransitionCapability) {
+            ((CanonicalPreparedTransitionCapability) selectionMatrixParameterization)
                     .fillTransitionCovariance(diffusionMatrix, dt, out);
             return;
         }

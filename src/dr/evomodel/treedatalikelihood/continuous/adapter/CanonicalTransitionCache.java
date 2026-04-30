@@ -29,8 +29,8 @@ package dr.evomodel.treedatalikelihood.continuous.adapter;
 
 import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
+import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
@@ -49,7 +49,7 @@ final class CanonicalTransitionCache {
     private final OUProcessModel processModel;
     private final BranchLengthProvider branchLengthProvider;
     private final BranchCacheEntry[] entries;
-    private final SpecializedCanonicalSelectionParameterization specializedSelection;
+    private final CanonicalPreparedTransitionCapability preparedTransition;
     private final ThreadLocal<CanonicalBranchWorkspace> specializedWorkspace;
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
@@ -59,7 +59,7 @@ final class CanonicalTransitionCache {
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
                              final OUProcessModel processModel,
-                             final SpecializedCanonicalSelectionParameterization specializedSelection,
+                             final CanonicalPreparedTransitionCapability preparedTransition,
                              final BranchLengthProvider branchLengthProvider,
                              final CanonicalTransitionCacheOptions options) {
         this.dimension = dimension;
@@ -69,12 +69,12 @@ final class CanonicalTransitionCache {
         for (int i = 0; i < nodeCount; i++) {
             this.entries[i] = new BranchCacheEntry();
         }
-        this.specializedSelection = specializedSelection;
+        this.preparedTransition = preparedTransition;
         this.specializedWorkspace =
-                specializedSelection == null
+                preparedTransition == null
                         ? null
-                        : ThreadLocal.withInitial(specializedSelection::createBranchWorkspace);
-        this.stationaryMeanScratch = specializedSelection == null ? null : new double[dimension];
+                        : ThreadLocal.withInitial(preparedTransition::createBranchWorkspace);
+        this.stationaryMeanScratch = preparedTransition == null ? null : new double[dimension];
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
         this.epoch = new CacheEpoch();
         this.stationaryMeanSnapshotValid = false;
@@ -182,7 +182,7 @@ final class CanonicalTransitionCache {
 
     private CanonicalPreparedBranchHandle fillCachedTransition(final BranchCacheEntry entry,
                                                                final double effectiveBranchLength) {
-        if (specializedSelection == null) {
+        if (preparedTransition == null) {
             processModel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
             return null;
         }
@@ -190,17 +190,17 @@ final class CanonicalTransitionCache {
         CanonicalPreparedBranchHandle prepared =
                 entry.preparedBranchHandle;
         if (prepared == null) {
-            prepared = specializedSelection.createPreparedBranchHandle();
+            prepared = preparedTransition.createPreparedBranchHandle();
             entry.preparedBranchHandle = prepared;
             entry.preparedBasisValid = false;
         }
         ensureStationaryMeanSnapshot();
         if (!entry.isPreparedBasisCurrent(epoch)) {
             diagnostics.recordPreparedBasisRebuild();
-            specializedSelection.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
+            preparedTransition.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
             entry.markPreparedBasisCurrent(epoch);
         }
-        specializedSelection.fillCanonicalTransitionPrepared(
+        preparedTransition.fillCanonicalTransitionPrepared(
                 prepared,
                 processModel.getDiffusionMatrix(),
                 specializedWorkspace.get(),

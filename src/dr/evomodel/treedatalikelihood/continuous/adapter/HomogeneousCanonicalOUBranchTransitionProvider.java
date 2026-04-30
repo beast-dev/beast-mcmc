@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
+import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -46,7 +47,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 
@@ -114,17 +114,17 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 initialCovariance);
         addModel(processModel);
 
-        final SpecializedCanonicalSelectionParameterization specializedSelection =
+        final CanonicalPreparedTransitionCapability preparedTransition =
                 processModel.getSelectionMatrixParameterization()
-                        instanceof SpecializedCanonicalSelectionParameterization
-                        ? (SpecializedCanonicalSelectionParameterization)
+                        instanceof CanonicalPreparedTransitionCapability
+                        ? (CanonicalPreparedTransitionCapability)
                         processModel.getSelectionMatrixParameterization()
                         : null;
         this.transitionCache = new CanonicalTransitionCache(
                 dimension,
                 tree.getNodeCount(),
                 processModel,
-                specializedSelection,
+                preparedTransition,
                 this::getEffectiveBranchLength,
                 CanonicalTransitionCacheOptions.fromSystemProperties());
 

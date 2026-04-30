@@ -42,9 +42,9 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCa
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.integration.SequentialCanonicalOUMessagePasser;
 import dr.inference.model.Parameter;
+import dr.evomodel.continuous.ou.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
-import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
 
 /**
  * Integrator-style backend for the canonical OU tree passer path.
@@ -400,8 +400,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
         final SelectionMatrixParameterization parameterization =
                 processModel.getSelectionMatrixParameterization();
-        if (parameterization instanceof SpecializedCanonicalSelectionParameterization) {
-            return ((SpecializedCanonicalSelectionParameterization) parameterization)
+        if (parameterization instanceof CanonicalGradientPackingCapability) {
+            return ((CanonicalGradientPackingCapability) parameterization)
                     .getSelectionGradientDimension();
         }
 

@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
-import dr.evomodel.continuous.ou.SpecializedCanonicalSelectionParameterization;
+import dr.evomodel.continuous.ou.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 
@@ -76,7 +76,7 @@ final class GradientPullbackWorkspace {
     }
 
     CanonicalBranchWorkspace
-    ensureSpecializedBranchWorkspace(final SpecializedCanonicalSelectionParameterization selection) {
+    ensureSpecializedBranchWorkspace(final CanonicalPreparedTransitionCapability selection) {
         if (specializedBranchWorkspace == null) {
             specializedBranchWorkspace = selection.createBranchWorkspace();
         }

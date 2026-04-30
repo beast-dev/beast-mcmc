@@ -53,6 +53,7 @@ final class CanonicalTransitionCache {
     private final ThreadLocal<CanonicalBranchWorkspace> specializedWorkspace;
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
+    private final CacheEpoch epoch;
     private boolean stationaryMeanSnapshotValid;
 
     CanonicalTransitionCache(final int dimension,
@@ -75,6 +76,7 @@ final class CanonicalTransitionCache {
                         : ThreadLocal.withInitial(specializedSelection::createBranchWorkspace);
         this.stationaryMeanScratch = specializedSelection == null ? null : new double[dimension];
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
+        this.epoch = new CacheEpoch();
         this.stationaryMeanSnapshotValid = false;
     }
 
@@ -107,9 +109,14 @@ final class CanonicalTransitionCache {
 
     void clear(final CanonicalTransitionCacheInvalidationReason reason) {
         diagnostics.recordClear(reason);
-        stationaryMeanSnapshotValid = false;
+        epoch.advance(reason);
+        if (reason != CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
+            stationaryMeanSnapshotValid = false;
+        }
         for (int i = 0; i < entries.length; i++) {
-            entries[i].invalidate(reason);
+            if (entries[i].invalidate(reason)) {
+                diagnostics.recordPreparedCovarianceInvalidation();
+            }
         }
     }
 
@@ -149,10 +156,9 @@ final class CanonicalTransitionCache {
         recordRequest();
         final BranchCacheEntry entry = entries[childNodeIndex];
         final double effectiveBranchLength = branchLengthProvider.getEffectiveBranchLength(childNodeIndex);
-        if (!entry.valid
-                || Double.doubleToLongBits(entry.effectiveBranchLength)
-                != Double.doubleToLongBits(effectiveBranchLength)) {
+        if (!entry.isTransitionCurrent(effectiveBranchLength, epoch)) {
             recordMiss();
+            diagnostics.recordTransitionRebuild();
             if (entry.transition == null) {
                 entry.transition = new CanonicalGaussianTransition(dimension);
             }
@@ -167,8 +173,7 @@ final class CanonicalTransitionCache {
                     effectiveBranchLength,
                     entry.transition,
                     prepared);
-            entry.effectiveBranchLength = effectiveBranchLength;
-            entry.valid = true;
+            entry.markTransitionCurrent(effectiveBranchLength, epoch);
         } else {
             recordHit();
         }
@@ -190,9 +195,10 @@ final class CanonicalTransitionCache {
             entry.preparedBasisValid = false;
         }
         ensureStationaryMeanSnapshot();
-        if (!entry.preparedBasisValid) {
+        if (!entry.isPreparedBasisCurrent(epoch)) {
+            diagnostics.recordPreparedBasisRebuild();
             specializedSelection.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
-            entry.preparedBasisValid = true;
+            entry.markPreparedBasisCurrent(epoch);
         }
         specializedSelection.fillCanonicalTransitionPrepared(
                 prepared,
@@ -233,19 +239,86 @@ final class CanonicalTransitionCache {
         private double effectiveBranchLength;
         private boolean valid;
         private boolean preparedBasisValid;
+        private long transitionSelectionVersion;
+        private long transitionDiffusionVersion;
+        private long transitionStationaryMeanVersion;
+        private long transitionBranchLengthVersion;
+        private long preparedSelectionVersion;
+        private long preparedStationaryMeanVersion;
+        private long preparedBranchLengthVersion;
 
-        private void invalidate(final CanonicalTransitionCacheInvalidationReason reason) {
+        private boolean isTransitionCurrent(final double effectiveBranchLength,
+                                            final CacheEpoch epoch) {
+            return valid
+                    && Double.doubleToLongBits(this.effectiveBranchLength)
+                    == Double.doubleToLongBits(effectiveBranchLength)
+                    && transitionSelectionVersion == epoch.selectionVersion
+                    && transitionDiffusionVersion == epoch.diffusionVersion
+                    && transitionStationaryMeanVersion == epoch.stationaryMeanVersion
+                    && transitionBranchLengthVersion == epoch.branchLengthVersion;
+        }
+
+        private void markTransitionCurrent(final double effectiveBranchLength,
+                                           final CacheEpoch epoch) {
+            this.effectiveBranchLength = effectiveBranchLength;
+            this.transitionSelectionVersion = epoch.selectionVersion;
+            this.transitionDiffusionVersion = epoch.diffusionVersion;
+            this.transitionStationaryMeanVersion = epoch.stationaryMeanVersion;
+            this.transitionBranchLengthVersion = epoch.branchLengthVersion;
+            this.valid = true;
+        }
+
+        private boolean isPreparedBasisCurrent(final CacheEpoch epoch) {
+            return preparedBasisValid
+                    && preparedSelectionVersion == epoch.selectionVersion
+                    && preparedStationaryMeanVersion == epoch.stationaryMeanVersion
+                    && preparedBranchLengthVersion == epoch.branchLengthVersion;
+        }
+
+        private void markPreparedBasisCurrent(final CacheEpoch epoch) {
+            this.preparedSelectionVersion = epoch.selectionVersion;
+            this.preparedStationaryMeanVersion = epoch.stationaryMeanVersion;
+            this.preparedBranchLengthVersion = epoch.branchLengthVersion;
+            this.preparedBasisValid = true;
+        }
+
+        private boolean invalidate(final CanonicalTransitionCacheInvalidationReason reason) {
             valid = false;
             if (preparedBranchHandle == null) {
                 preparedBasisValid = false;
-                return;
+                return false;
             }
             if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
                 preparedBranchHandle.invalidateCovariance();
-                return;
+                return true;
             }
             preparedBasisValid = false;
             preparedBranchHandle.invalidateCovariance();
+            return true;
+        }
+    }
+
+    private static final class CacheEpoch {
+        private long selectionVersion;
+        private long diffusionVersion;
+        private long stationaryMeanVersion;
+        private long branchLengthVersion;
+
+        private void advance(final CanonicalTransitionCacheInvalidationReason reason) {
+            if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
+                diffusionVersion++;
+            } else if (reason == CanonicalTransitionCacheInvalidationReason.STATIONARY_MEAN_CHANGED) {
+                stationaryMeanVersion++;
+            } else if (reason == CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED) {
+                selectionVersion++;
+            } else if (reason == CanonicalTransitionCacheInvalidationReason.BRANCH_LENGTH_CHANGED) {
+                branchLengthVersion++;
+            } else {
+                selectionVersion++;
+                diffusionVersion++;
+                stationaryMeanVersion++;
+                branchLengthVersion++;
+            }
         }
     }
 

@@ -19,6 +19,9 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
     private final AtomicLong modelChangedClears = new AtomicLong();
     private final AtomicLong restoreClears = new AtomicLong();
     private final AtomicLong explicitClears = new AtomicLong();
+    private final AtomicLong transitionRebuilds = new AtomicLong();
+    private final AtomicLong preparedBasisRebuilds = new AtomicLong();
+    private final AtomicLong preparedCovarianceInvalidations = new AtomicLong();
     private final AtomicLong snapshotRefreshes = new AtomicLong();
     private final AtomicLong stores = new AtomicLong();
     private final AtomicLong restores = new AtomicLong();
@@ -116,6 +119,24 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
         }
     }
 
+    void recordTransitionRebuild() {
+        if (enabled) {
+            transitionRebuilds.incrementAndGet();
+        }
+    }
+
+    void recordPreparedBasisRebuild() {
+        if (enabled) {
+            preparedBasisRebuilds.incrementAndGet();
+        }
+    }
+
+    void recordPreparedCovarianceInvalidation() {
+        if (enabled) {
+            preparedCovarianceInvalidations.incrementAndGet();
+        }
+    }
+
     void recordStore() {
         if (enabled) {
             stores.incrementAndGet();
@@ -152,6 +173,10 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
                 + modelChangedClears.get()
                 + "/" + restoreClears.get()
                 + "/" + explicitClears.get()
+                + " rebuilds=transition/basis/covarianceInvalidation="
+                + transitionRebuilds.get()
+                + "/" + preparedBasisRebuilds.get()
+                + "/" + preparedCovarianceInvalidations.get()
                 + " snapshots=" + snapshotRefreshes.get()
                 + " store/restore/accept=" + stores.get()
                 + "/" + restores.get()

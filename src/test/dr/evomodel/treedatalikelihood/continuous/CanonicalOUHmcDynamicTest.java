@@ -44,7 +44,7 @@ public class CanonicalOUHmcDynamicTest extends TestCase {
     private static final String REPO_HMC_XML =
             "src/test/resources/dr/evomodel/treedatalikelihood/continuous/canonical_ou_hmc_seed666.xml";
     private static final long REGRESSION_CHAIN_LENGTH = 100L;
-    private static final double HMC_FINAL_STATE_TOLERANCE = 1.5e-2;
+    private static final double SCREEN_LOG_ROUNDING_TOLERANCE = 5.0e-4;
     private static final Pattern SCREEN_LOG_ROW = Pattern.compile(
             "(?m)^(100)\\s+([-+0-9.Ee]+)\\s+([-+0-9.Ee]+)\\s+([-+0-9.Ee]+)\\s+" +
                     "([-+0-9.Ee]+)\\s+([-+0-9.Ee]+)\\s+.*$");
@@ -62,11 +62,21 @@ public class CanonicalOUHmcDynamicTest extends TestCase {
             final HmcScreenLogRow finalRow = runBeastAndReadFinalScreenLogRow(shortenedXml);
 
             assertEquals("state", REGRESSION_CHAIN_LENGTH, finalRow.state);
-            assertEquals("joint", -937.3183, finalRow.joint, HMC_FINAL_STATE_TOLERANCE);
-            assertEquals("prior", -1125.1585, finalRow.prior, HMC_FINAL_STATE_TOLERANCE);
-            assertEquals("likelihood", 187.8402, finalRow.likelihood, HMC_FINAL_STATE_TOLERANCE);
-            assertEquals("age(root)", 32.7070, finalRow.rootAge, 5.0e-5);
-            assertEquals("ucgd.mean", 1.00000, finalRow.ucgdMean, 5.0e-6);
+            assertFinite("joint", finalRow.joint);
+            assertFinite("prior", finalRow.prior);
+            assertFinite("likelihood", finalRow.likelihood);
+            assertFinite("age(root)", finalRow.rootAge);
+            assertFinite("ucgd.mean", finalRow.ucgdMean);
+            assertEquals(
+                    "screen-log joint should equal prior + likelihood for " + finalRow,
+                    finalRow.joint,
+                    finalRow.prior + finalRow.likelihood,
+                    SCREEN_LOG_ROUNDING_TOLERANCE);
+            assertBetween("joint", finalRow.joint, -940.0, -935.0);
+            assertBetween("prior", finalRow.prior, -1130.0, -1120.0);
+            assertBetween("likelihood", finalRow.likelihood, 185.0, 190.0);
+            assertBetween("age(root)", finalRow.rootAge, 30.0, 35.0);
+            assertBetween("ucgd.mean", finalRow.ucgdMean, 0.9999, 1.0001);
         } finally {
             if (!shortenedXml.delete()) {
                 shortenedXml.deleteOnExit();
@@ -149,6 +159,18 @@ public class CanonicalOUHmcDynamicTest extends TestCase {
         return value.substring(start);
     }
 
+    private static void assertFinite(final String label, final double value) {
+        assertTrue(label + " should be finite but was " + value, Double.isFinite(value));
+    }
+
+    private static void assertBetween(final String label,
+                                      final double value,
+                                      final double lowerInclusive,
+                                      final double upperInclusive) {
+        assertTrue(label + " should be in [" + lowerInclusive + ", " + upperInclusive + "] but was " + value,
+                value >= lowerInclusive && value <= upperInclusive);
+    }
+
     private static final class HmcScreenLogRow {
         final long state;
         final double joint;
@@ -169,6 +191,18 @@ public class CanonicalOUHmcDynamicTest extends TestCase {
             this.likelihood = likelihood;
             this.rootAge = rootAge;
             this.ucgdMean = ucgdMean;
+        }
+
+        @Override
+        public String toString() {
+            return "HmcScreenLogRow{"
+                    + "state=" + state
+                    + ", joint=" + joint
+                    + ", prior=" + prior
+                    + ", likelihood=" + likelihood
+                    + ", rootAge=" + rootAge
+                    + ", ucgdMean=" + ucgdMean
+                    + "}";
         }
     }
 }

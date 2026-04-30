@@ -28,9 +28,6 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
@@ -38,8 +35,6 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
-import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalMatrixProvider;
 import dr.util.TaskPool;
 
 import java.util.Arrays;
@@ -84,44 +79,30 @@ final class CanonicalTreeGradientEngine {
 
         final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
         final OUProcessModel processModel = ouProvider.getProcessModel();
-        final OrthogonalBlockCanonicalParameterization orthogonalSelection =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockCanonicalParameterization
-                        ? (OrthogonalBlockCanonicalParameterization)
-                        processModel.getSelectionMatrixParameterization()
-                        : null;
+        final CanonicalSelectionGradientPullback selectionPullback =
+                CanonicalSelectionGradientPullbacks.create(processModel, dimension, gradA, mainWorkspace);
         if (workspaces.length <= 1 || inputs.getActiveBranchCount() <= 1) {
-            computeSequential(inputs, processModel, orthogonalSelection, gradA, gradQ, gradMu);
+            computeSequential(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
             return;
         }
 
-        computeParallel(inputs, processModel, orthogonalSelection, gradA, gradQ, gradMu);
+        computeParallel(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
     }
 
     private void computeSequential(final BranchGradientInputs inputs,
                                    final OUProcessModel processModel,
-                                   final OrthogonalBlockCanonicalParameterization orthogonalSelection,
+                                   final CanonicalSelectionGradientPullback selectionPullback,
                                    final double[] gradA,
                                    final double[] gradQ,
                                    final double[] gradMu) {
         final BranchGradientWorkspace workspace = mainWorkspace;
-        final OrthogonalGradientLayout orthogonalLayout =
-                orthogonalSelection == null ? null : validateOrthogonalGradientLayout(orthogonalSelection, gradA, workspace);
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-
-        if (orthogonalLayout != null) {
-            Arrays.fill(gradient.orthogonalCompressedGradientScratch, 0, orthogonalLayout.compressedBlockDim, 0.0);
-            Arrays.fill(gradient.orthogonalNativeGradientScratch, 0, orthogonalLayout.nativeBlockDim, 0.0);
-            Arrays.fill(gradient.orthogonalRotationGradientFlatScratch, 0.0);
-            workspace.ensureOrthogonalBranchWorkspace(orthogonalSelection);
-        }
+        selectionPullback.initialize(workspace, gradA, gradMu);
 
         for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
             copyAdjoints(inputs.getLocalAdjoints(activeIndex), workspace.adjoints);
-            accumulateForBranch(
-                    inputs,
+            selectionPullback.accumulateForBranch(
                     processModel,
-                    orthogonalSelection,
+                    inputs,
                     activeIndex,
                     workspace,
                     gradA,
@@ -129,38 +110,24 @@ final class CanonicalTreeGradientEngine {
                     gradMu);
         }
 
-        finalizeJointGradients(orthogonalLayout, inputs, workspace, gradA, gradQ);
+        finalizeJointGradients(selectionPullback, inputs, workspace, gradA, gradQ);
     }
 
     private void computeParallel(final BranchGradientInputs inputs,
                                  final OUProcessModel processModel,
-                                 final OrthogonalBlockCanonicalParameterization orthogonalSelection,
+                                 final CanonicalSelectionGradientPullback selectionPullback,
                                  final double[] gradA,
                                  final double[] gradQ,
                                  final double[] gradMu) {
         final BranchGradientWorkspace reductionWorkspace = mainWorkspace;
-        final OrthogonalGradientLayout orthogonalLayout =
-                orthogonalSelection == null ? null : validateOrthogonalGradientLayout(orthogonalSelection, gradA, reductionWorkspace);
 
         for (int worker = 0; worker < workspaces.length; ++worker) {
             final BranchGradientWorkspace workspace = workspaces[worker];
-            workspace.clearLocalGradientBuffers(
-                    gradA.length,
-                    gradMu.length,
-                    dimension,
-                    orthogonalLayout != null,
-                    orthogonalLayout == null ? 0 : orthogonalLayout.compressedBlockDim);
-            if (orthogonalLayout != null) {
-                workspace.ensureOrthogonalBranchWorkspace(orthogonalSelection);
-            }
+            selectionPullback.clearWorkerBuffers(workspace, gradA.length, gradMu.length);
+            selectionPullback.prepareWorkspace(workspace);
         }
 
-        if (orthogonalLayout != null) {
-            final GradientPullbackWorkspace gradient = reductionWorkspace.gradient;
-            Arrays.fill(gradient.orthogonalCompressedGradientScratch, 0, orthogonalLayout.compressedBlockDim, 0.0);
-            Arrays.fill(gradient.orthogonalNativeGradientScratch, 0, orthogonalLayout.nativeBlockDim, 0.0);
-            Arrays.fill(gradient.orthogonalRotationGradientFlatScratch, 0.0);
-        }
+        selectionPullback.initialize(reductionWorkspace, gradA, gradMu);
 
         taskPool.forkDynamicBalanced(
                 inputs.getActiveBranchCount(),
@@ -169,10 +136,9 @@ final class CanonicalTreeGradientEngine {
                     final BranchGradientWorkspace workspace = workspaces[thread];
                     copyAdjoints(inputs.getLocalAdjoints(activeIndex), workspace.adjoints);
 
-                    accumulateForBranch(
-                            inputs,
+                    selectionPullback.accumulateForBranch(
                             processModel,
-                            orthogonalSelection,
+                            inputs,
                             activeIndex,
                             workspace,
                             workspace.localGradientA,
@@ -184,136 +150,18 @@ final class CanonicalTreeGradientEngine {
             final BranchGradientWorkspace workspace = workspaces[worker];
             accumulateVectorInPlace(gradQ, workspace.localGradientQ, gradQ.length);
             accumulateVectorInPlace(gradMu, workspace.localGradientMu(gradMu.length, dimension), gradMu.length);
-            if (orthogonalLayout != null) {
-                accumulateVectorInPlace(
-                        reductionWorkspace.gradient.orthogonalCompressedGradientScratch,
-                        workspace.gradient.orthogonalCompressedGradientScratch,
-                        orthogonalLayout.compressedBlockDim);
-                accumulateVectorInPlace(
-                        reductionWorkspace.gradient.orthogonalRotationGradientFlatScratch,
-                        workspace.gradient.orthogonalRotationGradientFlatScratch,
-                        reductionWorkspace.gradient.orthogonalRotationGradientFlatScratch.length);
-            } else {
-                accumulateVectorInPlace(gradA, workspace.localGradientA, gradA.length);
-            }
+            selectionPullback.reduceWorker(workspace, reductionWorkspace, gradA);
         }
 
-        finalizeJointGradients(orthogonalLayout, inputs, reductionWorkspace, gradA, gradQ);
+        finalizeJointGradients(selectionPullback, inputs, reductionWorkspace, gradA, gradQ);
     }
 
-    private void accumulateForBranch(
-            final BranchGradientInputs inputs,
-            final OUProcessModel processModel,
-            final OrthogonalBlockCanonicalParameterization orthogonalSelection,
-            final int activeIndex,
-            final BranchGradientWorkspace workspace,
-            final double[] gradA,
-            final double[] gradQ,
-            final double[] gradMu) {
-        if (orthogonalSelection != null) {
-            accumulateOrthogonalForBranch(
-                    inputs.getOrthogonalPreparedBasis(activeIndex),
-                    processModel,
-                    orthogonalSelection,
-                    workspace,
-                    gradQ,
-                    gradMu);
-            return;
-        }
-
-        accumulateDenseForBranch(
-                processModel,
-                workspace,
-                inputs.getBranchLength(activeIndex),
-                gradA,
-                gradQ,
-                gradMu);
-    }
-
-    private void accumulateOrthogonalForBranch(
-            final OrthogonalBlockPreparedBranchBasis preparedBasis,
-            final OUProcessModel processModel,
-            final OrthogonalBlockCanonicalParameterization orthogonalSelection,
-            final BranchGradientWorkspace workspace,
-            final double[] gradQ,
-            final double[] gradMu) {
-        final OrthogonalBlockBranchGradientWorkspace orthogonalWorkspace =
-                workspace.ensureOrthogonalBranchWorkspace(orthogonalSelection);
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-        orthogonalSelection.accumulateNativeGradientFromAdjointsPreparedFlat(
-                preparedBasis,
-                processModel.getDiffusionMatrix(),
-                workspace.adjoints,
-                orthogonalWorkspace,
-                gradient.orthogonalCompressedGradientScratch,
-                gradient.orthogonalRotationGradientFlatScratch);
-
-        orthogonalSelection.accumulateDiffusionGradientPreparedFlat(
-                preparedBasis,
-                workspace.adjoints.dLogL_dOmega,
-                true,
-                gradQ,
-                orthogonalWorkspace);
-
-        orthogonalSelection.accumulateMeanGradientPrepared(
-                preparedBasis,
-                workspace.adjoints.dLogL_df,
-                gradMu,
-                orthogonalWorkspace);
-    }
-
-    private void accumulateDenseForBranch(final OUProcessModel processModel,
-                                          final BranchGradientWorkspace workspace,
-                                          final double branchLength,
-                                          final double[] gradA,
-                                          final double[] gradQ,
-                                          final double[] gradMu) {
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-
-        processModel.accumulateSelectionGradientFlat(
-                branchLength,
-                workspace.adjoints.dLogL_dF,
-                workspace.adjoints.dLogL_df,
-                gradA);
-
-        processModel.accumulateSelectionGradientFromCovarianceFlat(
-                branchLength,
-                workspace.adjoints.dLogL_dOmega,
-                true,
-                gradA);
-
-        processModel.accumulateDiffusionGradientFlat(
-                branchLength,
-                workspace.adjoints.dLogL_dOmega,
-                false,
-                gradQ);
-
-        processModel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
-        accumulateStationaryMeanGradientFlat(
-                gradient.transitionMatrixFlat,
-                workspace.adjoints.dLogL_df,
-                gradMu);
-    }
-
-    private void finalizeJointGradients(final OrthogonalGradientLayout orthogonalLayout,
+    private void finalizeJointGradients(final CanonicalSelectionGradientPullback selectionPullback,
                                         final BranchGradientInputs inputs,
                                         final BranchGradientWorkspace workspace,
                                         final double[] gradA,
                                         final double[] gradQ) {
-        if (orthogonalLayout != null) {
-            final GradientPullbackWorkspace gradient = workspace.gradient;
-            orthogonalLayout.blockParameter.chainGradient(
-                    gradient.orthogonalCompressedGradientScratch,
-                    gradient.orthogonalNativeGradientScratch);
-            final double[] angleGradient =
-                    orthogonalLayout.orthogonalRotation.pullBackGradientFlat(
-                            gradient.orthogonalRotationGradientFlatScratch,
-                            dimension);
-            System.arraycopy(gradient.orthogonalNativeGradientScratch, 0, gradA, 0, orthogonalLayout.nativeBlockDim);
-            System.arraycopy(angleGradient, 0, gradA, orthogonalLayout.nativeBlockDim, angleGradient.length);
-        } else {
-            GaussianMatrixOps.transposeFlatSquareInPlace(gradA, dimension);
-        }
+        selectionPullback.finish(inputs, workspace, gradA);
 
         if (inputs.getRootDiffusionScale() > 0.0) {
             accumulateRootDiffusionGradient(
@@ -323,43 +171,6 @@ final class CanonicalTreeGradientEngine {
                     gradQ,
                     workspace);
         }
-    }
-
-    private OrthogonalGradientLayout validateOrthogonalGradientLayout(
-            final OrthogonalBlockCanonicalParameterization orthogonalSelection,
-            final double[] gradA,
-            final BranchGradientWorkspace workspace) {
-        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
-                (AbstractBlockDiagonalTwoByTwoMatrixParameter) orthogonalSelection.getMatrixParameter();
-        if (!(blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider)) {
-            throw new IllegalStateException(
-                    "Orthogonal block native gradient requires an OrthogonalMatrixProvider rotation parameter.");
-        }
-
-        final OrthogonalMatrixProvider orthogonalRotation =
-                (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
-        final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
-        final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
-        final int nativeDim = nativeBlockDim + angleDim;
-        if (gradA.length != nativeDim) {
-            throw new IllegalArgumentException(
-                    "Orthogonal block selection gradient expects native parameter length "
-                            + nativeDim + ", found " + gradA.length);
-        }
-
-        final int compressedBlockDim = blockParameter.getCompressedDDimension();
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-        if (compressedBlockDim > gradient.orthogonalCompressedGradientScratch.length
-                || nativeBlockDim > gradient.orthogonalNativeGradientScratch.length) {
-            throw new IllegalStateException(
-                    "Orthogonal block scratch is too small for native gradient dimensions "
-                            + compressedBlockDim + " and " + nativeBlockDim + ".");
-        }
-        return new OrthogonalGradientLayout(
-                blockParameter,
-                orthogonalRotation,
-                compressedBlockDim,
-                nativeBlockDim);
     }
 
     private int branchGradientJointChunkSize(final int taskLimit) {
@@ -373,35 +184,6 @@ final class CanonicalTreeGradientEngine {
         final int suggested =
                 (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
         return Math.max(1, Math.min(maxChunkSize, suggested));
-    }
-
-    private void accumulateStationaryMeanGradientFlat(final double[] transitionMatrix,
-                                                      final double[] adjointB,
-                                                      final double[] gradient) {
-        if (gradient.length == 1) {
-            double sum = 0.0;
-            for (int i = 0; i < dimension; ++i) {
-                double ftAdjoint = 0.0;
-                for (int j = 0; j < dimension; ++j) {
-                    ftAdjoint += transitionMatrix[j * dimension + i] * adjointB[j];
-                }
-                sum += adjointB[i] - ftAdjoint;
-            }
-            gradient[0] += sum;
-            return;
-        }
-        if (gradient.length != dimension) {
-            throw new IllegalArgumentException(
-                    "Stationary-mean gradient length must be 1 or " + dimension + ", found " + gradient.length);
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            double ftAdjoint = 0.0;
-            for (int j = 0; j < dimension; ++j) {
-                ftAdjoint += transitionMatrix[j * dimension + i] * adjointB[j];
-            }
-            gradient[i] += adjointB[i] - ftAdjoint;
-        }
     }
 
     private void accumulateRootDiffusionGradient(final CanonicalGaussianState rootPreOrder,
@@ -466,20 +248,4 @@ final class CanonicalTreeGradientEngine {
         }
     }
 
-    private static final class OrthogonalGradientLayout {
-        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
-        final OrthogonalMatrixProvider orthogonalRotation;
-        final int compressedBlockDim;
-        final int nativeBlockDim;
-
-        private OrthogonalGradientLayout(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-                                         final OrthogonalMatrixProvider orthogonalRotation,
-                                         final int compressedBlockDim,
-                                         final int nativeBlockDim) {
-            this.blockParameter = blockParameter;
-            this.orthogonalRotation = orthogonalRotation;
-            this.compressedBlockDim = compressedBlockDim;
-            this.nativeBlockDim = nativeBlockDim;
-        }
-    }
 }

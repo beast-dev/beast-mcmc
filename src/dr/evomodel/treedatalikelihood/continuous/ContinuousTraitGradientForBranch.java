@@ -527,7 +527,8 @@ public interface ContinuousTraitGradientForBranch {
                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           final DenseMatrix64F gradQInv, final DenseMatrix64F gradN) {
-                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                    if (likelihoodDelegate.usesCanonicalOULikelihood()
+                            && diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
                         final OUDiffusionModelDelegate ouDelegate =
                                 (OUDiffusionModelDelegate) diffusionProcessDelegate;
                         return ouDelegate.getCanonicalGradientDisplacementForBranch(statistics, node, cdi);

@@ -1,6 +1,7 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.DiagonalMatrix;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -8,10 +9,10 @@ import dr.xml.XMLParseException;
 /**
  * Parser-side guardrail for OU selection-matrix charts.
  *
- * <p>The intended default XML pathway is the orthogonal block chart. Dense or
- * diagonal matrices remain available for generality, but they must be
- * requested explicitly in XML to avoid silently bypassing the orthogonal-block
- * adjoint machinery.</p>
+ * <p>The intended default XML pathway is the orthogonal block chart. Diagonal
+ * matrices are unambiguous and remain legacy-compatible by default. Dense full
+ * matrices remain available for generality, but they must be requested explicitly
+ * in XML to avoid silently bypassing the orthogonal-block adjoint machinery.</p>
  */
 public final class OUSelectionChartParserHelper {
 
@@ -39,11 +40,12 @@ public final class OUSelectionChartParserHelper {
         final String requestedChart = xo.getAttribute(SELECTION_CHART, ORTHOGONAL_BLOCK);
         final boolean usesOrthogonalBlockChart =
                 OUProcessModel.usesOrthogonalBlockSelectionChart(selectionMatrix);
+        final boolean usesDiagonalChart = selectionMatrix instanceof DiagonalMatrix;
 
         if (ORTHOGONAL_BLOCK.equals(requestedChart)) {
-            if (!usesOrthogonalBlockChart) {
+            if (!usesOrthogonalBlockChart && !usesDiagonalChart) {
                 throw new XMLParseException(context + " defaults to selectionChart=\""
-                        + ORTHOGONAL_BLOCK + "\". Dense or diagonal OU selection matrices must "
+                        + ORTHOGONAL_BLOCK + "\". Dense OU selection matrices must "
                         + "set selectionChart=\"" + DENSE + "\" explicitly.");
             }
             return;

@@ -1,6 +1,7 @@
 package test.dr.inferencexml.timeseries;
 
 import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -33,6 +34,13 @@ public class OUSelectionChartParserHelperTest extends TestCase {
         OUSelectionChartParserHelper.validateSelectionChart(
                 parseXml("<ouProcessModel selectionChart=\"dense\"/>"),
                 denseSelectionMatrix(),
+                "ouProcessModel");
+    }
+
+    public void testDiagonalSelectionAcceptedByDefault() throws Exception {
+        OUSelectionChartParserHelper.validateSelectionChart(
+                parseXml("<ouProcessModel/>"),
+                diagonalSelectionMatrix(),
                 "ouProcessModel");
     }
 
@@ -70,6 +78,10 @@ public class OUSelectionChartParserHelperTest extends TestCase {
         matrix.setParameterValue(1, 0, 0.2);
         matrix.setParameterValue(1, 1, 1.1);
         return matrix;
+    }
+
+    private static DiagonalMatrix diagonalSelectionMatrix() {
+        return new DiagonalMatrix(new Parameter.Default("diagonalSelection", new double[]{0.8, 1.1}));
     }
 
     private static MatrixParameterInterface orthogonalBlockSelectionMatrix() {

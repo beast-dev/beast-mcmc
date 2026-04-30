@@ -30,7 +30,7 @@ import dr.inference.timeseries.engine.gaussian.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.OUProcessModel.CovarianceGradientMethod;
 import dr.inference.timeseries.engine.LikelihoodEngine;

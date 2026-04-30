@@ -8,7 +8,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.TransposedMatrixParameter;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import org.ejml.data.DenseMatrix64F;
 
@@ -118,12 +118,12 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         branchWiring.fillLocalAdjoints(branchLength, optimum, statistics, localAdjoints);
         zero(matrixGradient);
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+                instanceof OrthogonalBlockCanonicalParameterization) {
             // Branch-local canonical adjoints in the tree bridge use the opposite
             // covariance orientation relative to the orthogonal exact helper.
             // Match the same orientation convention used by the selection-covariance path.
             transposeFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
-            ((OrthogonalBlockDiagonalSelectionMatrixParameterization)
+            ((OrthogonalBlockCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization())
                     .accumulateDiffusionGradient(
                             processModel.getDiffusionMatrix(),
@@ -160,7 +160,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
 
         if (nativeBlockParameter != null
                 && processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+                instanceof OrthogonalBlockCanonicalParameterization) {
             final double[] denseGradient = new double[dimension * dimension];
             processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
             final double[] pulled = pullBackDenseGradientToBlock(
@@ -296,7 +296,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         }
 
         if (!(processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization)) {
+                instanceof OrthogonalBlockCanonicalParameterization)) {
             if (Boolean.getBoolean(DEBUG_NONORTH_OMEGA_PROPERTY)) {
                 fillLocalAdjoints(statistics, localAdjoints);
                 System.err.println("NONORTH OMEGA branchLength=" + branchLength
@@ -372,7 +372,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                                                                  final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                                                  final Parameter requestedParameter) {
         if (!(processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization)) {
+                instanceof OrthogonalBlockCanonicalParameterization)) {
             throw new IllegalStateException("Native orthogonal block gradient requires orthogonal block selection parametrization");
         }
 
@@ -381,8 +381,8 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         branchWiring.fillLocalAdjoints(branchLength, stationaryMean, statistics, localAdjoints);
         final CanonicalBranchMessageContribution localContribution =
                 branchWiring.prepareCanonicalContribution(branchLength, stationaryMean, statistics);
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
-                (OrthogonalBlockDiagonalSelectionMatrixParameterization) processModel.getSelectionMatrixParameterization();
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
+                (OrthogonalBlockCanonicalParameterization) processModel.getSelectionMatrixParameterization();
 
         zero(compressedNativeGradient);
         zero(rotationGradient);
@@ -516,7 +516,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     }
 
     private double[] numericalLocalSelectionGradient(
-            final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization,
+            final OrthogonalBlockCanonicalParameterization orthogonalParameterization,
             final double branchLength,
             final double[] optimum,
             final CanonicalLocalTransitionAdjoints adjoints,

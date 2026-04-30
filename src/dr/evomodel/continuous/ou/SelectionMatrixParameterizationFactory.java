@@ -3,6 +3,7 @@ package dr.evomodel.continuous.ou;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 
 /**
  * Factory for selection-matrix parametrizations.

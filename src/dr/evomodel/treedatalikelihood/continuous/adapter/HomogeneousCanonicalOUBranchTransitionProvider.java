@@ -44,7 +44,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -112,10 +113,10 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 initialCovariance);
         addModel(processModel);
 
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalSelection =
+        final OrthogonalBlockCanonicalParameterization orthogonalSelection =
                 processModel.getSelectionMatrixParameterization()
-                        instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization
-                        ? (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                        instanceof OrthogonalBlockCanonicalParameterization
+                        ? (OrthogonalBlockCanonicalParameterization)
                         processModel.getSelectionMatrixParameterization()
                         : null;
         this.transitionCache = new CanonicalTransitionCache(
@@ -168,7 +169,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     @Override
-    public OrthogonalBlockDiagonalSelectionMatrixParameterization.PreparedBranchBasis
+    public OrthogonalBlockPreparedBranchBasis
     getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
         ensureCurrentSnapshot();
         return transitionCache.getOrthogonalPreparedBranchBasis(childNodeIndex);

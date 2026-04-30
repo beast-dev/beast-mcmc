@@ -7,7 +7,7 @@ import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -289,7 +289,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         final OUProcessModel processModel = (OUProcessModel) repr;
         return processModel.getCovarianceGradientMethod() == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
                 && processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization;
+                instanceof OrthogonalBlockCanonicalParameterization;
     }
 
     private double[] computeOrthogonalNativeGradient(final Parameter requestedParameter,
@@ -298,8 +298,8 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                                                      final GaussianTransitionRepresentation repr,
                                                      final TimeGrid timeGrid) {
         final OUProcessModel processModel = (OUProcessModel) repr;
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
-                (OrthogonalBlockDiagonalSelectionMatrixParameterization) processModel.getSelectionMatrixParameterization();
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
+                (OrthogonalBlockCanonicalParameterization) processModel.getSelectionMatrixParameterization();
         final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter =
                 (OrthogonalBlockDiagonalPolarStableMatrixParameter) selectionMatrixParameter;
 

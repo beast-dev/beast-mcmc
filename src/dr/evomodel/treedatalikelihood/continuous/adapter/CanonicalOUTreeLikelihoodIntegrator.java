@@ -45,7 +45,7 @@ import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 
 /**
  * Integrator-style backend for the canonical OU tree passer path.
@@ -400,9 +400,9 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         final OUProcessModel processModel =
                 ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
-            final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization =
-                    (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                instanceof OrthogonalBlockCanonicalParameterization) {
+            final OrthogonalBlockCanonicalParameterization parameterization =
+                    (OrthogonalBlockCanonicalParameterization)
                             processModel.getSelectionMatrixParameterization();
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
                     (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameterization.getMatrixParameter();

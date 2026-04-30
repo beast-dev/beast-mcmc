@@ -15,6 +15,7 @@ import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
@@ -115,6 +116,7 @@ public class OUProcessModel extends AbstractModel
     private final Parameter stationaryMean;
     private final MatrixParameter initialCovariance;
     private final CovarianceGradientMethod covarianceGradientMethod;
+    private final OUCovarianceGradientStrategy covarianceGradientStrategy;
     private final GaussianComputationMode defaultComputationMode;
     private final SelectionMatrixParameterization selectionMatrixParameterization;
     private final DiffusionMatrixParameterization diffusionMatrixParameterization;
@@ -185,6 +187,7 @@ public class OUProcessModel extends AbstractModel
         this.stationaryMean         = stationaryMean;
         this.initialCovariance      = initialCovariance;
         this.covarianceGradientMethod = covarianceGradientMethod;
+        this.covarianceGradientStrategy = createCovarianceGradientStrategy(covarianceGradientMethod);
         this.defaultComputationMode = defaultComputationMode;
         this.selectionMatrixParameterization =
                 SelectionMatrixParameterizationFactory.create(driftMatrix);
@@ -250,6 +253,20 @@ public class OUProcessModel extends AbstractModel
             return CovarianceGradientMethod.STATIONARY_LYAPUNOV;
         }
         return CovarianceGradientMethod.VAN_LOAN_ADJOINT;
+    }
+
+    private static OUCovarianceGradientStrategy createCovarianceGradientStrategy(
+            final CovarianceGradientMethod method) {
+        switch (method) {
+            case VAN_LOAN_ADJOINT:
+                return new VanLoanCovarianceGradientStrategy();
+            case LYAPUNOV_ADJOINT:
+                return new LyapunovCovarianceGradientStrategy();
+            case STATIONARY_LYAPUNOV:
+                return new StationaryLyapunovCovarianceGradientStrategy();
+            default:
+                throw new IllegalStateException("Unknown CovarianceGradientMethod: " + method);
+        }
     }
 
     public GaussianComputationMode getDefaultComputationMode() {
@@ -352,10 +369,10 @@ public class OUProcessModel extends AbstractModel
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         final Workspace workspace = workspace();
-        if (selectionMatrixParameterization instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
+        if (selectionMatrixParameterization instanceof OrthogonalBlockCanonicalParameterization) {
             final double[] mean = workspace.vector0;
             getInitialMean(mean);
-            ((OrthogonalBlockDiagonalSelectionMatrixParameterization) selectionMatrixParameterization)
+            ((OrthogonalBlockCanonicalParameterization) selectionMatrixParameterization)
                     .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
             return;
         }
@@ -428,8 +445,8 @@ public class OUProcessModel extends AbstractModel
         checkSquareMatrix(out, stateDimension, "transition covariance");
         final Workspace workspace = workspace();
 
-        if (selectionMatrixParameterization instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
-            ((OrthogonalBlockDiagonalSelectionMatrixParameterization) selectionMatrixParameterization)
+        if (selectionMatrixParameterization instanceof OrthogonalBlockCanonicalParameterization) {
+            ((OrthogonalBlockCanonicalParameterization) selectionMatrixParameterization)
                     .fillTransitionCovariance(diffusionMatrix, dt, out);
             return;
         }
@@ -489,19 +506,7 @@ public class OUProcessModel extends AbstractModel
         selectionMatrixParameterization.fillSelectionMatrix(a);
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
-        switch (covarianceGradientMethod) {
-            case VAN_LOAN_ADJOINT:
-                accumulateViaVanLoanAdjoint(dt, d, a, q, dLogL_dV, gradientAccumulator);
-                break;
-            case LYAPUNOV_ADJOINT:
-                accumulateViaLyapunovAdjoint(dt, d, a, q, dLogL_dV, gradientAccumulator);
-                break;
-            case STATIONARY_LYAPUNOV:
-                accumulateViaStationaryLyapunov(dt, d, a, q, dLogL_dV, gradientAccumulator);
-                break;
-            default:
-                throw new IllegalStateException("Unknown CovarianceGradientMethod: " + covarianceGradientMethod);
-        }
+        covarianceGradientStrategy.accumulate(this, dt, d, a, q, dLogL_dV, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
@@ -517,19 +522,8 @@ public class OUProcessModel extends AbstractModel
         selectionMatrixParameterization.fillSelectionMatrix(a);
         diffusionMatrixParameterization.fillDiffusionMatrix(q);
 
-        switch (covarianceGradientMethod) {
-            case VAN_LOAN_ADJOINT:
-                accumulateViaVanLoanAdjointFlat(dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
-                break;
-            case LYAPUNOV_ADJOINT:
-                accumulateViaLyapunovAdjointFlat(dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
-                break;
-            case STATIONARY_LYAPUNOV:
-                accumulateViaStationaryLyapunovFlat(dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
-                break;
-            default:
-                throw new IllegalStateException("Unknown CovarianceGradientMethod: " + covarianceGradientMethod);
-        }
+        covarianceGradientStrategy.accumulateFlat(
+                this, dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
     }
 
     @Override
@@ -633,7 +627,7 @@ public class OUProcessModel extends AbstractModel
      *   ∂logL/∂A_{kl} += −dt · G_M[k][l]  +  dt · G_M[d+l][d+k]
      * </pre>
      */
-    private void accumulateViaVanLoanAdjoint(final double dt, final int d,
+    void accumulateViaVanLoanAdjoint(final double dt, final int d,
                                               final double[][] a, final double[][] q,
                                               final double[][] dLogL_dV,
                                               final double[] gradientAccumulator) {
@@ -702,7 +696,7 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private void accumulateViaVanLoanAdjointFlat(final double dt, final int d,
+    void accumulateViaVanLoanAdjointFlat(final double dt, final int d,
                                                  final double[][] a, final double[][] q,
                                                  final double[] dLogL_dV,
                                                  final boolean transposeAdjoint,
@@ -768,7 +762,7 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private void accumulateViaLyapunovAdjoint(final double dt, final int d,
+    void accumulateViaLyapunovAdjoint(final double dt, final int d,
                                               final double[][] a, final double[][] q,
                                               final double[][] dLogL_dV,
                                               final double[] gradientAccumulator) {
@@ -806,7 +800,7 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private void accumulateViaLyapunovAdjointFlat(final double dt, final int d,
+    void accumulateViaLyapunovAdjointFlat(final double dt, final int d,
                                                   final double[][] a, final double[][] q,
                                                   final double[] dLogL_dV,
                                                   final boolean transposeAdjoint,
@@ -841,7 +835,7 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private void accumulateViaStationaryLyapunov(final double dt, final int d,
+    void accumulateViaStationaryLyapunov(final double dt, final int d,
                                                  final double[][] a, final double[][] q,
                                                  final double[][] dLogL_dV,
                                                  final double[] gradientAccumulator) {
@@ -856,7 +850,7 @@ public class OUProcessModel extends AbstractModel
         accumulateViaStationaryLyapunovSymmetric(dt, d, a, q, gV, gradientAccumulator);
     }
 
-    private void accumulateViaStationaryLyapunovFlat(final double dt, final int d,
+    void accumulateViaStationaryLyapunovFlat(final double dt, final int d,
                                                      final double[][] a, final double[][] q,
                                                      final double[] dLogL_dV,
                                                      final boolean transposeAdjoint,

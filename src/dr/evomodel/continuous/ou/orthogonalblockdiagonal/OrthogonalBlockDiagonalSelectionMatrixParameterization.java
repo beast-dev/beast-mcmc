@@ -1,9 +1,11 @@
-package dr.evomodel.continuous.ou;
+package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.continuous.ou.DenseSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;
@@ -21,7 +23,9 @@ import java.util.Arrays;
  * Orthogonal block-diagonal parametrization using block-space helpers for the
  * forward path and the orthogonal native backward path.
  */
-public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extends DenseSelectionMatrixParameterization {
+public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
+        extends DenseSelectionMatrixParameterization
+        implements OrthogonalBlockCanonicalParameterization {
 
     private static final double SPD_JITTER_RELATIVE = 1.0e-14;
     private static final double SPD_JITTER_ABSOLUTE = 1.0e-14;
@@ -83,107 +87,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
     private boolean basisCacheValid;
     private double cachedExpDt;
     private double cachedBasisDt;
-
-    public static final class PreparedBranchBasis {
-        private final int dimension;
-        private double dt;
-        private final double[] stationaryMean;
-        private final double[] blockDParams;
-        private final DenseMatrix64F expD;
-        private final DenseMatrix64F rMatrix;
-        private final DenseMatrix64F rtMatrix;
-        private final DenseMatrix64F transitionMatrix;
-        private final DenseMatrix64F qMatrix;
-        private final DenseMatrix64F stationaryCovDBasis;
-        private final DenseMatrix64F transitionCovDBasis;
-        private final DenseMatrix64F transitionCovariance;
-        private final double[][] workMatrix;
-        private boolean covariancePrepared;
-
-        private PreparedBranchBasis(final int dimension,
-                                    final int blockDParamDimension) {
-            this.dimension = dimension;
-            this.dt = Double.NaN;
-            this.stationaryMean = new double[dimension];
-            this.blockDParams = new double[blockDParamDimension];
-            this.expD = new DenseMatrix64F(dimension, dimension);
-            this.rMatrix = new DenseMatrix64F(dimension, dimension);
-            this.rtMatrix = new DenseMatrix64F(dimension, dimension);
-            this.transitionMatrix = new DenseMatrix64F(dimension, dimension);
-            this.qMatrix = new DenseMatrix64F(dimension, dimension);
-            this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);
-            this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
-            this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
-            this.workMatrix = new double[dimension][dimension];
-            this.covariancePrepared = false;
-        }
-    }
-
-    public static final class BranchGradientWorkspace {
-        private final BlockDiagonalFrechetHelper frechetHelper;
-        private final BlockDiagonalLyapunovSolver lyapunovSolver;
-        private final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper;
-        private final DenseMatrix64F qMatrix;
-        private final DenseMatrix64F qDBasis;
-        private final DenseMatrix64F stationaryCovDBasis;
-        private final DenseMatrix64F transitionCovDBasis;
-        private final DenseMatrix64F transitionCovariance;
-        private final double[] transitionCovarianceArrayScratch;
-        private final double[] transitionOffsetScratch;
-        private final double[][] scaledNegativeBlockDScratch;
-        private final double[][] denseAdjointScratch;
-        private final DenseMatrix64F upstreamF;
-        private final DenseMatrix64F upstreamFD;
-        private final DenseMatrix64F gradD;
-        private final DenseMatrix64F gradR;
-        private final DenseMatrix64F gV;
-        private final DenseMatrix64F hDBasis;
-        private final DenseMatrix64F gS;
-        private final DenseMatrix64F yAdjoint;
-        private final DenseMatrix64F gECov;
-        private final DenseMatrix64F temp1;
-        private final DenseMatrix64F temp2;
-        private final DenseMatrix64F temp3;
-        private final double[] choleskyScratch;
-        private final double[] lowerInverseScratch;
-        private final double[] tempVector1;
-        private final double[] tempVector2;
-
-        public BranchGradientWorkspace(final int dimension,
-                                       final int[] blockStarts,
-                                       final int[] blockSizes) {
-            final BlockDiagonalExpSolver.BlockStructure structure =
-                    new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes);
-            this.frechetHelper = new BlockDiagonalFrechetHelper(structure);
-            this.lyapunovSolver = new BlockDiagonalLyapunovSolver(dimension, blockStarts, blockSizes);
-            this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(dimension, lyapunovSolver);
-            this.qMatrix = new DenseMatrix64F(dimension, dimension);
-            this.qDBasis = new DenseMatrix64F(dimension, dimension);
-            this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);
-            this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
-            this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
-            this.transitionCovarianceArrayScratch = new double[dimension * dimension];
-            this.transitionOffsetScratch = new double[dimension];
-            this.scaledNegativeBlockDScratch = new double[dimension][dimension];
-            this.denseAdjointScratch = new double[dimension][dimension];
-            this.upstreamF = new DenseMatrix64F(dimension, dimension);
-            this.upstreamFD = new DenseMatrix64F(dimension, dimension);
-            this.gradD = new DenseMatrix64F(dimension, dimension);
-            this.gradR = new DenseMatrix64F(dimension, dimension);
-            this.gV = new DenseMatrix64F(dimension, dimension);
-            this.hDBasis = new DenseMatrix64F(dimension, dimension);
-            this.gS = new DenseMatrix64F(dimension, dimension);
-            this.yAdjoint = new DenseMatrix64F(dimension, dimension);
-            this.gECov = new DenseMatrix64F(dimension, dimension);
-            this.temp1 = new DenseMatrix64F(dimension, dimension);
-            this.temp2 = new DenseMatrix64F(dimension, dimension);
-            this.temp3 = new DenseMatrix64F(dimension, dimension);
-            this.choleskyScratch = new double[dimension * dimension];
-            this.lowerInverseScratch = new double[dimension * dimension];
-            this.tempVector1 = new double[dimension];
-            this.tempVector2 = new double[dimension];
-        }
-    }
 
     public OrthogonalBlockDiagonalSelectionMatrixParameterization(
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
@@ -281,21 +184,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         fillCanonicalTransitionDirect(stationaryMean, out);
     }
 
-    public PreparedBranchBasis prepareBranchBasis(final double dt,
+    public OrthogonalBlockPreparedBranchBasis prepareBranchBasis(final double dt,
                                                   final double[] stationaryMean) {
-        final PreparedBranchBasis prepared = createPreparedBranchBasis();
+        final OrthogonalBlockPreparedBranchBasis prepared = createPreparedBranchBasis();
         prepareBranchBasis(dt, stationaryMean, prepared);
         return prepared;
     }
 
-    public PreparedBranchBasis createPreparedBranchBasis() {
+    public OrthogonalBlockPreparedBranchBasis createPreparedBranchBasis() {
         final int dimension = getDimension();
-        return new PreparedBranchBasis(dimension, blockParameter.getTridiagonalDDimension());
+        return new OrthogonalBlockPreparedBranchBasis(dimension, blockParameter.getTridiagonalDDimension());
     }
 
     public void prepareBranchBasis(final double dt,
                                    final double[] stationaryMean,
-                                   final PreparedBranchBasis prepared) {
+                                   final OrthogonalBlockPreparedBranchBasis prepared) {
         final int dimension = getDimension();
         if (prepared.dimension != dimension) {
             throw new IllegalArgumentException(
@@ -325,24 +228,24 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         prepared.covariancePrepared = false;
     }
 
-    public BranchGradientWorkspace createBranchGradientWorkspace() {
-        return new BranchGradientWorkspace(
+    public OrthogonalBlockBranchGradientWorkspace createBranchGradientWorkspace() {
+        return new OrthogonalBlockBranchGradientWorkspace(
                 getDimension(),
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes());
     }
 
-    public void fillCanonicalTransitionPrepared(final PreparedBranchBasis prepared,
+    public void fillCanonicalTransitionPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                 final MatrixParameterInterface diffusionMatrix,
-                                                final BranchGradientWorkspace workspace,
+                                                final OrthogonalBlockBranchGradientWorkspace workspace,
                                                 final CanonicalGaussianTransition out) {
         loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
         fillCanonicalTransitionDirectPrepared(prepared, workspace.transitionCovariance, workspace, out);
     }
 
-    public void prepareBranchCovariance(final PreparedBranchBasis prepared,
+    public void prepareBranchCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
                                         final MatrixParameterInterface diffusionMatrix,
-                                        final BranchGradientWorkspace workspace) {
+                                        final OrthogonalBlockBranchGradientWorkspace workspace) {
         fillTransitionCovarianceMatrixPrepared(prepared, diffusionMatrix, workspace, workspace.transitionCovariance);
         prepared.qMatrix.set(workspace.qMatrix);
         prepared.stationaryCovDBasis.set(workspace.stationaryCovDBasis);
@@ -351,10 +254,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         prepared.covariancePrepared = true;
     }
 
-    public void accumulateNativeGradientFromAdjointsPrepared(final PreparedBranchBasis prepared,
+    public void accumulateNativeGradientFromAdjointsPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                              final MatrixParameterInterface diffusionMatrix,
                                                              final CanonicalLocalTransitionAdjoints localAdjoints,
-                                                             final BranchGradientWorkspace workspace,
+                                                             final OrthogonalBlockBranchGradientWorkspace workspace,
                                                              final double[] compressedDAccumulator,
                                                              final double[][] rotationAccumulator) {
         loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
@@ -383,10 +286,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
-    public void accumulateNativeGradientFromAdjointsPreparedFlat(final PreparedBranchBasis prepared,
+    public void accumulateNativeGradientFromAdjointsPreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
                                                                  final MatrixParameterInterface diffusionMatrix,
                                                                  final CanonicalLocalTransitionAdjoints localAdjoints,
-                                                                 final BranchGradientWorkspace workspace,
+                                                                 final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                  final double[] compressedDAccumulator,
                                                                  final double[] rotationAccumulator) {
         loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
@@ -415,9 +318,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
-    private void loadOrFillPreparedCovariance(final PreparedBranchBasis prepared,
+    private void loadOrFillPreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
                                               final MatrixParameterInterface diffusionMatrix,
-                                              final BranchGradientWorkspace workspace) {
+                                              final OrthogonalBlockBranchGradientWorkspace workspace) {
         if (!prepared.covariancePrepared) {
             prepareBranchCovariance(prepared, diffusionMatrix, workspace);
             return;
@@ -428,10 +331,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         workspace.transitionCovariance.set(prepared.transitionCovariance);
     }
 
-    public void accumulateMeanGradientPrepared(final PreparedBranchBasis prepared,
+    public void accumulateMeanGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                final double[] dLogL_df,
                                                final double[] gradientAccumulator,
-                                               final BranchGradientWorkspace workspace) {
+                                               final OrthogonalBlockBranchGradientWorkspace workspace) {
         multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
         applyBlockDiagonalTransposeExpPrepared(prepared, workspace.tempVector1, workspace.tempVector2);
         multiplyRowMajorVector(prepared.rMatrix.data, workspace.tempVector2, workspace.tempVector1, prepared.dimension);
@@ -453,26 +356,26 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
-    public void accumulateDiffusionGradientPrepared(final PreparedBranchBasis prepared,
+    public void accumulateDiffusionGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                     final double[][] dLogL_dV,
                                                     final double[] gradientAccumulator,
-                                                    final BranchGradientWorkspace workspace) {
+                                                    final OrthogonalBlockBranchGradientWorkspace workspace) {
         fillSymmetricDenseMatrix(dLogL_dV, workspace.gV);
         accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
     }
 
-    public void accumulateDiffusionGradientPreparedFlat(final PreparedBranchBasis prepared,
+    public void accumulateDiffusionGradientPreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
                                                         final double[] dLogL_dV,
                                                         final boolean transposeAdjoint,
                                                         final double[] gradientAccumulator,
-                                                        final BranchGradientWorkspace workspace) {
+                                                        final OrthogonalBlockBranchGradientWorkspace workspace) {
         fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
         accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
     }
 
-    private void accumulateDiffusionGradientPreparedSymmetric(final PreparedBranchBasis prepared,
+    private void accumulateDiffusionGradientPreparedSymmetric(final OrthogonalBlockPreparedBranchBasis prepared,
                                                               final double[] gradientAccumulator,
-                                                              final BranchGradientWorkspace workspace) {
+                                                              final OrthogonalBlockBranchGradientWorkspace workspace) {
         CommonOps.mult(prepared.rtMatrix, workspace.gV, workspace.temp1);
         CommonOps.mult(workspace.temp1, prepared.rMatrix, workspace.hDBasis);
         symmetrize(workspace.hDBasis);
@@ -905,9 +808,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         addDenseMatrixToArray(gradR, rotationAccumulator);
     }
 
-    private void fillTransitionCovarianceMatrixPrepared(final PreparedBranchBasis prepared,
+    private void fillTransitionCovarianceMatrixPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                         final MatrixParameterInterface diffusionMatrix,
-                                                        final BranchGradientWorkspace workspace,
+                                                        final OrthogonalBlockBranchGradientWorkspace workspace,
                                                         final DenseMatrix64F out) {
         fillDenseMatrix(diffusionMatrix, workspace.qMatrix);
         CommonOps.mult(prepared.rtMatrix, workspace.qMatrix, workspace.temp1);
@@ -922,9 +825,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         symmetrize(out);
     }
 
-    private void fillCanonicalTransitionDirectPrepared(final PreparedBranchBasis prepared,
+    private void fillCanonicalTransitionDirectPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                        final DenseMatrix64F transitionCovariance,
-                                                       final BranchGradientWorkspace workspace,
+                                                       final OrthogonalBlockBranchGradientWorkspace workspace,
                                                        final CanonicalGaussianTransition out) {
         final int dimension = prepared.dimension;
         final double[] transitionData = prepared.transitionMatrix.data;
@@ -988,10 +891,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         out.logNormalizer = 0.5 * (dimension * Math.log(2.0 * Math.PI) + logDet + quadratic);
     }
 
-    private void accumulateNativeGradientFromTransitionPrepared(final PreparedBranchBasis prepared,
+    private void accumulateNativeGradientFromTransitionPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                                 final double[] dLogL_dF,
                                                                 final double[] dLogL_df,
-                                                                final BranchGradientWorkspace workspace,
+                                                                final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                 final double[] compressedDAccumulator,
                                                                 final double[][] rotationAccumulator) {
         fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
@@ -1050,10 +953,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         addDenseMatrixToArray(workspace.gradR, rotationAccumulator);
     }
 
-    private void accumulateNativeGradientFromTransitionPreparedFlat(final PreparedBranchBasis prepared,
+    private void accumulateNativeGradientFromTransitionPreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
                                                                     final double[] dLogL_dF,
                                                                     final double[] dLogL_df,
-                                                                    final BranchGradientWorkspace workspace,
+                                                                    final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                     final double[] compressedDAccumulator,
                                                                     final double[] rotationAccumulator) {
         fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
@@ -1112,9 +1015,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
     }
 
-    private void accumulateNativeGradientFromCovarianceStationaryPrepared(final PreparedBranchBasis prepared,
+    private void accumulateNativeGradientFromCovarianceStationaryPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                                           final double[] dLogL_dV,
-                                                                          final BranchGradientWorkspace workspace,
+                                                                          final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                           final double[] compressedDAccumulator,
                                                                           final double[][] rotationAccumulator) {
         final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
@@ -1184,9 +1087,9 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         addDenseMatrixToArray(workspace.gradR, rotationAccumulator);
     }
 
-    private void accumulateNativeGradientFromCovarianceStationaryPreparedFlat(final PreparedBranchBasis prepared,
+    private void accumulateNativeGradientFromCovarianceStationaryPreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
                                                                               final double[] dLogL_dV,
-                                                                              final BranchGradientWorkspace workspace,
+                                                                              final OrthogonalBlockBranchGradientWorkspace workspace,
                                                                               final double[] compressedDAccumulator,
                                                                               final double[] rotationAccumulator) {
         final boolean forceDenseAdjointExp = Boolean.getBoolean(NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY);
@@ -1544,7 +1447,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization extend
         }
     }
 
-    private void applyBlockDiagonalTransposeExpPrepared(final PreparedBranchBasis prepared,
+    private void applyBlockDiagonalTransposeExpPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                                         final double[] in,
                                                         final double[] out) {
         final double[] expData = prepared.expD.data;

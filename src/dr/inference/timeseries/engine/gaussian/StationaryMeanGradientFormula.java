@@ -4,7 +4,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -82,7 +82,7 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         fillCurrentMean(currentMean);
 
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
                 getOrthogonalParameterizationIfAvailable();
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
@@ -132,7 +132,7 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         double scalarGradient = 0.0;
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
                 getOrthogonalParameterizationIfAvailable();
 
         for (int t = 0; t < timeCount - 1; ++t) {
@@ -176,13 +176,13 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         return new double[]{scalarGradient};
     }
 
-    private OrthogonalBlockDiagonalSelectionMatrixParameterization getOrthogonalParameterizationIfAvailable() {
+    private OrthogonalBlockCanonicalParameterization getOrthogonalParameterizationIfAvailable() {
         if (processModel == null) {
             return null;
         }
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
-            return (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                instanceof OrthogonalBlockCanonicalParameterization) {
+            return (OrthogonalBlockCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization();
         }
         return null;

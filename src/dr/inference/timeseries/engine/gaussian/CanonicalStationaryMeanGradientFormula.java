@@ -11,7 +11,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
@@ -90,7 +90,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         fillCurrentMean(currentMean);
 
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
                 getOrthogonalParameterizationIfAvailable();
         for (int t = 0; t < timeCount - 1; ++t) {
             CanonicalBranchMessageContributionUtils.fillFromPairState(
@@ -140,7 +140,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         double scalarGradient = 0.0;
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockDiagonalSelectionMatrixParameterization orthogonalParameterization =
+        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
                 getOrthogonalParameterizationIfAvailable();
 
         for (int t = 0; t < timeCount - 1; ++t) {
@@ -184,13 +184,13 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         return new double[]{scalarGradient};
     }
 
-    private OrthogonalBlockDiagonalSelectionMatrixParameterization getOrthogonalParameterizationIfAvailable() {
+    private OrthogonalBlockCanonicalParameterization getOrthogonalParameterizationIfAvailable() {
         if (processModel == null) {
             return null;
         }
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization) {
-            return (OrthogonalBlockDiagonalSelectionMatrixParameterization)
+                instanceof OrthogonalBlockCanonicalParameterization) {
+            return (OrthogonalBlockCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization();
         }
         return null;

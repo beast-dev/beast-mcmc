@@ -52,6 +52,7 @@ final class CanonicalTransitionCache {
             orthogonalWorkspace;
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
+    private boolean stationaryMeanSnapshotValid;
 
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
@@ -73,10 +74,11 @@ final class CanonicalTransitionCache {
                         : ThreadLocal.withInitial(orthogonalSelection::createBranchGradientWorkspace);
         this.stationaryMeanScratch = orthogonalSelection == null ? null : new double[dimension];
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
+        this.stationaryMeanSnapshotValid = false;
     }
 
     void fillTransition(final int childNodeIndex, final CanonicalGaussianTransition out) {
-        copyTransition(ensureTransition(childNodeIndex), out);
+        out.copyFrom(ensureTransition(childNodeIndex));
     }
 
     OrthogonalBlockPreparedBranchBasis
@@ -92,8 +94,9 @@ final class CanonicalTransitionCache {
 
     void clear(final CanonicalTransitionCacheInvalidationReason reason) {
         diagnostics.recordClear(reason);
+        stationaryMeanSnapshotValid = false;
         for (int i = 0; i < entries.length; i++) {
-            entries[i].valid = false;
+            entries[i].invalidate(reason);
         }
     }
 
@@ -136,6 +139,10 @@ final class CanonicalTransitionCache {
             if (entry.transition == null) {
                 entry.transition = new CanonicalGaussianTransition(dimension);
             }
+            if (Double.doubleToLongBits(entry.effectiveBranchLength)
+                    != Double.doubleToLongBits(effectiveBranchLength)) {
+                entry.preparedBasisValid = false;
+            }
             final OrthogonalBlockPreparedBranchBasis prepared =
                     fillCachedTransition(entry, effectiveBranchLength);
             entry.snapshot = new CanonicalPreparedBranchSnapshot(
@@ -163,15 +170,27 @@ final class CanonicalTransitionCache {
         if (prepared == null) {
             prepared = orthogonalSelection.createPreparedBranchBasis();
             entry.orthogonalPreparedBasis = prepared;
+            entry.preparedBasisValid = false;
         }
-        processModel.getInitialMean(stationaryMeanScratch);
-        orthogonalSelection.prepareBranchBasis(effectiveBranchLength, stationaryMeanScratch, prepared);
+        ensureStationaryMeanSnapshot();
+        if (!entry.preparedBasisValid) {
+            orthogonalSelection.prepareBranchBasis(effectiveBranchLength, stationaryMeanScratch, prepared);
+            entry.preparedBasisValid = true;
+        }
         orthogonalSelection.fillCanonicalTransitionPrepared(
                 prepared,
                 processModel.getDiffusionMatrix(),
                 orthogonalWorkspace.get(),
                 entry.transition);
         return prepared;
+    }
+
+    private void ensureStationaryMeanSnapshot() {
+        if (stationaryMeanSnapshotValid) {
+            return;
+        }
+        processModel.getInitialMean(stationaryMeanScratch);
+        stationaryMeanSnapshotValid = true;
     }
 
     private void recordRequest() {
@@ -190,24 +209,27 @@ final class CanonicalTransitionCache {
         return diagnostics.currentPhase();
     }
 
-    private static void copyTransition(final CanonicalGaussianTransition source,
-                                       final CanonicalGaussianTransition target) {
-        final int dimension = source.getDimension();
-        System.arraycopy(source.informationX, 0, target.informationX, 0, dimension);
-        System.arraycopy(source.informationY, 0, target.informationY, 0, dimension);
-        System.arraycopy(source.precisionXX, 0, target.precisionXX, 0, dimension * dimension);
-        System.arraycopy(source.precisionXY, 0, target.precisionXY, 0, dimension * dimension);
-        System.arraycopy(source.precisionYX, 0, target.precisionYX, 0, dimension * dimension);
-        System.arraycopy(source.precisionYY, 0, target.precisionYY, 0, dimension * dimension);
-        target.logNormalizer = source.logNormalizer;
-    }
-
     private static final class BranchCacheEntry {
         private CanonicalGaussianTransition transition;
         private CanonicalPreparedBranchSnapshot snapshot;
         private OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis;
         private double effectiveBranchLength;
         private boolean valid;
+        private boolean preparedBasisValid;
+
+        private void invalidate(final CanonicalTransitionCacheInvalidationReason reason) {
+            valid = false;
+            if (orthogonalPreparedBasis == null) {
+                preparedBasisValid = false;
+                return;
+            }
+            if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
+                orthogonalPreparedBasis.invalidateCovariance();
+                return;
+            }
+            preparedBasisValid = false;
+            orthogonalPreparedBasis.invalidateCovariance();
+        }
     }
 
 }

@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchBasisProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
+import dr.evomodel.treedatalikelihood.continuous.framework.MatrixUtils;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -50,7 +51,6 @@ import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonica
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 /**
  * Homogeneous OU branch-transition provider for the canonical tree pathway.
@@ -73,8 +73,13 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     private final DenseMatrix64F ejmlPrecision;
     private final DenseMatrix64F ejmlCovariance;
-
+    private final double[] choleskyForwardScratch;
+    private final double[] choleskyBackwardScratch;
+    private final double[] effectiveBranchLengthCache;
+    private int effectiveBranchLengthPhaseDepth;
     private boolean dirty = false;
+    private CanonicalTransitionCacheInvalidationReason dirtyReason =
+            CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
 
     public HomogeneousCanonicalOUBranchTransitionProvider(final Tree tree,
                                                           final MultivariateElasticModel elasticModel,
@@ -129,6 +134,10 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
         this.ejmlPrecision = new DenseMatrix64F(dimension, dimension);
         this.ejmlCovariance = new DenseMatrix64F(dimension, dimension);
+        this.choleskyForwardScratch = new double[dimension];
+        this.choleskyBackwardScratch = new double[dimension];
+        this.effectiveBranchLengthCache = new double[tree.getNodeCount()];
+        this.effectiveBranchLengthPhaseDepth = 0;
         refreshSnapshot();
     }
 
@@ -183,16 +192,46 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     @Override
     public String pushDiagnosticPhase(final String phase) {
+        beginEffectiveBranchLengthPhase();
         return transitionCache.pushDiagnosticPhase(phase);
     }
 
     @Override
     public void popDiagnosticPhase(final String previous) {
         transitionCache.popDiagnosticPhase(previous);
+        endEffectiveBranchLengthPhase();
     }
 
     @Override
     public double getEffectiveBranchLength(final int childNodeIndex) {
+        if (effectiveBranchLengthPhaseDepth > 0) {
+            return effectiveBranchLengthCache[childNodeIndex];
+        }
+        return computeEffectiveBranchLength(childNodeIndex);
+    }
+
+    private void beginEffectiveBranchLengthPhase() {
+        if (effectiveBranchLengthPhaseDepth++ > 0) {
+            return;
+        }
+        ensureCurrentSnapshot();
+        final int rootIndex = tree.getRoot().getNumber();
+        for (int childNodeIndex = 0; childNodeIndex < tree.getNodeCount(); childNodeIndex++) {
+            if (childNodeIndex == rootIndex) {
+                effectiveBranchLengthCache[childNodeIndex] = 0.0;
+                continue;
+            }
+            effectiveBranchLengthCache[childNodeIndex] = computeEffectiveBranchLength(childNodeIndex);
+        }
+    }
+
+    private void endEffectiveBranchLengthPhase() {
+        if (effectiveBranchLengthPhaseDepth > 0) {
+            effectiveBranchLengthPhaseDepth--;
+        }
+    }
+
+    private double computeEffectiveBranchLength(final int childNodeIndex) {
         final NodeRef node = tree.getNode(childNodeIndex);
         final double rawLength = tree.getBranchLength(node);
         final double normalization = rateTransformation == null ? 1.0 : rateTransformation.getNormalization();
@@ -223,7 +262,8 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         }
         refreshSnapshot();
         dirty = false;
-        transitionCache.clear(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
+        transitionCache.clear(dirtyReason);
+        dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
     }
 
     private void refreshSnapshot() {
@@ -235,8 +275,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 precData[i * dimension + j] = precision[i][j];
             }
         }
-        ejmlCovariance.set(ejmlPrecision);
-        CommonOps.invert(ejmlCovariance);
+        MatrixUtils.invertSymmetricPositiveDefiniteCompact(
+                ejmlPrecision.data,
+                ejmlCovariance.data,
+                dimension,
+                choleskyForwardScratch,
+                choleskyBackwardScratch);
 
         final double[] covData = ejmlCovariance.data;
         for (int i = 0; i < dimension; i++) {
@@ -260,6 +304,11 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
         dirty = true;
+        if (model == diffusionModel && dirtyReason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
+            dirtyReason = CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED;
+        } else if (model != diffusionModel) {
+            dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
+        }
     }
 
     @Override
@@ -267,6 +316,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                                               final int index,
                                               final Parameter.ChangeType type) {
         dirty = true;
+        dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
     }
 
     @Override
@@ -279,6 +329,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         transitionCache.recordRestore();
         transitionCache.clear(CanonicalTransitionCacheInvalidationReason.RESTORE_STATE);
         dirty = true;
+        dirtyReason = CanonicalTransitionCacheInvalidationReason.RESTORE_STATE;
     }
 
     @Override

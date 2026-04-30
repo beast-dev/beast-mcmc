@@ -12,6 +12,10 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
     private final AtomicLong hits = new AtomicLong();
     private final AtomicLong misses = new AtomicLong();
     private final AtomicLong clears = new AtomicLong();
+    private final AtomicLong diffusionChangedClears = new AtomicLong();
+    private final AtomicLong stationaryMeanChangedClears = new AtomicLong();
+    private final AtomicLong selectionChangedClears = new AtomicLong();
+    private final AtomicLong branchLengthChangedClears = new AtomicLong();
     private final AtomicLong modelChangedClears = new AtomicLong();
     private final AtomicLong restoreClears = new AtomicLong();
     private final AtomicLong explicitClears = new AtomicLong();
@@ -89,7 +93,15 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
             return;
         }
         clears.incrementAndGet();
-        if (reason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
+        if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
+            diffusionChangedClears.incrementAndGet();
+        } else if (reason == CanonicalTransitionCacheInvalidationReason.STATIONARY_MEAN_CHANGED) {
+            stationaryMeanChangedClears.incrementAndGet();
+        } else if (reason == CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED) {
+            selectionChangedClears.incrementAndGet();
+        } else if (reason == CanonicalTransitionCacheInvalidationReason.BRANCH_LENGTH_CHANGED) {
+            branchLengthChangedClears.incrementAndGet();
+        } else if (reason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
             modelChangedClears.incrementAndGet();
         } else if (reason == CanonicalTransitionCacheInvalidationReason.RESTORE_STATE) {
             restoreClears.incrementAndGet();
@@ -131,7 +143,12 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
                 + " hits=" + hits.get()
                 + " misses=" + misses.get()
                 + " clears=" + clears.get()
-                + " clearReasons=model/restore/explicit="
+                + " clearReasons=diffusion/mean/selection/branch/model/restore/explicit="
+                + diffusionChangedClears.get()
+                + "/" + stationaryMeanChangedClears.get()
+                + "/" + selectionChangedClears.get()
+                + "/" + branchLengthChangedClears.get()
+                + "/"
                 + modelChangedClears.get()
                 + "/" + restoreClears.get()
                 + "/" + explicitClears.get()

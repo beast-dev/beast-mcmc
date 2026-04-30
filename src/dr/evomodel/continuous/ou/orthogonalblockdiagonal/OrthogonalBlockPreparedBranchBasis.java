@@ -38,4 +38,8 @@ public final class OrthogonalBlockPreparedBranchBasis {
         this.workMatrix = new double[dimension][dimension];
         this.covariancePrepared = false;
     }
+
+    public void invalidateCovariance() {
+        covariancePrepared = false;
+    }
 }

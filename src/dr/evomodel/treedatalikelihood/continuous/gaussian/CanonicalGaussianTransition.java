@@ -49,4 +49,19 @@ public final class CanonicalGaussianTransition {
     public int getDimension() {
         return dimension;
     }
+
+    public void copyFrom(final CanonicalGaussianTransition source) {
+        if (source.dimension != dimension) {
+            throw new IllegalArgumentException(
+                    "Transition dimension mismatch: " + source.dimension + " vs " + dimension);
+        }
+        final int d2 = dimension * dimension;
+        System.arraycopy(source.informationX, 0, informationX, 0, dimension);
+        System.arraycopy(source.informationY, 0, informationY, 0, dimension);
+        System.arraycopy(source.precisionXX, 0, precisionXX, 0, d2);
+        System.arraycopy(source.precisionXY, 0, precisionXY, 0, d2);
+        System.arraycopy(source.precisionYX, 0, precisionYX, 0, d2);
+        System.arraycopy(source.precisionYY, 0, precisionYY, 0, d2);
+        logNormalizer = source.logNormalizer;
+    }
 }

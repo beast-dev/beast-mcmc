@@ -20,7 +20,6 @@ final class OrthogonalBlockTransitionFactory {
     private final DenseMatrix64F transitionCovDBasis;
     private final DenseMatrix64F transitionCovariance;
     private final DenseMatrix64F temp;
-    private final double[] transitionMatrixScratch;
     private final double[] transitionCovarianceScratch;
     private final double[] precisionScratch;
     private final double[] transitionOffsetScratch;
@@ -37,7 +36,6 @@ final class OrthogonalBlockTransitionFactory {
         this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
         this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
         this.temp = new DenseMatrix64F(dimension, dimension);
-        this.transitionMatrixScratch = new double[dimension * dimension];
         this.transitionCovarianceScratch = new double[dimension * dimension];
         this.precisionScratch = new double[dimension * dimension];
         this.transitionOffsetScratch = new double[dimension];
@@ -75,7 +73,6 @@ final class OrthogonalBlockTransitionFactory {
                                     final CanonicalBranchMessageContribution contribution,
                                     final CanonicalLocalTransitionAdjoints out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
-        copyDenseMatrixToFlat(basis.transitionMatrix, transitionMatrixScratch);
         OrthogonalBlockCanonicalTransitionAssembler.fillTransitionOffset(
                 basis.transitionMatrix, stationaryMean, transitionOffsetScratch);
         OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
@@ -87,7 +84,7 @@ final class OrthogonalBlockTransitionFactory {
         CanonicalTransitionAdjointUtils.fillFromMoments(
                 precisionScratch,
                 transitionCovarianceScratch,
-                transitionMatrixScratch,
+                basis.transitionMatrix.data,
                 transitionOffsetScratch,
                 contribution,
                 canonicalAdjointWorkspace,
@@ -122,7 +119,4 @@ final class OrthogonalBlockTransitionFactory {
         }
     }
 
-    private static void copyDenseMatrixToFlat(final DenseMatrix64F source, final double[] out) {
-        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
-    }
 }

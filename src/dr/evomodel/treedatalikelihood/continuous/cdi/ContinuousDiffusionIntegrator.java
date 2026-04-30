@@ -396,7 +396,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             int priorOffset = dimPartial * priorBufferIndex;
             final double priorScalar = partials[priorOffset + dimTrait];
             precision.fill(diffusions, precisionOffset, dimTrait * dimTrait,
-                    sparseDiffusions[precisionIndex], 0,
+                    sparseDiffusions == null ? null : sparseDiffusions[precisionIndex], 0,
                     priorScalar);
 //            for (int i = 0; i < dimTrait * dimTrait; ++i) {
 //                precision[i] = priorScalar * diffusions[precisionOffset + i];

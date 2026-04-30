@@ -24,16 +24,13 @@ import org.ejml.data.DenseMatrix64F;
  * outside the larger delegate/gradient classes.</p>
  */
 public final class OUCanonicalBranchWiring {
-    private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY =
-            "beast.experimental.disableExactTipShortcut";
-    private static final String NONFINITE_BRANCH_STATS_DEBUG_PROPERTY =
-            "beast.debug.ou.nonfiniteBranchStats";
-
     private static final CanonicalNumericsOptions NUMERICS_OPTIONS = CanonicalNumericsOptions.OU_TREE;
 
     private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
     private final int dimension;
+    private final CanonicalDebugOptions debugOptions;
+    private final CanonicalGradientFallbackPolicy fallbackPolicy;
 
     private final CanonicalGaussianTransition transition;
     private final CanonicalGaussianState pairPosterior;
@@ -56,12 +53,28 @@ public final class OUCanonicalBranchWiring {
     private final double[][] reducedLowerInverseScratch;
 
     public OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
+        this(branchTransitionProvider,
+                CanonicalDebugOptions.fromSystemProperties(),
+                CanonicalGradientFallbackPolicy.fromSystemProperties());
+    }
+
+    OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider,
+                            final CanonicalDebugOptions debugOptions,
+                            final CanonicalGradientFallbackPolicy fallbackPolicy) {
         if (branchTransitionProvider == null) {
             throw new IllegalArgumentException("branchTransitionProvider must not be null");
+        }
+        if (debugOptions == null) {
+            throw new IllegalArgumentException("debugOptions must not be null");
+        }
+        if (fallbackPolicy == null) {
+            throw new IllegalArgumentException("fallbackPolicy must not be null");
         }
         this.branchTransitionProvider = branchTransitionProvider;
         this.processModel = branchTransitionProvider.getProcessModel();
         this.dimension = branchTransitionProvider.getStateDimension();
+        this.debugOptions = debugOptions;
+        this.fallbackPolicy = fallbackPolicy;
         this.transition = new CanonicalGaussianTransition(dimension);
         this.pairPosterior = new CanonicalGaussianState(2 * dimension);
         this.currentPosterior = new CanonicalGaussianState(dimension);
@@ -128,7 +141,7 @@ public final class OUCanonicalBranchWiring {
         if (hasFiniteBranchTransitionStatistics(statistics.getBranch())) {
             fillCanonicalTransition(statistics.getBranch());
         } else {
-            if (Boolean.getBoolean(NONFINITE_BRANCH_STATS_DEBUG_PROPERTY)) {
+            if (debugOptions.isNonFiniteBranchStatsEnabled()) {
                 System.err.println("nonfiniteBranchStatsFallback branchLength=" + branchLength);
             }
             fillCanonicalTransitionFromKernel(branchLength, optimum);
@@ -138,8 +151,7 @@ public final class OUCanonicalBranchWiring {
 
     private CanonicalBranchMessageContribution prepareCanonicalContributionFromCurrentTransition(
             final BranchSufficientStatistics statistics) {
-        final boolean disableExactTipShortcut = Boolean.getBoolean(DISABLE_EXACT_TIP_SHORTCUT_PROPERTY);
-        final int observedCount = disableExactTipShortcut
+        final int observedCount = fallbackPolicy.isExactTipShortcutDisabled()
                 ? 0
                 : classifyExactObservationPattern(statistics.getBelow());
         if (observedCount > 0) {

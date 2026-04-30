@@ -28,6 +28,8 @@
 package dr.evomodel.treedatalikelihood.continuous.integration;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTransitionCacheDiagnostics;
@@ -54,17 +56,13 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private static final String PHASE_BRANCH_LENGTH_GRADIENT = "branchLengthGradient";
     private static final double BRANCH_LENGTH_FD_RELATIVE_STEP = 1.0e-6;
     private static final double BRANCH_LENGTH_FD_ABSOLUTE_STEP = 1.0e-8;
-    private static final String BRANCH_GRADIENT_THREADS_PROPERTY =
-            "beast.experimental.canonicalBranchGradientThreads";
-    private static final String BRANCH_LENGTH_FD_FALLBACK_PROPERTY =
-            "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
-    private static final String ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY =
-            "beast.debug.canonicalAssertNoGradientCacheMisses";
 
     private final Tree tree;
     private final int dim;
     private final int nodeCount;
     private final int tipCount;
+    private final CanonicalDebugOptions debugOptions;
+    private final CanonicalGradientFallbackPolicy fallbackPolicy;
     private final CanonicalTreeStateStore stateStore;
     private final CanonicalTipProjector tipProjector;
     private final CanonicalTreeTraversal treeTraversal;
@@ -79,16 +77,36 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final CanonicalLegacyGradientCompatibility legacyGradientCompatibility;
 
     public SequentialCanonicalOUMessagePasser(final Tree tree, final int dim) {
-        this(tree, dim, resolveBranchGradientParallelism());
+        this(tree, dim, CanonicalGradientFallbackPolicy.branchGradientParallelismFromSystemProperties());
     }
 
     public SequentialCanonicalOUMessagePasser(final Tree tree,
                                               final int dim,
                                               final int branchGradientParallelism) {
+        this(tree,
+                dim,
+                branchGradientParallelism,
+                CanonicalDebugOptions.fromSystemProperties(),
+                CanonicalGradientFallbackPolicy.fromSystemProperties());
+    }
+
+    SequentialCanonicalOUMessagePasser(final Tree tree,
+                                       final int dim,
+                                       final int branchGradientParallelism,
+                                       final CanonicalDebugOptions debugOptions,
+                                       final CanonicalGradientFallbackPolicy fallbackPolicy) {
+        if (debugOptions == null) {
+            throw new IllegalArgumentException("debugOptions must not be null");
+        }
+        if (fallbackPolicy == null) {
+            throw new IllegalArgumentException("fallbackPolicy must not be null");
+        }
         this.tree = tree;
         this.dim = dim;
         this.nodeCount = tree.getNodeCount();
         this.tipCount = tree.getExternalNodeCount();
+        this.debugOptions = debugOptions;
+        this.fallbackPolicy = fallbackPolicy;
         this.stateStore = new CanonicalTreeStateStore(nodeCount, dim);
         this.tipProjector = new CanonicalTipProjector(dim);
         this.treeTraversal = new CanonicalTreeTraversal(tree, dim, tipProjector);
@@ -122,18 +140,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 stateStore,
                 mainWorkspace,
                 branchContributionAssembler);
-    }
-
-    private static int resolveBranchGradientParallelism() {
-        final String propertyValue = System.getProperty(BRANCH_GRADIENT_THREADS_PROPERTY);
-        if (propertyValue != null) {
-            try {
-                return Math.max(1, Integer.parseInt(propertyValue));
-            } catch (NumberFormatException ignored) {
-                // Fall back to the reproducible default below.
-            }
-        }
-        return 1;
     }
 
     @Override
@@ -212,7 +218,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
         try {
             final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
-            if (!Boolean.getBoolean(BRANCH_LENGTH_FD_FALLBACK_PROPERTY)) {
+            if (!fallbackPolicy.useBranchLengthFiniteDifference()) {
                 final long missesBefore =
                         transitionCacheMisses(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
                 branchAdjointPreparer.prepare(transitionProvider, stateStore, preparedBranchGradientInputs);
@@ -392,7 +398,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private void assertNoGradientTransitionMisses(final CanonicalBranchTransitionProvider transitionProvider,
                                                   final String phase,
                                                   final long missesBefore) {
-        if (!Boolean.getBoolean(ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY)) {
+        if (!debugOptions.isAssertNoGradientCacheMissesEnabled()) {
             return;
         }
         final long missesAfter = transitionCacheMisses(transitionProvider, phase);

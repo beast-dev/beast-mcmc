@@ -20,28 +20,14 @@ import java.util.Arrays;
  * canonical adjoint machinery for OU branch gradients.
  */
 public final class TimeSeriesOUCanonicalBranchGradientBridge {
-    private static final String DEBUG_NONORTH_OMEGA_PROPERTY = "beast.debug.nonorth.omega";
-    private static final String DEBUG_BRANCH_LOCAL_SELECTION_FD_PROPERTY = "beast.debug.branchLocalSelectionFD";
-    private static final String DEBUG_BRANCH_LOCAL_MEAN_FD_PROPERTY = "beast.debug.branchLocalMeanFD";
-    private static final String DEBUG_BRANCH_LOCAL_MEAN_FD_NODE_PROPERTY = "beast.debug.branchLocalMeanFD.node";
-    private static final String USE_NUMERIC_LOCAL_SELECTION_PROPERTY = "beast.experimental.localSelectionNumeric";
-    private static final String USE_FROZEN_LOG_FACTOR_NUMERIC_PROPERTY =
-            "beast.experimental.localSelectionNumeric.useFrozenLogFactor";
-    private static final String NO_TRANSPOSE_DOMEGA_PROPERTY = "beast.experimental.noTransposeDOmega";
-    private static final String USE_DENSE_PULLBACK_FOR_ORTHOGONAL_PROPERTY =
-            "beast.experimental.orthBlockUseDensePullback";
-    private static final String NATIVE_FROM_CONTRIBUTION_PROPERTY =
-            "beast.experimental.nativeFromContribution";
-    private static final String DEBUG_NATIVE_ASSEMBLY_PROPERTY =
-            "beast.debug.branchGradient.nativeAssembly";
-    private static final String DEBUG_NATIVE_ASSEMBLY_NODE_PROPERTY =
-            "beast.debug.branchGradient.nativeAssembly.node";
     private static final ThreadLocal<Integer> DEBUG_NODE_CONTEXT = new ThreadLocal<Integer>();
 
     private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
     private final int dimension;
     private final OUCanonicalBranchWiring branchWiring;
+    private final CanonicalDebugOptions debugOptions;
+    private final CanonicalGradientFallbackPolicy fallbackPolicy;
 
     private final CanonicalLocalTransitionAdjoints localAdjoints;
 
@@ -56,11 +42,28 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
 
     public TimeSeriesOUCanonicalBranchGradientBridge(
             final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
+        this(branchTransitionProvider,
+                CanonicalDebugOptions.fromSystemProperties(),
+                CanonicalGradientFallbackPolicy.fromSystemProperties());
+    }
+
+    TimeSeriesOUCanonicalBranchGradientBridge(
+            final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider,
+            final CanonicalDebugOptions debugOptions,
+            final CanonicalGradientFallbackPolicy fallbackPolicy) {
         if (branchTransitionProvider == null) {
             throw new IllegalArgumentException("branchTransitionProvider must not be null");
         }
+        if (debugOptions == null) {
+            throw new IllegalArgumentException("debugOptions must not be null");
+        }
+        if (fallbackPolicy == null) {
+            throw new IllegalArgumentException("fallbackPolicy must not be null");
+        }
         this.branchTransitionProvider = branchTransitionProvider;
-        this.branchWiring = new OUCanonicalBranchWiring(branchTransitionProvider);
+        this.debugOptions = debugOptions;
+        this.fallbackPolicy = fallbackPolicy;
+        this.branchWiring = new OUCanonicalBranchWiring(branchTransitionProvider, debugOptions, fallbackPolicy);
         this.processModel = branchWiring.getProcessModel();
         this.dimension = branchWiring.getDimension();
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(dimension);
@@ -203,7 +206,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             return numericalLocalSelectionGradientFromFrozenFactor(branchLength, optimum, statistics);
         }
         final double[][] components = computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
-        if (Boolean.getBoolean("beast.debug.selectionComponents")) {
+        if (debugOptions.isSelectionComponentsEnabled()) {
             System.err.println("selectionComponentsDebug branchLength=" + branchLength
                     + " transition=" + Arrays.toString(components[0])
                     + " covariance=" + Arrays.toString(components[1])
@@ -259,7 +262,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                 transitionAdjointScratch,
                 localAdjoints.dLogL_df,
                 transitionGradient);
-        if (Boolean.getBoolean(NO_TRANSPOSE_DOMEGA_PROPERTY)) {
+        if (fallbackPolicy.useNoTransposeDOmega()) {
             copyFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
         } else {
             transposeFromFlatInto(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, dimension);
@@ -271,7 +274,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         for (int i = 0; i < totalGradient.length; ++i) {
             totalGradient[i] = transitionGradient[i] + covarianceGradient[i];
         }
-        if (Boolean.getBoolean(DEBUG_BRANCH_LOCAL_SELECTION_FD_PROPERTY)) {
+        if (debugOptions.isBranchLocalSelectionFiniteDifferenceEnabled()) {
             emitDenseLocalSelectionDebug(branchLength, optimum, localAdjoints, totalGradient);
         }
         return new double[][]{transitionGradient, covarianceGradient, totalGradient};
@@ -297,7 +300,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
 
         if (!(processModel.getSelectionMatrixParameterization()
                 instanceof OrthogonalBlockCanonicalParameterization)) {
-            if (Boolean.getBoolean(DEBUG_NONORTH_OMEGA_PROPERTY)) {
+            if (debugOptions.isNonOrthogonalOmegaEnabled()) {
                 fillLocalAdjoints(statistics, localAdjoints);
                 System.err.println("NONORTH OMEGA branchLength=" + branchLength
                         + " dOmega=" + Arrays.toString(localAdjoints.dLogL_dOmega)
@@ -305,7 +308,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             }
             final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
             final double[] analytic = pullBackDenseGradientToBlock(requestedParameter, nativeBlockParameter, denseGradient);
-            if (Boolean.getBoolean(DEBUG_NONORTH_OMEGA_PROPERTY)) {
+            if (debugOptions.isNonOrthogonalOmegaEnabled()) {
                 fillLocalAdjoints(statistics, localAdjoints);
                 final double[] numeric = numericalLocalSelectionGradientGeneric(
                         branchLength,
@@ -319,7 +322,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             return analytic;
         }
 
-        if (Boolean.getBoolean(USE_DENSE_PULLBACK_FOR_ORTHOGONAL_PROPERTY)) {
+        if (fallbackPolicy.useDensePullbackForOrthogonal()) {
             final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
             return pullBackDenseGradientToBlock(requestedParameter, nativeBlockParameter, denseGradient);
         }
@@ -338,7 +341,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                                                                 final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
                                                                 final Parameter requestedParameter) {
         if (nativeBlockParameter != null) {
-            if (Boolean.getBoolean(USE_FROZEN_LOG_FACTOR_NUMERIC_PROPERTY)) {
+            if (fallbackPolicy.useNumericLocalSelectionFromFrozenLogFactor()) {
                 return numericalLocalSelectionGradientGenericFromFrozenFactor(
                         branchLength, optimum, statistics, requestedParameter);
             }
@@ -387,7 +390,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
         zero(compressedNativeGradient);
         zero(rotationGradient);
         final CanonicalLocalTransitionAdjoints adjointsForNative;
-        if (Boolean.getBoolean("beast.experimental.transposeNativeDF")) {
+        if (fallbackPolicy.transposeNativeDF()) {
             final CanonicalLocalTransitionAdjoints transposed = new CanonicalLocalTransitionAdjoints(dimension);
             copyAdjoints(localAdjoints, transposed, true, true);
             transposeFlatSquare(localAdjoints.dLogL_dF, transposed.dLogL_dF, dimension);
@@ -396,7 +399,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
             adjointsForNative = localAdjoints;
         }
         try {
-            if (Boolean.getBoolean(NATIVE_FROM_CONTRIBUTION_PROPERTY)) {
+            if (fallbackPolicy.useNativeGradientFromContribution()) {
                 orthogonalParameterization.accumulateNativeGradientFromCanonicalContribution(
                         processModel.getDiffusionMatrix(),
                         stationaryMean,
@@ -448,7 +451,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                 nativeGradient,
                 rotationGradient);
         final double[] direct = assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradient);
-        if (Boolean.getBoolean(DEBUG_BRANCH_LOCAL_SELECTION_FD_PROPERTY)) {
+        if (debugOptions.isBranchLocalSelectionFiniteDifferenceEnabled()) {
             final double[] numeric = numericalLocalSelectionGradientGeneric(
                     branchLength,
                     stationaryMean,
@@ -493,13 +496,13 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                                               final double[] compressedNative,
                                               final double[] nativeBlock,
                                               final double[][] rotation) {
-        if (!Boolean.getBoolean(DEBUG_NATIVE_ASSEMBLY_PROPERTY)) {
+        if (!debugOptions.isNativeAssemblyEnabled()) {
             return;
         }
-        final String nodeRaw = System.getProperty(DEBUG_NATIVE_ASSEMBLY_NODE_PROPERTY);
-        if (nodeRaw != null && !nodeRaw.trim().isEmpty()) {
+        final Integer requestedNode = debugOptions.getNativeAssemblyNode();
+        if (requestedNode != null) {
             final Integer contextNode = DEBUG_NODE_CONTEXT.get();
-            if (contextNode == null || contextNode != Integer.parseInt(nodeRaw.trim())) {
+            if (contextNode == null || !contextNode.equals(requestedNode)) {
                 return;
             }
         }
@@ -835,7 +838,7 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     }
 
     private boolean useNumericLocalSelectionGradient() {
-        return false;
+        return fallbackPolicy.useNumericLocalSelectionGradient();
     }
 
     private void emitDenseLocalSelectionDebug(final double branchLength,
@@ -864,12 +867,11 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
                                            final BranchSufficientStatistics statistics,
                                            final int nodeNumber,
                                            final double[] analytic) {
-        if (!Boolean.getBoolean(DEBUG_BRANCH_LOCAL_MEAN_FD_PROPERTY)) {
+        if (!debugOptions.isBranchLocalMeanFiniteDifferenceEnabled()) {
             return;
         }
-        final String nodeFilterRaw = System.getProperty(DEBUG_BRANCH_LOCAL_MEAN_FD_NODE_PROPERTY);
-        if (nodeFilterRaw != null && !nodeFilterRaw.trim().isEmpty()) {
-            final int requestedNode = Integer.parseInt(nodeFilterRaw.trim());
+        final Integer requestedNode = debugOptions.getBranchLocalMeanFiniteDifferenceNode();
+        if (requestedNode != null) {
             if (nodeNumber != requestedNode) {
                 return;
             }

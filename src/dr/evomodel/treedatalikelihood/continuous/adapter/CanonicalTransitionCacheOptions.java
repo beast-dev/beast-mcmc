@@ -1,10 +1,8 @@
 package dr.evomodel.treedatalikelihood.continuous.adapter;
 
-final class CanonicalTransitionCacheOptions {
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 
-    private static final String DEBUG_CACHE_PROPERTY = "beast.debug.canonicalTransitionCache";
-    private static final String ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY =
-            "beast.debug.canonicalAssertNoGradientCacheMisses";
+final class CanonicalTransitionCacheOptions {
 
     private final boolean diagnosticsEnabled;
 
@@ -13,9 +11,10 @@ final class CanonicalTransitionCacheOptions {
     }
 
     static CanonicalTransitionCacheOptions fromSystemProperties() {
+        final CanonicalDebugOptions debugOptions = CanonicalDebugOptions.fromSystemProperties();
         return new CanonicalTransitionCacheOptions(
-                Boolean.getBoolean(DEBUG_CACHE_PROPERTY)
-                        || Boolean.getBoolean(ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY));
+                debugOptions.isTransitionCacheDiagnosticsEnabled()
+                        || debugOptions.isAssertNoGradientCacheMissesEnabled());
     }
 
     boolean isDiagnosticsEnabled() {

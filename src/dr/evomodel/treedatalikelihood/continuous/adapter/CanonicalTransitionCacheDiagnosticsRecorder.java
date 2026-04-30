@@ -168,6 +168,13 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
                 + "/" + otherMisses.get());
     }
 
+    long phaseMisses(final String currentPhase) {
+        if (!enabled) {
+            return 0L;
+        }
+        return phaseMissCounter(currentPhase).get();
+    }
+
     private AtomicLong phaseRequestCounter(final String currentPhase) {
         if ("postorder".equals(currentPhase)) {
             return postOrderRequests;

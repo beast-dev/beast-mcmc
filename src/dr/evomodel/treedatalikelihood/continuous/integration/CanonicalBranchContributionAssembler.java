@@ -33,50 +33,55 @@ final class CanonicalBranchContributionAssembler {
     boolean fillLocalAdjointsForBranch(final int childIndex,
                                        final CanonicalBranchTransitionProvider transitionProvider,
                                        final BranchGradientWorkspace workspace) {
-        transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
         if (stateStore.hasFixedRootValue && tree.isRoot(tree.getParent(tree.getNode(childIndex)))) {
+            final CanonicalGaussianTransition transition;
             if (tree.isExternal(tree.getNode(childIndex))) {
                 final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
                 if (tipObservation.observedCount == 0) {
                     return false;
                 }
+                transition = transitionFor(childIndex, transitionProvider, workspace);
                 final int observedCount = collectObservationPartition(tipObservation, workspace);
                 if (observedCount == dim) {
-                    fillContributionForFixedParentObservedTip(workspace.transition, tipObservation, workspace);
+                    fillContributionForFixedParentObservedTip(transition, tipObservation, workspace);
                 } else {
                     fillContributionForFixedParentPartiallyObservedTip(
-                            workspace.transition, tipObservation, observedCount, workspace);
+                            transition, tipObservation, observedCount, workspace);
                 }
             } else {
+                transition = transitionFor(childIndex, transitionProvider, workspace);
                 fillContributionForFixedParentInternalNode(
-                        workspace.transition, stateStore.postOrder[childIndex], workspace);
+                        transition, stateStore.postOrder[childIndex], workspace);
             }
 
-            fillAdjointsFromContribution(workspace);
+            fillAdjointsFromContribution(transition, workspace);
             return true;
         }
 
+        final CanonicalGaussianTransition transition;
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
             if (tipObservation.observedCount == 0) {
                 return false;
             }
+            transition = transitionFor(childIndex, transitionProvider, workspace);
             final int observedCount = collectObservationPartition(tipObservation, workspace);
             if (observedCount == dim) {
                 fillContributionForObservedTip(
-                        stateStore.branchAboveParent[childIndex], workspace.transition, tipObservation, workspace);
+                        stateStore.branchAboveParent[childIndex], transition, tipObservation, workspace);
             } else {
                 fillContributionForPartiallyObservedTip(
                         stateStore.branchAboveParent[childIndex],
-                        workspace.transition,
+                        transition,
                         tipObservation,
                         observedCount,
                         workspace);
             }
         } else {
+            transition = transitionFor(childIndex, transitionProvider, workspace);
             CanonicalGaussianMessageOps.buildPairPosterior(
                     stateStore.branchAboveParent[childIndex],
-                    workspace.transition,
+                    transition,
                     stateStore.postOrder[childIndex],
                     workspace.pairState);
             CanonicalBranchMessageContributionUtils.fillFromPairState(
@@ -85,16 +90,29 @@ final class CanonicalBranchContributionAssembler {
                     workspace.contribution);
         }
 
-        fillAdjointsFromContribution(workspace);
+        fillAdjointsFromContribution(transition, workspace);
         return true;
     }
 
-    private void fillAdjointsFromContribution(final BranchGradientWorkspace workspace) {
+    private void fillAdjointsFromContribution(final CanonicalGaussianTransition transition,
+                                              final BranchGradientWorkspace workspace) {
         CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                workspace.transition,
+                transition,
                 workspace.contribution,
                 workspace.transitionAdjointWorkspace,
                 workspace.adjoints);
+    }
+
+    private CanonicalGaussianTransition transitionFor(final int childIndex,
+                                                      final CanonicalBranchTransitionProvider transitionProvider,
+                                                      final BranchGradientWorkspace workspace) {
+        final CanonicalGaussianTransition transitionView =
+                transitionProvider.getCanonicalTransitionView(childIndex);
+        if (transitionView != null) {
+            return transitionView;
+        }
+        transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
+        return workspace.transition;
     }
 
     private int collectObservationPartition(final CanonicalTipObservation tipObservation,

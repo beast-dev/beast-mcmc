@@ -43,6 +43,14 @@ public interface CanonicalBranchTransitionProvider {
 
     void fillCanonicalTransition(int childNodeIndex, CanonicalGaussianTransition out);
 
+    /**
+     * Returns a provider-owned transition for read-only use, or {@code null}
+     * when the provider cannot expose one safely.
+     */
+    default CanonicalGaussianTransition getCanonicalTransitionView(int childNodeIndex) {
+        return null;
+    }
+
     double getEffectiveBranchLength(int childNodeIndex);
 
     void fillTraitCovariance(double[][] out);

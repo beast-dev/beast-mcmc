@@ -82,6 +82,10 @@ final class CanonicalTransitionCache {
         out.copyFrom(ensureTransition(childNodeIndex));
     }
 
+    CanonicalGaussianTransition getTransitionView(final int childNodeIndex) {
+        return ensureTransition(childNodeIndex);
+    }
+
     OrthogonalBlockPreparedBranchBasis
     getOrthogonalPreparedBranchBasis(final int childNodeIndex) {
         final CanonicalPreparedBranchHandle handle = getPreparedBranchHandle(childNodeIndex);
@@ -135,6 +139,10 @@ final class CanonicalTransitionCache {
 
     void report(final String label) {
         diagnostics.report(label);
+    }
+
+    long getMissCount(final String phase) {
+        return diagnostics.phaseMisses(phase);
     }
 
     private CanonicalGaussianTransition ensureTransition(final int childNodeIndex) {

@@ -37,4 +37,8 @@ public interface CanonicalTransitionCacheDiagnostics {
     void popDiagnosticPhase(String previousPhase);
 
     void reportTransitionCacheDiagnostics(String label);
+
+    default long getTransitionCacheMissCount(String phase) {
+        return 0L;
+    }
 }

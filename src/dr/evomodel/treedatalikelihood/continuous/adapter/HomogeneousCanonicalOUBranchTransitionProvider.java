@@ -154,6 +154,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     @Override
+    public CanonicalGaussianTransition getCanonicalTransitionView(final int childNodeIndex) {
+        ensureCurrentSnapshot();
+        return transitionCache.getTransitionView(childNodeIndex);
+    }
+
+    @Override
     public void fillCanonicalTransitionForLength(final double branchLength,
                                                  final CanonicalGaussianTransition out) {
         ensureCurrentSnapshot();
@@ -346,5 +352,10 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     public void reportTransitionCacheDiagnostics(final String label) {
         transitionCache.report(label);
+    }
+
+    @Override
+    public long getTransitionCacheMissCount(final String phase) {
+        return transitionCache.getMissCount(phase);
     }
 }

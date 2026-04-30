@@ -133,9 +133,10 @@ final class CanonicalTreeTraversal {
             final int childIndex = tree.getChild(tree.getNode(parentIndex), c).getNumber();
             if (stateStore.hasFixedRootValue && parentIndex == rootIndex) {
                 CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[childIndex]);
-                transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
+                final CanonicalGaussianTransition transition =
+                        transitionFor(childIndex, transitionProvider, workspace);
                 CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
-                        workspace.transition,
+                        transition,
                         stateStore.fixedRootValue,
                         stateStore.preOrder[childIndex]);
                 computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
@@ -159,10 +160,11 @@ final class CanonicalTreeTraversal {
             CanonicalGaussianMessageOps.copyState(
                     workspace.downwardParentState,
                     stateStore.branchAboveParent[childIndex]);
-            transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
+            final CanonicalGaussianTransition transition =
+                    transitionFor(childIndex, transitionProvider, workspace);
             CanonicalGaussianMessageOps.pushForward(
                     workspace.downwardParentState,
-                    workspace.transition,
+                    transition,
                     workspace.gaussianWorkspace,
                     stateStore.preOrder[childIndex]);
             computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
@@ -208,8 +210,9 @@ final class CanonicalTreeTraversal {
                 return;
             }
         }
-        transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
-        buildUpwardParentMessageForTransition(childIndex, workspace.transition, stateStore, out, workspace);
+        final CanonicalGaussianTransition transition =
+                transitionFor(childIndex, transitionProvider, workspace);
+        buildUpwardParentMessageForTransition(childIndex, transition, stateStore, out, workspace);
     }
 
     private void buildUpwardParentMessageForTransition(
@@ -252,10 +255,23 @@ final class CanonicalTreeTraversal {
                             + "CanonicalTransitionMomentProvider.");
         }
 
+        transitionProvider.getCanonicalTransitionView(childIndex);
         tipProjector.projectObservedChildToParent(
                 tipObservation,
                 (CanonicalTransitionMomentProvider) transitionProvider,
                 transitionProvider.getEffectiveBranchLength(childIndex),
                 out);
+    }
+
+    private CanonicalGaussianTransition transitionFor(final int childIndex,
+                                                      final CanonicalBranchTransitionProvider transitionProvider,
+                                                      final BranchGradientWorkspace workspace) {
+        final CanonicalGaussianTransition transitionView =
+                transitionProvider.getCanonicalTransitionView(childIndex);
+        if (transitionView != null) {
+            return transitionView;
+        }
+        transitionProvider.fillCanonicalTransition(childIndex, workspace.transition);
+        return workspace.transition;
     }
 }

@@ -58,6 +58,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             "beast.experimental.canonicalBranchGradientThreads";
     private static final String BRANCH_LENGTH_FD_FALLBACK_PROPERTY =
             "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
+    private static final String ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY =
+            "beast.debug.canonicalAssertNoGradientCacheMisses";
 
     private final Tree tree;
     private final int dim;
@@ -211,7 +213,11 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         try {
             final CanonicalOUTransitionProvider ouProvider = requireOUProvider(transitionProvider);
             if (!Boolean.getBoolean(BRANCH_LENGTH_FD_FALLBACK_PROPERTY)) {
+                final long missesBefore =
+                        transitionCacheMisses(transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT);
                 branchAdjointPreparer.prepare(transitionProvider, stateStore, preparedBranchGradientInputs);
+                assertNoGradientTransitionMisses(
+                        transitionProvider, PHASE_BRANCH_LENGTH_GRADIENT, missesBefore);
                 branchLengthGradientEngine.compute(
                         ouProvider.getProcessModel(),
                         preparedBranchGradientInputs,
@@ -278,7 +284,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         final String previousPhase = pushTransitionCachePhase(transitionProvider, PHASE_GRADIENT_PREP);
         try {
             ensureGradientState();
+            final long missesBefore = transitionCacheMisses(transitionProvider, PHASE_GRADIENT_PREP);
             branchAdjointPreparer.prepare(transitionProvider, stateStore, out);
+            assertNoGradientTransitionMisses(transitionProvider, PHASE_GRADIENT_PREP, missesBefore);
         } finally {
             popTransitionCachePhase(transitionProvider, previousPhase);
         }
@@ -369,6 +377,29 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                          final String previousPhase) {
         if (transitionProvider instanceof CanonicalTransitionCacheDiagnostics) {
             ((CanonicalTransitionCacheDiagnostics) transitionProvider).popDiagnosticPhase(previousPhase);
+        }
+    }
+
+    private long transitionCacheMisses(final CanonicalBranchTransitionProvider transitionProvider,
+                                       final String phase) {
+        if (transitionProvider instanceof CanonicalTransitionCacheDiagnostics) {
+            return ((CanonicalTransitionCacheDiagnostics) transitionProvider)
+                    .getTransitionCacheMissCount(phase);
+        }
+        return 0L;
+    }
+
+    private void assertNoGradientTransitionMisses(final CanonicalBranchTransitionProvider transitionProvider,
+                                                  final String phase,
+                                                  final long missesBefore) {
+        if (!Boolean.getBoolean(ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY)) {
+            return;
+        }
+        final long missesAfter = transitionCacheMisses(transitionProvider, phase);
+        if (missesAfter != missesBefore) {
+            throw new IllegalStateException(
+                    "Canonical transition cache rebuilt " + (missesAfter - missesBefore)
+                            + " branch transitions during " + phase + ".");
         }
     }
 

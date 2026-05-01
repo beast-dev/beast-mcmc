@@ -10,7 +10,7 @@ import java.util.Arrays;
  * No {@code double[][]} appears in any method signature.
  *
  * <p>This class supersedes
- * {@link dr.evomodel.treedatalikelihood.continuous.canonical.MatrixUtils} and the
+ * {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixUtils} and the
  * flat-array portion of
  * {@link dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps}.
  * Those classes retain their implementations for backward compatibility but should not

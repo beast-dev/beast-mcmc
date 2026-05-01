@@ -27,6 +27,13 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.contribution.CanonicalBranchContributionAssembler;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.*;
+
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
+
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
+
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;

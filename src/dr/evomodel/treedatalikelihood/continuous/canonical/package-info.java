@@ -13,8 +13,18 @@
  *       root mean, or branch length targets.</li>
  * </ol>
  *
- * <p>Traversal code should stay separate from gradient target code. Shared
- * provider checks, diagnostic phase names, and fallback policy belong in small
- * helpers so the message passer remains orchestration.</p>
+ * <p>The root package intentionally holds the public facade, transition/root
+ * provider contracts, cache diagnostics, and orchestration. Implementation
+ * details live in narrower subpackages:</p>
+ *
+ * <ul>
+ *   <li>{@code traversal}: post-order/pre-order tree walks and tree state.</li>
+ *   <li>{@code contribution}: branch-local canonical contribution assembly.</li>
+ *   <li>{@code gradient}: frozen branch adjoints and target pullbacks.</li>
+ *   <li>{@code workspace}: reusable buffers and workspace factories.</li>
+ *   <li>{@code scheduling}: parallel chunk sizing policies.</li>
+ *   <li>{@code message}, {@code math}, and {@code adapter}: canonical Gaussian
+ *       algebra, matrix conversion, and model/integrator adapters.</li>
+ * </ul>
  */
 package dr.evomodel.treedatalikelihood.continuous.canonical;

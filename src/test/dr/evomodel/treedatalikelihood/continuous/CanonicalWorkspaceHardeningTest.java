@@ -11,7 +11,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testTransitionMatrixCacheInvalidatesAcrossPasses() throws Exception {
         final Class<?> workspaceClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.GradientPullbackWorkspace");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.GradientPullbackWorkspace");
         final Object workspace = newInstance(workspaceClass, int.class, 2);
         final Method hasTransitionMatrix =
                 method(workspaceClass, "hasTransitionMatrix", double.class);
@@ -38,7 +38,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryRejectsInvalidDimension() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class);
         try {
             factory.invoke(null, 0);
@@ -51,7 +51,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
     public void testWorkspaceFactoryConstructsValidatedWorkspace() throws Exception {
         final int[] dimensions = {1, 2, 3, 8, 16};
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class);
         for (int dim : dimensions) {
             final Object workspace = factory.invoke(null, dim);
@@ -68,9 +68,9 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryAllocatesOnlyRequestedCapabilities() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
         final Class<?> capabilityClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceCapability");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceCapability");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class, EnumSet.class);
 
         final Object traversalOnly = factory.invoke(
@@ -103,9 +103,9 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryRejectsUnsupportedCapabilityCombinations() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
         final Class<?> capabilityClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.WorkspaceCapability");
+                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceCapability");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class, EnumSet.class);
 
         assertIllegalArgument(factory, capabilitySet(capabilityClass, "PARTIAL_OBSERVATION"));

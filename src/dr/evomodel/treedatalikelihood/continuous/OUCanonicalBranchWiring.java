@@ -9,7 +9,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTran
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
@@ -381,7 +381,7 @@ public final class OUCanonicalBranchWiring {
         }
         currentPosterior.logNormalizer = 0.0;
 
-        CanonicalGaussianUtils.fillMomentsFromCanonical(currentPosterior, currentMeanScratch, currentCovarianceScratch);
+        GaussianFormConverter.fillMomentsFromState(currentPosterior, currentMeanScratch, currentCovarianceScratch);
 
         OUCanonicalBranchContributionBuilder.fillObservedTipContribution(
                 dimension,

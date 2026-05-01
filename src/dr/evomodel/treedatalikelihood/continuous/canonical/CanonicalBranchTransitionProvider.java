@@ -53,7 +53,7 @@ public interface CanonicalBranchTransitionProvider {
 
     double getEffectiveBranchLength(int childNodeIndex);
 
-    void fillTraitCovariance(double[][] out);
+    void fillTraitCovarianceFlat(double[] out);
 
     default void storeState() { }
 

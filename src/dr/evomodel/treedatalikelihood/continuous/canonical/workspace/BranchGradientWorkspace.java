@@ -20,7 +20,7 @@ public final class BranchGradientWorkspace {
     public final BranchAdjointWorkspace adjoint;
     public final GradientPullbackWorkspace gradient;
 
-    public final double[][] traitCovariance;
+    public final double[] traitCovariance;
     public final CanonicalGaussianTransition transition;
     public final CanonicalGaussianState state;
     public final CanonicalGaussianState siblingProduct;
@@ -130,7 +130,7 @@ public final class BranchGradientWorkspace {
 
     public void validate(final int dim) {
         if (hasCapability(WorkspaceCapability.TRAVERSAL)) {
-            requireLength(traitCovariance, dim, dim, "traitCovariance");
+            requireLength(traitCovariance, dim * dim, "traitCovariance");
         }
         if (hasCapability(WorkspaceCapability.ADJOINTS)) {
             requireLength(covariance, dim * dim, "covariance");
@@ -169,20 +169,6 @@ public final class BranchGradientWorkspace {
     private static void requireLength(final int[] array, final int expected, final String name) {
         if (array == null || array.length < expected) {
             throw new IllegalStateException(name + " length must be at least " + expected);
-        }
-    }
-
-    private static void requireLength(final double[][] matrix,
-                                      final int rows,
-                                      final int cols,
-                                      final String name) {
-        if (matrix == null || matrix.length < rows) {
-            throw new IllegalStateException(name + " row count must be at least " + rows);
-        }
-        for (int i = 0; i < rows; ++i) {
-            if (matrix[i] == null || matrix[i].length < cols) {
-                throw new IllegalStateException(name + " column count must be at least " + cols);
-            }
         }
     }
 

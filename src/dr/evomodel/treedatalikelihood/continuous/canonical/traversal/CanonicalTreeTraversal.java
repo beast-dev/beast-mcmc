@@ -72,7 +72,7 @@ public final class CanonicalTreeTraversal {
         }
 
         final int rootIndex = tree.getRoot().getNumber();
-        transitionProvider.fillTraitCovariance(workspace.traitCovariance);
+        transitionProvider.fillTraitCovarianceFlat(workspace.traitCovariance);
         stateStore.hasPostOrderState = true;
         return rootPrior.computeLogMarginalLikelihood(
                 stateStore.postOrder[rootIndex],
@@ -84,7 +84,7 @@ public final class CanonicalTreeTraversal {
                          final CanonicalTreeStateStore stateStore,
                          final BranchGradientWorkspace workspace) {
         final int rootIndex = tree.getRoot().getNumber();
-        transitionProvider.fillTraitCovariance(workspace.traitCovariance);
+        transitionProvider.fillTraitCovarianceFlat(workspace.traitCovariance);
         CanonicalGaussianMessageOps.clearState(stateStore.preOrder[rootIndex]);
         stateStore.hasFixedRootValue = rootPrior.isFixedRoot();
         if (stateStore.hasFixedRootValue) {

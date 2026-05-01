@@ -44,6 +44,17 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
     }
 
     @Override
+    public void fillSelectionMatrixFlat(final double[] out) {
+        checkFlatSquare(out, "selection matrix");
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[rowOffset + j] = matrixParameter.getParameterValue(i, j);
+            }
+        }
+    }
+
+    @Override
     public void fillTransitionMatrix(final double dt, final double[][] out) {
         final Workspace workspace = workspace();
         fillScaledNegativeSelectionMatrix(dt, workspace.minusAdt);

@@ -29,7 +29,7 @@ final class OrthogonalBlockBasisCache {
     private final double[] cachedRData;
     private final double[] cachedRtData;
     private final double[] cachedBlockDParams;
-    private final double[][] workMatrix;
+    private final double[] workMatrix;
     private boolean expCacheValid;
     private boolean basisCacheValid;
     private double cachedExpDt;
@@ -59,7 +59,7 @@ final class OrthogonalBlockBasisCache {
         this.rMatrix = new DenseMatrix64F(d, d);
         this.rtMatrix = new DenseMatrix64F(d, d);
         this.transitionMatrix = new DenseMatrix64F(d, d);
-        this.workMatrix = new double[d][d];
+        this.workMatrix = new double[d * d];
         this.expCacheValid = false;
         this.basisCacheValid = false;
         this.cachedExpDt = Double.NaN;

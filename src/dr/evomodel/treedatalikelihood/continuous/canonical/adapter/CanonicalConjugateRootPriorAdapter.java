@@ -32,7 +32,6 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Canonical-form adapter over {@link ConjugateRootTraitPrior}.
@@ -49,7 +48,6 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
     private final int dim;
 
     private final double[] scratchMean;
-    private final double[][] scratchCovariance;
     private final double[] scratchCovarianceFlat;
     private final CanonicalGaussianState scratchPriorState;
     private final CanonicalGaussianState scratchCombinedState;
@@ -60,7 +58,6 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
         this.prior = prior;
         this.dim = dim;
         this.scratchMean = new double[dim];
-        this.scratchCovariance = new double[dim][dim];
         this.scratchCovarianceFlat = new double[dim * dim];
         this.scratchPriorState = new CanonicalGaussianState(dim);
         this.scratchCombinedState = new CanonicalGaussianState(dim);
@@ -75,7 +72,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
     }
 
     @Override
-    public void fillRootPriorState(final double[][] traitCovariance, final CanonicalGaussianState out) {
+    public void fillRootPriorState(final double[] traitCovariance, final CanonicalGaussianState out) {
         final double kappa0 = prior.getPseudoObservations();
         if (!(kappa0 > 0.0) || Double.isInfinite(kappa0)) {
             throw new UnsupportedOperationException(
@@ -83,15 +80,14 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
         }
 
         final double[] mean = prior.getMean();
-        final double[][] scaledCovariance = scratchCovariance;
         final double invKappa0 = 1.0 / kappa0;
+        final int matrixSize = dim * dim;
+        for (int k = 0; k < matrixSize; k++) {
+            scratchCovarianceFlat[k] = traitCovariance[k] * invKappa0;
+        }
         for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                scaledCovariance[i][j] = traitCovariance[i][j] * invKappa0;
-            }
             scratchMean[i] = mean[i];
         }
-        MatrixOps.toFlat(scaledCovariance, scratchCovarianceFlat, dim);
         GaussianFormConverter.fillStateFromMoments(
                 scratchMean,
                 scratchCovarianceFlat,
@@ -102,7 +98,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
 
     @Override
     public double computeLogMarginalLikelihood(final CanonicalGaussianState rootMessage,
-                                               final double[][] traitCovariance) {
+                                               final double[] traitCovariance) {
         if (isFixedRoot()) {
             final double[] mean = prior.getMean();
             double quadratic = 0.0;
@@ -134,7 +130,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
 
     @Override
     public void accumulateRootMeanGradient(final CanonicalGaussianState rootMessage,
-                                           final double[][] traitCovariance,
+                                           final double[] traitCovariance,
                                            final double[] gradOut) {
         if (isFixedRoot()) {
             final double[] mean = prior.getMean();
@@ -156,7 +152,6 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
                 scratchCovarianceFlat,
                 dim,
                 converterWorkspace);
-        MatrixOps.fromFlat(scratchCovarianceFlat, scratchCovariance, dim);
 
         final double[] mean = prior.getMean();
         for (int i = 0; i < dim; i++) {

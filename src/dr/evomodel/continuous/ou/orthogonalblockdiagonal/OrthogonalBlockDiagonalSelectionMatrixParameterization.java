@@ -111,6 +111,14 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         transitionFactory.fillTransitionCovariance(diffusionMatrix, basisCache, out);
     }
 
+    @Override
+    public void fillTransitionCovarianceFlat(final MatrixParameterInterface diffusionMatrix,
+                                             final double dt,
+                                             final double[] out) {
+        refreshBasisCaches(dt);
+        transitionFactory.fillTransitionCovarianceFlat(diffusionMatrix, basisCache, out);
+    }
+
     public void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,
                                         final double[] stationaryMean,
                                         final double dt,

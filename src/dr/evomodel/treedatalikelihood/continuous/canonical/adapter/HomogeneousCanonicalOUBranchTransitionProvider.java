@@ -160,12 +160,6 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     @Override
-    public void fillTransitionMatrix(final double branchLength, final double[][] out) {
-        ensureCurrentSnapshot();
-        processModel.fillTransitionMatrix(branchLength, out);
-    }
-
-    @Override
     public void fillTransitionMatrixFlat(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
         processModel.fillTransitionMatrixFlat(branchLength, out);
@@ -175,12 +169,6 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public void fillTransitionOffset(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
         processModel.fillTransitionOffset(branchLength, out);
-    }
-
-    @Override
-    public void fillTransitionCovariance(final double branchLength, final double[][] out) {
-        ensureCurrentSnapshot();
-        processModel.fillTransitionCovariance(branchLength, out);
     }
 
     @Override
@@ -219,9 +207,9 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     }
 
     @Override
-    public void fillTraitCovariance(final double[][] out) {
+    public void fillTraitCovarianceFlat(final double[] out) {
         ensureCurrentSnapshot();
-        diffusionSnapshot.fillCovariance(out);
+        diffusionSnapshot.fillCovarianceFlat(out);
     }
 
     public OUProcessModel getProcessModel() {

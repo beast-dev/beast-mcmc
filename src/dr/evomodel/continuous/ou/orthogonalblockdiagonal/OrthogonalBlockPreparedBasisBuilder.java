@@ -43,7 +43,7 @@ final class OrthogonalBlockPreparedBasisBuilder {
                                      final double[] expDData,
                                      final double[] rtData,
                                      final int dimension,
-                                     final double[][] workMatrix,
+                                     final double[] workMatrix,
                                      final double[] transitionData) {
         multiplyRowMajor(rData, expDData, dimension, workMatrix);
         multiply(workMatrix, rtData, dimension, transitionData);
@@ -52,29 +52,31 @@ final class OrthogonalBlockPreparedBasisBuilder {
     private static void multiplyRowMajor(final double[] leftRowMajor,
                                          final double[] rightRowMajor,
                                          final int dimension,
-                                         final double[][] out) {
+                                         final double[] out) {
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dimension; ++k) {
                     sum += leftRowMajor[i * dimension + k] * rightRowMajor[k * dimension + j];
                 }
-                out[i][j] = sum;
+                out[rowOffset + j] = sum;
             }
         }
     }
 
-    private static void multiply(final double[][] left,
+    private static void multiply(final double[] left,
                                  final double[] rightRowMajor,
                                  final int dimension,
                                  final double[] outData) {
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dimension; ++k) {
-                    sum += left[i][k] * rightRowMajor[k * dimension + j];
+                    sum += left[rowOffset + k] * rightRowMajor[k * dimension + j];
                 }
-                outData[i * dimension + j] = sum;
+                outData[rowOffset + j] = sum;
             }
         }
     }

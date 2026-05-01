@@ -7,7 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservation
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipParentMessageWorkspace;
 
 public final class TraversalWorkspace {
-    public final double[][] traitCovariance;
+    public final double[] traitCovariance;
     public final CanonicalGaussianTransition transition;
     public final CanonicalGaussianState state;
     public final CanonicalGaussianState siblingProduct;
@@ -24,7 +24,7 @@ public final class TraversalWorkspace {
     public final TipObservationModelWorkspace observationWorkspace;
 
     public TraversalWorkspace(final int dim) {
-        this.traitCovariance           = new double[dim][dim];
+        this.traitCovariance           = new double[dim * dim];
         this.transition                = new CanonicalGaussianTransition(dim);
         this.state                     = new CanonicalGaussianState(dim);
         this.siblingProduct            = new CanonicalGaussianState(dim);

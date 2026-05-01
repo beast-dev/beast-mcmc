@@ -40,9 +40,9 @@ public interface CanonicalRootPrior {
 
     int getDimension();
 
-    void fillRootPriorState(double[][] traitCovariance, CanonicalGaussianState out);
+    void fillRootPriorState(double[] traitCovariance, CanonicalGaussianState out);
 
-    double computeLogMarginalLikelihood(CanonicalGaussianState rootMessage, double[][] traitCovariance);
+    double computeLogMarginalLikelihood(CanonicalGaussianState rootMessage, double[] traitCovariance);
 
     default boolean isFixedRoot() {
         return false;
@@ -53,7 +53,7 @@ public interface CanonicalRootPrior {
     }
 
     default void accumulateRootMeanGradient(CanonicalGaussianState rootMessage,
-                                           double[][] traitCovariance,
+                                           double[] traitCovariance,
                                            double[] gradOut) {
     }
 

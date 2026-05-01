@@ -18,7 +18,7 @@ public final class OrthogonalBlockPreparedBranchBasis {
     final DenseMatrix64F stationaryCovDBasis;
     final DenseMatrix64F transitionCovDBasis;
     final DenseMatrix64F transitionCovariance;
-    final double[][] workMatrix;
+    final double[] workMatrix;
     boolean covariancePrepared;
 
     OrthogonalBlockPreparedBranchBasis(final int dimension,
@@ -35,7 +35,7 @@ public final class OrthogonalBlockPreparedBranchBasis {
         this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);
         this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
         this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
-        this.workMatrix = new double[dimension][dimension];
+        this.workMatrix = new double[dimension * dimension];
         this.covariancePrepared = false;
     }
 

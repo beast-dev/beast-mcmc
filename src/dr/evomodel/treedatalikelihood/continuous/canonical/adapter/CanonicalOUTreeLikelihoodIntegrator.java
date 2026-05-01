@@ -60,7 +60,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private final CanonicalTreeMessagePasser passer;
     private final CanonicalBranchTransitionProvider transitionProvider;
     private final CanonicalRootPrior rootPrior;
-    private final double[][] scratchTraitCovariance;
+    private final double[] scratchTraitCovariance;
     private final int rootIndex;
     private final double[] cachedGradientA;
     private final double[] cachedGradientQ;
@@ -145,7 +145,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 tree, elasticModel, diffusionModel, stationaryMean, rateModel, rateTransformation);
         this.rootPrior = new CanonicalConjugateRootPriorAdapter(conjugatePrior, dim);
         this.passer = new SequentialCanonicalOUMessagePasser(tree, dim);
-        this.scratchTraitCovariance = new double[dim][dim];
+        this.scratchTraitCovariance = new double[dim * dim];
         this.rootIndex = tree.getRoot().getNumber();
         final int selectionGradientDimension = inferSelectionGradientDimension(this.transitionProvider, this.passer);
         this.cachedGradientA = new double[selectionGradientDimension];
@@ -180,7 +180,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.passer = passer;
         this.transitionProvider = transitionProvider;
         this.rootPrior = rootPrior;
-        this.scratchTraitCovariance = new double[passer.getDimension()][passer.getDimension()];
+        this.scratchTraitCovariance = new double[passer.getDimension() * passer.getDimension()];
         this.rootIndex = -1;
         final int selectionGradientDimension = inferSelectionGradientDimension(this.transitionProvider, this.passer);
         this.cachedGradientA = new double[selectionGradientDimension];
@@ -244,7 +244,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
             passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
             modelDirty = false;
         }
-        transitionProvider.fillTraitCovariance(scratchTraitCovariance);
+        transitionProvider.fillTraitCovarianceFlat(scratchTraitCovariance);
         rootPrior.accumulateRootMeanGradient(
                 passer.getPostOrderState(rootIndex),
                 scratchTraitCovariance,

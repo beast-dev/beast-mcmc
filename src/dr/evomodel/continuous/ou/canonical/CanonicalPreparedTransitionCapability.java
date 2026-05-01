@@ -9,9 +9,9 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public interface CanonicalPreparedTransitionCapability {
 
-    void fillTransitionCovariance(MatrixParameterInterface diffusionMatrix,
-                                  double dt,
-                                  double[][] out);
+    void fillTransitionCovarianceFlat(MatrixParameterInterface diffusionMatrix,
+                                      double dt,
+                                      double[] out);
 
     void fillCanonicalTransition(MatrixParameterInterface diffusionMatrix,
                                  double[] stationaryMean,

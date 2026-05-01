@@ -55,11 +55,7 @@ final class CanonicalOUDiffusionSnapshot {
         covarianceParameter.fireParameterChangedEvent();
     }
 
-    void fillCovariance(final double[][] out) {
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                out[i][j] = covarianceParameter.getParameterValue(i, j);
-            }
-        }
+    void fillCovarianceFlat(final double[] out) {
+        System.arraycopy(covariance.data, 0, out, 0, dimension * dimension);
     }
 }

@@ -104,8 +104,8 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         final OUSetup setup = buildOUSetup("canonGradRootMean_partial", buildPartiallyObservedTips());
         setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
-        final double[][] traitCovariance = new double[dimTrait][dimTrait];
-        setup.provider.fillTraitCovariance(traitCovariance);
+        final double[] traitCovariance = new double[dimTrait * dimTrait];
+        setup.provider.fillTraitCovarianceFlat(traitCovariance);
         final double[] gradAnalytic = new double[dimTrait];
         setup.rootPrior.accumulateRootMeanGradient(
                 setup.passer.getPostOrderState(treeModel.getRoot().getNumber()),

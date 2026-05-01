@@ -1,27 +1,21 @@
 package dr.evomodel.continuous.ou.canonical;
 
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.continuous.ou.OUCovarianceGradientMath;
 import dr.evomodel.continuous.ou.OUCovarianceGradientStrategy;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
-import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 
 /**
- * Canonical OU transition and gradient kernel.
- *
- * <p>This class owns the reusable numerical workspace for canonical tree
- * transitions and gradients. BEAST model wrappers provide live parameter
- * access through small parameterization/provider interfaces.</p>
+ * Flat-array canonical OU transition and gradient kernel.
  */
-public final class CanonicalOUKernel
-        implements GaussianBranchTransitionKernel, CanonicalGaussianBranchTransitionKernel {
+public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitionKernel {
 
     private static final String DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY =
             "beast.experimental.ouDiffusionGradientQuadratureSubsteps";
@@ -29,7 +23,7 @@ public final class CanonicalOUKernel
     public interface InitialMoments {
         void getInitialMean(double[] out);
 
-        void getInitialCovariance(double[][] out);
+        void getInitialCovarianceFlat(double[] out);
     }
 
     private final int stateDimension;
@@ -68,14 +62,11 @@ public final class CanonicalOUKernel
     @Override
     public void fillInitialCanonicalState(final CanonicalGaussianState out) {
         final Workspace workspace = workspace();
-        final double[] mean = workspace.vector0;
-        final double[][] covariance = workspace.squareMatrices[0];
-        getInitialMean(mean);
-        getInitialCovariance(covariance);
-        MatrixOps.toFlat(covariance, workspace.flatMatrix0, stateDimension);
+        getInitialMean(workspace.vector0);
+        initialMoments.getInitialCovarianceFlat(workspace.matrix0);
         GaussianFormConverter.fillStateFromMoments(
-                mean,
-                workspace.flatMatrix0,
+                workspace.vector0,
+                workspace.matrix0,
                 stateDimension,
                 workspace.converterWorkspace,
                 out);
@@ -85,43 +76,32 @@ public final class CanonicalOUKernel
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         final Workspace workspace = workspace();
         if (selectionMatrixParameterization instanceof CanonicalPreparedTransitionCapability) {
-            final double[] mean = workspace.vector0;
-            getInitialMean(mean);
+            getInitialMean(workspace.vector0);
             ((CanonicalPreparedTransitionCapability) selectionMatrixParameterization)
-                    .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
+                    .fillCanonicalTransition(diffusionMatrix, workspace.vector0, dt, out);
             return;
         }
-        final double[] transitionOffset = workspace.vector1;
-        final double[] transitionMatrix = workspace.flatMatrix0;
-        final double[] transitionCovariance = workspace.flatMatrix1;
-        fillTransitionMatrixFlat(dt, transitionMatrix);
-        fillTransitionOffset(dt, transitionOffset);
-        fillTransitionCovarianceFlat(dt, transitionCovariance);
+
+        fillTransitionMatrixFlat(dt, workspace.matrix0);
+        fillTransitionOffset(dt, workspace.vector1);
+        fillTransitionCovarianceFlat(dt, workspace.matrix1);
         GaussianFormConverter.fillTransitionFromMoments(
-                transitionMatrix,
-                transitionOffset,
-                transitionCovariance,
+                workspace.matrix0,
+                workspace.vector1,
+                workspace.matrix1,
                 stateDimension,
                 workspace.converterWorkspace,
                 out);
     }
 
-    @Override
     public void getInitialMean(final double[] out) {
         checkVectorLength(out, stateDimension, "initial mean");
         initialMoments.getInitialMean(out);
     }
 
-    @Override
-    public void getInitialCovariance(final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "initial covariance");
-        initialMoments.getInitialCovariance(out);
-    }
-
-    @Override
-    public void fillTransitionMatrix(final double dt, final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "transition matrix");
-        selectionMatrixParameterization.fillTransitionMatrix(dt, out);
+    public void getInitialCovarianceFlat(final double[] out) {
+        checkFlatSquare(out, stateDimension, "initial covariance");
+        initialMoments.getInitialCovarianceFlat(out);
     }
 
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
@@ -131,84 +111,57 @@ public final class CanonicalOUKernel
 
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
         checkFlatSquare(out, stateDimension, "transition covariance");
-        final Workspace workspace = workspace();
-        final double[][] transitionCovariance = workspace.squareMatrices[1];
-        fillTransitionCovariance(dt, transitionCovariance);
-        MatrixOps.toFlat(transitionCovariance, out, stateDimension);
-    }
-
-    @Override
-    public void fillTransitionOffset(final double dt, final double[] out) {
-        checkVectorLength(out, stateDimension, "transition offset");
-        final Workspace workspace = workspace();
-        final double[] transitionMatrix = workspace.flatMatrix0;
-        final double[] mu = workspace.vector0;
-        final double[] transformedMean = workspace.vector2;
-
-        fillTransitionMatrixFlat(dt, transitionMatrix);
-        getInitialMean(mu);
-        MatrixOps.matVec(transitionMatrix, mu, transformedMean, stateDimension);
-
-        for (int i = 0; i < stateDimension; ++i) {
-            out[i] = mu[i] - transformedMean[i];
-        }
-    }
-
-    @Override
-    public void fillTransitionCovariance(final double dt, final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "transition covariance");
-        final Workspace workspace = workspace();
-
         if (selectionMatrixParameterization instanceof CanonicalPreparedTransitionCapability) {
             ((CanonicalPreparedTransitionCapability) selectionMatrixParameterization)
-                    .fillTransitionCovariance(diffusionMatrix, dt, out);
+                    .fillTransitionCovarianceFlat(diffusionMatrix, dt, out);
             return;
         }
 
-        final double[][] a = workspace.squareMatrices[2];
-        final double[][] q = workspace.squareMatrices[3];
-        selectionMatrixParameterization.fillSelectionMatrix(a);
-        diffusionMatrixParameterization.fillDiffusionMatrix(q);
-
-        final double[][] vanLoan = workspace.blockMatrices[0];
-        final double[][] vanLoanExp = workspace.blockMatrices[1];
-
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                vanLoan[i][j] = -dt * a[i][j];
-                vanLoan[i][j + stateDimension] = dt * q[i][j];
-                vanLoan[i + stateDimension][j] = 0.0;
-                vanLoan[i + stateDimension][j + stateDimension] = dt * a[j][i];
-            }
-        }
-
-        MatrixExponentialUtils.expm(vanLoan, vanLoanExp);
-
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < stateDimension; ++k) {
-                    sum += vanLoanExp[i][k + stateDimension] * vanLoanExp[j][k];
-                }
-                out[i][j] = sum;
-            }
-        }
-        MatrixExponentialUtils.symmetrize(out);
-    }
-
-    @Override
-    public void accumulateSelectionGradientFromCovariance(final double dt,
-                                                          final double[][] dLogL_dV,
-                                                          final double[] gradientAccumulator) {
         final int d = stateDimension;
         final Workspace workspace = workspace();
+        final double[] a = workspace.matrix2;
+        final double[] q = workspace.matrix3;
+        final double[] vanLoan = workspace.block0;
+        final double[] vanLoanExp = workspace.block1;
 
-        final double[][] a = workspace.squareMatrices[0];
-        final double[][] q = workspace.squareMatrices[1];
-        selectionMatrixParameterization.fillSelectionMatrix(a);
-        diffusionMatrixParameterization.fillDiffusionMatrix(q);
+        selectionMatrixParameterization.fillSelectionMatrixFlat(a);
+        diffusionMatrixParameterization.fillDiffusionMatrixFlat(q);
 
-        covarianceGradientStrategy.accumulate(dt, d, a, q, dLogL_dV, gradientAccumulator);
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                vanLoan[i * 2 * d + j] = -dt * a[i * d + j];
+                vanLoan[i * 2 * d + j + d] = dt * q[i * d + j];
+                vanLoan[(i + d) * 2 * d + j] = 0.0;
+                vanLoan[(i + d) * 2 * d + j + d] = dt * a[j * d + i];
+            }
+        }
+
+        MatrixExponentialUtils.expmFlat(vanLoan, vanLoanExp, 2 * d);
+
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    sum += vanLoanExp[i * 2 * d + k + d] * vanLoanExp[j * 2 * d + k];
+                }
+                out[iOff + j] = sum;
+            }
+        }
+        MatrixExponentialUtils.symmetrizeFlat(out, d);
+    }
+
+    public void fillTransitionOffset(final double dt, final double[] out) {
+        checkVectorLength(out, stateDimension, "transition offset");
+        final Workspace workspace = workspace();
+
+        fillTransitionMatrixFlat(dt, workspace.matrix0);
+        getInitialMean(workspace.vector0);
+        MatrixOps.matVec(workspace.matrix0, workspace.vector0, workspace.vector2, stateDimension);
+
+        for (int i = 0; i < stateDimension; ++i) {
+            out[i] = workspace.vector0[i] - workspace.vector2[i];
+        }
     }
 
     public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
@@ -216,60 +169,17 @@ public final class CanonicalOUKernel
                                                               final boolean transposeAdjoint,
                                                               final double[] gradientAccumulator) {
         checkFlatSquare(dLogL_dV, stateDimension, "covariance adjoint");
-        final int d = stateDimension;
         final Workspace workspace = workspace();
-
-        final double[][] a = workspace.squareMatrices[0];
-        final double[][] q = workspace.squareMatrices[1];
-        selectionMatrixParameterization.fillSelectionMatrix(a);
-        diffusionMatrixParameterization.fillDiffusionMatrix(q);
-
-        covarianceGradientStrategy.accumulateFlat(
-                dt, d, a, q, dLogL_dV, transposeAdjoint, gradientAccumulator);
-    }
-
-    @Override
-    public void accumulateDiffusionGradient(final double dt,
-                                            final double[][] dLogL_dV,
-                                            final double[] gradientAccumulator) {
-        final int d = stateDimension;
-        final Workspace workspace = workspace();
-        final double[][] a = workspace.squareMatrices[0];
-        final double[][] gSym = workspace.squareMatrices[2];
-        final double[][] fS = workspace.squareMatrices[3];
-        final double[][] fST = workspace.squareMatrices[4];
-        final double[][] tempDxD = workspace.squareMatrices[5];
-        final double[][] contrib = workspace.squareMatrices[6];
-        final double[][] expScratch = workspace.squareMatrices[7];
-
-        selectionMatrixParameterization.fillSelectionMatrix(a);
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                gSym[i][j] = 0.5 * (dLogL_dV[i][j] + dLogL_dV[j][i]);
-            }
-        }
-
-        final int substeps = Math.max(1,
-                Integer.getInteger(DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY, 2));
-        final double h = dt / substeps;
-        for (int sub = 0; sub < substeps; ++sub) {
-            final double t0 = sub * h;
-            for (int idx = 0; idx < OUCovarianceGradientMath.GL5_NODES.length; ++idx) {
-                final double s = t0 + 0.5 * h * (OUCovarianceGradientMath.GL5_NODES[idx] + 1.0);
-                final double scaledWeight = 0.5 * h * OUCovarianceGradientMath.GL5_WEIGHTS[idx];
-
-                OUCovarianceGradientMath.buildExpmMinusAs(s, a, d, fS, expScratch);
-                MatrixExponentialUtils.transpose(fS, fST);
-                MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
-                MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
-
-                for (int i = 0; i < d; ++i) {
-                    for (int j = 0; j < d; ++j) {
-                        gradientAccumulator[i * d + j] += scaledWeight * contrib[i][j];
-                    }
-                }
-            }
-        }
+        selectionMatrixParameterization.fillSelectionMatrixFlat(workspace.matrix0);
+        diffusionMatrixParameterization.fillDiffusionMatrixFlat(workspace.matrix1);
+        covarianceGradientStrategy.accumulateFlatMatrices(
+                dt,
+                stateDimension,
+                workspace.matrix0,
+                workspace.matrix1,
+                dLogL_dV,
+                transposeAdjoint,
+                gradientAccumulator);
     }
 
     public void accumulateDiffusionGradientFlat(final double dt,
@@ -279,15 +189,15 @@ public final class CanonicalOUKernel
         checkFlatSquare(dLogL_dV, stateDimension, "covariance adjoint");
         final int d = stateDimension;
         final Workspace workspace = workspace();
-        final double[][] a = workspace.squareMatrices[0];
-        final double[][] gSym = workspace.squareMatrices[2];
-        final double[][] fS = workspace.squareMatrices[3];
-        final double[][] fST = workspace.squareMatrices[4];
-        final double[][] tempDxD = workspace.squareMatrices[5];
-        final double[][] contrib = workspace.squareMatrices[6];
-        final double[][] expScratch = workspace.squareMatrices[7];
+        final double[] a = workspace.matrix0;
+        final double[] gSym = workspace.matrix2;
+        final double[] fS = workspace.matrix3;
+        final double[] fST = workspace.matrix4;
+        final double[] temp = workspace.matrix5;
+        final double[] contrib = workspace.matrix6;
+        final double[] expScratch = workspace.matrix7;
 
-        selectionMatrixParameterization.fillSelectionMatrix(a);
+        selectionMatrixParameterization.fillSelectionMatrixFlat(a);
         fillSymmetricFromFlat(dLogL_dV, transposeAdjoint, d, gSym);
 
         final int substeps = Math.max(1,
@@ -299,15 +209,13 @@ public final class CanonicalOUKernel
                 final double s = t0 + 0.5 * h * (OUCovarianceGradientMath.GL5_NODES[idx] + 1.0);
                 final double scaledWeight = 0.5 * h * OUCovarianceGradientMath.GL5_WEIGHTS[idx];
 
-                OUCovarianceGradientMath.buildExpmMinusAs(s, a, d, fS, expScratch);
-                MatrixExponentialUtils.transpose(fS, fST);
-                MatrixExponentialUtils.multiply(fST, gSym, tempDxD);
-                MatrixExponentialUtils.multiply(tempDxD, fS, contrib);
+                buildExpmMinusAsFlat(s, a, d, fS, expScratch);
+                MatrixExponentialUtils.transposeFlat(fS, fST, d);
+                MatrixExponentialUtils.multiplyFlat(fST, gSym, temp, d);
+                MatrixExponentialUtils.multiplyFlat(temp, fS, contrib, d);
 
-                for (int i = 0; i < d; ++i) {
-                    for (int j = 0; j < d; ++j) {
-                        gradientAccumulator[i * d + j] += scaledWeight * contrib[i][j];
-                    }
+                for (int i = 0; i < d * d; ++i) {
+                    gradientAccumulator[i] += scaledWeight * contrib[i];
                 }
             }
         }
@@ -324,16 +232,16 @@ public final class CanonicalOUKernel
 
         final int d = stateDimension;
         final Workspace workspace = workspace();
-        final double[][] a = workspace.squareMatrices[0];
-        final double[][] q = workspace.squareMatrices[1];
-        final double[][] f = workspace.squareMatrices[2];
-        final double[][] dFdt = workspace.squareMatrices[3];
-        final double[][] fq = workspace.squareMatrices[4];
+        final double[] a = workspace.matrix0;
+        final double[] q = workspace.matrix1;
+        final double[] f = workspace.matrix2;
+        final double[] dFdt = workspace.matrix3;
+        final double[] fq = workspace.matrix4;
         final double[] mu = workspace.vector0;
 
-        selectionMatrixParameterization.fillSelectionMatrix(a);
-        diffusionMatrixParameterization.fillDiffusionMatrix(q);
-        fillTransitionMatrix(dt, f);
+        selectionMatrixParameterization.fillSelectionMatrixFlat(a);
+        diffusionMatrixParameterization.fillDiffusionMatrixFlat(q);
+        fillTransitionMatrixFlat(dt, f);
         getInitialMean(mu);
 
         double score = 0.0;
@@ -342,9 +250,9 @@ public final class CanonicalOUKernel
             for (int j = 0; j < d; ++j) {
                 double value = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    value -= a[i][k] * f[k][j];
+                    value -= a[iOff + k] * f[k * d + j];
                 }
-                dFdt[i][j] = value;
+                dFdt[iOff + j] = value;
                 score += dLogL_dF[iOff + j] * value;
             }
         }
@@ -352,27 +260,18 @@ public final class CanonicalOUKernel
         for (int i = 0; i < d; ++i) {
             double dfdt = 0.0;
             for (int j = 0; j < d; ++j) {
-                dfdt -= dFdt[i][j] * mu[j];
+                dfdt -= dFdt[i * d + j] * mu[j];
             }
             score += dLogL_df[i] * dfdt;
         }
 
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                double value = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    value += f[i][k] * q[k][j];
-                }
-                fq[i][j] = value;
-            }
-        }
-
+        MatrixExponentialUtils.multiplyFlat(f, q, fq, d);
         for (int i = 0; i < d; ++i) {
             final int iOff = i * d;
             for (int j = 0; j < d; ++j) {
                 double value = 0.0;
                 for (int k = 0; k < d; ++k) {
-                    value += fq[i][k] * f[j][k];
+                    value += fq[iOff + k] * f[j * d + k];
                 }
                 score += flatSquareValue(dLogL_dV, i, j, d, transposeCovarianceAdjoint) * value;
             }
@@ -381,35 +280,14 @@ public final class CanonicalOUKernel
         return score;
     }
 
-    @Override
-    public void accumulateSelectionGradient(final double dt,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        final Workspace workspace = workspace();
-        final double[] mu = workspace.vector0;
-        getInitialMean(mu);
-        accumulateSelectionGradient(dt, mu, dLogL_dF, dLogL_df, gradientAccumulator);
-    }
-
     public void accumulateSelectionGradientFlat(final double dt,
                                                 final double[] dLogL_dF,
                                                 final double[] dLogL_df,
                                                 final double[] gradientAccumulator) {
         checkFlatSquare(dLogL_dF, stateDimension, "transition adjoint");
         final Workspace workspace = workspace();
-        final double[] mu = workspace.vector0;
-        getInitialMean(mu);
-        accumulateSelectionGradientFlat(dt, mu, dLogL_dF, dLogL_df, gradientAccumulator);
-    }
-
-    public void accumulateSelectionGradient(final double dt,
-                                            final double[] mean,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        selectionMatrixParameterization.accumulateGradientFromTransition(
-                dt, mean, dLogL_dF, dLogL_df, gradientAccumulator);
+        getInitialMean(workspace.vector0);
+        accumulateSelectionGradientFlat(dt, workspace.vector0, dLogL_dF, dLogL_df, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFlat(final double dt,
@@ -426,20 +304,20 @@ public final class CanonicalOUKernel
         return workspaceLocal.get();
     }
 
+    private static void buildExpmMinusAsFlat(final double t,
+                                             final double[] a,
+                                             final int d,
+                                             final double[] out,
+                                             final double[] scaledMinusA) {
+        for (int i = 0; i < d * d; ++i) {
+            scaledMinusA[i] = -t * a[i];
+        }
+        MatrixExponentialUtils.expmFlat(scaledMinusA, out, d);
+    }
+
     private static void checkVectorLength(final double[] vector, final int expectedLength, final String label) {
         if (vector == null || vector.length != expectedLength) {
             throw new IllegalArgumentException(label + " must have length " + expectedLength);
-        }
-    }
-
-    private static void checkSquareMatrix(final double[][] matrix, final int expectedSize, final String label) {
-        if (matrix == null || matrix.length != expectedSize) {
-            throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
-        }
-        for (double[] row : matrix) {
-            if (row == null || row.length != expectedSize) {
-                throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
-            }
         }
     }
 
@@ -462,10 +340,11 @@ public final class CanonicalOUKernel
     private static void fillSymmetricFromFlat(final double[] source,
                                               final boolean transpose,
                                               final int dim,
-                                              final double[][] out) {
+                                              final double[] out) {
         for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                out[i][j] = 0.5 * (
+                out[iOff + j] = 0.5 * (
                         flatSquareValue(source, i, j, dim, transpose)
                                 + flatSquareValue(source, j, i, dim, transpose));
             }
@@ -473,47 +352,37 @@ public final class CanonicalOUKernel
     }
 
     private static final class Workspace {
-        private static final int SQUARE_MATRIX_COUNT = 8;
-        private static final int BLOCK_MATRIX_COUNT = 2;
-
-        private final double[][][] squareMatrices;
-        private final double[][][] blockMatrices;
         private final double[] vector0;
         private final double[] vector1;
         private final double[] vector2;
-        private final double[] flatMatrix0;
-        private final double[] flatMatrix1;
+        private final double[] matrix0;
+        private final double[] matrix1;
+        private final double[] matrix2;
+        private final double[] matrix3;
+        private final double[] matrix4;
+        private final double[] matrix5;
+        private final double[] matrix6;
+        private final double[] matrix7;
+        private final double[] block0;
+        private final double[] block1;
         private final GaussianFormConverter.Workspace converterWorkspace;
 
         private Workspace(final int dimension) {
-            this.squareMatrices = allocateMatrixStack(SQUARE_MATRIX_COUNT, dimension, dimension);
-            this.blockMatrices = allocateMatrixStack(BLOCK_MATRIX_COUNT, 2 * dimension, 2 * dimension);
             this.vector0 = new double[dimension];
             this.vector1 = new double[dimension];
             this.vector2 = new double[dimension];
-            this.flatMatrix0 = new double[dimension * dimension];
-            this.flatMatrix1 = new double[dimension * dimension];
+            this.matrix0 = new double[dimension * dimension];
+            this.matrix1 = new double[dimension * dimension];
+            this.matrix2 = new double[dimension * dimension];
+            this.matrix3 = new double[dimension * dimension];
+            this.matrix4 = new double[dimension * dimension];
+            this.matrix5 = new double[dimension * dimension];
+            this.matrix6 = new double[dimension * dimension];
+            this.matrix7 = new double[dimension * dimension];
+            this.block0 = new double[4 * dimension * dimension];
+            this.block1 = new double[4 * dimension * dimension];
             this.converterWorkspace = new GaussianFormConverter.Workspace();
             this.converterWorkspace.ensureDim(dimension);
         }
-    }
-
-    private static double[][][] allocateMatrixStack(final int count,
-                                                    final int rows,
-                                                    final int cols) {
-        final double[][][] stack = new double[count][][];
-        for (int i = 0; i < count; ++i) {
-            stack[i] = allocateMatrix(rows, cols);
-        }
-        return stack;
-    }
-
-    private static double[][] allocateMatrix(final int rows,
-                                             final int cols) {
-        final double[][] matrix = new double[rows][];
-        for (int i = 0; i < rows; ++i) {
-            matrix[i] = new double[cols];
-        }
-        return matrix;
     }
 }

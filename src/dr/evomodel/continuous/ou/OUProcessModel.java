@@ -148,8 +148,8 @@ public class OUProcessModel extends AbstractModel
                             }
 
                             @Override
-                            public void getInitialCovariance(final double[][] out) {
-                                copyMatrixParameter(initialCovariance, out);
+                            public void getInitialCovarianceFlat(final double[] out) {
+                                copyMatrixParameterFlat(initialCovariance, out);
                             }
                         });
 
@@ -250,7 +250,9 @@ public class OUProcessModel extends AbstractModel
 
     @Override
     public void fillTransitionMatrix(final double dt, final double[][] out) {
-        canonicalKernel.fillTransitionMatrix(dt, out);
+        final double[] flat = new double[stateDimension * stateDimension];
+        canonicalKernel.fillTransitionMatrixFlat(dt, flat);
+        copyFlatToMatrix(flat, out, stateDimension);
     }
 
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
@@ -264,7 +266,9 @@ public class OUProcessModel extends AbstractModel
 
     @Override
     public void fillTransitionCovariance(final double dt, final double[][] out) {
-        canonicalKernel.fillTransitionCovariance(dt, out);
+        final double[] flat = new double[stateDimension * stateDimension];
+        canonicalKernel.fillTransitionCovarianceFlat(dt, flat);
+        copyFlatToMatrix(flat, out, stateDimension);
     }
 
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
@@ -287,7 +291,9 @@ public class OUProcessModel extends AbstractModel
     public void accumulateSelectionGradientFromCovariance(final double dt,
                                                           final double[][] dLogL_dV,
                                                           final double[] gradientAccumulator) {
-        canonicalKernel.accumulateSelectionGradientFromCovariance(dt, dLogL_dV, gradientAccumulator);
+        final double[] flat = new double[stateDimension * stateDimension];
+        copyMatrixToFlat(dLogL_dV, flat, stateDimension);
+        canonicalKernel.accumulateSelectionGradientFromCovarianceFlat(dt, flat, false, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
@@ -302,7 +308,9 @@ public class OUProcessModel extends AbstractModel
     public void accumulateDiffusionGradient(final double dt,
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
-        canonicalKernel.accumulateDiffusionGradient(dt, dLogL_dV, gradientAccumulator);
+        final double[] flat = new double[stateDimension * stateDimension];
+        copyMatrixToFlat(dLogL_dV, flat, stateDimension);
+        canonicalKernel.accumulateDiffusionGradientFlat(dt, flat, false, gradientAccumulator);
     }
 
     public void accumulateDiffusionGradientFlat(final double dt,
@@ -354,7 +362,9 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dF,
                                             final double[] dLogL_df,
                                             final double[] gradientAccumulator) {
-        canonicalKernel.accumulateSelectionGradient(dt, dLogL_dF, dLogL_df, gradientAccumulator);
+        final double[] flat = new double[stateDimension * stateDimension];
+        copyMatrixToFlat(dLogL_dF, flat, stateDimension);
+        canonicalKernel.accumulateSelectionGradientFlat(dt, flat, dLogL_df, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFlat(final double dt,
@@ -369,7 +379,9 @@ public class OUProcessModel extends AbstractModel
                                             final double[][] dLogL_dF,
                                             final double[] dLogL_df,
                                             final double[] gradientAccumulator) {
-        canonicalKernel.accumulateSelectionGradient(dt, mean, dLogL_dF, dLogL_df, gradientAccumulator);
+        final double[] flat = new double[stateDimension * stateDimension];
+        copyMatrixToFlat(dLogL_dF, flat, stateDimension);
+        canonicalKernel.accumulateSelectionGradientFlat(dt, mean, flat, dLogL_df, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFlat(final double dt,
@@ -442,6 +454,28 @@ public class OUProcessModel extends AbstractModel
             for (int j = 0; j < out[i].length; ++j) {
                 out[i][j] = parameter.getParameterValue(i, j);
             }
+        }
+    }
+
+    private static void copyMatrixParameterFlat(final MatrixParameterInterface parameter, final double[] out) {
+        final int dimension = parameter.getRowDimension();
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[rowOffset + j] = parameter.getParameterValue(i, j);
+            }
+        }
+    }
+
+    private static void copyMatrixToFlat(final double[][] source, final double[] out, final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source[i], 0, out, i * dimension, dimension);
+        }
+    }
+
+    private static void copyFlatToMatrix(final double[] source, final double[][] out, final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source, i * dimension, out[i], 0, dimension);
         }
     }
 

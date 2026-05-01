@@ -133,6 +133,55 @@ public final class MatrixExponentialUtils {
         }
     }
 
+    public static void transposeFlat(final double[] source, final double[] out, final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[j * dimension + i] = source[rowOffset + j];
+            }
+        }
+    }
+
+    public static void multiplyFlat(final double[] left,
+                                    final double[] right,
+                                    final double[] out,
+                                    final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dimension; ++k) {
+                    sum += left[rowOffset + k] * right[k * dimension + j];
+                }
+                out[rowOffset + j] = sum;
+            }
+        }
+    }
+
+    public static void symmetrizeFlat(final double[] matrix, final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = i + 1; j < dimension; ++j) {
+                final int ij = i * dimension + j;
+                final int ji = j * dimension + i;
+                final double average = 0.5 * (matrix[ij] + matrix[ji]);
+                matrix[ij] = average;
+                matrix[ji] = average;
+            }
+        }
+    }
+
+    public static void expmFlat(final double[] matrix, final double[] out, final int dimension) {
+        final double[][] dense = new double[dimension][dimension];
+        final double[][] denseOut = new double[dimension][dimension];
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(matrix, i * dimension, dense[i], 0, dimension);
+        }
+        expm(dense, denseOut);
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(denseOut[i], 0, out, i * dimension, dimension);
+        }
+    }
+
     public static double norm1(final double[][] matrix) {
         double best = 0.0;
         for (int j = 0; j < matrix[0].length; ++j) {

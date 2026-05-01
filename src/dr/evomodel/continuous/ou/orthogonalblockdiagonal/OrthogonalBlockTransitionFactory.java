@@ -51,6 +51,14 @@ final class OrthogonalBlockTransitionFactory {
         copyDenseMatrixToArray(transitionCovariance, out);
     }
 
+    void fillTransitionCovarianceFlat(final MatrixParameterInterface diffusionMatrix,
+                                      final OrthogonalBlockBasisCache basis,
+                                      final double[] out) {
+        fillTransitionCovarianceMatrix(diffusionMatrix, basis);
+        System.arraycopy(transitionCovariance.data, 0, out, 0,
+                transitionCovariance.numRows * transitionCovariance.numCols);
+    }
+
     void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,
                                  final double[] stationaryMean,
                                  final OrthogonalBlockBasisCache basis,

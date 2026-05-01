@@ -13,6 +13,15 @@ public interface SelectionMatrixParameterization {
 
     void fillSelectionMatrix(double[][] out);
 
+    default void fillSelectionMatrixFlat(final double[] out) {
+        final int dimension = getDimension();
+        final double[][] dense = new double[dimension][dimension];
+        fillSelectionMatrix(dense);
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(dense[i], 0, out, i * dimension, dimension);
+        }
+    }
+
     void fillTransitionMatrix(double dt, double[][] out);
 
     void fillTransitionMatrixFlat(double dt, double[] out);

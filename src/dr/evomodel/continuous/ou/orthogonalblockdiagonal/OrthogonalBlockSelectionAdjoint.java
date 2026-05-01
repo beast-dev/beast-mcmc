@@ -23,8 +23,8 @@ final class OrthogonalBlockSelectionAdjoint {
     private final DenseMatrix64F temp1;
     private final DenseMatrix64F temp2;
     private final DenseMatrix64F temp3;
-    private final double[][] scaledNegativeBlockDScratch;
-    private final double[][] denseAdjointScratch;
+    private final double[] scaledNegativeBlockDScratch;
+    private final double[] denseAdjointScratch;
     private final double[] tempVector1;
     private final double[] tempVector2;
 
@@ -44,38 +44,10 @@ final class OrthogonalBlockSelectionAdjoint {
         this.temp1 = new DenseMatrix64F(d, d);
         this.temp2 = new DenseMatrix64F(d, d);
         this.temp3 = new DenseMatrix64F(d, d);
-        this.scaledNegativeBlockDScratch = new double[d][d];
-        this.denseAdjointScratch = new double[d][d];
+        this.scaledNegativeBlockDScratch = new double[d * d];
+        this.denseAdjointScratch = new double[d * d];
         this.tempVector1 = new double[d];
         this.tempVector2 = new double[d];
-    }
-
-    void accumulateCurrent(final OrthogonalBlockBasisCache basis,
-                           final double dt,
-                           final double[] stationaryMean,
-                           final double[] dLogL_dF,
-                           final double[] dLogL_df,
-                           final double[] compressedDAccumulator,
-                           final double[][] rotationAccumulator) {
-        fillTotalUpstreamOnTransition(stationaryMean, dLogL_dF, dLogL_df, upstreamF);
-        accumulateTransitionPullback(
-                basis.rMatrix,
-                basis.rtMatrix,
-                basis.expD,
-                basis.blockDParams,
-                dt,
-                upstreamF,
-                upstreamFD,
-                frechetHelper,
-                temp1,
-                temp2,
-                temp3,
-                gradD,
-                gradR,
-                scaledNegativeBlockDScratch,
-                denseAdjointScratch,
-                compressedDAccumulator,
-                rotationAccumulator);
     }
 
     void accumulateCurrentFlat(final OrthogonalBlockBasisCache basis,
@@ -102,33 +74,6 @@ final class OrthogonalBlockSelectionAdjoint {
                 gradR,
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
-                compressedDAccumulator,
-                rotationAccumulator);
-    }
-
-    void accumulatePrepared(final OrthogonalBlockPreparedBranchBasis prepared,
-                            final double[] dLogL_dF,
-                            final double[] dLogL_df,
-                            final OrthogonalBlockBranchGradientWorkspace workspace,
-                            final double[] compressedDAccumulator,
-                            final double[][] rotationAccumulator) {
-        fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
-        accumulateTransitionPullback(
-                prepared.rMatrix,
-                prepared.rtMatrix,
-                prepared.expD,
-                prepared.blockDParams,
-                prepared.dt,
-                workspace.upstreamF,
-                workspace.upstreamFD,
-                workspace.frechetHelper,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -222,46 +167,8 @@ final class OrthogonalBlockSelectionAdjoint {
                                               final DenseMatrix64F temp3,
                                               final DenseMatrix64F gradD,
                                               final DenseMatrix64F gradR,
-                                              final double[][] scaledNegativeBlockDScratch,
-                                              final double[][] denseAdjointScratch,
-                                              final double[] compressedDAccumulator,
-                                              final double[][] rotationAccumulator) {
-        CommonOps.mult(rtMatrix, upstreamF, temp1);
-        CommonOps.mult(temp1, rMatrix, upstreamFD);
-        fillTransitionDGradient(
-                blockDParams,
-                dt,
-                upstreamFD,
-                frechetHelper,
-                temp3,
-                gradD,
-                scaledNegativeBlockDScratch,
-                denseAdjointScratch);
-        accumulateCompressedGradient(gradD, compressedDAccumulator);
-
-        CommonOps.multTransB(rMatrix, expD, temp1);
-        CommonOps.mult(upstreamF, temp1, gradR);
-        CommonOps.multTransA(upstreamF, rMatrix, temp1);
-        CommonOps.mult(temp1, expD, temp2);
-        CommonOps.addEquals(gradR, temp2);
-        addDenseMatrixToArray(gradR, rotationAccumulator);
-    }
-
-    private void accumulateTransitionPullback(final DenseMatrix64F rMatrix,
-                                              final DenseMatrix64F rtMatrix,
-                                              final DenseMatrix64F expD,
-                                              final double[] blockDParams,
-                                              final double dt,
-                                              final DenseMatrix64F upstreamF,
-                                              final DenseMatrix64F upstreamFD,
-                                              final BlockDiagonalFrechetHelper frechetHelper,
-                                              final DenseMatrix64F temp1,
-                                              final DenseMatrix64F temp2,
-                                              final DenseMatrix64F temp3,
-                                              final DenseMatrix64F gradD,
-                                              final DenseMatrix64F gradR,
-                                              final double[][] scaledNegativeBlockDScratch,
-                                              final double[][] denseAdjointScratch,
+                                              final double[] scaledNegativeBlockDScratch,
+                                              final double[] denseAdjointScratch,
                                               final double[] compressedDAccumulator,
                                               final double[] rotationAccumulator) {
         CommonOps.mult(rtMatrix, upstreamF, temp1);
@@ -291,8 +198,8 @@ final class OrthogonalBlockSelectionAdjoint {
                                          final BlockDiagonalFrechetHelper frechetHelper,
                                          final DenseMatrix64F temp,
                                          final DenseMatrix64F gradD,
-                                         final double[][] scaledNegativeBlockDScratch,
-                                         final double[][] denseAdjointScratch) {
+                                         final double[] scaledNegativeBlockDScratch,
+                                         final double[] denseAdjointScratch) {
         if (denseFallbackPolicy.forceDenseAdjointExp()) {
             fillDenseAdjointExpGradient(blockDParams, dt, upstreamFD, scaledNegativeBlockDScratch,
                     denseAdjointScratch, gradD);
@@ -316,15 +223,16 @@ final class OrthogonalBlockSelectionAdjoint {
     private static void fillDenseAdjointExpGradient(final double[] blockDParams,
                                                     final double dt,
                                                     final DenseMatrix64F upstreamFD,
-                                                    final double[][] scaledNegativeBlockDScratch,
-                                                    final double[][] denseAdjointScratch,
+                                                    final double[] scaledNegativeBlockDScratch,
+                                                    final double[] denseAdjointScratch,
                                                     final DenseMatrix64F gradD) {
         fillScaledNegativeBlockDMatrix(blockDParams, dt, scaledNegativeBlockDScratch, upstreamFD.numRows);
-        copyDenseMatrixToArray(upstreamFD, denseAdjointScratch);
-        MatrixExponentialUtils.adjointExp(
+        copyDenseMatrixToFlatArray(upstreamFD, denseAdjointScratch);
+        MatrixExponentialUtils.adjointExpFlat(
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
-                denseAdjointScratch);
+                denseAdjointScratch,
+                upstreamFD.numRows);
         fillDenseMatrix(denseAdjointScratch, gradD);
         transposeInPlace(gradD);
         CommonOps.scale(-dt, gradD);
@@ -389,16 +297,6 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    private static void addDenseMatrixToArray(final DenseMatrix64F src, final double[][] dest) {
-        final int dimension = dest.length;
-        final double[] data = src.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                dest[i][j] += data[i * dimension + j];
-            }
-        }
-    }
-
     private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {
         final int length = src.numRows * src.numCols;
         final double[] data = src.data;
@@ -407,32 +305,22 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    private static void copyDenseMatrixToArray(final DenseMatrix64F source, final double[][] out) {
-        final int dimension = source.numRows;
-        final double[] data = source.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = data[i * dimension + j];
-            }
-        }
+    private static void copyDenseMatrixToFlatArray(final DenseMatrix64F source, final double[] out) {
+        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
     }
 
     private static void fillScaledNegativeBlockDMatrix(final double[] blockDParams,
                                                        final double dt,
-                                                       final double[][] out,
+                                                       final double[] out,
                                                        final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = 0.0;
-            }
-        }
+        java.util.Arrays.fill(out, 0, dimension * dimension, 0.0);
         final int upperOffset = dimension;
         final int lowerOffset = dimension + (dimension - 1);
         for (int i = 0; i < dimension; ++i) {
-            out[i][i] = -dt * blockDParams[i];
+            out[i * dimension + i] = -dt * blockDParams[i];
             if (i < dimension - 1) {
-                out[i][i + 1] = -dt * blockDParams[upperOffset + i];
-                out[i + 1][i] = -dt * blockDParams[lowerOffset + i];
+                out[i * dimension + i + 1] = -dt * blockDParams[upperOffset + i];
+                out[(i + 1) * dimension + i] = -dt * blockDParams[lowerOffset + i];
             }
         }
     }
@@ -451,15 +339,9 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    private static void fillDenseMatrix(final double[][] source,
+    private static void fillDenseMatrix(final double[] source,
                                         final DenseMatrix64F out) {
-        final int dimension = out.numRows;
-        final double[] data = out.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                data[i * dimension + j] = source[i][j];
-            }
-        }
+        System.arraycopy(source, 0, out.data, 0, out.numRows * out.numCols);
     }
 
     private static void transposeInPlace(final DenseMatrix64F matrix) {

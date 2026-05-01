@@ -13,15 +13,6 @@ final class OrthogonalBlockPositiveDefiniteInverter {
 
     private OrthogonalBlockPositiveDefiniteInverter() { }
 
-    static double copyAndInvert(final DenseMatrix64F source,
-                                final double[][] matrixOut,
-                                final double[][] inverseOut,
-                                final double[] choleskyScratch,
-                                final double[] lowerInverseScratch) {
-        return CanonicalNumerics.copyAndInvertPositiveDefinite(
-                source, matrixOut, inverseOut, choleskyScratch, lowerInverseScratch, OPTIONS);
-    }
-
     static double copyAndInvertFlat(final DenseMatrix64F source,
                                     final double[] matrixOut,
                                     final double[] inverseOut,

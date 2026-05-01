@@ -32,7 +32,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         final Result dense = computeTransitionGradient(parameterization, stationaryMean, dLogL_dF, dLogL_df, dt, true);
 
         assertVectorEquals("compressed transition gradient", dense.compressed, exact.compressed, TOL);
-        assertMatrixEquals("rotation transition gradient", dense.rotation, exact.rotation, TOL);
+        assertVectorEquals("rotation transition gradient", dense.rotation, exact.rotation, TOL);
     }
 
     public void testExactFrechetCovarianceGradientMatchesDenseFallback() {
@@ -50,7 +50,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         final Result dense = computeCovarianceGradient(parameterization, diffusionMatrix, dLogL_dV, dt, true);
 
         assertVectorEquals("compressed covariance gradient", dense.compressed, exact.compressed, TOL);
-        assertMatrixEquals("rotation covariance gradient", dense.rotation, exact.rotation, TOL);
+        assertVectorEquals("rotation covariance gradient", dense.rotation, exact.rotation, TOL);
     }
 
     public void testExactFrechetNearNilpotentTransitionGradientMatchesDenseFallback() {
@@ -82,7 +82,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         final Result dense = computeTransitionGradient(parameterization, stationaryMean, dLogL_dF, dLogL_df, dt, true);
 
         assertVectorEquals("near-nilpotent compressed transition gradient", dense.compressed, exact.compressed, TOL);
-        assertMatrixEquals("near-nilpotent rotation transition gradient", dense.rotation, exact.rotation, TOL);
+        assertVectorEquals("near-nilpotent rotation transition gradient", dense.rotation, exact.rotation, TOL);
     }
 
     private Result computeTransitionGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
@@ -100,7 +100,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
             }
 
             final Result result = new Result(10, 4);
-            parameterization.accumulateNativeGradientFromTransition(
+            parameterization.accumulateNativeGradientFromTransitionFlat(
                     dt, stationaryMean, dLogL_dF, dLogL_df, result.compressed, result.rotation);
             return result;
         } finally {
@@ -122,7 +122,7 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
             }
 
             final Result result = new Result(10, 4);
-            parameterization.accumulateNativeGradientFromCovarianceStationary(
+            parameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
                     diffusionMatrix, dt, dLogL_dV, result.compressed, result.rotation);
             return result;
         } finally {
@@ -211,12 +211,12 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
     private static final class Result {
         private final double[] compressed;
-        private final double[][] rotation;
+        private final double[] rotation;
 
         private Result(final int compressedDimension,
                        final int matrixDimension) {
             this.compressed = new double[compressedDimension];
-            this.rotation = new double[matrixDimension][matrixDimension];
+            this.rotation = new double[matrixDimension * matrixDimension];
         }
     }
 }

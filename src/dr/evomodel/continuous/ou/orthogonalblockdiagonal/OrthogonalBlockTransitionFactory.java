@@ -44,13 +44,6 @@ final class OrthogonalBlockTransitionFactory {
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(dimension);
     }
 
-    void fillTransitionCovariance(final MatrixParameterInterface diffusionMatrix,
-                                  final OrthogonalBlockBasisCache basis,
-                                  final double[][] out) {
-        fillTransitionCovarianceMatrix(diffusionMatrix, basis);
-        copyDenseMatrixToArray(transitionCovariance, out);
-    }
-
     void fillTransitionCovarianceFlat(final MatrixParameterInterface diffusionMatrix,
                                       final OrthogonalBlockBasisCache basis,
                                       final double[] out) {
@@ -115,16 +108,6 @@ final class OrthogonalBlockTransitionFactory {
                 temp,
                 transitionCovariance,
                 false);
-    }
-
-    private static void copyDenseMatrixToArray(final DenseMatrix64F source, final double[][] out) {
-        final int dimension = source.numRows;
-        final double[] data = source.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = data[i * dimension + j];
-            }
-        }
     }
 
 }

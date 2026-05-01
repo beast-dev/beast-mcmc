@@ -384,6 +384,23 @@ public final class MatrixExponentialUtils {
         transpose(tmp, out);
     }
 
+    public static void adjointExpFlat(final double[] x,
+                                      final double[] upstream,
+                                      final double[] out,
+                                      final int dimension) {
+        final double[][] denseX = new double[dimension][dimension];
+        final double[][] denseUpstream = new double[dimension][dimension];
+        final double[][] denseOut = new double[dimension][dimension];
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(x, i * dimension, denseX[i], 0, dimension);
+            System.arraycopy(upstream, i * dimension, denseUpstream[i], 0, dimension);
+        }
+        adjointExp(denseX, denseUpstream, denseOut);
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(denseOut[i], 0, out, i * dimension, dimension);
+        }
+    }
+
     private static double log2(final double x) {
         return Math.log(x) / Math.log(2.0);
     }

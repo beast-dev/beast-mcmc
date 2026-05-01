@@ -21,8 +21,8 @@ public final class OrthogonalBlockBranchGradientWorkspace implements CanonicalBr
     final DenseMatrix64F transitionCovariance;
     final double[] transitionCovarianceArrayScratch;
     final double[] transitionOffsetScratch;
-    final double[][] scaledNegativeBlockDScratch;
-    final double[][] denseAdjointScratch;
+    final double[] scaledNegativeBlockDScratch;
+    final double[] denseAdjointScratch;
     final DenseMatrix64F upstreamF;
     final DenseMatrix64F upstreamFD;
     final DenseMatrix64F gradD;
@@ -55,8 +55,8 @@ public final class OrthogonalBlockBranchGradientWorkspace implements CanonicalBr
         this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
         this.transitionCovarianceArrayScratch = new double[dimension * dimension];
         this.transitionOffsetScratch = new double[dimension];
-        this.scaledNegativeBlockDScratch = new double[dimension][dimension];
-        this.denseAdjointScratch = new double[dimension][dimension];
+        this.scaledNegativeBlockDScratch = new double[dimension * dimension];
+        this.denseAdjointScratch = new double[dimension * dimension];
         this.upstreamF = new DenseMatrix64F(dimension, dimension);
         this.upstreamFD = new DenseMatrix64F(dimension, dimension);
         this.gradD = new DenseMatrix64F(dimension, dimension);

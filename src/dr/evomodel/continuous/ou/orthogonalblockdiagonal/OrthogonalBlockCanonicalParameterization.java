@@ -11,10 +11,6 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public interface OrthogonalBlockCanonicalParameterization extends SpecializedCanonicalSelectionParameterization {
 
-    void fillTransitionCovariance(MatrixParameterInterface diffusionMatrix,
-                                  double dt,
-                                  double[][] out);
-
     void fillCanonicalTransition(MatrixParameterInterface diffusionMatrix,
                                  double[] stationaryMean,
                                  double dt,
@@ -41,33 +37,6 @@ public interface OrthogonalBlockCanonicalParameterization extends SpecializedCan
             double[] compressedDAccumulator,
             double[] rotationAccumulator);
 
-    void accumulateNativeGradientFromTransition(double dt,
-                                                double[] stationaryMean,
-                                                double[][] dLogL_dF,
-                                                double[] dLogL_df,
-                                                double[] compressedDAccumulator,
-                                                double[][] rotationAccumulator);
-
-    void accumulateNativeGradientFromCovarianceStationary(MatrixParameterInterface diffusionMatrix,
-                                                          double dt,
-                                                          double[][] dLogL_dV,
-                                                          double[] compressedDAccumulator,
-                                                          double[][] rotationAccumulator);
-
-    void accumulateDiffusionGradient(MatrixParameterInterface diffusionMatrix,
-                                     double dt,
-                                     double[][] dLogL_dV,
-                                     double[] gradientAccumulator);
-
-    void accumulateNativeGradientFromCanonicalContribution(
-            MatrixParameterInterface diffusionMatrix,
-            double[] stationaryMean,
-            double dt,
-            CanonicalBranchMessageContribution contribution,
-            CanonicalLocalTransitionAdjoints localAdjoints,
-            double[] compressedDAccumulator,
-            double[][] rotationAccumulator);
-
     void accumulateNativeGradientFromCanonicalContributionFlat(
             MatrixParameterInterface diffusionMatrix,
             double[] stationaryMean,
@@ -76,13 +45,6 @@ public interface OrthogonalBlockCanonicalParameterization extends SpecializedCan
             CanonicalLocalTransitionAdjoints localAdjoints,
             double[] compressedDAccumulator,
             double[] rotationAccumulator);
-
-    void accumulateNativeGradientFromAdjoints(MatrixParameterInterface diffusionMatrix,
-                                             double[] stationaryMean,
-                                             double dt,
-                                             CanonicalLocalTransitionAdjoints localAdjoints,
-                                             double[] compressedDAccumulator,
-                                             double[][] rotationAccumulator);
 
     void accumulateNativeGradientFromAdjointsFlat(MatrixParameterInterface diffusionMatrix,
                                                   double[] stationaryMean,

@@ -34,8 +34,8 @@ final class OrthogonalBlockCovarianceAdjoint {
     private final DenseMatrix64F temp1;
     private final DenseMatrix64F temp2;
     private final DenseMatrix64F temp3;
-    private final double[][] scaledNegativeBlockDScratch;
-    private final double[][] denseAdjointScratch;
+    private final double[] scaledNegativeBlockDScratch;
+    private final double[] denseAdjointScratch;
 
     OrthogonalBlockCovarianceAdjoint(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                      final BlockDiagonalLyapunovSolver lyapunovSolver,
@@ -63,8 +63,8 @@ final class OrthogonalBlockCovarianceAdjoint {
         this.temp1 = new DenseMatrix64F(d, d);
         this.temp2 = new DenseMatrix64F(d, d);
         this.temp3 = new DenseMatrix64F(d, d);
-        this.scaledNegativeBlockDScratch = new double[d][d];
-        this.denseAdjointScratch = new double[d][d];
+        this.scaledNegativeBlockDScratch = new double[d * d];
+        this.denseAdjointScratch = new double[d * d];
     }
 
     void fillTransitionCovarianceMatrix(final MatrixParameterInterface diffusionMatrix,
@@ -106,16 +106,6 @@ final class OrthogonalBlockCovarianceAdjoint {
                 true);
     }
 
-    void prepareAndAccumulateCurrent(final MatrixParameterInterface diffusionMatrix,
-                                     final OrthogonalBlockBasisCache basis,
-                                     final double dt,
-                                     final double[] dLogL_dV,
-                                     final double[] compressedDAccumulator,
-                                     final double[][] rotationAccumulator) {
-        fillTransitionCovarianceMatrix(diffusionMatrix, basis, transitionCovariance);
-        accumulateCurrentCached(basis, dt, dLogL_dV, compressedDAccumulator, rotationAccumulator);
-    }
-
     void prepareAndAccumulateCurrentFlat(final MatrixParameterInterface diffusionMatrix,
                                          final OrthogonalBlockBasisCache basis,
                                          final double dt,
@@ -124,39 +114,6 @@ final class OrthogonalBlockCovarianceAdjoint {
                                          final double[] rotationAccumulator) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis, transitionCovariance);
         accumulateCurrentCachedFlat(basis, dt, dLogL_dV, compressedDAccumulator, rotationAccumulator);
-    }
-
-    void accumulateCurrentCached(final OrthogonalBlockBasisCache basis,
-                                 final double dt,
-                                 final double[] dLogL_dV,
-                                 final double[] compressedDAccumulator,
-                                 final double[][] rotationAccumulator) {
-        accumulateCovariancePullback(
-                basis.rMatrix,
-                basis.rtMatrix,
-                basis.expD,
-                basis.blockDParams,
-                dt,
-                qMatrix,
-                stationaryCovDBasis,
-                transitionCovDBasis,
-                gV,
-                hDBasis,
-                gS,
-                yAdjoint,
-                gECov,
-                gradD,
-                gradR,
-                temp1,
-                temp2,
-                temp3,
-                lyapunovAdjointHelper,
-                frechetHelper,
-                scaledNegativeBlockDScratch,
-                denseAdjointScratch,
-                dLogL_dV,
-                compressedDAccumulator,
-                rotationAccumulator);
     }
 
     void accumulateCurrentCachedFlat(final OrthogonalBlockBasisCache basis,
@@ -187,39 +144,6 @@ final class OrthogonalBlockCovarianceAdjoint {
                 frechetHelper,
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
-                dLogL_dV,
-                compressedDAccumulator,
-                rotationAccumulator);
-    }
-
-    void accumulatePrepared(final OrthogonalBlockPreparedBranchBasis prepared,
-                            final double[] dLogL_dV,
-                            final OrthogonalBlockBranchGradientWorkspace workspace,
-                            final double[] compressedDAccumulator,
-                            final double[][] rotationAccumulator) {
-        accumulateCovariancePullback(
-                prepared.rMatrix,
-                prepared.rtMatrix,
-                prepared.expD,
-                prepared.blockDParams,
-                prepared.dt,
-                workspace.qMatrix,
-                workspace.stationaryCovDBasis,
-                workspace.transitionCovDBasis,
-                workspace.gV,
-                workspace.hDBasis,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.gECov,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.lyapunovAdjointHelper,
-                workspace.frechetHelper,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
                 dLogL_dV,
                 compressedDAccumulator,
                 rotationAccumulator);
@@ -258,25 +182,6 @@ final class OrthogonalBlockCovarianceAdjoint {
                 rotationAccumulator);
     }
 
-    void accumulateDiffusionGradientCurrent(final OrthogonalBlockBasisCache basis,
-                                            final double[][] dLogL_dV,
-                                            final double[] gradientAccumulator) {
-        fillSymmetricDenseMatrix(dLogL_dV, gV);
-        accumulateDiffusionGradientSymmetric(
-                basis.rMatrix,
-                basis.rtMatrix,
-                basis.expD,
-                basis.blockDParams,
-                gV,
-                hDBasis,
-                gS,
-                yAdjoint,
-                temp1,
-                temp2,
-                lyapunovAdjointHelper,
-                gradientAccumulator);
-    }
-
     void accumulateDiffusionGradientCurrentFlat(final OrthogonalBlockBasisCache basis,
                                                 final double[] dLogL_dV,
                                                 final boolean transposeAdjoint,
@@ -295,14 +200,6 @@ final class OrthogonalBlockCovarianceAdjoint {
                 temp2,
                 lyapunovAdjointHelper,
                 gradientAccumulator);
-    }
-
-    void accumulateDiffusionGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
-                                             final double[][] dLogL_dV,
-                                             final double[] gradientAccumulator,
-                                             final OrthogonalBlockBranchGradientWorkspace workspace) {
-        fillSymmetricDenseMatrix(dLogL_dV, workspace.gV);
-        accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
     }
 
     void accumulateDiffusionGradientPreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -351,42 +248,8 @@ final class OrthogonalBlockCovarianceAdjoint {
                                               final DenseMatrix64F temp3,
                                               final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
                                               final BlockDiagonalFrechetHelper frechetHelper,
-                                              final double[][] scaledNegativeBlockDScratch,
-                                              final double[][] denseAdjointScratch,
-                                              final double[] dLogL_dV,
-                                              final double[] compressedDAccumulator,
-                                              final double[][] rotationAccumulator) {
-        fillSymmetricDenseMatrixFlat(dLogL_dV, gV);
-        accumulateCovariancePullbackSymmetric(rMatrix, rtMatrix, expD, blockDParams, dt,
-                qMatrix, stationaryCovDBasis, transitionCovDBasis, gV, hDBasis, gS,
-                yAdjoint, gECov, gradD, gradR, temp1, temp2, temp3,
-                lyapunovAdjointHelper, frechetHelper,
-                scaledNegativeBlockDScratch, denseAdjointScratch, compressedDAccumulator);
-        addDenseMatrixToArray(gradR, rotationAccumulator);
-    }
-
-    private void accumulateCovariancePullback(final DenseMatrix64F rMatrix,
-                                              final DenseMatrix64F rtMatrix,
-                                              final DenseMatrix64F expD,
-                                              final double[] blockDParams,
-                                              final double dt,
-                                              final DenseMatrix64F qMatrix,
-                                              final DenseMatrix64F stationaryCovDBasis,
-                                              final DenseMatrix64F transitionCovDBasis,
-                                              final DenseMatrix64F gV,
-                                              final DenseMatrix64F hDBasis,
-                                              final DenseMatrix64F gS,
-                                              final DenseMatrix64F yAdjoint,
-                                              final DenseMatrix64F gECov,
-                                              final DenseMatrix64F gradD,
-                                              final DenseMatrix64F gradR,
-                                              final DenseMatrix64F temp1,
-                                              final DenseMatrix64F temp2,
-                                              final DenseMatrix64F temp3,
-                                              final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
-                                              final BlockDiagonalFrechetHelper frechetHelper,
-                                              final double[][] scaledNegativeBlockDScratch,
-                                              final double[][] denseAdjointScratch,
+                                              final double[] scaledNegativeBlockDScratch,
+                                              final double[] denseAdjointScratch,
                                               final double[] dLogL_dV,
                                               final double[] compressedDAccumulator,
                                               final double[] rotationAccumulator) {
@@ -419,8 +282,8 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                        final DenseMatrix64F temp3,
                                                        final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
                                                        final BlockDiagonalFrechetHelper frechetHelper,
-                                                       final double[][] scaledNegativeBlockDScratch,
-                                                       final double[][] denseAdjointScratch,
+                                                       final double[] scaledNegativeBlockDScratch,
+                                                       final double[] denseAdjointScratch,
                                                        final double[] compressedDAccumulator) {
         CommonOps.mult(rtMatrix, gV, temp1);
         CommonOps.mult(temp1, rMatrix, hDBasis);
@@ -473,8 +336,8 @@ final class OrthogonalBlockCovarianceAdjoint {
                                             final BlockDiagonalFrechetHelper frechetHelper,
                                             final DenseMatrix64F temp,
                                             final DenseMatrix64F gradD,
-                                            final double[][] scaledNegativeBlockDScratch,
-                                            final double[][] denseAdjointScratch) {
+                                            final double[] scaledNegativeBlockDScratch,
+                                            final double[] denseAdjointScratch) {
         if (denseFallbackPolicy.forceDenseAdjointExp()) {
             fillDenseAdjointExpGradient(blockDParams, dt, gECov, scaledNegativeBlockDScratch,
                     denseAdjointScratch, gradD);
@@ -533,15 +396,16 @@ final class OrthogonalBlockCovarianceAdjoint {
     private static void fillDenseAdjointExpGradient(final double[] blockDParams,
                                                     final double dt,
                                                     final DenseMatrix64F upstream,
-                                                    final double[][] scaledNegativeBlockDScratch,
-                                                    final double[][] denseAdjointScratch,
+                                                    final double[] scaledNegativeBlockDScratch,
+                                                    final double[] denseAdjointScratch,
                                                     final DenseMatrix64F gradD) {
         fillScaledNegativeBlockDMatrix(blockDParams, dt, scaledNegativeBlockDScratch, upstream.numRows);
-        copyDenseMatrixToArray(upstream, denseAdjointScratch);
-        MatrixExponentialUtils.adjointExp(
+        copyDenseMatrixToFlatArray(upstream, denseAdjointScratch);
+        MatrixExponentialUtils.adjointExpFlat(
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
-                denseAdjointScratch);
+                denseAdjointScratch,
+                upstream.numRows);
         fillDenseMatrix(denseAdjointScratch, gradD);
         transposeInPlace(gradD);
         CommonOps.scale(-dt, gradD);
@@ -579,16 +443,6 @@ final class OrthogonalBlockCovarianceAdjoint {
         }
     }
 
-    private static void fillSymmetricDenseMatrix(final double[][] source, final DenseMatrix64F out) {
-        final int dimension = out.numRows;
-        final double[] data = out.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                data[i * dimension + j] = 0.5 * (source[i][j] + source[j][i]);
-            }
-        }
-    }
-
     private static void fillSymmetricDenseMatrixFlat(final double[] source, final DenseMatrix64F out) {
         final int dimension = out.numRows;
         final double[] data = out.data;
@@ -613,16 +467,6 @@ final class OrthogonalBlockCovarianceAdjoint {
         }
     }
 
-    private static void addDenseMatrixToArray(final DenseMatrix64F src, final double[][] dest) {
-        final int dimension = dest.length;
-        final double[] data = src.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                dest[i][j] += data[i * dimension + j];
-            }
-        }
-    }
-
     private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {
         final int length = src.numRows * src.numCols;
         final double[] data = src.data;
@@ -631,45 +475,29 @@ final class OrthogonalBlockCovarianceAdjoint {
         }
     }
 
-    private static void copyDenseMatrixToArray(final DenseMatrix64F source, final double[][] out) {
-        final int dimension = source.numRows;
-        final double[] data = source.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = data[i * dimension + j];
-            }
-        }
+    private static void copyDenseMatrixToFlatArray(final DenseMatrix64F source, final double[] out) {
+        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
     }
 
     private static void fillScaledNegativeBlockDMatrix(final double[] blockDParams,
                                                        final double dt,
-                                                       final double[][] out,
+                                                       final double[] out,
                                                        final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = 0.0;
-            }
-        }
+        java.util.Arrays.fill(out, 0, dimension * dimension, 0.0);
         final int upperOffset = dimension;
         final int lowerOffset = dimension + (dimension - 1);
         for (int i = 0; i < dimension; ++i) {
-            out[i][i] = -dt * blockDParams[i];
+            out[i * dimension + i] = -dt * blockDParams[i];
             if (i < dimension - 1) {
-                out[i][i + 1] = -dt * blockDParams[upperOffset + i];
-                out[i + 1][i] = -dt * blockDParams[lowerOffset + i];
+                out[i * dimension + i + 1] = -dt * blockDParams[upperOffset + i];
+                out[(i + 1) * dimension + i] = -dt * blockDParams[lowerOffset + i];
             }
         }
     }
 
-    private static void fillDenseMatrix(final double[][] source,
+    private static void fillDenseMatrix(final double[] source,
                                         final DenseMatrix64F out) {
-        final int dimension = out.numRows;
-        final double[] data = out.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                data[i * dimension + j] = source[i][j];
-            }
-        }
+        System.arraycopy(source, 0, out.data, 0, out.numRows * out.numCols);
     }
 
     private static void symmetrize(final DenseMatrix64F matrix) {

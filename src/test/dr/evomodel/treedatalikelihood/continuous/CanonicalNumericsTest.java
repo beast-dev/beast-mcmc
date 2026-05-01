@@ -107,4 +107,35 @@ public class CanonicalNumericsTest extends TestCase {
             assertTrue("debug dump callback should be invoked before throwing", callbackInvoked[0]);
         }
     }
+
+    public void testCanonicalNumericsOptionsBuilderPreservesDefaultsAndOverrides() {
+        final CanonicalNumericsOptions defaults = CanonicalNumericsOptions.OU_TREE;
+        final CanonicalNumericsOptions copy = defaults.toBuilder().build();
+
+        assertEquals(defaults.getRelativeJitter(), copy.getRelativeJitter(), 0.0);
+        assertEquals(defaults.getAbsoluteJitter(), copy.getAbsoluteJitter(), 0.0);
+        assertEquals(defaults.getRobustInversionAttempts(), copy.getRobustInversionAttempts());
+        assertEquals(defaults.getStrictInversionAttempts(), copy.getStrictInversionAttempts());
+        assertEquals(defaults.isForceStrictSpdInversion(), copy.isForceStrictSpdInversion());
+        assertEquals(defaults.isSpdFailureDumpEnabled(), copy.isSpdFailureDumpEnabled());
+        assertEquals(defaults.isPivotFloorDebugEnabled(), copy.isPivotFloorDebugEnabled());
+
+        final CanonicalNumericsOptions custom = defaults.toBuilder()
+                .relativeJitter(2.0e-8)
+                .absoluteJitter(3.0e-8)
+                .robustInversionAttempts(4)
+                .strictInversionAttempts(5)
+                .forceStrictSpdInversion(!defaults.isForceStrictSpdInversion())
+                .spdFailureDumpEnabled(!defaults.isSpdFailureDumpEnabled())
+                .pivotFloorDebugEnabled(!defaults.isPivotFloorDebugEnabled())
+                .build();
+
+        assertEquals(2.0e-8, custom.getRelativeJitter(), 0.0);
+        assertEquals(3.0e-8, custom.getAbsoluteJitter(), 0.0);
+        assertEquals(4, custom.getRobustInversionAttempts());
+        assertEquals(5, custom.getStrictInversionAttempts());
+        assertEquals(!defaults.isForceStrictSpdInversion(), custom.isForceStrictSpdInversion());
+        assertEquals(!defaults.isSpdFailureDumpEnabled(), custom.isSpdFailureDumpEnabled());
+        assertEquals(!defaults.isPivotFloorDebugEnabled(), custom.isPivotFloorDebugEnabled());
+    }
 }

@@ -66,7 +66,7 @@ public final class OUGaussianBranchTransitionProvider
                 zeroMean,
                 initialCovariance,
                 OUProcessModel.defaultCovarianceGradientMethod(driftMatrix));
-        this.kernel = processModel.getRepresentation(GaussianBranchTransitionKernel.class);
+        this.kernel = processModel;
 
         this.precisionMatrix = new DenseMatrix64F(dimension, dimension);
         this.covarianceMatrix = new DenseMatrix64F(dimension, dimension);

@@ -29,9 +29,9 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         }
         this.compressedGradientDim = selection.getCompressedSelectionGradientDimension();
         this.nativeGradientScratchDim = selection.getNativeSelectionGradientScratchDimension();
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-        if (compressedGradientDim > gradient.orthogonalCompressedGradientScratch.length
-                || nativeGradientScratchDim > gradient.orthogonalNativeGradientScratch.length) {
+        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        if (compressedGradientDim > gradient.compressedGradientScratch.length
+                || nativeGradientScratchDim > gradient.nativeGradientScratch.length) {
             throw new IllegalStateException(
                     "Specialized selection scratch is too small for native gradient dimensions "
                             + compressedGradientDim + " and " + nativeGradientScratchDim + ".");
@@ -42,10 +42,10 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
     public void initialize(final BranchGradientWorkspace workspace,
                            final double[] gradA,
                            final double[] gradMu) {
-        final GradientPullbackWorkspace gradient = workspace.gradient;
-        Arrays.fill(gradient.orthogonalCompressedGradientScratch, 0, compressedGradientDim, 0.0);
-        Arrays.fill(gradient.orthogonalNativeGradientScratch, 0, nativeGradientScratchDim, 0.0);
-        Arrays.fill(gradient.orthogonalRotationGradientFlatScratch, 0.0);
+        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        Arrays.fill(gradient.compressedGradientScratch, 0, compressedGradientDim, 0.0);
+        Arrays.fill(gradient.nativeGradientScratch, 0, nativeGradientScratchDim, 0.0);
+        Arrays.fill(gradient.rotationGradientFlatScratch, 0.0);
         workspace.ensureSpecializedBranchWorkspace(selection);
     }
 
@@ -78,15 +78,15 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         final CanonicalPreparedBranchHandle prepared = inputs.getPreparedBranchHandle(activeIndex);
         final CanonicalBranchWorkspace specializedWorkspace =
                 workspace.ensureSpecializedBranchWorkspace(selection);
-        final GradientPullbackWorkspace gradient = workspace.gradient;
+        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
 
         selection.accumulateNativeGradientFromAdjointsPreparedFlat(
                 prepared,
                 processModel.getDiffusionMatrix(),
                 localAdjoints,
                 specializedWorkspace,
-                gradient.orthogonalCompressedGradientScratch,
-                gradient.orthogonalRotationGradientFlatScratch);
+                gradient.compressedGradientScratch,
+                gradient.rotationGradientFlatScratch);
 
         selection.accumulateDiffusionGradientPreparedFlat(
                 prepared,
@@ -107,24 +107,24 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                              final BranchGradientWorkspace reductionWorkspace,
                              final double[] gradA) {
         accumulateVectorInPlace(
-                reductionWorkspace.gradient.orthogonalCompressedGradientScratch,
-                worker.gradient.orthogonalCompressedGradientScratch,
+                reductionWorkspace.orthogonalGradient().compressedGradientScratch,
+                worker.orthogonalGradient().compressedGradientScratch,
                 compressedGradientDim);
         accumulateVectorInPlace(
-                reductionWorkspace.gradient.orthogonalRotationGradientFlatScratch,
-                worker.gradient.orthogonalRotationGradientFlatScratch,
-                reductionWorkspace.gradient.orthogonalRotationGradientFlatScratch.length);
+                reductionWorkspace.orthogonalGradient().rotationGradientFlatScratch,
+                worker.orthogonalGradient().rotationGradientFlatScratch,
+                reductionWorkspace.orthogonalGradient().rotationGradientFlatScratch.length);
     }
 
     @Override
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
                        final double[] gradA) {
-        final GradientPullbackWorkspace gradient = workspace.gradient;
+        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
         selection.finishNativeSelectionGradient(
-                gradient.orthogonalCompressedGradientScratch,
-                gradient.orthogonalNativeGradientScratch,
-                gradient.orthogonalRotationGradientFlatScratch,
+                gradient.compressedGradientScratch,
+                gradient.nativeGradientScratch,
+                gradient.rotationGradientFlatScratch,
                 gradA);
     }
 

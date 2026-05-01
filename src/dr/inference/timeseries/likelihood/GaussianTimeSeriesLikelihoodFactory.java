@@ -3,6 +3,7 @@ package dr.inference.timeseries.likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.timeseries.core.TimeSeriesModel;
+import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.engine.DisabledGradientEngine;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.engine.LikelihoodEngine;
@@ -22,6 +23,7 @@ import dr.inference.timeseries.engine.gaussian.StationaryMeanGradientFormula;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -61,18 +63,14 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         if (model == null) {
             throw new IllegalArgumentException("model must not be null");
         }
-        if (!(model.getLatentProcessModel() instanceof RepresentableProcess)) {
-            throw new IllegalArgumentException(
-                    "Latent process must implement RepresentableProcess: " +
-                            model.getLatentProcessModel().getClass().getName());
-        }
         if (!(model.getObservationModel() instanceof GaussianObservationModel)) {
             throw new IllegalArgumentException(
                     "Observation model must be GaussianObservationModel: " +
                             model.getObservationModel().getClass().getName());
         }
 
-        final RepresentableProcess process = (RepresentableProcess) model.getLatentProcessModel();
+        final LatentProcessModel latentProcess = model.getLatentProcessModel();
+        final RepresentableProcess process = representationFor(latentProcess);
         final GaussianObservationModel observationModel = (GaussianObservationModel) model.getObservationModel();
 
         final LikelihoodEngine likelihoodEngine = GaussianLikelihoodEngineFactory.createForwardEngine(
@@ -81,11 +79,21 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                 model.getTimeGrid(),
                 forwardMode);
         final GradientEngine gradientEngine = createGradientEngine(
-                process, observationModel, model, smootherMode, gradientMode);
+                latentProcess, process, observationModel, model, smootherMode, gradientMode);
         return new TimeSeriesLikelihood(name, model, likelihoodEngine, gradientEngine);
     }
 
-    private static GradientEngine createGradientEngine(final RepresentableProcess process,
+    private static RepresentableProcess representationFor(final LatentProcessModel latentProcess) {
+        if (latentProcess instanceof RepresentableProcess) {
+            return (RepresentableProcess) latentProcess;
+        }
+        throw new IllegalArgumentException(
+                "Latent process must be representable for time-series inference: "
+                        + latentProcess.getClass().getName());
+    }
+
+    private static GradientEngine createGradientEngine(final LatentProcessModel latentProcess,
+                                                       final RepresentableProcess process,
                                                        final GaussianObservationModel observationModel,
                                                        final TimeSeriesModel model,
                                                        final GaussianSmootherComputationMode smootherMode,
@@ -97,38 +105,41 @@ public final class GaussianTimeSeriesLikelihoodFactory {
             case DISABLED:
                 return new DisabledGradientEngine();
             case EXPECTATION_ANALYTICAL:
-                return createAnalyticalGradientEngine(process, observationModel, model,
+                return createAnalyticalGradientEngine(latentProcess, process, observationModel, model,
                         GaussianSmootherComputationMode.EXPECTATION);
             case CANONICAL_ANALYTICAL:
-                return createAnalyticalGradientEngine(process, observationModel, model, smootherMode);
+                return createAnalyticalGradientEngine(latentProcess, process, observationModel, model, smootherMode);
             default:
                 throw new IllegalArgumentException("Unsupported gradient mode: " + gradientMode);
         }
     }
 
-    private static GradientEngine createAnalyticalGradientEngine(final RepresentableProcess process,
+    private static GradientEngine createAnalyticalGradientEngine(final LatentProcessModel latentProcess,
+                                                                 final RepresentableProcess process,
                                                                  final GaussianObservationModel observationModel,
                                                                  final TimeSeriesModel model,
                                                                  final GaussianSmootherComputationMode smootherMode) {
-        if (process instanceof OUProcessModel) {
+        if (latentProcess instanceof OUTimeSeriesProcessAdapter) {
+            final OUProcessModel ouProcess = ((OUTimeSeriesProcessAdapter) latentProcess).getProcessModel();
             return buildAnalyticalEngineForOu(
-                    (OUProcessModel) process,
+                    ouProcess,
                     createSmoother(process, observationModel, model, smootherMode),
-                    ((OUProcessModel) process).getDriftMatrix(),
-                    ((OUProcessModel) process).getDiffusionMatrix(),
-                    ((OUProcessModel) process).getStationaryMeanParameter(),
-                    ((OUProcessModel) process).getInitialCovarianceParameter(),
-                    ((OUProcessModel) process).getStateDimension());
+                    ouProcess.getDriftMatrix(),
+                    ouProcess.getDiffusionMatrix(),
+                    ouProcess.getStationaryMeanParameter(),
+                    ouProcess.getInitialCovarianceParameter(),
+                    ouProcess.getStateDimension());
         }
-        if (process instanceof EulerOUProcessModel) {
+        if (latentProcess instanceof EulerOUProcessModel) {
+            final EulerOUProcessModel eulerProcess = (EulerOUProcessModel) latentProcess;
             return buildAnalyticalEngineForOu(
                     null,
                     createSmoother(process, observationModel, model, smootherMode),
-                    ((EulerOUProcessModel) process).getDriftMatrix(),
-                    ((EulerOUProcessModel) process).getDiffusionMatrix(),
-                    ((EulerOUProcessModel) process).getStationaryMeanParameter(),
-                    ((EulerOUProcessModel) process).getInitialCovarianceParameter(),
-                    ((EulerOUProcessModel) process).getStateDimension());
+                    eulerProcess.getDriftMatrix(),
+                    eulerProcess.getDiffusionMatrix(),
+                    eulerProcess.getStationaryMeanParameter(),
+                    eulerProcess.getInitialCovarianceParameter(),
+                    eulerProcess.getStateDimension());
         }
 
         throw new IllegalArgumentException(

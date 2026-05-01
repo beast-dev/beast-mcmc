@@ -61,8 +61,7 @@ public class GeneralOUTreeSimulatorTest extends TestCase {
                 diffusionCovariance,
                 optimum,
                 zeroInitialCovariance);
-        final GaussianBranchTransitionKernel kernel =
-                processModel.getRepresentation(GaussianBranchTransitionKernel.class);
+        final GaussianBranchTransitionKernel kernel = processModel;
 
         final double[][] transitionMatrix = new double[2][2];
         final double[] transitionOffset = new double[2];

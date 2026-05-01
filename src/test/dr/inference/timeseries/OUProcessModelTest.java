@@ -1,5 +1,13 @@
 package test.dr.inference.timeseries;
 
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
+
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -186,7 +194,7 @@ public class OUProcessModelTest extends TestCase {
         // A = 0 → expm(0) = I
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[][] F = new double[1][1];
-        makeScalar1D(0.0, 1.0, 0.0, 1.0).getTransitionMatrix(0, 1, grid, F);
+        getTransitionMatrix(makeScalar1D(0.0, 1.0, 0.0, 1.0), 0, 1, grid, F);
         assertEquals(1.0, F[0][0], TOL);
     }
 
@@ -194,7 +202,7 @@ public class OUProcessModelTest extends TestCase {
         // a = 2, dt = 0.5  →  F = exp(-1)
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 0.5);
         double[][] F = new double[1][1];
-        makeScalar1D(2.0, 1.0, 0.0, 1.0).getTransitionMatrix(0, 1, grid, F);
+        getTransitionMatrix(makeScalar1D(2.0, 1.0, 0.0, 1.0), 0, 1, grid, F);
         assertEquals(Math.exp(-1.0), F[0][0], EXACT_TOL);
     }
 
@@ -202,7 +210,7 @@ public class OUProcessModelTest extends TestCase {
         // A = diag(1, 2), dt = 1  →  F = diag(exp(-1), exp(-2))
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[][] F = new double[2][2];
-        make2D(1.0, 2.0, 1.0, 1.0, 0.0, 1.0).getTransitionMatrix(0, 1, grid, F);
+        getTransitionMatrix(make2D(1.0, 2.0, 1.0, 1.0, 0.0, 1.0), 0, 1, grid, F);
         assertEquals(Math.exp(-1.0), F[0][0], EXACT_TOL);
         assertEquals(Math.exp(-2.0), F[1][1], EXACT_TOL);
         assertEquals(0.0, F[0][1], EXACT_TOL);
@@ -213,7 +221,7 @@ public class OUProcessModelTest extends TestCase {
         // a = 1, dt = 0.25  →  F = exp(-0.25)
         TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.25);
         double[][] F = new double[1][1];
-        makeScalar1D(1.0, 1.0, 0.0, 1.0).getTransitionMatrix(1, 2, grid, F);
+        getTransitionMatrix(makeScalar1D(1.0, 1.0, 0.0, 1.0), 1, 2, grid, F);
         assertEquals(Math.exp(-0.25), F[0][0], EXACT_TOL);
     }
 
@@ -223,7 +231,7 @@ public class OUProcessModelTest extends TestCase {
         // mu = 0 → b = 0 regardless of A
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[] offset = new double[1];
-        makeScalar1D(2.0, 1.0, 0.0, 1.0).getTransitionOffset(0, 1, grid, offset);
+        getTransitionOffset(makeScalar1D(2.0, 1.0, 0.0, 1.0), 0, 1, grid, offset);
         assertEquals(0.0, offset[0], EXACT_TOL);
     }
 
@@ -231,7 +239,7 @@ public class OUProcessModelTest extends TestCase {
         // A = 0 → F = I → b = (I - I) mu = 0
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[] offset = new double[1];
-        makeScalar1D(0.0, 1.0, 5.0, 1.0).getTransitionOffset(0, 1, grid, offset);
+        getTransitionOffset(makeScalar1D(0.0, 1.0, 5.0, 1.0), 0, 1, grid, offset);
         assertEquals(0.0, offset[0], EXACT_TOL);
     }
 
@@ -239,7 +247,7 @@ public class OUProcessModelTest extends TestCase {
         // a = 2, mu = 3, dt = 0.5  →  b = (1 - exp(-1)) * 3
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 0.5);
         double[] offset = new double[1];
-        makeScalar1D(2.0, 1.0, 3.0, 1.0).getTransitionOffset(0, 1, grid, offset);
+        getTransitionOffset(makeScalar1D(2.0, 1.0, 3.0, 1.0), 0, 1, grid, offset);
         assertEquals(3.0 * (1.0 - Math.exp(-1.0)), offset[0], EXACT_TOL);
     }
 
@@ -249,7 +257,7 @@ public class OUProcessModelTest extends TestCase {
         // A = 0 → V = Q * dt  (exact integral reduces to Euler)
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 2.0);
         double[][] Qt = new double[1][1];
-        makeScalar1D(0.0, 3.0, 0.0, 1.0).getTransitionCovariance(0, 1, grid, Qt);
+        getTransitionCovariance(makeScalar1D(0.0, 3.0, 0.0, 1.0), 0, 1, grid, Qt);
         assertEquals(6.0, Qt[0][0], EXACT_TOL);
     }
 
@@ -257,7 +265,7 @@ public class OUProcessModelTest extends TestCase {
         // a = 1, q = 2, dt = 1  →  V = (q/2a)(1 - exp(-2a dt)) = 1 * (1 - exp(-2))
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[][] Qt = new double[1][1];
-        makeScalar1D(1.0, 2.0, 0.0, 1.0).getTransitionCovariance(0, 1, grid, Qt);
+        getTransitionCovariance(makeScalar1D(1.0, 2.0, 0.0, 1.0), 0, 1, grid, Qt);
         final double expected = (2.0 / 2.0) * (1.0 - Math.exp(-2.0));
         assertEquals(expected, Qt[0][0], EXACT_TOL);
     }
@@ -266,31 +274,32 @@ public class OUProcessModelTest extends TestCase {
         // A = 0 → V = Q * dt
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 0.5);
         double[][] Qt = new double[2][2];
-        make2D(0, 0, 2.0, 4.0, 0, 1.0).getTransitionCovariance(0, 1, grid, Qt);
+        getTransitionCovariance(make2D(0, 0, 2.0, 4.0, 0, 1.0), 0, 1, grid, Qt);
         assertEquals(1.0, Qt[0][0], EXACT_TOL);
         assertEquals(2.0, Qt[1][1], EXACT_TOL);
         assertEquals(0.0, Qt[0][1], EXACT_TOL);
         assertEquals(0.0, Qt[1][0], EXACT_TOL);
     }
 
-    // ── Representation bridge ────────────────────────────────────────────────────
+    // ── Time-series adapter bridge ────────────────────────────────────────────────
 
     public void testSupportsGaussianRepresentation() {
-        assertTrue(makeScalar1D(0, 1, 0, 1)
-                .supportsRepresentation(GaussianTransitionRepresentation.class));
+        assertTrue(supportsRepresentation(
+                makeScalar1D(0, 1, 0, 1),
+                GaussianTransitionRepresentation.class));
     }
 
     public void testGetRepresentationReturnsTransitionRepresentation() {
         OUProcessModel ou = makeScalar1D(0, 1, 0, 1);
         GaussianTransitionRepresentation representation =
-                ou.getRepresentation(GaussianTransitionRepresentation.class);
+                representation(ou, GaussianTransitionRepresentation.class);
         assertNotNull(representation);
         assertFalse(representation == ou);
     }
 
     public void testGetRepresentationUnsupportedThrows() {
         try {
-            makeScalar1D(0, 1, 0, 1).getRepresentation(String.class);
+            representation(makeScalar1D(0, 1, 0, 1), String.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) { /* expected */ }
     }
@@ -337,7 +346,7 @@ public class OUProcessModelTest extends TestCase {
         // F = I - dt * A = 1 - 0.5 * 2 = 0
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 0.5);
         double[][] F = new double[1][1];
-        makeEulerScalar1D(2.0, 1.0, 0.0, 1.0).getTransitionMatrix(0, 1, grid, F);
+        getTransitionMatrix(makeEulerScalar1D(2.0, 1.0, 0.0, 1.0), 0, 1, grid, F);
         assertEquals(0.0, F[0][0], TOL);
     }
 
@@ -345,7 +354,7 @@ public class OUProcessModelTest extends TestCase {
         // F = I - dt * diag(1, 2) = diag(0, -1)
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 1.0);
         double[][] F = new double[2][2];
-        makeEuler2D(1.0, 2.0, 1.0, 1.0, 0.0, 1.0).getTransitionMatrix(0, 1, grid, F);
+        getTransitionMatrix(makeEuler2D(1.0, 2.0, 1.0, 1.0, 0.0, 1.0), 0, 1, grid, F);
         assertEquals(0.0, F[0][0], TOL);
         assertEquals(-1.0, F[1][1], TOL);
         assertEquals(0.0, F[0][1], TOL);
@@ -356,7 +365,7 @@ public class OUProcessModelTest extends TestCase {
         // f = dt * A * mu = 0.5 * 2 * 3 = 3
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 0.5);
         double[] offset = new double[1];
-        makeEulerScalar1D(2.0, 1.0, 3.0, 1.0).getTransitionOffset(0, 1, grid, offset);
+        getTransitionOffset(makeEulerScalar1D(2.0, 1.0, 3.0, 1.0), 0, 1, grid, offset);
         assertEquals(3.0, offset[0], TOL);
     }
 
@@ -364,7 +373,7 @@ public class OUProcessModelTest extends TestCase {
         // V = dt * Q = 2 * 3 = 6
         TimeGrid grid = new UniformTimeGrid(2, 0.0, 2.0);
         double[][] Qt = new double[1][1];
-        makeEulerScalar1D(0.0, 3.0, 0.0, 1.0).getTransitionCovariance(0, 1, grid, Qt);
+        getTransitionCovariance(makeEulerScalar1D(0.0, 3.0, 0.0, 1.0), 0, 1, grid, Qt);
         assertEquals(6.0, Qt[0][0], TOL);
     }
 

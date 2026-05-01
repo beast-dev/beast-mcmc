@@ -108,13 +108,13 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.treeTraversal = new CanonicalTreeTraversal(tree, dim, tipProjector);
         this.branchContributionAssembler = new CanonicalBranchContributionAssembler(tree, dim, stateStore);
         this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
-        this.mainWorkspace = new BranchGradientWorkspace(dim);
+        this.mainWorkspace = WorkspaceFactory.branchGradientWorkspace(dim);
         this.branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
         final int branchGradientWorkspaceCount =
                 branchGradientTaskPool.getNumThreads() <= 1 ? 1 : branchGradientTaskPool.getNumThreads() + 1;
         this.branchGradientWorkspaces = new BranchGradientWorkspace[branchGradientWorkspaceCount];
         for (int i = 0; i < branchGradientWorkspaces.length; ++i) {
-            branchGradientWorkspaces[i] = new BranchGradientWorkspace(dim);
+            branchGradientWorkspaces[i] = WorkspaceFactory.branchGradientWorkspace(dim);
         }
         this.branchAdjointPreparer = new CanonicalBranchAdjointPreparer(
                 tree,

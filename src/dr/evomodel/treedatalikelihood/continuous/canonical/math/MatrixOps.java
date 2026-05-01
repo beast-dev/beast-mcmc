@@ -5,6 +5,8 @@ import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
+
 /**
  * Stateless flat row-major matrix operations for the canonical diffusion framework.
  *
@@ -73,6 +75,21 @@ public final class MatrixOps {
         matMul(A, B, C, dim, dim, dim);
     }
 
+    /** {@code C = A B^T}, all {@code dim×dim} square. */
+    public static void matMulTransposedRight(double[] A, double[] B, double[] C, int dim) {
+        for (int i = 0; i < dim; i++) {
+            final int iOff = i * dim;
+            for (int j = 0; j < dim; j++) {
+                double sum = 0.0;
+                final int jOff = j * dim;
+                for (int k = 0; k < dim; k++) {
+                    sum += A[iOff + k] * B[jOff + k];
+                }
+                C[iOff + j] = sum;
+            }
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Misc flat arithmetic
     // -----------------------------------------------------------------------
@@ -106,6 +123,16 @@ public final class MatrixOps {
     /** {@code diff[i] = a[i] - b[i]}. */
     public static void subtract(double[] diff, double[] a, double[] b, int len) {
         for (int i = 0; i < len; i++) diff[i] = a[i] - b[i];
+    }
+
+    /** {@code out[i,j] = left[i] * right[j]}. */
+    public static void outerProduct(double[] left, double[] right, double[] out, int dim) {
+        for (int i = 0; i < dim; i++) {
+            final int row = i * dim;
+            for (int j = 0; j < dim; j++) {
+                out[row + j] = left[i] * right[j];
+            }
+        }
     }
 
     /**
@@ -215,6 +242,77 @@ public final class MatrixOps {
         }
         symmetrize(out, dim);
         return logDet;
+    }
+
+    /**
+     * Inverts the leading compact {@code dim x dim} row-major SPD block of {@code src}
+     * into {@code dst}. The leading block of {@code src} is overwritten with the
+     * Cholesky factor. This allocation-free variant exists for reduced missing-data
+     * matrices whose active dimension changes inside a larger scratch buffer.
+     *
+     * @return log determinant of the original compact SPD block
+     */
+    public static double invertSPDCompact(final double[] src,
+                                          final double[] dst,
+                                          final int dim,
+                                          final double[] forwardWork,
+                                          final double[] backwardWork) {
+        if (forwardWork.length < dim || backwardWork.length < dim) {
+            throw new IllegalArgumentException("workspace vectors are too small for compact inversion");
+        }
+        if (src.length < dim * dim || dst.length < dim * dim) {
+            throw new IllegalArgumentException("matrix buffers are too small for compact inversion");
+        }
+
+        double logDeterminant = 0.0;
+        for (int row = 0; row < dim; ++row) {
+            final int rowOffset = row * dim;
+            for (int col = 0; col <= row; ++col) {
+                double sum = src[rowOffset + col];
+                final int colOffset = col * dim;
+                for (int k = 0; k < col; ++k) {
+                    sum -= src[rowOffset + k] * src[colOffset + k];
+                }
+                if (row == col) {
+                    if (!(sum > 0.0) || Double.isNaN(sum)) {
+                        throw new IllegalArgumentException("Matrix is not symmetric positive definite.");
+                    }
+                    final double diagonal = Math.sqrt(sum);
+                    src[rowOffset + row] = diagonal;
+                    logDeterminant += 2.0 * Math.log(diagonal);
+                } else {
+                    src[rowOffset + col] = sum / src[colOffset + col];
+                }
+            }
+            Arrays.fill(src, rowOffset + row + 1, rowOffset + dim, 0.0);
+        }
+
+        Arrays.fill(dst, 0, dim * dim, 0.0);
+        for (int column = 0; column < dim; ++column) {
+            for (int row = 0; row < dim; ++row) {
+                double sum = row == column ? 1.0 : 0.0;
+                final int rowOffset = row * dim;
+                for (int k = 0; k < row; ++k) {
+                    sum -= src[rowOffset + k] * forwardWork[k];
+                }
+                forwardWork[row] = sum / src[rowOffset + row];
+            }
+
+            for (int row = dim - 1; row >= 0; --row) {
+                double sum = forwardWork[row];
+                for (int k = row + 1; k < dim; ++k) {
+                    sum -= src[k * dim + row] * backwardWork[k];
+                }
+                backwardWork[row] = sum / src[row * dim + row];
+            }
+
+            for (int row = 0; row < dim; ++row) {
+                dst[row * dim + column] = backwardWork[row];
+            }
+        }
+
+        symmetrize(dst, dim);
+        return logDeterminant;
     }
 
     // -----------------------------------------------------------------------

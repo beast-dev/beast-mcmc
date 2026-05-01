@@ -8,6 +8,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.gaussian.BlockDiagonalSelectionMatrixParameterization;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
@@ -64,7 +65,8 @@ public class CompareFastBlockPieces {
         MatrixParameter Y = makeMatrix("Y", new double[][]{y1, y2});
         GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = new OUTimeSeriesProcessAdapter(process)
+                .getRepresentation(GaussianTransitionRepresentation.class);
         KalmanSmootherEngine smoother = new KalmanSmootherEngine(rep, obs, grid);
         AnalyticalKalmanGradientEngine analytical = new AnalyticalKalmanGradientEngine(
                 smoother, new SelectionMatrixGradientFormula(process.getDriftMatrix(), 2));
@@ -138,8 +140,7 @@ public class CompareFastBlockPieces {
 
             parameterization.accumulateNativeGradientFromTransition(
                     dt, mu, dLogL_dF, dLogL_df, fastTransitionD, fastTransitionR);
-            model.process.accumulateSelectionGradient(t, t + 1, model.smoother.getTimeGrid(),
-                    dLogL_dF, dLogL_df, denseTransitionA);
+            model.process.accumulateSelectionGradient(dt, dLogL_dF, dLogL_df, denseTransitionA);
 
             KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
             KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(F_t, crossCov, temp);
@@ -173,8 +174,7 @@ public class CompareFastBlockPieces {
 
             parameterization.accumulateNativeGradientFromCovarianceStationary(
                     model.process.getDiffusionMatrix(), dt, dLogL_dV, fastCovarianceD, fastCovarianceR);
-            model.process.accumulateSelectionGradientFromCovariance(t, t + 1, model.smoother.getTimeGrid(),
-                    dLogL_dV, denseCovarianceA);
+            model.process.accumulateSelectionGradientFromCovariance(dt, dLogL_dV, denseCovarianceA);
         }
 
         final double[] denseTransitionNative = pullBack(blockParam, denseTransitionA);

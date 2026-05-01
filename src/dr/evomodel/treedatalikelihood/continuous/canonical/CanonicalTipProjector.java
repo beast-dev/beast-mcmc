@@ -29,7 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.MatrixUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
@@ -92,7 +92,7 @@ final class CanonicalTipProjector {
             }
         }
 
-        final double logDetVariance = MatrixUtils.invertSymmetricPositiveDefiniteCompact(
+        final double logDetVariance = MatrixOps.invertSPDCompact(
                 varianceFlatScratch,
                 precisionFlatScratch,
                 observedCount,
@@ -138,7 +138,7 @@ final class CanonicalTipProjector {
                 out.precision[i * dimension + j] = precision;
             }
         }
-        symmetrizeFlatSquare(out.precision);
+        MatrixOps.symmetrize(out.precision, dimension);
 
         double quadratic = 0.0;
         for (int observed = 0; observed < observedCount; ++observed) {
@@ -161,13 +161,4 @@ final class CanonicalTipProjector {
         return observedCount;
     }
 
-    private void symmetrizeFlatSquare(final double[] matrix) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = i + 1; j < dimension; ++j) {
-                final double avg = 0.5 * (matrix[i * dimension + j] + matrix[j * dimension + i]);
-                matrix[i * dimension + j] = avg;
-                matrix[j * dimension + i] = avg;
-            }
-        }
-    }
 }

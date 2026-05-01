@@ -32,6 +32,8 @@ public final class BlockDiagonalFrechetHelper {
     private final double[] cachedPlanParams;
     private final BlockDiagonalFrechetExactPlan.Plan cachedPlan;
     private double cachedPlanT;
+    private int cachedPlanParameterHash;
+    private long cachedPlanParameterVersion;
     private boolean cachedPlanValid;
 
     public BlockDiagonalFrechetHelper(final BlockDiagonalExpSolver.BlockStructure structure) {
@@ -44,6 +46,8 @@ public final class BlockDiagonalFrechetHelper {
         this.cachedPlanParams = new double[3 * dim - 2];
         this.cachedPlan = BlockDiagonalFrechetExactPlan.createPlan(structure);
         this.cachedPlanT = Double.NaN;
+        this.cachedPlanParameterHash = 0;
+        this.cachedPlanParameterVersion = 0L;
         this.cachedPlanValid = false;
     }
 
@@ -201,11 +205,19 @@ public final class BlockDiagonalFrechetHelper {
 
     private BlockDiagonalFrechetExactPlan.Plan getOrBuildPlan(final double[] blockDParams,
                                                               final double t) {
+        final int parameterHash = Arrays.hashCode(blockDParams);
+        final boolean parametersChanged = !cachedPlanValid
+                || parameterHash != cachedPlanParameterHash
+                || !Arrays.equals(blockDParams, cachedPlanParams);
         if (!cachedPlanValid
                 || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT)
-                || !Arrays.equals(blockDParams, cachedPlanParams)) {
+                || parametersChanged) {
             cachedPlan.rebuild(blockDParams, t);
-            System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
+            if (parametersChanged) {
+                System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
+                cachedPlanParameterHash = parameterHash;
+                cachedPlanParameterVersion++;
+            }
             cachedPlanT = t;
             cachedPlanValid = true;
         }

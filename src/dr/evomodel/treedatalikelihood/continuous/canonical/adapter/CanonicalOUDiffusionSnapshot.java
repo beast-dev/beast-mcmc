@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
 
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.MatrixUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameter;
 import org.ejml.data.DenseMatrix64F;
 
@@ -39,7 +39,7 @@ final class CanonicalOUDiffusionSnapshot {
                 precisionData[i * dimension + j] = precisionMatrix[i][j];
             }
         }
-        MatrixUtils.invertSymmetricPositiveDefiniteCompact(
+        MatrixOps.invertSPDCompact(
                 precision.data,
                 covariance.data,
                 dimension,

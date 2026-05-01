@@ -1,5 +1,13 @@
 package test.dr.inference.timeseries;
 
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
+
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
@@ -82,7 +90,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
         GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, timeStep);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         return new KalmanLikelihoodEngine(rep, obs, grid);
     }
 
@@ -214,7 +222,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
         GaussianObservationModel obs = new GaussianObservationModel("obs", obsDim, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 1.0);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         KalmanLikelihoodEngine engine = new KalmanLikelihoodEngine(rep, obs, grid);
 
         double ll = engine.getLogLikelihood();
@@ -244,7 +252,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
         GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 0.5);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         KalmanLikelihoodEngine engine = new KalmanLikelihoodEngine(rep, obs, grid);
 
         double ll = engine.getLogLikelihood();

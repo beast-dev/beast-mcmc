@@ -143,7 +143,7 @@ public final class GeneralOUTreeSimulator {
                 diffusionCovarianceSnapshot,
                 optimumMean,
                 unusedInitialCovariance);
-        this.kernel = processModel.getRepresentation(GaussianBranchTransitionKernel.class);
+        this.kernel = processModel;
         this.precisionMatrix = new DenseMatrix64F(dimension, dimension);
         this.covarianceMatrix = new DenseMatrix64F(dimension, dimension);
     }
@@ -190,7 +190,7 @@ public final class GeneralOUTreeSimulator {
                 diffusionCovarianceSnapshot,
                 optimumMean,
                 unusedInitialCovariance);
-        this.kernel = processModel.getRepresentation(GaussianBranchTransitionKernel.class);
+        this.kernel = processModel;
         this.precisionMatrix = new DenseMatrix64F(dimension, dimension);
         this.covarianceMatrix = new DenseMatrix64F(dimension, dimension);
     }

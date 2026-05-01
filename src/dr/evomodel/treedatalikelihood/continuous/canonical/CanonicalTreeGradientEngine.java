@@ -31,9 +31,8 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.util.TaskPool;
 
 import java.util.Arrays;
@@ -52,6 +51,7 @@ final class CanonicalTreeGradientEngine {
     private final TaskPool taskPool;
     private final BranchGradientWorkspace mainWorkspace;
     private final BranchGradientWorkspace[] workspaces;
+    private final ChunkSizeStrategy chunkSizeStrategy;
 
     CanonicalTreeGradientEngine(
             final int dimension,
@@ -64,6 +64,8 @@ final class CanonicalTreeGradientEngine {
         this.taskPool = taskPool;
         this.mainWorkspace = mainWorkspace;
         this.workspaces = workspaces;
+        this.chunkSizeStrategy =
+                new DimensionWeightedChunkSizeStrategy(dimension, Math.max(1, workspaces.length));
     }
 
     void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
@@ -174,36 +176,7 @@ final class CanonicalTreeGradientEngine {
     }
 
     private int branchGradientJointChunkSize(final int taskLimit) {
-        return branchGradientChunkSize(taskLimit, dimensionWeightedTargetChunksPerWorker(), dimensionWeightedMaxChunkSize());
-    }
-
-    private int branchGradientChunkSize(final int taskLimit,
-                                        final int targetChunksPerWorker,
-                                        final int maxChunkSize) {
-        final int workerCount = Math.max(1, workspaces.length);
-        final int suggested =
-                (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
-        return Math.max(1, Math.min(maxChunkSize, suggested));
-    }
-
-    private int dimensionWeightedTargetChunksPerWorker() {
-        if (dimension >= 16) {
-            return 1;
-        }
-        if (dimension >= 8) {
-            return 2;
-        }
-        return 4;
-    }
-
-    private int dimensionWeightedMaxChunkSize() {
-        if (dimension >= 16) {
-            return 4;
-        }
-        if (dimension >= 8) {
-            return 8;
-        }
-        return 32;
+        return chunkSizeStrategy.chunkSize(taskLimit);
     }
 
     private void accumulateRootDiffusionGradient(final CanonicalGaussianState rootPreOrder,
@@ -216,10 +189,10 @@ final class CanonicalTreeGradientEngine {
 
         CanonicalGaussianMessageOps.combineStates(rootPreOrder, rootPostOrder, adjoint.combinedState);
 
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                adjoint.combinedState, adjoint.mean, adjoint.covariance);
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                rootPreOrder, adjoint.mean2, gradient.covariance2);
+        adjoint.fillMomentsFromCanonical(
+                adjoint.combinedState, adjoint.mean, adjoint.covariance, dimension);
+        adjoint.fillMomentsFromCanonical(
+                rootPreOrder, adjoint.mean2, gradient.covariance2, dimension);
 
         final double[] priorPrecision = rootPreOrder.precision;
         for (int i = 0; i < dimension; ++i) {
@@ -231,9 +204,9 @@ final class CanonicalTreeGradientEngine {
             }
         }
 
-        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+        MatrixOps.matMul(
                 priorPrecision, gradient.covarianceAdjointFlat, gradient.matrixProductFlat, dimension);
-        GaussianMatrixOps.multiplyMatrixMatrixFlat(
+        MatrixOps.matMul(
                 gradient.matrixProductFlat, priorPrecision, gradient.covarianceAdjointFlat, dimension);
         for (int i = 0; i < dimension; ++i) {
             final int iOff = i * dimension;

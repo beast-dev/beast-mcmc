@@ -1,5 +1,13 @@
 package test.dr.inference.timeseries;
 
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
+
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
@@ -95,7 +103,7 @@ public class KalmanGradientEngineTest extends TestCase {
         GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         KalmanLikelihoodEngine likelihoodEngine = new KalmanLikelihoodEngine(rep, obs, grid);
         KalmanGradientEngine gradientEngine = new KalmanGradientEngine(likelihoodEngine, process, obs);
 

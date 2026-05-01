@@ -31,7 +31,8 @@ import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Canonical-form adapter over {@link ConjugateRootTraitPrior}.
@@ -49,18 +50,23 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
 
     private final double[] scratchMean;
     private final double[][] scratchCovariance;
+    private final double[] scratchCovarianceFlat;
     private final CanonicalGaussianState scratchPriorState;
     private final CanonicalGaussianState scratchCombinedState;
     private final CanonicalGaussianMessageOps.Workspace workspace;
+    private final GaussianFormConverter.Workspace converterWorkspace;
 
     public CanonicalConjugateRootPriorAdapter(final ConjugateRootTraitPrior prior, final int dim) {
         this.prior = prior;
         this.dim = dim;
         this.scratchMean = new double[dim];
         this.scratchCovariance = new double[dim][dim];
+        this.scratchCovarianceFlat = new double[dim * dim];
         this.scratchPriorState = new CanonicalGaussianState(dim);
         this.scratchCombinedState = new CanonicalGaussianState(dim);
         this.workspace = new CanonicalGaussianMessageOps.Workspace(dim);
+        this.converterWorkspace = new GaussianFormConverter.Workspace();
+        this.converterWorkspace.ensureDim(dim);
     }
 
     @Override
@@ -85,7 +91,13 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
             }
             scratchMean[i] = mean[i];
         }
-        CanonicalGaussianUtils.fillStateFromMoments(scratchMean, scaledCovariance, out);
+        MatrixOps.toFlat(scaledCovariance, scratchCovarianceFlat, dim);
+        GaussianFormConverter.fillStateFromMoments(
+                scratchMean,
+                scratchCovarianceFlat,
+                dim,
+                converterWorkspace,
+                out);
     }
 
     @Override
@@ -138,7 +150,13 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
 
         fillRootPriorState(traitCovariance, scratchPriorState);
         CanonicalGaussianMessageOps.combineStates(rootMessage, scratchPriorState, scratchCombinedState);
-        CanonicalGaussianUtils.fillMomentsFromCanonical(scratchCombinedState, scratchMean, scratchCovariance);
+        GaussianFormConverter.fillMomentsFromState(
+                scratchCombinedState,
+                scratchMean,
+                scratchCovarianceFlat,
+                dim,
+                converterWorkspace);
+        MatrixOps.fromFlat(scratchCovarianceFlat, scratchCovariance, dim);
 
         final double[] mean = prior.getMean();
         for (int i = 0; i < dim; i++) {

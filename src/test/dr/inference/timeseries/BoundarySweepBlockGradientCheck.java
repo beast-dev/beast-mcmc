@@ -1,5 +1,13 @@
 package test.dr.inference.timeseries;
 
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
+import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
+
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -71,7 +79,7 @@ public class BoundarySweepBlockGradientCheck {
         MatrixParameter Y = makeMatrix("Y", new double[][]{y1, y2});
         GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
-        GaussianTransitionRepresentation rep = process.getRepresentation(GaussianTransitionRepresentation.class);
+        GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         KalmanSmootherEngine smoother = new KalmanSmootherEngine(rep, obs, grid);
         AnalyticalKalmanGradientEngine analytical = new AnalyticalKalmanGradientEngine(
                 smoother, new SelectionMatrixGradientFormula(process.getDriftMatrix(), 2));

@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Direct pullback from canonical transition blocks to moment-form transition
@@ -156,7 +156,7 @@ public final class CanonicalTransitionAdjointUtils {
         multiplyFlat(precision, gP, temp1, d);
         multiplyFlat(temp1, precision, out.dLogL_dOmega, d);
         scaleInPlaceFlat(out.dLogL_dOmega, -1.0, d2);
-        GaussianMatrixOps.symmetrizeFlat(out.dLogL_dOmega, d);
+        MatrixOps.symmetrize(out.dLogL_dOmega, d);
     }
 
     private static void ensureWorkspaceDimension(final Workspace workspace, final int dimension) {
@@ -202,55 +202,35 @@ public final class CanonicalTransitionAdjointUtils {
                 out[i * d + j] = sum;
             }
         }
-        GaussianMatrixOps.symmetrizeFlat(out, d);
+        MatrixOps.symmetrize(out, d);
     }
 
     private static void multiplyFlat(final double[] left, final double[] right,
                                      final double[] out, final int d) {
-        GaussianMatrixOps.multiplyMatrixMatrixFlat(left, right, out, d);
+        MatrixOps.matMul(left, right, out, d);
     }
 
     private static void multiplyMatVecFlat(final double[] matrix, final double[] vector,
                                            final double[] out, final int d) {
-        GaussianMatrixOps.multiplyMatrixVectorFlat(matrix, vector, out, d);
+        MatrixOps.matVec(matrix, vector, out, d);
     }
 
     private static void multiplyTransposedRightFlat(final double[] left, final double[] right,
                                                     final double[] out, final int d) {
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < d; ++k) {
-                    sum += left[iOff + k] * right[j * d + k];
-                }
-                out[iOff + j] = sum;
-            }
-        }
+        MatrixOps.matMulTransposedRight(left, right, out, d);
     }
 
     private static void outerProductFlat(final double[] left, final double[] right,
                                          final double[] out, final int d) {
-        for (int i = 0; i < d; ++i) {
-            final int iOff = i * d;
-            for (int j = 0; j < d; ++j) {
-                out[iOff + j] = left[i] * right[j];
-            }
-        }
+        MatrixOps.outerProduct(left, right, out, d);
     }
 
     private static void transposeIntoFlat(final double[] source, final double[] out, final int d) {
-        for (int i = 0; i < d; ++i) {
-            for (int j = 0; j < d; ++j) {
-                out[j * d + i] = source[i * d + j];
-            }
-        }
+        MatrixOps.transpose(source, out, d);
     }
 
     private static void addInPlaceFlat(final double[] target, final double[] delta, final int d2) {
-        for (int k = 0; k < d2; ++k) {
-            target[k] += delta[k];
-        }
+        MatrixOps.addInPlace(target, delta, d2);
     }
 
     private static void subtractInPlaceFlat(final double[] target, final double[] delta, final int d2) {
@@ -260,8 +240,6 @@ public final class CanonicalTransitionAdjointUtils {
     }
 
     private static void scaleInPlaceFlat(final double[] matrix, final double factor, final int d2) {
-        for (int k = 0; k < d2; ++k) {
-            matrix[k] *= factor;
-        }
+        MatrixOps.scaleInPlace(matrix, factor, d2);
     }
 }

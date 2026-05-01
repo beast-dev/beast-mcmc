@@ -9,18 +9,10 @@ import dr.inference.model.Model;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.timeseries.core.LatentProcessModel;
-import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
-import dr.inference.timeseries.representation.GaussianComputationMode;
-import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
-import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
-import dr.inference.timeseries.representation.RepresentableProcess;
 
 /**
  * Multivariate Ornstein-Uhlenbeck process model with exact Gaussian transitions.
@@ -67,7 +59,7 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  * at construction time and is immutable unless explicitly overridden.
  */
 public class OUProcessModel extends AbstractModel
-        implements LatentProcessModel, RepresentableProcess,
+        implements
         GaussianBranchTransitionKernel, CanonicalGaussianBranchTransitionKernel {
     /**
      * Strategy for computing the V-path contribution of ∂logL/∂A.
@@ -84,10 +76,8 @@ public class OUProcessModel extends AbstractModel
     private final Parameter stationaryMean;
     private final MatrixParameter initialCovariance;
     private final CovarianceGradientMethod covarianceGradientMethod;
-    private final GaussianComputationMode defaultComputationMode;
     private final SelectionMatrixParameterization selectionMatrixParameterization;
     private final CanonicalOUKernel canonicalKernel;
-    private final GaussianTransitionRepresentation transitionRepresentation;
 
     /**
      * Constructs an OUProcessModel using the default covariance-adjoint strategy for the
@@ -113,18 +103,6 @@ public class OUProcessModel extends AbstractModel
                           final Parameter stationaryMean,
                           final MatrixParameter initialCovariance,
                           final CovarianceGradientMethod covarianceGradientMethod) {
-        this(name, stateDimension, driftMatrix, diffusionMatrix, stationaryMean,
-                initialCovariance, covarianceGradientMethod, GaussianComputationMode.EXPECTATION);
-    }
-
-    public OUProcessModel(final String name,
-                          final int stateDimension,
-                          final MatrixParameterInterface driftMatrix,
-                          final MatrixParameterInterface diffusionMatrix,
-                          final Parameter stationaryMean,
-                          final MatrixParameter initialCovariance,
-                          final CovarianceGradientMethod covarianceGradientMethod,
-                          final GaussianComputationMode defaultComputationMode) {
         super(name);
         if (stateDimension < 1) {
             throw new IllegalArgumentException("stateDimension must be at least 1");
@@ -144,16 +122,12 @@ public class OUProcessModel extends AbstractModel
         if (covarianceGradientMethod == null) {
             throw new IllegalArgumentException("covarianceGradientMethod must not be null");
         }
-        if (defaultComputationMode == null) {
-            throw new IllegalArgumentException("defaultComputationMode must not be null");
-        }
         this.stateDimension         = stateDimension;
         this.driftMatrix            = driftMatrix;
         this.diffusionMatrix        = diffusionMatrix;
         this.stationaryMean         = stationaryMean;
         this.initialCovariance      = initialCovariance;
         this.covarianceGradientMethod = covarianceGradientMethod;
-        this.defaultComputationMode = defaultComputationMode;
         this.selectionMatrixParameterization =
                 SelectionMatrixParameterizationFactory.create(driftMatrix);
         final DiffusionMatrixParameterization diffusionMatrixParameterization =
@@ -178,8 +152,6 @@ public class OUProcessModel extends AbstractModel
                                 copyMatrixParameter(initialCovariance, out);
                             }
                         });
-        this.transitionRepresentation =
-                new KernelBackedGaussianTransitionRepresentation(this);
 
         validateShapes();
 
@@ -246,95 +218,12 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    public GaussianComputationMode getDefaultComputationMode() {
-        return defaultComputationMode;
-    }
-
     public SelectionMatrixParameterization getSelectionMatrixParameterization() {
         return selectionMatrixParameterization;
     }
 
     public CanonicalOUKernel getCanonicalKernel() {
         return canonicalKernel;
-    }
-
-    @Override
-    public <T> boolean supportsRepresentation(final Class<T> representationClass) {
-        return representationClass.isAssignableFrom(GaussianTransitionRepresentation.class)
-                || representationClass.isAssignableFrom(GaussianBranchTransitionKernel.class)
-                || representationClass.isAssignableFrom(CanonicalGaussianBranchTransitionKernel.class);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T getRepresentation(final Class<T> representationClass) {
-        if (!supportsRepresentation(representationClass)) {
-            throw new IllegalArgumentException("Unsupported representation: " + representationClass.getName());
-        }
-        if (representationClass.isAssignableFrom(GaussianTransitionRepresentation.class)) {
-            return (T) transitionRepresentation;
-        }
-        return (T) this;
-    }
-
-    /**
-     * Backward-compatible transition accessor that delegates to the current
-     * representation API.
-     */
-    public void getTransitionMatrix(final int fromIndex,
-                                    final int toIndex,
-                                    final TimeGrid timeGrid,
-                                    final double[][] out) {
-        transitionRepresentation.getTransitionMatrix(fromIndex, toIndex, timeGrid, out);
-    }
-
-    /**
-     * Backward-compatible transition accessor that delegates to the current
-     * representation API.
-     */
-    public void getTransitionOffset(final int fromIndex,
-                                    final int toIndex,
-                                    final TimeGrid timeGrid,
-                                    final double[] out) {
-        transitionRepresentation.getTransitionOffset(fromIndex, toIndex, timeGrid, out);
-    }
-
-    /**
-     * Backward-compatible transition accessor that delegates to the current
-     * representation API.
-     */
-    public void getTransitionCovariance(final int fromIndex,
-                                        final int toIndex,
-                                        final TimeGrid timeGrid,
-                                        final double[][] out) {
-        transitionRepresentation.getTransitionCovariance(fromIndex, toIndex, timeGrid, out);
-    }
-
-    /**
-     * Backward-compatible index-based gradient hook routed through the current
-     * representation API.
-     */
-    public void accumulateSelectionGradient(final int fromIndex,
-                                            final int toIndex,
-                                            final TimeGrid timeGrid,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        transitionRepresentation.accumulateSelectionGradient(
-                fromIndex, toIndex, timeGrid, dLogL_dF, dLogL_df, gradientAccumulator);
-    }
-
-    /**
-     * Backward-compatible index-based covariance gradient hook routed through
-     * the current representation API.
-     */
-    public void accumulateSelectionGradientFromCovariance(final int fromIndex,
-                                                          final int toIndex,
-                                                          final TimeGrid timeGrid,
-                                                          final double[][] dLogL_dV,
-                                                          final double[] gradientAccumulator) {
-        transitionRepresentation.accumulateSelectionGradientFromCovariance(
-                fromIndex, toIndex, timeGrid, dLogL_dV, gradientAccumulator);
     }
 
     @Override

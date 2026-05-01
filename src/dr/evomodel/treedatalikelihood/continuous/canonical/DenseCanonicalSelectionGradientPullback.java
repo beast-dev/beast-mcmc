@@ -4,7 +4,7 @@ import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
 
@@ -17,7 +17,9 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
     @Override
     public void initialize(final BranchGradientWorkspace workspace,
                            final double[] gradA,
-                           final double[] gradMu) { }
+                           final double[] gradMu) {
+        workspace.gradient.invalidateTransitionMatrixCache();
+    }
 
     @Override
     public void clearWorkerBuffers(final BranchGradientWorkspace workspace,
@@ -38,7 +40,7 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
                                     final double[] gradA,
                                     final double[] gradQ,
                                     final double[] gradMu) {
-        final GradientPullbackWorkspace gradient = workspace.gradient;
+        final DenseGradientWorkspace gradient = workspace.denseGradient();
         final CanonicalOUKernel kernel = processModel.getCanonicalKernel();
         final double branchLength = inputs.getBranchLength(activeIndex);
         final CanonicalPreparedTransitionCapability preparedTransition =
@@ -86,10 +88,8 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
                                           final int activeIndex,
                                           final double branchLength,
                                           final BranchGradientWorkspace workspace,
-                                          final GradientPullbackWorkspace gradient) {
-        if (gradient.cachedTransitionMatrixValid
-                && Double.doubleToLongBits(gradient.cachedTransitionMatrixLength)
-                == Double.doubleToLongBits(branchLength)) {
+                                          final DenseGradientWorkspace gradient) {
+        if (gradient.hasTransitionMatrix(branchLength)) {
             return;
         }
         if (preparedTransition != null && inputs.hasPreparedBranchHandles()) {
@@ -100,8 +100,7 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
         } else {
             kernel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
         }
-        gradient.cachedTransitionMatrixLength = branchLength;
-        gradient.cachedTransitionMatrixValid = true;
+        gradient.cacheTransitionMatrix(branchLength);
     }
 
     @Override
@@ -115,7 +114,7 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
                        final double[] gradA) {
-        GaussianMatrixOps.transposeFlatSquareInPlace(gradA, dimension);
+        MatrixOps.transposeInPlace(gradA, dimension);
     }
 
     private void accumulateStationaryMeanGradientFlat(final double[] transitionMatrix,

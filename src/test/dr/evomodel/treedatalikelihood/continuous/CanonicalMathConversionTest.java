@@ -1,0 +1,107 @@
+package test.dr.evomodel.treedatalikelihood.continuous;
+
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import junit.framework.TestCase;
+
+public final class CanonicalMathConversionTest extends TestCase {
+
+    private static final double TOL = 1.0e-11;
+
+    public void testMomentCanonicalStateRoundTrip() {
+        final int dim = 3;
+        final double[] mean = {1.25, -0.75, 2.5};
+        final double[] covariance = {
+                3.0, 0.4, 0.2,
+                0.4, 2.5, 0.3,
+                0.2, 0.3, 1.75
+        };
+        final CanonicalGaussianState state = new CanonicalGaussianState(dim);
+        final GaussianFormConverter.Workspace workspace = new GaussianFormConverter.Workspace();
+        workspace.ensureDim(dim);
+
+        GaussianFormConverter.fillStateFromMoments(mean, covariance, dim, workspace, state);
+
+        final double[] recoveredMean = new double[dim];
+        final double[] recoveredCovariance = new double[dim * dim];
+        GaussianFormConverter.fillMomentsFromState(
+                state, recoveredMean, recoveredCovariance, dim, workspace);
+
+        assertArrayClose("mean round trip", mean, recoveredMean, TOL);
+        assertArrayClose("covariance round trip", covariance, recoveredCovariance, TOL);
+    }
+
+    public void testFlatAndMatrixTransitionMomentConversionMatch() {
+        final int dim = 2;
+        final double[] flatTransition = {
+                0.9, 0.15,
+                -0.05, 0.8
+        };
+        final double[][] matrixTransition = {
+                {0.9, 0.15},
+                {-0.05, 0.8}
+        };
+        final double[] offset = {0.2, -0.35};
+        final double[] flatOmega = {
+                1.4, 0.25,
+                0.25, 1.1
+        };
+        final double[][] matrixOmega = {
+                {1.4, 0.25},
+                {0.25, 1.1}
+        };
+        final CanonicalGaussianTransition flat = new CanonicalGaussianTransition(dim);
+        final CanonicalGaussianTransition matrix = new CanonicalGaussianTransition(dim);
+        final GaussianFormConverter.Workspace workspace = new GaussianFormConverter.Workspace();
+        workspace.ensureDim(dim);
+
+        GaussianFormConverter.fillTransitionFromMoments(
+                flatTransition, offset, flatOmega, dim, workspace, flat);
+        GaussianFormConverter.fillTransitionFromMoments(
+                matrixTransition, offset, matrixOmega, matrix);
+
+        assertArrayClose("precisionXX", flat.precisionXX, matrix.precisionXX, TOL);
+        assertArrayClose("precisionXY", flat.precisionXY, matrix.precisionXY, TOL);
+        assertArrayClose("precisionYX", flat.precisionYX, matrix.precisionYX, TOL);
+        assertArrayClose("precisionYY", flat.precisionYY, matrix.precisionYY, TOL);
+        assertArrayClose("informationX", flat.informationX, matrix.informationX, TOL);
+        assertArrayClose("informationY", flat.informationY, matrix.informationY, TOL);
+        assertEquals("log normalizer", flat.logNormalizer, matrix.logNormalizer, TOL);
+    }
+
+    public void testCompactAndGeneralSpdInversionMatch() {
+        final int dim = 3;
+        final double[] source = {
+                4.0, 0.4, 0.2,
+                0.4, 3.0, 0.5,
+                0.2, 0.5, 2.0
+        };
+        final double[] compactSource = source.clone();
+        final double[] compactInverse = new double[dim * dim];
+        final double[] generalInverse = new double[dim * dim];
+
+        final double compactLogDet = MatrixOps.invertSPDCompact(
+                compactSource,
+                compactInverse,
+                dim,
+                new double[dim],
+                new double[dim]);
+        MatrixOps.invertSPD(source.clone(), generalInverse, dim);
+        final double generalLogDet = MatrixOps.logDeterminant(source.clone(), dim);
+
+        assertArrayClose("compact vs general inverse", generalInverse, compactInverse, TOL);
+        assertEquals("compact vs general log determinant", generalLogDet, compactLogDet, TOL);
+    }
+
+    private static void assertArrayClose(final String label,
+                                         final double[] expected,
+                                         final double[] actual,
+                                         final double tolerance) {
+        assertEquals(label + " length", expected.length, actual.length);
+        for (int i = 0; i < expected.length; ++i) {
+            assertEquals(label + "[" + i + "]", expected[i], actual[i], tolerance);
+        }
+    }
+}

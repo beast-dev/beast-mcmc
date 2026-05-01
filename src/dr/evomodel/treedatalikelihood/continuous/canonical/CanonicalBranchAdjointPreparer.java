@@ -54,6 +54,7 @@ final class CanonicalBranchAdjointPreparer {
     private final BranchGradientWorkspace mainWorkspace;
     private final BranchGradientWorkspace[] workspaces;
     private final Source source;
+    private final ChunkSizeStrategy chunkSizeStrategy;
 
     CanonicalBranchAdjointPreparer(final Tree tree,
                                    final int dimension,
@@ -68,6 +69,8 @@ final class CanonicalBranchAdjointPreparer {
         this.mainWorkspace = mainWorkspace;
         this.workspaces = workspaces;
         this.source = source;
+        this.chunkSizeStrategy =
+                new DimensionWeightedChunkSizeStrategy(dimension, Math.max(1, workspaces.length));
     }
 
     void prepare(final CanonicalBranchTransitionProvider transitionProvider,
@@ -129,36 +132,7 @@ final class CanonicalBranchAdjointPreparer {
     }
 
     private int branchGradientPreparationChunkSize(final int taskLimit) {
-        return branchGradientChunkSize(taskLimit, dimensionWeightedTargetChunksPerWorker(), dimensionWeightedMaxChunkSize());
-    }
-
-    private int branchGradientChunkSize(final int taskLimit,
-                                        final int targetChunksPerWorker,
-                                        final int maxChunkSize) {
-        final int workerCount = Math.max(1, workspaces.length);
-        final int suggested =
-                (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
-        return Math.max(1, Math.min(maxChunkSize, suggested));
-    }
-
-    private int dimensionWeightedTargetChunksPerWorker() {
-        if (dimension >= 16) {
-            return 1;
-        }
-        if (dimension >= 8) {
-            return 2;
-        }
-        return 4;
-    }
-
-    private int dimensionWeightedMaxChunkSize() {
-        if (dimension >= 16) {
-            return 4;
-        }
-        if (dimension >= 8) {
-            return 8;
-        }
-        return 32;
+        return chunkSizeStrategy.chunkSize(taskLimit);
     }
 
     private static CanonicalPreparedBranchSnapshotProvider requirePreparedBranchSnapshotProvider(

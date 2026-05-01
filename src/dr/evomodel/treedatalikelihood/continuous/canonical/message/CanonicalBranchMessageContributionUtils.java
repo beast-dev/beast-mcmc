@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Utilities for recovering local canonical branch contributions from canonical
@@ -15,6 +15,8 @@ public final class CanonicalBranchMessageContributionUtils {
     public static final class Workspace {
         final double[] jointMean;
         final double[][] jointCovariance;
+        final double[] jointCovarianceFlat;
+        final GaussianFormConverter.Workspace converterWorkspace;
         private final int stateDimension;
 
         public Workspace(final int stateDimension) {
@@ -22,6 +24,9 @@ public final class CanonicalBranchMessageContributionUtils {
             final int pairDimension = 2 * stateDimension;
             this.jointMean = new double[pairDimension];
             this.jointCovariance = new double[pairDimension][pairDimension];
+            this.jointCovarianceFlat = new double[pairDimension * pairDimension];
+            this.converterWorkspace = new GaussianFormConverter.Workspace();
+            this.converterWorkspace.ensureDim(pairDimension);
         }
 
         public int getStateDimension() {
@@ -48,7 +53,13 @@ public final class CanonicalBranchMessageContributionUtils {
 
         final double[] jointMean = workspace.jointMean;
         final double[][] jointCovariance = workspace.jointCovariance;
-        CanonicalGaussianUtils.fillMomentsFromCanonical(pairState, jointMean, jointCovariance);
+        GaussianFormConverter.fillMomentsFromState(
+                pairState,
+                jointMean,
+                workspace.jointCovarianceFlat,
+                pairDimension,
+                workspace.converterWorkspace);
+        MatrixOps.fromFlat(workspace.jointCovarianceFlat, jointCovariance, pairDimension);
 
         for (int i = 0; i < d; ++i) {
             final double currentMeanI = jointMean[i];

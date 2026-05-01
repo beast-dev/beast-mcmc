@@ -14,8 +14,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
@@ -692,7 +691,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
 
     private static void copyDenseMatrixToArray(final DenseMatrix64F source, final double[][] out) {
         final int dimension = source.numRows;
-        GaussianMatrixOps.rowMajorToMatrix(source.data, out, dimension);
+        MatrixOps.fromFlat(source.data, out, dimension);
     }
 
     private static void copyDenseMatrixToFlat(final DenseMatrix64F source, final double[] out) {
@@ -700,7 +699,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     }
 
     private static void copySquareMatrixToFlat(final double[][] source, final double[] out) {
-        GaussianMatrixOps.matrixToRowMajor(source, out, source.length);
+        MatrixOps.toFlat(source, out, source.length);
     }
 
     private static void clearSquare(final double[][] matrix) {

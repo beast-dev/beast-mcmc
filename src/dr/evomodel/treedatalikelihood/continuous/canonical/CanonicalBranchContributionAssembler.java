@@ -3,11 +3,9 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.canonical.MatrixUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 
@@ -20,7 +18,8 @@ final class CanonicalBranchContributionAssembler {
 
     private final Tree tree;
     private final int dim;
-    private final CanonicalTreeStateStore stateStore;
+    final CanonicalTreeStateStore stateStore;
+    private final BranchContributionStrategyFactory strategyFactory;
 
     CanonicalBranchContributionAssembler(final Tree tree,
                                          final int dim,
@@ -28,66 +27,20 @@ final class CanonicalBranchContributionAssembler {
         this.tree = tree;
         this.dim = dim;
         this.stateStore = stateStore;
+        this.strategyFactory = new BranchContributionStrategyFactory(tree, dim, stateStore);
     }
 
     boolean fillLocalAdjointsForBranch(final int childIndex,
                                        final CanonicalBranchTransitionProvider transitionProvider,
                                        final BranchGradientWorkspace workspace) {
-        if (stateStore.hasFixedRootValue && tree.isRoot(tree.getParent(tree.getNode(childIndex)))) {
-            final CanonicalGaussianTransition transition;
-            if (tree.isExternal(tree.getNode(childIndex))) {
-                final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-                if (tipObservation.observedCount == 0) {
-                    return false;
-                }
-                transition = transitionFor(childIndex, transitionProvider, workspace);
-                final int observedCount = collectObservationPartition(tipObservation, workspace);
-                if (observedCount == dim) {
-                    fillContributionForFixedParentObservedTip(transition, tipObservation, workspace);
-                } else {
-                    fillContributionForFixedParentPartiallyObservedTip(
-                            transition, tipObservation, observedCount, workspace);
-                }
-            } else {
-                transition = transitionFor(childIndex, transitionProvider, workspace);
-                fillContributionForFixedParentInternalNode(
-                        transition, stateStore.postOrder[childIndex], workspace);
-            }
-
-            fillAdjointsFromContribution(transition, workspace);
-            return true;
+        final BranchContributionStrategy strategy = strategyFactory.select(childIndex);
+        if (!strategy.contributes()) {
+            return false;
         }
-
-        final CanonicalGaussianTransition transition;
-        if (tree.isExternal(tree.getNode(childIndex))) {
-            final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-            if (tipObservation.observedCount == 0) {
-                return false;
-            }
-            transition = transitionFor(childIndex, transitionProvider, workspace);
-            final int observedCount = collectObservationPartition(tipObservation, workspace);
-            if (observedCount == dim) {
-                fillContributionForObservedTip(
-                        stateStore.branchAboveParent[childIndex], transition, tipObservation, workspace);
-            } else {
-                fillContributionForPartiallyObservedTip(
-                        stateStore.branchAboveParent[childIndex],
-                        transition,
-                        tipObservation,
-                        observedCount,
-                        workspace);
-            }
-        } else {
-            transition = transitionFor(childIndex, transitionProvider, workspace);
-            CanonicalGaussianMessageOps.buildPairPosterior(
-                    stateStore.branchAboveParent[childIndex],
-                    transition,
-                    stateStore.postOrder[childIndex],
-                    workspace.pairState);
-            CanonicalBranchMessageContributionUtils.fillFromPairState(
-                    workspace.pairState,
-                    workspace.contributionWorkspace,
-                    workspace.contribution);
+        final CanonicalGaussianTransition transition =
+                transitionFor(childIndex, transitionProvider, workspace);
+        if (!strategy.fillContribution(childIndex, transition, this, workspace)) {
+            return false;
         }
 
         fillAdjointsFromContribution(transition, workspace);
@@ -115,8 +68,8 @@ final class CanonicalBranchContributionAssembler {
         return workspace.transition;
     }
 
-    private int collectObservationPartition(final CanonicalTipObservation tipObservation,
-                                            final BranchGradientWorkspace workspace) {
+    int collectObservationPartition(final CanonicalTipObservation tipObservation,
+                                    final BranchGradientWorkspace workspace) {
         int observedCount = 0;
         int missingCount = 0;
 
@@ -137,10 +90,10 @@ final class CanonicalBranchContributionAssembler {
         return observedCount;
     }
 
-    private void fillContributionForObservedTip(final CanonicalGaussianState aboveState,
-                                                final CanonicalGaussianTransition transition,
-                                                final CanonicalTipObservation tipObservation,
-                                                final BranchGradientWorkspace workspace) {
+    void fillContributionForObservedTip(final CanonicalGaussianState aboveState,
+                                        final CanonicalGaussianTransition transition,
+                                        final CanonicalTipObservation tipObservation,
+                                        final BranchGradientWorkspace workspace) {
         for (int i = 0; i < dim; ++i) {
             double info = transition.informationX[i] + aboveState.information[i];
             final int iOff = i * dim;
@@ -153,8 +106,8 @@ final class CanonicalBranchContributionAssembler {
         }
         workspace.parentPosterior.logNormalizer = 0.0;
 
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                workspace.parentPosterior, workspace.mean, workspace.covariance);
+        workspace.adjoint.fillMomentsFromCanonical(
+                workspace.parentPosterior, workspace.mean, workspace.covariance, dim);
 
         for (int i = 0; i < dim; ++i) {
             final double xi = workspace.mean[i];
@@ -175,9 +128,9 @@ final class CanonicalBranchContributionAssembler {
         workspace.contribution.dLogL_dLogNormalizer = -1.0;
     }
 
-    private void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
-                                                           final CanonicalTipObservation tipObservation,
-                                                           final BranchGradientWorkspace workspace) {
+    void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
+                                                   final CanonicalTipObservation tipObservation,
+                                                   final BranchGradientWorkspace workspace) {
         clearContribution(workspace);
         for (int i = 0; i < dim; ++i) {
             final double xi = stateStore.fixedRootValue[i];
@@ -197,21 +150,21 @@ final class CanonicalBranchContributionAssembler {
         workspace.contribution.dLogL_dLogNormalizer = -1.0;
     }
 
-    private void fillContributionForFixedParentInternalNode(final CanonicalGaussianTransition transition,
-                                                            final CanonicalGaussianState childMessage,
-                                                            final BranchGradientWorkspace workspace) {
+    void fillContributionForFixedParentInternalNode(final CanonicalGaussianTransition transition,
+                                                    final CanonicalGaussianState childMessage,
+                                                    final BranchGradientWorkspace workspace) {
         CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
                 transition, stateStore.fixedRootValue, workspace.state);
         CanonicalGaussianMessageOps.combineStates(workspace.state, childMessage, workspace.parentPosterior);
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
-                workspace.parentPosterior, workspace.mean, workspace.covariance);
+        workspace.adjoint.fillMomentsFromCanonical(
+                workspace.parentPosterior, workspace.mean, workspace.covariance, dim);
         fillContributionFromFixedParentChildMoments(workspace.mean, workspace.covariance, workspace);
     }
 
-    private void fillContributionForFixedParentPartiallyObservedTip(final CanonicalGaussianTransition transition,
-                                                                    final CanonicalTipObservation tipObservation,
-                                                                    final int observedCount,
-                                                                    final BranchGradientWorkspace workspace) {
+    void fillContributionForFixedParentPartiallyObservedTip(final CanonicalGaussianTransition transition,
+                                                            final CanonicalTipObservation tipObservation,
+                                                            final int observedCount,
+                                                            final BranchGradientWorkspace workspace) {
         final int missingCount = dim - observedCount;
         CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
                 transition, stateStore.fixedRootValue, workspace.state);
@@ -231,7 +184,7 @@ final class CanonicalBranchContributionAssembler {
             }
         }
 
-        MatrixUtils.safeInvertPrecision(
+        MatrixOps.safeInvertPrecision(
                 workspace.reducedPrecisionFlatScratch,
                 workspace.reducedCovarianceFlatScratch,
                 missingCount);
@@ -298,11 +251,11 @@ final class CanonicalBranchContributionAssembler {
         workspace.contribution.dLogL_dLogNormalizer = -1.0;
     }
 
-    private void fillContributionForPartiallyObservedTip(final CanonicalGaussianState aboveState,
-                                                         final CanonicalGaussianTransition transition,
-                                                         final CanonicalTipObservation tipObservation,
-                                                         final int observedCount,
-                                                         final BranchGradientWorkspace workspace) {
+    void fillContributionForPartiallyObservedTip(final CanonicalGaussianState aboveState,
+                                                 final CanonicalGaussianTransition transition,
+                                                 final CanonicalTipObservation tipObservation,
+                                                 final int observedCount,
+                                                 final BranchGradientWorkspace workspace) {
         final int missingCount = dim - observedCount;
         final int reducedDimension = dim + missingCount;
 
@@ -344,7 +297,7 @@ final class CanonicalBranchContributionAssembler {
             }
         }
 
-        MatrixUtils.safeInvertPrecision(
+        MatrixOps.safeInvertPrecision(
                 workspace.reducedPrecisionFlatScratch,
                 workspace.reducedCovarianceFlatScratch,
                 reducedDimension);

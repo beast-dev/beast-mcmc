@@ -143,6 +143,86 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
         });
     }
 
+    public void testDenseGradientRestoreMatchesColdWorkspaceAfterSelectionPerturbation() {
+        System.out.println("\nTest: dense canonical OU gradient cache is fresh after selection restore");
+
+        final OUSetup setup = buildOUSetup("focusedDenseRestoreCache", buildPartiallyObservedTips());
+        refreshMessages(setup);
+
+        final double[] baselineA = new double[dimTrait * dimTrait];
+        final double[] baselineQ = new double[dimTrait * dimTrait];
+        final double[] baselineMu = new double[dimTrait];
+        setup.passer.computeJointGradients(setup.provider, baselineA, baselineQ, baselineMu);
+
+        setup.aMatrix.storeParameterValues();
+        try {
+            setup.aMatrix.setParameterValue(0, 1, setup.aMatrix.getParameterValue(0, 1) + 0.0625);
+            refreshMessages(setup);
+            setup.passer.computeJointGradients(
+                    setup.provider,
+                    new double[dimTrait * dimTrait],
+                    new double[dimTrait * dimTrait],
+                    new double[dimTrait]);
+
+            setup.aMatrix.restoreParameterValues();
+            setup.aMatrix.fireParameterChangedEvent();
+            refreshMessages(setup);
+
+            final double[] restoredA = new double[dimTrait * dimTrait];
+            final double[] restoredQ = new double[dimTrait * dimTrait];
+            final double[] restoredMu = new double[dimTrait];
+            setup.passer.computeJointGradients(setup.provider, restoredA, restoredQ, restoredMu);
+
+            final OUSetup cold = buildOUSetup("focusedDenseRestoreCacheCold", buildPartiallyObservedTips());
+            refreshMessages(cold);
+            final double[] coldA = new double[dimTrait * dimTrait];
+            final double[] coldQ = new double[dimTrait * dimTrait];
+            final double[] coldMu = new double[dimTrait];
+            cold.passer.computeJointGradients(cold.provider, coldA, coldQ, coldMu);
+
+            assertVectorEquals("baseline vs restored A", baselineA, restoredA, 1.0e-11);
+            assertVectorEquals("baseline vs restored Q", baselineQ, restoredQ, 1.0e-11);
+            assertVectorEquals("baseline vs restored mu", baselineMu, restoredMu, 1.0e-11);
+            assertVectorEquals("cold vs restored A", coldA, restoredA, 1.0e-11);
+            assertVectorEquals("cold vs restored Q", coldQ, restoredQ, 1.0e-11);
+            assertVectorEquals("cold vs restored mu", coldMu, restoredMu, 1.0e-11);
+        } finally {
+            setup.aMatrix.acceptParameterValues();
+        }
+    }
+
+    public void testDenseGradientSharedWorkspaceHandlesDistinctBranchLengths() {
+        System.out.println("\nTest: dense canonical OU shared gradient workspace handles distinct branch lengths");
+
+        final CanonicalTipObservation[] tips = buildPartiallyObservedTips();
+        final OUSetup base = buildOUSetup("focusedDenseSharedBranchLengths", tips);
+        final int rootIndex = treeModel.getRoot().getNumber();
+        for (int nodeIndex = 0; nodeIndex < treeModel.getNodeCount(); ++nodeIndex) {
+            if (nodeIndex != rootIndex) {
+                base.branchScale[nodeIndex] = 0.75 + 0.125 * nodeIndex;
+            }
+        }
+
+        final OUSetup sharedWorkspace = withPasserParallelism(base, tips, 1);
+        final OUSetup freshWorkspace = withPasserParallelism(base, tips, 3);
+        refreshMessages(sharedWorkspace);
+        refreshMessages(freshWorkspace);
+
+        final double[] sharedA = new double[dimTrait * dimTrait];
+        final double[] sharedQ = new double[dimTrait * dimTrait];
+        final double[] sharedMu = new double[dimTrait];
+        final double[] freshA = new double[dimTrait * dimTrait];
+        final double[] freshQ = new double[dimTrait * dimTrait];
+        final double[] freshMu = new double[dimTrait];
+
+        sharedWorkspace.passer.computeJointGradients(sharedWorkspace.provider, sharedA, sharedQ, sharedMu);
+        freshWorkspace.passer.computeJointGradients(freshWorkspace.provider, freshA, freshQ, freshMu);
+
+        assertVectorEquals("shared vs fresh A with distinct branch lengths", freshA, sharedA, 1.0e-11);
+        assertVectorEquals("shared vs fresh Q with distinct branch lengths", freshQ, sharedQ, 1.0e-11);
+        assertVectorEquals("shared vs fresh mu with distinct branch lengths", freshMu, sharedMu, 1.0e-11);
+    }
+
     public void testBranchGradientCopyRegressionBenchmarkReusesPreparedInputs() {
         System.out.println("\nBenchmark: branch gradient prepared-input reuse");
 

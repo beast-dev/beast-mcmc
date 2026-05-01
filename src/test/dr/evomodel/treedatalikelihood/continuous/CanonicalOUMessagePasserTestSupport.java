@@ -36,7 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalConj
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.canonical.MatrixUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
@@ -416,7 +416,7 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
             System.arraycopy(basePrecision[i], 0, precisionFlat, i * d, d);
         }
         final double[] qFlat = new double[d2];
-        MatrixUtils.invertSymmetric(precisionFlat, qFlat, d);
+        MatrixOps.invertSPD(precisionFlat, qFlat, d);
 
         final MatrixParameter qMatrix = new MatrixParameter("Q." + tag, d, d);
         for (int i = 0; i < d; i++) {

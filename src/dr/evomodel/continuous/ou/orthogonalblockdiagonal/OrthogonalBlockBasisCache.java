@@ -34,6 +34,13 @@ final class OrthogonalBlockBasisCache {
     private boolean basisCacheValid;
     private double cachedExpDt;
     private double cachedBasisDt;
+    private int cachedRHash;
+    private int cachedRtHash;
+    private int cachedBlockDHash;
+    private long expParameterVersion;
+    private long basisRVersion;
+    private long basisRtVersion;
+    private long basisExpVersion;
 
     OrthogonalBlockBasisCache(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                               final OrthogonalMatrixProvider orthogonalRotation,
@@ -57,6 +64,13 @@ final class OrthogonalBlockBasisCache {
         this.basisCacheValid = false;
         this.cachedExpDt = Double.NaN;
         this.cachedBasisDt = Double.NaN;
+        this.cachedRHash = 0;
+        this.cachedRtHash = 0;
+        this.cachedBlockDHash = 0;
+        this.expParameterVersion = 0L;
+        this.basisRVersion = 0L;
+        this.basisRtVersion = 0L;
+        this.basisExpVersion = -1L;
     }
 
     void refresh(final double dt) {
@@ -69,17 +83,28 @@ final class OrthogonalBlockBasisCache {
         if (Boolean.getBoolean(DEBUG_NATIVE_R_CONSISTENCY_PROPERTY)) {
             reportNativeRConsistency(dt, d);
         }
+        final int rHash = Arrays.hashCode(rData);
+        final int rtHash = Arrays.hashCode(rtData);
+        final boolean rChanged = rHash != cachedRHash || !Arrays.equals(rData, cachedRData);
+        final boolean rtChanged = rtHash != cachedRtHash || !Arrays.equals(rtData, cachedRtData);
         final boolean basisNeedsRefresh = expNeedsRefresh
                 || !basisCacheValid
                 || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedBasisDt)
-                || !Arrays.equals(rData, cachedRData)
-                || !Arrays.equals(rtData, cachedRtData);
+                || basisExpVersion != expParameterVersion
+                || rChanged
+                || rtChanged;
         if (!basisNeedsRefresh) {
             return;
         }
 
         if (expNeedsRefresh) {
             refreshExp(dt);
+        }
+        if (rChanged) {
+            basisRVersion++;
+        }
+        if (rtChanged) {
+            basisRtVersion++;
         }
 
         System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
@@ -88,7 +113,10 @@ final class OrthogonalBlockBasisCache {
                 rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
         System.arraycopy(rData, 0, cachedRData, 0, rData.length);
         System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
+        cachedRHash = rHash;
+        cachedRtHash = rtHash;
         cachedBasisDt = dt;
+        basisExpVersion = expParameterVersion;
         basisCacheValid = true;
     }
 
@@ -101,14 +129,18 @@ final class OrthogonalBlockBasisCache {
     }
 
     private boolean expNeedsRefresh(final double dt) {
+        final int blockDHash = Arrays.hashCode(blockDParams);
         return !expCacheValid
                 || Double.doubleToLongBits(dt) != Double.doubleToLongBits(cachedExpDt)
+                || blockDHash != cachedBlockDHash
                 || !Arrays.equals(blockDParams, cachedBlockDParams);
     }
 
     private void refreshExp(final double dt) {
         expSolver.compute(blockDParams, dt, expD);
         System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
+        cachedBlockDHash = Arrays.hashCode(blockDParams);
+        expParameterVersion++;
         cachedExpDt = dt;
         expCacheValid = true;
     }

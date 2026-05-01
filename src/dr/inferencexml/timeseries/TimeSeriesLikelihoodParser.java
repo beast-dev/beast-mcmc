@@ -2,7 +2,7 @@ package dr.inferencexml.timeseries;
 
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -31,8 +31,8 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(final XMLObject xo) throws XMLParseException {
         final TimeSeriesModel model = (TimeSeriesModel) xo.getElementFirstChild(MODEL);
 
-        if (!(model.getLatentProcessModel() instanceof OUProcessModel)) {
-            throw new XMLParseException("This initial parser currently supports OUProcessModel only.");
+        if (!(model.getLatentProcessModel() instanceof OUTimeSeriesProcessAdapter)) {
+            throw new XMLParseException("This initial parser currently supports OUTimeSeriesProcessAdapter only.");
         }
         if (!(model.getObservationModel() instanceof GaussianObservationModel)) {
             throw new XMLParseException("This initial parser currently supports GaussianObservationModel only.");

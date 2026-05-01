@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 
 /**
@@ -55,7 +55,7 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
         checkFlatSquare(out, "transition matrix");
         final Workspace workspace = workspace();
         fillTransitionMatrix(dt, workspace.transitionMatrix);
-        GaussianMatrixOps.matrixToRowMajor(workspace.transitionMatrix, out, dimension);
+        MatrixOps.toFlat(workspace.transitionMatrix, out, dimension);
     }
 
     @Override

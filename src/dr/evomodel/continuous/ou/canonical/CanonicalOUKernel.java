@@ -4,14 +4,14 @@ import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.continuous.ou.OUCovarianceGradientMath;
 import dr.evomodel.continuous.ou.OUCovarianceGradientStrategy;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 
 /**
  * Canonical OU transition and gradient kernel.
@@ -72,7 +72,13 @@ public final class CanonicalOUKernel
         final double[][] covariance = workspace.squareMatrices[0];
         getInitialMean(mean);
         getInitialCovariance(covariance);
-        CanonicalGaussianUtils.fillStateFromMoments(mean, covariance, out);
+        MatrixOps.toFlat(covariance, workspace.flatMatrix0, stateDimension);
+        GaussianFormConverter.fillStateFromMoments(
+                mean,
+                workspace.flatMatrix0,
+                stateDimension,
+                workspace.converterWorkspace,
+                out);
     }
 
     @Override
@@ -91,10 +97,14 @@ public final class CanonicalOUKernel
         fillTransitionMatrix(dt, transitionMatrix);
         fillTransitionOffset(dt, transitionOffset);
         fillTransitionCovariance(dt, transitionCovariance);
-        CanonicalGaussianUtils.fillTransitionFromMoments(
-                transitionMatrix,
+        MatrixOps.toFlat(transitionMatrix, workspace.flatMatrix0, stateDimension);
+        MatrixOps.toFlat(transitionCovariance, workspace.flatMatrix1, stateDimension);
+        GaussianFormConverter.fillTransitionFromMoments(
+                workspace.flatMatrix0,
                 transitionOffset,
-                transitionCovariance,
+                workspace.flatMatrix1,
+                stateDimension,
+                workspace.converterWorkspace,
                 out);
     }
 
@@ -126,7 +136,7 @@ public final class CanonicalOUKernel
         final Workspace workspace = workspace();
         final double[][] transitionCovariance = workspace.squareMatrices[1];
         fillTransitionCovariance(dt, transitionCovariance);
-        GaussianMatrixOps.matrixToRowMajor(transitionCovariance, out, stateDimension);
+        MatrixOps.toFlat(transitionCovariance, out, stateDimension);
     }
 
     @Override
@@ -473,6 +483,9 @@ public final class CanonicalOUKernel
         private final double[] vector0;
         private final double[] vector1;
         private final double[] vector2;
+        private final double[] flatMatrix0;
+        private final double[] flatMatrix1;
+        private final GaussianFormConverter.Workspace converterWorkspace;
 
         private Workspace(final int dimension) {
             this.squareMatrices = allocateMatrixStack(SQUARE_MATRIX_COUNT, dimension, dimension);
@@ -480,6 +493,10 @@ public final class CanonicalOUKernel
             this.vector0 = new double[dimension];
             this.vector1 = new double[dimension];
             this.vector2 = new double[dimension];
+            this.flatMatrix0 = new double[dimension * dimension];
+            this.flatMatrix1 = new double[dimension * dimension];
+            this.converterWorkspace = new GaussianFormConverter.Workspace();
+            this.converterWorkspace.ensureDim(dimension);
         }
     }
 

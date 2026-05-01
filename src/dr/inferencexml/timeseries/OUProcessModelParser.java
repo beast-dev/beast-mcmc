@@ -4,6 +4,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -41,7 +42,8 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
         OUSelectionChartParserHelper.validateSelectionChart(xo, driftMatrix, PARSER_NAME);
 
         final String id = xo.hasId() ? xo.getId() : PARSER_NAME;
-        return new OUProcessModel(id, stateDimension, driftMatrix, diffusionMatrix, stationaryMean, initialCovariance);
+        return new OUTimeSeriesProcessAdapter(
+                new OUProcessModel(id, stateDimension, driftMatrix, diffusionMatrix, stationaryMean, initialCovariance));
     }
 
     @Override
@@ -62,11 +64,11 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "Defines a multivariate OU latent process model with a Gaussian transition representation.";
+        return "Defines a multivariate OU latent process adapter for Gaussian time-series inference.";
     }
 
     @Override
     public Class getReturnType() {
-        return OUProcessModel.class;
+        return OUTimeSeriesProcessAdapter.class;
     }
 }

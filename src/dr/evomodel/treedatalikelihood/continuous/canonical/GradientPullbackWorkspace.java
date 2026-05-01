@@ -1,13 +1,11 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
-import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-
-import java.util.Arrays;
+import java.util.EnumSet;
 
 final class GradientPullbackWorkspace {
+    final DenseGradientWorkspace dense;
+    final OrthogonalBlockGradientWorkspace orthogonal;
+
     final double[] orthogonalStationaryMeanScratch;
     final double[] orthogonalCompressedGradientScratch;
     final double[] orthogonalNativeGradientScratch;
@@ -21,37 +19,54 @@ final class GradientPullbackWorkspace {
     final double[] localGradientQ;
     final double[] localGradientMuVector;
     final double[] localGradientMuScalar;
-    CanonicalBranchWorkspace specializedBranchWorkspace;
-    double cachedTransitionMatrixLength;
-    boolean cachedTransitionMatrixValid;
 
     GradientPullbackWorkspace(final int dim) {
-        this.orthogonalStationaryMeanScratch = new double[dim];
-        this.orthogonalCompressedGradientScratch = new double[dim + 2 * (dim / 2)];
-        this.orthogonalNativeGradientScratch = new double[((dim & 1) == 1 ? 1 : 0) + 3 * (dim / 2)];
-        this.orthogonalRotationGradientFlatScratch = new double[dim * dim];
-        this.orthogonalRotationGradientScratch = new double[dim][dim];
-        this.covariance2 = new double[dim][dim];
-        this.transitionMatrixFlat = new double[dim * dim];
-        this.covarianceAdjointFlat = new double[dim * dim];
-        this.matrixProductFlat = new double[dim * dim];
-        this.localGradientA = new double[dim * dim];
-        this.localGradientQ = new double[dim * dim];
-        this.localGradientMuVector = new double[dim];
-        this.localGradientMuScalar = new double[1];
-        this.cachedTransitionMatrixLength = Double.NaN;
-        this.cachedTransitionMatrixValid = false;
+        this(dim, EnumSet.of(
+                WorkspaceCapability.DENSE_GRADIENT,
+                WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT));
+    }
+
+    GradientPullbackWorkspace(final int dim, final EnumSet<WorkspaceCapability> capabilities) {
+        if (dim < 1) throw new IllegalArgumentException("dim must be >= 1");
+        this.dense = capabilities.contains(WorkspaceCapability.DENSE_GRADIENT)
+                ? new DenseGradientWorkspace(dim)
+                : null;
+        this.orthogonal = capabilities.contains(WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT)
+                ? new OrthogonalBlockGradientWorkspace(dim)
+                : null;
+
+        this.orthogonalStationaryMeanScratch =
+                orthogonal == null ? null : orthogonal.stationaryMeanScratch;
+        this.orthogonalCompressedGradientScratch =
+                orthogonal == null ? null : orthogonal.compressedGradientScratch;
+        this.orthogonalNativeGradientScratch =
+                orthogonal == null ? null : orthogonal.nativeGradientScratch;
+        this.orthogonalRotationGradientFlatScratch =
+                orthogonal == null ? null : orthogonal.rotationGradientFlatScratch;
+        this.orthogonalRotationGradientScratch =
+                orthogonal == null ? null : orthogonal.rotationGradientScratch;
+
+        this.covariance2 = dense == null ? null : dense.covariance2;
+        this.transitionMatrixFlat = dense == null ? null : dense.transitionMatrixFlat;
+        this.covarianceAdjointFlat = dense == null ? null : dense.covarianceAdjointFlat;
+        this.matrixProductFlat = dense == null ? null : dense.matrixProductFlat;
+        this.localGradientA = dense == null ? null : dense.localGradientA;
+        this.localGradientQ = dense == null ? null : dense.localGradientQ;
+        this.localGradientMuVector = dense == null ? null : dense.localGradientMuVector;
+        this.localGradientMuScalar = dense == null ? null : dense.localGradientMuScalar;
     }
 
     double[] localGradientMu(final int gradientLength, final int dim) {
-        if (gradientLength == 1) {
-            return localGradientMuScalar;
-        }
-        if (gradientLength == dim) {
-            return localGradientMuVector;
-        }
-        throw new IllegalArgumentException(
-                "Stationary-mean gradient length must be 1 or " + dim + ", found " + gradientLength);
+        return dense().localGradientMu(gradientLength, dim);
+    }
+
+    /**
+     * Clears the local gradient accumulators and resets the transition-matrix cache.
+     * Specialized (orthogonal-block) fields are NOT cleared here; that is the
+     * responsibility of {@link SpecializedCanonicalSelectionGradientPullback#clearWorkerBuffers}.
+     */
+    void clearLocalGradientBuffers(final int gradALength, final int gradMuLength, final int dim) {
+        dense().clearLocalGradientBuffers(gradALength, gradMuLength, dim);
     }
 
     void clearLocalGradientBuffers(final int gradALength,
@@ -59,32 +74,35 @@ final class GradientPullbackWorkspace {
                                    final int dim,
                                    final boolean orthogonalSelection,
                                    final int compressedGradientLength) {
-        Arrays.fill(localGradientA, 0, gradALength, 0.0);
-        Arrays.fill(localGradientQ, 0.0);
-        Arrays.fill(localGradientMu(gradMuLength, dim), 0.0);
-        cachedTransitionMatrixValid = false;
+        clearLocalGradientBuffers(gradALength, gradMuLength, dim);
         if (orthogonalSelection) {
-            Arrays.fill(orthogonalCompressedGradientScratch, 0, compressedGradientLength, 0.0);
-            Arrays.fill(orthogonalRotationGradientFlatScratch, 0.0);
-            for (double[] row : orthogonalRotationGradientScratch) {
-                Arrays.fill(row, 0.0);
-            }
+            orthogonal().clearSpecializedBuffers(compressedGradientLength);
         }
     }
 
-    OrthogonalBlockBranchGradientWorkspace
-    ensureOrthogonalBranchWorkspace(final OrthogonalBlockCanonicalParameterization orthogonalSelection) {
-        if (specializedBranchWorkspace == null) {
-            specializedBranchWorkspace = orthogonalSelection.createBranchGradientWorkspace();
-        }
-        return (OrthogonalBlockBranchGradientWorkspace) specializedBranchWorkspace;
+    void invalidateTransitionMatrixCache() {
+        dense().invalidateTransitionMatrixCache();
     }
 
-    CanonicalBranchWorkspace
-    ensureSpecializedBranchWorkspace(final CanonicalPreparedTransitionCapability selection) {
-        if (specializedBranchWorkspace == null) {
-            specializedBranchWorkspace = selection.createBranchWorkspace();
+    boolean hasTransitionMatrix(final double branchLength) {
+        return dense().hasTransitionMatrix(branchLength);
+    }
+
+    void cacheTransitionMatrix(final double branchLength) {
+        dense().cacheTransitionMatrix(branchLength);
+    }
+
+    private DenseGradientWorkspace dense() {
+        if (dense == null) {
+            throw new IllegalStateException("Dense gradient workspace capability was not requested");
         }
-        return specializedBranchWorkspace;
+        return dense;
+    }
+
+    OrthogonalBlockGradientWorkspace orthogonal() {
+        if (orthogonal == null) {
+            throw new IllegalStateException("Orthogonal-block gradient workspace capability was not requested");
+        }
+        return orthogonal;
     }
 }

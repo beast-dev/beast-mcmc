@@ -11,6 +11,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationModelWorkspace;
 
 import java.util.EnumSet;
 
@@ -28,6 +29,7 @@ final class BranchGradientWorkspace {
     final CanonicalGaussianState parentPosterior;
     final CanonicalGaussianState pairState;
     final CanonicalGaussianMessageOps.Workspace gaussianWorkspace;
+    final TipObservationModelWorkspace observationWorkspace;
     final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     final CanonicalTransitionAdjointUtils.Workspace transitionAdjointWorkspace;
     final CanonicalBranchMessageContribution contribution;
@@ -81,6 +83,7 @@ final class BranchGradientWorkspace {
         this.siblingProduct = traversal == null ? null : traversal.siblingProduct;
         this.downwardParentState = traversal == null ? null : traversal.downwardParentState;
         this.gaussianWorkspace = traversal == null ? null : traversal.gaussianWorkspace;
+        this.observationWorkspace = traversal == null ? null : traversal.observationWorkspace;
 
         this.combinedState = adjoint == null ? null : adjoint.combinedState;
         this.parentPosterior = adjoint == null ? null : adjoint.parentPosterior;

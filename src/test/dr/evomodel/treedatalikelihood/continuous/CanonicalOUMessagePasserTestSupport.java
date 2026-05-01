@@ -38,6 +38,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.GaussianCanonicalTipObservation;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
@@ -539,6 +540,29 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         out.put("orangutan", new double[]{11.0, 1.0, -1.5});
         out.put("siamang", new double[]{1.0, 2.5, 4.0});
         return out;
+    }
+
+    protected void installIdentityGaussianLinkTips(final OUSetup setup,
+                                                   final CanonicalTipObservation[] tips,
+                                                   final double observationVariance) {
+        final double[] link = new double[dimTrait * dimTrait];
+        final double[] offset = new double[dimTrait];
+        final double[] covariance = new double[dimTrait * dimTrait];
+        for (int i = 0; i < dimTrait; ++i) {
+            link[i * dimTrait + i] = 1.0;
+            covariance[i * dimTrait + i] = observationVariance;
+        }
+        for (int tipIndex = 0; tipIndex < tips.length; ++tipIndex) {
+            setup.passer.setTipObservationModel(
+                    tipIndex,
+                    new GaussianCanonicalTipObservation(
+                            dimTrait,
+                            dimTrait,
+                            tips[tipIndex].values,
+                            link,
+                            offset,
+                            covariance));
+        }
     }
 
     protected static void fillMatrixParameter(final MatrixParameter matrix, final double[][] values) {

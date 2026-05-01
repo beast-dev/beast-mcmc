@@ -41,6 +41,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessageP
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.TaskPool;
 
 import java.util.Arrays;
@@ -144,7 +146,12 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
 
     @Override
     public void setTipObservation(final int tipIndex, final CanonicalTipObservation observation) {
-        stateStore.tipObservations[tipIndex].copyFrom(observation);
+        stateStore.setTipObservation(tipIndex, observation);
+    }
+
+    public void setTipObservationModel(final int tipIndex,
+                                       final CanonicalTipObservationModel observationModel) {
+        stateStore.setTipObservationModel(tipIndex, observationModel);
     }
 
     @Override
@@ -222,9 +229,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 if (childIndex == rootIndex) {
                     continue;
                 }
-                final CanonicalTipObservation tipObservation =
-                        tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservations[childIndex] : null;
-                if (tipObservation != null && tipObservation.observedCount == 0) {
+                final CanonicalTipObservationModel observationModel =
+                        tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservationModels[childIndex] : null;
+                if (observationModel != null && observationModel.isEmpty()) {
                     gradT[childIndex] = 0.0;
                     continue;
                 }
@@ -306,9 +313,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                        final CanonicalGaussianState out,
                                                        final BranchGradientWorkspace workspace) {
         if (tree.isExternal(tree.getNode(childIndex))) {
+            final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
             final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-            if (tipObservation.observedCount == 0) {
+            if (observationModel.isEmpty()) {
                 clearState(out);
+            } else if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
+                observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
+                CanonicalGaussianMessageOps.pushBackward(
+                        workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
             } else if (tipObservation.observedCount == dim) {
                 CanonicalGaussianMessageOps.conditionOnObservedSecondBlock(transition, tipObservation.values, out);
             } else {
@@ -403,7 +415,17 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         final BranchGradientWorkspace workspace = mainWorkspace;
         final CanonicalTipObservation tipObservation =
                 tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservations[childIndex] : null;
-        if (tipObservation != null && tipObservation.observedCount < dim) {
+        final CanonicalTipObservationModel observationModel =
+                tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservationModels[childIndex] : null;
+        if (observationModel != null && observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
+            provider.fillCanonicalTransitionForLength(branchLength, workspace.transition);
+            observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
+            CanonicalGaussianMessageOps.pushBackward(
+                    workspace.siblingProduct,
+                    workspace.transition,
+                    workspace.gaussianWorkspace,
+                    workspace.state);
+        } else if (tipObservation != null && tipObservation.observedCount < dim) {
             buildTipParentMessageWithMissingMask(
                     tipObservation,
                     provider,

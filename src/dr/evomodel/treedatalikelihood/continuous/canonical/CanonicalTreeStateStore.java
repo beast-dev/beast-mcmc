@@ -30,6 +30,8 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 
 /**
  * Owns canonical tree message buffers and their MCMC snapshots.
@@ -42,6 +44,8 @@ final class CanonicalTreeStateStore {
 
     CanonicalTipObservation[] tipObservations;
     private CanonicalTipObservation[] storedTipObservations;
+    CanonicalTipObservationModel[] tipObservationModels;
+    private CanonicalTipObservationModel[] storedTipObservationModels;
 
     CanonicalGaussianState[] postOrder;
     private CanonicalGaussianState[] storedPostOrder;
@@ -75,6 +79,8 @@ final class CanonicalTreeStateStore {
         this.dimension = dimension;
         this.tipObservations = allocateTipObservations(nodeCount, dimension);
         this.storedTipObservations = allocateTipObservations(nodeCount, dimension);
+        this.tipObservationModels = allocateTipObservationModels(nodeCount, dimension);
+        this.storedTipObservationModels = allocateTipObservationModels(nodeCount, dimension);
         this.postOrder = allocateStates(nodeCount, dimension);
         this.storedPostOrder = allocateStates(nodeCount, dimension);
         this.preOrder = allocateStates(nodeCount, dimension);
@@ -101,6 +107,7 @@ final class CanonicalTreeStateStore {
         System.arraycopy(fixedRootValue, 0, storedFixedRootValue, 0, dimension);
         for (int i = 0; i < nodeCount; i++) {
             storedTipObservations[i].copyFrom(tipObservations[i]);
+            storedTipObservationModels[i] = tipObservationModels[i].copy();
             copyState(postOrder[i], storedPostOrder[i]);
             copyState(preOrder[i], storedPreOrder[i]);
             copyState(branchAboveParent[i], storedBranchAboveParent[i]);
@@ -143,6 +150,33 @@ final class CanonicalTreeStateStore {
         final CanonicalTipObservation[] tmpTips = tipObservations;
         tipObservations = storedTipObservations;
         storedTipObservations = tmpTips;
+
+        final CanonicalTipObservationModel[] tmpTipModels = tipObservationModels;
+        tipObservationModels = storedTipObservationModels;
+        storedTipObservationModels = tmpTipModels;
+    }
+
+    void setTipObservation(final int tipIndex, final CanonicalTipObservation observation) {
+        tipObservations[tipIndex].copyFrom(observation);
+        tipObservationModels[tipIndex] =
+                IdentityCanonicalTipObservationModel.fromObservation(tipObservations[tipIndex]);
+    }
+
+    void setTipObservationModel(final int tipIndex, final CanonicalTipObservationModel observationModel) {
+        if (observationModel == null) {
+            throw new IllegalArgumentException("Tip observation model must not be null");
+        }
+        if (observationModel.getLatentDimension() != dimension) {
+            throw new IllegalArgumentException(
+                    "Tip observation model latent dimension mismatch: "
+                            + observationModel.getLatentDimension() + " vs " + dimension);
+        }
+        tipObservationModels[tipIndex] = observationModel.copy();
+        if (observationModel instanceof IdentityCanonicalTipObservationModel) {
+            ((IdentityCanonicalTipObservationModel) observationModel).copyTo(tipObservations[tipIndex]);
+        } else {
+            tipObservations[tipIndex].setMissing();
+        }
     }
 
     private static CanonicalGaussianState[] allocateStates(final int count, final int dimension) {
@@ -157,6 +191,15 @@ final class CanonicalTreeStateStore {
         final CanonicalTipObservation[] out = new CanonicalTipObservation[count];
         for (int i = 0; i < count; i++) {
             out[i] = new CanonicalTipObservation(dimension);
+        }
+        return out;
+    }
+
+    private static CanonicalTipObservationModel[] allocateTipObservationModels(final int count,
+                                                                              final int dimension) {
+        final CanonicalTipObservationModel[] out = new CanonicalTipObservationModel[count];
+        for (int i = 0; i < count; i++) {
+            out[i] = IdentityCanonicalTipObservationModel.missing(dimension);
         }
         return out;
     }

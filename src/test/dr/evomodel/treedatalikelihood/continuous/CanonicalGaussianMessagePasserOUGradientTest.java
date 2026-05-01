@@ -70,6 +70,14 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         checkGradientBranchLengths(buildOUSetup("canonGradT_full", buildFullyObservedTips()), "fully observed");
     }
 
+    public void testGradientBranchLengthsConjugateRootGaussianLinkMatchesNumerical() {
+        System.out.println("\nTest: canonical OU ∂logL/∂t analytic vs numerical (conjugate root, Gaussian-link tips)");
+        final CanonicalTipObservation[] tips = buildFullyObservedTips();
+        final OUSetup setup = buildOUSetup("canonGradT_gaussian_link", tips);
+        installIdentityGaussianLinkTips(setup, tips, 0.05);
+        checkGradientBranchLengths(setup, "Gaussian-link tips");
+    }
+
     public void testGradientQConjugateRootPartiallyObservedMatchesNumerical() {
         System.out.println("\nTest: canonical OU ∂logL/∂Q analytic vs numerical (conjugate root, partially observed)");
         checkGradientQ(buildOUSetup("canonGradQ_partial", buildPartiallyObservedTips()), "partially observed");

@@ -27,6 +27,8 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+
 public class CanonicalGaussianMessagePasserOULikelihoodTest extends CanonicalOUMessagePasserTestSupport {
 
     public CanonicalGaussianMessagePasserOULikelihoodTest(final String name) {
@@ -45,6 +47,35 @@ public class CanonicalGaussianMessagePasserOULikelihoodTest extends CanonicalOUM
         final OUSetup setup = buildOUSetup("canonLogL_partial", buildPartiallyObservedTips());
         final double logLikelihood = setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
         assertTrue("Partially observed canonical OU log-likelihood must be finite", Double.isFinite(logLikelihood));
+    }
+
+    public void testLogLikelihoodConjugateRootGaussianLinkFullyObservedIsFinite() {
+        System.out.println("\nTest: canonical OU log-likelihood is finite (conjugate root, Gaussian-link tips)");
+        final CanonicalTipObservation[] tips = buildFullyObservedTips();
+        final OUSetup setup = buildOUSetup("canonLogL_gaussian_link", tips);
+        installIdentityGaussianLinkTips(setup, tips, 0.05);
+
+        final double logLikelihood = setup.passer.computePostOrderLogLikelihood(setup.provider, setup.rootPrior);
+
+        assertTrue("Gaussian-link canonical OU log-likelihood must be finite", Double.isFinite(logLikelihood));
+    }
+
+    public void testLogLikelihoodConjugateRootGaussianLinkDiffersFromCollapsedIdentity() {
+        System.out.println("\nTest: canonical OU Gaussian-link log-likelihood differs from collapsed identity tips");
+        final CanonicalTipObservation[] tips = buildFullyObservedTips();
+        final OUSetup identitySetup = buildOUSetup("canonLogL_gaussian_identity", tips);
+        final OUSetup gaussianSetup = buildOUSetup("canonLogL_gaussian_noise", tips);
+        installIdentityGaussianLinkTips(gaussianSetup, tips, 0.25);
+
+        final double identityLogLikelihood =
+                identitySetup.passer.computePostOrderLogLikelihood(identitySetup.provider, identitySetup.rootPrior);
+        final double gaussianLogLikelihood =
+                gaussianSetup.passer.computePostOrderLogLikelihood(gaussianSetup.provider, gaussianSetup.rootPrior);
+
+        assertTrue("Collapsed identity log-likelihood must be finite", Double.isFinite(identityLogLikelihood));
+        assertTrue("Gaussian-link log-likelihood must be finite", Double.isFinite(gaussianLogLikelihood));
+        assertTrue("Finite observation noise should change the integrated likelihood",
+                Math.abs(identityLogLikelihood - gaussianLogLikelihood) > 1.0e-6);
     }
 
     public void testOrthogonalBlockConjugateRootFullyObservedLikelihoodMatchesDense() {

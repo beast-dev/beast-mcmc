@@ -35,6 +35,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservati
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 /**
  * Canonical post-order and pre-order tree message propagation.
@@ -204,8 +206,18 @@ final class CanonicalTreeTraversal {
             final CanonicalGaussianState out,
             final BranchGradientWorkspace workspace) {
         if (tree.isExternal(tree.getNode(childIndex))) {
+            final CanonicalTipObservationModel observationModel =
+                    stateStore.tipObservationModels[childIndex];
+            if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
+                final CanonicalGaussianTransition transition =
+                        transitionFor(childIndex, transitionProvider, workspace);
+                observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
+                CanonicalGaussianMessageOps.pushBackward(
+                        workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
+                return;
+            }
             final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-            if (tipObservation.observedCount < dimension) {
+            if (observationModel.getMode() != TipObservationMode.EXACT_IDENTITY) {
                 buildTipParentMessage(childIndex, tipObservation, transitionProvider, out);
                 return;
             }
@@ -222,6 +234,14 @@ final class CanonicalTreeTraversal {
             final CanonicalGaussianState out,
             final BranchGradientWorkspace workspace) {
         if (tree.isExternal(tree.getNode(childIndex))) {
+            final CanonicalTipObservationModel observationModel =
+                    stateStore.tipObservationModels[childIndex];
+            if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
+                observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
+                CanonicalGaussianMessageOps.pushBackward(
+                        workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
+                return;
+            }
             final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
             if (tipObservation.observedCount == 0) {
                 CanonicalGaussianMessageOps.clearState(out);

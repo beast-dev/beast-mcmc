@@ -1,6 +1,8 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 final class BranchContributionStrategyFactory {
 
@@ -22,6 +24,10 @@ final class BranchContributionStrategyFactory {
             new InternalNodeContribution();
     private final BranchContributionStrategy missingTrait =
             new MissingTraitContribution();
+    private final BranchContributionStrategy gaussianLinkTip =
+            new GaussianLinkTipContribution();
+    private final BranchContributionStrategy fixedParentGaussianLinkTip =
+            new FixedParentGaussianLinkTipContribution();
 
     BranchContributionStrategyFactory(final Tree tree,
                                       final int dimension,
@@ -35,6 +41,11 @@ final class BranchContributionStrategyFactory {
         final boolean fixedParent =
                 stateStore.hasFixedRootValue && tree.isRoot(tree.getParent(tree.getNode(childIndex)));
         if (tree.isExternal(tree.getNode(childIndex))) {
+            final CanonicalTipObservationModel observationModel =
+                    stateStore.tipObservationModels[childIndex];
+            if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
+                return fixedParent ? fixedParentGaussianLinkTip : gaussianLinkTip;
+            }
             final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
             if (tipObservation.observedCount == 0) {
                 return missingTrait;

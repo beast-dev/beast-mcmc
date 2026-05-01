@@ -130,6 +130,29 @@ final class OUCanonicalParentAboveResolver {
         return aboveParentPrecisionMatrix;
     }
 
+    DenseMatrix64F requireParentAbovePrecision(final NormalSufficientStatistics aboveParent) {
+        if (aboveParent == null) {
+            throw new IllegalStateException("Missing parent-above message for canonical branch contribution.");
+        }
+        final DenseMatrix64F parentPrecisionRaw = aboveParent.getRawPrecision();
+        final DenseMatrix64F parentMeanRaw = aboveParent.getRawMean();
+        final boolean parentMeanFinite = CanonicalNumerics.isFinite(parentMeanRaw);
+        final boolean parentPrecisionHasNaN = CanonicalNumerics.hasNaN(parentPrecisionRaw);
+        final boolean parentPrecisionHasInfinity = CanonicalNumerics.hasInfinity(parentPrecisionRaw);
+        if (!parentMeanFinite || parentPrecisionHasNaN || parentPrecisionHasInfinity) {
+            throw new IllegalStateException(
+                    "Invalid parent-above message."
+                            + " parentMeanFinite=" + parentMeanFinite
+                            + " parentPrecisionHasNaN=" + parentPrecisionHasNaN
+                            + " parentPrecisionHasInfinity=" + parentPrecisionHasInfinity
+                            + " parentPrecisionSummary=" + CanonicalNumerics.summarizeDenseMatrix(parentPrecisionRaw)
+                            + " parentMeanSummary=" + CanonicalNumerics.summarizeDenseMatrix(parentMeanRaw));
+        }
+        aboveParentPrecisionMatrix.set(parentPrecisionRaw);
+        aboveParentMeanVector.set(parentMeanRaw);
+        return aboveParentPrecisionMatrix;
+    }
+
     DenseMatrix64F recoverParentAbovePrecision(final NormalSufficientStatistics above) {
         aboveChildPrecisionMatrix.set(above.getRawPrecision());
         safeInvertSymmetricPositiveDefinite(

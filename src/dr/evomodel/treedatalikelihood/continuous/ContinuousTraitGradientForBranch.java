@@ -854,12 +854,8 @@ public interface ContinuousTraitGradientForBranch {
                 return new double[getDimension()];
             }
 
-            if (nativeBlockParameter != null) {
-                return diffusionDelegate.getCanonicalNativeOrthogonalBlockGradientSelectionForBranch(
-                        statistics, node, cdi, nativeBlockParameter, requestedParameter);
-            }
-
-            return diffusionDelegate.getCanonicalGradientSelectionForBranch(statistics, node, cdi);
+            return diffusionDelegate.getCanonicalSelectionGradientForRequestedParameter(
+                    statistics, node, cdi, nativeBlockParameter, requestedParameter);
         }
 
         @Override

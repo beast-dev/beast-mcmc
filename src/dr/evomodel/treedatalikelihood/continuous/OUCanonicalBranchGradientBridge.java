@@ -181,48 +181,6 @@ public final class OUCanonicalBranchGradientBridge {
                 requestedParameter);
     }
 
-    public double[] getGradientWrtSelectionViaDensePullback(
-            final double branchLength,
-            final double[] optimum,
-            final BranchSufficientStatistics statistics,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-            final Parameter requestedParameter) {
-        return selectionGradient.getGradientWrtSelectionViaDensePullback(
-                branchLength,
-                optimum,
-                statistics,
-                blockParameter,
-                requestedParameter);
-    }
-
-    public double[] getNativeOrthogonalBlockGradientWrtSelection(
-            final double branchLength,
-            final double[] optimum,
-            final BranchSufficientStatistics statistics,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-            final Parameter requestedParameter) {
-        return getNativeSpecializedGradientWrtSelection(
-                branchLength,
-                optimum,
-                statistics,
-                blockParameter,
-                requestedParameter);
-    }
-
-    public double[] getNativeSpecializedGradientWrtSelection(
-            final double branchLength,
-            final double[] optimum,
-            final BranchSufficientStatistics statistics,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-            final Parameter requestedParameter) {
-        return selectionGradient.getNativeSpecializedGradientWrtSelection(
-                branchLength,
-                optimum,
-                statistics,
-                blockParameter,
-                requestedParameter);
-    }
-
     private void refreshProcessSnapshots() {
         branchTransitionProvider.getProcessModel();
     }

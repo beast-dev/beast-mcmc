@@ -19,14 +19,13 @@ public final class CanonicalGaussianMessageOps {
 
     public static final class Workspace {
         private final int dimension;
-        final double[] matrix1;
-        final double[] matrix2;
-        final double[] matrix3;
-        final double[] matrix4;
-        final double[] matrix5;
-        final double[] vector1;
-        final double[] vector2;
-        final double[] vector3;
+        final double[] eliminationPrecision;
+        final double[] eliminationPrecisionInverse;
+        final double[] leftProductScratch;
+        final double[] symmetricMatrixScratch;
+        final double[] matrixProductScratch;
+        final double[] eliminationInformation;
+        final double[] meanScratch;
 
         public Workspace(final int dimension) {
             if (dimension < 1) {
@@ -34,14 +33,13 @@ public final class CanonicalGaussianMessageOps {
             }
             this.dimension = dimension;
             final int d2 = dimension * dimension;
-            this.matrix1 = new double[d2];
-            this.matrix2 = new double[d2];
-            this.matrix3 = new double[d2];
-            this.matrix4 = new double[d2];
-            this.matrix5 = new double[d2];
-            this.vector1 = new double[dimension];
-            this.vector2 = new double[dimension];
-            this.vector3 = new double[dimension];
+            this.eliminationPrecision = new double[d2];
+            this.eliminationPrecisionInverse = new double[d2];
+            this.leftProductScratch = new double[d2];
+            this.symmetricMatrixScratch = new double[d2];
+            this.matrixProductScratch = new double[d2];
+            this.eliminationInformation = new double[dimension];
+            this.meanScratch = new double[dimension];
         }
 
         public int getDimension() {
@@ -99,12 +97,12 @@ public final class CanonicalGaussianMessageOps {
         final int d = previous.getDimension();
         ensureDimension(workspace, d);
 
-        final double[] a      = workspace.matrix1;
-        final double[] aInv   = workspace.matrix2;
-        final double[] temp   = workspace.matrix3;
-        final double[] temp2  = workspace.matrix4;
-        final double[] h      = workspace.vector1;
-        final double[] tempv  = workspace.vector2;
+        final double[] a      = workspace.eliminationPrecision;
+        final double[] aInv   = workspace.eliminationPrecisionInverse;
+        final double[] temp   = workspace.leftProductScratch;
+        final double[] temp2  = workspace.symmetricMatrixScratch;
+        final double[] h      = workspace.eliminationInformation;
+        final double[] tempv  = workspace.meanScratch;
 
         for (int i = 0; i < d; ++i) {
             h[i] = previous.information[i] + transition.informationX[i];
@@ -140,12 +138,12 @@ public final class CanonicalGaussianMessageOps {
         final int d = next.getDimension();
         ensureDimension(workspace, d);
 
-        final double[] a      = workspace.matrix1;
-        final double[] aInv   = workspace.matrix2;
-        final double[] temp   = workspace.matrix3;
-        final double[] temp2  = workspace.matrix4;
-        final double[] h      = workspace.vector1;
-        final double[] tempv  = workspace.vector2;
+        final double[] a      = workspace.eliminationPrecision;
+        final double[] aInv   = workspace.eliminationPrecisionInverse;
+        final double[] temp   = workspace.leftProductScratch;
+        final double[] temp2  = workspace.symmetricMatrixScratch;
+        final double[] h      = workspace.eliminationInformation;
+        final double[] tempv  = workspace.meanScratch;
 
         for (int i = 0; i < d; ++i) {
             h[i] = next.information[i] + transition.informationY[i];
@@ -240,11 +238,11 @@ public final class CanonicalGaussianMessageOps {
             return;
         }
 
-        final double[] missingPrecision        = workspace.matrix1;
-        final double[] missingPrecisionInverse  = workspace.matrix2;
-        final double[] xyTimesMissingInverse    = workspace.matrix3;
-        final double[] missingInformation       = workspace.vector1;
-        final double[] missingMean              = workspace.vector2;
+        final double[] missingPrecision        = workspace.eliminationPrecision;
+        final double[] missingPrecisionInverse  = workspace.eliminationPrecisionInverse;
+        final double[] xyTimesMissingInverse    = workspace.leftProductScratch;
+        final double[] missingInformation       = workspace.eliminationInformation;
+        final double[] missingMean              = workspace.meanScratch;
 
         for (int i = 0; i < d; ++i) {
             final int iOff = i * d;
@@ -367,7 +365,7 @@ public final class CanonicalGaussianMessageOps {
         final int d = state.getDimension();
         ensureDimension(workspace, d);
         return normalizedLogNormalizer(state.precision, state.information, d, workspace,
-                workspace.matrix1, workspace.vector1);
+                workspace.eliminationPrecision, workspace.eliminationInformation);
     }
 
     public static double normalizationShift(final CanonicalGaussianState state,
@@ -381,12 +379,12 @@ public final class CanonicalGaussianMessageOps {
                                     final Workspace workspace,
                                     final CanonicalGaussianState out) {
         ensureDimension(workspace, d);
-        final double[] elimPrecision        = workspace.matrix1;
-        final double[] elimPrecisionInverse = workspace.matrix2;
-        final double[] cross1               = workspace.matrix3;
-        final double[] cross2               = workspace.matrix4;
-        final double[] elimInformation      = workspace.vector1;
-        final double[] tempv                = workspace.vector2;
+        final double[] elimPrecision        = workspace.eliminationPrecision;
+        final double[] elimPrecisionInverse = workspace.eliminationPrecisionInverse;
+        final double[] cross1               = workspace.leftProductScratch;
+        final double[] cross2               = workspace.symmetricMatrixScratch;
+        final double[] elimInformation      = workspace.eliminationInformation;
+        final double[] tempv                = workspace.meanScratch;
 
         if (keepFirstBlock) {
             fillLowerRightBlockFlat(pairState.precision, d, elimPrecision);
@@ -407,8 +405,8 @@ public final class CanonicalGaussianMessageOps {
             fillUpperRightBlockFlat(pairState.precision, d, cross2);
         }
 
-        MatrixOps.matMul(cross1, elimPrecisionInverse, workspace.matrix5, d);
-        MatrixOps.matMul(workspace.matrix5, cross2, workspace.matrix1, d);
+        MatrixOps.matMul(cross1, elimPrecisionInverse, workspace.matrixProductScratch, d);
+        MatrixOps.matMul(workspace.matrixProductScratch, cross2, workspace.eliminationPrecision, d);
 
         if (keepFirstBlock) {
             fillUpperLeftBlockFlat(pairState.precision, d, out.precision);
@@ -418,7 +416,7 @@ public final class CanonicalGaussianMessageOps {
             fillSecondBlockFlat(pairState.information, d, out.information);
         }
 
-        subtractMatrixInPlaceFlat(out.precision, workspace.matrix1, d);
+        subtractMatrixInPlaceFlat(out.precision, workspace.eliminationPrecision, d);
         MatrixOps.symmetrize(out.precision, d);
 
         MatrixOps.matVec(elimPrecisionInverse, elimInformation, tempv, d);
@@ -467,34 +465,34 @@ public final class CanonicalGaussianMessageOps {
                                                       final double[] inverseOut,
                                                       final int dimension,
                                                       final Workspace workspace) {
-        MatrixOps.copyMatrix(matrix, workspace.matrix4, dimension);
-        symmetrizeSquareFlat(workspace.matrix4, dimension);
+        MatrixOps.copyMatrix(matrix, workspace.symmetricMatrixScratch, dimension);
+        symmetrizeSquareFlat(workspace.symmetricMatrixScratch, dimension);
         double logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4);
+                workspace.symmetricMatrixScratch, inverseOut, dimension, workspace.matrixProductScratch, workspace.symmetricMatrixScratch);
         if (!Double.isNaN(logDet)) {
             return logDet;
         }
 
-        MatrixOps.copyMatrix(workspace.matrix4, workspace.matrix3, dimension);
+        MatrixOps.copyMatrix(workspace.symmetricMatrixScratch, workspace.leftProductScratch, dimension);
         final double jitterBase = Math.max(
                 SYMMETRIC_JITTER_ABSOLUTE,
-                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonalFlat(workspace.matrix3, dimension)));
+                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonalFlat(workspace.leftProductScratch, dimension)));
 
         double jitter = 0.0;
         double lowerBound = Double.NaN;
         for (int attempt = 0; attempt < 12; ++attempt) {
-            MatrixOps.copyMatrix(workspace.matrix3, workspace.matrix4, dimension);
+            MatrixOps.copyMatrix(workspace.leftProductScratch, workspace.symmetricMatrixScratch, dimension);
             if (jitter > 0.0) {
-                addDiagonalJitterFlat(workspace.matrix4, jitter, dimension);
+                addDiagonalJitterFlat(workspace.symmetricMatrixScratch, jitter, dimension);
             }
             logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
-                    workspace.matrix4, inverseOut, dimension, workspace.matrix5, workspace.matrix4);
+                    workspace.symmetricMatrixScratch, inverseOut, dimension, workspace.matrixProductScratch, workspace.symmetricMatrixScratch);
             if (!Double.isNaN(logDet)) {
                 return logDet;
             }
             if (jitter == 0.0) {
                 if (Double.isNaN(lowerBound)) {
-                    lowerBound = gershgorinLowerBoundFlat(workspace.matrix3, dimension);
+                    lowerBound = gershgorinLowerBoundFlat(workspace.leftProductScratch, dimension);
                 }
                 jitter = lowerBound > 0.0 ? jitterBase : (-lowerBound + jitterBase);
             } else {
@@ -508,19 +506,19 @@ public final class CanonicalGaussianMessageOps {
                                                                final double[] inverseOut,
                                                                final int dim,
                                                                final Workspace workspace) {
-        System.arraycopy(matrix, 0, workspace.matrix3, 0, dim * dim);
-        symmetrizeSquareFlat(workspace.matrix3, dim);
+        System.arraycopy(matrix, 0, workspace.leftProductScratch, 0, dim * dim);
+        symmetrizeSquareFlat(workspace.leftProductScratch, dim);
 
         double logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix3, inverseOut, dim, workspace.matrix5, workspace.matrix4);
+                workspace.leftProductScratch, inverseOut, dim, workspace.matrixProductScratch, workspace.symmetricMatrixScratch);
         if (!Double.isNaN(logDet)) {
             return logDet;
         }
 
-        System.arraycopy(workspace.matrix3, 0, workspace.matrix4, 0, dim * dim);
-        addDiagonalJitterFlat(workspace.matrix4, SYMMETRIC_JITTER_ABSOLUTE, dim);
+        System.arraycopy(workspace.leftProductScratch, 0, workspace.symmetricMatrixScratch, 0, dim * dim);
+        addDiagonalJitterFlat(workspace.symmetricMatrixScratch, SYMMETRIC_JITTER_ABSOLUTE, dim);
         logDet = invertPositiveDefiniteFromSymmetricCopyFlat(
-                workspace.matrix4, inverseOut, dim, workspace.matrix5, workspace.matrix4);
+                workspace.symmetricMatrixScratch, inverseOut, dim, workspace.matrixProductScratch, workspace.symmetricMatrixScratch);
         if (!Double.isNaN(logDet)) {
             return logDet;
         }

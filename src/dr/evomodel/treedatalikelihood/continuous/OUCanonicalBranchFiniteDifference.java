@@ -155,12 +155,12 @@ final class OUCanonicalBranchFiniteDifference {
                 requestedParameter.setParameterValue(i, base + step);
                 refreshProcessSnapshots();
                 final double plus = branchWiring.evaluateFrozenLocalLogFactor(
-                        branchLength, optimum, statistics.getAbove(), statistics.getBelow());
+                        branchLength, optimum, statistics.getAboveParent(), statistics.getBelow());
 
                 requestedParameter.setParameterValue(i, base - step);
                 refreshProcessSnapshots();
                 final double minus = branchWiring.evaluateFrozenLocalLogFactor(
-                        branchLength, optimum, statistics.getAbove(), statistics.getBelow());
+                        branchLength, optimum, statistics.getAboveParent(), statistics.getBelow());
 
                 gradient[i] = (plus - minus) / (2.0 * step);
                 requestedParameter.setParameterValue(i, base);
@@ -218,7 +218,6 @@ final class OUCanonicalBranchFiniteDifference {
         final double baseFrozenFactor = branchWiring.evaluateFrozenLocalLogFactor(
                 branchLength,
                 optimum,
-                statistics.getAbove(),
                 statistics.getAboveParent(),
                 statistics.getBelow());
         double maxAbsAdjoint = 0.0;
@@ -334,14 +333,12 @@ final class OUCanonicalBranchFiniteDifference {
             final double plus = branchWiring.evaluateFrozenLocalLogFactor(
                     branchLength,
                     optimumWork,
-                    statistics.getAbove(),
                     statistics.getAboveParent(),
                     statistics.getBelow());
             optimumWork[i] = base - step;
             final double minus = branchWiring.evaluateFrozenLocalLogFactor(
                     branchLength,
                     optimumWork,
-                    statistics.getAbove(),
                     statistics.getAboveParent(),
                     statistics.getBelow());
             gradient[i] = (plus - minus) / (2.0 * step);

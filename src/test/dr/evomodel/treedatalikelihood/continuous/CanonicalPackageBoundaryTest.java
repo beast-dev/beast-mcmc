@@ -17,12 +17,20 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
                 ORTHOGONAL_BACKEND_PACKAGE);
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/treedatalikelihood/continuous"),
+                ORTHOGONAL_BACKEND_PACKAGE,
+                "OUCanonical");
     }
 
     public void testCanonicalMachineryDoesNotUseWildcardImports() throws IOException {
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
                 WILDCARD_IMPORT);
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/treedatalikelihood/continuous"),
+                WILDCARD_IMPORT,
+                "OUCanonical");
         assertNoSourceMatch(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 WILDCARD_IMPORT);

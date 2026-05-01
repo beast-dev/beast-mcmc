@@ -20,6 +20,7 @@ final class OUCanonicalBranchSelectionGradient {
     private final OUCanonicalNativeSelectionGradient nativeSelectionGradient;
     private final OUCanonicalBranchGradientScratch scratch;
     private final int dimension;
+    private final CanonicalSelectionPullback.DenseSelectionGradientProvider denseGradientProvider;
 
     OUCanonicalBranchSelectionGradient(
             final OUGaussianBranchTransitionProvider branchTransitionProvider,
@@ -40,6 +41,14 @@ final class OUCanonicalBranchSelectionGradient {
         this.nativeSelectionGradient = nativeSelectionGradient;
         this.scratch = scratch;
         this.dimension = dimension;
+        this.denseGradientProvider = new CanonicalSelectionPullback.DenseSelectionGradientProvider() {
+            @Override
+            public double[] gradient(final double branchLength,
+                                     final double[] optimum,
+                                     final BranchSufficientStatistics statistics) {
+                return getDenseGradientWrtSelection(branchLength, optimum, statistics);
+            }
+        };
     }
 
     void accumulateGlobalRemainderSelectionGradientForBranch(
@@ -59,25 +68,10 @@ final class OUCanonicalBranchSelectionGradient {
             }
         }
 
-        if (nativeBlockParameter == null) {
-            if (requestedParameter == null) {
-                processModel.accumulateSelectionGradientFromCovariance(
-                        branchLength, barVdi2D, gradientAccumulator);
-            } else {
-                final double[] denseGradient = new double[dimension * dimension];
-                processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
-                final double[] reordered = CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
-                        dimension, requestedParameter, denseGradient);
-                addInto(reordered, gradientAccumulator);
-            }
-            return;
-        }
-
         final double[] denseGradient = new double[dimension * dimension];
         processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
-        final double[] pulled = CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
-                dimension, requestedParameter, nativeBlockParameter, denseGradient);
-        addInto(pulled, gradientAccumulator);
+        addInto(selectionPullback(nativeBlockParameter, requestedParameter, false).projectDenseGradient(denseGradient),
+                gradientAccumulator);
     }
 
     double[] getGradientWrtSelection(final double branchLength,
@@ -135,38 +129,28 @@ final class OUCanonicalBranchSelectionGradient {
                                      final boolean externalBranch,
                                      final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
                                      final Parameter requestedParameter) {
-        if (useNumericLocalSelectionGradient()) {
-            final double[] denseGradient = finiteDifference.numericalLocalSelectionGradientFromFrozenFactor(
-                    branchLength, optimum, statistics, scratch.localAdjoints);
-            if (nativeBlockParameter == null) {
-                return CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
-                        dimension, requestedParameter, denseGradient);
-            }
-            return CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
-                    dimension, requestedParameter, nativeBlockParameter, denseGradient);
+        final boolean useNumeric = useNumericLocalSelectionGradient();
+        final CanonicalSelectionPullback pullback = selectionPullback(
+                nativeBlockParameter,
+                requestedParameter,
+                !useNumeric);
+        if (useNumeric) {
+            return pullback.projectDenseGradient(
+                    finiteDifference.numericalLocalSelectionGradientFromFrozenFactor(
+                            branchLength, optimum, statistics, scratch.localAdjoints));
         }
-        if (nativeBlockParameter == null) {
-            final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
-            return CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
-                    dimension, requestedParameter, denseGradient);
-        }
-
-        if (!(processModel.getSelectionMatrixParameterization()
+        if (debugOptions.isNonOrthogonalOmegaEnabled()
+                && nativeBlockParameter != null
+                && !(processModel.getSelectionMatrixParameterization()
                 instanceof CanonicalNativeBranchGradientCapability)) {
-            return getNonNativeBlockGradient(branchLength, optimum, statistics, nativeBlockParameter, requestedParameter);
-        }
-
-        if (fallbackPolicy.useDensePullbackForOrthogonal()) {
-            return getGradientWrtSelectionViaDensePullback(
-                    branchLength, optimum, statistics, nativeBlockParameter, requestedParameter);
-        }
-
-        return getNativeSpecializedGradientWrtSelection(
+            emitNonNativeBlockDebug(
                 branchLength,
                 optimum,
                 statistics,
                 nativeBlockParameter,
                 requestedParameter);
+        }
+        return pullback.gradientForBranch(branchLength, optimum, statistics, denseGradientProvider);
     }
 
     double[] getNumericalFrozenLocalGradientWrtSelection(
@@ -187,40 +171,9 @@ final class OUCanonicalBranchSelectionGradient {
                     scratch.localAdjoints,
                     requestedParameter);
         }
-        return CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
-                dimension,
-                requestedParameter,
+        return new DenseCanonicalSelectionPullback(dimension, requestedParameter).projectDenseGradient(
                 finiteDifference.numericalLocalSelectionGradientFromFrozenFactor(
                         branchLength, optimum, statistics, scratch.localAdjoints));
-    }
-
-    double[] getGradientWrtSelectionViaDensePullback(
-            final double branchLength,
-            final double[] optimum,
-            final BranchSufficientStatistics statistics,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-            final Parameter requestedParameter) {
-        final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
-        if (blockParameter == null) {
-            return CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
-                    dimension, requestedParameter, denseGradient);
-        }
-        return CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
-                dimension, requestedParameter, blockParameter, denseGradient);
-    }
-
-    double[] getNativeSpecializedGradientWrtSelection(
-            final double branchLength,
-            final double[] optimum,
-            final BranchSufficientStatistics statistics,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-            final Parameter requestedParameter) {
-        return nativeSelectionGradient.getNativeSpecializedGradientWrtSelection(
-                branchLength,
-                optimum,
-                statistics,
-                blockParameter,
-                requestedParameter);
     }
 
     private double[][] computeDenseSelectionGradientComponents(final double branchLength,
@@ -261,11 +214,43 @@ final class OUCanonicalBranchSelectionGradient {
         return new double[][]{transitionGradient, covarianceGradient, totalGradient};
     }
 
-    private double[] getNonNativeBlockGradient(final double branchLength,
-                                               final double[] optimum,
-                                               final BranchSufficientStatistics statistics,
-                                               final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
-                                               final Parameter requestedParameter) {
+    private double[] getDenseGradientWrtSelection(final double branchLength,
+                                                  final double[] optimum,
+                                                  final BranchSufficientStatistics statistics) {
+        if (useNumericLocalSelectionGradient()) {
+            return finiteDifference.numericalLocalSelectionGradientFromFrozenFactor(
+                    branchLength, optimum, statistics, scratch.localAdjoints);
+        }
+        return getGradientWrtSelection(branchLength, optimum, statistics);
+    }
+
+    private CanonicalSelectionPullback selectionPullback(
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+            final Parameter requestedParameter,
+            final boolean allowNativeSpecialized) {
+        if (blockParameter == null) {
+            return new DenseCanonicalSelectionPullback(dimension, requestedParameter);
+        }
+        if (allowNativeSpecialized
+                && processModel.getSelectionMatrixParameterization()
+                instanceof CanonicalNativeBranchGradientCapability
+                && !fallbackPolicy.useDensePullbackForOrthogonal()) {
+            return new NativeSpecializedCanonicalSelectionPullback(
+                    nativeSelectionGradient,
+                    blockParameter,
+                    requestedParameter);
+        }
+        return new DenseBlockCanonicalSelectionPullback(
+                dimension,
+                requestedParameter,
+                blockParameter);
+    }
+
+    private void emitNonNativeBlockDebug(final double branchLength,
+                                         final double[] optimum,
+                                         final BranchSufficientStatistics statistics,
+                                         final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
+                                         final Parameter requestedParameter) {
         if (debugOptions.isNonOrthogonalOmegaEnabled()) {
             branchWiring.fillLocalAdjoints(statistics, scratch.localAdjoints);
             System.err.println("NONORTH OMEGA branchLength=" + branchLength
@@ -273,8 +258,10 @@ final class OUCanonicalBranchSelectionGradient {
                     + " drift=" + Arrays.toString(processModel.getDriftMatrix().getParameterAsMatrix()[0]));
         }
         final double[] denseGradient = getGradientWrtSelection(branchLength, optimum, statistics);
-        final double[] analytic = CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
-                dimension, requestedParameter, nativeBlockParameter, denseGradient);
+        final double[] analytic = selectionPullback(
+                nativeBlockParameter,
+                requestedParameter,
+                false).projectDenseGradient(denseGradient);
         if (debugOptions.isNonOrthogonalOmegaEnabled()) {
             branchWiring.fillLocalAdjoints(statistics, scratch.localAdjoints);
             final double[] numeric = finiteDifference.numericalLocalSelectionGradientGeneric(
@@ -286,7 +273,6 @@ final class OUCanonicalBranchSelectionGradient {
                     + " analytic=" + Arrays.toString(analytic)
                     + " numeric=" + Arrays.toString(numeric));
         }
-        return analytic;
     }
 
     private boolean useNumericLocalSelectionGradient() {

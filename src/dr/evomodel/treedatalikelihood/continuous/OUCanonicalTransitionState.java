@@ -133,6 +133,10 @@ final class OUCanonicalTransitionState {
         return parentAboveResolver.recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
     }
 
+    DenseMatrix64F requireParentAbovePrecision(final NormalSufficientStatistics aboveParent) {
+        return parentAboveResolver.requireParentAbovePrecision(aboveParent);
+    }
+
     DenseMatrix64F recoverParentAbovePrecision(final NormalSufficientStatistics above) {
         return parentAboveResolver.recoverParentAbovePrecision(above);
     }

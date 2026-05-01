@@ -1,26 +1,38 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+
 /**
  * Shared dense linear-algebra utilities for Gaussian likelihood engines.
  *
- * <p>This helper centralizes the matrix and Cholesky routines that are shared by
- * expectation-form and canonical-form Gaussian engines.
+ * <p>The flat row-major methods in this class ({@code *Flat} suffix) are the live
+ * implementations. The {@code double[][]} overloads are deprecated; migrate callers
+ * to {@link MatrixOps} which provides a clean flat-only API.
  */
 public final class GaussianMatrixOps {
 
-    public static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
-    public static final double MIN_DIAGONAL_JITTER = 1E-10;
+    /** @see MatrixOps#LOG_TWO_PI */
+    public static final double LOG_TWO_PI = MatrixOps.LOG_TWO_PI;
+    /** @see MatrixOps#MIN_DIAGONAL_JITTER */
+    public static final double MIN_DIAGONAL_JITTER = MatrixOps.MIN_DIAGONAL_JITTER;
 
     private static final double SYMMETRY_TOLERANCE = 1E-12;
 
     private GaussianMatrixOps() { }
 
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#matVec(double[], double[], double[], int, int)}
+     *     with a flat row-major matrix instead.
+     */
+    @Deprecated
     public static void multiplyMatrixVector(final double[][] matrix,
                                      final double[] vector,
                                      final double[] out) {
         multiplyMatrixVector(matrix, vector, out, matrix.length, vector.length);
     }
 
+    /** @deprecated See {@link #multiplyMatrixVector(double[][], double[], double[])}. */
+    @Deprecated
     public static void multiplyMatrixVector(final double[][] matrix,
                                      final double[] vector,
                                      final double[] out,
@@ -35,12 +47,19 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#matMul(double[], double[], double[], int, int, int)}
+     *     with flat row-major matrices instead.
+     */
+    @Deprecated
     public static void multiplyMatrixMatrix(final double[][] left,
                                      final double[][] right,
                                      final double[][] out) {
         multiplyMatrixMatrix(left, right, out, left.length, right.length, right[0].length);
     }
 
+    /** @deprecated See {@link #multiplyMatrixMatrix(double[][], double[][], double[][])}. */
+    @Deprecated
     public static void multiplyMatrixMatrix(final double[][] left,
                                      final double[][] right,
                                      final double[][] out,
@@ -58,6 +77,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
     public static void multiplyMatrixMatrixTransposedRight(final double[][] left,
                                                     final double[][] right,
                                                     final double[][] out) {
@@ -75,6 +96,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#addInPlace(double[], double[], int)} with flat arrays instead. */
+    @Deprecated
     public static void addMatrixInPlace(final double[][] accumulator, final double[][] increment) {
         for (int i = 0; i < accumulator.length; ++i) {
             for (int j = 0; j < accumulator[i].length; ++j) {
@@ -336,6 +359,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
     public static void identityMinus(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[i].length; ++j) {
@@ -348,10 +373,14 @@ public final class GaussianMatrixOps {
         System.arraycopy(source, 0, target, 0, source.length);
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#copyMatrix(double[], double[], int)} with flat arrays instead. */
+    @Deprecated
     public static void copyMatrix(final double[][] source, final double[][] target) {
         copyMatrix(source, target, source.length, source[0].length);
     }
 
+    /** @deprecated See {@link #copyMatrix(double[][], double[][])}. */
+    @Deprecated
     public static void copyMatrix(final double[][] source,
                            final double[][] target,
                            final int rows,
@@ -361,6 +390,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#symmetrize(double[], int)} with a flat array instead. */
+    @Deprecated
     public static void symmetrize(final double[][] matrix) {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = i + 1; j < matrix[i].length; ++j) {
@@ -371,6 +402,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
     public static void addJitterToDiagonal(final double[][] matrix, final double minimumJitter) {
         for (int i = 0; i < matrix.length; ++i) {
             if (matrix[i][i] < minimumJitter) {
@@ -379,6 +412,8 @@ public final class GaussianMatrixOps {
         }
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#quadraticForm(double[], double[], int, double[])} with a flat array instead. */
+    @Deprecated
     public static double quadraticForm(final double[][] matrix, final double[] vector) {
         double result = 0.0;
         for (int i = 0; i < vector.length; ++i) {
@@ -391,6 +426,11 @@ public final class GaussianMatrixOps {
         return result;
     }
 
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#tryCholesky(double[], double[], int)}
+     *     with flat arrays instead.
+     */
+    @Deprecated
     public static CholeskyFactor cholesky(final double[][] matrix) {
         final int dim = matrix.length;
         final double[][] lower = new double[dim][dim];
@@ -402,6 +442,8 @@ public final class GaussianMatrixOps {
         return new CholeskyFactor(lower);
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#tryCholesky(double[], double[], int)} instead. */
+    @Deprecated
     public static boolean tryCholesky(final double[][] matrix,
                                final double[][] lowerOut,
                                final int dimension) {
@@ -438,6 +480,8 @@ public final class GaussianMatrixOps {
         return true;
     }
 
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#invertFromCholesky(double[], double[], double[], int)} with flat arrays instead. */
+    @Deprecated
     public static void invertPositiveDefiniteFromCholesky(final double[][] out,
                                                    final CholeskyFactor factor) {
         final int dim = out.length;
@@ -460,6 +504,8 @@ public final class GaussianMatrixOps {
         symmetrize(out);
     }
 
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
     public static void invertPositiveDefiniteFromLowerTriangular(final double[][] inverseOut,
                                                           final double[][] lowerTriangular,
                                                           final double[] yScratch,

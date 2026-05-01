@@ -85,4 +85,57 @@ public final class CanonicalNumericsOptions {
     public double jitterBase(final double maxAbsDiagonal) {
         return Math.max(absoluteJitter, relativeJitter * Math.max(1.0, maxAbsDiagonal));
     }
+
+    // -----------------------------------------------------------------------
+    // Builder
+    // -----------------------------------------------------------------------
+
+    /** Returns a {@link Builder} pre-populated with the values of this instance. */
+    public Builder toBuilder() {
+        return new Builder()
+                .relativeJitter(relativeJitter)
+                .absoluteJitter(absoluteJitter)
+                .robustInversionAttempts(robustInversionAttempts)
+                .strictInversionAttempts(strictInversionAttempts)
+                .forceStrictSpdInversion(forceStrictSpdInversion)
+                .spdFailureDumpEnabled(spdFailureDumpEnabled)
+                .pivotFloorDebugEnabled(pivotFloorDebugEnabled);
+    }
+
+    /**
+     * Fluent builder for {@link CanonicalNumericsOptions}.
+     * Start from one of the predefined instances ({@link #OU_TREE}, {@link #ORTHOGONAL_BLOCK})
+     * via {@link CanonicalNumericsOptions#toBuilder()}, or from defaults via {@code new Builder()}.
+     */
+    public static final class Builder {
+
+        private double  relativeJitter             = 1.0e-12;
+        private double  absoluteJitter             = 1.0e-12;
+        private int     robustInversionAttempts    = 8;
+        private int     strictInversionAttempts    = 12;
+        private boolean forceStrictSpdInversion    = false;
+        private boolean spdFailureDumpEnabled      = false;
+        private boolean pivotFloorDebugEnabled     = false;
+
+        public Builder() { }
+
+        public Builder relativeJitter(double value)          { relativeJitter = value;          return this; }
+        public Builder absoluteJitter(double value)          { absoluteJitter = value;          return this; }
+        public Builder robustInversionAttempts(int value)    { robustInversionAttempts = value; return this; }
+        public Builder strictInversionAttempts(int value)    { strictInversionAttempts = value; return this; }
+        public Builder forceStrictSpdInversion(boolean value){ forceStrictSpdInversion = value; return this; }
+        public Builder spdFailureDumpEnabled(boolean value)  { spdFailureDumpEnabled = value;   return this; }
+        public Builder pivotFloorDebugEnabled(boolean value) { pivotFloorDebugEnabled = value;  return this; }
+
+        public CanonicalNumericsOptions build() {
+            return new CanonicalNumericsOptions(
+                    relativeJitter,
+                    absoluteJitter,
+                    robustInversionAttempts,
+                    strictInversionAttempts,
+                    forceStrictSpdInversion,
+                    spdFailureDumpEnabled,
+                    pivotFloorDebugEnabled);
+        }
+    }
 }

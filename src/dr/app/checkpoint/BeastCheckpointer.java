@@ -37,6 +37,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.CheckpointableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.state.*;
@@ -325,6 +326,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     out.print(((AdaptableMCMCOperator)operator).getAdaptationCount());
                 }
                 out.println();
+                if (operator instanceof CheckpointableMCMCOperator) {
+                    writeCheckpointableOperatorState(out, operator, (CheckpointableMCMCOperator) operator);
+                }
             }
 
             //check up front if there are any TreeParameterModel objects
@@ -425,6 +429,38 @@ public class BeastCheckpointer implements StateLoaderSaver {
         return true;
     }
 
+    private void writeCheckpointableOperatorState(PrintStream out, MCMCOperator operator,
+                                                  CheckpointableMCMCOperator checkpointableOperator) {
+        out.print("operator_state");
+        out.print("\t");
+        out.print(operator.getOperatorName());
+        out.print("\t");
+        out.print(checkpointableOperator.getCheckpointStateType());
+        checkpointableOperator.writeCheckpointState(new CheckpointableMCMCOperator.CheckpointStateWriter(out));
+        out.println();
+    }
+
+    private void addSavedFields(Map<String, Deque<String[]>> savedFields, String key, String[] fields) {
+        Deque<String[]> values = savedFields.get(key);
+        if (values == null) {
+            values = new ArrayDeque<String[]>();
+            savedFields.put(key, values);
+        }
+        values.addLast(fields);
+    }
+
+    private String[] removeSavedFields(Map<String, Deque<String[]>> savedFields, String key) {
+        Deque<String[]> values = savedFields.get(key);
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        return values.removeFirst();
+    }
+
+    private String getParameterCheckpointName(Parameter parameter) {
+        return parameter.getParameterName() == null ? "null" : parameter.getParameterName();
+    }
+
     protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
 
         DoubleParser parser = useFullPrecision ? DoubleParser.HEX : DoubleParser.TEXT;
@@ -481,23 +517,29 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
+            Map<String, Deque<String[]>> savedParameters = new LinkedHashMap<String, Deque<String[]>>();
+            line = in.readLine();
+            while (line != null) {
+                fields = line.split("\t");
+                if (!fields[0].equals("parameter")) {
+                    break;
+                }
+                addSavedFields(savedParameters, fields[1], fields);
+                line = in.readLine();
+            }
+
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
 
                 if (!parameter.isImmutable()) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    //if (!fields[0].equals(parameter.getParameterName())) {
-                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                    //}
+                    fields = removeSavedFields(savedParameters, getParameterCheckpointName(parameter));
+                    if (fields == null) {
+                        throw new RuntimeException("Unable to match state parameter: " + parameter.getParameterName());
+                    }
                     int dimension = Integer.parseInt(fields[2]);
 
                     if (dimension != parameter.getDimension()) {
-                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                        System.err.print("Read from file: ");
-                        for (int i = 0; i < fields.length; i++) {
-                            System.err.print(fields[i] + "\t");
-                        }
-                        System.err.println();
+                        throw new RuntimeException("Unable to match state parameter dimension: " + dimension +
+                                ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
                     }
 
                     if (fields[1].endsWith(".rootNodeNumber")) {
@@ -531,28 +573,62 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 }
             }
 
-            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
-                //TODO we can no longer assume these are in the right order
-                //TODO best parse all the "operator" lines and store them so we can mix and match within this for loop
-                //TODO does not only apply to the operators but also to the parameters
-                //TODO test using additional tip-date sampling compared to previous run
-                MCMCOperator operator = operatorSchedule.getOperator(i);
-                line = in.readLine();
+            Map<String, Deque<String[]>> savedOperators = new LinkedHashMap<String, Deque<String[]>>();
+            Map<String, Deque<String[]>> savedOperatorStates = new LinkedHashMap<String, Deque<String[]>>();
+            while (line != null) {
                 fields = line.split("\t");
-                if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match " + operator.getOperatorName() + " operator: " + fields[1]);
+                if (fields[0].equals("operator")) {
+                    addSavedFields(savedOperators, fields[1], fields);
+                } else if (fields[0].equals("operator_state")) {
+                    addSavedFields(savedOperatorStates, fields[1], fields);
+                } else {
+                    break;
+                }
+                line = in.readLine();
+            }
+
+            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                MCMCOperator operator = operatorSchedule.getOperator(i);
+                fields = removeSavedFields(savedOperators, operator.getOperatorName());
+                if (fields == null) {
+                    throw new RuntimeException("Unable to match operator: " + operator.getOperatorName());
                 }
                 if (fields.length < 4) {
                     throw new RuntimeException("Operator missing values: " + fields[1]);
                 }
-                operator.setAcceptCount(Integer.parseInt(fields[2]));
-                operator.setRejectCount(Integer.parseInt(fields[3]));
+                operator.setAcceptCount(Long.parseLong(fields[2]));
+                operator.setRejectCount(Long.parseLong(fields[3]));
                 if (operator instanceof AdaptableMCMCOperator) {
                     if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
                     ((AdaptableMCMCOperator)operator).setAdaptableParameter(parser.parseDouble(fields[4]));
                     ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
+                }
+                if (operator instanceof CheckpointableMCMCOperator) {
+                    String[] operatorState = removeSavedFields(savedOperatorStates, operator.getOperatorName());
+                    CheckpointableMCMCOperator checkpointableOperator = (CheckpointableMCMCOperator) operator;
+                    if (operatorState == null) {
+                        throw new RuntimeException("Missing " + checkpointableOperator.getCheckpointStateType() +
+                                " operator state for checkpointable operator: " + operator.getOperatorName());
+                    }
+                    if (operatorState.length < 3 ||
+                            !operatorState[2].equals(checkpointableOperator.getCheckpointStateType())) {
+                        throw new RuntimeException("Malformed " + checkpointableOperator.getCheckpointStateType() +
+                                " operator state for checkpointable operator: " + operator.getOperatorName());
+                    }
+                    checkpointableOperator.readCheckpointState(
+                            new CheckpointableMCMCOperator.CheckpointStateReader(
+                                    operatorState,
+                                    3,
+                                    checkpointableOperator.getCheckpointStateType(),
+                                    operator.getOperatorName(),
+                                    new CheckpointableMCMCOperator.CheckpointStateReader.DoubleParser() {
+                                        @Override
+                                        public double parseDouble(String string) {
+                                            return parser.parseDouble(string);
+                                        }
+                                    }));
                 }
             }
 
@@ -572,12 +648,15 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.out.println("model = " + model.getModelName());
                     }
 
-                    line = in.readLine();
+                    if (line == null || !line.startsWith("empirical tree\t")) {
+                        line = in.readLine();
+                    }
                     fields = line.split("\t");
 
                     EmpiricalTreeDistributionModel empiricalTreeDistributionModel = (EmpiricalTreeDistributionModel) model;
                     int currentTreeIndex = Integer.parseInt(fields[2]);
                     empiricalTreeDistributionModel.setTree(currentTreeIndex);
+                    line = null;
                 } else
 
                 if (model instanceof TreeModel) {
@@ -632,7 +711,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             if (hasTreeModel) {
 
-                line = in.readLine();
+                if (line == null) {
+                    line = in.readLine();
+                }
                 fields = line.split("\t");
                 // Read in all (possibly more than one) trees
                 while (fields[0].equals("tree")) {

@@ -16,6 +16,8 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
+import java.util.Arrays;
+
 /**
  * Selection-matrix gradient formula driven by branch-local canonical posterior states.
  *
@@ -37,7 +39,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     private final double[][] dLogL_dF;
     private final double[][] dLogL_dV;
     private final double[] nativeCompressedGradientScratch;
-    private final double[][] nativeRotationGradientScratch;
+    // Row-major flat rotation gradient (replaces former double[][] field).
+    private final double[] nativeRotationGradientFlat;
+    // 2-D scratch for pullBackGradient() calls that still require double[][].
+    private final double[][] nativeRotationGradient2D;
     private final double[] stationaryMeanScratch;
 
     public CanonicalSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
@@ -64,10 +69,14 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
         this.dLogL_dF = new double[stateDimension][stateDimension];
         this.dLogL_dV = new double[stateDimension][stateDimension];
-        this.nativeCompressedGradientScratch = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
+        final boolean hasBlock = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter;
+        this.nativeCompressedGradientScratch = hasBlock
                 ? new double[((AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter).getCompressedDDimension()]
                 : null;
-        this.nativeRotationGradientScratch = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
+        this.nativeRotationGradientFlat = hasBlock
+                ? new double[stateDimension * stateDimension]
+                : null;
+        this.nativeRotationGradient2D = hasBlock
                 ? new double[stateDimension][stateDimension]
                 : null;
         this.stationaryMeanScratch = processModel != null ? new double[stateDimension] : null;
@@ -162,10 +171,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 (OrthogonalBlockDiagonalPolarStableMatrixParameter) selectionMatrixParameter;
         final int T = trajectory.timeCount;
         final double[] compressedDGradient = nativeCompressedGradientScratch;
-        final double[][] rotationGradient = nativeRotationGradientScratch;
+        final double[] rotationGradientFlat = nativeRotationGradientFlat;
         final double[] stationaryMean = stationaryMeanScratch;
-        zero(compressedDGradient);
-        zero(rotationGradient);
+        Arrays.fill(compressedDGradient, 0.0);
+        Arrays.fill(rotationGradientFlat, 0.0);
         processModel.getInitialMean(stationaryMean);
 
         for (int t = 0; t < T - 1; ++t) {
@@ -174,18 +183,22 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                     trajectory.branchPairStates[t],
                     contributionWorkspace,
                     localContribution);
-            orthogonalParameterization.accumulateNativeGradientFromCanonicalContribution(
+            orthogonalParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
                     processModel.getDiffusionMatrix(),
                     stationaryMean,
                     dt,
                     localContribution,
                     localAdjoints,
-                    compressedDGradient, rotationGradient);
+                    compressedDGradient,
+                    rotationGradientFlat);
         }
+
+        // Convert flat rotation gradient to 2D for assembleBlockGradientResult.
+        GaussianMatrixOps.copyFlatToMatrix(rotationGradientFlat, nativeRotationGradient2D, stateDimension);
 
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
-        return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradient);
+        return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, nativeRotationGradient2D);
     }
 
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
@@ -235,20 +248,6 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         final double[] out = new double[matrix.length * matrix.length];
         flattenColumnMajor(matrix, out, 0);
         return out;
-    }
-
-    private static void zero(final double[] vector) {
-        for (int i = 0; i < vector.length; ++i) {
-            vector[i] = 0.0;
-        }
-    }
-
-    private static void zero(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < matrix[i].length; ++j) {
-                matrix[i][j] = 0.0;
-            }
-        }
     }
 
     private static void flattenColumnMajor(final double[][] matrix,

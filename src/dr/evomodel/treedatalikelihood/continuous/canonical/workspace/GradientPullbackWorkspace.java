@@ -56,11 +56,6 @@ public final class GradientPullbackWorkspace {
         return dense().localGradientMu(gradientLength, dim);
     }
 
-    /**
-     * Clears the local gradient accumulators and resets the transition-matrix cache.
-     * Specialized (orthogonal-block) fields are NOT cleared here; that is the
-     * responsibility of {@link SpecializedCanonicalSelectionGradientPullback#clearWorkerBuffers}.
-     */
     public void clearLocalGradientBuffers(final int gradALength, final int gradMuLength, final int dim) {
         dense().clearLocalGradientBuffers(gradALength, gradMuLength, dim);
     }

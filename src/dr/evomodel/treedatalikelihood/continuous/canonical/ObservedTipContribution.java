@@ -17,7 +17,7 @@ final class ObservedTipContribution implements BranchContributionStrategy {
         assembler.fillContributionForObservedTip(
                 assembler.stateStore.branchAboveParent[childIndex],
                 transition,
-                assembler.stateStore.tipObservations[childIndex],
+                assembler.identityTipObservationModel(childIndex),
                 workspace);
         return true;
     }

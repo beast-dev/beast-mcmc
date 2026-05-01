@@ -37,7 +37,7 @@ public final class PartialIdentityTipProjection {
         this.transitionOffset = new double[dimension];
     }
 
-    public void projectObservedChildToParent(final CanonicalTipObservation tipObservation,
+    public void projectObservedChildToParent(final IdentityCanonicalTipObservationModel tipObservation,
                                              final CanonicalTransitionMomentProvider transitionMomentProvider,
                                              final double branchLength,
                                              final CanonicalGaussianState out) {
@@ -54,7 +54,7 @@ public final class PartialIdentityTipProjection {
         for (int observed = 0; observed < observedCount; ++observed) {
             final int observedTrait = partition.observedIndex(observed);
             shiftedObservation[observed] =
-                    tipObservation.values[observedTrait] - transitionOffset[observedTrait];
+                    tipObservation.valueAt(observedTrait) - transitionOffset[observedTrait];
             final int rowOffset = observed * observedCount;
             for (int otherObserved = 0; otherObserved < observedCount; ++otherObserved) {
                 varianceFlat[rowOffset + otherObserved] =

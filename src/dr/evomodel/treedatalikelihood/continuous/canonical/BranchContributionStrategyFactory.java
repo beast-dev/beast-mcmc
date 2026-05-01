@@ -1,14 +1,12 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 final class BranchContributionStrategyFactory {
 
     private final Tree tree;
-    private final int dimension;
     private final CanonicalTreeStateStore stateStore;
 
     private final BranchContributionStrategy fixedParentObservedTip =
@@ -34,7 +32,6 @@ final class BranchContributionStrategyFactory {
                                       final int dimension,
                                       final CanonicalTreeStateStore stateStore) {
         this.tree = tree;
-        this.dimension = dimension;
         this.stateStore = stateStore;
     }
 
@@ -47,14 +44,17 @@ final class BranchContributionStrategyFactory {
             if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
                 return fixedParent ? fixedParentGaussianLinkTip : gaussianLinkTip;
             }
-            final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
-            if (tipObservation.observedCount == 0) {
-                return missingTrait;
+            switch (observationModel.getMode()) {
+                case MISSING:
+                    return missingTrait;
+                case EXACT_IDENTITY:
+                    return fixedParent ? fixedParentObservedTip : observedTip;
+                case PARTIAL_EXACT_IDENTITY:
+                    return fixedParent ? fixedParentPartiallyObservedTip : partiallyObservedTip;
+                default:
+                    throw new IllegalStateException("Unsupported tip observation mode: "
+                            + observationModel.getMode());
             }
-            if (tipObservation.observedCount == dimension) {
-                return fixedParent ? fixedParentObservedTip : observedTip;
-            }
-            return fixedParent ? fixedParentPartiallyObservedTip : partiallyObservedTip;
         }
         return fixedParent ? fixedParentInternalNode : internalNode;
     }

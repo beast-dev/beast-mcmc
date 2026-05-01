@@ -43,6 +43,30 @@ public final class TipObservationPartition {
         return observedCount;
     }
 
+    public int update(final IdentityCanonicalTipObservationModel observation) {
+        if (observation.getLatentDimension() != dimension) {
+            throw new IllegalArgumentException("Observation dimension mismatch");
+        }
+
+        observedCount = 0;
+        missingCount = 0;
+        for (int i = 0; i < dimension; ++i) {
+            if (observation.isTraitObserved(i)) {
+                observedIndices[observedCount++] = i;
+                reducedIndexByTrait[i] = -1;
+            } else {
+                missingIndices[missingCount++] = i;
+                reducedIndexByTrait[i] = dimension + missingCount - 1;
+            }
+        }
+
+        if (observedCount != observation.getObservedCount() || observedCount + missingCount != dimension) {
+            throw new UnsupportedOperationException(
+                    "Canonical tip observation partition is inconsistent with observedCount.");
+        }
+        return observedCount;
+    }
+
     public int getDimension() {
         return dimension;
     }

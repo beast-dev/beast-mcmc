@@ -21,7 +21,7 @@ public final class PartialIdentityTipContribution {
     public void fillContributionForPartiallyObservedTip(
             final CanonicalGaussianState aboveState,
             final CanonicalGaussianTransition transition,
-            final CanonicalTipObservation tipObservation,
+            final IdentityCanonicalTipObservationModel tipObservation,
             final PartialIdentityTipObservationWorkspace workspace,
             final CanonicalBranchMessageContribution contribution) {
         final TipObservationPartition partition = workspace.partition;
@@ -38,7 +38,7 @@ public final class PartialIdentityTipContribution {
             }
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedIndex = partition.observedIndex(observed);
-                info -= transition.precisionXY[iOff + observedIndex] * tipObservation.values[observedIndex];
+                info -= transition.precisionXY[iOff + observedIndex] * tipObservation.valueAt(observedIndex);
             }
             workspace.reducedInformation[i] = info;
             for (int missing = 0; missing < missingCount; ++missing) {
@@ -54,7 +54,7 @@ public final class PartialIdentityTipContribution {
             double info = transition.informationY[childIndex];
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedIndex = partition.observedIndex(observed);
-                info -= transition.precisionYY[childOff + observedIndex] * tipObservation.values[observedIndex];
+                info -= transition.precisionYY[childOff + observedIndex] * tipObservation.valueAt(observedIndex);
             }
             workspace.reducedInformation[row] = info;
             for (int j = 0; j < dimension; ++j) {
@@ -84,8 +84,8 @@ public final class PartialIdentityTipContribution {
         clearContribution(contribution);
         for (int i = 0; i < dimension; ++i) {
             contribution.dLogL_dInformationX[i] = workspace.reducedMean[i];
-            contribution.dLogL_dInformationY[i] = tipObservation.observed[i]
-                    ? tipObservation.values[i]
+            contribution.dLogL_dInformationY[i] = tipObservation.isTraitObserved(i)
+                    ? tipObservation.valueAt(i)
                     : workspace.reducedMean[partition.reducedIndexByTrait(i)];
         }
 
@@ -99,13 +99,13 @@ public final class PartialIdentityTipContribution {
                 final double yj = contribution.dLogL_dInformationY[j];
 
                 final double exx = workspace.reducedCovariance[i * reducedDimension + j] + xi * xj;
-                final double exy = tipObservation.observed[j]
+                final double exy = tipObservation.isTraitObserved(j)
                         ? xi * yj
                         : workspace.reducedCovariance[i * reducedDimension + reducedJ] + xi * yj;
-                final double eyx = tipObservation.observed[i]
+                final double eyx = tipObservation.isTraitObserved(i)
                         ? yi * xj
                         : workspace.reducedCovariance[reducedI * reducedDimension + j] + yi * xj;
-                final double eyy = (tipObservation.observed[i] || tipObservation.observed[j])
+                final double eyy = (tipObservation.isTraitObserved(i) || tipObservation.isTraitObserved(j))
                         ? yi * yj
                         : workspace.reducedCovariance[reducedI * reducedDimension + reducedJ] + yi * yj;
 
@@ -121,7 +121,7 @@ public final class PartialIdentityTipContribution {
 
     public void fillContributionForFixedParentPartiallyObservedTip(
             final CanonicalGaussianTransition transition,
-            final CanonicalTipObservation tipObservation,
+            final IdentityCanonicalTipObservationModel tipObservation,
             final double[] fixedRootValue,
             final PartialIdentityTipObservationWorkspace workspace,
             final CanonicalGaussianState conditionedChildState,
@@ -140,7 +140,7 @@ public final class PartialIdentityTipContribution {
             for (int observed = 0; observed < observedCount; ++observed) {
                 final int observedTrait = partition.observedIndex(observed);
                 info -= conditionedChildState.precision[missingTraitOff + observedTrait]
-                        * tipObservation.values[observedTrait];
+                        * tipObservation.valueAt(observedTrait);
             }
             workspace.reducedInformation[missing] = info;
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
@@ -166,20 +166,20 @@ public final class PartialIdentityTipContribution {
         clearContribution(contribution);
         for (int i = 0; i < dimension; ++i) {
             contribution.dLogL_dInformationX[i] = fixedRootValue[i];
-            contribution.dLogL_dInformationY[i] = tipObservation.observed[i]
-                    ? tipObservation.values[i]
+            contribution.dLogL_dInformationY[i] = tipObservation.isTraitObserved(i)
+                    ? tipObservation.valueAt(i)
                     : workspace.missingMean[partition.reducedIndexByTrait(i) - dimension];
         }
 
         for (int i = 0; i < dimension; ++i) {
             final double xi = fixedRootValue[i];
             final double yi = contribution.dLogL_dInformationY[i];
-            final int missingI = tipObservation.observed[i] ? -1 : partition.reducedIndexByTrait(i) - dimension;
+            final int missingI = tipObservation.isTraitObserved(i) ? -1 : partition.reducedIndexByTrait(i) - dimension;
             final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 final double xj = fixedRootValue[j];
                 final double yj = contribution.dLogL_dInformationY[j];
-                final int missingJ = tipObservation.observed[j] ? -1 : partition.reducedIndexByTrait(j) - dimension;
+                final int missingJ = tipObservation.isTraitObserved(j) ? -1 : partition.reducedIndexByTrait(j) - dimension;
                 final double eyy = (missingI < 0 || missingJ < 0)
                         ? yi * yj
                         : workspace.reducedCovariance[missingI * missingCount + missingJ] + yi * yj;

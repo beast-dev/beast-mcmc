@@ -16,7 +16,7 @@ final class FixedParentObservedTipContribution implements BranchContributionStra
                                     final BranchGradientWorkspace workspace) {
         assembler.fillContributionForFixedParentObservedTip(
                 transition,
-                assembler.stateStore.tipObservations[childIndex],
+                assembler.identityTipObservationModel(childIndex),
                 workspace);
         return true;
     }

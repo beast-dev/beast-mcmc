@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 
 final class PartiallyObservedTipContribution implements BranchContributionStrategy {
 
@@ -15,7 +15,7 @@ final class PartiallyObservedTipContribution implements BranchContributionStrate
                                     final CanonicalGaussianTransition transition,
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
-        final CanonicalTipObservation tipObservation = assembler.stateStore.tipObservations[childIndex];
+        final IdentityCanonicalTipObservationModel tipObservation = assembler.identityTipObservationModel(childIndex);
         assembler.fillContributionForPartiallyObservedTip(
                 assembler.stateStore.branchAboveParent[childIndex],
                 transition,

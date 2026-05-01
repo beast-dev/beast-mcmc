@@ -2,11 +2,12 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipContribution;
 
 import java.util.Arrays;
@@ -72,13 +73,13 @@ final class CanonicalBranchContributionAssembler {
 
     void fillContributionForObservedTip(final CanonicalGaussianState aboveState,
                                         final CanonicalGaussianTransition transition,
-                                        final CanonicalTipObservation tipObservation,
+                                        final IdentityCanonicalTipObservationModel tipObservation,
                                         final BranchGradientWorkspace workspace) {
         for (int i = 0; i < dim; ++i) {
             double info = transition.informationX[i] + aboveState.information[i];
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                info -= transition.precisionXY[iOff + j] * tipObservation.values[j];
+                info -= transition.precisionXY[iOff + j] * tipObservation.valueAt(j);
                 workspace.parentPosterior.precision[iOff + j] =
                         transition.precisionXX[iOff + j] + aboveState.precision[iOff + j];
             }
@@ -91,13 +92,13 @@ final class CanonicalBranchContributionAssembler {
 
         for (int i = 0; i < dim; ++i) {
             final double xi = workspace.mean[i];
-            final double yi = tipObservation.values[i];
+            final double yi = tipObservation.valueAt(i);
             workspace.contribution.dLogL_dInformationX[i] = xi;
             workspace.contribution.dLogL_dInformationY[i] = yi;
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = workspace.mean[j];
-                final double yj = tipObservation.values[j];
+                final double yj = tipObservation.valueAt(j);
                 final double exx = workspace.covariance[i][j] + xi * xj;
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * exx;
                 workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
@@ -109,18 +110,18 @@ final class CanonicalBranchContributionAssembler {
     }
 
     void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
-                                                   final CanonicalTipObservation tipObservation,
+                                                   final IdentityCanonicalTipObservationModel tipObservation,
                                                    final BranchGradientWorkspace workspace) {
         clearContribution(workspace);
         for (int i = 0; i < dim; ++i) {
             final double xi = stateStore.fixedRootValue[i];
-            final double yi = tipObservation.values[i];
+            final double yi = tipObservation.valueAt(i);
             workspace.contribution.dLogL_dInformationX[i] = xi;
             workspace.contribution.dLogL_dInformationY[i] = yi;
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
                 final double xj = stateStore.fixedRootValue[j];
-                final double yj = tipObservation.values[j];
+                final double yj = tipObservation.valueAt(j);
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
                 workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
                 workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
@@ -142,7 +143,7 @@ final class CanonicalBranchContributionAssembler {
     }
 
     void fillContributionForFixedParentPartiallyObservedTip(final CanonicalGaussianTransition transition,
-                                                            final CanonicalTipObservation tipObservation,
+                                                            final IdentityCanonicalTipObservationModel tipObservation,
                                                             final BranchGradientWorkspace workspace) {
         partialIdentityContribution.fillContributionForFixedParentPartiallyObservedTip(
                 transition,
@@ -178,7 +179,7 @@ final class CanonicalBranchContributionAssembler {
 
     void fillContributionForPartiallyObservedTip(final CanonicalGaussianState aboveState,
                                                  final CanonicalGaussianTransition transition,
-                                                 final CanonicalTipObservation tipObservation,
+                                                 final IdentityCanonicalTipObservationModel tipObservation,
                                                  final BranchGradientWorkspace workspace) {
         partialIdentityContribution.fillContributionForPartiallyObservedTip(
                 aboveState,
@@ -186,6 +187,15 @@ final class CanonicalBranchContributionAssembler {
                 tipObservation,
                 workspace.partialObservationWorkspace,
                 workspace.contribution);
+    }
+
+    IdentityCanonicalTipObservationModel identityTipObservationModel(final int childIndex) {
+        final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
+        if (observationModel instanceof IdentityCanonicalTipObservationModel) {
+            return (IdentityCanonicalTipObservationModel) observationModel;
+        }
+        throw new IllegalStateException("Expected identity tip observation model for node " + childIndex
+                + " but found " + observationModel.getClass().getName());
     }
 
     private void clearContribution(final BranchGradientWorkspace workspace) {

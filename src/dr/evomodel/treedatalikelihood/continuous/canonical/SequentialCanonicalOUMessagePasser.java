@@ -42,6 +42,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipProjection;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.TaskPool;
@@ -315,34 +316,53 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                        final BranchGradientWorkspace workspace) {
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
-            final CanonicalTipObservation tipObservation = stateStore.tipObservations[childIndex];
             if (observationModel.isEmpty()) {
                 clearState(out);
             } else if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
                 observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
                 CanonicalGaussianMessageOps.pushBackward(
                         workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
-            } else if (tipObservation.observedCount == dim) {
-                CanonicalGaussianMessageOps.conditionOnObservedSecondBlock(transition, tipObservation.values, out);
+            } else if (observationModel instanceof IdentityCanonicalTipObservationModel) {
+                ((IdentityCanonicalTipObservationModel) observationModel).fillParentMessage(
+                        transition,
+                        transitionMomentProviderFor((IdentityCanonicalTipObservationModel) observationModel, null),
+                        0.0,
+                        partialIdentityProjection,
+                        out);
             } else {
-                throw new IllegalStateException(
-                        "Partially observed canonical tips must use the missing-mask branch update.");
+                throw new IllegalStateException("Unsupported tip observation model: "
+                        + observationModel.getClass().getName());
             }
         } else {
             CanonicalGaussianMessageOps.pushBackward(stateStore.postOrder[childIndex], transition, workspace.gaussianWorkspace, out);
         }
     }
 
-    private void buildTipParentMessageWithMissingMask(final CanonicalTipObservation tipObservation,
-                                                      final CanonicalTransitionMomentProvider transitionMomentProvider,
-                                                      final double branchLength,
-                                                      final CanonicalGaussianState out,
-                                                      final BranchGradientWorkspace workspace) {
-        partialIdentityProjection.projectObservedChildToParent(
-                tipObservation,
-                transitionMomentProvider,
+    private void buildIdentityTipParentMessageForLength(final IdentityCanonicalTipObservationModel observationModel,
+                                                        final CanonicalOUTransitionProvider provider,
+                                                        final double branchLength,
+                                                        final CanonicalGaussianState out,
+                                                        final BranchGradientWorkspace workspace) {
+        provider.fillCanonicalTransitionForLength(branchLength, workspace.transition);
+        observationModel.fillParentMessage(
+                workspace.transition,
+                provider,
                 branchLength,
+                partialIdentityProjection,
                 out);
+    }
+
+    private CanonicalTransitionMomentProvider transitionMomentProviderFor(
+            final IdentityCanonicalTipObservationModel observationModel,
+            final CanonicalTransitionMomentProvider transitionMomentProvider) {
+        if (observationModel.getMode() != TipObservationMode.PARTIAL_EXACT_IDENTITY) {
+            return null;
+        }
+        if (transitionMomentProvider != null) {
+            return transitionMomentProvider;
+        }
+        throw new UnsupportedOperationException(
+                "Canonical OU partial identity observations require a CanonicalTransitionMomentProvider.");
     }
 
     private void ensureGradientState() {
@@ -418,8 +438,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                 final CanonicalOUTransitionProvider provider,
                                                 final double branchLength) {
         final BranchGradientWorkspace workspace = mainWorkspace;
-        final CanonicalTipObservation tipObservation =
-                tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservations[childIndex] : null;
         final CanonicalTipObservationModel observationModel =
                 tree.isExternal(tree.getNode(childIndex)) ? stateStore.tipObservationModels[childIndex] : null;
         if (observationModel != null && observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
@@ -430,9 +448,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                     workspace.transition,
                     workspace.gaussianWorkspace,
                     workspace.state);
-        } else if (tipObservation != null && tipObservation.observedCount < dim) {
-            buildTipParentMessageWithMissingMask(
-                    tipObservation,
+        } else if (observationModel instanceof IdentityCanonicalTipObservationModel) {
+            buildIdentityTipParentMessageForLength(
+                    (IdentityCanonicalTipObservationModel) observationModel,
                     provider,
                     branchLength,
                     workspace.state,

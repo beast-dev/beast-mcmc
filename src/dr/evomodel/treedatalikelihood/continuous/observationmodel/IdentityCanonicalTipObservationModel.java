@@ -1,5 +1,8 @@
 package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 
 import java.util.Arrays;
 
@@ -81,6 +84,42 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
 
     public int getObservedCount() {
         return observedCount;
+    }
+
+    public boolean isTraitObserved(final int trait) {
+        return observed[trait];
+    }
+
+    public double valueAt(final int trait) {
+        return values[trait];
+    }
+
+    public void fillParentMessage(final CanonicalGaussianTransition transition,
+                                  final CanonicalTransitionMomentProvider transitionMomentProvider,
+                                  final double branchLength,
+                                  final PartialIdentityTipProjection partialIdentityProjection,
+                                  final CanonicalGaussianState out) {
+        switch (getMode()) {
+            case MISSING:
+                CanonicalGaussianMessageOps.clearState(out);
+                return;
+            case EXACT_IDENTITY:
+                CanonicalGaussianMessageOps.conditionOnObservedSecondBlock(transition, values, out);
+                return;
+            case PARTIAL_EXACT_IDENTITY:
+                if (transitionMomentProvider == null) {
+                    throw new UnsupportedOperationException(
+                            "Partial exact identity observations require a CanonicalTransitionMomentProvider.");
+                }
+                partialIdentityProjection.projectObservedChildToParent(
+                        this,
+                        transitionMomentProvider,
+                        branchLength,
+                        out);
+                return;
+            default:
+                throw new IllegalStateException("Unsupported identity observation mode: " + getMode());
+        }
     }
 
     @Override

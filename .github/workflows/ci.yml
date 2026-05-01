@@ -17,6 +17,7 @@ env:
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
     BEAGLE_BRANCH: v4_release
+    BEAGLE_CACHE_VERSION: generic-v1
 
 jobs:
     build:
@@ -39,7 +40,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  key: beagle-beast-${{ env.BEAGLE_CACHE_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Build BEAGLE
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
@@ -73,9 +74,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_CACHE_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Rebuild project
               run: ant dist                      
             - name: Run test for ${{ matrix.file }}
@@ -92,9 +91,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_CACHE_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: checkpoint adaptive MCMC
@@ -119,7 +116,6 @@ jobs:
     # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
     test-xml-long-load-state:
         needs: [build, test-xml-short-load-state]
-        if: ${{ needs.build.outputs.xml-long-load-state-matrix != '[]' }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -132,9 +128,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_CACHE_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: Download checkpoint file
@@ -161,9 +155,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_CACHE_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: Run JUnit tests

@@ -71,7 +71,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final CanonicalBranchAdjointPreparer branchAdjointPreparer;
     private final CanonicalTreeGradientEngine treeGradientEngine;
     private final CanonicalBranchLengthGradientEngine branchLengthGradientEngine;
-    private final CanonicalLegacyGradientCompatibility legacyGradientCompatibility;
 
     public SequentialCanonicalOUMessagePasser(final Tree tree, final int dim) {
         this(tree, dim, CanonicalGradientFallbackPolicy.branchGradientParallelismFromSystemProperties());
@@ -131,12 +130,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 mainWorkspace,
                 branchGradientWorkspaces);
         this.branchLengthGradientEngine = new CanonicalBranchLengthGradientEngine();
-        this.legacyGradientCompatibility = new CanonicalLegacyGradientCompatibility(
-                tree,
-                dim,
-                stateStore,
-                mainWorkspace,
-                branchContributionAssembler);
     }
 
     @Override
@@ -197,20 +190,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
-    @Deprecated
-    public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
-        ensureGradientState();
-
-        final String previousPhase = pushTransitionCachePhase(
-                transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP);
-        try {
-            legacyGradientCompatibility.computeGradientQ(transitionProvider, gradQ);
-        } finally {
-            popTransitionCachePhase(transitionProvider, previousPhase);
-        }
-    }
-
-    @Override
     public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                              final double[] gradT) {
         ensureGradientState();
@@ -255,20 +234,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         } finally {
             popTransitionCachePhase(transitionProvider, previousPhase);
         }
-    }
-
-    @Override
-    @Deprecated
-    public void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
-        ensureGradientState();
-        legacyGradientCompatibility.computeGradientA(transitionProvider, gradA);
-    }
-
-    @Override
-    @Deprecated
-    public void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
-        ensureGradientState();
-        legacyGradientCompatibility.computeGradientMu(transitionProvider, gradMu);
     }
 
     @Override

@@ -373,24 +373,9 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         }
 
         @Override
-        public void computeGradientQ(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradQ) {
-            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
-        }
-
-        @Override
         public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                                  final double[] gradT) {
             delegate.computeGradientBranchLengths(transitionProvider, gradT);
-        }
-
-        @Override
-        public void computeGradientA(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradA) {
-            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
-        }
-
-        @Override
-        public void computeGradientMu(final CanonicalBranchTransitionProvider transitionProvider, final double[] gradMu) {
-            throw new AssertionError("Standalone integrator should route canonical gradients through computeJointGradients");
         }
 
         @Override

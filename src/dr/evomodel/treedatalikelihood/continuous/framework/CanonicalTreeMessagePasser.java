@@ -55,31 +55,7 @@ public interface CanonicalTreeMessagePasser {
 
     CanonicalGaussianState getPreOrderState(int nodeIndex);
 
-    /**
-     * Legacy single-target gradient entry point. Production canonical OU callers
-     * should prefer {@link #computeJointGradients} through the integrator so
-     * shared branch adjoints are prepared once.
-     */
-    @Deprecated
-    void computeGradientQ(CanonicalBranchTransitionProvider transitionProvider, double[] gradQ);
-
     void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider, double[] gradT);
-
-    /**
-     * Legacy single-target gradient entry point. Production canonical OU callers
-     * should prefer {@link #computeJointGradients} through the integrator so
-     * shared branch adjoints are prepared once.
-     */
-    @Deprecated
-    void computeGradientA(CanonicalBranchTransitionProvider transitionProvider, double[] gradA);
-
-    /**
-     * Legacy single-target gradient entry point. Production canonical OU callers
-     * should prefer {@link #computeJointGradients} through the integrator so
-     * shared branch adjoints are prepared once.
-     */
-    @Deprecated
-    void computeGradientMu(CanonicalBranchTransitionProvider transitionProvider, double[] gradMu);
 
     void computeJointGradients(CanonicalBranchTransitionProvider transitionProvider,
                                double[] gradA,

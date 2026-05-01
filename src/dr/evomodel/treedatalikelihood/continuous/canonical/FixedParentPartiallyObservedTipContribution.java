@@ -15,11 +15,9 @@ final class FixedParentPartiallyObservedTipContribution implements BranchContrib
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
         final CanonicalTipObservation tipObservation = assembler.stateStore.tipObservations[childIndex];
-        final int observedCount = assembler.collectObservationPartition(tipObservation, workspace);
         assembler.fillContributionForFixedParentPartiallyObservedTip(
                 transition,
                 tipObservation,
-                observedCount,
                 workspace);
         return true;
     }

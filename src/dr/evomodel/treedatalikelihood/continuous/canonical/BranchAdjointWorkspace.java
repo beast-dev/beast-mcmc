@@ -7,6 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipObservationWorkspace;
 
 final class BranchAdjointWorkspace {
     final CanonicalGaussianState combinedState;
@@ -16,6 +17,7 @@ final class BranchAdjointWorkspace {
     final CanonicalTransitionAdjointUtils.Workspace transitionAdjointWorkspace;
     final CanonicalBranchMessageContribution contribution;
     final CanonicalLocalTransitionAdjoints adjoints;
+    final PartialIdentityTipObservationWorkspace partialObservationWorkspace;
     final int[] observedIndexScratch;
     final int[] missingIndexScratch;
     final int[] reducedIndexByTraitScratch;
@@ -40,19 +42,20 @@ final class BranchAdjointWorkspace {
         this.transitionAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(dim);
         this.contribution = new CanonicalBranchMessageContribution(dim);
         this.adjoints = new CanonicalLocalTransitionAdjoints(dim);
-        this.observedIndexScratch = new int[dim];
-        this.missingIndexScratch = new int[dim];
-        this.reducedIndexByTraitScratch = new int[dim];
+        this.partialObservationWorkspace = new PartialIdentityTipObservationWorkspace(dim);
+        this.observedIndexScratch = partialObservationWorkspace.partition.observedIndices;
+        this.missingIndexScratch = partialObservationWorkspace.partition.missingIndices;
+        this.reducedIndexByTraitScratch = partialObservationWorkspace.partition.reducedIndexByTrait;
         this.mean = new double[dim];
-        this.mean2 = new double[dim];
+        this.mean2 = partialObservationWorkspace.missingMean;
         this.covariance = new double[dim][dim];
         this.covarianceFlat = new double[dim * dim];
         this.varianceFlat = new double[dim * dim];
         this.precisionFlat = new double[dim * dim];
-        this.reducedPrecisionFlatScratch = new double[4 * dim * dim];
-        this.reducedCovarianceFlatScratch = new double[4 * dim * dim];
-        this.reducedInformationScratch = new double[2 * dim];
-        this.reducedMeanScratch = new double[2 * dim];
+        this.reducedPrecisionFlatScratch = partialObservationWorkspace.reducedPrecision;
+        this.reducedCovarianceFlatScratch = partialObservationWorkspace.reducedCovariance;
+        this.reducedInformationScratch = partialObservationWorkspace.reducedInformation;
+        this.reducedMeanScratch = partialObservationWorkspace.reducedMean;
         this.converterWorkspace = new GaussianFormConverter.Workspace();
         this.converterWorkspace.ensureDim(dim);
     }

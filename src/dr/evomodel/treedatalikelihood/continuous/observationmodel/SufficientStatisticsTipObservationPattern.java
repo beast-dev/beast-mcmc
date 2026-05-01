@@ -1,12 +1,12 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.observationmodel;
 
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Scratch-backed classifier for exact canonical tip observations.
+ * Scratch-backed classifier for exact tip observations encoded as sufficient statistics.
  */
-final class OUCanonicalObservationPattern {
+public final class SufficientStatisticsTipObservationPattern {
 
     private final int dimension;
     private final boolean[] observedMask;
@@ -14,7 +14,10 @@ final class OUCanonicalObservationPattern {
     private final int[] missingIndices;
     private final int[] reducedIndexByTrait;
 
-    OUCanonicalObservationPattern(final int dimension) {
+    public SufficientStatisticsTipObservationPattern(final int dimension) {
+        if (dimension < 1) {
+            throw new IllegalArgumentException("dimension must be positive");
+        }
         this.dimension = dimension;
         this.observedMask = new boolean[dimension];
         this.observedIndices = new int[dimension];
@@ -22,7 +25,7 @@ final class OUCanonicalObservationPattern {
         this.reducedIndexByTrait = new int[dimension];
     }
 
-    int classify(final NormalSufficientStatistics below) {
+    public int classify(final NormalSufficientStatistics below) {
         final DenseMatrix64F precision = below.getRawPrecision();
         int observedCount = 0;
         for (int i = 0; i < dimension; ++i) {
@@ -47,7 +50,7 @@ final class OUCanonicalObservationPattern {
         return observedCount;
     }
 
-    int collectPartition(final int observedCount) {
+    public int collectPartition(final int observedCount) {
         int observedCursor = 0;
         int missingCursor = 0;
         for (int i = 0; i < dimension; ++i) {
@@ -66,19 +69,19 @@ final class OUCanonicalObservationPattern {
         return missingCursor;
     }
 
-    boolean isObserved(final int trait) {
+    public boolean isObserved(final int trait) {
         return observedMask[trait];
     }
 
-    int observedIndex(final int offset) {
+    public int observedIndex(final int offset) {
         return observedIndices[offset];
     }
 
-    int missingIndex(final int offset) {
+    public int missingIndex(final int offset) {
         return missingIndices[offset];
     }
 
-    int reducedIndexByTrait(final int trait) {
+    public int reducedIndexByTrait(final int trait) {
         return reducedIndexByTrait[trait];
     }
 }

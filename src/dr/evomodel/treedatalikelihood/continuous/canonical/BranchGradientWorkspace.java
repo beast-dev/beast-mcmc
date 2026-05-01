@@ -11,6 +11,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipObservationWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationModelWorkspace;
 
 import java.util.EnumSet;
@@ -34,6 +35,7 @@ final class BranchGradientWorkspace {
     final CanonicalTransitionAdjointUtils.Workspace transitionAdjointWorkspace;
     final CanonicalBranchMessageContribution contribution;
     final CanonicalLocalTransitionAdjoints adjoints;
+    final PartialIdentityTipObservationWorkspace partialObservationWorkspace;
     final int[] observedIndexScratch;
     final int[] missingIndexScratch;
     final int[] reducedIndexByTraitScratch;
@@ -92,6 +94,7 @@ final class BranchGradientWorkspace {
         this.transitionAdjointWorkspace = adjoint == null ? null : adjoint.transitionAdjointWorkspace;
         this.contribution = adjoint == null ? null : adjoint.contribution;
         this.adjoints = adjoint == null ? null : adjoint.adjoints;
+        this.partialObservationWorkspace = adjoint == null ? null : adjoint.partialObservationWorkspace;
         this.observedIndexScratch = adjoint == null ? null : adjoint.observedIndexScratch;
         this.missingIndexScratch = adjoint == null ? null : adjoint.missingIndexScratch;
         this.reducedIndexByTraitScratch = adjoint == null ? null : adjoint.reducedIndexByTraitScratch;

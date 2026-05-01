@@ -2,6 +2,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;
 
@@ -12,7 +13,7 @@ final class OUCanonicalFrozenLocalFactorEvaluator {
 
     private final int dimension;
     private final CanonicalGaussianTransition transition;
-    private final OUCanonicalObservationPattern observationPattern;
+    private final SufficientStatisticsTipObservationPattern observationPattern;
     private final double[] aboveInformation;
     private final double[] belowInformation;
     private final double[][] reducedPrecisionScratch;
@@ -24,7 +25,7 @@ final class OUCanonicalFrozenLocalFactorEvaluator {
 
     OUCanonicalFrozenLocalFactorEvaluator(final int dimension,
                                           final CanonicalGaussianTransition transition,
-                                          final OUCanonicalObservationPattern observationPattern) {
+                                          final SufficientStatisticsTipObservationPattern observationPattern) {
         this.dimension = dimension;
         this.transition = transition;
         this.observationPattern = observationPattern;

@@ -12,6 +12,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
 import org.ejml.data.DenseMatrix64F;
 
 /**
@@ -42,7 +43,7 @@ public final class OUCanonicalBranchWiring {
 
     private final double[] aboveInformation;
     private final double[] belowInformation;
-    private final OUCanonicalObservationPattern observationPattern;
+    private final SufficientStatisticsTipObservationPattern observationPattern;
     private final double[][] reducedPrecisionScratch;
     private final double[][] reducedCovarianceScratch;
     private final double[] reducedInformationScratch;
@@ -80,7 +81,7 @@ public final class OUCanonicalBranchWiring {
         this.currentPosterior = new CanonicalGaussianState(dimension);
         this.contribution = new CanonicalBranchMessageContribution(dimension);
         this.workspace = new CanonicalTransitionAdjointUtils.Workspace(dimension);
-        this.observationPattern = new OUCanonicalObservationPattern(dimension);
+        this.observationPattern = new SufficientStatisticsTipObservationPattern(dimension);
         this.transitionState = new OUCanonicalTransitionState(
                 branchTransitionProvider,
                 transition,

@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
 import org.ejml.data.DenseMatrix64F;
 
 /**
@@ -46,7 +47,7 @@ final class OUCanonicalBranchContributionBuilder {
     }
 
     static void fillPartiallyObservedTipContribution(final int dimension,
-                                                     final OUCanonicalObservationPattern observationPattern,
+                                                     final SufficientStatisticsTipObservationPattern observationPattern,
                                                      final DenseMatrix64F observedChild,
                                                      final double[] reducedMean,
                                                      final double[][] reducedCovariance,

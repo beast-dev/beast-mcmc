@@ -15,12 +15,10 @@ final class PartiallyObservedTipContribution implements BranchContributionStrate
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
         final CanonicalTipObservation tipObservation = assembler.stateStore.tipObservations[childIndex];
-        final int observedCount = assembler.collectObservationPartition(tipObservation, workspace);
         assembler.fillContributionForPartiallyObservedTip(
                 assembler.stateStore.branchAboveParent[childIndex],
                 transition,
                 tipObservation,
-                observedCount,
                 workspace);
         return true;
     }

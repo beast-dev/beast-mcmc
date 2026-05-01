@@ -29,9 +29,8 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipProjection;
 
 /**
  * Projects exact tip observations through an OU branch into a parent-side
@@ -39,126 +38,21 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
  */
 final class CanonicalTipProjector {
 
-    private static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
-
-    private final int dimension;
-    private final int[] observedIndexScratch;
-    private final double[] shiftedObservationScratch;
-    private final double[] precisionTimesShiftedScratch;
-    private final double[] varianceFlatScratch;
-    private final double[] precisionFlatScratch;
-    private final double[] projectedPrecisionScratch;
-    private final double[] choleskyScratch;
-    private final double[] transitionMatrixFlat;
-    private final double[] covarianceFlat;
-    private final double[] transitionOffset;
+    private final PartialIdentityTipProjection partialIdentityProjection;
 
     CanonicalTipProjector(final int dimension) {
-        this.dimension = dimension;
-        this.observedIndexScratch = new int[dimension];
-        this.shiftedObservationScratch = new double[dimension];
-        this.precisionTimesShiftedScratch = new double[dimension];
-        this.varianceFlatScratch = new double[dimension * dimension];
-        this.precisionFlatScratch = new double[dimension * dimension];
-        this.projectedPrecisionScratch = new double[dimension * dimension];
-        this.choleskyScratch = new double[dimension * dimension];
-        this.transitionMatrixFlat = new double[dimension * dimension];
-        this.covarianceFlat = new double[dimension * dimension];
-        this.transitionOffset = new double[dimension];
+        this.partialIdentityProjection = new PartialIdentityTipProjection(dimension);
     }
 
     void projectObservedChildToParent(final CanonicalTipObservation tipObservation,
                                       final CanonicalTransitionMomentProvider transitionMomentProvider,
                                       final double branchLength,
                                       final CanonicalGaussianState out) {
-        final int observedCount = collectObservedIndices(tipObservation);
-        if (observedCount == 0) {
-            CanonicalGaussianMessageOps.clearState(out);
-            return;
-        }
-
-        transitionMomentProvider.fillTransitionMatrixFlat(branchLength, transitionMatrixFlat);
-        transitionMomentProvider.fillTransitionOffset(branchLength, transitionOffset);
-        transitionMomentProvider.fillTransitionCovarianceFlat(branchLength, covarianceFlat);
-
-        for (int observed = 0; observed < observedCount; ++observed) {
-            final int observedTrait = observedIndexScratch[observed];
-            shiftedObservationScratch[observed] =
-                    tipObservation.values[observedTrait] - transitionOffset[observedTrait];
-            final int rowOffset = observed * observedCount;
-            for (int otherObserved = 0; otherObserved < observedCount; ++otherObserved) {
-                varianceFlatScratch[rowOffset + otherObserved] =
-                        covarianceFlat[observedTrait * dimension + observedIndexScratch[otherObserved]];
-            }
-        }
-
-        final double logDetVariance = MatrixOps.invertSPDCompact(
-                varianceFlatScratch,
-                precisionFlatScratch,
-                observedCount,
-                transitionOffset,
-                choleskyScratch);
-
-        for (int row = 0; row < observedCount; ++row) {
-            double sum = 0.0;
-            final int rowOffset = row * observedCount;
-            for (int k = 0; k < observedCount; ++k) {
-                sum += precisionFlatScratch[rowOffset + k] * shiftedObservationScratch[k];
-            }
-            precisionTimesShiftedScratch[row] = sum;
-        }
-
-        for (int row = 0; row < observedCount; ++row) {
-            final int precisionRowOffset = row * observedCount;
-            final int projectedRowOffset = row * dimension;
-            for (int col = 0; col < dimension; ++col) {
-                double sum = 0.0;
-                for (int k = 0; k < observedCount; ++k) {
-                    sum += precisionFlatScratch[precisionRowOffset + k]
-                            * transitionMatrixFlat[observedIndexScratch[k] * dimension + col];
-                }
-                projectedPrecisionScratch[projectedRowOffset + col] = sum;
-            }
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            double information = 0.0;
-            for (int observed = 0; observed < observedCount; ++observed) {
-                information += transitionMatrixFlat[observedIndexScratch[observed] * dimension + i]
-                        * precisionTimesShiftedScratch[observed];
-            }
-            out.information[i] = information;
-
-            for (int j = 0; j < dimension; ++j) {
-                double precision = 0.0;
-                for (int observed = 0; observed < observedCount; ++observed) {
-                    precision += transitionMatrixFlat[observedIndexScratch[observed] * dimension + i]
-                            * projectedPrecisionScratch[observed * dimension + j];
-                }
-                out.precision[i * dimension + j] = precision;
-            }
-        }
-        MatrixOps.symmetrize(out.precision, dimension);
-
-        double quadratic = 0.0;
-        for (int observed = 0; observed < observedCount; ++observed) {
-            quadratic += shiftedObservationScratch[observed] * precisionTimesShiftedScratch[observed];
-        }
-        out.logNormalizer = 0.5 * (observedCount * LOG_TWO_PI + logDetVariance + quadratic);
-    }
-
-    private int collectObservedIndices(final CanonicalTipObservation tipObservation) {
-        int observedCount = 0;
-        for (int i = 0; i < dimension; i++) {
-            if (tipObservation.observed[i]) {
-                observedIndexScratch[observedCount++] = i;
-            }
-        }
-        if (observedCount != tipObservation.observedCount) {
-            throw new UnsupportedOperationException(
-                    "Canonical tip observation partition is inconsistent with observedCount.");
-        }
-        return observedCount;
+        partialIdentityProjection.projectObservedChildToParent(
+                tipObservation,
+                transitionMomentProvider,
+                branchLength,
+                out);
     }
 
 }

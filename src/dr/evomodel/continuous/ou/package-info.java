@@ -3,7 +3,8 @@
  *
  * <p>{@code OUProcessModel} is the BEAST model wrapper: it owns live variables,
  * model events, and time-series representation compatibility. Canonical tree
- * code should prefer the narrower {@code CanonicalOUKernel} and capability
+ * code should prefer the narrower
+ * {@code dr.evomodel.continuous.ou.canonical.CanonicalOUKernel} and capability
  * interfaces when it only needs transition, covariance, or gradient math.</p>
  *
  * <p>Flat matrices in canonical hot paths use row-major order:

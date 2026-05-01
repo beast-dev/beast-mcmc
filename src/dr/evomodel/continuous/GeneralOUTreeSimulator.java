@@ -36,7 +36,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.AbstractXMLObjectParser;

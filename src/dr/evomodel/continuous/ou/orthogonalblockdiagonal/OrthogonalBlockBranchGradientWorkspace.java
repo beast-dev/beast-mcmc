@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;

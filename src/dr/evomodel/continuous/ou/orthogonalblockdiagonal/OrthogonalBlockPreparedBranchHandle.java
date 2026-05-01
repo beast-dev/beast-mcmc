@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 
 /**
  * Opaque public handle for an orthogonal block-diagonal prepared branch basis.

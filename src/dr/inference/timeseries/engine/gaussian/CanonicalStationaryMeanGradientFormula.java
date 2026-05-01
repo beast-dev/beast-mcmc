@@ -1,18 +1,18 @@
 package dr.inference.timeseries.engine.gaussian;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContributionUtils;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

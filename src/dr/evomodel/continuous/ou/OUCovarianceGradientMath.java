@@ -1,14 +1,14 @@
 package dr.evomodel.continuous.ou;
 
-final class OUCovarianceGradientMath {
+public final class OUCovarianceGradientMath {
 
-    static final double[] GL5_NODES = {
+    public static final double[] GL5_NODES = {
             0.0,
             -0.5384693101056831, 0.5384693101056831,
             -0.9061798459386640, 0.9061798459386640
     };
 
-    static final double[] GL5_WEIGHTS = {
+    public static final double[] GL5_WEIGHTS = {
             0.5688888888888889,
             0.4786286704993665, 0.4786286704993665,
             0.2369268850561891, 0.2369268850561891
@@ -56,11 +56,11 @@ final class OUCovarianceGradientMath {
     }
 
     /** Computes out = expm(-A * t). */
-    static void buildExpmMinusAs(final double t,
-                                 final double[][] a,
-                                 final int dim,
-                                 final double[][] out,
-                                 final double[][] scaledMinusA) {
+    public static void buildExpmMinusAs(final double t,
+                                        final double[][] a,
+                                        final int dim,
+                                        final double[][] out,
+                                        final double[][] scaledMinusA) {
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
                 scaledMinusA[i][j] = -t * a[i][j];

@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import org.ejml.data.DenseMatrix64F;
 
 /**

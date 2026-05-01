@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 
 /**
  * Tree-side adapter over a shared {@link GaussianBranchTransitionKernel}.

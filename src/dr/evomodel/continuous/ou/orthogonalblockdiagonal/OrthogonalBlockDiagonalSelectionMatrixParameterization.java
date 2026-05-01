@@ -1,7 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-import dr.evomodel.continuous.ou.CanonicalBranchWorkspace;
-import dr.evomodel.continuous.ou.CanonicalPreparedBranchHandle;
+import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
@@ -10,12 +10,12 @@ import dr.evomodel.continuous.ou.DenseSelectionMatrixParameterization;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;

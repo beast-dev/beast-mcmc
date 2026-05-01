@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 
 /**

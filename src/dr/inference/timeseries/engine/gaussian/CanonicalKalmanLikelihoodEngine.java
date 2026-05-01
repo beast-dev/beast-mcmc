@@ -1,15 +1,15 @@
 package dr.inference.timeseries.engine.gaussian;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianBranchTransitionKernel;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 
 /**
  * Forward-only Gaussian likelihood engine that propagates canonical-form states.

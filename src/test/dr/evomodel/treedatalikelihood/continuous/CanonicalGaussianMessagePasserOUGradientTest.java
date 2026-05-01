@@ -27,13 +27,13 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalPreparedBranchSnapshot;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.framework.CanonicalTreeMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
 

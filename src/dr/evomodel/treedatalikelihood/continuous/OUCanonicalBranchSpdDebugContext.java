@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import org.ejml.data.DenseMatrix64F;
 
 final class OUCanonicalBranchSpdDebugContext implements CanonicalNumerics.DenseSpdFailureDump {

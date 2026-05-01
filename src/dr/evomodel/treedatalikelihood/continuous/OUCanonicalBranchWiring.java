@@ -3,15 +3,15 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.MatrixSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianUtils;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumericsOptions;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import org.ejml.data.DenseMatrix64F;
 
 /**

@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou;
 
-interface OUCovarianceGradientStrategy {
+public interface OUCovarianceGradientStrategy {
 
     void accumulate(double dt,
                     int dimension,

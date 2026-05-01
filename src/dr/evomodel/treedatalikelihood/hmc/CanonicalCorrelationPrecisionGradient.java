@@ -29,7 +29,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.MatrixParameterInterface;
 
 public final class CanonicalCorrelationPrecisionGradient extends CorrelationPrecisionGradient {

@@ -1,7 +1,7 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumericsOptions;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import junit.framework.TestCase;
 import org.ejml.data.DenseMatrix64F;
 

@@ -1,7 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.message.CanonicalNumericsOptions;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import org.ejml.data.DenseMatrix64F;
 
 /**

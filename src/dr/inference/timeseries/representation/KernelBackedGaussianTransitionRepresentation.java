@@ -1,6 +1,6 @@
 package dr.inference.timeseries.representation;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.core.TimeGrid;
 
 /**

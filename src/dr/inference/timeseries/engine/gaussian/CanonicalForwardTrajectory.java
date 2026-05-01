@@ -1,7 +1,7 @@
 package dr.inference.timeseries.engine.gaussian;
 
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.gaussian.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 
 /**
  * Canonical-form snapshot of the forward and backward Gaussian trajectory.

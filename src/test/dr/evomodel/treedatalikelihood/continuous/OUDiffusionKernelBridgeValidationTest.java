@@ -15,7 +15,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.evomodel.treedatalikelihood.continuous.DiffusionProcessDelegate;
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
-import dr.evomodel.treedatalikelihood.continuous.TimeSeriesOUGaussianBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
@@ -43,14 +43,14 @@ import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.Param
 
 /**
  * Validates the opt-in forward bridge between {@link OUDiffusionModelDelegate}
- * and the shared time-series OU branch kernel on a small test tree.
+ * and the shared canonical OU branch kernel on a small test tree.
  */
 public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
 
     private static final String USE_BRIDGE_PROPERTY =
-            "dr.evomodel.treedatalikelihood.continuous.useTimeSeriesOUBridge";
+            "dr.evomodel.treedatalikelihood.continuous.useCanonicalOUBridge";
     private static final String VALIDATION_PROPERTY =
-            "dr.evomodel.treedatalikelihood.continuous.validateTimeSeriesOUBridge";
+            "dr.evomodel.treedatalikelihood.continuous.validateCanonicalOUBridge";
 
     public OUDiffusionKernelBridgeValidationTest(final String name) {
         super(name);
@@ -189,10 +189,10 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                         {0.0, 0.0, 0.08, 1.9}
                 }));
 
-        final TimeSeriesOUGaussianBranchTransitionProvider blockProvider =
-                new TimeSeriesOUGaussianBranchTransitionProvider(blockElastic, diffusion);
-        final TimeSeriesOUGaussianBranchTransitionProvider denseProvider =
-                new TimeSeriesOUGaussianBranchTransitionProvider(denseElastic, diffusion);
+        final OUGaussianBranchTransitionProvider blockProvider =
+                new OUGaussianBranchTransitionProvider(blockElastic, diffusion);
+        final OUGaussianBranchTransitionProvider denseProvider =
+                new OUGaussianBranchTransitionProvider(denseElastic, diffusion);
 
         assertTrue("tree bridge should preserve orthogonal block parametrization",
                 blockProvider.getProcessModel().getSelectionMatrixParameterization()

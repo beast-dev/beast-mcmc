@@ -60,16 +60,16 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegate {
 
     private static final String USE_KERNEL_BRIDGE_PROPERTY =
-            "dr.evomodel.treedatalikelihood.continuous.useTimeSeriesOUBridge";
+            "dr.evomodel.treedatalikelihood.continuous.useCanonicalOUBridge";
     private static final String VALIDATE_KERNEL_BRIDGE_PROPERTY =
-            "dr.evomodel.treedatalikelihood.continuous.validateTimeSeriesOUBridge";
+            "dr.evomodel.treedatalikelihood.continuous.validateCanonicalOUBridge";
     private static final double KERNEL_BRIDGE_TOLERANCE = 1e-8;
 
     // Here, branchRateModels represents optimal values
 
     private MultivariateElasticModel elasticModel;
     private final GaussianBranchTransitionProvider branchTransitionProvider;
-    private final TimeSeriesOUCanonicalBranchGradientBridge canonicalBranchGradientBridge;
+    private final OUCanonicalBranchGradientBridge canonicalBranchGradientBridge;
 
     public OUDiffusionModelDelegate(Tree tree,
                                     MultivariateDiffusionModel diffusionModel,
@@ -86,10 +86,10 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         super(tree, diffusionModel, branchRateModels, partitionNumber);
         this.elasticModel = elasticModel;
         this.branchTransitionProvider =
-                new TimeSeriesOUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
+                new OUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
         this.canonicalBranchGradientBridge =
-                new TimeSeriesOUCanonicalBranchGradientBridge(
-                        (TimeSeriesOUGaussianBranchTransitionProvider) this.branchTransitionProvider);
+                new OUCanonicalBranchGradientBridge(
+                        (OUGaussianBranchTransitionProvider) this.branchTransitionProvider);
         addModel(elasticModel);
     }
 

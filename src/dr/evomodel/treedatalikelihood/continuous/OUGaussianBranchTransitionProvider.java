@@ -11,16 +11,16 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 /**
- * Tree-side Gaussian branch-transition provider backed by the shared time-series
+ * Tree-side Gaussian branch-transition provider backed by the shared canonical
  * OU branch kernel.
  *
  * <p>This adapter snapshots the current tree OU parameters into a reusable
  * {@link OUProcessModel}. The branch actualization and covariance are then obtained
- * from the same branch-length machinery used by the time-series code. The branch
+ * from the same branch-length machinery used by the canonical OU code. The branch
  * displacement is intentionally not modeled here because tree OU delegates often use
  * branch-specific optima rather than a single stationary mean.</p>
  */
-public final class TimeSeriesOUGaussianBranchTransitionProvider
+public final class OUGaussianBranchTransitionProvider
         implements GaussianBranchTransitionProvider {
 
     private final MultivariateElasticModel elasticModel;
@@ -37,8 +37,8 @@ public final class TimeSeriesOUGaussianBranchTransitionProvider
     private final DenseMatrix64F precisionMatrix;
     private final DenseMatrix64F covarianceMatrix;
 
-    public TimeSeriesOUGaussianBranchTransitionProvider(final MultivariateElasticModel elasticModel,
-                                                        final MultivariateDiffusionModel diffusionModel) {
+    public OUGaussianBranchTransitionProvider(final MultivariateElasticModel elasticModel,
+                                              final MultivariateDiffusionModel diffusionModel) {
         if (elasticModel == null) {
             throw new IllegalArgumentException("elasticModel must not be null");
         }

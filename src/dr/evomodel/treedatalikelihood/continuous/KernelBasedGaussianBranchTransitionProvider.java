@@ -7,7 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranc
  *
  * <p>This class is intentionally thin: it lets the tree continuous-data likelihood
  * consume the same branch-length Gaussian transition machinery used by the
- * time-series code, without introducing fake time grids or indices.
+ * canonical OU code, without introducing fake time grids or indices.
  */
 public final class KernelBasedGaussianBranchTransitionProvider
         implements GaussianBranchTransitionProvider {

@@ -15,13 +15,13 @@ import java.util.Arrays;
 
 /**
  * Tree-side bridge that reconstructs a branch-local canonical posterior from
- * the preorder/postorder sufficient statistics and then reuses the time-series
- * canonical adjoint machinery for OU branch gradients.
+ * the preorder/postorder sufficient statistics and then reuses canonical OU
+ * adjoint machinery for branch gradients.
  */
-public final class TimeSeriesOUCanonicalBranchGradientBridge {
+public final class OUCanonicalBranchGradientBridge {
     private static final ThreadLocal<Integer> DEBUG_NODE_CONTEXT = new ThreadLocal<Integer>();
 
-    private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
+    private final OUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
     private final int dimension;
     private final OUCanonicalBranchWiring branchWiring;
@@ -39,15 +39,15 @@ public final class TimeSeriesOUCanonicalBranchGradientBridge {
     private final double[][] covarianceAdjointScratch;
     private final double[] parameterRestoreScratch;
 
-    public TimeSeriesOUCanonicalBranchGradientBridge(
-            final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
+    public OUCanonicalBranchGradientBridge(
+            final OUGaussianBranchTransitionProvider branchTransitionProvider) {
         this(branchTransitionProvider,
                 CanonicalDebugOptions.fromSystemProperties(),
                 CanonicalGradientFallbackPolicy.fromSystemProperties());
     }
 
-    TimeSeriesOUCanonicalBranchGradientBridge(
-            final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider,
+    OUCanonicalBranchGradientBridge(
+            final OUGaussianBranchTransitionProvider branchTransitionProvider,
             final CanonicalDebugOptions debugOptions,
             final CanonicalGradientFallbackPolicy fallbackPolicy) {
         if (branchTransitionProvider == null) {

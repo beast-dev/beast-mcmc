@@ -12,7 +12,7 @@ import org.ejml.data.DenseMatrix64F;
  */
 final class OUCanonicalTransitionState {
 
-    private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
+    private final OUGaussianBranchTransitionProvider branchTransitionProvider;
     private final int dimension;
     private final CanonicalGaussianTransition transition;
     private final DenseMatrix64F actualizationMatrix;
@@ -31,7 +31,7 @@ final class OUCanonicalTransitionState {
     private final double[] transitionOffsetScratch;
     private final double[][] matrixScratch;
 
-    OUCanonicalTransitionState(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider,
+    OUCanonicalTransitionState(final OUGaussianBranchTransitionProvider branchTransitionProvider,
                                final CanonicalGaussianTransition transition,
                                final CanonicalNumericsOptions numericsOptions) {
         this.branchTransitionProvider = branchTransitionProvider;

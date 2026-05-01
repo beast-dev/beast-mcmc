@@ -55,7 +55,7 @@ import java.util.Arrays;
 /**
  * Exact simulator for a constant-optimum multivariate OU process on a rooted tree.
  *
- * <p>The branch transition is sampled from the same shared time-series OU kernel
+ * <p>The branch transition is sampled from the same shared canonical OU kernel
  * used elsewhere in the codebase:
  * <pre>
  *   X_child | X_parent ~ N(F(dt) X_parent + b(dt), V(dt))

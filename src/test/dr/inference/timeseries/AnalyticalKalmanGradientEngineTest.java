@@ -9,7 +9,7 @@ import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
-import dr.evomodel.treedatalikelihood.continuous.TimeSeriesOUGaussianBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
@@ -3110,8 +3110,8 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
 
         final MultivariateElasticModel elasticModel = new MultivariateElasticModel(drift);
         final MultivariateDiffusionModel diffusionModel = new MultivariateDiffusionModel(precision);
-        final TimeSeriesOUGaussianBranchTransitionProvider provider =
-                new TimeSeriesOUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
+        final OUGaussianBranchTransitionProvider provider =
+                new OUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
 
         final double[][] fExpected = new double[2][2];
         final double[] bExpected = new double[2];

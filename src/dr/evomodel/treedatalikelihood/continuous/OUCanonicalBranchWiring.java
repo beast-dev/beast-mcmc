@@ -15,7 +15,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNume
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Self-contained local tree-to-time-series canonical wiring for one OU branch.
+ * Self-contained local tree canonical wiring for one OU branch.
  *
  * <p>This class is intentionally narrow: given tree-side branch sufficient statistics,
  * it reconstructs the canonical branch factor that the time-series machinery expects,
@@ -26,7 +26,7 @@ import org.ejml.data.DenseMatrix64F;
 public final class OUCanonicalBranchWiring {
     private static final CanonicalNumericsOptions NUMERICS_OPTIONS = CanonicalNumericsOptions.OU_TREE;
 
-    private final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider;
+    private final OUGaussianBranchTransitionProvider branchTransitionProvider;
     private final OUProcessModel processModel;
     private final int dimension;
     private final CanonicalDebugOptions debugOptions;
@@ -52,13 +52,13 @@ public final class OUCanonicalBranchWiring {
     private final double[][] reducedCholeskyScratch;
     private final double[][] reducedLowerInverseScratch;
 
-    public OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider) {
+    public OUCanonicalBranchWiring(final OUGaussianBranchTransitionProvider branchTransitionProvider) {
         this(branchTransitionProvider,
                 CanonicalDebugOptions.fromSystemProperties(),
                 CanonicalGradientFallbackPolicy.fromSystemProperties());
     }
 
-    OUCanonicalBranchWiring(final TimeSeriesOUGaussianBranchTransitionProvider branchTransitionProvider,
+    OUCanonicalBranchWiring(final OUGaussianBranchTransitionProvider branchTransitionProvider,
                             final CanonicalDebugOptions debugOptions,
                             final CanonicalGradientFallbackPolicy fallbackPolicy) {
         if (branchTransitionProvider == null) {
@@ -102,7 +102,7 @@ public final class OUCanonicalBranchWiring {
         this.reducedLowerInverseScratch = new double[maxReducedDimension][maxReducedDimension];
     }
 
-    public TimeSeriesOUGaussianBranchTransitionProvider getBranchTransitionProvider() {
+    public OUGaussianBranchTransitionProvider getBranchTransitionProvider() {
         return branchTransitionProvider;
     }
 

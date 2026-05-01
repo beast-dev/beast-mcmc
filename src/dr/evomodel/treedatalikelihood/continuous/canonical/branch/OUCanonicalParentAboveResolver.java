@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
 import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
@@ -248,7 +249,7 @@ final class OUCanonicalParentAboveResolver {
                 spdCholeskyScratch,
                 spdLowerInverseScratch,
                 numericsOptions);
-        System.arraycopy(spdInverseScratch, 0, inverseOut.data, 0, dimension * dimension);
+        MatrixOps.fromFlat(spdInverseScratch, inverseOut, dimension);
     }
 
     private void safeInvert(final DenseMatrix64F source,

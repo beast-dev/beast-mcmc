@@ -70,7 +70,8 @@ public final class PartialIdentityTipContribution {
         MatrixOps.safeInvertPrecision(
                 workspace.reducedPrecision,
                 workspace.reducedCovariance,
-                reducedDimension);
+                reducedDimension,
+                workspace.inversionWorkspace);
 
         for (int i = 0; i < reducedDimension; ++i) {
             double sum = 0.0;
@@ -152,7 +153,8 @@ public final class PartialIdentityTipContribution {
         MatrixOps.safeInvertPrecision(
                 workspace.reducedPrecision,
                 workspace.reducedCovariance,
-                missingCount);
+                missingCount,
+                workspace.inversionWorkspace);
 
         for (int missing = 0; missing < missingCount; ++missing) {
             double sum = 0.0;

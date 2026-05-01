@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
 import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
@@ -198,7 +199,7 @@ final class OUCanonicalTransitionState {
                 spdCholeskyScratch,
                 spdLowerInverseScratch,
                 CanonicalNumericsOptions.OU_TREE);
-        System.arraycopy(spdInverseScratch, 0, inverseOut.data, 0, dimension * dimension);
+        MatrixOps.fromFlat(spdInverseScratch, inverseOut, dimension);
     }
 
     private static void fillTransitionOffset(final double[] transitionMatrix,

@@ -1,6 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
@@ -48,8 +49,7 @@ final class OrthogonalBlockTransitionFactory {
                                       final OrthogonalBlockBasisCache basis,
                                       final double[] out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
-        System.arraycopy(transitionCovariance.data, 0, out, 0,
-                transitionCovariance.numRows * transitionCovariance.numCols);
+        MatrixOps.toFlat(transitionCovariance, out, transitionCovariance.numRows);
     }
 
     void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,

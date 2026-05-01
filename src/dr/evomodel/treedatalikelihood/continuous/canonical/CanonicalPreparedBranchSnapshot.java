@@ -35,15 +35,25 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
  */
 public final class CanonicalPreparedBranchSnapshot {
 
-    private final int childNodeIndex;
-    private final double effectiveBranchLength;
-    private final CanonicalGaussianTransition transition;
-    private final CanonicalPreparedBranchHandle preparedBranchHandle;
+    private int childNodeIndex;
+    private double effectiveBranchLength;
+    private CanonicalGaussianTransition transition;
+    private CanonicalPreparedBranchHandle preparedBranchHandle;
 
     public CanonicalPreparedBranchSnapshot(final int childNodeIndex,
                                            final double effectiveBranchLength,
                                            final CanonicalGaussianTransition transition,
                                            final CanonicalPreparedBranchHandle preparedBranchHandle) {
+        this.childNodeIndex = childNodeIndex;
+        this.effectiveBranchLength = effectiveBranchLength;
+        this.transition = transition;
+        this.preparedBranchHandle = preparedBranchHandle;
+    }
+
+    public void reset(final int childNodeIndex,
+                      final double effectiveBranchLength,
+                      final CanonicalGaussianTransition transition,
+                      final CanonicalPreparedBranchHandle preparedBranchHandle) {
         this.childNodeIndex = childNodeIndex;
         this.effectiveBranchLength = effectiveBranchLength;
         this.transition = transition;

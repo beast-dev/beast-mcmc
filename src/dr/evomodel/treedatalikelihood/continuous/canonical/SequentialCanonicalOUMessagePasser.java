@@ -177,6 +177,13 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
+    public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
+                                             final BranchGradientInputs inputs,
+                                             final double[] gradT) {
+        branchLengthGradientRunner.compute(transitionProvider, inputs, gradT);
+    }
+
+    @Override
     public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
                                       final double[] gradA,
                                       final double[] gradQ,
@@ -198,7 +205,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
 
     public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
                                             final BranchGradientInputs out) {
-        gradientPreparationRunner.prepare(transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP, out);
+        prepareBranchGradientInputs(transitionProvider, CanonicalTransitionCachePhases.GRADIENT_PREP, out);
+    }
+
+    @Override
+    public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
+                                            final String phase,
+                                            final BranchGradientInputs out) {
+        gradientPreparationRunner.prepare(transitionProvider, phase, out);
     }
 
     public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,

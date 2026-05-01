@@ -57,10 +57,7 @@ final class CanonicalBranchLengthGradientRunner {
                     transitionProvider,
                     CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT,
                     preparedBranchGradientInputs);
-            branchLengthGradientEngine.compute(
-                    ouProvider.getProcessModel(),
-                    preparedBranchGradientInputs,
-                    gradT);
+            computeAnalytic(ouProvider, preparedBranchGradientInputs, gradT);
             return;
         }
 
@@ -68,6 +65,32 @@ final class CanonicalBranchLengthGradientRunner {
                 transitionProvider, CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT)) {
             computeFiniteDifference(transitionProvider, ouProvider, gradT);
         }
+    }
+
+    void compute(final CanonicalBranchTransitionProvider transitionProvider,
+                 final BranchGradientInputs inputs,
+                 final double[] gradT) {
+        final CanonicalOUTransitionProvider ouProvider =
+                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
+        if (!fallbackPolicy.useBranchLengthFiniteDifference()) {
+            computeAnalytic(ouProvider, inputs, gradT);
+            return;
+        }
+
+        traversalRunner.requireGradientState();
+        try (CanonicalCachePhaseScope ignored = CanonicalCachePhaseScope.push(
+                transitionProvider, CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT)) {
+            computeFiniteDifference(transitionProvider, ouProvider, gradT);
+        }
+    }
+
+    private void computeAnalytic(final CanonicalOUTransitionProvider ouProvider,
+                                 final BranchGradientInputs inputs,
+                                 final double[] gradT) {
+        branchLengthGradientEngine.compute(
+                ouProvider.getProcessModel(),
+                inputs,
+                gradT);
     }
 
     private void computeFiniteDifference(final CanonicalBranchTransitionProvider transitionProvider,

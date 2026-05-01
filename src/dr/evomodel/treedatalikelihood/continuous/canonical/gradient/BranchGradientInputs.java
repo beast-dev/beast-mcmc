@@ -260,9 +260,6 @@ public final class BranchGradientInputs {
 
     private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,
                                      final CanonicalLocalTransitionAdjoints target) {
-        final int dimension = source.getDimension();
-        System.arraycopy(source.dLogL_dF, 0, target.dLogL_dF, 0, dimension * dimension);
-        System.arraycopy(source.dLogL_df, 0, target.dLogL_df, 0, dimension);
-        System.arraycopy(source.dLogL_dOmega, 0, target.dLogL_dOmega, 0, dimension * dimension);
+        target.copyFrom(source);
     }
 }

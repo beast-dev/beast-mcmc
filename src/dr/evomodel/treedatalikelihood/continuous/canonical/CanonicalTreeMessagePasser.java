@@ -27,6 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 
@@ -56,7 +57,23 @@ public interface CanonicalTreeMessagePasser {
 
     void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider, double[] gradT);
 
+    void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider,
+                                      BranchGradientInputs inputs,
+                                      double[] gradT);
+
     void computeJointGradients(CanonicalBranchTransitionProvider transitionProvider,
+                               double[] gradA,
+                               double[] gradQ,
+                               double[] gradMu);
+
+    BranchGradientInputs createBranchGradientInputs();
+
+    void prepareBranchGradientInputs(CanonicalBranchTransitionProvider transitionProvider,
+                                     String phase,
+                                     BranchGradientInputs out);
+
+    void computeJointGradients(CanonicalBranchTransitionProvider transitionProvider,
+                               BranchGradientInputs inputs,
                                double[] gradA,
                                double[] gradQ,
                                double[] gradMu);

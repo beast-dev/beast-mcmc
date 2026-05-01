@@ -14,6 +14,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
@@ -94,7 +95,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                     "transition matrix must have length " + (getDimension() * getDimension()));
         }
         refreshBasisCaches(dt);
-        copyDenseMatrixToFlat(basisCache.transitionMatrix, out);
+        MatrixOps.toFlat(basisCache.transitionMatrix, out, getDimension());
     }
 
     @Override
@@ -153,10 +154,12 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                              final double[] gradientOut) {
         final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
         blockParameter.chainGradient(compressedGradient, nativeGradientScratch);
-        final double[] angleGradient =
-                orthogonalRotation.pullBackGradientFlat(rotationGradientFlat, getDimension());
         System.arraycopy(nativeGradientScratch, 0, gradientOut, 0, nativeBlockDim);
-        System.arraycopy(angleGradient, 0, gradientOut, nativeBlockDim, angleGradient.length);
+        orthogonalRotation.fillPullBackGradientFlat(
+                rotationGradientFlat,
+                getDimension(),
+                gradientOut,
+                nativeBlockDim);
     }
 
     @Override
@@ -219,7 +222,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     public void fillTransitionMatrixPreparedFlat(final CanonicalPreparedBranchHandle prepared,
                                                  final CanonicalBranchWorkspace workspace,
                                                  final double[] out) {
-        copyDenseMatrixToFlat(asPreparedBasis(prepared).transitionMatrix, out);
+        MatrixOps.toFlat(asPreparedBasis(prepared).transitionMatrix, out, getDimension());
     }
 
     public void prepareBranchCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -409,6 +412,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 transitionMatrixArrayScratch,
                 denseAdjointScratch,
                 nativeBlockGradientScratch,
+                precisionFlat,
                 gradientAccumulator);
     }
 
@@ -580,10 +584,6 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
 
     private void refreshMeanGradientCaches(final double dt) {
         basisCache.refreshExpOnly(dt);
-    }
-
-    private static void copyDenseMatrixToFlat(final DenseMatrix64F source, final double[] out) {
-        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
     }
 
     private double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,

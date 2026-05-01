@@ -80,12 +80,13 @@ public final class CanonicalSelectionGradientProjector {
             final double[] gradientR) {
         if (requestedParameter == blockParameter.getParameter()) {
             if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
-                final double[] angleGradient =
-                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                                .pullBackGradientFlat(gradientR, dimension);
-                final double[] out = new double[blockParameter.getBlockDiagonalNParameters() + angleGradient.length];
+                final OrthogonalMatrixProvider orthogonalProvider =
+                        (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
+                final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
+                final int angleDim = orthogonalProvider.getOrthogonalParameter().getDimension();
+                final double[] out = new double[nativeBlockDim + angleDim];
                 System.arraycopy(nativeBlockGradient, 0, out, 0, blockParameter.getBlockDiagonalNParameters());
-                System.arraycopy(angleGradient, 0, out, blockParameter.getBlockDiagonalNParameters(), angleGradient.length);
+                orthogonalProvider.fillPullBackGradientFlat(gradientR, dimension, out, nativeBlockDim);
                 return out;
             }
             final double[] out = new double[blockParameter.getBlockDiagonalNParameters() + dimension * dimension];
@@ -101,8 +102,11 @@ public final class CanonicalSelectionGradientProjector {
         }
         if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
                 && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
-            return ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                    .pullBackGradientFlat(gradientR, dimension);
+            final OrthogonalMatrixProvider orthogonalProvider =
+                    (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
+            final double[] out = new double[orthogonalProvider.getOrthogonalParameter().getDimension()];
+            orthogonalProvider.fillPullBackGradientFlat(gradientR, dimension, out);
+            return out;
         }
         if (requestedParameter == blockParameter.getScalarBlockParameter()) {
             return new double[]{nativeBlockGradient[0]};

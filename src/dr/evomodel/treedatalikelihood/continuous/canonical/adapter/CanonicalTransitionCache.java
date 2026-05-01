@@ -179,11 +179,7 @@ final class CanonicalTransitionCache {
             }
             final CanonicalPreparedBranchHandle prepared =
                     fillCachedTransition(entry, effectiveBranchLength);
-            entry.snapshot = new CanonicalPreparedBranchSnapshot(
-                    childNodeIndex,
-                    effectiveBranchLength,
-                    entry.transition,
-                    prepared);
+            entry.updateSnapshot(childNodeIndex, effectiveBranchLength, entry.transition, prepared);
             entry.markTransitionCurrent(effectiveBranchLength, epoch);
         } else {
             recordHit();

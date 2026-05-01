@@ -4,6 +4,7 @@ import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
@@ -400,7 +401,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                     final double[] denseAdjointScratch,
                                                     final DenseMatrix64F gradD) {
         fillScaledNegativeBlockDMatrix(blockDParams, dt, scaledNegativeBlockDScratch, upstream.numRows);
-        copyDenseMatrixToFlatArray(upstream, denseAdjointScratch);
+        MatrixOps.toFlat(upstream, denseAdjointScratch, upstream.numRows);
         MatrixExponentialUtils.adjointExpFlat(
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
@@ -475,10 +476,6 @@ final class OrthogonalBlockCovarianceAdjoint {
         }
     }
 
-    private static void copyDenseMatrixToFlatArray(final DenseMatrix64F source, final double[] out) {
-        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
-    }
-
     private static void fillScaledNegativeBlockDMatrix(final double[] blockDParams,
                                                        final double dt,
                                                        final double[] out,
@@ -497,7 +494,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private static void fillDenseMatrix(final double[] source,
                                         final DenseMatrix64F out) {
-        System.arraycopy(source, 0, out.data, 0, out.numRows * out.numCols);
+        MatrixOps.fromFlat(source, out, out.numRows);
     }
 
     private static void symmetrize(final DenseMatrix64F matrix) {

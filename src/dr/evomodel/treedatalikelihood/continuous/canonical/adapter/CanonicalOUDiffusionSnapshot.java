@@ -33,12 +33,7 @@ final class CanonicalOUDiffusionSnapshot {
 
     void refresh() {
         final double[][] precisionMatrix = diffusionModel.getPrecisionMatrix();
-        final double[] precisionData = precision.data;
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                precisionData[i * dimension + j] = precisionMatrix[i][j];
-            }
-        }
+        MatrixOps.toFlat(precisionMatrix, precision.data, dimension);
         MatrixOps.invertSPDCompact(
                 precision.data,
                 covariance.data,
@@ -56,6 +51,6 @@ final class CanonicalOUDiffusionSnapshot {
     }
 
     void fillCovarianceFlat(final double[] out) {
-        System.arraycopy(covariance.data, 0, out, 0, dimension * dimension);
+        MatrixOps.toFlat(covariance, out, dimension);
     }
 }

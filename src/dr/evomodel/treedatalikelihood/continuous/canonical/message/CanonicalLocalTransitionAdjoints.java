@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+
 /**
  * Local branch adjoints for a Gaussian transition in moment coordinates.
  *
@@ -27,5 +29,15 @@ public final class CanonicalLocalTransitionAdjoints {
 
     public int getDimension() {
         return dimension;
+    }
+
+    public void copyFrom(final CanonicalLocalTransitionAdjoints source) {
+        if (source.dimension != dimension) {
+            throw new IllegalArgumentException(
+                    "Adjoint dimension mismatch: " + source.dimension + " vs " + dimension);
+        }
+        MatrixOps.copyMatrix(source.dLogL_dF, dLogL_dF, dimension);
+        MatrixOps.copyVector(source.dLogL_df, dLogL_df);
+        MatrixOps.copyMatrix(source.dLogL_dOmega, dLogL_dOmega, dimension);
     }
 }

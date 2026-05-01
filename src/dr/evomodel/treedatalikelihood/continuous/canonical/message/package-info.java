@@ -3,9 +3,10 @@
  *
  * <p>This package owns the low-level canonical representation used by the tree
  * traversal: precision/information states, branch transition factors, local
- * transition adjoints, and matrix utilities needed to combine, condition, and
- * convert Gaussian messages. Classes here should remain tree-topology agnostic;
- * traversal, branch selection, and BEAST model lifecycle belong in parent
- * packages.</p>
+ * transition adjoints, and Gaussian message algebra. Classes here should remain
+ * tree-topology agnostic; traversal, branch selection, BEAST model lifecycle, and
+ * general matrix utilities belong in parent/sibling packages. New canonical
+ * hot-path matrix code should use
+ * {@code dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps}.</p>
  */
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;

@@ -42,6 +42,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCa
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -68,9 +69,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private final double[] storedGradientA;
     private final double[] storedGradientQ;
     private final double[] storedGradientMu;
+    private final BranchGradientInputs cachedGradientInputs;
     private final Tree tipTree;
     private final ContinuousTraitPartialsProvider tipDataModel;
     private final CanonicalTipObservation[] ownedTipObservations;
+    private boolean gradientInputsDirty;
+    private boolean storedGradientInputsDirty;
     private boolean jointGradientCacheDirty;
     private boolean storedJointGradientCacheDirty;
     private boolean modelDirty;
@@ -154,9 +158,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.storedGradientA = new double[selectionGradientDimension];
         this.storedGradientQ = new double[dim * dim];
         this.storedGradientMu = new double[dim];
+        this.cachedGradientInputs = passer.createBranchGradientInputs();
         this.tipTree = dataModel == null ? null : tree;
         this.tipDataModel = dataModel;
         this.ownedTipObservations = dataModel == null ? null : tipObservations;
+        this.gradientInputsDirty = true;
+        this.storedGradientInputsDirty = true;
         this.jointGradientCacheDirty = true;
         this.storedJointGradientCacheDirty = true;
         this.modelDirty = true;
@@ -189,9 +196,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.storedGradientA = new double[selectionGradientDimension];
         this.storedGradientQ = new double[passer.getDimension() * passer.getDimension()];
         this.storedGradientMu = new double[passer.getDimension()];
+        this.cachedGradientInputs = passer.createBranchGradientInputs();
         this.tipTree = null;
         this.tipDataModel = null;
         this.ownedTipObservations = null;
+        this.gradientInputsDirty = true;
+        this.storedGradientInputsDirty = true;
         this.jointGradientCacheDirty = true;
         this.storedJointGradientCacheDirty = true;
         this.modelDirty = true;
@@ -240,13 +250,10 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (rootIndex < 0) {
             throw new IllegalStateException("Root index is unavailable for this canonical OU tree likelihood integrator.");
         }
-        if (modelDirty || jointGradientCacheDirty) {
-            passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-            modelDirty = false;
-        }
+        ensureGradientInputs(CanonicalTransitionCachePhases.GRADIENT_PREP);
         transitionProvider.fillTraitCovarianceFlat(scratchTraitCovariance);
         rootPrior.accumulateRootMeanGradient(
-                passer.getPostOrderState(rootIndex),
+                cachedGradientInputs.getRootPostOrderState(),
                 scratchTraitCovariance,
                 gradRootMean);
     }
@@ -254,10 +261,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     @Override
     public void computeGradientBranchLengths(final double[] gradT) {
         syncOwnedTipObservations();
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        passer.computePreOrder(transitionProvider, rootPrior);
-        modelDirty = false;
-        passer.computeGradientBranchLengths(transitionProvider, gradT);
+        ensureGradientInputs(CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT);
+        passer.computeGradientBranchLengths(transitionProvider, cachedGradientInputs, gradT);
         reportTransitionCacheDiagnostics(CanonicalTransitionCachePhases.BRANCH_LENGTH_GRADIENT);
     }
 
@@ -279,6 +284,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     public void storeState() {
         passer.storeState();
         transitionProvider.storeState();
+        storedGradientInputsDirty = gradientInputsDirty;
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
         storedTipObservationsDirty = tipObservationsDirty;
@@ -293,6 +299,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     public void restoreState() {
         passer.restoreState();
         transitionProvider.restoreState();
+        gradientInputsDirty = storedGradientInputsDirty;
         jointGradientCacheDirty = storedJointGradientCacheDirty;
         modelDirty = storedModelDirty;
         tipObservationsDirty = storedTipObservationsDirty;
@@ -307,6 +314,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     public void acceptState() {
         passer.acceptState();
         transitionProvider.acceptState();
+        storedGradientInputsDirty = gradientInputsDirty;
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
         storedTipObservationsDirty = tipObservationsDirty;
@@ -353,15 +361,30 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (!jointGradientCacheDirty) {
             return;
         }
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        passer.computePreOrder(transitionProvider, rootPrior);
-        passer.computeJointGradients(transitionProvider, cachedGradientA, cachedGradientQ, cachedGradientMu);
-        modelDirty = false;
+        ensureGradientInputs(CanonicalTransitionCachePhases.GRADIENT_PREP);
+        passer.computeJointGradients(
+                transitionProvider,
+                cachedGradientInputs,
+                cachedGradientA,
+                cachedGradientQ,
+                cachedGradientMu);
         jointGradientCacheDirty = false;
         reportTransitionCacheDiagnostics("jointGradient");
     }
 
+    private void ensureGradientInputs(final String phase) {
+        if (!gradientInputsDirty) {
+            return;
+        }
+        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        passer.computePreOrder(transitionProvider, rootPrior);
+        passer.prepareBranchGradientInputs(transitionProvider, phase, cachedGradientInputs);
+        modelDirty = false;
+        gradientInputsDirty = false;
+    }
+
     private void markJointGradientCacheDirty() {
+        gradientInputsDirty = true;
         jointGradientCacheDirty = true;
     }
 

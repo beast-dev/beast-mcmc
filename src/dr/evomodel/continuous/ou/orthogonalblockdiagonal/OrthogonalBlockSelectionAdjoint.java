@@ -2,6 +2,7 @@ package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import org.ejml.data.DenseMatrix64F;
@@ -227,7 +228,7 @@ final class OrthogonalBlockSelectionAdjoint {
                                                     final double[] denseAdjointScratch,
                                                     final DenseMatrix64F gradD) {
         fillScaledNegativeBlockDMatrix(blockDParams, dt, scaledNegativeBlockDScratch, upstreamFD.numRows);
-        copyDenseMatrixToFlatArray(upstreamFD, denseAdjointScratch);
+        MatrixOps.toFlat(upstreamFD, denseAdjointScratch, upstreamFD.numRows);
         MatrixExponentialUtils.adjointExpFlat(
                 scaledNegativeBlockDScratch,
                 denseAdjointScratch,
@@ -305,10 +306,6 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    private static void copyDenseMatrixToFlatArray(final DenseMatrix64F source, final double[] out) {
-        System.arraycopy(source.data, 0, out, 0, source.numRows * source.numCols);
-    }
-
     private static void fillScaledNegativeBlockDMatrix(final double[] blockDParams,
                                                        final double dt,
                                                        final double[] out,
@@ -341,7 +338,7 @@ final class OrthogonalBlockSelectionAdjoint {
 
     private static void fillDenseMatrix(final double[] source,
                                         final DenseMatrix64F out) {
-        System.arraycopy(source, 0, out.data, 0, out.numRows * out.numCols);
+        MatrixOps.fromFlat(source, out, out.numRows);
     }
 
     private static void transposeInPlace(final DenseMatrix64F matrix) {

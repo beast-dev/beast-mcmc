@@ -1,6 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import org.ejml.data.DenseMatrix64F;
@@ -30,6 +31,8 @@ final class OrthogonalBlockBasisCache {
     private final double[] cachedRtData;
     private final double[] cachedBlockDParams;
     private final double[] workMatrix;
+    private final double[] debugBlockR;
+    private final double[] debugBlockRinv;
     private boolean expCacheValid;
     private boolean basisCacheValid;
     private double cachedExpDt;
@@ -60,6 +63,8 @@ final class OrthogonalBlockBasisCache {
         this.rtMatrix = new DenseMatrix64F(d, d);
         this.transitionMatrix = new DenseMatrix64F(d, d);
         this.workMatrix = new double[d * d];
+        this.debugBlockR = new double[d * d];
+        this.debugBlockRinv = new double[d * d];
         this.expCacheValid = false;
         this.basisCacheValid = false;
         this.cachedExpDt = Double.NaN;
@@ -107,8 +112,8 @@ final class OrthogonalBlockBasisCache {
             basisRtVersion++;
         }
 
-        System.arraycopy(rData, 0, rMatrix.data, 0, d * d);
-        System.arraycopy(rtData, 0, rtMatrix.data, 0, d * d);
+        MatrixOps.fromFlat(rData, rMatrix, d);
+        MatrixOps.fromFlat(rtData, rtMatrix, d);
         OrthogonalBlockPreparedBasisBuilder.fillTransitionMatrix(
                 rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
         System.arraycopy(rData, 0, cachedRData, 0, rData.length);
@@ -146,15 +151,13 @@ final class OrthogonalBlockBasisCache {
     }
 
     private void reportNativeRConsistency(final double dt, final int d) {
-        final double[] blockR = new double[d * d];
-        final double[] blockRinv = new double[d * d];
-        blockParameter.fillRAndRinv(blockR, blockRinv);
+        blockParameter.fillRAndRinv(debugBlockR, debugBlockRinv);
         double maxR = 0.0;
         double maxRt = 0.0;
         double maxRinvVsTranspose = 0.0;
         for (int i = 0; i < d * d; ++i) {
-            maxR = Math.max(maxR, Math.abs(rData[i] - blockR[i]));
-            maxRt = Math.max(maxRt, Math.abs(rtData[i] - blockRinv[i]));
+            maxR = Math.max(maxR, Math.abs(rData[i] - debugBlockR[i]));
+            maxRt = Math.max(maxRt, Math.abs(rtData[i] - debugBlockRinv[i]));
         }
         for (int r = 0; r < d; ++r) {
             for (int c = 0; c < d; ++c) {
@@ -162,7 +165,7 @@ final class OrthogonalBlockBasisCache {
                 final int cr = c * d + r;
                 maxRinvVsTranspose = Math.max(
                         maxRinvVsTranspose,
-                        Math.abs(blockRinv[rc] - blockR[cr]));
+                        Math.abs(debugBlockRinv[rc] - debugBlockR[cr]));
             }
         }
         dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("nativeRConsistencyDebug dt=" + dt

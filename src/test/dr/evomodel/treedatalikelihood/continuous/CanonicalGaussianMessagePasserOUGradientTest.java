@@ -31,6 +31,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTr
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
@@ -217,7 +218,7 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         assertEquals("joint post-order reuse", 1, countingPasser.postOrderCalls);
         assertEquals("joint pre-order reuse", 1, countingPasser.preOrderCalls);
-        assertEquals("joint branch-adjoint reuse", 1, countingPasser.jointGradientCalls);
+        assertEquals("joint branch-adjoint reuse", 1, countingPasser.jointGradientPreparedCalls);
 
         refreshMessages(setup);
         final double[] directA = new double[dimTrait * dimTrait];
@@ -230,6 +231,31 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertArrayEquals("cached vs direct joint mu", directMu, jointMu, 1.0e-11);
     }
 
+    public void testStandaloneIntegratorReusesPreparedGradientInputsAcrossTargets() {
+        System.out.println("\nTest: canonical OU integrator reuses prepared branch-gradient inputs across targets");
+
+        final OUSetup setup = buildOUSetup("canonPreparedInputReuse_partial", buildPartiallyObservedTips());
+        final CountingPasser countingPasser = new CountingPasser(setup.passer);
+        final CanonicalOUTreeLikelihoodIntegrator integrator =
+                new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
+
+        integrator.computeGradientBranchLengths(new double[treeModel.getNodeCount()]);
+        integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
+        integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
+        integrator.computeStationaryMeanGradient(new double[dimTrait]);
+
+        assertEquals("one post-order traversal prepares all canonical gradient targets",
+                1, countingPasser.postOrderCalls);
+        assertEquals("one pre-order traversal prepares all canonical gradient targets",
+                1, countingPasser.preOrderCalls);
+        assertEquals("one branch-gradient input preparation shared by all targets",
+                1, countingPasser.prepareGradientInputsCalls);
+        assertEquals("branch length consumes prepared branch-gradient inputs",
+                1, countingPasser.branchLengthPreparedCalls);
+        assertEquals("A/Q/mu consume one joint pullback from prepared inputs",
+                1, countingPasser.jointGradientPreparedCalls);
+    }
+
     public void testStandaloneIntegratorModelDirtyInvalidatesJointGradientCache() {
         System.out.println("\nTest: canonical OU integrator model dirty invalidates joint gradient cache");
 
@@ -240,11 +266,11 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
         integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
         integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
-        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientPreparedCalls);
 
         integrator.markModelDirty();
         integrator.computeStationaryMeanGradient(new double[dimTrait]);
-        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientCalls);
+        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientPreparedCalls);
     }
 
     public void testStandaloneIntegratorReloadedTipsInvalidateJointGradientCache() {
@@ -256,11 +282,11 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                 new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
 
         integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
-        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientPreparedCalls);
 
         integrator.reloadTips(buildFullyObservedTips());
         integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
-        assertEquals("joint gradient recomputed after tip reload", 2, countingPasser.jointGradientCalls);
+        assertEquals("joint gradient recomputed after tip reload", 2, countingPasser.jointGradientPreparedCalls);
     }
 
     public void testStandaloneIntegratorStoreRestorePreservesCachedJointGradients() {
@@ -272,16 +298,16 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                 new CanonicalOUTreeLikelihoodIntegrator(countingPasser, setup.provider, setup.rootPrior);
 
         integrator.computeSelectionGradient(new double[dimTrait * dimTrait]);
-        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientCalls);
+        assertEquals("initial joint gradient computation", 1, countingPasser.jointGradientPreparedCalls);
 
         integrator.storeState();
         integrator.markModelDirty();
         integrator.computeDiffusionGradient(new double[dimTrait * dimTrait]);
-        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientCalls);
+        assertEquals("joint gradient recomputed after model dirty", 2, countingPasser.jointGradientPreparedCalls);
 
         integrator.restoreState();
         integrator.computeStationaryMeanGradient(new double[dimTrait]);
-        assertEquals("restored cached joint gradient reused", 2, countingPasser.jointGradientCalls);
+        assertEquals("restored cached joint gradient reused", 2, countingPasser.jointGradientPreparedCalls);
     }
 
     public void testOrthogonalBlockJointGradientsMatchAcrossBranchGradientThreadCounts() {
@@ -338,11 +364,15 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertSame("orthogonal prepared basis reused on cache hit",
                 orthogonalPreparedBasis(first), orthogonalPreparedBasis(second));
 
+        final double previousBranchLength = first.getEffectiveBranchLength();
         setup.orthogonal.branchScale[childNodeIndex] += 0.125;
         final CanonicalPreparedBranchSnapshot afterLengthChange =
                 setup.orthogonal.provider.getPreparedBranchSnapshot(childNodeIndex);
 
-        assertNotSame("branch length change refreshes snapshot", first, afterLengthChange);
+        assertSame("branch length change refreshes reusable snapshot", first, afterLengthChange);
+        assertTrue("reusable snapshot reflects updated branch length",
+                Double.doubleToLongBits(previousBranchLength)
+                        != Double.doubleToLongBits(afterLengthChange.getEffectiveBranchLength()));
         assertSame("prepared basis buffer is retained across snapshot refresh",
                 orthogonalPreparedBasis(first), orthogonalPreparedBasis(afterLengthChange));
     }
@@ -433,7 +463,9 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         private final CanonicalTreeMessagePasser delegate;
         private int postOrderCalls = 0;
         private int preOrderCalls = 0;
-        private int jointGradientCalls = 0;
+        private int prepareGradientInputsCalls = 0;
+        private int branchLengthPreparedCalls = 0;
+        private int jointGradientPreparedCalls = 0;
 
         private CountingPasser(final CanonicalTreeMessagePasser delegate) {
             this.delegate = delegate;
@@ -480,12 +512,42 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         }
 
         @Override
+        public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
+                                                 final BranchGradientInputs inputs,
+                                                 final double[] gradT) {
+            branchLengthPreparedCalls++;
+            delegate.computeGradientBranchLengths(transitionProvider, inputs, gradT);
+        }
+
+        @Override
         public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
                                           final double[] gradA,
                                           final double[] gradQ,
                                           final double[] gradMu) {
-            jointGradientCalls++;
             delegate.computeJointGradients(transitionProvider, gradA, gradQ, gradMu);
+        }
+
+        @Override
+        public BranchGradientInputs createBranchGradientInputs() {
+            return delegate.createBranchGradientInputs();
+        }
+
+        @Override
+        public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
+                                                final String phase,
+                                                final BranchGradientInputs out) {
+            prepareGradientInputsCalls++;
+            delegate.prepareBranchGradientInputs(transitionProvider, phase, out);
+        }
+
+        @Override
+        public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
+                                          final BranchGradientInputs inputs,
+                                          final double[] gradA,
+                                          final double[] gradQ,
+                                          final double[] gradMu) {
+            jointGradientPreparedCalls++;
+            delegate.computeJointGradients(transitionProvider, inputs, gradA, gradQ, gradMu);
         }
 
         @Override

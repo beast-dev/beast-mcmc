@@ -106,4 +106,23 @@ final class CanonicalTransitionCacheEntry {
         preparedBranchHandle.invalidateCovariance();
         return true;
     }
+
+    void updateSnapshot(final int childNodeIndex,
+                        final double effectiveBranchLength,
+                        final CanonicalGaussianTransition transition,
+                        final CanonicalPreparedBranchHandle preparedBranchHandle) {
+        if (snapshot == null) {
+            snapshot = new CanonicalPreparedBranchSnapshot(
+                    childNodeIndex,
+                    effectiveBranchLength,
+                    transition,
+                    preparedBranchHandle);
+        } else {
+            snapshot.reset(
+                    childNodeIndex,
+                    effectiveBranchLength,
+                    transition,
+                    preparedBranchHandle);
+        }
+    }
 }

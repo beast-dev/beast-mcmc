@@ -3,11 +3,12 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
- * Shared dense linear-algebra utilities for Gaussian likelihood engines.
+ * Legacy shared dense linear-algebra utilities for Gaussian likelihood engines.
  *
- * <p>The flat row-major methods in this class ({@code *Flat} suffix) are the live
- * implementations. The {@code double[][]} overloads are deprecated; migrate callers
- * to {@link MatrixOps} which provides a clean flat-only API.
+ * <p>This class remains for compatibility with older non-tree callers. Canonical
+ * tree hot paths should use {@link MatrixOps}, whose primary API is flat
+ * row-major {@code double[]}. The {@code double[][]} overloads here are
+ * deprecated; do not add new canonical tree uses.
  */
 public final class GaussianMatrixOps {
 
@@ -107,9 +108,7 @@ public final class GaussianMatrixOps {
     }
 
     public static void addInPlace(final double[] accumulator, final double[] increment) {
-        for (int i = 0; i < accumulator.length; ++i) {
-            accumulator[i] += increment[i];
-        }
+        MatrixOps.addInPlace(accumulator, increment, accumulator.length);
     }
 
     // -----------------------------------------------------------------------
@@ -120,44 +119,22 @@ public final class GaussianMatrixOps {
                                          final double[] right,
                                          final double[] out,
                                          final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            final int iOff = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dim; ++k) {
-                    sum += left[iOff + k] * right[k * dim + j];
-                }
-                out[iOff + j] = sum;
-            }
-        }
+        MatrixOps.matMul(left, right, out, dim);
     }
 
     public static void multiplyMatrixVectorFlat(final double[] matrix,
                                          final double[] vector,
                                          final double[] out,
                                          final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            final int iOff = i * dim;
-            double sum = 0.0;
-            for (int j = 0; j < dim; ++j) {
-                sum += matrix[iOff + j] * vector[j];
-            }
-            out[i] = sum;
-        }
+        MatrixOps.matVec(matrix, vector, out, dim);
     }
 
     public static void symmetrizeFlat(final double[] matrix, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = i + 1; j < dim; ++j) {
-                final double avg = 0.5 * (matrix[i * dim + j] + matrix[j * dim + i]);
-                matrix[i * dim + j] = avg;
-                matrix[j * dim + i] = avg;
-            }
-        }
+        MatrixOps.symmetrize(matrix, dim);
     }
 
     public static void copyMatrixFlat(final double[] source, final double[] target, final int dim) {
-        System.arraycopy(source, 0, target, 0, dim * dim);
+        MatrixOps.copyMatrix(source, target, dim);
     }
 
     /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
@@ -167,9 +144,7 @@ public final class GaussianMatrixOps {
 
     /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
     public static void matrixToRowMajor(final double[][] source, final double[] target, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(source[i], 0, target, i * dim, dim);
-        }
+        MatrixOps.toFlat(source, target, dim);
     }
 
     /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
@@ -179,64 +154,37 @@ public final class GaussianMatrixOps {
 
     /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
     public static void rowMajorToMatrix(final double[] source, final double[][] target, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(source, i * dim, target[i], 0, dim);
-        }
+        MatrixOps.fromFlat(source, target, dim);
     }
 
     /** Copy a flat row-major square matrix into flat column-major parameter order. */
     public static void rowMajorToColumnMajorParameter(final double[] source,
                                                       final double[] target,
                                                       final int dim) {
-        for (int row = 0; row < dim; ++row) {
-            for (int col = 0; col < dim; ++col) {
-                target[col * dim + row] = source[row * dim + col];
-            }
-        }
+        MatrixOps.toColumnMajorParam(source, target, dim);
     }
 
     /** Copy a 2-D row-major square matrix into flat column-major parameter order. */
     public static void matrixToColumnMajorParameter(final double[][] source,
                                                     final double[] target,
                                                     final int dim) {
-        int index = 0;
-        for (int col = 0; col < dim; ++col) {
-            for (int row = 0; row < dim; ++row) {
-                target[index++] = source[row][col];
-            }
-        }
+        MatrixOps.toColumnMajorParam(source, target, dim);
     }
 
     /** Copy a flat column-major parameter vector into flat row-major square-matrix order. */
     public static void columnMajorParameterToRowMajor(final double[] source,
                                                       final double[] target,
                                                       final int dim) {
-        for (int row = 0; row < dim; ++row) {
-            for (int col = 0; col < dim; ++col) {
-                target[row * dim + col] = source[col * dim + row];
-            }
-        }
+        MatrixOps.fromColumnMajorParam(source, target, dim);
     }
 
     /** Copy the transpose of a flat row-major square matrix into a 2-D matrix. */
     public static void transposeFlatToMatrix(final double[] source, final double[][] target, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                target[j][i] = source[i * dim + j];
-            }
-        }
+        MatrixOps.transposedFromFlat(source, target, dim);
     }
 
     public static void transposeFlatSquareInPlace(final double[] matrix, final int dim) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = i + 1; j < dim; ++j) {
-                final int ij = i * dim + j;
-                final int ji = j * dim + i;
-                final double tmp = matrix[ij];
-                matrix[ij] = matrix[ji];
-                matrix[ji] = tmp;
-            }
-        }
+        MatrixOps.transposeInPlace(matrix, dim);
     }
 
     public static void multiplyFlatByMatrix(final double[] left, final double[][] right,

@@ -13,16 +13,20 @@ final class OrthogonalBlockGradientPullback {
             final double[] compressedBlockGradient,
             final double[] rotationGradient,
             final double[] nativeBlockGradientScratch,
+            final double[] angleGradientScratch,
             final double[] gradientAccumulator) {
         final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
         blockParameter.chainGradient(compressedBlockGradient, nativeBlockGradientScratch);
-        final double[] angleGradient =
-                orthogonalRotation.pullBackGradientFlat(rotationGradient, blockParameter.getRowDimension());
+        final int angleDim = orthogonalRotation.getOrthogonalParameter().getDimension();
+        orthogonalRotation.fillPullBackGradientFlat(
+                rotationGradient,
+                blockParameter.getRowDimension(),
+                angleGradientScratch);
         for (int i = 0; i < nativeBlockDim; ++i) {
             gradientAccumulator[i] += nativeBlockGradientScratch[i];
         }
-        for (int i = 0; i < angleGradient.length; ++i) {
-            gradientAccumulator[nativeBlockDim + i] += angleGradient[i];
+        for (int i = 0; i < angleDim; ++i) {
+            gradientAccumulator[nativeBlockDim + i] += angleGradientScratch[i];
         }
     }
 }

@@ -5,7 +5,10 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConv
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.Parameter;
 import junit.framework.TestCase;
+import org.ejml.data.DenseMatrix64F;
 
 public final class CanonicalMathConversionTest extends TestCase {
 
@@ -94,6 +97,49 @@ public final class CanonicalMathConversionTest extends TestCase {
 
         assertArrayClose("compact vs general inverse", generalInverse, compactInverse, TOL);
         assertEquals("compact vs general log determinant", generalLogDet, compactLogDet, TOL);
+    }
+
+    public void testEJMLBoundaryConversionUsesFlatRowMajorStorage() {
+        final int dim = 2;
+        final DenseMatrix64F matrix = new DenseMatrix64F(dim, dim);
+        matrix.set(0, 0, 1.0);
+        matrix.set(0, 1, 2.0);
+        matrix.set(1, 0, 3.0);
+        matrix.set(1, 1, 4.0);
+        final double[] flat = new double[dim * dim];
+
+        MatrixOps.toFlat(matrix, flat, dim);
+        assertArrayClose("ejml to flat", new double[] {1.0, 2.0, 3.0, 4.0}, flat, TOL);
+
+        final DenseMatrix64F roundTrip = new DenseMatrix64F(dim, dim);
+        MatrixOps.fromFlat(flat, roundTrip, dim);
+        assertEquals(1.0, roundTrip.get(0, 0), TOL);
+        assertEquals(2.0, roundTrip.get(0, 1), TOL);
+        assertEquals(3.0, roundTrip.get(1, 0), TOL);
+        assertEquals(4.0, roundTrip.get(1, 1), TOL);
+    }
+
+    public void testGivensFlatPullbackCanFillExistingBuffer() {
+        final int dim = 3;
+        final Parameter angles = new Parameter.Default(new double[] {0.15, -0.30, 0.45});
+        final GivensRotationMatrixParameter rotation =
+                new GivensRotationMatrixParameter("rotation.fillPullback", dim, angles);
+        final double[] gradient = {
+                0.4, -0.2, 0.7,
+                0.1, 0.5, -0.3,
+                -0.6, 0.8, 0.2
+        };
+        final double[] expected = new double[angles.getDimension()];
+        final double[] actual = {-99.0, -99.0, -99.0, -99.0, -99.0};
+
+        rotation.fillPullBackGradientFlat(gradient, dim, expected);
+        rotation.fillPullBackGradientFlat(gradient, dim, actual, 1);
+
+        assertEquals(-99.0, actual[0], TOL);
+        assertEquals(-99.0, actual[4], TOL);
+        for (int i = 0; i < expected.length; ++i) {
+            assertEquals("angle gradient " + i, expected[i], actual[i + 1], TOL);
+        }
     }
 
     public void testSafeInvertPrecisionHandlesMissingDiagonalLocally() {

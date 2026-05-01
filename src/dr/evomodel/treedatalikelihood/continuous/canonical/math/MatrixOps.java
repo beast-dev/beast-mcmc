@@ -1,13 +1,15 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.math;
 
+import org.ejml.data.DenseMatrix64F;
+
 import java.util.Arrays;
 
 /**
  * Flat row-major matrix operations for canonical Gaussian algebra.
  *
  * <p>Element {@code (i,j)} of an {@code m x n} matrix is stored at {@code i*n + j}.
- * Conversion helpers are for BEAST {@code double[][]} boundaries; hot canonical
- * paths should keep matrices flat.
+ * Conversion helpers are for BEAST {@code double[][]} and EJML boundaries; hot
+ * canonical paths should keep matrices flat.
  */
 public final class MatrixOps {
 
@@ -15,6 +17,35 @@ public final class MatrixOps {
     public static final double MIN_DIAGONAL_JITTER = 1e-10;
 
     private MatrixOps() { }
+
+    public static final class MissingInversionWorkspace {
+        private final int maximumDimension;
+        private final int[] finiteIndices;
+        private final double[] compactSource;
+        private final double[] compactInverse;
+        private final double[] forwardWork;
+        private final double[] backwardWork;
+
+        public MissingInversionWorkspace(final int maximumDimension) {
+            if (maximumDimension < 1) {
+                throw new IllegalArgumentException("maximumDimension must be positive");
+            }
+            this.maximumDimension = maximumDimension;
+            this.finiteIndices = new int[maximumDimension];
+            this.compactSource = new double[maximumDimension * maximumDimension];
+            this.compactInverse = new double[maximumDimension * maximumDimension];
+            this.forwardWork = new double[maximumDimension];
+            this.backwardWork = new double[maximumDimension];
+        }
+
+        private void checkDimension(final int dimension) {
+            if (dimension > maximumDimension) {
+                throw new IllegalArgumentException(
+                        "Workspace maximum dimension " + maximumDimension
+                                + " is too small for " + dimension + ".");
+            }
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Matrix–vector  (y = A x)
@@ -324,7 +355,14 @@ public final class MatrixOps {
      * effective dimension and log-determinant of the finite variance block.
      */
     public static CanonicalInversionResult safeInvertVariance(double[] src, double[] dst, int dim) {
-        return safeInvertWithMissing(src, dst, dim, true);
+        return safeInvertWithMissing(src, dst, dim, true, null);
+    }
+
+    public static CanonicalInversionResult safeInvertVariance(final double[] src,
+                                                              final double[] dst,
+                                                              final int dim,
+                                                              final MissingInversionWorkspace workspace) {
+        return safeInvertWithMissing(src, dst, dim, true, workspace);
     }
 
     /**
@@ -333,7 +371,14 @@ public final class MatrixOps {
      * effective dimension and log-determinant of the finite precision block.
      */
     public static CanonicalInversionResult safeInvertPrecision(double[] src, double[] dst, int dim) {
-        return safeInvertWithMissing(src, dst, dim, false);
+        return safeInvertWithMissing(src, dst, dim, false, null);
+    }
+
+    public static CanonicalInversionResult safeInvertPrecision(final double[] src,
+                                                               final double[] dst,
+                                                               final int dim,
+                                                               final MissingInversionWorkspace workspace) {
+        return safeInvertWithMissing(src, dst, dim, false, workspace);
     }
 
     /**
@@ -354,10 +399,14 @@ public final class MatrixOps {
     private static CanonicalInversionResult safeInvertWithMissing(final double[] src,
                                                                   final double[] dst,
                                                                   final int dim,
-                                                                  final boolean inputIsVariance) {
+                                                                  final boolean inputIsVariance,
+                                                                  final MissingInversionWorkspace workspace) {
         Arrays.fill(dst, 0, dim * dim, 0.0);
 
-        final int[] finiteIndices = new int[dim];
+        if (workspace != null) {
+            workspace.checkDimension(dim);
+        }
+        final int[] finiteIndices = workspace == null ? new int[dim] : workspace.finiteIndices;
         int finiteCount = 0;
         int exactCount = 0;
 
@@ -387,10 +436,14 @@ public final class MatrixOps {
         double logDeterminant;
 
         if (finiteCount > 0) {
-            final double[] compactSource = new double[finiteCount * finiteCount];
-            final double[] compactInverse = new double[finiteCount * finiteCount];
-            final double[] forwardWork = new double[finiteCount];
-            final double[] backwardWork = new double[finiteCount];
+            final double[] compactSource =
+                    workspace == null ? new double[finiteCount * finiteCount] : workspace.compactSource;
+            final double[] compactInverse =
+                    workspace == null ? new double[finiteCount * finiteCount] : workspace.compactInverse;
+            final double[] forwardWork =
+                    workspace == null ? new double[finiteCount] : workspace.forwardWork;
+            final double[] backwardWork =
+                    workspace == null ? new double[finiteCount] : workspace.backwardWork;
 
             for (int row = 0; row < finiteCount; row++) {
                 final int sourceRow = finiteIndices[row];
@@ -436,9 +489,21 @@ public final class MatrixOps {
         for (int i = 0; i < dim; i++) System.arraycopy(src[i], 0, dst, i * dim, dim);
     }
 
+    /** Copy EJML row-major matrix data into row-major {@code double[]}. */
+    public static void toFlat(DenseMatrix64F src, double[] dst, int dim) {
+        checkDenseSquare(src, dim, "source");
+        System.arraycopy(src.data, 0, dst, 0, dim * dim);
+    }
+
     /** Copy row-major {@code double[]} into {@code double[][]}. */
     public static void fromFlat(double[] src, double[][] dst, int dim) {
         for (int i = 0; i < dim; i++) System.arraycopy(src, i * dim, dst[i], 0, dim);
+    }
+
+    /** Copy row-major {@code double[]} into EJML row-major matrix storage. */
+    public static void fromFlat(double[] src, DenseMatrix64F dst, int dim) {
+        checkDenseSquare(dst, dim, "destination");
+        System.arraycopy(src, 0, dst.data, 0, dim * dim);
     }
 
     /**
@@ -471,5 +536,15 @@ public final class MatrixOps {
         for (int row = 0; row < dim; row++)
             for (int col = 0; col < dim; col++)
                 dst[row * dim + col] = src[col * dim + row];
+    }
+
+    private static void checkDenseSquare(final DenseMatrix64F matrix,
+                                         final int dim,
+                                         final String label) {
+        if (matrix.getNumRows() != dim || matrix.getNumCols() != dim) {
+            throw new IllegalArgumentException(
+                    label + " matrix must be " + dim + "x" + dim
+                            + " but is " + matrix.getNumRows() + "x" + matrix.getNumCols());
+        }
     }
 }

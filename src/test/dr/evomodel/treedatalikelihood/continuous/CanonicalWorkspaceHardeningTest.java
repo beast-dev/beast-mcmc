@@ -90,15 +90,15 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         final Object gradient = field(denseGradientOnly.getClass(), "gradient").get(denseGradientOnly);
         assertNotNull(gradient);
         assertNotNull(field(gradient.getClass(), "dense").get(gradient));
-        assertNull(field(gradient.getClass(), "orthogonal").get(gradient));
+        assertNull(field(gradient.getClass(), "specialized").get(gradient));
 
         final Object fullGradient = factory.invoke(
                 null,
                 3,
-                capabilitySet(capabilityClass, "DENSE_GRADIENT", "ORTHOGONAL_BLOCK_GRADIENT"));
+                capabilitySet(capabilityClass, "DENSE_GRADIENT", "SPECIALIZED_GRADIENT"));
         final Object fullGradientWorkspace = field(fullGradient.getClass(), "gradient").get(fullGradient);
         assertNotNull(field(fullGradientWorkspace.getClass(), "dense").get(fullGradientWorkspace));
-        assertNotNull(field(fullGradientWorkspace.getClass(), "orthogonal").get(fullGradientWorkspace));
+        assertNotNull(field(fullGradientWorkspace.getClass(), "specialized").get(fullGradientWorkspace));
     }
 
     public void testWorkspaceFactoryRejectsUnsupportedCapabilityCombinations() throws Exception {
@@ -109,7 +109,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class, EnumSet.class);
 
         assertIllegalArgument(factory, capabilitySet(capabilityClass, "PARTIAL_OBSERVATION"));
-        assertIllegalArgument(factory, capabilitySet(capabilityClass, "ORTHOGONAL_BLOCK_GRADIENT"));
+        assertIllegalArgument(factory, capabilitySet(capabilityClass, "SPECIALIZED_GRADIENT"));
     }
 
     private static Object newInstance(final Class<?> clazz,

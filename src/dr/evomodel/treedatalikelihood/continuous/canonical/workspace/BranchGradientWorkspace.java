@@ -41,11 +41,11 @@ public final class BranchGradientWorkspace {
     public final int[] reducedIndexByTraitScratch;
     public final double[] mean;
     public final double[] mean2;
-    public final double[] orthogonalStationaryMeanScratch;
-    public final double[] orthogonalCompressedGradientScratch;
-    public final double[] orthogonalNativeGradientScratch;
-    public final double[] orthogonalRotationGradientFlatScratch;
-    public final double[][] orthogonalRotationGradientScratch;
+    public final double[] specializedStationaryMeanScratch;
+    public final double[] specializedCompressedGradientScratch;
+    public final double[] specializedNativeGradientScratch;
+    public final double[] specializedRotationGradientFlatScratch;
+    public final double[][] specializedRotationGradientScratch;
     public final double[][] covariance;
     public final double[][] covariance2;
     public final double[] transitionMatrixFlat;
@@ -109,16 +109,16 @@ public final class BranchGradientWorkspace {
         this.reducedInformationScratch = adjoint == null ? null : adjoint.reducedInformationScratch;
         this.reducedMeanScratch = adjoint == null ? null : adjoint.reducedMeanScratch;
 
-        this.orthogonalStationaryMeanScratch =
-                gradient == null ? null : gradient.orthogonalStationaryMeanScratch;
-        this.orthogonalCompressedGradientScratch =
-                gradient == null ? null : gradient.orthogonalCompressedGradientScratch;
-        this.orthogonalNativeGradientScratch =
-                gradient == null ? null : gradient.orthogonalNativeGradientScratch;
-        this.orthogonalRotationGradientFlatScratch =
-                gradient == null ? null : gradient.orthogonalRotationGradientFlatScratch;
-        this.orthogonalRotationGradientScratch =
-                gradient == null ? null : gradient.orthogonalRotationGradientScratch;
+        this.specializedStationaryMeanScratch =
+                gradient == null ? null : gradient.specializedStationaryMeanScratch;
+        this.specializedCompressedGradientScratch =
+                gradient == null ? null : gradient.specializedCompressedGradientScratch;
+        this.specializedNativeGradientScratch =
+                gradient == null ? null : gradient.specializedNativeGradientScratch;
+        this.specializedRotationGradientFlatScratch =
+                gradient == null ? null : gradient.specializedRotationGradientFlatScratch;
+        this.specializedRotationGradientScratch =
+                gradient == null ? null : gradient.specializedRotationGradientScratch;
         this.covariance2 = gradient == null ? null : gradient.covariance2;
         this.transitionMatrixFlat = gradient == null ? null : gradient.transitionMatrixFlat;
         this.covarianceAdjointFlat = gradient == null ? null : gradient.covarianceAdjointFlat;
@@ -153,13 +153,13 @@ public final class BranchGradientWorkspace {
             requireLength(localGradientMuVector, dim, "localGradientMuVector");
             requireLength(localGradientMuScalar, 1, "localGradientMuScalar");
         }
-        if (hasCapability(WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT)) {
-            requireLength(orthogonalCompressedGradientScratch, dim + 2 * (dim / 2),
-                    "orthogonalCompressedGradientScratch");
-            requireLength(orthogonalNativeGradientScratch, ((dim & 1) == 1 ? 1 : 0) + 3 * (dim / 2),
-                    "orthogonalNativeGradientScratch");
-            requireLength(orthogonalRotationGradientFlatScratch, dim * dim,
-                    "orthogonalRotationGradientFlatScratch");
+        if (hasCapability(WorkspaceCapability.SPECIALIZED_GRADIENT)) {
+            requireLength(specializedCompressedGradientScratch, dim + 2 * (dim / 2),
+                    "specializedCompressedGradientScratch");
+            requireLength(specializedNativeGradientScratch, ((dim & 1) == 1 ? 1 : 0) + 3 * (dim / 2),
+                    "specializedNativeGradientScratch");
+            requireLength(specializedRotationGradientFlatScratch, dim * dim,
+                    "specializedRotationGradientFlatScratch");
         }
     }
 
@@ -209,16 +209,16 @@ public final class BranchGradientWorkspace {
         return gradient.dense;
     }
 
-    public OrthogonalBlockGradientWorkspace orthogonalGradient() {
-        if (gradient == null || gradient.orthogonal == null) {
-            throw new IllegalStateException("Orthogonal-block gradient workspace capability was not requested");
+    public SpecializedGradientWorkspace specializedGradient() {
+        if (gradient == null || gradient.specialized == null) {
+            throw new IllegalStateException("Specialized gradient workspace capability was not requested");
         }
-        return gradient.orthogonal;
+        return gradient.specialized;
     }
 
     public CanonicalBranchWorkspace
     ensureSpecializedBranchWorkspace(final CanonicalPreparedTransitionCapability selection) {
-        return orthogonalGradient().ensureSpecializedBranchWorkspace(selection);
+        return specializedGradient().ensureSpecializedBranchWorkspace(selection);
     }
 
     public boolean hasCapability(final WorkspaceCapability capability) {
@@ -227,6 +227,6 @@ public final class BranchGradientWorkspace {
 
     private static boolean hasGradientCapability(final EnumSet<WorkspaceCapability> capabilities) {
         return capabilities.contains(WorkspaceCapability.DENSE_GRADIENT)
-                || capabilities.contains(WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT);
+                || capabilities.contains(WorkspaceCapability.SPECIALIZED_GRADIENT);
     }
 }

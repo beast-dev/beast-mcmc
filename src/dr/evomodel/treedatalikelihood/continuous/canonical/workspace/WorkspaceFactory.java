@@ -35,10 +35,10 @@ public final class WorkspaceFactory {
             throw new IllegalArgumentException(
                     "PARTIAL_OBSERVATION requires ADJOINTS workspace capability");
         }
-        if (capabilities.contains(WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT)
+        if (capabilities.contains(WorkspaceCapability.SPECIALIZED_GRADIENT)
                 && !capabilities.contains(WorkspaceCapability.DENSE_GRADIENT)) {
             throw new IllegalArgumentException(
-                    "ORTHOGONAL_BLOCK_GRADIENT requires DENSE_GRADIENT for shared gradient accumulators");
+                    "SPECIALIZED_GRADIENT requires DENSE_GRADIENT for shared gradient accumulators");
         }
     }
 }

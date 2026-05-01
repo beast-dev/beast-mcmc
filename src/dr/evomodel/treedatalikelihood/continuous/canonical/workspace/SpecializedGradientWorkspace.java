@@ -5,7 +5,7 @@ import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability
 
 import java.util.Arrays;
 
-public final class OrthogonalBlockGradientWorkspace {
+public final class SpecializedGradientWorkspace {
 
     public final double[] stationaryMeanScratch;
     public final double[] compressedGradientScratch;
@@ -14,7 +14,7 @@ public final class OrthogonalBlockGradientWorkspace {
     public final double[][] rotationGradientScratch;
     private CanonicalBranchWorkspace specializedBranchWorkspace;
 
-    public OrthogonalBlockGradientWorkspace(final int dim) {
+    public SpecializedGradientWorkspace(final int dim) {
         if (dim < 1) throw new IllegalArgumentException("dim must be >= 1");
         this.stationaryMeanScratch = new double[dim];
         this.compressedGradientScratch = new double[dim + 2 * (dim / 2)];

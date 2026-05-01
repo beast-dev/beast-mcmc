@@ -4,13 +4,13 @@ import java.util.EnumSet;
 
 public final class GradientPullbackWorkspace {
     public final DenseGradientWorkspace dense;
-    public final OrthogonalBlockGradientWorkspace orthogonal;
+    public final SpecializedGradientWorkspace specialized;
 
-    public final double[] orthogonalStationaryMeanScratch;
-    public final double[] orthogonalCompressedGradientScratch;
-    public final double[] orthogonalNativeGradientScratch;
-    public final double[] orthogonalRotationGradientFlatScratch;
-    public final double[][] orthogonalRotationGradientScratch;
+    public final double[] specializedStationaryMeanScratch;
+    public final double[] specializedCompressedGradientScratch;
+    public final double[] specializedNativeGradientScratch;
+    public final double[] specializedRotationGradientFlatScratch;
+    public final double[][] specializedRotationGradientScratch;
     public final double[][] covariance2;
     public final double[] transitionMatrixFlat;
     public final double[] covarianceAdjointFlat;
@@ -23,7 +23,7 @@ public final class GradientPullbackWorkspace {
     public GradientPullbackWorkspace(final int dim) {
         this(dim, EnumSet.of(
                 WorkspaceCapability.DENSE_GRADIENT,
-                WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT));
+                WorkspaceCapability.SPECIALIZED_GRADIENT));
     }
 
     public GradientPullbackWorkspace(final int dim, final EnumSet<WorkspaceCapability> capabilities) {
@@ -31,20 +31,20 @@ public final class GradientPullbackWorkspace {
         this.dense = capabilities.contains(WorkspaceCapability.DENSE_GRADIENT)
                 ? new DenseGradientWorkspace(dim)
                 : null;
-        this.orthogonal = capabilities.contains(WorkspaceCapability.ORTHOGONAL_BLOCK_GRADIENT)
-                ? new OrthogonalBlockGradientWorkspace(dim)
+        this.specialized = capabilities.contains(WorkspaceCapability.SPECIALIZED_GRADIENT)
+                ? new SpecializedGradientWorkspace(dim)
                 : null;
 
-        this.orthogonalStationaryMeanScratch =
-                orthogonal == null ? null : orthogonal.stationaryMeanScratch;
-        this.orthogonalCompressedGradientScratch =
-                orthogonal == null ? null : orthogonal.compressedGradientScratch;
-        this.orthogonalNativeGradientScratch =
-                orthogonal == null ? null : orthogonal.nativeGradientScratch;
-        this.orthogonalRotationGradientFlatScratch =
-                orthogonal == null ? null : orthogonal.rotationGradientFlatScratch;
-        this.orthogonalRotationGradientScratch =
-                orthogonal == null ? null : orthogonal.rotationGradientScratch;
+        this.specializedStationaryMeanScratch =
+                specialized == null ? null : specialized.stationaryMeanScratch;
+        this.specializedCompressedGradientScratch =
+                specialized == null ? null : specialized.compressedGradientScratch;
+        this.specializedNativeGradientScratch =
+                specialized == null ? null : specialized.nativeGradientScratch;
+        this.specializedRotationGradientFlatScratch =
+                specialized == null ? null : specialized.rotationGradientFlatScratch;
+        this.specializedRotationGradientScratch =
+                specialized == null ? null : specialized.rotationGradientScratch;
 
         this.covariance2 = dense == null ? null : dense.covariance2;
         this.transitionMatrixFlat = dense == null ? null : dense.transitionMatrixFlat;
@@ -76,7 +76,7 @@ public final class GradientPullbackWorkspace {
                                    final int compressedGradientLength) {
         clearLocalGradientBuffers(gradALength, gradMuLength, dim);
         if (orthogonalSelection) {
-            orthogonal().clearSpecializedBuffers(compressedGradientLength);
+            specialized().clearSpecializedBuffers(compressedGradientLength);
         }
     }
 
@@ -99,10 +99,10 @@ public final class GradientPullbackWorkspace {
         return dense;
     }
 
-    public OrthogonalBlockGradientWorkspace orthogonal() {
-        if (orthogonal == null) {
-            throw new IllegalStateException("Orthogonal-block gradient workspace capability was not requested");
+    public SpecializedGradientWorkspace specialized() {
+        if (specialized == null) {
+            throw new IllegalStateException("Specialized gradient workspace capability was not requested");
         }
-        return orthogonal;
+        return specialized;
     }
 }

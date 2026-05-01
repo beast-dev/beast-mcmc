@@ -6,7 +6,7 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.OrthogonalBlockGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.SpecializedGradientWorkspace;
 
 import java.util.Arrays;
 
@@ -31,7 +31,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         }
         this.compressedGradientDim = selection.getCompressedSelectionGradientDimension();
         this.nativeGradientScratchDim = selection.getNativeSelectionGradientScratchDimension();
-        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         if (compressedGradientDim > gradient.compressedGradientScratch.length
                 || nativeGradientScratchDim > gradient.nativeGradientScratch.length) {
             throw new IllegalStateException(
@@ -44,7 +44,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
     public void initialize(final BranchGradientWorkspace workspace,
                            final double[] gradA,
                            final double[] gradMu) {
-        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         Arrays.fill(gradient.compressedGradientScratch, 0, compressedGradientDim, 0.0);
         Arrays.fill(gradient.nativeGradientScratch, 0, nativeGradientScratchDim, 0.0);
         Arrays.fill(gradient.rotationGradientFlatScratch, 0.0);
@@ -80,7 +80,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         final CanonicalPreparedBranchHandle prepared = inputs.getPreparedBranchHandle(activeIndex);
         final CanonicalBranchWorkspace specializedWorkspace =
                 workspace.ensureSpecializedBranchWorkspace(selection);
-        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
 
         selection.accumulateNativeGradientFromAdjointsPreparedFlat(
                 prepared,
@@ -109,20 +109,20 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                              final BranchGradientWorkspace reductionWorkspace,
                              final double[] gradA) {
         accumulateVectorInPlace(
-                reductionWorkspace.orthogonalGradient().compressedGradientScratch,
-                worker.orthogonalGradient().compressedGradientScratch,
+                reductionWorkspace.specializedGradient().compressedGradientScratch,
+                worker.specializedGradient().compressedGradientScratch,
                 compressedGradientDim);
         accumulateVectorInPlace(
-                reductionWorkspace.orthogonalGradient().rotationGradientFlatScratch,
-                worker.orthogonalGradient().rotationGradientFlatScratch,
-                reductionWorkspace.orthogonalGradient().rotationGradientFlatScratch.length);
+                reductionWorkspace.specializedGradient().rotationGradientFlatScratch,
+                worker.specializedGradient().rotationGradientFlatScratch,
+                reductionWorkspace.specializedGradient().rotationGradientFlatScratch.length);
     }
 
     @Override
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
                        final double[] gradA) {
-        final OrthogonalBlockGradientWorkspace gradient = workspace.orthogonalGradient();
+        final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         selection.finishNativeSelectionGradient(
                 gradient.compressedGradientScratch,
                 gradient.nativeGradientScratch,

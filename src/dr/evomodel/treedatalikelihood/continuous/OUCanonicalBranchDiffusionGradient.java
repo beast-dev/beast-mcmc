@@ -34,19 +34,20 @@ final class OUCanonicalBranchDiffusionGradient {
         OUCanonicalBranchGradientUtils.zero(scratch.matrixGradient);
         if (processModel.getSelectionMatrixParameterization()
                 instanceof CanonicalNativeBranchGradientCapability) {
-            OUCanonicalBranchGradientUtils.transposeFromFlatInto(
-                    localAdjoints.dLogL_dOmega, scratch.covarianceAdjoint, dimension);
             ((CanonicalNativeBranchGradientCapability)
                     processModel.getSelectionMatrixParameterization())
-                    .accumulateDiffusionGradient(
+                    .accumulateDiffusionGradientFlat(
                             processModel.getDiffusionMatrix(),
                             branchLength,
-                            scratch.covarianceAdjoint,
+                            localAdjoints.dLogL_dOmega,
+                            true,
                             scratch.matrixGradient);
         } else {
-            OUCanonicalBranchGradientUtils.copyFromFlatInto(
-                    localAdjoints.dLogL_dOmega, scratch.covarianceAdjoint, dimension);
-            processModel.accumulateDiffusionGradient(branchLength, scratch.covarianceAdjoint, scratch.matrixGradient);
+            processModel.accumulateDiffusionGradientFlat(
+                    branchLength,
+                    localAdjoints.dLogL_dOmega,
+                    false,
+                    scratch.matrixGradient);
         }
         return scratch.matrixGradient.clone();
     }

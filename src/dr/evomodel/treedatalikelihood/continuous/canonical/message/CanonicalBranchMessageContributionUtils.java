@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Utilities for recovering local canonical branch contributions from canonical
@@ -14,7 +13,6 @@ public final class CanonicalBranchMessageContributionUtils {
 
     public static final class Workspace {
         final double[] jointMean;
-        final double[][] jointCovariance;
         final double[] jointCovarianceFlat;
         final GaussianFormConverter.Workspace converterWorkspace;
         private final int stateDimension;
@@ -23,7 +21,6 @@ public final class CanonicalBranchMessageContributionUtils {
             this.stateDimension = stateDimension;
             final int pairDimension = 2 * stateDimension;
             this.jointMean = new double[pairDimension];
-            this.jointCovariance = new double[pairDimension][pairDimension];
             this.jointCovarianceFlat = new double[pairDimension * pairDimension];
             this.converterWorkspace = new GaussianFormConverter.Workspace();
             this.converterWorkspace.ensureDim(pairDimension);
@@ -52,14 +49,13 @@ public final class CanonicalBranchMessageContributionUtils {
         }
 
         final double[] jointMean = workspace.jointMean;
-        final double[][] jointCovariance = workspace.jointCovariance;
+        final double[] jointCovariance = workspace.jointCovarianceFlat;
         GaussianFormConverter.fillMomentsFromState(
                 pairState,
                 jointMean,
                 workspace.jointCovarianceFlat,
                 pairDimension,
                 workspace.converterWorkspace);
-        MatrixOps.fromFlat(workspace.jointCovarianceFlat, jointCovariance, pairDimension);
 
         for (int i = 0; i < d; ++i) {
             final double currentMeanI = jointMean[i];
@@ -69,12 +65,16 @@ public final class CanonicalBranchMessageContributionUtils {
             for (int j = 0; j < d; ++j) {
                 final double currentMeanJ = jointMean[j];
                 final double nextMeanJ = jointMean[d + j];
-                final double currentSecondMoment = jointCovariance[i][j] + currentMeanI * currentMeanJ;
-                final double crossSecondMoment = jointCovariance[d + i][j] + nextMeanI * currentMeanJ;
-                final double nextSecondMoment = jointCovariance[d + i][d + j] + nextMeanI * nextMeanJ;
+                final double currentSecondMoment =
+                        jointCovariance[i * pairDimension + j] + currentMeanI * currentMeanJ;
+                final double crossSecondMoment =
+                        jointCovariance[(d + i) * pairDimension + j] + nextMeanI * currentMeanJ;
+                final double nextSecondMoment =
+                        jointCovariance[(d + i) * pairDimension + d + j] + nextMeanI * nextMeanJ;
                 final int ij = i * d + j;
                 out.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
-                out.dLogL_dPrecisionXY[ij] = -0.5 * (jointCovariance[i][d + j] + currentMeanI * nextMeanJ);
+                out.dLogL_dPrecisionXY[ij] =
+                        -0.5 * (jointCovariance[i * pairDimension + d + j] + currentMeanI * nextMeanJ);
                 out.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
                 out.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
             }

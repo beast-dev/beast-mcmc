@@ -10,20 +10,6 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public interface CanonicalNativeBranchGradientCapability {
 
-    void accumulateDiffusionGradient(MatrixParameterInterface diffusionMatrix,
-                                     double dt,
-                                     double[][] dLogL_dV,
-                                     double[] gradientAccumulator);
-
-    void accumulateNativeGradientFromCanonicalContribution(
-            MatrixParameterInterface diffusionMatrix,
-            double[] stationaryMean,
-            double dt,
-            CanonicalBranchMessageContribution contribution,
-            CanonicalLocalTransitionAdjoints localAdjoints,
-            double[] compressedDAccumulator,
-            double[][] rotationAccumulator);
-
     void accumulateNativeGradientFromCanonicalContributionFlat(
             MatrixParameterInterface diffusionMatrix,
             double[] stationaryMean,
@@ -33,17 +19,16 @@ public interface CanonicalNativeBranchGradientCapability {
             double[] compressedDAccumulator,
             double[] rotationAccumulator);
 
-    void accumulateNativeGradientFromAdjoints(MatrixParameterInterface diffusionMatrix,
-                                             double[] stationaryMean,
-                                             double dt,
-                                             CanonicalLocalTransitionAdjoints localAdjoints,
-                                             double[] compressedDAccumulator,
-                                             double[][] rotationAccumulator);
-
     void accumulateNativeGradientFromAdjointsFlat(MatrixParameterInterface diffusionMatrix,
                                                   double[] stationaryMean,
                                                   double dt,
                                                   CanonicalLocalTransitionAdjoints localAdjoints,
                                                   double[] compressedDAccumulator,
                                                   double[] rotationAccumulator);
+
+    void accumulateDiffusionGradientFlat(MatrixParameterInterface diffusionMatrix,
+                                         double dt,
+                                         double[] dLogL_dV,
+                                         boolean transposeAdjoint,
+                                         double[] gradientAccumulator);
 }

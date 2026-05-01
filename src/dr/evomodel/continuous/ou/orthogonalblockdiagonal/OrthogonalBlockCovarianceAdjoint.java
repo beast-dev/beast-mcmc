@@ -277,6 +277,26 @@ final class OrthogonalBlockCovarianceAdjoint {
                 gradientAccumulator);
     }
 
+    void accumulateDiffusionGradientCurrentFlat(final OrthogonalBlockBasisCache basis,
+                                                final double[] dLogL_dV,
+                                                final boolean transposeAdjoint,
+                                                final double[] gradientAccumulator) {
+        fillSymmetricDenseMatrixFlat(dLogL_dV, transposeAdjoint, gV);
+        accumulateDiffusionGradientSymmetric(
+                basis.rMatrix,
+                basis.rtMatrix,
+                basis.expD,
+                basis.blockDParams,
+                gV,
+                hDBasis,
+                gS,
+                yAdjoint,
+                temp1,
+                temp2,
+                lyapunovAdjointHelper,
+                gradientAccumulator);
+    }
+
     void accumulateDiffusionGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                              final double[][] dLogL_dV,
                                              final double[] gradientAccumulator,
@@ -575,6 +595,20 @@ final class OrthogonalBlockCovarianceAdjoint {
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
                 data[i * dimension + j] = 0.5 * (source[i * dimension + j] + source[j * dimension + i]);
+            }
+        }
+    }
+
+    private static void fillSymmetricDenseMatrixFlat(final double[] source,
+                                                     final boolean transpose,
+                                                     final DenseMatrix64F out) {
+        final int dimension = out.numRows;
+        final double[] data = out.data;
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = 0; j < dimension; ++j) {
+                final double ij = transpose ? source[j * dimension + i] : source[i * dimension + j];
+                final double ji = transpose ? source[i * dimension + j] : source[j * dimension + i];
+                data[i * dimension + j] = 0.5 * (ij + ji);
             }
         }
     }

@@ -528,6 +528,17 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 basisCache, dLogL_dV, gradientAccumulator);
     }
 
+    @Override
+    public void accumulateDiffusionGradientFlat(final MatrixParameterInterface diffusionMatrix,
+                                                final double dt,
+                                                final double[] dLogL_dV,
+                                                final boolean transposeAdjoint,
+                                                final double[] gradientAccumulator) {
+        refreshBasisCaches(dt);
+        covarianceAdjoint.accumulateDiffusionGradientCurrentFlat(
+                basisCache, dLogL_dV, transposeAdjoint, gradientAccumulator);
+    }
+
     public void accumulateNativeGradientFromCanonicalContribution(final MatrixParameterInterface diffusionMatrix,
                                                                   final double[] stationaryMean,
                                                                   final double dt,

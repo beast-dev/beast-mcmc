@@ -1,7 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;

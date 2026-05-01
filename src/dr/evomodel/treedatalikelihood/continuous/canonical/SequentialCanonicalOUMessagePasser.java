@@ -28,26 +28,21 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.contribution.CanonicalBranchContributionAssembler;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchAdjointPreparer;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchLengthGradientEngine;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalTreeGradientEngine;
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeTraversal;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCacheDiagnostics;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.TaskPool;

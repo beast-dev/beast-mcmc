@@ -26,5 +26,10 @@
  *   <li>{@code message}, {@code math}, and {@code adapter}: canonical Gaussian
  *       algebra, matrix conversion, and model/integrator adapters.</li>
  * </ul>
+ *
+ * <p>Tree-layer code in this package must talk to specialized OU backends only
+ * through {@code dr.evomodel.continuous.ou.canonical} capability interfaces.
+ * Backend implementation packages such as {@code orthogonalblockdiagonal}
+ * remain behind those capabilities.</p>
  */
 package dr.evomodel.treedatalikelihood.continuous.canonical;

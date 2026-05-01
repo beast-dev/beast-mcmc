@@ -2,8 +2,6 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 
 import java.util.Arrays;
 
@@ -31,14 +29,6 @@ public final class OrthogonalBlockGradientWorkspace {
             Arrays.fill(row, 0.0);
         }
         Arrays.fill(rotationGradientFlatScratch, 0.0);
-    }
-
-    public OrthogonalBlockBranchGradientWorkspace
-    ensureOrthogonalBranchWorkspace(final OrthogonalBlockCanonicalParameterization orthogonalSelection) {
-        if (specializedBranchWorkspace == null) {
-            specializedBranchWorkspace = orthogonalSelection.createBranchGradientWorkspace();
-        }
-        return (OrthogonalBlockBranchGradientWorkspace) specializedBranchWorkspace;
     }
 
     public CanonicalBranchWorkspace

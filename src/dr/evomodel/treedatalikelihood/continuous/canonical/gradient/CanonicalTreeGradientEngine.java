@@ -27,18 +27,18 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.ChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchAdjointWorkspace;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.GradientPullbackWorkspace;
 import dr.util.TaskPool;
 
 import java.util.Arrays;

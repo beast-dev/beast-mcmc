@@ -27,8 +27,6 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical.traversal;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
@@ -36,6 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMo
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 

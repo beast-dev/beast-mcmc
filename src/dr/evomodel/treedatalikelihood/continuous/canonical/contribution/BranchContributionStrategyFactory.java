@@ -1,12 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 

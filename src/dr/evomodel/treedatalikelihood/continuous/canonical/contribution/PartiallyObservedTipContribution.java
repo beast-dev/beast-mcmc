@@ -1,12 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 
 final class PartiallyObservedTipContribution implements BranchContributionStrategy {

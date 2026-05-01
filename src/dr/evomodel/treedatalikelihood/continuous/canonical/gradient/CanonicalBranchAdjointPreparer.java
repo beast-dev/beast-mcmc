@@ -27,22 +27,19 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.ChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.util.TaskPool;
 
 /**

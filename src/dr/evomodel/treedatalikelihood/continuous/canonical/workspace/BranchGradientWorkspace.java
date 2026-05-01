@@ -2,8 +2,6 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockBranchGradientWorkspace;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
@@ -216,11 +214,6 @@ public final class BranchGradientWorkspace {
             throw new IllegalStateException("Orthogonal-block gradient workspace capability was not requested");
         }
         return gradient.orthogonal;
-    }
-
-    public OrthogonalBlockBranchGradientWorkspace
-    ensureOrthogonalBranchWorkspace(final OrthogonalBlockCanonicalParameterization orthogonalSelection) {
-        return orthogonalGradient().ensureOrthogonalBranchWorkspace(orthogonalSelection);
     }
 
     public CanonicalBranchWorkspace

@@ -1,19 +1,13 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.*;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipContribution;

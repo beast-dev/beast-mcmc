@@ -1,10 +1,9 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
+import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 
 final class CanonicalSelectionGradientPullbacks {
 

@@ -10,6 +10,7 @@ public interface SpecializedCanonicalSelectionParameterization extends Selection
         CanonicalGradientPackingCapability,
         CanonicalPreparedTransitionCapability,
         CanonicalNativeSelectionGradientCapability,
+        CanonicalNativeBranchGradientCapability,
         CanonicalNativeMeanGradientCapability,
         CanonicalNativeDiffusionGradientCapability {
 }

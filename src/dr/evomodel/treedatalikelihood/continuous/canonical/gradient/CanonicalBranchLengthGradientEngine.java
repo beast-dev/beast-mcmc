@@ -1,7 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 

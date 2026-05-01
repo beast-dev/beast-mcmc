@@ -12,7 +12,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -115,7 +115,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
             }
         }
 
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
+        GaussianFormConverter.fillMomentsFromState(
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
                 smoothedInitialCovariance);
@@ -164,7 +164,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
             }
         }
 
-        CanonicalGaussianUtils.fillMomentsFromCanonical(
+        GaussianFormConverter.fillMomentsFromState(
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
                 smoothedInitialCovariance);

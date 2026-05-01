@@ -55,7 +55,6 @@ public interface CanonicalRootPrior {
     default void accumulateRootMeanGradient(CanonicalGaussianState rootMessage,
                                            double[][] traitCovariance,
                                            double[] gradOut) {
-        // No root-mean contribution by default.
     }
 
     default double getDiffusionScale() {

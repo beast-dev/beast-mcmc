@@ -51,7 +51,7 @@ public final class CanonicalTipObservationAdapter {
                                            final CanonicalTipObservation[] observations) {
         if (dataModel.getTraitCount() != 1) {
             throw new UnsupportedOperationException(
-                    "Canonical OU XML wiring currently supports only a single trait partition.");
+                    "Canonical OU XML wiring requires a single trait partition.");
         }
 
         final int tipCount = tree.getExternalNodeCount();

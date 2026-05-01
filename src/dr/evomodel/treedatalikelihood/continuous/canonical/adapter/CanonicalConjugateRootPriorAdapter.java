@@ -79,7 +79,7 @@ public final class CanonicalConjugateRootPriorAdapter implements CanonicalRootPr
         final double kappa0 = prior.getPseudoObservations();
         if (!(kappa0 > 0.0) || Double.isInfinite(kappa0)) {
             throw new UnsupportedOperationException(
-                    "Canonical root seeding currently supports only finite positive pseudo-observations.");
+                    "Canonical root seeding requires finite positive pseudo-observations.");
         }
 
         final double[] mean = prior.getMean();

@@ -11,7 +11,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianComputationMode;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -182,7 +182,7 @@ public class EulerOUProcessModel extends AbstractModel
         final double[][] covariance = new double[stateDimension][stateDimension];
         getInitialMean(mean);
         getInitialCovariance(covariance);
-        CanonicalGaussianUtils.fillStateFromMoments(mean, covariance, out);
+        GaussianFormConverter.fillStateFromMoments(mean, covariance, out);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class EulerOUProcessModel extends AbstractModel
         fillTransitionMatrix(dt, transitionMatrix);
         fillTransitionOffset(dt, transitionOffset);
         fillTransitionCovariance(dt, transitionCovariance);
-        CanonicalGaussianUtils.fillTransitionFromMoments(
+        GaussianFormConverter.fillTransitionFromMoments(
                 transitionMatrix,
                 transitionOffset,
                 transitionCovariance,

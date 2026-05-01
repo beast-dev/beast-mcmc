@@ -3,22 +3,11 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.math;
 import java.util.Arrays;
 
 /**
- * Stateless flat row-major matrix operations for the canonical diffusion framework.
+ * Flat row-major matrix operations for canonical Gaussian algebra.
  *
- * <p>All methods operate on {@code double[]} arrays in row-major order:
- * element {@code (i,j)} of an {@code m×n} matrix is at index {@code i*n + j}.
- * No {@code double[][]} appears in any method signature.
- *
- * <p>This class supersedes
- * {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixUtils} and the
- * flat-array portion of
- * {@link dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps}.
- * Those classes retain their implementations for backward compatibility but should not
- * be used in new code.
- *
- * <p>Conversion helpers ({@code toFlat}, {@code fromFlat}, …) are provided solely for
- * use at {@code double[][]} boundaries (external BEAST model parameters). Do not store
- * matrices as {@code double[][]} inside the canonical framework.
+ * <p>Element {@code (i,j)} of an {@code m x n} matrix is stored at {@code i*n + j}.
+ * Conversion helpers are for BEAST {@code double[][]} boundaries; hot canonical
+ * paths should keep matrices flat.
  */
 public final class MatrixOps {
 
@@ -439,10 +428,7 @@ public final class MatrixOps {
     }
 
     // -----------------------------------------------------------------------
-    // Conversion helpers — double[][] boundary only
-    //
-    // Use these only when receiving data from external BEAST model objects that
-    // provide double[][]. Do not introduce new double[][] storage in canonical code.
+    // Conversion helpers: double[][] boundary only
     // -----------------------------------------------------------------------
 
     /** Copy {@code double[][]} into row-major {@code double[]}. */

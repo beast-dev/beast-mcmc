@@ -116,11 +116,8 @@ final class OUCanonicalParentAboveResolver {
                                 + " parentPrecisionSummary=" + CanonicalNumerics.summarizeDenseMatrix(parentPrecisionRaw)
                                 + " parentMeanSummary=" + CanonicalNumerics.summarizeDenseMatrix(parentMeanRaw));
             }
-            // Parent-above messages can be represented as exact constraints (infinite precision)
-            // in mixed missing-data paths. Convert to a finite equivalent recovered from child-above
-            // for stable downstream canonical algebra. Keep the supplied parent mean fixed:
-            // recovering mean from child-above introduces parameter dependence that is not
-            // part of the original parent-above message.
+            // Exact parent constraints need a finite precision for local canonical algebra.
+            // Keep the supplied parent mean fixed; only the precision is recovered.
             final DenseMatrix64F recoveredPrecision = recoverParentAbovePrecision(aboveChild);
             aboveParentMeanVector.set(parentMeanRaw);
             return recoveredPrecision;
@@ -165,9 +162,6 @@ final class OUCanonicalParentAboveResolver {
                     above.getRawMean().unsafe_get(i, 0) - displacementVector.unsafe_get(i, 0));
         }
 
-        // Keep this path smooth and deterministic:
-        // always regularize/invert the same stabilized actualization matrix
-        // instead of branching between solve/fallback paths.
         secondaryScratchMatrix.set(actualizationMatrix);
         final double solveJitter = numericsOptions.jitterBase(
                 CanonicalNumerics.maxAbsDiagonal(secondaryScratchMatrix));

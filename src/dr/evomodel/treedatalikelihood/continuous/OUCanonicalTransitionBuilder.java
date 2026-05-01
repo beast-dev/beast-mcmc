@@ -5,7 +5,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNume
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Branch-local transition construction for the time-series/tree canonical bridge.
+ * Branch-local canonical transition construction for OU tree gradients.
  */
 final class OUCanonicalTransitionBuilder {
 

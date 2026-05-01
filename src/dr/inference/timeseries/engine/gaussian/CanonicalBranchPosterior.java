@@ -3,7 +3,7 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 
 /**
  * Joint posterior statistics for a single branch pair {@code (x_t, x_{t+1})}.
@@ -18,10 +18,10 @@ final class CanonicalBranchPosterior {
     private final int stateDimension;
     private final CanonicalGaussianState pairState;
     private final double[] jointMean;
-    private final double[][] jointCovariance;          // kept double[][] for CanonicalGaussianUtils bridge
+    private final double[][] jointCovariance;
     private final double[] currentMeanScratch;
     private final double[] nextMeanScratch;
-    private final double[][] currentCovarianceScratch;   // double[][] for CanonicalGaussianUtils bridge
+    private final double[][] currentCovarianceScratch;
     private final double[][] crossCovarianceScratch;
     private final double[][] nextCovarianceScratch;
     private final double[] currentSecondMomentScratch;   // flat
@@ -61,7 +61,7 @@ final class CanonicalBranchPosterior {
                 jointCovariance[d + i][d + j] = nextCovariance[i][j];
             }
         }
-        CanonicalGaussianUtils.fillStateFromMoments(jointMean, jointCovariance, pairState);
+        GaussianFormConverter.fillStateFromMoments(jointMean, jointCovariance, pairState);
     }
 
     CanonicalGaussianState getPairState() {
@@ -80,7 +80,7 @@ final class CanonicalBranchPosterior {
                         final double[] nextMeanOut,
                         final double[][] nextCovarianceOut,
                         final double[][] crossCovarianceOut) {
-        CanonicalGaussianUtils.fillMomentsFromCanonical(pairState, jointMean, jointCovariance);
+        GaussianFormConverter.fillMomentsFromState(pairState, jointMean, jointCovariance);
         final int d = stateDimension;
         for (int i = 0; i < d; ++i) {
             currentMeanOut[i] = jointMean[i];
@@ -98,7 +98,7 @@ final class CanonicalBranchPosterior {
                                   final double[] currentSecondMomentOut,
                                   final double[] crossSecondMomentOut,
                                   final double[] nextSecondMomentOut) {
-        CanonicalGaussianUtils.fillMomentsFromCanonical(pairState, jointMean, jointCovariance);
+        GaussianFormConverter.fillMomentsFromState(pairState, jointMean, jointCovariance);
         final int d = stateDimension;
         for (int i = 0; i < d; ++i) {
             final double currentMeanI = jointMean[i];

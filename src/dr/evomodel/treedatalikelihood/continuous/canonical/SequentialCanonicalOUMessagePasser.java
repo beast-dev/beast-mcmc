@@ -384,7 +384,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         provider.fillCanonicalTransitionForLength(branchLength, workspace.transition);
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
-            // provider implements CanonicalTransitionMomentProvider (CanonicalOUTransitionProvider extends it)
             final CanonicalTransitionMomentProvider momentProvider =
                     observationModel.getMode() == TipObservationMode.PARTIAL_EXACT_IDENTITY
                     ? provider

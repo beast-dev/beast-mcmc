@@ -7,8 +7,7 @@ import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 
 /**
- * Tree-side bridge that reconstructs branch-local canonical adjoints and
- * delegates OU gradient pullbacks to focused helpers.
+ * Tree-side facade for canonical OU branch gradient helpers.
  */
 public final class OUCanonicalBranchGradientBridge {
     private static final ThreadLocal<Integer> DEBUG_NODE_CONTEXT = new ThreadLocal<Integer>();

@@ -6,22 +6,9 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 /**
  * Converts between moment-form and canonical-form Gaussian representations.
  *
- * <h3>Representations</h3>
- * <ul>
- *   <li><b>Moment form</b>: mean vector μ and covariance matrix Σ (or, for a transition,
- *       matrix F, offset vector f, and transition covariance Ω).</li>
- *   <li><b>Canonical form</b>: precision J = Σ⁻¹, information h = J μ, and a scalar
- *       log-normalizer g, stored as a {@link CanonicalGaussianState}.</li>
- * </ul>
- *
- * <h3>Usage</h3>
- * <p>All primary methods accept flat row-major {@code double[]} arrays and an explicit
- * {@link Workspace} to avoid allocation on the hot path. Allocate a {@code Workspace}
- * once per long-lived computation context and reuse it across calls.
- *
- * <p>{@code double[][]} bridge overloads are provided for call sites that receive data
- * from external BEAST model objects. They allocate a temporary {@code Workspace} and
- * should not be used on performance-critical paths.
+ * <p>Primary methods use flat row-major arrays and caller-owned {@link Workspace}
+ * instances. The {@code double[][]} overloads are boundary helpers for BEAST model
+ * objects and allocate scratch.
  *
  * <h3>Numerical robustness</h3>
  * <p>Inversion uses Cholesky factorization. If the matrix is not strictly positive
@@ -106,8 +93,8 @@ public final class GaussianFormConverter {
     }
 
     /**
-     * Bridge overload accepting a {@code double[][]} covariance.
-     * Allocates a temporary {@code Workspace}; prefer {@link #fillStateFromMoments(double[], double[], int, Workspace, CanonicalGaussianState)}
+     * Boundary overload accepting a {@code double[][]} covariance.
+     * Allocates a {@code Workspace}; prefer {@link #fillStateFromMoments(double[], double[], int, Workspace, CanonicalGaussianState)}
      * on hot paths.
      */
     public static void fillStateFromMoments(
@@ -184,8 +171,8 @@ public final class GaussianFormConverter {
     }
 
     /**
-     * Bridge overload accepting {@code double[][]} F and Ω.
-     * Allocates temporary arrays; prefer the flat variant on hot paths.
+     * Boundary overload accepting {@code double[][]} F and Omega.
+     * Allocates scratch arrays; prefer the flat variant on hot paths.
      */
     public static void fillTransitionFromMoments(
             double[][] F, double[] f, double[][] Omega, CanonicalGaussianTransition out) {
@@ -227,7 +214,7 @@ public final class GaussianFormConverter {
 
     /**
      * Bridge overload writing covariance into a {@code double[][]}.
-     * Allocates temporary arrays; prefer the flat variant on hot paths.
+     * Allocates scratch arrays; prefer the flat variant on hot paths.
      */
     public static void fillMomentsFromState(
             CanonicalGaussianState state, double[] meanOut, double[][] covOut) {

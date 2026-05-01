@@ -13,13 +13,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNume
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Self-contained local tree canonical wiring for one OU branch.
- *
- * <p>This class is intentionally narrow: given tree-side branch sufficient statistics,
- * it reconstructs the canonical branch factor that the time-series machinery expects,
- * handles the exact observed-tip conditioning limit, and produces local canonical
- * transition adjoints. That keeps the branch factor construction explicit and testable
- * outside the larger delegate/gradient classes.</p>
+ * Local canonical OU branch factor assembly and adjoint extraction.
  */
 public final class OUCanonicalBranchWiring {
     private static final CanonicalNumericsOptions NUMERICS_OPTIONS = CanonicalNumericsOptions.OU_TREE;

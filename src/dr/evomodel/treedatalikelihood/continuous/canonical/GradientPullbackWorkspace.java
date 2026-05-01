@@ -22,6 +22,8 @@ final class GradientPullbackWorkspace {
     final double[] localGradientMuVector;
     final double[] localGradientMuScalar;
     CanonicalBranchWorkspace specializedBranchWorkspace;
+    double cachedTransitionMatrixLength;
+    boolean cachedTransitionMatrixValid;
 
     GradientPullbackWorkspace(final int dim) {
         this.orthogonalStationaryMeanScratch = new double[dim];
@@ -37,6 +39,8 @@ final class GradientPullbackWorkspace {
         this.localGradientQ = new double[dim * dim];
         this.localGradientMuVector = new double[dim];
         this.localGradientMuScalar = new double[1];
+        this.cachedTransitionMatrixLength = Double.NaN;
+        this.cachedTransitionMatrixValid = false;
     }
 
     double[] localGradientMu(final int gradientLength, final int dim) {
@@ -58,6 +62,7 @@ final class GradientPullbackWorkspace {
         Arrays.fill(localGradientA, 0, gradALength, 0.0);
         Arrays.fill(localGradientQ, 0.0);
         Arrays.fill(localGradientMu(gradMuLength, dim), 0.0);
+        cachedTransitionMatrixValid = false;
         if (orthogonalSelection) {
             Arrays.fill(orthogonalCompressedGradientScratch, 0, compressedGradientLength, 0.0);
             Arrays.fill(orthogonalRotationGradientFlatScratch, 0.0);

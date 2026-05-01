@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransi
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
@@ -41,6 +42,9 @@ import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPrepared
  * Validates canonical OU tree-passer gradients against numerical finite differences.
  */
 public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMessagePasserTestSupport {
+
+    private static final String TRANSITION_CACHE_DIAGNOSTICS_PROPERTY =
+            "beast.debug.canonicalTransitionCache";
 
     public CanonicalGaussianMessagePasserOUGradientTest(final String name) {
         super(name);
@@ -294,6 +298,61 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         assertNotSame("branch length change refreshes snapshot", first, afterLengthChange);
         assertSame("prepared basis buffer is retained across snapshot refresh",
                 orthogonalPreparedBasis(first), orthogonalPreparedBasis(afterLengthChange));
+    }
+
+    public void testJointGradientsReuseTransitionCacheWithoutRebuilds() {
+        System.out.println("\nTest: canonical OU joint gradients reuse prepared transition cache");
+
+        final String previous = System.getProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY);
+        System.setProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY, "true");
+        try {
+            final OrthogonalBlockOUSetup setup =
+                    buildOrthogonalBlockOUSetup("canonOrthGradientCacheCounters", buildPartiallyObservedTips());
+            refreshMessages(setup.orthogonal);
+
+            final double[] gradA = new double[setup.nativeParameter.getDimension()];
+            final double[] gradQ = new double[dimTrait * dimTrait];
+            final double[] gradMu = new double[dimTrait];
+
+            setup.orthogonal.passer.computeJointGradients(
+                    setup.orthogonal.provider,
+                    gradA,
+                    gradQ,
+                    gradMu);
+            final long requestsAfterFirst =
+                    setup.orthogonal.provider.getTransitionCacheRequestCount(
+                            CanonicalTransitionCachePhases.GRADIENT_PREP);
+            final long transitionRebuildsAfterFirst =
+                    setup.orthogonal.provider.getTransitionCacheRebuildCount();
+            final long preparedRebuildsAfterFirst =
+                    setup.orthogonal.provider.getPreparedBranchRebuildCount();
+
+            assertTrue("gradient prep records cache requests", requestsAfterFirst > 0L);
+            assertTrue("initial traversal prepared branch bases", preparedRebuildsAfterFirst > 0L);
+
+            setup.orthogonal.passer.computeJointGradients(
+                    setup.orthogonal.provider,
+                    gradA,
+                    gradQ,
+                    gradMu);
+
+            assertTrue("second gradient pass records additional cache requests",
+                    setup.orthogonal.provider.getTransitionCacheRequestCount(
+                            CanonicalTransitionCachePhases.GRADIENT_PREP)
+                            > requestsAfterFirst);
+            assertEquals("cached gradient prep does not rebuild transitions",
+                    transitionRebuildsAfterFirst,
+                    setup.orthogonal.provider.getTransitionCacheRebuildCount());
+            assertEquals("cached gradient prep does not rebuild prepared branch bases",
+                    preparedRebuildsAfterFirst,
+                    setup.orthogonal.provider.getPreparedBranchRebuildCount());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY);
+            } else {
+                System.setProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY, previous);
+            }
+        }
     }
 
     private OrthogonalBlockPreparedBranchBasis orthogonalPreparedBasis(

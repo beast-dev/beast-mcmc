@@ -93,6 +93,10 @@ public final class BranchGradientInputs {
         return rootDiffusionScale;
     }
 
+    public boolean hasPreparedBranchHandles() {
+        return hasPreparedBranchHandles;
+    }
+
     public CanonicalGaussianState getRootPreOrderState() {
         return rootPreOrder;
     }
@@ -184,7 +188,14 @@ public final class BranchGradientInputs {
                     usePreparedBranchHandles ? stagedPreparedBranchHandlesByChild[childIndex] : null;
             activeBranchCount++;
         }
-        hasPreparedBranchHandles = usePreparedBranchHandles && activeBranchCount > 0;
+        hasPreparedBranchHandles = false;
+        for (int activeIndex = 0; activeIndex < activeBranchCount; ++activeIndex) {
+            if (activePreparedBranchHandles[activeIndex] != null) {
+                hasPreparedBranchHandles = true;
+                break;
+            }
+        }
+        sortActiveBranchesByLength();
     }
 
     CanonicalPreparedBranchHandle getPreparedBranchHandle(final int activeIndex) {
@@ -216,6 +227,35 @@ public final class BranchGradientInputs {
             throw new IndexOutOfBoundsException(
                     "Child index " + childIndex + " is outside [0, " + nodeSlotCount + ").");
         }
+    }
+
+    void sortActiveBranchesByLength() {
+        for (int i = 1; i < activeBranchCount; ++i) {
+            int j = i;
+            while (j > 0 && activeBranchLengths[j - 1] > activeBranchLengths[j]) {
+                swapActiveBranches(j - 1, j);
+                j--;
+            }
+        }
+    }
+
+    private void swapActiveBranches(final int left,
+                                    final int right) {
+        final int childIndex = activeChildIndices[left];
+        activeChildIndices[left] = activeChildIndices[right];
+        activeChildIndices[right] = childIndex;
+
+        final double branchLength = activeBranchLengths[left];
+        activeBranchLengths[left] = activeBranchLengths[right];
+        activeBranchLengths[right] = branchLength;
+
+        final CanonicalLocalTransitionAdjoints adjoints = activeAdjoints[left];
+        activeAdjoints[left] = activeAdjoints[right];
+        activeAdjoints[right] = adjoints;
+
+        final CanonicalPreparedBranchHandle handle = activePreparedBranchHandles[left];
+        activePreparedBranchHandles[left] = activePreparedBranchHandles[right];
+        activePreparedBranchHandles[right] = handle;
     }
 
     private static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,

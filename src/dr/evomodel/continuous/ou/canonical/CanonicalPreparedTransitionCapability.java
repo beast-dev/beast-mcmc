@@ -30,4 +30,8 @@ public interface CanonicalPreparedTransitionCapability {
                                          MatrixParameterInterface diffusionMatrix,
                                          CanonicalBranchWorkspace workspace,
                                          CanonicalGaussianTransition out);
+
+    void fillTransitionMatrixPreparedFlat(CanonicalPreparedBranchHandle prepared,
+                                          CanonicalBranchWorkspace workspace,
+                                          double[] out);
 }

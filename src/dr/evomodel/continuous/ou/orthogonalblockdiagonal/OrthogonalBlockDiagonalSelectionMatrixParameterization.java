@@ -222,6 +222,13 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 out);
     }
 
+    @Override
+    public void fillTransitionMatrixPreparedFlat(final CanonicalPreparedBranchHandle prepared,
+                                                 final CanonicalBranchWorkspace workspace,
+                                                 final double[] out) {
+        copyDenseMatrixToFlat(asPreparedBasis(prepared).transitionMatrix, out);
+    }
+
     public void prepareBranchCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
                                         final MatrixParameterInterface diffusionMatrix,
                                         final OrthogonalBlockBranchGradientWorkspace workspace) {

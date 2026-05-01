@@ -41,4 +41,16 @@ public interface CanonicalTransitionCacheDiagnostics {
     default long getTransitionCacheMissCount(String phase) {
         return 0L;
     }
+
+    default long getTransitionCacheRequestCount(String phase) {
+        return 0L;
+    }
+
+    default long getTransitionCacheRebuildCount() {
+        return 0L;
+    }
+
+    default long getPreparedBranchRebuildCount() {
+        return 0L;
+    }
 }

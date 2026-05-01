@@ -174,7 +174,7 @@ final class CanonicalTreeGradientEngine {
     }
 
     private int branchGradientJointChunkSize(final int taskLimit) {
-        return branchGradientChunkSize(taskLimit, 3, 8);
+        return branchGradientChunkSize(taskLimit, dimensionWeightedTargetChunksPerWorker(), dimensionWeightedMaxChunkSize());
     }
 
     private int branchGradientChunkSize(final int taskLimit,
@@ -184,6 +184,26 @@ final class CanonicalTreeGradientEngine {
         final int suggested =
                 (taskLimit + workerCount * targetChunksPerWorker - 1) / (workerCount * targetChunksPerWorker);
         return Math.max(1, Math.min(maxChunkSize, suggested));
+    }
+
+    private int dimensionWeightedTargetChunksPerWorker() {
+        if (dimension >= 16) {
+            return 1;
+        }
+        if (dimension >= 8) {
+            return 2;
+        }
+        return 4;
+    }
+
+    private int dimensionWeightedMaxChunkSize() {
+        if (dimension >= 16) {
+            return 4;
+        }
+        if (dimension >= 8) {
+            return 8;
+        }
+        return 32;
     }
 
     private void accumulateRootDiffusionGradient(final CanonicalGaussianState rootPreOrder,

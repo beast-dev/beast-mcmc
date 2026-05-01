@@ -202,6 +202,21 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
         return phaseMissCounter(currentPhase).get();
     }
 
+    long phaseRequests(final String currentPhase) {
+        if (!enabled) {
+            return 0L;
+        }
+        return phaseRequestCounter(currentPhase).get();
+    }
+
+    long transitionRebuilds() {
+        return enabled ? transitionRebuilds.get() : 0L;
+    }
+
+    long preparedBasisRebuilds() {
+        return enabled ? preparedBasisRebuilds.get() : 0L;
+    }
+
     private AtomicLong phaseRequestCounter(final String currentPhase) {
         if (CanonicalTransitionCachePhases.POSTORDER.equals(currentPhase)) {
             return postOrderRequests;

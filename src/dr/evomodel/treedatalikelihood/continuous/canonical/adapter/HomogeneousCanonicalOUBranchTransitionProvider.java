@@ -291,4 +291,19 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public long getTransitionCacheMissCount(final String phase) {
         return transitionCache.getMissCount(phase);
     }
+
+    @Override
+    public long getTransitionCacheRequestCount(final String phase) {
+        return transitionCache.getRequestCount(phase);
+    }
+
+    @Override
+    public long getTransitionCacheRebuildCount() {
+        return transitionCache.getTransitionRebuildCount();
+    }
+
+    @Override
+    public long getPreparedBranchRebuildCount() {
+        return transitionCache.getPreparedBranchRebuildCount();
+    }
 }

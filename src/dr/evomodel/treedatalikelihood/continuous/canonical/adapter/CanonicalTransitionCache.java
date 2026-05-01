@@ -144,6 +144,18 @@ final class CanonicalTransitionCache {
         return diagnostics.phaseMisses(phase);
     }
 
+    long getRequestCount(final String phase) {
+        return diagnostics.phaseRequests(phase);
+    }
+
+    long getTransitionRebuildCount() {
+        return diagnostics.transitionRebuilds();
+    }
+
+    long getPreparedBranchRebuildCount() {
+        return diagnostics.preparedBasisRebuilds();
+    }
+
     private CanonicalGaussianTransition ensureTransition(final int childNodeIndex) {
         recordRequest();
         final BranchCacheEntry entry = entries[childNodeIndex];

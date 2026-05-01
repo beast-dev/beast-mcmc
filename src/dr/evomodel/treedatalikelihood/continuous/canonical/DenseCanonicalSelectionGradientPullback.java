@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
@@ -40,6 +41,12 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
         final GradientPullbackWorkspace gradient = workspace.gradient;
         final CanonicalOUKernel kernel = processModel.getCanonicalKernel();
         final double branchLength = inputs.getBranchLength(activeIndex);
+        final CanonicalPreparedTransitionCapability preparedTransition =
+                processModel.getSelectionMatrixParameterization()
+                        instanceof CanonicalPreparedTransitionCapability
+                        ? (CanonicalPreparedTransitionCapability)
+                        processModel.getSelectionMatrixParameterization()
+                        : null;
 
         kernel.accumulateSelectionGradientFlat(
                 branchLength,
@@ -59,11 +66,42 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
                 false,
                 gradQ);
 
-        kernel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
+        fillTransitionMatrixFlat(
+                kernel,
+                preparedTransition,
+                inputs,
+                activeIndex,
+                branchLength,
+                workspace,
+                gradient);
         accumulateStationaryMeanGradientFlat(
                 gradient.transitionMatrixFlat,
                 localAdjoints.dLogL_df,
                 gradMu);
+    }
+
+    private void fillTransitionMatrixFlat(final CanonicalOUKernel kernel,
+                                          final CanonicalPreparedTransitionCapability preparedTransition,
+                                          final BranchGradientInputs inputs,
+                                          final int activeIndex,
+                                          final double branchLength,
+                                          final BranchGradientWorkspace workspace,
+                                          final GradientPullbackWorkspace gradient) {
+        if (gradient.cachedTransitionMatrixValid
+                && Double.doubleToLongBits(gradient.cachedTransitionMatrixLength)
+                == Double.doubleToLongBits(branchLength)) {
+            return;
+        }
+        if (preparedTransition != null && inputs.hasPreparedBranchHandles()) {
+            preparedTransition.fillTransitionMatrixPreparedFlat(
+                    inputs.getPreparedBranchHandle(activeIndex),
+                    workspace.ensureSpecializedBranchWorkspace(preparedTransition),
+                    gradient.transitionMatrixFlat);
+        } else {
+            kernel.fillTransitionMatrixFlat(branchLength, gradient.transitionMatrixFlat);
+        }
+        gradient.cachedTransitionMatrixLength = branchLength;
+        gradient.cachedTransitionMatrixValid = true;
     }
 
     @Override

@@ -27,11 +27,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.CanonicalInversionResult;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.math.matrixAlgebra.missingData.InversionResult;
-import dr.math.matrixAlgebra.missingData.MissingOps;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 /**
  * Stateless matrix utilities used internally by the framework.
@@ -95,8 +92,8 @@ public final class MatrixUtils {
 
     /**
      * Inverts a symmetric variance matrix that may contain {@code +∞} entries on the diagonal
-     * (representing missing trait dimensions), and returns an {@link InversionResult} with the
-     * log-determinant of the resulting <em>precision</em> matrix and the effective dimension.
+     * (representing missing trait dimensions), and returns a {@link CanonicalInversionResult}
+     * with the log-determinant of the finite variance block and the effective dimension.
      *
      * <p>Missing dimensions (∞ diagonal in variance) are mapped to 0 precision; observed
      * dimensions are inverted in the usual way. Off-diagonal entries for missing rows/columns
@@ -105,18 +102,18 @@ public final class MatrixUtils {
      * @param src variance matrix (row-major, length {@code dim×dim}); may have ∞ entries
      * @param dst output precision matrix (row-major, length {@code dim×dim})
      * @param dim matrix dimension
-     * @return inversion result with effective dimension and log-determinant of the precision
+     * @return inversion result with effective dimension and log-determinant of the finite variance block
      */
     /** @deprecated Use {@link MatrixOps#safeInvertVariance(double[], double[], int)} instead. */
     @Deprecated
-    public static InversionResult safeInvertVariance(double[] src, double[] dst, int dim) {
+    public static CanonicalInversionResult safeInvertVariance(double[] src, double[] dst, int dim) {
         return MatrixOps.safeInvertVariance(src, dst, dim);
     }
 
     /**
      * Inverts a symmetric precision matrix that may contain {@code 0} entries on the diagonal
-     * (representing missing trait dimensions), and returns an {@link InversionResult} with the
-     * log-determinant of the resulting <em>precision</em> (not variance) and the effective dimension.
+     * (representing missing trait dimensions), and returns a {@link CanonicalInversionResult}
+     * with the log-determinant of the resulting <em>precision</em> (not variance) and the effective dimension.
      *
      * <p>Missing dimensions (0 diagonal in precision) are mapped to ∞ variance; observed
      * dimensions are inverted in the usual way.
@@ -128,7 +125,7 @@ public final class MatrixUtils {
      */
     /** @deprecated Use {@link MatrixOps#safeInvertPrecision(double[], double[], int)} instead. */
     @Deprecated
-    public static InversionResult safeInvertPrecision(double[] src, double[] dst, int dim) {
+    public static CanonicalInversionResult safeInvertPrecision(double[] src, double[] dst, int dim) {
         return MatrixOps.safeInvertPrecision(src, dst, dim);
     }
 

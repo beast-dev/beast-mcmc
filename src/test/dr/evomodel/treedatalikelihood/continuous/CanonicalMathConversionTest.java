@@ -1,5 +1,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.CanonicalInversionResult;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
@@ -93,6 +94,65 @@ public final class CanonicalMathConversionTest extends TestCase {
 
         assertArrayClose("compact vs general inverse", generalInverse, compactInverse, TOL);
         assertEquals("compact vs general log determinant", generalLogDet, compactLogDet, TOL);
+    }
+
+    public void testSafeInvertPrecisionHandlesMissingDiagonalLocally() {
+        final int dim = 3;
+        final double[] precision = {
+                2.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 4.0
+        };
+        final double[] variance = new double[dim * dim];
+
+        final CanonicalInversionResult result = MatrixOps.safeInvertPrecision(precision, variance, dim);
+
+        assertEquals(CanonicalInversionResult.Code.PARTIALLY_OBSERVED, result.getReturnCode());
+        assertEquals(2, result.getEffectiveDimension());
+        assertEquals(Math.log(8.0), result.getLogDeterminant(), TOL);
+        assertEquals(0.5, variance[0], TOL);
+        assertEquals(Double.POSITIVE_INFINITY, variance[4]);
+        assertEquals(0.25, variance[8], TOL);
+        assertEquals(0.0, variance[1], TOL);
+        assertEquals(0.0, variance[5], TOL);
+    }
+
+    public void testSafeInvertVarianceHandlesMissingDiagonalLocally() {
+        final int dim = 3;
+        final double[] variance = {
+                2.0, 0.0, 0.0,
+                0.0, Double.POSITIVE_INFINITY, 0.0,
+                0.0, 0.0, 4.0
+        };
+        final double[] precision = new double[dim * dim];
+
+        final CanonicalInversionResult result = MatrixOps.safeInvertVariance(variance, precision, dim);
+
+        assertEquals(CanonicalInversionResult.Code.PARTIALLY_OBSERVED, result.getReturnCode());
+        assertEquals(2, result.getEffectiveDimension());
+        assertEquals(Math.log(8.0), result.getLogDeterminant(), TOL);
+        assertEquals(0.5, precision[0], TOL);
+        assertEquals(0.0, precision[4], TOL);
+        assertEquals(0.25, precision[8], TOL);
+        assertEquals(0.0, precision[1], TOL);
+        assertEquals(0.0, precision[5], TOL);
+    }
+
+    public void testSafeInvertVariancePreservesCollapsedDiagonal() {
+        final int dim = 2;
+        final double[] variance = {
+                0.0, 0.0,
+                0.0, Double.POSITIVE_INFINITY
+        };
+        final double[] precision = new double[dim * dim];
+
+        final CanonicalInversionResult result = MatrixOps.safeInvertVariance(variance, precision, dim);
+
+        assertEquals(CanonicalInversionResult.Code.PARTIALLY_OBSERVED, result.getReturnCode());
+        assertEquals(1, result.getEffectiveDimension());
+        assertEquals(Double.POSITIVE_INFINITY, result.getLogDeterminant());
+        assertEquals(Double.POSITIVE_INFINITY, precision[0]);
+        assertEquals(0.0, precision[3], TOL);
     }
 
     private static void assertArrayClose(final String label,

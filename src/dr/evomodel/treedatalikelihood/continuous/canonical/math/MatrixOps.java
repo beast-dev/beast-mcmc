@@ -1,10 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.math;
 
-import dr.math.matrixAlgebra.missingData.InversionResult;
-import dr.math.matrixAlgebra.missingData.MissingOps;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
-
 import java.util.Arrays;
 
 /**
@@ -316,57 +311,131 @@ public final class MatrixOps {
     }
 
     // -----------------------------------------------------------------------
-    // EJML-backed inversion (for BEAST parameter boundaries and safe variants)
+    // SPD inversion and missing-aware safe variants
     // -----------------------------------------------------------------------
 
     /**
-     * Invert a symmetric positive-definite matrix using EJML's Cholesky solver.
+     * Invert a symmetric positive-definite matrix using flat Cholesky workspaces.
      * Prefer {@link GaussianFormConverter} for inversion in the canonical hot path.
      *
-     * @throws IllegalArgumentException if the matrix is singular or ill-conditioned
+     * @throws IllegalArgumentException if the matrix is not symmetric positive definite
      */
     public static void invertSPD(double[] src, double[] dst, int dim) {
-        final DenseMatrix64F m = DenseMatrix64F.wrap(dim, dim, src);
-        final DenseMatrix64F inv = new DenseMatrix64F(dim, dim);
-        if (!CommonOps.invert(m, inv))
-            throw new IllegalArgumentException("Matrix is not invertible (singular or ill-conditioned).");
-        System.arraycopy(inv.data, 0, dst, 0, dim * dim);
+        final double[] lower = new double[dim * dim];
+        final double[] lowerInverse = new double[dim * dim];
+        if (!tryCholesky(src, lower, dim)) {
+            throw new IllegalArgumentException("Matrix is not symmetric positive definite.");
+        }
+        invertFromCholesky(lower, lowerInverse, dst, dim);
     }
 
     /**
      * Invert a variance matrix that may contain ∞ on the diagonal (missing traits),
-     * returning the precision matrix and an {@link InversionResult} with the
-     * effective dimension and log-determinant of the precision.
+     * returning the precision matrix and a {@link CanonicalInversionResult} with the
+     * effective dimension and log-determinant of the finite variance block.
      */
-    public static InversionResult safeInvertVariance(double[] src, double[] dst, int dim) {
-        final DenseMatrix64F srcM = new DenseMatrix64F(dim, dim);
-        System.arraycopy(src, 0, srcM.data, 0, dim * dim);
-        final DenseMatrix64F dstM = new DenseMatrix64F(dim, dim);
-        final InversionResult result = MissingOps.safeInvertVariance(srcM, dstM, true);
-        System.arraycopy(dstM.data, 0, dst, 0, dim * dim);
-        return result;
+    public static CanonicalInversionResult safeInvertVariance(double[] src, double[] dst, int dim) {
+        return safeInvertWithMissing(src, dst, dim, true);
     }
 
     /**
      * Invert a precision matrix that may contain 0 on the diagonal (missing traits),
-     * returning the variance matrix and an {@link InversionResult} with the
-     * effective dimension and log-determinant of the original precision.
+     * returning the variance matrix and a {@link CanonicalInversionResult} with the
+     * effective dimension and log-determinant of the finite precision block.
      */
-    public static InversionResult safeInvertPrecision(double[] src, double[] dst, int dim) {
-        final DenseMatrix64F srcM = new DenseMatrix64F(dim, dim);
-        System.arraycopy(src, 0, srcM.data, 0, dim * dim);
-        final DenseMatrix64F dstM = new DenseMatrix64F(dim, dim);
-        final InversionResult result = MissingOps.safeInvertPrecision(srcM, dstM, true);
-        System.arraycopy(dstM.data, 0, dst, 0, dim * dim);
-        return result;
+    public static CanonicalInversionResult safeInvertPrecision(double[] src, double[] dst, int dim) {
+        return safeInvertWithMissing(src, dst, dim, false);
     }
 
     /**
-     * Log-determinant via LU decomposition.
-     * Use Cholesky-based determinant via {@link #invertFromCholesky} for SPD matrices.
+     * Log-determinant via flat Cholesky decomposition.
      */
     public static double logDeterminant(double[] m, int dim) {
-        return Math.log(Math.abs(CommonOps.det(DenseMatrix64F.wrap(dim, dim, m))));
+        final double[] lower = new double[dim * dim];
+        if (!tryCholesky(m, lower, dim)) {
+            throw new IllegalArgumentException("Matrix is not symmetric positive definite.");
+        }
+        double logDet = 0.0;
+        for (int i = 0; i < dim; i++) {
+            logDet += Math.log(lower[i * dim + i]);
+        }
+        return 2.0 * logDet;
+    }
+
+    private static CanonicalInversionResult safeInvertWithMissing(final double[] src,
+                                                                  final double[] dst,
+                                                                  final int dim,
+                                                                  final boolean inputIsVariance) {
+        Arrays.fill(dst, 0, dim * dim, 0.0);
+
+        final int[] finiteIndices = new int[dim];
+        int finiteCount = 0;
+        int exactCount = 0;
+
+        for (int i = 0; i < dim; i++) {
+            final double diagonal = src[i * dim + i];
+            if (Double.isNaN(diagonal) || diagonal == Double.NEGATIVE_INFINITY) {
+                throw new IllegalArgumentException("Matrix diagonal contains an unsupported missing-data marker.");
+            }
+
+            if (isFiniteNonZero(diagonal)) {
+                finiteIndices[finiteCount++] = i;
+            } else if (diagonal == 0.0) {
+                dst[i * dim + i] = Double.POSITIVE_INFINITY;
+                if (inputIsVariance) {
+                    exactCount++;
+                }
+            } else if (diagonal == Double.POSITIVE_INFINITY) {
+                if (!inputIsVariance) {
+                    exactCount++;
+                }
+            } else {
+                throw new IllegalArgumentException("Matrix diagonal contains an unsupported missing-data marker.");
+            }
+        }
+
+        final int effectiveDimension = finiteCount + exactCount;
+        double logDeterminant;
+
+        if (finiteCount > 0) {
+            final double[] compactSource = new double[finiteCount * finiteCount];
+            final double[] compactInverse = new double[finiteCount * finiteCount];
+            final double[] forwardWork = new double[finiteCount];
+            final double[] backwardWork = new double[finiteCount];
+
+            for (int row = 0; row < finiteCount; row++) {
+                final int sourceRow = finiteIndices[row];
+                for (int col = 0; col < finiteCount; col++) {
+                    compactSource[row * finiteCount + col] = src[sourceRow * dim + finiteIndices[col]];
+                }
+            }
+
+            final double sourceLogDeterminant = invertSPDCompact(
+                    compactSource, compactInverse, finiteCount, forwardWork, backwardWork);
+            for (int row = 0; row < finiteCount; row++) {
+                final int targetRow = finiteIndices[row];
+                for (int col = 0; col < finiteCount; col++) {
+                    dst[targetRow * dim + finiteIndices[col]] = compactInverse[row * finiteCount + col];
+                }
+            }
+
+            logDeterminant = sourceLogDeterminant;
+        } else {
+            logDeterminant = Double.NEGATIVE_INFINITY;
+        }
+
+        if (exactCount > 0) {
+            logDeterminant = Double.POSITIVE_INFINITY;
+        }
+
+        return new CanonicalInversionResult(
+                CanonicalInversionResult.getCode(dim, effectiveDimension),
+                effectiveDimension,
+                logDeterminant);
+    }
+
+    private static boolean isFiniteNonZero(final double value) {
+        return value != 0.0 && !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     // -----------------------------------------------------------------------

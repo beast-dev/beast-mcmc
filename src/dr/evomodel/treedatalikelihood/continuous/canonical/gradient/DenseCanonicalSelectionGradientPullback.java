@@ -7,6 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
@@ -47,11 +48,11 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
         final DenseGradientWorkspace gradient = workspace.denseGradient();
         final CanonicalOUKernel kernel = processModel.getCanonicalKernel();
         final double branchLength = inputs.getBranchLength(activeIndex);
+        final SelectionMatrixParameterization parameterization =
+                processModel.getSelectionMatrixParameterization();
         final CanonicalPreparedTransitionCapability preparedTransition =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof CanonicalPreparedTransitionCapability
-                        ? (CanonicalPreparedTransitionCapability)
-                        processModel.getSelectionMatrixParameterization()
+                parameterization instanceof CanonicalPreparedTransitionCapability
+                        ? (CanonicalPreparedTransitionCapability) parameterization
                         : null;
 
         kernel.accumulateSelectionGradientFlat(

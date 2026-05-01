@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
@@ -88,13 +89,13 @@ public final class CanonicalBranchAdjointPreparer {
         out.clear();
 
         final CanonicalOUTransitionProvider ouProvider =
-                CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
+                CanonicalOUProviderSupport.requireCapability(transitionProvider, CanonicalOUTransitionProvider.class);
         final OUProcessModel processModel = ouProvider.getProcessModel();
+        final SelectionMatrixParameterization parameterization =
+                processModel.getSelectionMatrixParameterization();
         final CanonicalPreparedTransitionCapability preparedTransition =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof CanonicalPreparedTransitionCapability
-                        ? (CanonicalPreparedTransitionCapability)
-                        processModel.getSelectionMatrixParameterization()
+                parameterization instanceof CanonicalPreparedTransitionCapability
+                        ? (CanonicalPreparedTransitionCapability) parameterization
                         : null;
         final CanonicalPreparedBranchSnapshotProvider snapshotProvider =
                 requirePreparedBranchSnapshotProvider(transitionProvider);
@@ -145,11 +146,8 @@ public final class CanonicalBranchAdjointPreparer {
 
     private static CanonicalPreparedBranchSnapshotProvider requirePreparedBranchSnapshotProvider(
             final CanonicalBranchTransitionProvider transitionProvider) {
-        if (!(transitionProvider instanceof CanonicalPreparedBranchSnapshotProvider)) {
-            throw new UnsupportedOperationException(
-                    "Canonical OU gradients require CanonicalPreparedBranchSnapshotProvider.");
-        }
-        return (CanonicalPreparedBranchSnapshotProvider) transitionProvider;
+        return CanonicalOUProviderSupport.requireCapability(
+                transitionProvider, CanonicalPreparedBranchSnapshotProvider.class);
     }
 
     private static CanonicalPreparedBranchSnapshot requireSnapshot(

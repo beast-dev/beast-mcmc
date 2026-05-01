@@ -8,11 +8,16 @@ import org.ejml.data.DenseMatrix64F;
 
 /**
  * Strategy interface for how OU actualization and its adjoint behave.
- * The delegate is responsible for:
- *  - handling root vs non-root logic,
- *  - fixed-root logic for displacement wrt root,
- * and then forwarding to these methods.
+ *
+ * @deprecated This interface and its implementations in {@code OUActualizationStrategies}
+ *     are dead code — no external caller invokes them. The CDI path uses the separate
+ *     {@link dr.evomodel.treedatalikelihood.continuous.cdi.OUActualizationStrategy}
+ *     interface in the {@code cdi} package. The canonical OU path uses
+ *     {@link dr.evomodel.continuous.ou.OUProcessModel} directly and does not require
+ *     this strategy layer. Scheduled for removal once the legacy CDI delegate
+ *     decomposition (Phase 9/10) is complete.
  */
+@Deprecated
 public interface OUActualizationStrategy {
 
     void setDiffusionStationaryVariance(SafeMultivariateActualizedWithDriftIntegrator integrator,

@@ -1,10 +1,9 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.*;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.*;
-
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
 
 final class CanonicalSelectionGradientPullbacks {
@@ -15,11 +14,11 @@ final class CanonicalSelectionGradientPullbacks {
                                                      final int dimension,
                                                      final double[] gradA,
                                                      final BranchGradientWorkspace workspace) {
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof SpecializedCanonicalSelectionParameterization) {
+        final SelectionMatrixParameterization parameterization =
+                processModel.getSelectionMatrixParameterization();
+        if (parameterization instanceof SpecializedCanonicalSelectionParameterization) {
             return new SpecializedCanonicalSelectionGradientPullback(
-                    (SpecializedCanonicalSelectionParameterization)
-                            processModel.getSelectionMatrixParameterization(),
+                    (SpecializedCanonicalSelectionParameterization) parameterization,
                     dimension,
                     gradA,
                     workspace);

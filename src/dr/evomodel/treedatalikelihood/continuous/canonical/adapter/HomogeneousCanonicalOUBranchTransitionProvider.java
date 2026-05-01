@@ -59,6 +59,9 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     private final int dimension;
     private final MultivariateDiffusionModel diffusionModel;
+    private final MultivariateElasticModel elasticModel;
+    private final MatrixParameterInterface driftMatrix;
+    private final Parameter stationaryMean;
     private final MatrixParameter diffusionCovariance;
     private final CanonicalOUDiffusionSnapshot diffusionSnapshot;
     private final CanonicalBranchLengthSnapshot branchLengths;
@@ -84,10 +87,14 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                                                           final BranchRateModel rateModel,
                                                           final ContinuousRateTransformation rateTransformation) {
         super("homogeneousCanonicalOUTransitionProvider");
+        this.elasticModel = elasticModel;
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
 
-        final MatrixParameterInterface driftMatrix = elasticModel.getStrengthOfSelectionMatrixParameter();
+        this.driftMatrix = elasticModel.getStrengthOfSelectionMatrixParameter();
+        this.stationaryMean = stationaryMean;
+        addVariable(driftMatrix);
+        addVariable(stationaryMean);
         this.dimension = driftMatrix.getRowDimension();
         this.diffusionCovariance = new MatrixParameter("canonicalOuProvider.diffusion", dimension, dimension);
         this.diffusionSnapshot = new CanonicalOUDiffusionSnapshot(
@@ -249,11 +256,12 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
 
     @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
-        dirty = true;
-        if (model == diffusionModel && dirtyReason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
-            dirtyReason = CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED;
-        } else if (model != diffusionModel) {
-            dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
+        if (model == diffusionModel) {
+            markDirty(CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED);
+        } else if (model == elasticModel) {
+            markDirty(CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED);
+        } else {
+            markDirty(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
         }
     }
 
@@ -261,8 +269,22 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     protected void handleVariableChangedEvent(final Variable variable,
                                               final int index,
                                               final Parameter.ChangeType type) {
+        if (variable == driftMatrix) {
+            markDirty(CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED);
+        } else if (variable == stationaryMean) {
+            markDirty(CanonicalTransitionCacheInvalidationReason.STATIONARY_MEAN_CHANGED);
+        } else {
+            markDirty(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
+        }
+    }
+
+    private void markDirty(final CanonicalTransitionCacheInvalidationReason reason) {
         dirty = true;
-        dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
+        if (reason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED
+                && dirtyReason != CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
+            return;
+        }
+        dirtyReason = reason;
     }
 
     @Override
@@ -305,5 +327,10 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     @Override
     public long getPreparedBranchRebuildCount() {
         return transitionCache.getPreparedBranchRebuildCount();
+    }
+
+    @Override
+    public long getTransitionCacheClearCount(final String reason) {
+        return transitionCache.getClearCount(reason);
     }
 }

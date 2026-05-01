@@ -217,6 +217,31 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
         return enabled ? preparedBasisRebuilds.get() : 0L;
     }
 
+    long clearCount(final CanonicalTransitionCacheInvalidationReason reason) {
+        if (!enabled) {
+            return 0L;
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
+            return diffusionChangedClears.get();
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.STATIONARY_MEAN_CHANGED) {
+            return stationaryMeanChangedClears.get();
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED) {
+            return selectionChangedClears.get();
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.BRANCH_LENGTH_CHANGED) {
+            return branchLengthChangedClears.get();
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED) {
+            return modelChangedClears.get();
+        }
+        if (reason == CanonicalTransitionCacheInvalidationReason.RESTORE_STATE) {
+            return restoreClears.get();
+        }
+        return explicitClears.get();
+    }
+
     private AtomicLong phaseRequestCounter(final String currentPhase) {
         if (CanonicalTransitionCachePhases.POSTORDER.equals(currentPhase)) {
             return postOrderRequests;

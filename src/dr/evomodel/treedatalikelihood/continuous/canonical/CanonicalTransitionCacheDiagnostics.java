@@ -53,4 +53,8 @@ public interface CanonicalTransitionCacheDiagnostics {
     default long getPreparedBranchRebuildCount() {
         return 0L;
     }
+
+    default long getTransitionCacheClearCount(final String reason) {
+        return 0L;
+    }
 }

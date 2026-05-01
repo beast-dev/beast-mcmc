@@ -156,6 +156,10 @@ final class CanonicalTransitionCache {
         return diagnostics.preparedBasisRebuilds();
     }
 
+    long getClearCount(final String reason) {
+        return diagnostics.clearCount(CanonicalTransitionCacheInvalidationReason.valueOf(reason));
+    }
+
     private CanonicalGaussianTransition ensureTransition(final int childNodeIndex) {
         recordRequest();
         final BranchCacheEntry entry = entries[childNodeIndex];
@@ -163,6 +167,9 @@ final class CanonicalTransitionCache {
         if (!entry.isTransitionCurrent(effectiveBranchLength, epoch)) {
             recordMiss();
             diagnostics.recordTransitionRebuild();
+            if (entry.hasBranchLengthChanged(effectiveBranchLength)) {
+                diagnostics.recordClear(CanonicalTransitionCacheInvalidationReason.BRANCH_LENGTH_CHANGED);
+            }
             if (entry.transition == null) {
                 entry.transition = new CanonicalGaussianTransition(dimension);
             }
@@ -260,6 +267,12 @@ final class CanonicalTransitionCache {
                     && transitionDiffusionVersion == epoch.diffusionVersion
                     && transitionStationaryMeanVersion == epoch.stationaryMeanVersion
                     && transitionBranchLengthVersion == epoch.branchLengthVersion;
+        }
+
+        private boolean hasBranchLengthChanged(final double effectiveBranchLength) {
+            return valid
+                    && Double.doubleToLongBits(this.effectiveBranchLength)
+                    != Double.doubleToLongBits(effectiveBranchLength);
         }
 
         private void markTransitionCurrent(final double effectiveBranchLength,

@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
@@ -23,12 +24,12 @@ final class OUCanonicalBranchContributionAssembler {
 
     private final double[] aboveInformation;
     private final double[] belowInformation;
-    private final double[][] reducedPrecisionScratch;
-    private final double[][] reducedCovarianceScratch;
+    private final double[] reducedPrecisionScratch;
+    private final double[] reducedCovarianceScratch;
     private final double[] reducedInformationScratch;
     private final double[] reducedMeanScratch;
-    private final double[][] reducedCholeskyScratch;
-    private final double[][] reducedLowerInverseScratch;
+    private final double[] reducedForwardScratch;
+    private final double[] reducedBackwardScratch;
 
     OUCanonicalBranchContributionAssembler(final int dimension,
                                            final CanonicalGradientFallbackPolicy fallbackPolicy,
@@ -50,12 +51,12 @@ final class OUCanonicalBranchContributionAssembler {
         this.aboveInformation = new double[dimension];
         this.belowInformation = new double[dimension];
         final int maxReducedDimension = 2 * dimension;
-        this.reducedPrecisionScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.reducedCovarianceScratch = new double[maxReducedDimension][maxReducedDimension];
+        this.reducedPrecisionScratch = new double[maxReducedDimension * maxReducedDimension];
+        this.reducedCovarianceScratch = new double[maxReducedDimension * maxReducedDimension];
         this.reducedInformationScratch = new double[maxReducedDimension];
         this.reducedMeanScratch = new double[maxReducedDimension];
-        this.reducedCholeskyScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.reducedLowerInverseScratch = new double[maxReducedDimension][maxReducedDimension];
+        this.reducedForwardScratch = new double[maxReducedDimension];
+        this.reducedBackwardScratch = new double[maxReducedDimension];
     }
 
     CanonicalBranchMessageContribution prepareFromCurrentTransition(final BranchSufficientStatistics statistics) {
@@ -141,17 +142,19 @@ final class OUCanonicalBranchContributionAssembler {
         fillInformation(abovePrecision, aboveMean, aboveInformation);
         final int missingCount = collectObservationPartition(observedCount);
         final int reducedDimension = dimension + missingCount;
-        final double[][] reducedPrecision = reducedPrecisionScratch;
-        final double[][] reducedCovariance = reducedCovarianceScratch;
+        final double[] reducedPrecision = reducedPrecisionScratch;
+        final double[] reducedCovariance = reducedCovarianceScratch;
         final double[] reducedInformation = reducedInformationScratch;
         final double[] reducedMean = reducedMeanScratch;
 
-        fillReducedCanonicalSystem(abovePrecision, observedChild, missingCount, reducedPrecision, reducedInformation);
+        fillReducedCanonicalSystem(
+                abovePrecision, observedChild, missingCount, reducedDimension, reducedPrecision, reducedInformation);
         invertSymmetricPositiveDefinite(reducedPrecision, reducedDimension, reducedCovariance);
         for (int i = 0; i < reducedDimension; ++i) {
             double sum = 0.0;
+            final int iOffset = i * reducedDimension;
             for (int j = 0; j < reducedDimension; ++j) {
-                sum += reducedCovariance[i][j] * reducedInformation[j];
+                sum += reducedCovariance[iOffset + j] * reducedInformation[j];
             }
             reducedMean[i] = sum;
         }
@@ -162,6 +165,7 @@ final class OUCanonicalBranchContributionAssembler {
                 observedChild,
                 reducedMean,
                 reducedCovariance,
+                reducedDimension,
                 contribution);
     }
 
@@ -186,13 +190,16 @@ final class OUCanonicalBranchContributionAssembler {
     private void fillReducedCanonicalSystem(final DenseMatrix64F abovePrecision,
                                             final DenseMatrix64F observedChild,
                                             final int missingCount,
-                                            final double[][] reducedPrecision,
+                                            final int reducedDimension,
+                                            final double[] reducedPrecision,
                                             final double[] reducedInformation) {
         for (int i = 0; i < dimension; ++i) {
             double information = transition.informationX[i] + aboveInformation[i];
             final int iOffset = i * dimension;
+            final int reducedIOffset = i * reducedDimension;
             for (int j = 0; j < dimension; ++j) {
-                reducedPrecision[i][j] = transition.precisionXX[iOffset + j] + abovePrecision.unsafe_get(i, j);
+                reducedPrecision[reducedIOffset + j] =
+                        transition.precisionXX[iOffset + j] + abovePrecision.unsafe_get(i, j);
             }
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
                 final int observedIndex = observationPattern.observedIndex(observed);
@@ -200,7 +207,7 @@ final class OUCanonicalBranchContributionAssembler {
             }
             reducedInformation[i] = information;
             for (int missing = 0; missing < missingCount; ++missing) {
-                reducedPrecision[i][dimension + missing] =
+                reducedPrecision[reducedIOffset + dimension + missing] =
                         transition.precisionXY[iOffset + observationPattern.missingIndex(missing)];
             }
         }
@@ -208,6 +215,7 @@ final class OUCanonicalBranchContributionAssembler {
         for (int missing = 0; missing < missingCount; ++missing) {
             final int childIndex = observationPattern.missingIndex(missing);
             final int row = dimension + missing;
+            final int rowOffset = row * reducedDimension;
             double information = transition.informationY[childIndex];
             final int childOffset = childIndex * dimension;
             for (int observed = 0; observed < dimension - missingCount; ++observed) {
@@ -216,10 +224,10 @@ final class OUCanonicalBranchContributionAssembler {
             }
             reducedInformation[row] = information;
             for (int j = 0; j < dimension; ++j) {
-                reducedPrecision[row][j] = transition.precisionYX[childOffset + j];
+                reducedPrecision[rowOffset + j] = transition.precisionYX[childOffset + j];
             }
             for (int otherMissing = 0; otherMissing < missingCount; ++otherMissing) {
-                reducedPrecision[row][dimension + otherMissing] =
+                reducedPrecision[rowOffset + dimension + otherMissing] =
                         transition.precisionYY[childOffset + observationPattern.missingIndex(otherMissing)];
             }
         }
@@ -227,38 +235,35 @@ final class OUCanonicalBranchContributionAssembler {
 
     private void fillMomentsFromCanonicalLocally(final CanonicalGaussianState state,
                                                  final double[] meanOut,
-                                                 final double[][] covarianceOut) {
+                                                 final double[] covarianceOut) {
         final int dimensionUsed = state.getDimension();
         invertFlatSymmetricPositiveDefinite(state.precision, dimensionUsed, covarianceOut);
         for (int i = 0; i < dimensionUsed; ++i) {
             double sum = 0.0;
+            final int iOffset = i * dimensionUsed;
             for (int j = 0; j < dimensionUsed; ++j) {
-                sum += covarianceOut[i][j] * state.information[j];
+                sum += covarianceOut[iOffset + j] * state.information[j];
             }
             meanOut[i] = sum;
         }
     }
 
-    private double invertSymmetricPositiveDefinite(final double[][] matrix,
+    private double invertSymmetricPositiveDefinite(final double[] matrix,
                                                    final int dimensionUsed,
-                                                   final double[][] inverseOut) {
-        return CanonicalNumerics.invertSymmetricPositiveDefinite(
+                                                   final double[] inverseOut) {
+        return MatrixOps.invertSPDCompact(
                 matrix,
-                dimensionUsed,
                 inverseOut,
-                reducedCholeskyScratch,
-                reducedPrecisionScratch,
-                reducedLowerInverseScratch);
+                dimensionUsed,
+                reducedForwardScratch,
+                reducedBackwardScratch);
     }
 
     private double invertFlatSymmetricPositiveDefinite(final double[] matrix,
                                                        final int dimensionUsed,
-                                                       final double[][] inverseOut) {
-        final double[][] square = reducedPrecisionScratch;
-        for (int i = 0; i < dimensionUsed; ++i) {
-            System.arraycopy(matrix, i * dimensionUsed, square[i], 0, dimensionUsed);
-        }
-        return invertSymmetricPositiveDefinite(square, dimensionUsed, inverseOut);
+                                                       final double[] inverseOut) {
+        System.arraycopy(matrix, 0, reducedPrecisionScratch, 0, dimensionUsed * dimensionUsed);
+        return invertSymmetricPositiveDefinite(reducedPrecisionScratch, dimensionUsed, inverseOut);
     }
 
     private static void fillInformation(final DenseMatrix64F precision,

@@ -91,18 +91,16 @@ public final class CanonicalOUKernel
                     .fillCanonicalTransition(diffusionMatrix, mean, dt, out);
             return;
         }
-        final double[][] transitionMatrix = workspace.squareMatrices[0];
         final double[] transitionOffset = workspace.vector1;
-        final double[][] transitionCovariance = workspace.squareMatrices[1];
-        fillTransitionMatrix(dt, transitionMatrix);
+        final double[] transitionMatrix = workspace.flatMatrix0;
+        final double[] transitionCovariance = workspace.flatMatrix1;
+        fillTransitionMatrixFlat(dt, transitionMatrix);
         fillTransitionOffset(dt, transitionOffset);
-        fillTransitionCovariance(dt, transitionCovariance);
-        MatrixOps.toFlat(transitionMatrix, workspace.flatMatrix0, stateDimension);
-        MatrixOps.toFlat(transitionCovariance, workspace.flatMatrix1, stateDimension);
+        fillTransitionCovarianceFlat(dt, transitionCovariance);
         GaussianFormConverter.fillTransitionFromMoments(
-                workspace.flatMatrix0,
+                transitionMatrix,
                 transitionOffset,
-                workspace.flatMatrix1,
+                transitionCovariance,
                 stateDimension,
                 workspace.converterWorkspace,
                 out);
@@ -143,13 +141,13 @@ public final class CanonicalOUKernel
     public void fillTransitionOffset(final double dt, final double[] out) {
         checkVectorLength(out, stateDimension, "transition offset");
         final Workspace workspace = workspace();
-        final double[][] transitionMatrix = workspace.squareMatrices[2];
+        final double[] transitionMatrix = workspace.flatMatrix0;
         final double[] mu = workspace.vector0;
         final double[] transformedMean = workspace.vector2;
 
-        fillTransitionMatrix(dt, transitionMatrix);
+        fillTransitionMatrixFlat(dt, transitionMatrix);
         getInitialMean(mu);
-        MatrixExponentialUtils.multiply(transitionMatrix, mu, transformedMean);
+        MatrixOps.matVec(transitionMatrix, mu, transformedMean, stateDimension);
 
         for (int i = 0; i < stateDimension; ++i) {
             out[i] = mu[i] - transformedMean[i];

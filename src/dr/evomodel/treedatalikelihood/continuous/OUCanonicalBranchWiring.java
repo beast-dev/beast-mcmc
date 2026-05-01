@@ -129,9 +129,9 @@ public final class OUCanonicalBranchWiring {
 
     public void fillTransitionMomentsFromKernel(final double branchLength,
                                                 final double[] optimum,
-                                                final double[][] transitionMatrixOut,
+                                                final double[] transitionMatrixOut,
                                                 final double[] transitionOffsetOut,
-                                                final double[][] transitionCovarianceOut) {
+                                                final double[] transitionCovarianceOut) {
         transitionState.fillTransitionMomentsFromKernel(
                 branchLength,
                 optimum,
@@ -157,8 +157,8 @@ public final class OUCanonicalBranchWiring {
     public double evaluateLocalSelectionScore(final double branchLength,
                                               final double[] optimum,
                                               final CanonicalLocalTransitionAdjoints adjoints) {
-        final double[][] transitionMatrix = new double[dimension][dimension];
-        final double[][] transitionCovariance = new double[dimension][dimension];
+        final double[] transitionMatrix = new double[dimension * dimension];
+        final double[] transitionCovariance = new double[dimension * dimension];
         final double[] transitionOffset = new double[dimension];
         fillTransitionMomentsFromKernel(branchLength, optimum, transitionMatrix, transitionOffset, transitionCovariance);
         if (!isFinite(transitionMatrix)) {
@@ -181,8 +181,8 @@ public final class OUCanonicalBranchWiring {
             fContribution += fTerm;
             final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                final double matrixTerm = adjoints.dLogL_dF[iOffset + j] * transitionMatrix[i][j];
-                final double covarianceTerm = adjoints.dLogL_dOmega[iOffset + j] * transitionCovariance[i][j];
+                final double matrixTerm = adjoints.dLogL_dF[iOffset + j] * transitionMatrix[iOffset + j];
+                final double covarianceTerm = adjoints.dLogL_dOmega[iOffset + j] * transitionCovariance[iOffset + j];
                 score += matrixTerm;
                 score += covarianceTerm;
                 matrixContribution += matrixTerm;
@@ -224,10 +224,6 @@ public final class OUCanonicalBranchWiring {
         return CanonicalNumerics.isFinite(values);
     }
 
-    private static boolean isFinite(final double[][] values) {
-        return CanonicalNumerics.isFinite(values);
-    }
-
     private static boolean isFinite(final DenseMatrix64F matrix) {
         return CanonicalNumerics.isFinite(matrix);
     }
@@ -244,14 +240,6 @@ public final class OUCanonicalBranchWiring {
         return isFinite(branch.getRawDisplacement())
                 && isFinite(branch.getRawActualization())
                 && isFinite(branch.getRawPrecision());
-    }
-
-    private static double maxAbs(final double[][] values) {
-        double max = 0.0;
-        for (double[] row : values) {
-            max = Math.max(max, maxAbs(row));
-        }
-        return max;
     }
 
 }

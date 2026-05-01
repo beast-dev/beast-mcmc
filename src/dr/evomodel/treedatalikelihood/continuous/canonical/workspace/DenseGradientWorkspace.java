@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public final class DenseGradientWorkspace {
 
-    public final double[][] covariance2;
+    public final double[] covariance2;
     public final double[] transitionMatrixFlat;
     public final double[] covarianceAdjointFlat;
     public final double[] matrixProductFlat;
@@ -20,7 +20,7 @@ public final class DenseGradientWorkspace {
 
     public DenseGradientWorkspace(final int dim) {
         if (dim < 1) throw new IllegalArgumentException("dim must be >= 1");
-        this.covariance2 = new double[dim][dim];
+        this.covariance2 = new double[dim * dim];
         this.transitionMatrixFlat = new double[dim * dim];
         this.covarianceAdjointFlat = new double[dim * dim];
         this.matrixProductFlat = new double[dim * dim];

@@ -45,9 +45,8 @@ public final class BranchGradientWorkspace {
     public final double[] specializedCompressedGradientScratch;
     public final double[] specializedNativeGradientScratch;
     public final double[] specializedRotationGradientFlatScratch;
-    public final double[][] specializedRotationGradientScratch;
-    public final double[][] covariance;
-    public final double[][] covariance2;
+    public final double[] covariance;
+    public final double[] covariance2;
     public final double[] transitionMatrixFlat;
     public final double[] covarianceAdjointFlat;
     public final double[] matrixProductFlat;
@@ -101,7 +100,7 @@ public final class BranchGradientWorkspace {
         this.reducedIndexByTraitScratch = adjoint == null ? null : adjoint.reducedIndexByTraitScratch;
         this.mean = adjoint == null ? null : adjoint.mean;
         this.mean2 = adjoint == null ? null : adjoint.mean2;
-        this.covariance = adjoint == null ? null : adjoint.covariance;
+        this.covariance = adjoint == null ? null : adjoint.covarianceFlat;
         this.varianceFlat = adjoint == null ? null : adjoint.varianceFlat;
         this.precisionFlat = adjoint == null ? null : adjoint.precisionFlat;
         this.reducedPrecisionFlatScratch = adjoint == null ? null : adjoint.reducedPrecisionFlatScratch;
@@ -117,8 +116,6 @@ public final class BranchGradientWorkspace {
                 gradient == null ? null : gradient.specializedNativeGradientScratch;
         this.specializedRotationGradientFlatScratch =
                 gradient == null ? null : gradient.specializedRotationGradientFlatScratch;
-        this.specializedRotationGradientScratch =
-                gradient == null ? null : gradient.specializedRotationGradientScratch;
         this.covariance2 = gradient == null ? null : gradient.covariance2;
         this.transitionMatrixFlat = gradient == null ? null : gradient.transitionMatrixFlat;
         this.covarianceAdjointFlat = gradient == null ? null : gradient.covarianceAdjointFlat;
@@ -136,7 +133,7 @@ public final class BranchGradientWorkspace {
             requireLength(traitCovariance, dim, dim, "traitCovariance");
         }
         if (hasCapability(WorkspaceCapability.ADJOINTS)) {
-            requireLength(covariance, dim, dim, "covariance");
+            requireLength(covariance, dim * dim, "covariance");
             requireLength(varianceFlat, dim * dim, "varianceFlat");
             requireLength(precisionFlat, dim * dim, "precisionFlat");
             requireLength(observedIndexScratch, dim, "observedIndexScratch");
@@ -144,7 +141,7 @@ public final class BranchGradientWorkspace {
             requireLength(reducedIndexByTraitScratch, dim, "reducedIndexByTraitScratch");
         }
         if (hasCapability(WorkspaceCapability.DENSE_GRADIENT)) {
-            requireLength(covariance2, dim, dim, "covariance2");
+            requireLength(covariance2, dim * dim, "covariance2");
             requireLength(transitionMatrixFlat, dim * dim, "transitionMatrixFlat");
             requireLength(covarianceAdjointFlat, dim * dim, "covarianceAdjointFlat");
             requireLength(matrixProductFlat, dim * dim, "matrixProductFlat");

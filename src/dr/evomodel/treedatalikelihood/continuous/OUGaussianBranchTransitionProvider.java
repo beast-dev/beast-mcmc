@@ -105,6 +105,11 @@ public final class OUGaussianBranchTransitionProvider
         kernel.fillTransitionMatrix(branchLength, out);
     }
 
+    public void fillBranchTransitionMatrixFlat(final double branchLength, final double[] out) {
+        refreshSnapshots();
+        processModel.fillTransitionMatrixFlat(branchLength, out);
+    }
+
     @Override
     public void fillBranchTransitionOffset(final double branchLength, final double[] out) {
         refreshSnapshots();
@@ -115,6 +120,11 @@ public final class OUGaussianBranchTransitionProvider
     public void fillBranchTransitionCovariance(final double branchLength, final double[][] out) {
         refreshSnapshots();
         kernel.fillTransitionCovariance(branchLength, out);
+    }
+
+    public void fillBranchTransitionCovarianceFlat(final double branchLength, final double[] out) {
+        refreshSnapshots();
+        processModel.fillTransitionCovarianceFlat(branchLength, out);
     }
 
     private void refreshSnapshots() {

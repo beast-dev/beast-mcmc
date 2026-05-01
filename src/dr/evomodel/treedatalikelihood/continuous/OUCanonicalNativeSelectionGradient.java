@@ -72,7 +72,7 @@ final class OUCanonicalNativeSelectionGradient {
         }
         try {
             if (fallbackPolicy.useNativeGradientFromContribution()) {
-                nativeBranchGradient.accumulateNativeGradientFromCanonicalContribution(
+                nativeBranchGradient.accumulateNativeGradientFromCanonicalContributionFlat(
                         processModel.getDiffusionMatrix(),
                         scratch.stationaryMean,
                         branchLength,
@@ -81,7 +81,7 @@ final class OUCanonicalNativeSelectionGradient {
                         scratch.compressedNativeGradient,
                         scratch.rotationGradient);
             } else {
-                nativeBranchGradient.accumulateNativeGradientFromAdjoints(
+                nativeBranchGradient.accumulateNativeGradientFromAdjointsFlat(
                         processModel.getDiffusionMatrix(),
                         scratch.stationaryMean,
                         branchLength,
@@ -120,7 +120,7 @@ final class OUCanonicalNativeSelectionGradient {
                 scratch.compressedNativeGradient,
                 nativeGradient,
                 scratch.rotationGradient);
-        final double[] direct = CanonicalSelectionGradientProjector.assembleBlockGradientResult(
+        final double[] direct = CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
                 dimension, requestedParameter, blockParameter, nativeGradient, scratch.rotationGradient);
         if (debugOptions.isBranchLocalSelectionFiniteDifferenceEnabled()) {
             emitNativeLocalSelectionDebug(branchLength, requestedParameter, direct, localAdjoints);
@@ -172,7 +172,7 @@ final class OUCanonicalNativeSelectionGradient {
                                               final Parameter requestedParameter,
                                               final double[] compressedNative,
                                               final double[] nativeBlock,
-                                              final double[][] rotation) {
+                                              final double[] rotation) {
         if (!debugOptions.isNativeAssemblyEnabled()) {
             return;
         }
@@ -183,7 +183,7 @@ final class OUCanonicalNativeSelectionGradient {
                 return;
             }
         }
-        final double[] assembled = CanonicalSelectionGradientProjector.assembleBlockGradientResult(
+        final double[] assembled = CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
                 dimension, requestedParameter, blockParameter, nativeBlock, rotation);
         final Integer contextNode = debugNodeContext.get();
         System.err.println("branchNativeAssemblyDebug node=" + (contextNode == null ? "<unknown>" : contextNode)

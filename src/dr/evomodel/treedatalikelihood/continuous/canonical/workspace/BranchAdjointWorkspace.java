@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
@@ -23,8 +22,7 @@ public final class BranchAdjointWorkspace {
     public final int[] reducedIndexByTraitScratch;
     public final double[] mean;
     public final double[] mean2;
-    public final double[][] covariance;
-    public final double[] covarianceFlat;        // was double[][] covariance; row-major, length dim*dim
+    public final double[] covarianceFlat;
     public final double[] varianceFlat;
     public final double[] precisionFlat;
     public final double[] reducedPrecisionFlatScratch;
@@ -48,7 +46,6 @@ public final class BranchAdjointWorkspace {
         this.reducedIndexByTraitScratch = partialObservationWorkspace.partition.reducedIndexByTrait;
         this.mean = new double[dim];
         this.mean2 = partialObservationWorkspace.missingMean;
-        this.covariance = new double[dim][dim];
         this.covarianceFlat = new double[dim * dim];
         this.varianceFlat = new double[dim * dim];
         this.precisionFlat = new double[dim * dim];
@@ -62,14 +59,13 @@ public final class BranchAdjointWorkspace {
 
     public void fillMomentsFromCanonical(final CanonicalGaussianState state,
                                   final double[] meanOut,
-                                  final double[][] covarianceOut,
+                                  final double[] covarianceOut,
                                   final int dim) {
         GaussianFormConverter.fillMomentsFromState(
                 state,
                 meanOut,
-                covarianceFlat,
+                covarianceOut,
                 dim,
                 converterWorkspace);
-        MatrixOps.fromFlat(covarianceFlat, covarianceOut, dim);
     }
 }

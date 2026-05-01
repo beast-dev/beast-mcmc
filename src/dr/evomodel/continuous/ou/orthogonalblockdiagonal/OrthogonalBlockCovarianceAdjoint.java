@@ -116,11 +116,54 @@ final class OrthogonalBlockCovarianceAdjoint {
         accumulateCurrentCached(basis, dt, dLogL_dV, compressedDAccumulator, rotationAccumulator);
     }
 
+    void prepareAndAccumulateCurrentFlat(final MatrixParameterInterface diffusionMatrix,
+                                         final OrthogonalBlockBasisCache basis,
+                                         final double dt,
+                                         final double[] dLogL_dV,
+                                         final double[] compressedDAccumulator,
+                                         final double[] rotationAccumulator) {
+        fillTransitionCovarianceMatrix(diffusionMatrix, basis, transitionCovariance);
+        accumulateCurrentCachedFlat(basis, dt, dLogL_dV, compressedDAccumulator, rotationAccumulator);
+    }
+
     void accumulateCurrentCached(final OrthogonalBlockBasisCache basis,
                                  final double dt,
                                  final double[] dLogL_dV,
                                  final double[] compressedDAccumulator,
                                  final double[][] rotationAccumulator) {
+        accumulateCovariancePullback(
+                basis.rMatrix,
+                basis.rtMatrix,
+                basis.expD,
+                basis.blockDParams,
+                dt,
+                qMatrix,
+                stationaryCovDBasis,
+                transitionCovDBasis,
+                gV,
+                hDBasis,
+                gS,
+                yAdjoint,
+                gECov,
+                gradD,
+                gradR,
+                temp1,
+                temp2,
+                temp3,
+                lyapunovAdjointHelper,
+                frechetHelper,
+                scaledNegativeBlockDScratch,
+                denseAdjointScratch,
+                dLogL_dV,
+                compressedDAccumulator,
+                rotationAccumulator);
+    }
+
+    void accumulateCurrentCachedFlat(final OrthogonalBlockBasisCache basis,
+                                     final double dt,
+                                     final double[] dLogL_dV,
+                                     final double[] compressedDAccumulator,
+                                     final double[] rotationAccumulator) {
         accumulateCovariancePullback(
                 basis.rMatrix,
                 basis.rtMatrix,

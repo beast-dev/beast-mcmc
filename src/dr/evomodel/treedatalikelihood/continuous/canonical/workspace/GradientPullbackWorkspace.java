@@ -10,8 +10,7 @@ public final class GradientPullbackWorkspace {
     public final double[] specializedCompressedGradientScratch;
     public final double[] specializedNativeGradientScratch;
     public final double[] specializedRotationGradientFlatScratch;
-    public final double[][] specializedRotationGradientScratch;
-    public final double[][] covariance2;
+    public final double[] covariance2;
     public final double[] transitionMatrixFlat;
     public final double[] covarianceAdjointFlat;
     public final double[] matrixProductFlat;
@@ -43,9 +42,6 @@ public final class GradientPullbackWorkspace {
                 specialized == null ? null : specialized.nativeGradientScratch;
         this.specializedRotationGradientFlatScratch =
                 specialized == null ? null : specialized.rotationGradientFlatScratch;
-        this.specializedRotationGradientScratch =
-                specialized == null ? null : specialized.rotationGradientScratch;
-
         this.covariance2 = dense == null ? null : dense.covariance2;
         this.transitionMatrixFlat = dense == null ? null : dense.transitionMatrixFlat;
         this.covarianceAdjointFlat = dense == null ? null : dense.covarianceAdjointFlat;

@@ -139,15 +139,15 @@ public final class OUCanonicalBranchGradientBridge {
         return selectionGradient.getGradientWrtSelection(branchLength, optimum, statistics);
     }
 
-    public double[][] getGradientWrtSelectionComponents(final double branchLength,
-                                                        final double[] optimum,
-                                                        final BranchSufficientStatistics statistics) {
+    public double[] getGradientWrtSelectionComponents(final double branchLength,
+                                                      final double[] optimum,
+                                                      final BranchSufficientStatistics statistics) {
         return selectionGradient.getGradientWrtSelectionComponents(branchLength, optimum, statistics);
     }
 
-    public double[][] getNumericalDenseGradientWrtSelectionComponents(final double branchLength,
-                                                                      final double[] optimum,
-                                                                      final BranchSufficientStatistics statistics) {
+    public double[] getNumericalDenseGradientWrtSelectionComponents(final double branchLength,
+                                                                    final double[] optimum,
+                                                                    final BranchSufficientStatistics statistics) {
         return selectionGradient.getNumericalDenseGradientWrtSelectionComponents(branchLength, optimum, statistics);
     }
 

@@ -60,16 +60,8 @@ final class OUCanonicalBranchSelectionGradient {
 
         refreshProcessSnapshots();
 
-        final double[][] barVdi2D = new double[dimension][dimension];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                barVdi2D[i][j] = 0.5 * (
-                        barVdiFlatIn[i * dimension + j] + barVdiFlatIn[j * dimension + i]);
-            }
-        }
-
         final double[] denseGradient = new double[dimension * dimension];
-        processModel.accumulateSelectionGradientFromCovariance(branchLength, barVdi2D, denseGradient);
+        processModel.accumulateSelectionGradientFromCovarianceFlat(branchLength, barVdiFlatIn, false, denseGradient);
         addInto(selectionPullback(nativeBlockParameter, requestedParameter, false).projectDenseGradient(denseGradient),
                 gradientAccumulator);
     }
@@ -81,30 +73,27 @@ final class OUCanonicalBranchSelectionGradient {
             return finiteDifference.numericalLocalSelectionGradientFromFrozenFactor(
                     branchLength, optimum, statistics, scratch.localAdjoints);
         }
-        final double[][] components = computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
+        computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
         if (debugOptions.isSelectionComponentsEnabled()) {
             System.err.println("selectionComponentsDebug branchLength=" + branchLength
-                    + " transition=" + Arrays.toString(components[0])
-                    + " covariance=" + Arrays.toString(components[1])
-                    + " total=" + Arrays.toString(components[2]));
+                    + " transition=" + Arrays.toString(scratch.transitionSelectionGradient)
+                    + " covariance=" + Arrays.toString(scratch.covarianceSelectionGradient)
+                    + " total=" + Arrays.toString(scratch.totalSelectionGradient));
         }
-        return components[2].clone();
+        return scratch.totalSelectionGradient.clone();
     }
 
-    double[][] getGradientWrtSelectionComponents(final double branchLength,
-                                                 final double[] optimum,
-                                                 final BranchSufficientStatistics statistics) {
-        final double[][] components = computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
-        return new double[][]{
-                components[0].clone(),
-                components[1].clone(),
-                components[2].clone()
-        };
+    double[] getGradientWrtSelectionComponents(final double branchLength,
+                                               final double[] optimum,
+                                               final BranchSufficientStatistics statistics) {
+        computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
+        fillComponentGradient();
+        return scratch.selectionComponentGradient.clone();
     }
 
-    double[][] getNumericalDenseGradientWrtSelectionComponents(final double branchLength,
-                                                               final double[] optimum,
-                                                               final BranchSufficientStatistics statistics) {
+    double[] getNumericalDenseGradientWrtSelectionComponents(final double branchLength,
+                                                             final double[] optimum,
+                                                             final BranchSufficientStatistics statistics) {
         refreshProcessSnapshots();
         final CanonicalLocalTransitionAdjoints localAdjoints = scratch.localAdjoints;
         branchWiring.fillLocalAdjoints(branchLength, optimum, statistics, localAdjoints);
@@ -120,7 +109,11 @@ final class OUCanonicalBranchSelectionGradient {
         for (int i = 0; i < totalNumeric.length; ++i) {
             totalNumeric[i] = transitionNumeric[i] + covarianceNumeric[i];
         }
-        return new double[][]{transitionNumeric, covarianceNumeric, totalNumeric};
+        final double[] components = new double[3 * totalNumeric.length];
+        System.arraycopy(transitionNumeric, 0, components, 0, transitionNumeric.length);
+        System.arraycopy(covarianceNumeric, 0, components, transitionNumeric.length, covarianceNumeric.length);
+        System.arraycopy(totalNumeric, 0, components, 2 * transitionNumeric.length, totalNumeric.length);
+        return components;
     }
 
     double[] getGradientWrtSelection(final double branchLength,
@@ -176,34 +169,29 @@ final class OUCanonicalBranchSelectionGradient {
                         branchLength, optimum, statistics, scratch.localAdjoints));
     }
 
-    private double[][] computeDenseSelectionGradientComponents(final double branchLength,
-                                                               final double[] optimum,
-                                                               final BranchSufficientStatistics statistics) {
+    private void computeDenseSelectionGradientComponents(final double branchLength,
+                                                         final double[] optimum,
+                                                         final BranchSufficientStatistics statistics) {
         refreshProcessSnapshots();
         final CanonicalLocalTransitionAdjoints localAdjoints = scratch.localAdjoints;
         branchWiring.fillLocalAdjoints(branchLength, optimum, statistics, localAdjoints);
-        final double[] transitionGradient = new double[scratch.matrixGradient.length];
-        final double[] covarianceGradient = new double[scratch.matrixGradient.length];
-        final double[] totalGradient = new double[scratch.matrixGradient.length];
+        final double[] transitionGradient = scratch.transitionSelectionGradient;
+        final double[] covarianceGradient = scratch.covarianceSelectionGradient;
+        final double[] totalGradient = scratch.totalSelectionGradient;
+        OUCanonicalBranchGradientUtils.zero(transitionGradient);
+        OUCanonicalBranchGradientUtils.zero(covarianceGradient);
+        OUCanonicalBranchGradientUtils.zero(totalGradient);
 
-        OUCanonicalBranchGradientUtils.copyFromFlatInto(
-                localAdjoints.dLogL_dF, scratch.transitionAdjoint, dimension);
-        processModel.accumulateSelectionGradient(
+        processModel.accumulateSelectionGradientFlat(
                 branchLength,
                 optimum,
-                scratch.transitionAdjoint,
+                localAdjoints.dLogL_dF,
                 localAdjoints.dLogL_df,
                 transitionGradient);
-        if (fallbackPolicy.useNoTransposeDOmega()) {
-            OUCanonicalBranchGradientUtils.copyFromFlatInto(
-                    localAdjoints.dLogL_dOmega, scratch.covarianceAdjoint, dimension);
-        } else {
-            OUCanonicalBranchGradientUtils.transposeFromFlatInto(
-                    localAdjoints.dLogL_dOmega, scratch.covarianceAdjoint, dimension);
-        }
-        processModel.accumulateSelectionGradientFromCovariance(
+        processModel.accumulateSelectionGradientFromCovarianceFlat(
                 branchLength,
-                scratch.covarianceAdjoint,
+                localAdjoints.dLogL_dOmega,
+                !fallbackPolicy.useNoTransposeDOmega(),
                 covarianceGradient);
         for (int i = 0; i < totalGradient.length; ++i) {
             totalGradient[i] = transitionGradient[i] + covarianceGradient[i];
@@ -211,7 +199,6 @@ final class OUCanonicalBranchSelectionGradient {
         if (debugOptions.isBranchLocalSelectionFiniteDifferenceEnabled()) {
             finiteDifference.emitDenseLocalSelectionDebug(branchLength, optimum, localAdjoints, totalGradient);
         }
-        return new double[][]{transitionGradient, covarianceGradient, totalGradient};
     }
 
     private double[] getDenseGradientWrtSelection(final double branchLength,
@@ -281,6 +268,13 @@ final class OUCanonicalBranchSelectionGradient {
 
     private void refreshProcessSnapshots() {
         branchTransitionProvider.getProcessModel();
+    }
+
+    private void fillComponentGradient() {
+        final int blockLength = scratch.transitionSelectionGradient.length;
+        System.arraycopy(scratch.transitionSelectionGradient, 0, scratch.selectionComponentGradient, 0, blockLength);
+        System.arraycopy(scratch.covarianceSelectionGradient, 0, scratch.selectionComponentGradient, blockLength, blockLength);
+        System.arraycopy(scratch.totalSelectionGradient, 0, scratch.selectionComponentGradient, 2 * blockLength, blockLength);
     }
 
     private static void addInto(final double[] values, final double[] accumulator) {

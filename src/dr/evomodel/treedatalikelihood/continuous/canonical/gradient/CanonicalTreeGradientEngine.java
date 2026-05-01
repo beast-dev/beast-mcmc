@@ -196,7 +196,7 @@ public final class CanonicalTreeGradientEngine {
         CanonicalGaussianMessageOps.combineStates(rootPreOrder, rootPostOrder, adjoint.combinedState);
 
         adjoint.fillMomentsFromCanonical(
-                adjoint.combinedState, adjoint.mean, adjoint.covariance, dimension);
+                adjoint.combinedState, adjoint.mean, adjoint.covarianceFlat, dimension);
         adjoint.fillMomentsFromCanonical(
                 rootPreOrder, adjoint.mean2, gradient.covariance2, dimension);
 
@@ -206,7 +206,7 @@ public final class CanonicalTreeGradientEngine {
             final int iOff = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 gradient.covarianceAdjointFlat[iOff + j] =
-                        adjoint.covariance[i][j] + deltaI * (adjoint.mean[j] - adjoint.mean2[j]);
+                        adjoint.covarianceFlat[iOff + j] + deltaI * (adjoint.mean[j] - adjoint.mean2[j]);
             }
         }
 

@@ -1,8 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
-
 final class OUCanonicalBranchGradientUtils {
 
     private OUCanonicalBranchGradientUtils() {
@@ -18,39 +16,18 @@ final class OUCanonicalBranchGradientUtils {
         return true;
     }
 
-    static boolean isFinite(final double[][] values) {
-        for (double[] row : values) {
-            if (!isFinite(row)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     static void zero(final double[] vector) {
         for (int i = 0; i < vector.length; ++i) {
             vector[i] = 0.0;
         }
     }
 
-    static void zero(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < matrix[i].length; ++j) {
-                matrix[i][j] = 0.0;
+    static void transposeFlatSquare(final double[] in, final double[] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                out[j * dim + i] = in[i * dim + j];
             }
         }
-    }
-
-    static void copyFromFlatInto(final double[] in, final double[][] out, final int dim) {
-        GaussianMatrixOps.rowMajorToMatrix(in, out, dim);
-    }
-
-    static void transposeFromFlatInto(final double[] in, final double[][] out, final int dim) {
-        GaussianMatrixOps.transposeFlatToMatrix(in, out, dim);
-    }
-
-    static void transposeFlatSquare(final double[] in, final double[] out, final int dim) {
-        GaussianMatrixOps.rowMajorToColumnMajorParameter(in, out, dim);
     }
 
     static void copyAdjoints(final CanonicalLocalTransitionAdjoints source,

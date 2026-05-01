@@ -24,7 +24,7 @@ final class OUCanonicalBranchContributionBuilder {
 
     static void fillObservedTipContribution(final int dimension,
                                             final double[] parentMean,
-                                            final double[][] parentCovariance,
+                                            final double[] parentCovariance,
                                             final DenseMatrix64F observedChild,
                                             final CanonicalBranchMessageContribution contribution) {
         for (int i = 0; i < dimension; ++i) {
@@ -35,8 +35,8 @@ final class OUCanonicalBranchContributionBuilder {
             for (int j = 0; j < dimension; ++j) {
                 final double xj = parentMean[j];
                 final double yj = observedChild.unsafe_get(j, 0);
-                final double exx = parentCovariance[i][j] + xi * xj;
                 final int ij = i * dimension + j;
+                final double exx = parentCovariance[ij] + xi * xj;
                 contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
                 contribution.dLogL_dPrecisionXY[ij] = -0.5 * (xi * yj);
                 contribution.dLogL_dPrecisionYX[ij] = -0.5 * (yi * xj);
@@ -50,7 +50,8 @@ final class OUCanonicalBranchContributionBuilder {
                                                      final SufficientStatisticsTipObservationPattern observationPattern,
                                                      final DenseMatrix64F observedChild,
                                                      final double[] reducedMean,
-                                                     final double[][] reducedCovariance,
+                                                     final double[] reducedCovariance,
+                                                     final int reducedDimension,
                                                      final CanonicalBranchMessageContribution contribution) {
         clear(contribution);
         for (int i = 0; i < dimension; ++i) {
@@ -69,16 +70,16 @@ final class OUCanonicalBranchContributionBuilder {
                 final double yi = contribution.dLogL_dInformationY[i];
                 final double yj = contribution.dLogL_dInformationY[j];
 
-                final double exx = reducedCovariance[i][j] + xi * xj;
+                final double exx = reducedCovariance[i * reducedDimension + j] + xi * xj;
                 final double exy = observationPattern.isObserved(j)
                         ? xi * yj
-                        : reducedCovariance[i][reducedJ] + xi * yj;
+                        : reducedCovariance[i * reducedDimension + reducedJ] + xi * yj;
                 final double eyx = observationPattern.isObserved(i)
                         ? yi * xj
-                        : reducedCovariance[reducedI][j] + yi * xj;
+                        : reducedCovariance[reducedI * reducedDimension + j] + yi * xj;
                 final double eyy = (observationPattern.isObserved(i) || observationPattern.isObserved(j))
                         ? yi * yj
-                        : reducedCovariance[reducedI][reducedJ] + yi * yj;
+                        : reducedCovariance[reducedI * reducedDimension + reducedJ] + yi * yj;
 
                 final int ij = i * dimension + j;
                 contribution.dLogL_dPrecisionXX[ij] = -0.5 * exx;
@@ -92,8 +93,9 @@ final class OUCanonicalBranchContributionBuilder {
 
     static void fillPairPosteriorContribution(final int dimension,
                                               final double[] pairMean,
-                                              final double[][] pairCovariance,
+                                              final double[] pairCovariance,
                                               final CanonicalBranchMessageContribution contribution) {
+        final int pairDimension = 2 * dimension;
         for (int i = 0; i < dimension; ++i) {
             final double currentMeanI = pairMean[i];
             final double nextMeanI = pairMean[dimension + i];
@@ -103,15 +105,15 @@ final class OUCanonicalBranchContributionBuilder {
                 final double currentMeanJ = pairMean[j];
                 final double nextMeanJ = pairMean[dimension + j];
                 final double currentSecondMoment =
-                        pairCovariance[i][j] + currentMeanI * currentMeanJ;
+                        pairCovariance[i * pairDimension + j] + currentMeanI * currentMeanJ;
                 final double crossSecondMoment =
-                        pairCovariance[dimension + i][j] + nextMeanI * currentMeanJ;
+                        pairCovariance[(dimension + i) * pairDimension + j] + nextMeanI * currentMeanJ;
                 final double nextSecondMoment =
-                        pairCovariance[dimension + i][dimension + j] + nextMeanI * nextMeanJ;
+                        pairCovariance[(dimension + i) * pairDimension + dimension + j] + nextMeanI * nextMeanJ;
                 final int ij = i * dimension + j;
                 contribution.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
                 contribution.dLogL_dPrecisionXY[ij] =
-                        -0.5 * (pairCovariance[i][dimension + j] + currentMeanI * nextMeanJ);
+                        -0.5 * (pairCovariance[i * pairDimension + dimension + j] + currentMeanI * nextMeanJ);
                 contribution.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
                 contribution.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
             }

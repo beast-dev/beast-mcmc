@@ -59,6 +59,54 @@ final class CanonicalSelectionGradientProjector {
         throw new IllegalArgumentException("Unsupported block parameter: " + requestedParameter.getId());
     }
 
+    static double[] assembleBlockGradientResultFlat(
+            final int dimension,
+            final Parameter requestedParameter,
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+            final double[] nativeBlockGradient,
+            final double[] gradientR) {
+        if (requestedParameter == blockParameter.getParameter()) {
+            if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
+                final double[] angleGradient =
+                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
+                                .pullBackGradientFlat(gradientR, dimension);
+                final double[] out = new double[blockParameter.getBlockDiagonalNParameters() + angleGradient.length];
+                System.arraycopy(nativeBlockGradient, 0, out, 0, blockParameter.getBlockDiagonalNParameters());
+                System.arraycopy(angleGradient, 0, out, blockParameter.getBlockDiagonalNParameters(), angleGradient.length);
+                return out;
+            }
+            final double[] out = new double[blockParameter.getBlockDiagonalNParameters() + dimension * dimension];
+            System.arraycopy(nativeBlockGradient, 0, out, 0, blockParameter.getBlockDiagonalNParameters());
+            final double[] flatRotation = flattenRotationGradientFlat(
+                    blockParameter.getRotationMatrixParameter(), gradientR, dimension);
+            System.arraycopy(flatRotation, 0, out, blockParameter.getBlockDiagonalNParameters(), flatRotation.length);
+            return out;
+        }
+
+        if (requestedParameter == blockParameter.getRotationMatrixParameter()) {
+            return flattenRotationGradientFlat(blockParameter.getRotationMatrixParameter(), gradientR, dimension);
+        }
+        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
+                && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
+            return ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
+                    .pullBackGradientFlat(gradientR, dimension);
+        }
+        if (requestedParameter == blockParameter.getScalarBlockParameter()) {
+            return new double[]{nativeBlockGradient[0]};
+        }
+
+        final int blockBase = blockParameter.hasLeadingOneByOneBlock() ? 1 : 0;
+        final int blockWidth = blockParameter.getNum2x2Blocks();
+        for (int family = 0; family < blockParameter.getTwoByTwoParameterFamilyCount(); ++family) {
+            if (requestedParameter == blockParameter.getTwoByTwoBlockParameter(family)) {
+                final double[] out = new double[blockWidth];
+                System.arraycopy(nativeBlockGradient, blockBase + family * blockWidth, out, 0, blockWidth);
+                return out;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported block parameter: " + requestedParameter.getId());
+    }
+
     static double[] reorderDenseGradientForRequestedParameter(final int dimension,
                                                               final Parameter requestedParameter,
                                                               final double[] rowMajorGradient) {
@@ -122,6 +170,22 @@ final class CanonicalSelectionGradientProjector {
             return flattenRowMajor(gradientR);
         }
         return flattenColumnMajor(gradientR);
+    }
+
+    private static double[] flattenRotationGradientFlat(final Parameter rotationParameter,
+                                                        final double[] gradientR,
+                                                        final int dimension) {
+        final double[] out = new double[dimension * dimension];
+        if (rotationParameter instanceof TransposedMatrixParameter) {
+            System.arraycopy(gradientR, 0, out, 0, out.length);
+        } else {
+            for (int row = 0; row < dimension; ++row) {
+                for (int col = 0; col < dimension; ++col) {
+                    out[col * dimension + row] = gradientR[row * dimension + col];
+                }
+            }
+        }
+        return out;
     }
 
     private static void fillMatrixFromRowMajorGradient(final double[][] out,

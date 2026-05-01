@@ -24,10 +24,26 @@ public interface CanonicalNativeBranchGradientCapability {
             double[] compressedDAccumulator,
             double[][] rotationAccumulator);
 
+    void accumulateNativeGradientFromCanonicalContributionFlat(
+            MatrixParameterInterface diffusionMatrix,
+            double[] stationaryMean,
+            double dt,
+            CanonicalBranchMessageContribution contribution,
+            CanonicalLocalTransitionAdjoints localAdjoints,
+            double[] compressedDAccumulator,
+            double[] rotationAccumulator);
+
     void accumulateNativeGradientFromAdjoints(MatrixParameterInterface diffusionMatrix,
                                              double[] stationaryMean,
                                              double dt,
                                              CanonicalLocalTransitionAdjoints localAdjoints,
                                              double[] compressedDAccumulator,
                                              double[][] rotationAccumulator);
+
+    void accumulateNativeGradientFromAdjointsFlat(MatrixParameterInterface diffusionMatrix,
+                                                  double[] stationaryMean,
+                                                  double dt,
+                                                  CanonicalLocalTransitionAdjoints localAdjoints,
+                                                  double[] compressedDAccumulator,
+                                                  double[] rotationAccumulator);
 }

@@ -560,6 +560,46 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
     }
 
+    public void accumulateNativeGradientFromCanonicalContributionFlat(final MatrixParameterInterface diffusionMatrix,
+                                                                      final double[] stationaryMean,
+                                                                      final double dt,
+                                                                      final CanonicalBranchMessageContribution contribution,
+                                                                      final CanonicalLocalTransitionAdjoints localAdjoints,
+                                                                      final double[] compressedDAccumulator,
+                                                                      final double[] rotationAccumulator) {
+        refreshBasisCaches(dt);
+        fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
+        fillTransitionOffset(stationaryMean, transitionOffsetScratch);
+
+        copyAndInvertPositiveDefiniteFlat(transitionCovariance, transitionCovarianceArrayScratch, precisionFlat);
+        CanonicalTransitionAdjointUtils.fillFromMoments(
+                precisionFlat,
+                transitionCovarianceArrayScratch,
+                basisCache.transitionMatrix.data,
+                transitionOffsetScratch,
+                contribution,
+                canonicalAdjointWorkspace,
+                localAdjoints);
+
+        selectionAdjoint.accumulateCurrentFlat(
+                basisCache,
+                dt,
+                stationaryMean,
+                localAdjoints.dLogL_dF,
+                localAdjoints.dLogL_df,
+                compressedDAccumulator,
+                rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException("Non-finite orthogonal native transition contribution at dt=" + dt);
+        }
+        covarianceAdjoint.accumulateCurrentCachedFlat(
+                basisCache, dt, localAdjoints.dLogL_dOmega,
+                compressedDAccumulator, rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException("Non-finite orthogonal native covariance contribution at dt=" + dt);
+        }
+    }
+
     public void accumulateNativeGradientFromAdjoints(final MatrixParameterInterface diffusionMatrix,
                                                      final double[] stationaryMean,
                                                      final double dt,
@@ -582,6 +622,35 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
 
         covarianceAdjoint.accumulateCurrentCached(
+                basisCache, dt, localAdjoints.dLogL_dOmega,
+                compressedDAccumulator, rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException("Non-finite orthogonal native covariance contribution at dt=" + dt);
+        }
+    }
+
+    public void accumulateNativeGradientFromAdjointsFlat(final MatrixParameterInterface diffusionMatrix,
+                                                         final double[] stationaryMean,
+                                                         final double dt,
+                                                         final CanonicalLocalTransitionAdjoints localAdjoints,
+                                                         final double[] compressedDAccumulator,
+                                                         final double[] rotationAccumulator) {
+        refreshBasisCaches(dt);
+        fillTransitionCovarianceMatrix(diffusionMatrix, dt, transitionCovariance);
+
+        selectionAdjoint.accumulateCurrentFlat(
+                basisCache,
+                dt,
+                stationaryMean,
+                localAdjoints.dLogL_dF,
+                localAdjoints.dLogL_df,
+                compressedDAccumulator,
+                rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException("Non-finite orthogonal native transition contribution at dt=" + dt);
+        }
+
+        covarianceAdjoint.accumulateCurrentCachedFlat(
                 basisCache, dt, localAdjoints.dLogL_dOmega,
                 compressedDAccumulator, rotationAccumulator);
         if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {

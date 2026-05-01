@@ -101,7 +101,7 @@ public final class CanonicalBranchContributionAssembler {
             for (int j = 0; j < dim; ++j) {
                 final double xj = workspace.mean[j];
                 final double yj = tipObservation.valueAt(j);
-                final double exx = workspace.covariance[i][j] + xi * xj;
+                final double exx = workspace.covariance[iOff + j] + xi * xj;
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * exx;
                 workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
                 workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);
@@ -157,7 +157,7 @@ public final class CanonicalBranchContributionAssembler {
     }
 
     private void fillContributionFromFixedParentChildMoments(final double[] childMean,
-                                                             final double[][] childCovariance,
+                                                             final double[] childCovariance,
                                                              final BranchGradientWorkspace workspace) {
         clearContribution(workspace);
         for (int i = 0; i < dim; ++i) {
@@ -169,7 +169,7 @@ public final class CanonicalBranchContributionAssembler {
             for (int j = 0; j < dim; ++j) {
                 final double xj = stateStore.fixedRootValue[j];
                 final double yj = childMean[j];
-                final double eyy = childCovariance[i][j] + yi * yj;
+                final double eyy = childCovariance[iOff + j] + yi * yj;
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
                 workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
                 workspace.contribution.dLogL_dPrecisionYX[iOff + j] = -0.5 * (yi * xj);

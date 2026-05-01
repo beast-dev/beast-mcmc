@@ -22,14 +22,19 @@ final class OUCanonicalTransitionState {
     private final OUCanonicalParentAboveResolver parentAboveResolver;
     private final DenseMatrix64F scratchMatrix;
     private final DenseMatrix64F secondaryScratchMatrix;
-    private final double[][] reducedPrecisionScratch;
-    private final double[][] reducedCovarianceScratch;
-    private final double[][] reducedCholeskyScratch;
-    private final double[][] reducedLowerInverseScratch;
-    private final double[][] transitionMatrixScratch;
-    private final double[][] transitionCovarianceScratch;
+    private final double[] spdMatrixScratch;
+    private final double[] spdInverseScratch;
+    private final double[] spdCholeskyScratch;
+    private final double[] spdLowerInverseScratch;
+    private final double[] transitionMatrixScratch;
+    private final double[] transitionCovarianceScratch;
     private final double[] transitionOffsetScratch;
-    private final double[][] matrixScratch;
+    private final double[] transitionPrecisionScratch;
+    private final double[] transitionSymmetricScratch;
+    private final double[] transitionCholeskyScratch;
+    private final double[] transitionLowerInverseScratch;
+    private final double[] transitionTransposeScratch;
+    private final double[] matrixScratch;
 
     OUCanonicalTransitionState(final OUGaussianBranchTransitionProvider branchTransitionProvider,
                                final CanonicalGaussianTransition transition,
@@ -51,14 +56,19 @@ final class OUCanonicalTransitionState {
         this.scratchMatrix = new DenseMatrix64F(dimension, dimension);
         this.secondaryScratchMatrix = new DenseMatrix64F(dimension, dimension);
         final int maxReducedDimension = 2 * dimension;
-        this.reducedPrecisionScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.reducedCovarianceScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.reducedCholeskyScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.reducedLowerInverseScratch = new double[maxReducedDimension][maxReducedDimension];
-        this.transitionMatrixScratch = new double[dimension][dimension];
-        this.transitionCovarianceScratch = new double[dimension][dimension];
+        this.spdMatrixScratch = new double[maxReducedDimension * maxReducedDimension];
+        this.spdInverseScratch = new double[maxReducedDimension * maxReducedDimension];
+        this.spdCholeskyScratch = new double[maxReducedDimension * maxReducedDimension];
+        this.spdLowerInverseScratch = new double[maxReducedDimension * maxReducedDimension];
+        this.transitionMatrixScratch = new double[dimension * dimension];
+        this.transitionCovarianceScratch = new double[dimension * dimension];
         this.transitionOffsetScratch = new double[dimension];
-        this.matrixScratch = new double[dimension][dimension];
+        this.transitionPrecisionScratch = new double[dimension * dimension];
+        this.transitionSymmetricScratch = new double[dimension * dimension];
+        this.transitionCholeskyScratch = new double[dimension * dimension];
+        this.transitionLowerInverseScratch = new double[dimension * dimension];
+        this.transitionTransposeScratch = new double[dimension * dimension];
+        this.matrixScratch = new double[dimension * dimension];
     }
 
     void fillFromStatistics(final MatrixSufficientStatistics branchStatistics) {
@@ -85,16 +95,17 @@ final class OUCanonicalTransitionState {
     }
 
     void fillFromKernel(final double branchLength, final double[] optimum) {
-        final double[][] transitionMatrix = transitionMatrixScratch;
-        final double[][] transitionCovariance = transitionCovarianceScratch;
+        final double[] transitionMatrix = transitionMatrixScratch;
+        final double[] transitionCovariance = transitionCovarianceScratch;
         final double[] transitionOffset = transitionOffsetScratch;
         fillTransitionMomentsFromKernel(branchLength, optimum, transitionMatrix, transitionOffset, transitionCovariance);
 
         for (int i = 0; i < dimension; ++i) {
             displacementVector.unsafe_set(i, 0, transitionOffset[i]);
+            final int iOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                actualizationMatrix.unsafe_set(i, j, transitionMatrix[i][j]);
-                branchCovarianceMatrix.unsafe_set(i, j, transitionCovariance[i][j]);
+                actualizationMatrix.unsafe_set(i, j, transitionMatrix[iOffset + j]);
+                branchCovarianceMatrix.unsafe_set(i, j, transitionCovariance[iOffset + j]);
             }
         }
         canonicalizeBranchCovariancePrecisionPair(
@@ -106,11 +117,11 @@ final class OUCanonicalTransitionState {
                     transitionOffset,
                     transitionCovariance,
                     transition,
-                    reducedCovarianceScratch,
-                    reducedCholeskyScratch,
-                    reducedPrecisionScratch,
-                    reducedLowerInverseScratch,
-                    reducedPrecisionScratch,
+                    transitionPrecisionScratch,
+                    transitionSymmetricScratch,
+                    transitionCholeskyScratch,
+                    transitionLowerInverseScratch,
+                    transitionTransposeScratch,
                     matrixScratch);
         } else {
             OUCanonicalTransitionBuilder.fillFromPrecisionMoments(
@@ -120,11 +131,11 @@ final class OUCanonicalTransitionState {
 
     void fillTransitionMomentsFromKernel(final double branchLength,
                                          final double[] optimum,
-                                         final double[][] transitionMatrixOut,
+                                         final double[] transitionMatrixOut,
                                          final double[] transitionOffsetOut,
-                                         final double[][] transitionCovarianceOut) {
-        branchTransitionProvider.fillBranchTransitionMatrix(branchLength, transitionMatrixOut);
-        branchTransitionProvider.fillBranchTransitionCovariance(branchLength, transitionCovarianceOut);
+                                         final double[] transitionCovarianceOut) {
+        branchTransitionProvider.fillBranchTransitionMatrixFlat(branchLength, transitionMatrixOut);
+        branchTransitionProvider.fillBranchTransitionCovarianceFlat(branchLength, transitionCovarianceOut);
         fillTransitionOffset(transitionMatrixOut, optimum, transitionOffsetOut);
     }
 
@@ -176,28 +187,25 @@ final class OUCanonicalTransitionState {
     private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
                                                      final DenseMatrix64F inverseOut,
                                                      final String context) {
-        CanonicalNumerics.safeInvertSymmetricPositiveDefinite(
+        CanonicalNumerics.copyAndInvertPositiveDefiniteFlat(
                 source,
-                inverseOut,
-                scratchMatrix,
-                secondaryScratchMatrix,
-                reducedPrecisionScratch,
-                reducedCovarianceScratch,
-                reducedCholeskyScratch,
-                reducedLowerInverseScratch,
-                CanonicalNumericsOptions.OU_TREE,
-                context,
-                parentAboveResolver.getSpdFailureDump());
+                spdMatrixScratch,
+                spdInverseScratch,
+                spdCholeskyScratch,
+                spdLowerInverseScratch,
+                CanonicalNumericsOptions.OU_TREE);
+        System.arraycopy(spdInverseScratch, 0, inverseOut.data, 0, dimension * dimension);
     }
 
-    private static void fillTransitionOffset(final double[][] transitionMatrix,
+    private static void fillTransitionOffset(final double[] transitionMatrix,
                                              final double[] optimum,
                                              final double[] out) {
         final int d = out.length;
         for (int i = 0; i < d; ++i) {
             double sum = optimum[i];
+            final int iOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                sum -= transitionMatrix[i][j] * optimum[j];
+                sum -= transitionMatrix[iOffset + j] * optimum[j];
             }
             out[i] = sum;
         }

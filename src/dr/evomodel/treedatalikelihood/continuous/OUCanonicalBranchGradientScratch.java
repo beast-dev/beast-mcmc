@@ -7,22 +7,26 @@ final class OUCanonicalBranchGradientScratch {
     final CanonicalLocalTransitionAdjoints localAdjoints;
     final double[] branchMeanGradient;
     final double[] matrixGradient;
+    final double[] transitionSelectionGradient;
+    final double[] covarianceSelectionGradient;
+    final double[] totalSelectionGradient;
+    final double[] selectionComponentGradient;
     final double[] stationaryMean;
     final double[] compressedNativeGradient;
-    final double[][] rotationGradient;
-    final double[][] transitionAdjoint;
-    final double[][] covarianceAdjoint;
+    final double[] rotationGradient;
     final double[] parameterRestore;
 
     OUCanonicalBranchGradientScratch(final int dimension) {
         this.localAdjoints = new CanonicalLocalTransitionAdjoints(dimension);
         this.branchMeanGradient = new double[dimension];
         this.matrixGradient = new double[dimension * dimension];
+        this.transitionSelectionGradient = new double[dimension * dimension];
+        this.covarianceSelectionGradient = new double[dimension * dimension];
+        this.totalSelectionGradient = new double[dimension * dimension];
+        this.selectionComponentGradient = new double[3 * dimension * dimension];
         this.stationaryMean = new double[dimension];
         this.compressedNativeGradient = new double[dimension + 2 * (dimension / 2)];
-        this.rotationGradient = new double[dimension][dimension];
-        this.transitionAdjoint = new double[dimension][dimension];
-        this.covarianceAdjoint = new double[dimension][dimension];
+        this.rotationGradient = new double[dimension * dimension];
         this.parameterRestore = new double[Math.max(1, dimension * dimension)];
     }
 }

@@ -34,10 +34,10 @@ final class OUCanonicalParentAboveResolver {
     private final DenseMatrix64F centeredChildMeanVector;
     private final DenseMatrix64F scratchMatrix;
     private final DenseMatrix64F secondaryScratchMatrix;
-    private final double[][] symmetric2DScratch;
-    private final double[][] adjusted2DScratch;
-    private final double[][] choleskyScratch;
-    private final double[][] lowerInverseScratch;
+    private final double[] spdMatrixScratch;
+    private final double[] spdInverseScratch;
+    private final double[] spdCholeskyScratch;
+    private final double[] spdLowerInverseScratch;
     private final CanonicalNumericsOptions numericsOptions;
     private final OUCanonicalBranchSpdDebugContext spdDebugContext;
     private int parentAboveCompareReportCount = 0;
@@ -61,10 +61,10 @@ final class OUCanonicalParentAboveResolver {
         this.centeredChildMeanVector = new DenseMatrix64F(dimension, 1);
         this.scratchMatrix = new DenseMatrix64F(dimension, dimension);
         this.secondaryScratchMatrix = new DenseMatrix64F(dimension, dimension);
-        this.symmetric2DScratch = new double[dimension][dimension];
-        this.adjusted2DScratch = new double[dimension][dimension];
-        this.choleskyScratch = new double[dimension][dimension];
-        this.lowerInverseScratch = new double[dimension][dimension];
+        this.spdMatrixScratch = new double[dimension * dimension];
+        this.spdInverseScratch = new double[dimension * dimension];
+        this.spdCholeskyScratch = new double[dimension * dimension];
+        this.spdLowerInverseScratch = new double[dimension * dimension];
         this.numericsOptions = numericsOptions;
         this.spdDebugContext = new OUCanonicalBranchSpdDebugContext(
                 actualizationMatrix,
@@ -237,18 +237,14 @@ final class OUCanonicalParentAboveResolver {
     private void safeInvertSymmetricPositiveDefinite(final DenseMatrix64F source,
                                                      final DenseMatrix64F inverseOut,
                                                      final String context) {
-        CanonicalNumerics.safeInvertSymmetricPositiveDefinite(
+        CanonicalNumerics.copyAndInvertPositiveDefiniteFlat(
                 source,
-                inverseOut,
-                scratchMatrix,
-                secondaryScratchMatrix,
-                symmetric2DScratch,
-                adjusted2DScratch,
-                choleskyScratch,
-                lowerInverseScratch,
-                numericsOptions,
-                context,
-                spdDebugContext);
+                spdMatrixScratch,
+                spdInverseScratch,
+                spdCholeskyScratch,
+                spdLowerInverseScratch,
+                numericsOptions);
+        System.arraycopy(spdInverseScratch, 0, inverseOut.data, 0, dimension * dimension);
     }
 
     private void safeInvert(final DenseMatrix64F source,

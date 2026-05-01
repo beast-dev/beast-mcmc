@@ -78,6 +78,34 @@ final class OrthogonalBlockSelectionAdjoint {
                 rotationAccumulator);
     }
 
+    void accumulateCurrentFlat(final OrthogonalBlockBasisCache basis,
+                               final double dt,
+                               final double[] stationaryMean,
+                               final double[] dLogL_dF,
+                               final double[] dLogL_df,
+                               final double[] compressedDAccumulator,
+                               final double[] rotationAccumulator) {
+        fillTotalUpstreamOnTransition(stationaryMean, dLogL_dF, dLogL_df, upstreamF);
+        accumulateTransitionPullback(
+                basis.rMatrix,
+                basis.rtMatrix,
+                basis.expD,
+                basis.blockDParams,
+                dt,
+                upstreamF,
+                upstreamFD,
+                frechetHelper,
+                temp1,
+                temp2,
+                temp3,
+                gradD,
+                gradR,
+                scaledNegativeBlockDScratch,
+                denseAdjointScratch,
+                compressedDAccumulator,
+                rotationAccumulator);
+    }
+
     void accumulatePrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                             final double[] dLogL_dF,
                             final double[] dLogL_df,

@@ -68,12 +68,28 @@ public interface OrthogonalBlockCanonicalParameterization extends SpecializedCan
             double[] compressedDAccumulator,
             double[][] rotationAccumulator);
 
+    void accumulateNativeGradientFromCanonicalContributionFlat(
+            MatrixParameterInterface diffusionMatrix,
+            double[] stationaryMean,
+            double dt,
+            CanonicalBranchMessageContribution contribution,
+            CanonicalLocalTransitionAdjoints localAdjoints,
+            double[] compressedDAccumulator,
+            double[] rotationAccumulator);
+
     void accumulateNativeGradientFromAdjoints(MatrixParameterInterface diffusionMatrix,
                                              double[] stationaryMean,
                                              double dt,
                                              CanonicalLocalTransitionAdjoints localAdjoints,
                                              double[] compressedDAccumulator,
                                              double[][] rotationAccumulator);
+
+    void accumulateNativeGradientFromAdjointsFlat(MatrixParameterInterface diffusionMatrix,
+                                                  double[] stationaryMean,
+                                                  double dt,
+                                                  CanonicalLocalTransitionAdjoints localAdjoints,
+                                                  double[] compressedDAccumulator,
+                                                  double[] rotationAccumulator);
 
     void accumulateMeanGradient(double dt,
                                 double[] dLogL_df,

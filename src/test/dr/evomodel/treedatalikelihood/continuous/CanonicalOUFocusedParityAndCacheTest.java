@@ -28,7 +28,7 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.BranchGradientInputs;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 
 import java.util.Arrays;

@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 
 final class PartiallyObservedTipContribution implements BranchContributionStrategy {
 

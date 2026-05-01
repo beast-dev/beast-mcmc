@@ -36,7 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalTipObservationAdapter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;

@@ -30,7 +30,7 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 
 import java.util.Arrays;
 

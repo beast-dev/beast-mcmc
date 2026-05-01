@@ -36,12 +36,13 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCa
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipProjection;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.TaskPool;
 
@@ -63,7 +64,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final CanonicalDebugOptions debugOptions;
     private final CanonicalGradientFallbackPolicy fallbackPolicy;
     private final CanonicalTreeStateStore stateStore;
-    private final CanonicalTipProjector tipProjector;
+    private final PartialIdentityTipProjection partialIdentityProjection;
     private final CanonicalTreeTraversal treeTraversal;
     private final CanonicalBranchContributionAssembler branchContributionAssembler;
     private final BranchGradientInputs preparedBranchGradientInputs;
@@ -106,8 +107,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.debugOptions = debugOptions;
         this.fallbackPolicy = fallbackPolicy;
         this.stateStore = new CanonicalTreeStateStore(nodeCount, dim);
-        this.tipProjector = new CanonicalTipProjector(dim);
-        this.treeTraversal = new CanonicalTreeTraversal(tree, dim, tipProjector);
+        this.partialIdentityProjection = new PartialIdentityTipProjection(dim);
+        this.treeTraversal = new CanonicalTreeTraversal(tree, dim, partialIdentityProjection);
         this.branchContributionAssembler = new CanonicalBranchContributionAssembler(tree, dim, stateStore);
         this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
         this.mainWorkspace = WorkspaceFactory.branchGradientWorkspace(dim);
@@ -337,7 +338,11 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                                       final double branchLength,
                                                       final CanonicalGaussianState out,
                                                       final BranchGradientWorkspace workspace) {
-        tipProjector.projectObservedChildToParent(tipObservation, transitionMomentProvider, branchLength, out);
+        partialIdentityProjection.projectObservedChildToParent(
+                tipObservation,
+                transitionMomentProvider,
+                branchLength,
+                out);
     }
 
     private void ensureGradientState() {

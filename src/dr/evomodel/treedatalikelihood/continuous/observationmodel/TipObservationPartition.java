@@ -1,7 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.observationmodel;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
-
 public final class TipObservationPartition {
 
     public final int[] observedIndices;

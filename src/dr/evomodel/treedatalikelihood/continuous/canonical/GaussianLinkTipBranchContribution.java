@@ -5,7 +5,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 
-final class GaussianLinkTipContribution implements BranchContributionStrategy {
+final class GaussianLinkTipBranchContribution implements BranchContributionStrategy {
 
     @Override
     public boolean contributes() {

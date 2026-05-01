@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuous.observationmodel;
 
 import java.util.Arrays;
 

@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 
 /**
  * Canonical-form tree message passer contract.

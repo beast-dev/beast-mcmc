@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
@@ -25,9 +26,9 @@ final class BranchContributionStrategyFactory {
     private final BranchContributionStrategy missingTrait =
             new MissingTraitContribution();
     private final BranchContributionStrategy gaussianLinkTip =
-            new GaussianLinkTipContribution();
+            new GaussianLinkTipBranchContribution();
     private final BranchContributionStrategy fixedParentGaussianLinkTip =
-            new FixedParentGaussianLinkTipContribution();
+            new FixedParentGaussianLinkTipBranchContribution();
 
     BranchContributionStrategyFactory(final Tree tree,
                                       final int dimension,

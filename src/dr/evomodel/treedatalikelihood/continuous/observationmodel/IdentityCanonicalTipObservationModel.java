@@ -1,6 +1,4 @@
 package dr.evomodel.treedatalikelihood.continuous.observationmodel;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 
 import java.util.Arrays;

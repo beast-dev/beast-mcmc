@@ -31,11 +31,12 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipProjection;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 /**
@@ -45,14 +46,14 @@ final class CanonicalTreeTraversal {
 
     private final Tree tree;
     private final int dimension;
-    private final CanonicalTipProjector tipProjector;
+    private final PartialIdentityTipProjection partialIdentityProjection;
 
     CanonicalTreeTraversal(final Tree tree,
                            final int dimension,
-                           final CanonicalTipProjector tipProjector) {
+                           final PartialIdentityTipProjection partialIdentityProjection) {
         this.tree = tree;
         this.dimension = dimension;
-        this.tipProjector = tipProjector;
+        this.partialIdentityProjection = partialIdentityProjection;
     }
 
     double computePostOrderLogLikelihood(final CanonicalBranchTransitionProvider transitionProvider,
@@ -276,7 +277,7 @@ final class CanonicalTreeTraversal {
         }
 
         transitionProvider.getCanonicalTransitionView(childIndex);
-        tipProjector.projectObservedChildToParent(
+        partialIdentityProjection.projectObservedChildToParent(
                 tipObservation,
                 (CanonicalTransitionMomentProvider) transitionProvider,
                 transitionProvider.getEffectiveBranchLength(childIndex),

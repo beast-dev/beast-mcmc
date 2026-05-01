@@ -1,4 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.MatrixSufficientStatistics;
@@ -107,7 +111,7 @@ public final class OUCanonicalBranchWiring {
             fillCanonicalTransition(statistics.getBranch());
         } else {
             if (debugOptions.isNonFiniteBranchStatsEnabled()) {
-                System.err.println("nonfiniteBranchStatsFallback branchLength=" + branchLength);
+                dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("nonfiniteBranchStatsFallback branchLength=" + branchLength);
             }
             fillCanonicalTransitionFromKernel(branchLength, optimum);
         }

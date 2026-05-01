@@ -1,7 +1,15 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalNativeBranchGradientCapability;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.DenseBlockCanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.DenseCanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.NativeSpecializedCanonicalSelectionPullback;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
@@ -75,7 +83,7 @@ final class OUCanonicalBranchSelectionGradient {
         }
         computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
         if (debugOptions.isSelectionComponentsEnabled()) {
-            System.err.println("selectionComponentsDebug branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("selectionComponentsDebug branchLength=" + branchLength
                     + " transition=" + Arrays.toString(scratch.transitionSelectionGradient)
                     + " covariance=" + Arrays.toString(scratch.covarianceSelectionGradient)
                     + " total=" + Arrays.toString(scratch.totalSelectionGradient));
@@ -240,7 +248,7 @@ final class OUCanonicalBranchSelectionGradient {
                                          final Parameter requestedParameter) {
         if (debugOptions.isNonOrthogonalOmegaEnabled()) {
             branchWiring.fillLocalAdjoints(statistics, scratch.localAdjoints);
-            System.err.println("NONORTH OMEGA branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("NONORTH OMEGA branchLength=" + branchLength
                     + " dOmega=" + Arrays.toString(scratch.localAdjoints.dLogL_dOmega)
                     + " drift=" + Arrays.toString(processModel.getDriftMatrix().getParameterAsMatrix()[0]));
         }
@@ -256,7 +264,7 @@ final class OUCanonicalBranchSelectionGradient {
                     optimum,
                     scratch.localAdjoints,
                     requestedParameter);
-            System.err.println("NONORTH LOCAL branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("NONORTH LOCAL branchLength=" + branchLength
                     + " analytic=" + Arrays.toString(analytic)
                     + " numeric=" + Arrays.toString(numeric));
         }

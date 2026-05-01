@@ -1,8 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 
-interface CanonicalSelectionPullback {
+public interface CanonicalSelectionPullback {
 
     double[] gradientForBranch(double branchLength,
                                double[] optimum,

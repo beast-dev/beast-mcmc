@@ -12,6 +12,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
     private static final String ORTHOGONAL_BACKEND_PACKAGE =
             "dr.evomodel.continuous.ou.orthogonalblockdiagonal";
     private static final String WILDCARD_IMPORT = "wildcard import";
+    private static final String SYSTEM_PRINT = "system print";
 
     public void testCanonicalTreeLayerDoesNotImportOrthogonalBackend() throws IOException {
         assertNoSourceMatch(
@@ -21,6 +22,33 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
                 ORTHOGONAL_BACKEND_PACKAGE,
                 "OUCanonical");
+    }
+
+    public void testCanonicalMachineryDoesNotUseDirectSystemPrints() throws IOException {
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
+                SYSTEM_PRINT);
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/continuous/ou/canonical"),
+                SYSTEM_PRINT);
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                SYSTEM_PRINT);
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/treedatalikelihood/continuous"),
+                SYSTEM_PRINT,
+                "Canonical");
+    }
+
+    public void testParentContinuousPackageDoesNotGainCanonicalImplementationClasses() {
+        final File root = new File("src/dr/evomodel/treedatalikelihood/continuous");
+        final File[] children = root.listFiles();
+        assertNotNull("Source root does not exist: " + root.getPath(), children);
+        for (File child : children) {
+            if (child.isFile() && child.getName().startsWith("OUCanonical") && child.getName().endsWith(".java")) {
+                fail("Parent continuous package contains canonical implementation class: " + child.getPath());
+            }
+        }
     }
 
     public void testCanonicalMachineryDoesNotUseWildcardImports() throws IOException {
@@ -95,6 +123,9 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
         if (WILDCARD_IMPORT.equals(forbidden)) {
             final String trimmed = line.trim();
             return trimmed.startsWith("import ") && trimmed.endsWith(".*;");
+        }
+        if (SYSTEM_PRINT.equals(forbidden)) {
+            return line.contains("System.err") || line.contains("System.out");
         }
         return line.contains(forbidden);
     }

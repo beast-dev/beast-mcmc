@@ -1,4 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;

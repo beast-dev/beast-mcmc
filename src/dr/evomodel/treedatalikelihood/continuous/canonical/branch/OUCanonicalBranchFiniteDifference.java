@@ -1,4 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
@@ -190,7 +194,7 @@ final class OUCanonicalBranchFiniteDifference {
                 maxIdx = i;
             }
         }
-        System.err.println("branchLocalSelectionFDDebug len=" + branchLength
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("branchLocalSelectionFDDebug len=" + branchLength
                 + " maxAbsDiff=" + maxAbs
                 + " maxIdx=" + maxIdx
                 + " analytic=" + Arrays.toString(analytic)
@@ -236,7 +240,7 @@ final class OUCanonicalBranchFiniteDifference {
                 maxIdxFrozenFactor = i;
             }
         }
-        System.err.println("branchLocalMeanFDDebug node=" + nodeNumber
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("branchLocalMeanFDDebug node=" + nodeNumber
                 + " len=" + branchLength
                 + " belowPrecisionHasInf=" + hasInfinity(statsBelowPrecision(statistics))
                 + " aboveParentPrecisionHasInf=" + hasInfinity(statsAboveParentPrecision(statistics))

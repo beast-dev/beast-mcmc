@@ -427,7 +427,7 @@ public final class CanonicalNumerics {
                                               final double pivotFloor,
                                               final double maxAbsDiagonal) {
         if (options.isPivotFloorDebugEnabled() && pivotStats.clippedPivotCount > 0) {
-            System.err.println(
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
                     "pdPivotFloorDebug clipped=" + pivotStats.clippedPivotCount
                             + " dim=" + dimension
                             + " minPivotBeforeFloor=" + pivotStats.minPivotBeforeFloor
@@ -465,9 +465,9 @@ public final class CanonicalNumerics {
             sb.append("}\n");
 
             Files.write(Paths.get(path), sb.toString().getBytes(StandardCharsets.UTF_8));
-            System.err.println("OU_SPD_FAILURE_DUMP " + path);
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP " + path);
         } catch (final Exception e) {
-            System.err.println("OU_SPD_FAILURE_DUMP_FAILED context=" + context + " reason=" + e.getMessage());
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP_FAILED context=" + context + " reason=" + e.getMessage());
         }
     }
 

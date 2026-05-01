@@ -165,7 +165,7 @@ final class OrthogonalBlockBasisCache {
                         Math.abs(blockRinv[rc] - blockR[cr]));
             }
         }
-        System.err.println("nativeRConsistencyDebug dt=" + dt
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("nativeRConsistencyDebug dt=" + dt
                 + " maxAbsRDiff=" + maxR
                 + " maxAbsRtDiff=" + maxRt
                 + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);

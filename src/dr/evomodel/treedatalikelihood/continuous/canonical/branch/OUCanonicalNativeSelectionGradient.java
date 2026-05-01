@@ -1,7 +1,13 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalNativeBranchGradientCapability;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.NativeSpecializedCanonicalSelectionPullback;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
@@ -10,7 +16,8 @@ import dr.inference.model.Parameter;
 
 import java.util.Arrays;
 
-final class OUCanonicalNativeSelectionGradient {
+final class OUCanonicalNativeSelectionGradient
+        implements NativeSpecializedCanonicalSelectionPullback.NativeSelectionGradientProvider {
 
     private final OUCanonicalBranchWiring branchWiring;
     private final OUProcessModel processModel;
@@ -39,7 +46,7 @@ final class OUCanonicalNativeSelectionGradient {
         this.debugNodeContext = debugNodeContext;
     }
 
-    double[] getNativeSpecializedGradientWrtSelection(
+    public double[] getNativeSpecializedGradientWrtSelection(
             final double branchLength,
             final double[] optimum,
             final BranchSufficientStatistics statistics,
@@ -158,7 +165,7 @@ final class OUCanonicalNativeSelectionGradient {
                 maxIdx = i;
             }
         }
-        System.err.println("NATIVE_SPECIALIZED_LOCAL_FD branchLength=" + branchLength
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("NATIVE_SPECIALIZED_LOCAL_FD branchLength=" + branchLength
                 + " requested=" + requestedParameter.getId()
                 + " maxAbsDiff=" + maxAbs
                 + " maxIdx=" + maxIdx
@@ -186,7 +193,7 @@ final class OUCanonicalNativeSelectionGradient {
         final double[] assembled = CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
                 dimension, requestedParameter, blockParameter, nativeBlock, rotation);
         final Integer contextNode = debugNodeContext.get();
-        System.err.println("branchNativeAssemblyDebug node=" + (contextNode == null ? "<unknown>" : contextNode)
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("branchNativeAssemblyDebug node=" + (contextNode == null ? "<unknown>" : contextNode)
                 + " branch="
                 + statistics.getBranch()
                 + " branchLength=" + branchLength

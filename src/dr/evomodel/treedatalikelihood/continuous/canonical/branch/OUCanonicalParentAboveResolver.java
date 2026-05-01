@@ -1,4 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+
+import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
@@ -216,7 +220,7 @@ final class OUCanonicalParentAboveResolver {
         if (mismatch || parentAboveCompareReportCount < maxReports) {
             if (parentAboveCompareReportCount < maxReports) {
                 parentAboveCompareReportCount++;
-                System.err.println(
+                dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
                         "parentAboveCompare"
                                 + " call=" + parentAboveCompareReportCount
                                 + " precision=" + precisionComparison

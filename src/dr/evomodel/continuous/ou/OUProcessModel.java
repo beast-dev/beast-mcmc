@@ -259,6 +259,17 @@ public class OUProcessModel extends AbstractModel
         canonicalKernel.fillTransitionMatrixFlat(dt, out);
     }
 
+    public void fillTransitionMomentsFlat(final double dt,
+                                          final double[] transitionMatrixOut,
+                                          final double[] transitionOffsetOut,
+                                          final double[] transitionCovarianceOut) {
+        canonicalKernel.fillTransitionMomentsFlat(
+                dt,
+                transitionMatrixOut,
+                transitionOffsetOut,
+                transitionCovarianceOut);
+    }
+
     @Override
     public void fillTransitionOffset(final double dt, final double[] out) {
         canonicalKernel.fillTransitionOffset(dt, out);

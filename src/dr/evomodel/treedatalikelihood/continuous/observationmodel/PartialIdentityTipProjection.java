@@ -47,9 +47,11 @@ public final class PartialIdentityTipProjection {
             return;
         }
 
-        transitionMomentProvider.fillTransitionMatrixFlat(branchLength, transitionMatrixFlat);
-        transitionMomentProvider.fillTransitionOffset(branchLength, transitionOffset);
-        transitionMomentProvider.fillTransitionCovarianceFlat(branchLength, covarianceFlat);
+        transitionMomentProvider.fillTransitionMomentsFlat(
+                branchLength,
+                transitionMatrixFlat,
+                transitionOffset,
+                covarianceFlat);
 
         for (int observed = 0; observed < observedCount; ++observed) {
             final int observedTrait = partition.observedIndex(observed);

@@ -31,6 +31,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTr
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
@@ -45,6 +46,8 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
     private static final String TRANSITION_CACHE_DIAGNOSTICS_PROPERTY =
             "beast.debug.canonicalTransitionCache";
+    private static final String DENSE_ORTHOGONAL_PULLBACK_PROPERTY =
+            "beast.experimental.orthBlockUseDensePullback";
 
     public CanonicalGaussianMessagePasserOUGradientTest(final String name) {
         super(name);
@@ -159,6 +162,42 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         checkOrthogonalBlockGradientQMatchesDense(
                 buildOrthogonalBlockOUSetup("canonOrthGradQ_partial", buildPartiallyObservedTips()),
                 "partially observed");
+    }
+
+    public void testOrthogonalBlockDenseSelectionPullbackAvoidsLegacyMatrixProjection() {
+        System.out.println("\nTest: canonical OU orthogonal-block dense selection pullback uses flat workspace");
+        final String previous = System.getProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
+        try {
+            System.clearProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
+            final OrthogonalBlockOUSetup nativeSetup =
+                    buildOrthogonalBlockOUSetup("canonOrthDensePullbackNative_partial", buildPartiallyObservedTips());
+            refreshMessages(nativeSetup.orthogonal);
+            final double[] nativeGradient = new double[nativeSetup.nativeParameter.getDimension()];
+            computeJointGradientA(nativeSetup.orthogonal, nativeGradient);
+
+            System.setProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY, "true");
+            CanonicalSelectionGradientProjector.resetInstrumentation();
+
+            final OrthogonalBlockOUSetup denseSetup =
+                    buildOrthogonalBlockOUSetup("canonOrthDensePullbackAlloc_partial", buildPartiallyObservedTips());
+            refreshMessages(denseSetup.orthogonal);
+            final double[] denseGradient = new double[denseSetup.nativeParameter.getDimension()];
+            computeJointGradientA(denseSetup.orthogonal, denseGradient);
+
+            assertArrayEquals("dense flat pullback vs native specialized",
+                    nativeGradient,
+                    denseGradient,
+                    1.0e-10);
+            assertEquals("legacy matrix block pullback count",
+                    0L,
+                    CanonicalSelectionGradientProjector.getLegacyMatrixPullbackCount());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
+            } else {
+                System.setProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY, previous);
+            }
+        }
     }
 
     public void testStandaloneIntegratorReusesOneJointGradientPassAcrossAQMu() {

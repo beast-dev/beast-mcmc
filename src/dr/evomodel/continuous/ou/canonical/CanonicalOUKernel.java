@@ -82,9 +82,7 @@ public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitio
             return;
         }
 
-        fillTransitionMatrixFlat(dt, workspace.matrix0);
-        fillTransitionOffset(dt, workspace.vector1);
-        fillTransitionCovarianceFlat(dt, workspace.matrix1);
+        fillTransitionMomentsFlat(dt, workspace.matrix0, workspace.vector1, workspace.matrix1);
         GaussianFormConverter.fillTransitionFromMoments(
                 workspace.matrix0,
                 workspace.vector1,
@@ -107,6 +105,15 @@ public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitio
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
         checkFlatSquare(out, stateDimension, "transition matrix");
         selectionMatrixParameterization.fillTransitionMatrixFlat(dt, out);
+    }
+
+    public void fillTransitionMomentsFlat(final double dt,
+                                          final double[] transitionMatrixOut,
+                                          final double[] transitionOffsetOut,
+                                          final double[] transitionCovarianceOut) {
+        fillTransitionMatrixFlat(dt, transitionMatrixOut);
+        fillTransitionOffsetFromMatrix(transitionMatrixOut, transitionOffsetOut);
+        fillTransitionCovarianceFlat(dt, transitionCovarianceOut);
     }
 
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
@@ -156,8 +163,16 @@ public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitio
         final Workspace workspace = workspace();
 
         fillTransitionMatrixFlat(dt, workspace.matrix0);
+        fillTransitionOffsetFromMatrix(workspace.matrix0, out);
+    }
+
+    private void fillTransitionOffsetFromMatrix(final double[] transitionMatrix,
+                                                final double[] out) {
+        checkFlatSquare(transitionMatrix, stateDimension, "transition matrix");
+        checkVectorLength(out, stateDimension, "transition offset");
+        final Workspace workspace = workspace();
         getInitialMean(workspace.vector0);
-        MatrixOps.matVec(workspace.matrix0, workspace.vector0, workspace.vector2, stateDimension);
+        MatrixOps.matVec(transitionMatrix, workspace.vector0, workspace.vector2, stateDimension);
 
         for (int i = 0; i < stateDimension; ++i) {
             out[i] = workspace.vector0[i] - workspace.vector2[i];

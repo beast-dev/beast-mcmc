@@ -119,7 +119,7 @@ public final class CanonicalGradientFallbackPolicy {
                              || name.startsWith("beast.experimental.disableExact"))
                 .filter(name -> !KNOWN_PROPERTIES.contains(name))
                 .sorted()
-                .forEach(name -> System.err.println(
+                .forEach(name -> dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
                         "WARNING: Unrecognized canonical gradient property '" + name
                         + "' — check spelling against CanonicalGradientFallbackPolicy.KNOWN_PROPERTIES"));
     }
@@ -205,7 +205,7 @@ public final class CanonicalGradientFallbackPolicy {
             try {
                 return Math.max(1, Integer.parseInt(value));
             } catch (NumberFormatException e) {
-                System.err.println("WARNING: Canonical gradient property '"
+                dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical gradient property '"
                         + BRANCH_GRADIENT_THREADS_PROPERTY
                         + "' has non-integer value '" + value + "'; using 1.");
             }

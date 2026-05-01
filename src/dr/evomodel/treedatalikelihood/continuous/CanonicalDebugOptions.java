@@ -122,7 +122,7 @@ public final class CanonicalDebugOptions {
                 .filter(name -> name.startsWith("beast.debug."))
                 .filter(name -> !KNOWN_PROPERTIES.contains(name))
                 .sorted()
-                .forEach(name -> System.err.println(
+                .forEach(name -> dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
                         "WARNING: Unrecognized canonical debug property '" + name
                         + "' — check spelling against CanonicalDebugOptions.KNOWN_PROPERTIES"));
     }
@@ -194,7 +194,7 @@ public final class CanonicalDebugOptions {
         try {
             return Integer.valueOf(raw.trim());
         } catch (NumberFormatException e) {
-            System.err.println("WARNING: Canonical debug property '" + property
+            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical debug property '" + property
                     + "' has non-integer value '" + raw + "'; ignoring.");
             return null;
         }

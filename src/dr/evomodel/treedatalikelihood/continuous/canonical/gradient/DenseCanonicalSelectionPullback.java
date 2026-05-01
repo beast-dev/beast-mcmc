@@ -1,22 +1,17 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
-import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 
-final class DenseBlockCanonicalSelectionPullback implements CanonicalSelectionPullback {
+public final class DenseCanonicalSelectionPullback implements CanonicalSelectionPullback {
 
     private final int dimension;
     private final Parameter requestedParameter;
-    private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
 
-    DenseBlockCanonicalSelectionPullback(
-            final int dimension,
-            final Parameter requestedParameter,
-            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter) {
+    public DenseCanonicalSelectionPullback(final int dimension,
+                                           final Parameter requestedParameter) {
         this.dimension = dimension;
         this.requestedParameter = requestedParameter;
-        this.blockParameter = blockParameter;
     }
 
     @Override
@@ -29,7 +24,10 @@ final class DenseBlockCanonicalSelectionPullback implements CanonicalSelectionPu
 
     @Override
     public double[] projectDenseGradient(final double[] denseGradient) {
-        return CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
-                dimension, requestedParameter, blockParameter, denseGradient);
+        if (requestedParameter == null) {
+            return denseGradient.clone();
+        }
+        return CanonicalSelectionGradientProjector.reorderDenseGradientForRequestedParameter(
+                dimension, requestedParameter, denseGradient);
     }
 }

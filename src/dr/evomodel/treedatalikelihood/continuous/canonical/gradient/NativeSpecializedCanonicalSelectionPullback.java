@@ -1,17 +1,25 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 
-final class NativeSpecializedCanonicalSelectionPullback implements CanonicalSelectionPullback {
+public final class NativeSpecializedCanonicalSelectionPullback implements CanonicalSelectionPullback {
 
-    private final OUCanonicalNativeSelectionGradient nativeSelectionGradient;
+    public interface NativeSelectionGradientProvider {
+        double[] getNativeSpecializedGradientWrtSelection(double branchLength,
+                                                          double[] optimum,
+                                                          BranchSufficientStatistics statistics,
+                                                          AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+                                                          Parameter requestedParameter);
+    }
+
+    private final NativeSelectionGradientProvider nativeSelectionGradient;
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final Parameter requestedParameter;
 
-    NativeSpecializedCanonicalSelectionPullback(
-            final OUCanonicalNativeSelectionGradient nativeSelectionGradient,
+    public NativeSpecializedCanonicalSelectionPullback(
+            final NativeSelectionGradientProvider nativeSelectionGradient,
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
             final Parameter requestedParameter) {
         this.nativeSelectionGradient = nativeSelectionGradient;

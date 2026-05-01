@@ -161,7 +161,7 @@ final class CanonicalTransitionCacheDiagnosticsRecorder {
         if (!enabled) {
             return;
         }
-        System.err.println("[canonical-transition-cache] " + label
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("[canonical-transition-cache] " + label
                 + " requests=" + requests.get()
                 + " hits=" + hits.get()
                 + " misses=" + misses.get()

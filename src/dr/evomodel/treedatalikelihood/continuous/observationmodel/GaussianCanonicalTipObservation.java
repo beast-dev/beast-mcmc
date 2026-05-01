@@ -1,7 +1,10 @@
 package dr.evomodel.treedatalikelihood.continuous.observationmodel;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 
 public final class GaussianCanonicalTipObservation implements CanonicalTipObservationModel {
 
@@ -102,6 +105,18 @@ public final class GaussianCanonicalTipObservation implements CanonicalTipObserv
             quadratic += workspace.shiftedObservation[i] * workspace.precisionTimesShifted[i];
         }
         out.logNormalizer = 0.5 * (observationDimension * MatrixOps.LOG_TWO_PI + logDet + quadratic);
+    }
+
+    @Override
+    public void fillParentMessage(final CanonicalGaussianTransition transition,
+                                  final CanonicalTransitionMomentProvider momentProvider,
+                                  final double branchLength,
+                                  final TipParentMessageWorkspace workspace,
+                                  final CanonicalGaussianMessageOps.Workspace gaussianWorkspace,
+                                  final CanonicalGaussianState out) {
+        fillChildCanonicalState(workspace.childStateScratch, workspace.observationModelWorkspace);
+        CanonicalGaussianMessageOps.pushBackward(
+                workspace.childStateScratch, transition, gaussianWorkspace, out);
     }
 
     @Override

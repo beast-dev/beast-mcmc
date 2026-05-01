@@ -1,7 +1,8 @@
 package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 
 import java.util.Arrays;
@@ -94,10 +95,12 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
         return values[trait];
     }
 
+    @Override
     public void fillParentMessage(final CanonicalGaussianTransition transition,
-                                  final CanonicalTransitionMomentProvider transitionMomentProvider,
+                                  final CanonicalTransitionMomentProvider momentProvider,
                                   final double branchLength,
-                                  final PartialIdentityTipProjection partialIdentityProjection,
+                                  final TipParentMessageWorkspace workspace,
+                                  final CanonicalGaussianMessageOps.Workspace gaussianWorkspace,
                                   final CanonicalGaussianState out) {
         switch (getMode()) {
             case MISSING:
@@ -107,15 +110,12 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
                 CanonicalGaussianMessageOps.conditionOnObservedSecondBlock(transition, values, out);
                 return;
             case PARTIAL_EXACT_IDENTITY:
-                if (transitionMomentProvider == null) {
+                if (momentProvider == null) {
                     throw new UnsupportedOperationException(
                             "Partial exact identity observations require a CanonicalTransitionMomentProvider.");
                 }
-                partialIdentityProjection.projectObservedChildToParent(
-                        this,
-                        transitionMomentProvider,
-                        branchLength,
-                        out);
+                workspace.partialIdentityProjection.projectObservedChildToParent(
+                        this, momentProvider, branchLength, out);
                 return;
             default:
                 throw new IllegalStateException("Unsupported identity observation mode: " + getMode());
@@ -125,7 +125,9 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
     @Override
     public void fillChildCanonicalState(final CanonicalGaussianState out,
                                         final TipObservationModelWorkspace workspace) {
-        throw new UnsupportedOperationException("Exact identity observations are handled by the collapsed path");
+        throw new UnsupportedOperationException(
+                "Identity observations cannot be represented as a finite canonical child state; "
+                + "use fillParentMessage instead.");
     }
 
     @Override

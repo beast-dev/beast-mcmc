@@ -37,25 +37,23 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipProjection;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 /**
  * Canonical post-order and pre-order tree message propagation.
+ *
+ * <p>Tip observation models are dispatched polymorphically through
+ * {@link CanonicalTipObservationModel#fillParentMessage}. This class contains no
+ * per-mode logic for how individual tip types produce their parent messages.
  */
 public final class CanonicalTreeTraversal {
 
     private final Tree tree;
     private final int dimension;
-    private final PartialIdentityTipProjection partialIdentityProjection;
 
-    public CanonicalTreeTraversal(final Tree tree,
-                           final int dimension,
-                           final PartialIdentityTipProjection partialIdentityProjection) {
-        this.tree = tree;
+    public CanonicalTreeTraversal(final Tree tree, final int dimension) {
+        this.tree      = tree;
         this.dimension = dimension;
-        this.partialIdentityProjection = partialIdentityProjection;
     }
 
     public double computePostOrderLogLikelihood(final CanonicalBranchTransitionProvider transitionProvider,
@@ -63,7 +61,8 @@ public final class CanonicalTreeTraversal {
                                          final CanonicalTreeStateStore stateStore,
                                          final BranchGradientWorkspace workspace) {
         if (tree.isExternal(tree.getRoot())) {
-            throw new UnsupportedOperationException("Single-node trees are not yet supported by the canonical OU passer.");
+            throw new UnsupportedOperationException(
+                    "Single-node trees are not yet supported by the canonical OU passer.");
         }
 
         final int nodeCount = tree.getNodeCount();
@@ -202,100 +201,50 @@ public final class CanonicalTreeTraversal {
         return found;
     }
 
+    /**
+     * Builds the upward parent message from child {@code childIndex} into {@code out}.
+     *
+     * <p>For tip nodes, dispatches to the tip's observation model via
+     * {@link CanonicalTipObservationModel#fillParentMessage}, which owns all mode-specific
+     * logic (exact identity, partial identity, missing, Gaussian link). For internal
+     * nodes, applies the standard Gaussian backward push.
+     */
     private void buildUpwardParentMessage(
             final int childIndex,
             final CanonicalBranchTransitionProvider transitionProvider,
             final CanonicalTreeStateStore stateStore,
             final CanonicalGaussianState out,
             final BranchGradientWorkspace workspace) {
+        final CanonicalGaussianTransition transition = transitionFor(childIndex, transitionProvider, workspace);
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel =
                     stateStore.tipObservationModels[childIndex];
-            if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
-                final CanonicalGaussianTransition transition =
-                        transitionFor(childIndex, transitionProvider, workspace);
-                observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
-                CanonicalGaussianMessageOps.pushBackward(
-                        workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
-                return;
-            }
-            if (observationModel instanceof IdentityCanonicalTipObservationModel) {
-                buildIdentityTipParentMessage(
-                        childIndex,
-                        (IdentityCanonicalTipObservationModel) observationModel,
-                        transitionProvider,
-                        out,
-                        workspace);
-                return;
-            }
-        }
-        final CanonicalGaussianTransition transition =
-                transitionFor(childIndex, transitionProvider, workspace);
-        buildUpwardParentMessageForTransition(
-                childIndex, transitionProvider, transition, stateStore, out, workspace);
-    }
-
-    private void buildUpwardParentMessageForTransition(
-            final int childIndex,
-            final CanonicalBranchTransitionProvider transitionProvider,
-            final CanonicalGaussianTransition transition,
-            final CanonicalTreeStateStore stateStore,
-            final CanonicalGaussianState out,
-            final BranchGradientWorkspace workspace) {
-        if (tree.isExternal(tree.getNode(childIndex))) {
-            final CanonicalTipObservationModel observationModel =
-                    stateStore.tipObservationModels[childIndex];
-            if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
-                observationModel.fillChildCanonicalState(workspace.siblingProduct, workspace.observationWorkspace);
-                CanonicalGaussianMessageOps.pushBackward(
-                        workspace.siblingProduct, transition, workspace.gaussianWorkspace, out);
-                return;
-            }
-            if (observationModel instanceof IdentityCanonicalTipObservationModel) {
-                fillIdentityTipParentMessage(
-                        childIndex,
-                        (IdentityCanonicalTipObservationModel) observationModel,
-                        transitionProvider,
-                        transition,
-                        out);
-                return;
-            }
-            throw new IllegalStateException("Unsupported tip observation model: "
-                    + observationModel.getClass().getName());
-        } else {
-            CanonicalGaussianMessageOps.pushBackward(
-                    stateStore.postOrder[childIndex],
+            final CanonicalTransitionMomentProvider momentProvider =
+                    momentProviderIfNeeded(observationModel, transitionProvider);
+            final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+            observationModel.fillParentMessage(
                     transition,
+                    momentProvider,
+                    branchLength,
+                    workspace.tipParentMessageWorkspace,
                     workspace.gaussianWorkspace,
                     out);
+        } else {
+            CanonicalGaussianMessageOps.pushBackward(
+                    stateStore.postOrder[childIndex], transition, workspace.gaussianWorkspace, out);
         }
     }
 
-    private void buildIdentityTipParentMessage(final int childIndex,
-                                               final IdentityCanonicalTipObservationModel observationModel,
-                                               final CanonicalBranchTransitionProvider transitionProvider,
-                                               final CanonicalGaussianState out,
-                                               final BranchGradientWorkspace workspace) {
-        final CanonicalGaussianTransition transition =
-                transitionFor(childIndex, transitionProvider, workspace);
-        fillIdentityTipParentMessage(childIndex, observationModel, transitionProvider, transition, out);
-    }
-
-    private void fillIdentityTipParentMessage(final int childIndex,
-                                              final IdentityCanonicalTipObservationModel observationModel,
-                                              final CanonicalBranchTransitionProvider transitionProvider,
-                                              final CanonicalGaussianTransition transition,
-                                              final CanonicalGaussianState out) {
-        observationModel.fillParentMessage(
-                transition,
-                transitionMomentProviderFor(observationModel, transitionProvider),
-                transitionProvider.getEffectiveBranchLength(childIndex),
-                partialIdentityProjection,
-                out);
-    }
-
-    private CanonicalTransitionMomentProvider transitionMomentProviderFor(
-            final IdentityCanonicalTipObservationModel observationModel,
+    /**
+     * Returns the {@link CanonicalTransitionMomentProvider} required for partial-identity tip
+     * observations, or {@code null} for all other modes.
+     *
+     * @throws UnsupportedOperationException if the mode is {@code PARTIAL_EXACT_IDENTITY} but the
+     *                                        transition provider does not implement
+     *                                        {@link CanonicalTransitionMomentProvider}
+     */
+    private CanonicalTransitionMomentProvider momentProviderIfNeeded(
+            final CanonicalTipObservationModel observationModel,
             final CanonicalBranchTransitionProvider transitionProvider) {
         if (observationModel.getMode() != TipObservationMode.PARTIAL_EXACT_IDENTITY) {
             return null;
@@ -304,7 +253,9 @@ public final class CanonicalTreeTraversal {
             return (CanonicalTransitionMomentProvider) transitionProvider;
         }
         throw new UnsupportedOperationException(
-                "Canonical OU partial identity observations require a CanonicalTransitionMomentProvider.");
+                "Canonical OU partial exact identity observations require a "
+                + "CanonicalTransitionMomentProvider, but the current provider ("
+                + transitionProvider.getClass().getSimpleName() + ") does not implement it.");
     }
 
     private CanonicalGaussianTransition transitionFor(final int childIndex,

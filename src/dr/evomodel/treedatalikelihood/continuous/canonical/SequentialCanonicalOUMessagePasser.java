@@ -192,11 +192,6 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
-    public CanonicalGaussianState getPreOrderState(final int nodeIndex) {
-        return stateStore.preOrder[nodeIndex];
-    }
-
-    @Override
     public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                              final double[] gradT) {
         ensureGradientState();

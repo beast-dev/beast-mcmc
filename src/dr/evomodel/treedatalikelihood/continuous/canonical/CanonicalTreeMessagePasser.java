@@ -54,8 +54,6 @@ public interface CanonicalTreeMessagePasser {
     void computePreOrder(CanonicalBranchTransitionProvider transitionProvider,
                          CanonicalRootPrior rootPrior);
 
-    CanonicalGaussianState getPreOrderState(int nodeIndex);
-
     void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider, double[] gradT);
 
     void computeJointGradients(CanonicalBranchTransitionProvider transitionProvider,

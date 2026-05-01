@@ -133,7 +133,7 @@ public final class CanonicalBranchAdjointPreparer {
 
         out.setRoot(
                 stateStore.lastRootDiffusionScale,
-                stateStore.preOrder[rootIndex],
+                stateStore.branchAboveParent[rootIndex],
                 stateStore.postOrder[rootIndex]);
     }
 

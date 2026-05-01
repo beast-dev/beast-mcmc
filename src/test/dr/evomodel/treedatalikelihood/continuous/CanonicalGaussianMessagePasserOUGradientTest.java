@@ -435,11 +435,6 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         }
 
         @Override
-        public CanonicalGaussianState getPreOrderState(final int nodeIndex) {
-            return delegate.getPreOrderState(nodeIndex);
-        }
-
-        @Override
         public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                                  final double[] gradT) {
             delegate.computeGradientBranchLengths(transitionProvider, gradT);

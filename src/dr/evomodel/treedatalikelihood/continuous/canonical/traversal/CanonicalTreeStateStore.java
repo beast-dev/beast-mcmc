@@ -50,9 +50,6 @@ public final class CanonicalTreeStateStore {
     public CanonicalGaussianState[] postOrder;
     private CanonicalGaussianState[] storedPostOrder;
 
-    public CanonicalGaussianState[] preOrder;
-    private CanonicalGaussianState[] storedPreOrder;
-
     public CanonicalGaussianState[] branchAboveParent;
     private CanonicalGaussianState[] storedBranchAboveParent;
 
@@ -83,8 +80,6 @@ public final class CanonicalTreeStateStore {
         this.storedTipObservationModels = allocateTipObservationModels(nodeCount, dimension);
         this.postOrder = allocateStates(nodeCount, dimension);
         this.storedPostOrder = allocateStates(nodeCount, dimension);
-        this.preOrder = allocateStates(nodeCount, dimension);
-        this.storedPreOrder = allocateStates(nodeCount, dimension);
         this.branchAboveParent = allocateStates(nodeCount, dimension);
         this.storedBranchAboveParent = allocateStates(nodeCount, dimension);
         this.fixedRootValue = new double[dimension];
@@ -109,7 +104,6 @@ public final class CanonicalTreeStateStore {
             storedTipObservations[i].copyFrom(tipObservations[i]);
             storedTipObservationModels[i] = tipObservationModels[i].copy();
             copyState(postOrder[i], storedPostOrder[i]);
-            copyState(preOrder[i], storedPreOrder[i]);
             copyState(branchAboveParent[i], storedBranchAboveParent[i]);
         }
     }
@@ -118,10 +112,6 @@ public final class CanonicalTreeStateStore {
         final CanonicalGaussianState[] tmpPost = postOrder;
         postOrder = storedPostOrder;
         storedPostOrder = tmpPost;
-
-        final CanonicalGaussianState[] tmpPre = preOrder;
-        preOrder = storedPreOrder;
-        storedPreOrder = tmpPre;
 
         final CanonicalGaussianState[] tmpAbove = branchAboveParent;
         branchAboveParent = storedBranchAboveParent;

@@ -85,16 +85,15 @@ public final class CanonicalTreeTraversal {
                          final BranchGradientWorkspace workspace) {
         final int rootIndex = tree.getRoot().getNumber();
         transitionProvider.fillTraitCovarianceFlat(workspace.traitCovariance);
-        CanonicalGaussianMessageOps.clearState(stateStore.preOrder[rootIndex]);
+        CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[rootIndex]);
         stateStore.hasFixedRootValue = rootPrior.isFixedRoot();
         if (stateStore.hasFixedRootValue) {
             rootPrior.fillFixedRootValue(stateStore.fixedRootValue);
             stateStore.lastRootDiffusionScale = 0.0;
         } else {
-            rootPrior.fillRootPriorState(workspace.traitCovariance, stateStore.preOrder[rootIndex]);
+            rootPrior.fillRootPriorState(workspace.traitCovariance, stateStore.branchAboveParent[rootIndex]);
             stateStore.lastRootDiffusionScale = rootPrior.getDiffusionScale();
         }
-        CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[rootIndex]);
         computePreOrderRecursive(rootIndex, transitionProvider, stateStore, workspace);
         stateStore.hasPreOrderState = true;
     }
@@ -136,42 +135,53 @@ public final class CanonicalTreeTraversal {
             final int childIndex = tree.getChild(tree.getNode(parentIndex), c).getNumber();
             if (stateStore.hasFixedRootValue && parentIndex == rootIndex) {
                 CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[childIndex]);
-                final CanonicalGaussianTransition transition =
-                        transitionFor(childIndex, transitionProvider, workspace);
-                CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
-                        transition,
-                        stateStore.fixedRootValue,
-                        stateStore.preOrder[childIndex]);
                 computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
                 continue;
             }
+
+            fillOutsideAtNode(parentIndex, transitionProvider, stateStore, workspace.downwardParentState, workspace);
 
             final boolean hasSiblings = buildSiblingProduct(
                     parentIndex, childIndex, transitionProvider, stateStore, workspace.siblingProduct, workspace);
 
             if (hasSiblings) {
-                CanonicalGaussianMessageOps.combineStates(
-                        stateStore.preOrder[parentIndex],
-                        workspace.siblingProduct,
-                        workspace.downwardParentState);
-            } else {
-                CanonicalGaussianMessageOps.copyState(
-                        stateStore.preOrder[parentIndex],
-                        workspace.downwardParentState);
+                CanonicalGaussianMessageOps.combineStateInPlace(workspace.downwardParentState, workspace.siblingProduct);
             }
 
             CanonicalGaussianMessageOps.copyState(
                     workspace.downwardParentState,
                     stateStore.branchAboveParent[childIndex]);
-            final CanonicalGaussianTransition transition =
-                    transitionFor(childIndex, transitionProvider, workspace);
-            CanonicalGaussianMessageOps.pushForward(
-                    workspace.downwardParentState,
-                    transition,
-                    workspace.gaussianWorkspace,
-                    stateStore.preOrder[childIndex]);
             computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
         }
+    }
+
+    private void fillOutsideAtNode(
+            final int nodeIndex,
+            final CanonicalBranchTransitionProvider transitionProvider,
+            final CanonicalTreeStateStore stateStore,
+            final CanonicalGaussianState out,
+            final BranchGradientWorkspace workspace) {
+        final int rootIndex = tree.getRoot().getNumber();
+        if (nodeIndex == rootIndex) {
+            CanonicalGaussianMessageOps.copyState(stateStore.branchAboveParent[rootIndex], out);
+            return;
+        }
+
+        final int parentIndex = tree.getParent(tree.getNode(nodeIndex)).getNumber();
+        final CanonicalGaussianTransition transition = transitionFor(nodeIndex, transitionProvider, workspace);
+        if (stateStore.hasFixedRootValue && parentIndex == rootIndex) {
+            CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
+                    transition,
+                    stateStore.fixedRootValue,
+                    out);
+            return;
+        }
+
+        CanonicalGaussianMessageOps.pushForward(
+                stateStore.branchAboveParent[nodeIndex],
+                transition,
+                workspace.gaussianWorkspace,
+                out);
     }
 
     private boolean buildSiblingProduct(

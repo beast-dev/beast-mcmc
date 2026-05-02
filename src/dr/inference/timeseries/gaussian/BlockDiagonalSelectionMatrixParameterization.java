@@ -113,12 +113,12 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         copyDenseMatrixToArray(tmpMatrix2, out);
     }
 
-    public void accumulateNativeGradientFromTransition(final double dt,
-                                                       final double[] stationaryMean,
-                                                       final double[][] dLogL_dF,
-                                                       final double[] dLogL_df,
-                                                       final double[] compressedDAccumulator,
-                                                       final double[][] rotationAccumulator) {
+    public void accumulateNativeGradientFromTransitionFlat(final double dt,
+                                                           final double[] stationaryMean,
+                                                           final double[] dLogL_dF,
+                                                           final double[] dLogL_df,
+                                                           final double[] compressedDAccumulator,
+                                                           final double[] rotationAccumulator) {
         refreshBasisCaches(dt);
         fillTotalUpstreamOnTransition(stationaryMean, dLogL_dF, dLogL_df, upstreamF);
 
@@ -132,14 +132,14 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.multTransA(transitionMatrix, upstreamF, tmpMatrix2);
         CommonOps.subtract(tmpMatrix1, tmpMatrix2, tmpMatrix3);
         CommonOps.multTransB(tmpMatrix3, rinvMatrix, gradR);
-        addDenseMatrixToArray(gradR, rotationAccumulator);
+        addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
 
-    public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
-                                                                 final double dt,
-                                                                 final double[][] dLogL_dV,
-                                                                 final double[] compressedDAccumulator,
-                                                                 final double[][] rotationAccumulator) {
+    public void accumulateNativeGradientFromCovarianceStationaryFlat(final MatrixParameterInterface diffusionMatrix,
+                                                                     final double dt,
+                                                                     final double[] dLogL_dV,
+                                                                     final double[] compressedDAccumulator,
+                                                                     final double[] rotationAccumulator) {
         refreshBasisCaches(dt);
         fillDenseMatrix(diffusionMatrix, qMatrix);
         CommonOps.mult(rinvMatrix, qMatrix, tmpMatrix1);
@@ -150,7 +150,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         symmetrize(transitionCovDBasis);
 
-        fillSymmetricDenseMatrix(dLogL_dV, gV);
+        fillSymmetricDenseMatrixFlat(dLogL_dV, gV);
 
         CommonOps.multTransA(rMatrix, gV, tmpMatrix1);
         CommonOps.mult(tmpMatrix1, rMatrix, hDBasis);
@@ -169,7 +169,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.multTransA(yAdjoint, qDBasis, tmpMatrix2);
         CommonOps.add(tmpMatrix1, tmpMatrix2, tmpMatrix3);
         CommonOps.multTransA(rinvMatrix, tmpMatrix3, gradR);
-        addDenseMatrixToArray(gradR, rotationAccumulator);
+        addDenseMatrixToFlatArray(gradR, rotationAccumulator);
 
         multiplyRightBlockDiagonal(hDBasis, expD, tmpMatrix1, false);
         CommonOps.mult(tmpMatrix1, stationaryCovDBasis, gECov);
@@ -181,7 +181,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.mult(gV, rMatrix, tmpMatrix1);
         CommonOps.mult(tmpMatrix1, transitionCovDBasis, gradR);
         CommonOps.scale(2.0, gradR);
-        addDenseMatrixToArray(gradR, rotationAccumulator);
+        addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
 
     private static void multiplyRowMajor(final double[] leftRowMajor,
@@ -312,15 +312,16 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
     }
 
     private void fillTotalUpstreamOnTransition(final double[] stationaryMean,
-                                               final double[][] dLogL_dF,
+                                               final double[] dLogL_dF,
                                                final double[] dLogL_df,
                                                final DenseMatrix64F out) {
         final int dimension = getDimension();
         final double[] outData = out.data;
         for (int row = 0; row < dimension; ++row) {
+            final int rowOffset = row * dimension;
             for (int col = 0; col < dimension; ++col) {
-                outData[row * dimension + col] =
-                        dLogL_dF[row][col] - dLogL_df[row] * stationaryMean[col];
+                outData[rowOffset + col] =
+                        dLogL_dF[rowOffset + col] - dLogL_df[row] * stationaryMean[col];
             }
         }
     }
@@ -349,13 +350,11 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         }
     }
 
-    private static void addDenseMatrixToArray(final DenseMatrix64F src, final double[][] dest) {
-        final int dimension = dest.length;
+    private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {
+        final int dimension = src.numRows;
         final double[] data = src.data;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                dest[i][j] += data[i * dimension + j];
-            }
+        for (int i = 0; i < dimension * dimension; ++i) {
+            dest[i] += data[i];
         }
     }
 
@@ -379,12 +378,13 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         }
     }
 
-    private static void fillSymmetricDenseMatrix(final double[][] source, final DenseMatrix64F out) {
+    private static void fillSymmetricDenseMatrixFlat(final double[] source, final DenseMatrix64F out) {
         final int dimension = out.numRows;
         final double[] data = out.data;
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                data[i * dimension + j] = 0.5 * (source[i][j] + source[j][i]);
+                data[rowOffset + j] = 0.5 * (source[rowOffset + j] + source[j * dimension + i]);
             }
         }
     }

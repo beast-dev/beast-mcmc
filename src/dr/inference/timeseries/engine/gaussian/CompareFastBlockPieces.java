@@ -90,8 +90,8 @@ public class CompareFastBlockPieces {
 
         final double[] fastTransitionD = new double[blockParam.getCompressedDDimension()];
         final double[] fastCovarianceD = new double[blockParam.getCompressedDDimension()];
-        final double[][] fastTransitionR = new double[d][d];
-        final double[][] fastCovarianceR = new double[d][d];
+        final double[] fastTransitionR = new double[d * d];
+        final double[] fastCovarianceR = new double[d * d];
 
         final double[] denseTransitionA = new double[d * d];
         final double[] denseCovarianceA = new double[d * d];
@@ -103,9 +103,11 @@ public class CompareFastBlockPieces {
         final double[][] temp = new double[d][d];
         final double[][] temp2 = new double[d][d];
         final double[][] dLogL_dF = new double[d][d];
+        final double[] dLogL_dFFlat = new double[d * d];
         final double[] dLogL_df = new double[d];
         final double[][] residualSecondMoment = new double[d][d];
         final double[][] dLogL_dV = new double[d][d];
+        final double[] dLogL_dVFlat = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
@@ -137,9 +139,10 @@ public class CompareFastBlockPieces {
 
             KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
             KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+            copyMatrixToFlat(dLogL_dF, dLogL_dFFlat, d);
 
-            parameterization.accumulateNativeGradientFromTransition(
-                    dt, mu, dLogL_dF, dLogL_df, fastTransitionD, fastTransitionR);
+            parameterization.accumulateNativeGradientFromTransitionFlat(
+                    dt, mu, dLogL_dFFlat, dLogL_df, fastTransitionD, fastTransitionR);
             model.process.accumulateSelectionGradient(dt, dLogL_dF, dLogL_df, denseTransitionA);
 
             KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
@@ -171,9 +174,10 @@ public class CompareFastBlockPieces {
                     dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
                 }
             }
+            copyMatrixToFlat(dLogL_dV, dLogL_dVFlat, d);
 
-            parameterization.accumulateNativeGradientFromCovarianceStationary(
-                    model.process.getDiffusionMatrix(), dt, dLogL_dV, fastCovarianceD, fastCovarianceR);
+            parameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
+                    model.process.getDiffusionMatrix(), dt, dLogL_dVFlat, fastCovarianceD, fastCovarianceR);
             model.process.accumulateSelectionGradientFromCovariance(dt, dLogL_dV, denseCovarianceA);
         }
 
@@ -188,12 +192,13 @@ public class CompareFastBlockPieces {
 
     private static double[] project(AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                     double[] compressedBlockGradient,
-                                    double[][] rotationGradient) {
+                                    double[] rotationGradient) {
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedBlockGradient, nativeGradient);
-        final double[] out = new double[nativeGradient.length + rotationGradient.length * rotationGradient.length];
+        final int d = blockParameter.getRowDimension();
+        final double[] out = new double[nativeGradient.length + d * d];
         System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-        flattenColumnMajor(rotationGradient, out, nativeGradient.length);
+        flattenColumnMajorFromRowMajor(rotationGradient, out, nativeGradient.length, d);
         return out;
     }
 
@@ -227,6 +232,12 @@ public class CompareFastBlockPieces {
         System.out.println(label);
         for (int i = 0; i < fast.length; ++i) {
             System.out.println("  idx=" + i + " fast=" + fast[i] + " dense=" + dense[i] + " diff=" + (fast[i] - dense[i]));
+        }
+    }
+
+    private static void copyMatrixToFlat(final double[][] source, final double[] out, final int d) {
+        for (int row = 0; row < d; ++row) {
+            System.arraycopy(source[row], 0, out, row * d, d);
         }
     }
 
@@ -319,6 +330,18 @@ public class CompareFastBlockPieces {
         for (int col = 0; col < d; ++col) {
             for (int row = 0; row < d; ++row) {
                 out[index++] = matrix[row][col];
+            }
+        }
+    }
+
+    private static void flattenColumnMajorFromRowMajor(final double[] matrix,
+                                                       final double[] out,
+                                                       final int offset,
+                                                       final int d) {
+        int index = offset;
+        for (int col = 0; col < d; ++col) {
+            for (int row = 0; row < d; ++row) {
+                out[index++] = matrix[row * d + col];
             }
         }
     }

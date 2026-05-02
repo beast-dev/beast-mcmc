@@ -10,6 +10,8 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
+import java.util.Arrays;
+
 /**
  * Analytical gradient of log p(Y | θ) with respect to the selection (drift) matrix A.
  *
@@ -67,6 +69,10 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
     private final double[]   dLogL_df;              // ∂logL/∂f_t
     private final double[][] residualSecondMoment;  // S_t = E[δ_t δ_t^T | Y]
     private final double[][] dLogL_dV;              // ∂logL/∂V_t = ½(V^{-1} S V^{-1} − V^{-1})
+    private final double[]   dLogL_dFFlat;
+    private final double[]   dLogL_dVFlat;
+    private final double[]   rotationGradientFlat;
+    private final double[][] rotationGradientMatrix;
 
     /**
      * @param selectionMatrixParameter the drift/selection matrix {@link Parameter} whose
@@ -96,6 +102,10 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         dLogL_df             = new double[stateDimension];
         residualSecondMoment = new double[stateDimension][stateDimension];
         dLogL_dV             = new double[stateDimension][stateDimension];
+        dLogL_dFFlat         = new double[stateDimension * stateDimension];
+        dLogL_dVFlat         = new double[stateDimension * stateDimension];
+        rotationGradientFlat = new double[stateDimension * stateDimension];
+        rotationGradientMatrix = new double[stateDimension][stateDimension];
     }
 
     @Override
@@ -306,7 +316,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         final int T = trajectory.timeCount;
         final int d = stateDimension;
         final double[] compressedDGradient = new double[blockParameter.getCompressedDDimension()];
-        final double[][] rotationGradient = new double[d][d];
+        Arrays.fill(rotationGradientFlat, 0.0);
         final double[] stationaryMean = new double[d];
         processModel.getInitialMean(stationaryMean);
 
@@ -341,10 +351,11 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
 
             KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
             KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+            copyMatrixToFlat(dLogL_dF, dLogL_dFFlat, d);
 
-            orthogonalParameterization.accumulateNativeGradientFromTransition(
-                    dt, stationaryMean, dLogL_dF, dLogL_df,
-                    compressedDGradient, rotationGradient);
+            orthogonalParameterization.accumulateNativeGradientFromTransitionFlat(
+                    dt, stationaryMean, dLogL_dFFlat, dLogL_df,
+                    compressedDGradient, rotationGradientFlat);
 
             KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
             KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(F_t, crossCov, tempDxD);
@@ -375,26 +386,29 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                     dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
                 }
             }
+            copyMatrixToFlat(dLogL_dV, dLogL_dVFlat, d);
 
-            orthogonalParameterization.accumulateNativeGradientFromCovarianceStationary(
-                    processModel.getDiffusionMatrix(), dt, dLogL_dV,
-                    compressedDGradient, rotationGradient);
+            orthogonalParameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
+                    processModel.getDiffusionMatrix(), dt, dLogL_dVFlat,
+                    compressedDGradient, rotationGradientFlat);
         }
 
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
-        return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradient);
+        return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradientFlat);
     }
 
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
                                                  final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                                  final double[] nativeGradient,
-                                                 final double[][] gradientR) {
+                                                 final double[] gradientR) {
         final int d = stateDimension;
         if (requestedParameter == blockParameter.getParameter()) {
             if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
+                fillMatrixFromRowMajor(rotationGradientMatrix, gradientR, d);
                 final double[] angleGradient =
-                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).pullBackGradient(gradientR);
+                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
+                                .pullBackGradient(rotationGradientMatrix);
                 final double[] out = new double[nativeGradient.length + angleGradient.length];
                 System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
                 System.arraycopy(angleGradient, 0, out, nativeGradient.length, angleGradient.length);
@@ -402,16 +416,17 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
             }
             final double[] out = new double[nativeGradient.length + d * d];
             System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-            flattenColumnMajor(gradientR, out, nativeGradient.length);
+            flattenColumnMajorFromRowMajor(gradientR, out, nativeGradient.length, d);
             return out;
         }
         if (requestedParameter == blockParameter.getRotationMatrixParameter()) {
-            return flattenColumnMajor(gradientR);
+            return flattenColumnMajorFromRowMajor(gradientR, d);
         }
         if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
                 && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
+            fillMatrixFromRowMajor(rotationGradientMatrix, gradientR, d);
             return ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                    .pullBackGradient(gradientR);
+                    .pullBackGradient(rotationGradientMatrix);
         }
         if (requestedParameter == blockParameter.getScalarBlockParameter()) {
             return new double[]{nativeGradient[0]};
@@ -497,6 +512,22 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
             for (int row = 0; row < d; ++row) {
                 out[row][col] = gradient[col * d + row];
             }
+        }
+    }
+
+    private static void fillMatrixFromRowMajor(final double[][] out,
+                                               final double[] source,
+                                               final int d) {
+        for (int row = 0; row < d; ++row) {
+            System.arraycopy(source, row * d, out[row], 0, d);
+        }
+    }
+
+    private static void copyMatrixToFlat(final double[][] source,
+                                         final double[] out,
+                                         final int d) {
+        for (int row = 0; row < d; ++row) {
+            System.arraycopy(source[row], 0, out, row * d, d);
         }
     }
 
@@ -626,6 +657,25 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         final double[] out = new double[matrix.length * matrix.length];
         flattenColumnMajor(matrix, out, 0);
         return out;
+    }
+
+    private static double[] flattenColumnMajorFromRowMajor(final double[] matrix,
+                                                           final int d) {
+        final double[] out = new double[d * d];
+        flattenColumnMajorFromRowMajor(matrix, out, 0, d);
+        return out;
+    }
+
+    private static void flattenColumnMajorFromRowMajor(final double[] matrix,
+                                                       final double[] out,
+                                                       final int offset,
+                                                       final int d) {
+        int index = offset;
+        for (int col = 0; col < d; ++col) {
+            for (int row = 0; row < d; ++row) {
+                out[index++] = matrix[row * d + col];
+            }
+        }
     }
 
     private static void flattenColumnMajor(final double[][] matrix,

@@ -77,14 +77,15 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
                     localContribution,
                     canonicalAdjointWorkspace,
                     localAdjoints);
-            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, d);
             if (orthogonalParameterization != null) {
-                orthogonalParameterization.accumulateDiffusionGradient(
+                orthogonalParameterization.accumulateDiffusionGradientFlat(
                         processModel.getDiffusionMatrix(),
                         timeGrid.getDelta(t, t + 1),
-                        covarianceAdjointScratch,
+                        localAdjoints.dLogL_dOmega,
+                        false,
                         gradientAccumulator);
             } else {
+                GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dOmega, covarianceAdjointScratch, d);
                 repr.accumulateDiffusionGradient(
                         t, t + 1, timeGrid, covarianceAdjointScratch, gradientAccumulator);
             }

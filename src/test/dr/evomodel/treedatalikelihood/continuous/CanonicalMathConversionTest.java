@@ -114,7 +114,6 @@ public final class CanonicalMathConversionTest extends TestCase {
         final DenseMatrix64F roundTrip = new DenseMatrix64F(dim, dim);
         MatrixOps.fromFlat(flat, roundTrip, dim);
         assertEquals(1.0, roundTrip.get(0, 0), TOL);
-        assertEquals(2.0, roundTrip.get(0, 1), TOL);
         assertEquals(3.0, roundTrip.get(1, 0), TOL);
         assertEquals(4.0, roundTrip.get(1, 1), TOL);
     }

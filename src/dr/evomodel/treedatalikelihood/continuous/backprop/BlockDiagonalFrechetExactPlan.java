@@ -2,6 +2,8 @@ package dr.evomodel.treedatalikelihood.continuous.backprop;
 
 import org.ejml.data.DenseMatrix64F;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Exact cached coefficient plan for the block Fréchet map
  *
@@ -35,12 +37,39 @@ final class BlockDiagonalFrechetExactPlan {
             ThreadLocal.withInitial(ComplexWorkspace::new);
     private static final ThreadLocal<RealSeriesWorkspace> REAL_SERIES_WORKSPACE =
             ThreadLocal.withInitial(RealSeriesWorkspace::new);
+    private static final AtomicLong PARAMETER_UPDATES = new AtomicLong();
+    private static final AtomicLong TIME_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong EQUAL_DIAGONAL_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong GENERIC_SOLVE4X4_CALLS = new AtomicLong();
 
     private BlockDiagonalFrechetExactPlan() {
     }
 
     static Plan createPlan(final BlockDiagonalExpSolver.BlockStructure structure) {
         return new Plan(structure);
+    }
+
+    static void resetInstrumentation() {
+        PARAMETER_UPDATES.set(0L);
+        TIME_EVALUATIONS.set(0L);
+        EQUAL_DIAGONAL_EVALUATIONS.set(0L);
+        GENERIC_SOLVE4X4_CALLS.set(0L);
+    }
+
+    static long getParameterUpdateCount() {
+        return PARAMETER_UPDATES.get();
+    }
+
+    static long getTimeEvaluationCount() {
+        return TIME_EVALUATIONS.get();
+    }
+
+    static long getEqualDiagonalEvaluationCount() {
+        return EQUAL_DIAGONAL_EVALUATIONS.get();
+    }
+
+    static long getGenericSolve4x4CallCount() {
+        return GENERIC_SOLVE4X4_CALLS.get();
     }
 
     private static Entry[] buildEntries(final BlockDiagonalExpSolver.BlockStructure structure) {
@@ -73,21 +102,25 @@ final class BlockDiagonalFrechetExactPlan {
             this.entries = buildEntries(structure);
         }
 
-        void rebuild(final double[] blockDParams,
-                     final double t) {
+        void updateParameters(final double[] blockDParams) {
+            PARAMETER_UPDATES.incrementAndGet();
+            for (final Entry entry : entries) {
+                entry.kernel.updateParameters(blockDParams, dimension);
+            }
+        }
+
+        void evaluate(final double t) {
+            TIME_EVALUATIONS.incrementAndGet();
             final BuildWorkspace buildWorkspace = BUILD_WORKSPACE.get();
             for (final Entry entry : entries) {
-                fillCoefficients(
-                        blockDParams,
-                        dimension,
-                        entry.leftStart,
-                        entry.leftDim,
-                        entry.rightStart,
-                        entry.rightDim,
-                        t,
-                        entry.coefficients,
-                        buildWorkspace);
+                entry.kernel.fill(t, entry.coefficients, buildWorkspace);
             }
+        }
+
+        void rebuild(final double[] blockDParams,
+                     final double t) {
+            updateParameters(blockDParams);
+            evaluate(t);
         }
 
         void apply(final DenseMatrix64F input,
@@ -155,6 +188,7 @@ final class BlockDiagonalFrechetExactPlan {
         private final int rightDim;
         private final int size;
         private final double[] coefficients;
+        private final EntryKernel kernel;
 
         private Entry(final int leftStart,
                       final int leftDim,
@@ -166,6 +200,231 @@ final class BlockDiagonalFrechetExactPlan {
             this.rightDim = rightDim;
             this.size = leftDim * rightDim;
             this.coefficients = new double[size * size];
+            this.kernel = createKernel(leftStart, leftDim, rightStart, rightDim);
+        }
+    }
+
+    private interface EntryKernel {
+        void updateParameters(double[] blockDParams, int dimension);
+
+        void fill(double t, double[] out, BuildWorkspace workspace);
+    }
+
+    private static EntryKernel createKernel(final int leftStart,
+                                            final int leftDim,
+                                            final int rightStart,
+                                            final int rightDim) {
+        if (leftDim == 2 && rightDim == 2) {
+            return new TwoByTwoBlockPairKernel(leftStart, rightStart);
+        }
+        return new ExistingCoefficientKernel(leftStart, leftDim, rightStart, rightDim);
+    }
+
+    private static final class ExistingCoefficientKernel implements EntryKernel {
+        private final int leftStart;
+        private final int leftDim;
+        private final int rightStart;
+        private final int rightDim;
+        private double[] blockDParams;
+        private int dimension;
+
+        private ExistingCoefficientKernel(final int leftStart,
+                                          final int leftDim,
+                                          final int rightStart,
+                                          final int rightDim) {
+            this.leftStart = leftStart;
+            this.leftDim = leftDim;
+            this.rightStart = rightStart;
+            this.rightDim = rightDim;
+        }
+
+        @Override
+        public void updateParameters(final double[] blockDParams,
+                                     final int dimension) {
+            this.blockDParams = blockDParams;
+            this.dimension = dimension;
+        }
+
+        @Override
+        public void fill(final double t,
+                         final double[] out,
+                         final BuildWorkspace workspace) {
+            fillCoefficients(
+                    blockDParams,
+                    dimension,
+                    leftStart,
+                    leftDim,
+                    rightStart,
+                    rightDim,
+                    t,
+                    out,
+                    workspace);
+        }
+    }
+
+    private static final class TwoByTwoBlockPairKernel implements EntryKernel {
+        private final int leftStart;
+        private final int rightStart;
+        private final EqualDiagonalBlockBlockKernel equalDiagonalKernel =
+                new EqualDiagonalBlockBlockKernel();
+        private final double[] leftBlock = new double[4];
+        private final double[] rightBlock = new double[4];
+        private final double[] leftExp = new double[4];
+        private final double[] rightExp = new double[4];
+        private double leftDiagonal;
+        private double leftUpper;
+        private double leftLower;
+        private double leftOtherDiagonal;
+        private double rightDiagonal;
+        private double rightUpper;
+        private double rightLower;
+        private double rightOtherDiagonal;
+        private double leftProduct;
+        private double rightProduct;
+        private boolean equalDiagonalPair;
+
+        private TwoByTwoBlockPairKernel(final int leftStart,
+                                        final int rightStart) {
+            this.leftStart = leftStart;
+            this.rightStart = rightStart;
+        }
+
+        @Override
+        public void updateParameters(final double[] blockDParams,
+                                     final int dimension) {
+            final int upperOffset = dimension;
+            final int lowerOffset = dimension + (dimension - 1);
+            leftDiagonal = blockDParams[leftStart];
+            leftUpper = blockDParams[upperOffset + leftStart];
+            leftLower = blockDParams[lowerOffset + leftStart];
+            leftOtherDiagonal = blockDParams[leftStart + 1];
+            rightDiagonal = blockDParams[rightStart];
+            rightUpper = blockDParams[upperOffset + rightStart];
+            rightLower = blockDParams[lowerOffset + rightStart];
+            rightOtherDiagonal = blockDParams[rightStart + 1];
+            leftProduct = leftUpper * leftLower;
+            rightProduct = rightUpper * rightLower;
+            equalDiagonalPair =
+                    Math.abs(leftDiagonal - leftOtherDiagonal) < EPS
+                            && Math.abs(rightDiagonal - rightOtherDiagonal) < EPS;
+            if (equalDiagonalPair) {
+                equalDiagonalKernel.update(
+                        leftDiagonal,
+                        leftUpper,
+                        leftLower,
+                        rightDiagonal,
+                        rightUpper,
+                        rightLower,
+                        leftProduct,
+                        rightProduct);
+            }
+        }
+
+        @Override
+        public void fill(final double t,
+                         final double[] out,
+                         final BuildWorkspace workspace) {
+            if (equalDiagonalPair) {
+                fillEqualDiagonalCoefficient(t, out, workspace);
+                return;
+            }
+
+            fillScaledBlocks(t);
+            fillSmallExponential(leftBlock, 2, leftExp);
+            fillSmallExponential(rightBlock, 2, rightExp);
+            fillTwoByTwoCoefficientGeneric(leftBlock, rightBlock, leftExp, rightExp, out, workspace);
+        }
+
+        private void fillEqualDiagonalCoefficient(final double t,
+                                                  final double[] out,
+                                                  final BuildWorkspace workspace) {
+            EQUAL_DIAGONAL_EVALUATIONS.incrementAndGet();
+            equalDiagonalKernel.fill(t, out, workspace);
+        }
+
+        private void fillScaledBlocks(final double t) {
+            final double scale = -t;
+            leftBlock[0] = scale * leftDiagonal;
+            leftBlock[1] = scale * leftUpper;
+            leftBlock[2] = scale * leftLower;
+            leftBlock[3] = scale * leftOtherDiagonal;
+            rightBlock[0] = scale * rightDiagonal;
+            rightBlock[1] = scale * rightUpper;
+            rightBlock[2] = scale * rightLower;
+            rightBlock[3] = scale * rightOtherDiagonal;
+        }
+    }
+
+    private static final class EqualDiagonalBlockBlockKernel {
+        private double leftDiagonal;
+        private double leftUpper;
+        private double leftLower;
+        private double rightDiagonal;
+        private double rightUpper;
+        private double rightLower;
+        private double leftProduct;
+        private double rightProduct;
+
+        void update(final double leftDiagonal,
+                    final double leftUpper,
+                    final double leftLower,
+                    final double rightDiagonal,
+                    final double rightUpper,
+                    final double rightLower,
+                    final double leftProduct,
+                    final double rightProduct) {
+            this.leftDiagonal = leftDiagonal;
+            this.leftUpper = leftUpper;
+            this.leftLower = leftLower;
+            this.rightDiagonal = rightDiagonal;
+            this.rightUpper = rightUpper;
+            this.rightLower = rightLower;
+            this.leftProduct = leftProduct;
+            this.rightProduct = rightProduct;
+        }
+
+        void fill(final double t,
+                  final double[] out,
+                  final BuildWorkspace workspace) {
+            final double scale = -t;
+            final double a = scale * leftDiagonal;
+            final double b = scale * rightDiagonal;
+            final double scaledLeftUpper = scale * leftUpper;
+            final double scaledLeftLower = scale * leftLower;
+            final double scaledRightUpper = scale * rightUpper;
+            final double scaledRightLower = scale * rightLower;
+            final double t2 = t * t;
+            final double scaledLeftProduct = t2 * leftProduct;
+            final double scaledRightProduct = t2 * rightProduct;
+            final double rRe = scaledLeftProduct >= 0.0 ? Math.sqrt(scaledLeftProduct) : 0.0;
+            final double rIm = scaledLeftProduct >= 0.0 ? 0.0 : Math.sqrt(-scaledLeftProduct);
+            final double qRe = scaledRightProduct >= 0.0 ? Math.sqrt(scaledRightProduct) : 0.0;
+            final double qIm = scaledRightProduct >= 0.0 ? 0.0 : Math.sqrt(-scaledRightProduct);
+            final double rAbs = Math.sqrt(Math.abs(scaledLeftProduct));
+            final double qAbs = Math.sqrt(Math.abs(scaledRightProduct));
+            final ComplexWorkspace complexWorkspace = COMPLEX_WORKSPACE.get();
+            final PreparedCoefficients prepared = workspace.prepared;
+
+            if (rAbs < SMALL_ROOT_SERIES_CUTOFF && qAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                fillCoefficientsBivariateSmallRootSeries(a, b, scaledLeftProduct, scaledRightProduct, prepared);
+            } else if (rAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                fillCoefficientsSmallLeftRootSeries(
+                        a, b, qRe, qIm, scaledLeftProduct, prepared, complexWorkspace);
+            } else if (qAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                fillCoefficientsSmallRightRootSeries(
+                        a, b, rRe, rIm, scaledRightProduct, prepared, complexWorkspace);
+            } else {
+                fillCoefficientsDistinct(a, b, rRe, rIm, qRe, qIm, prepared, complexWorkspace);
+            }
+
+            fillTwoByTwoCoefficientFromPrepared(
+                    prepared,
+                    scaledLeftUpper,
+                    scaledLeftLower,
+                    scaledRightUpper,
+                    scaledRightLower,
+                    out,
+                    workspace);
         }
     }
 
@@ -879,6 +1138,7 @@ final class BlockDiagonalFrechetExactPlan {
                                  final double[] rhs,
                                  final double[] solution,
                                  final double[] augmented) {
+        GENERIC_SOLVE4X4_CALLS.incrementAndGet();
         for (int row = 0; row < 4; ++row) {
             final int matrixOffset = 4 * row;
             final int augmentedOffset = 5 * row;

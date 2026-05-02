@@ -1,5 +1,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -83,6 +84,31 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
         assertVectorEquals("near-nilpotent compressed transition gradient", dense.compressed, exact.compressed, TOL);
         assertVectorEquals("near-nilpotent rotation transition gradient", dense.rotation, exact.rotation, TOL);
+    }
+
+    public void testOrthogonalPolarBlocksUseEqualDiagonalExactPlanKernels() {
+        final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization = buildParameterization();
+        final double[] dLogL_dF = new double[]{
+                 0.10, -0.25,  0.08,  0.03,
+                -0.07,  0.18, -0.11,  0.04,
+                 0.06, -0.02,  0.21, -0.09,
+                -0.04,  0.05, -0.13,  0.17
+        };
+        final double[] dLogL_df = new double[]{0.14, -0.09, 0.07, -0.03};
+        final double[] stationaryMean = new double[]{0.3, -0.4, 0.8, -0.2};
+
+        BlockDiagonalFrechetHelper.resetExactPlanInstrumentation();
+        computeTransitionGradient(parameterization, stationaryMean, dLogL_dF, dLogL_df, 0.37, false);
+
+        assertTrue("exact plan updates parameters",
+                BlockDiagonalFrechetHelper.getExactPlanParameterUpdateCount() > 0L);
+        assertTrue("exact plan evaluates at branch length",
+                BlockDiagonalFrechetHelper.getExactPlanTimeEvaluationCount() > 0L);
+        assertTrue("orthogonal polar blocks use equal-diagonal kernels",
+                BlockDiagonalFrechetHelper.getExactPlanEqualDiagonalEvaluationCount() > 0L);
+        assertEquals("orthogonal polar blocks avoid generic Sylvester solves",
+                0L,
+                BlockDiagonalFrechetHelper.getExactPlanGenericSolve4x4CallCount());
     }
 
     private Result computeTransitionGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,

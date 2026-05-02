@@ -51,6 +51,26 @@ public final class BlockDiagonalFrechetHelper {
         this.cachedPlanValid = false;
     }
 
+    public static void resetExactPlanInstrumentation() {
+        BlockDiagonalFrechetExactPlan.resetInstrumentation();
+    }
+
+    public static long getExactPlanParameterUpdateCount() {
+        return BlockDiagonalFrechetExactPlan.getParameterUpdateCount();
+    }
+
+    public static long getExactPlanTimeEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getTimeEvaluationCount();
+    }
+
+    public static long getExactPlanEqualDiagonalEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getEqualDiagonalEvaluationCount();
+    }
+
+    public static long getExactPlanGenericSolve4x4CallCount() {
+        return BlockDiagonalFrechetExactPlan.getGenericSolve4x4CallCount();
+    }
+
     public DenseMatrix64F computeExpInDBasis(final double[] blockDParams,
                                              final double t) {
         expSolver.compute(blockDParams, t, lastExp);
@@ -212,12 +232,13 @@ public final class BlockDiagonalFrechetHelper {
         if (!cachedPlanValid
                 || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT)
                 || parametersChanged) {
-            cachedPlan.rebuild(blockDParams, t);
             if (parametersChanged) {
                 System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
                 cachedPlanParameterHash = parameterHash;
                 cachedPlanParameterVersion++;
+                cachedPlan.updateParameters(blockDParams);
             }
+            cachedPlan.evaluate(t);
             cachedPlanT = t;
             cachedPlanValid = true;
         }

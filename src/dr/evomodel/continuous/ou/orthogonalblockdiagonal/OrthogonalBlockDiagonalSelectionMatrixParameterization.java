@@ -47,6 +47,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
     private final double[] denseAdjointScratch;
     private final double[] choleskyScratch;
     private final double[] lowerInverseScratch;
+    private final double[] legacyMatrixScratch;
+    private final double[] legacyRotationScratch;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
 
     public OrthogonalBlockDiagonalSelectionMatrixParameterization(
@@ -85,6 +87,8 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         this.denseAdjointScratch = new double[d * d];
         this.choleskyScratch = new double[d * d];
         this.lowerInverseScratch = new double[d * d];
+        this.legacyMatrixScratch = new double[d * d];
+        this.legacyRotationScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
     }
 
@@ -123,7 +127,10 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
 
     public OrthogonalBlockPreparedBranchBasis createPreparedBranchBasis() {
         final int dimension = getDimension();
-        return new OrthogonalBlockPreparedBranchBasis(dimension, blockParameter.getTridiagonalDDimension());
+        return new OrthogonalBlockPreparedBranchBasis(
+                dimension,
+                blockParameter.getTridiagonalDDimension(),
+                blockParameter.getCompressedDDimension());
     }
 
     @Override
@@ -223,6 +230,22 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                  final CanonicalBranchWorkspace workspace,
                                                  final double[] out) {
         MatrixOps.toFlat(asPreparedBasis(prepared).transitionMatrix, out, getDimension());
+    }
+
+    @Override
+    public boolean fillTransitionMomentsPreparedFlat(final CanonicalPreparedBranchHandle prepared,
+                                                     final MatrixParameterInterface diffusionMatrix,
+                                                     final CanonicalBranchWorkspace workspace,
+                                                     final double[] transitionMatrixOut,
+                                                     final double[] transitionOffsetOut,
+                                                     final double[] transitionCovarianceOut) {
+        final OrthogonalBlockPreparedBranchBasis basis = asPreparedBasis(prepared);
+        final OrthogonalBlockBranchGradientWorkspace branchWorkspace = asBranchWorkspace(workspace);
+        loadOrFillPreparedCovariance(basis, diffusionMatrix, branchWorkspace);
+        MatrixOps.toFlat(basis.transitionMatrix, transitionMatrixOut, getDimension());
+        fillTransitionOffsetPrepared(basis, transitionOffsetOut);
+        MatrixOps.toFlat(basis.transitionCovariance, transitionCovarianceOut, getDimension());
+        return true;
     }
 
     public void prepareBranchCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -525,6 +548,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 compressedDAccumulator, rotationAccumulator);
     }
 
+    public void accumulateNativeGradientFromTransition(final double dt,
+                                                       final double[] stationaryMean,
+                                                       final double[][] dLogL_dF,
+                                                       final double[] dLogL_df,
+                                                      final double[] compressedDAccumulator,
+                                                      final double[][] rotationAccumulator) {
+        final int d = getDimension();
+        Arrays.fill(legacyRotationScratch, 0.0);
+        copyMatrixToFlat(dLogL_dF, legacyMatrixScratch, d);
+        accumulateNativeGradientFromTransitionFlat(
+                dt, stationaryMean, legacyMatrixScratch, dLogL_df,
+                compressedDAccumulator, legacyRotationScratch);
+        addFlatToMatrix(legacyRotationScratch, rotationAccumulator, d);
+    }
+
     @Override
     public void accumulateGradientFromTransitionFlat(final double dt,
                                                      final double[] stationaryMean,
@@ -574,6 +612,20 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 compressedDAccumulator, rotationAccumulator);
     }
 
+    public void accumulateNativeGradientFromCovarianceStationary(final MatrixParameterInterface diffusionMatrix,
+                                                                 final double dt,
+                                                                 final double[][] dLogL_dV,
+                                                                 final double[] compressedDAccumulator,
+                                                                 final double[][] rotationAccumulator) {
+        final int d = getDimension();
+        Arrays.fill(legacyRotationScratch, 0.0);
+        copyMatrixToFlat(dLogL_dV, legacyMatrixScratch, d);
+        accumulateNativeGradientFromCovarianceStationaryFlat(
+                diffusionMatrix, dt, legacyMatrixScratch,
+                compressedDAccumulator, legacyRotationScratch);
+        addFlatToMatrix(legacyRotationScratch, rotationAccumulator, d);
+    }
+
     @Override
     public void accumulateDiffusionGradientFlat(final MatrixParameterInterface diffusionMatrix,
                                                 final double dt,
@@ -583,6 +635,15 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         refreshBasisCaches(dt);
         covarianceAdjoint.accumulateDiffusionGradientCurrentFlat(
                 basisCache, dLogL_dV, transposeAdjoint, gradientAccumulator);
+    }
+
+    public void accumulateDiffusionGradient(final MatrixParameterInterface diffusionMatrix,
+                                            final double dt,
+                                            final double[][] dLogL_dV,
+                                            final double[] gradientAccumulator) {
+        final int d = getDimension();
+        copyMatrixToFlat(dLogL_dV, legacyMatrixScratch, d);
+        accumulateDiffusionGradientFlat(diffusionMatrix, dt, legacyMatrixScratch, false, gradientAccumulator);
     }
 
     public void accumulateNativeGradientFromCanonicalContributionFlat(final MatrixParameterInterface diffusionMatrix,
@@ -725,6 +786,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
     }
 
+    private void fillTransitionOffsetPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
+                                              final double[] out) {
+        final int dimension = getDimension();
+        final double[] transitionData = prepared.transitionMatrix.data;
+        final double[] stationaryMean = prepared.stationaryMean;
+        for (int i = 0; i < dimension; ++i) {
+            double transformedMean = 0.0;
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                transformedMean += transitionData[rowOffset + j] * stationaryMean[j];
+            }
+            out[i] = stationaryMean[i] - transformedMean;
+        }
+    }
+
     private void refreshBasisCaches(final double dt) {
         basisCache.refresh(dt);
     }
@@ -738,6 +814,25 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                                                      final double[] inverseOut) {
         return OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
                 source, matrixOut, inverseOut, choleskyScratch, lowerInverseScratch);
+    }
+
+    private static void copyMatrixToFlat(final double[][] source,
+                                         final double[] out,
+                                         final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source[i], 0, out, i * dimension, dimension);
+        }
+    }
+
+    private static void addFlatToMatrix(final double[] source,
+                                        final double[][] out,
+                                        final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[i][j] += source[rowOffset + j];
+            }
+        }
     }
 
     private static boolean isFinite(final double[] values) {

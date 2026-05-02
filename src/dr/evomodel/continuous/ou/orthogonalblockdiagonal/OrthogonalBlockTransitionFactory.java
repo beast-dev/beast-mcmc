@@ -107,7 +107,9 @@ final class OrthogonalBlockTransitionFactory {
                 transitionCovDBasis,
                 temp,
                 transitionCovariance,
-                false);
+                false,
+                basis.blockStarts,
+                basis.blockSizes);
     }
 
 }

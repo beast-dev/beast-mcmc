@@ -1,7 +1,13 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
@@ -18,6 +24,11 @@ import java.util.Arrays;
  * Builds branch-local canonical transition adjoints from current tree messages.
  */
 public final class CanonicalBranchContributionAssembler {
+
+    private static final boolean USE_PREPARED_TRANSITION_MOMENTS =
+            Boolean.parseBoolean(System.getProperty(
+                    "beast.experimental.canonicalUsePreparedTransitionMoments",
+                    "true"));
 
     private final Tree tree;
     private final int dim;
@@ -48,17 +59,71 @@ public final class CanonicalBranchContributionAssembler {
             return false;
         }
 
-        fillAdjointsFromContribution(transition, workspace);
+        fillAdjointsFromContribution(childIndex, transitionProvider, transition, workspace);
         return true;
     }
 
-    private void fillAdjointsFromContribution(final CanonicalGaussianTransition transition,
+    private void fillAdjointsFromContribution(final int childIndex,
+                                              final CanonicalBranchTransitionProvider transitionProvider,
+                                              final CanonicalGaussianTransition transition,
                                               final BranchGradientWorkspace workspace) {
+        if (fillAdjointsFromPreparedMoments(childIndex, transitionProvider, transition, workspace)) {
+            return;
+        }
         CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                 transition,
                 workspace.contribution,
                 workspace.transitionAdjointWorkspace,
                 workspace.adjoints);
+    }
+
+    private boolean fillAdjointsFromPreparedMoments(final int childIndex,
+                                                    final CanonicalBranchTransitionProvider transitionProvider,
+                                                    final CanonicalGaussianTransition transition,
+                                                    final BranchGradientWorkspace workspace) {
+        if (!USE_PREPARED_TRANSITION_MOMENTS
+                || !(transitionProvider instanceof CanonicalOUTransitionProvider)
+                || !(transitionProvider instanceof CanonicalPreparedBranchSnapshotProvider)) {
+            return false;
+        }
+
+        final OUProcessModel processModel =
+                ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
+        if (!(processModel.getSelectionMatrixParameterization()
+                instanceof CanonicalPreparedTransitionCapability)) {
+            return false;
+        }
+
+        final CanonicalPreparedBranchSnapshot snapshot =
+                ((CanonicalPreparedBranchSnapshotProvider) transitionProvider)
+                        .getPreparedBranchSnapshot(childIndex);
+        if (snapshot == null || snapshot.getPreparedBranchHandle() == null) {
+            return false;
+        }
+
+        final CanonicalPreparedTransitionCapability preparedTransition =
+                (CanonicalPreparedTransitionCapability) processModel.getSelectionMatrixParameterization();
+        final CanonicalBranchWorkspace specializedWorkspace =
+                workspace.ensureSpecializedBranchWorkspace(preparedTransition);
+        if (!preparedTransition.fillTransitionMomentsPreparedFlat(
+                snapshot.getPreparedBranchHandle(),
+                processModel.getDiffusionMatrix(),
+                specializedWorkspace,
+                workspace.transitionMatrixFlat,
+                workspace.mean2,
+                workspace.covariance2)) {
+            return false;
+        }
+
+        CanonicalTransitionAdjointUtils.fillFromMoments(
+                transition.precisionYY,
+                workspace.covariance2,
+                workspace.transitionMatrixFlat,
+                workspace.mean2,
+                workspace.contribution,
+                workspace.transitionAdjointWorkspace,
+                workspace.adjoints);
+        return true;
     }
 
     private CanonicalGaussianTransition transitionFor(final int childIndex,

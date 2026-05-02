@@ -31,6 +31,7 @@ public final class CanonicalGradientFallbackPolicy {
     private static final String BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY  = "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
     private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY       = "beast.experimental.disableExactTipShortcut";
     private static final String BRANCH_GRADIENT_THREADS_PROPERTY          = "beast.experimental.canonicalBranchGradientThreads";
+    private static final String PREPARED_TRANSITION_MOMENTS_PROPERTY      = "beast.experimental.canonicalUsePreparedTransitionMoments";
 
     /**
      * All property names recognized by this class.
@@ -46,7 +47,8 @@ public final class CanonicalGradientFallbackPolicy {
                     NATIVE_FROM_CONTRIBUTION_PROPERTY,
                     BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY,
                     DISABLE_EXACT_TIP_SHORTCUT_PROPERTY,
-                    BRANCH_GRADIENT_THREADS_PROPERTY)));
+                    BRANCH_GRADIENT_THREADS_PROPERTY,
+                    PREPARED_TRANSITION_MOMENTS_PROPERTY)));
 
     // -----------------------------------------------------------------------
     // Fields

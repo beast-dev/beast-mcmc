@@ -25,11 +25,13 @@ final class OrthogonalBlockPreparedBasisBuilder {
         orthogonalRotation.fillOrthogonalMatrix(prepared.rMatrix.data);
         orthogonalRotation.fillOrthogonalTranspose(prepared.rtMatrix.data);
         blockParameter.fillBlockDiagonalElements(prepared.blockDParams);
-        expSolver.compute(prepared.blockDParams, dt, prepared.expD);
-        multiplyRowMajor(
+        expSolver.computeCompressed(prepared.blockDParams, dt, prepared.expD);
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
                 prepared.rMatrix.data,
-                prepared.expD.data,
+                prepared.expD,
                 dimension,
+                blockParameter.getBlockStarts(),
+                blockParameter.getBlockSizes(),
                 prepared.workMatrix);
         multiply(
                 prepared.workMatrix,
@@ -43,26 +45,13 @@ final class OrthogonalBlockPreparedBasisBuilder {
                                      final double[] expDData,
                                      final double[] rtData,
                                      final int dimension,
+                                     final int[] blockStarts,
+                                     final int[] blockSizes,
                                      final double[] workMatrix,
                                      final double[] transitionData) {
-        multiplyRowMajor(rData, expDData, dimension, workMatrix);
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
+                rData, expDData, dimension, blockStarts, blockSizes, workMatrix);
         multiply(workMatrix, rtData, dimension, transitionData);
-    }
-
-    private static void multiplyRowMajor(final double[] leftRowMajor,
-                                         final double[] rightRowMajor,
-                                         final int dimension,
-                                         final double[] out) {
-        for (int i = 0; i < dimension; ++i) {
-            final int rowOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += leftRowMajor[i * dimension + k] * rightRowMajor[k * dimension + j];
-                }
-                out[rowOffset + j] = sum;
-            }
-        }
     }
 
     private static void multiply(final double[] left,

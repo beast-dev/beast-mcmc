@@ -24,7 +24,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
     private final double[] rData;
     private final double[] rinvData;
     private final double[] blockDParams;
-    private final DenseMatrix64F expD;
+    private final double[] expD;
     private final DenseMatrix64F rMatrix;
     private final DenseMatrix64F rinvMatrix;
     private final DenseMatrix64F transitionMatrix;
@@ -66,7 +66,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         this.rData = new double[dimension * dimension];
         this.rinvData = new double[dimension * dimension];
         this.blockDParams = new double[blockParameter.getTridiagonalDDimension()];
-        this.expD = new DenseMatrix64F(dimension, dimension);
+        this.expD = new double[blockParameter.getCompressedDDimension()];
         this.rMatrix = new DenseMatrix64F(dimension, dimension);
         this.rinvMatrix = new DenseMatrix64F(dimension, dimension);
         this.transitionMatrix = new DenseMatrix64F(dimension, dimension);
@@ -103,8 +103,8 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.mult(rinvMatrix, qMatrix, tmpMatrix1);
         CommonOps.multTransB(tmpMatrix1, rinvMatrix, qDBasis);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, tmpMatrix1);
-        CommonOps.multTransB(tmpMatrix1, expD, tmpMatrix2);
+        multiplyBlockDiagonalLeft(expD, stationaryCovDBasis, tmpMatrix1, false);
+        multiplyRightBlockDiagonal(tmpMatrix1, expD, tmpMatrix2, true);
         transitionCovDBasis.set(stationaryCovDBasis);
         CommonOps.subtractEquals(transitionCovDBasis, tmpMatrix2);
         CommonOps.mult(rMatrix, transitionCovDBasis, tmpMatrix1);
@@ -145,8 +145,8 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.mult(rinvMatrix, qMatrix, tmpMatrix1);
         CommonOps.multTransB(tmpMatrix1, rinvMatrix, qDBasis);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, tmpMatrix1);
-        CommonOps.multTransB(tmpMatrix1, expD, transitionCovDBasis);
+        multiplyBlockDiagonalLeft(expD, stationaryCovDBasis, tmpMatrix1, false);
+        multiplyRightBlockDiagonal(tmpMatrix1, expD, transitionCovDBasis, true);
         CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         symmetrize(transitionCovDBasis);
 
@@ -156,8 +156,8 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.mult(tmpMatrix1, rMatrix, hDBasis);
         symmetrize(hDBasis);
 
-        CommonOps.multTransA(expD, hDBasis, tmpMatrix1);
-        CommonOps.mult(tmpMatrix1, expD, gS);
+        multiplyBlockDiagonalLeft(expD, hDBasis, tmpMatrix1, true);
+        multiplyRightBlockDiagonal(tmpMatrix1, expD, gS, false);
         CommonOps.changeSign(gS);
         CommonOps.addEquals(gS, hDBasis);
         lyapunovAdjointHelper.accumulateLyapunovContributionInDBasis(
@@ -171,7 +171,7 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         CommonOps.multTransA(rinvMatrix, tmpMatrix3, gradR);
         addDenseMatrixToArray(gradR, rotationAccumulator);
 
-        CommonOps.mult(hDBasis, expD, tmpMatrix1);
+        multiplyRightBlockDiagonal(hDBasis, expD, tmpMatrix1, false);
         CommonOps.mult(tmpMatrix1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
         frechetHelper.frechetAdjointExpInDBasis(blockDParams, gECov, dt, gradD);
@@ -224,11 +224,91 @@ public final class BlockDiagonalSelectionMatrixParameterization extends DenseSel
         System.arraycopy(rData, 0, rMatrix.data, 0, dimension * dimension);
         System.arraycopy(rinvData, 0, rinvMatrix.data, 0, dimension * dimension);
         blockParameter.fillBlockDiagonalElements(blockDParams);
-        expSolver.compute(blockDParams, dt, expD);
+        expSolver.computeCompressed(blockDParams, dt, expD);
 
-        multiplyRowMajor(rData, expD.data, dimension, workMatrix);
-        multiply(workMatrix, rinvData, dimension, workMatrix);
-        fillDenseMatrix(workMatrix, transitionMatrix);
+        multiplyRightBlockDiagonal(rMatrix, expD, tmpMatrix1, false);
+        CommonOps.mult(tmpMatrix1, rinvMatrix, transitionMatrix);
+    }
+
+    private void multiplyRightBlockDiagonal(final DenseMatrix64F matrix,
+                                            final double[] compressedBlockData,
+                                            final DenseMatrix64F out,
+                                            final boolean transposeBlock) {
+        final int dimension = matrix.numRows;
+        final double[] matrixData = matrix.data;
+        final double[] outData = out.data;
+        final int upperBase = dimension;
+        final int lowerBase = dimension + blockParameter.getNum2x2Blocks();
+        int block2x2Index = 0;
+        for (int row = 0; row < dimension; ++row) {
+            final int rowOffset = row * dimension;
+            for (int b = 0; b < blockParameter.getNumBlocks(); ++b) {
+                final int start = blockParameter.getBlockStarts()[b];
+                final int size = blockParameter.getBlockSizes()[b];
+                if (size == 1) {
+                    outData[rowOffset + start] =
+                            matrixData[rowOffset + start] * compressedBlockData[start];
+                } else {
+                    final double e00 = compressedBlockData[start];
+                    final double e11 = compressedBlockData[start + 1];
+                    final double e01 = compressedBlockData[upperBase + block2x2Index];
+                    final double e10 = compressedBlockData[lowerBase + block2x2Index];
+                    final double x0 = matrixData[rowOffset + start];
+                    final double x1 = matrixData[rowOffset + start + 1];
+                    if (transposeBlock) {
+                        outData[rowOffset + start] = x0 * e00 + x1 * e01;
+                        outData[rowOffset + start + 1] = x0 * e10 + x1 * e11;
+                    } else {
+                        outData[rowOffset + start] = x0 * e00 + x1 * e10;
+                        outData[rowOffset + start + 1] = x0 * e01 + x1 * e11;
+                    }
+                    block2x2Index++;
+                }
+            }
+            block2x2Index = 0;
+        }
+    }
+
+    private void multiplyBlockDiagonalLeft(final double[] compressedBlockData,
+                                           final DenseMatrix64F matrix,
+                                           final DenseMatrix64F out,
+                                           final boolean transposeBlock) {
+        final int dimension = matrix.numRows;
+        final double[] matrixData = matrix.data;
+        final double[] outData = out.data;
+        final int upperBase = dimension;
+        final int lowerBase = dimension + blockParameter.getNum2x2Blocks();
+        int block2x2Index = 0;
+        for (int b = 0; b < blockParameter.getNumBlocks(); ++b) {
+            final int start = blockParameter.getBlockStarts()[b];
+            final int size = blockParameter.getBlockSizes()[b];
+            if (size == 1) {
+                final int rowOffset = start * dimension;
+                for (int col = 0; col < dimension; ++col) {
+                    outData[rowOffset + col] =
+                            compressedBlockData[start] * matrixData[rowOffset + col];
+                }
+            } else {
+                final int row0 = start * dimension;
+                final int row1 = (start + 1) * dimension;
+                final double e00 = compressedBlockData[start];
+                final double e11 = compressedBlockData[start + 1];
+                final double e01 = compressedBlockData[upperBase + block2x2Index];
+                final double e10 = compressedBlockData[lowerBase + block2x2Index];
+                for (int col = 0; col < dimension; ++col) {
+                    final double x0 = matrixData[row0 + col];
+                    final double x1 = matrixData[row1 + col];
+                    if (transposeBlock) {
+                        outData[row0 + col] = e00 * x0 + e10 * x1;
+                        outData[row1 + col] = e01 * x0 + e11 * x1;
+                    } else {
+                        outData[row0 + col] = e00 * x0 + e01 * x1;
+                        outData[row1 + col] = e10 * x0 + e11 * x1;
+                    }
+                }
+                block2x2Index++;
+            }
+        }
     }
 
     private void fillTotalUpstreamOnTransition(final double[] stationaryMean,

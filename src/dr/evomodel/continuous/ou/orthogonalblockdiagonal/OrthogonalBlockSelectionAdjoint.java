@@ -114,9 +114,10 @@ final class OrthogonalBlockSelectionAdjoint {
                                 final double[] dLogL_df,
                                 final double[] gradientAccumulator) {
         orthogonalRotation.applyOrthogonalTranspose(dLogL_df, tempVector1);
-        applyBlockDiagonalTransposeExp(basis.expD.data, tempVector1, tempVector2, basis.expD.numRows);
+        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+                basis.expD, tempVector1, tempVector2, tempVector1.length, blockStarts, blockSizes);
         orthogonalRotation.applyOrthogonal(tempVector2, tempVector1);
-        for (int i = 0; i < basis.expD.numRows; ++i) {
+        for (int i = 0; i < tempVector1.length; ++i) {
             gradientAccumulator[i] += dLogL_df[i] - tempVector1[i];
         }
     }
@@ -124,10 +125,11 @@ final class OrthogonalBlockSelectionAdjoint {
     double accumulateScalarMeanGradient(final OrthogonalBlockBasisCache basis,
                                         final double[] dLogL_df) {
         orthogonalRotation.applyOrthogonalTranspose(dLogL_df, tempVector1);
-        applyBlockDiagonalTransposeExp(basis.expD.data, tempVector1, tempVector2, basis.expD.numRows);
+        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+                basis.expD, tempVector1, tempVector2, tempVector1.length, blockStarts, blockSizes);
         orthogonalRotation.applyOrthogonal(tempVector2, tempVector1);
         double sum = 0.0;
-        for (int i = 0; i < basis.expD.numRows; ++i) {
+        for (int i = 0; i < tempVector1.length; ++i) {
             sum += dLogL_df[i] - tempVector1[i];
         }
         return sum;
@@ -138,8 +140,9 @@ final class OrthogonalBlockSelectionAdjoint {
                                         final double[] gradientAccumulator,
                                         final OrthogonalBlockBranchGradientWorkspace workspace) {
         multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
-        applyBlockDiagonalTransposeExp(
-                prepared.expD.data, workspace.tempVector1, workspace.tempVector2, prepared.dimension);
+        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+                prepared.expD, workspace.tempVector1, workspace.tempVector2,
+                prepared.dimension, blockStarts, blockSizes);
         multiplyRowMajorVector(prepared.rMatrix.data, workspace.tempVector2, workspace.tempVector1, prepared.dimension);
         if (gradientAccumulator.length == 1) {
             double sum = 0.0;
@@ -164,8 +167,9 @@ final class OrthogonalBlockSelectionAdjoint {
                                              final double[] dBasisGradientAccumulator,
                                              final OrthogonalBlockBranchGradientWorkspace workspace) {
         multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
-        applyBlockDiagonalTransposeExp(
-                prepared.expD.data, workspace.tempVector1, workspace.tempVector2, prepared.dimension);
+        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+                prepared.expD, workspace.tempVector1, workspace.tempVector2,
+                prepared.dimension, blockStarts, blockSizes);
         for (int i = 0; i < prepared.dimension; ++i) {
             dBasisGradientAccumulator[i] += workspace.tempVector1[i] - workspace.tempVector2[i];
         }
@@ -196,7 +200,7 @@ final class OrthogonalBlockSelectionAdjoint {
 
     private void accumulateTransitionPullback(final DenseMatrix64F rMatrix,
                                               final DenseMatrix64F rtMatrix,
-                                              final DenseMatrix64F expD,
+                                              final double[] expD,
                                               final double[] blockDParams,
                                               final double dt,
                                               final DenseMatrix64F upstreamF,
@@ -315,28 +319,6 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    private void applyBlockDiagonalTransposeExp(final double[] expData,
-                                                final double[] in,
-                                                final double[] out,
-                                                final int dimension) {
-        for (int b = 0; b < blockParameter.getNumBlocks(); ++b) {
-            final int start = blockParameter.getBlockStarts()[b];
-            final int size = blockParameter.getBlockSizes()[b];
-            if (size == 1) {
-                out[start] = expData[start * dimension + start] * in[start];
-            } else {
-                final int row0 = start * dimension;
-                final int row1 = (start + 1) * dimension;
-                final double e00 = expData[row0 + start];
-                final double e01 = expData[row0 + start + 1];
-                final double e10 = expData[row1 + start];
-                final double e11 = expData[row1 + start + 1];
-                out[start] = e00 * in[start] + e10 * in[start + 1];
-                out[start + 1] = e01 * in[start] + e11 * in[start + 1];
-            }
-        }
-    }
-
     private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {
         final int length = src.numRows * src.numCols;
         final double[] data = src.data;
@@ -376,51 +358,21 @@ final class OrthogonalBlockSelectionAdjoint {
     }
 
     private static void multiplyBlockDiagonalRight(final DenseMatrix64F matrix,
-                                                   final DenseMatrix64F blockDiagonal,
+                                                   final double[] blockDiagonal,
                                                    final DenseMatrix64F out,
                                                    final int[] blockStarts,
                                                    final int[] blockSizes) {
-        multiplyBlockDiagonalRight(matrix, blockDiagonal, out, blockStarts, blockSizes, false);
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
+                matrix.data, blockDiagonal, matrix.numRows, blockStarts, blockSizes, out.data);
     }
 
     private static void multiplyBlockDiagonalRightTranspose(final DenseMatrix64F matrix,
-                                                            final DenseMatrix64F blockDiagonal,
+                                                            final double[] blockDiagonal,
                                                             final DenseMatrix64F out,
                                                             final int[] blockStarts,
                                                             final int[] blockSizes) {
-        multiplyBlockDiagonalRight(matrix, blockDiagonal, out, blockStarts, blockSizes, true);
-    }
-
-    private static void multiplyBlockDiagonalRight(final DenseMatrix64F matrix,
-                                                   final DenseMatrix64F blockDiagonal,
-                                                   final DenseMatrix64F out,
-                                                   final int[] blockStarts,
-                                                   final int[] blockSizes,
-                                                   final boolean transposeBlock) {
-        final int dimension = matrix.numRows;
-        final double[] matrixData = matrix.data;
-        final double[] blockData = blockDiagonal.data;
-        final double[] outData = out.data;
-
-        for (int row = 0; row < dimension; ++row) {
-            final int rowOffset = row * dimension;
-            for (int b = 0; b < blockStarts.length; ++b) {
-                final int start = blockStarts[b];
-                final int size = blockSizes[b];
-                for (int colInBlock = 0; colInBlock < size; ++colInBlock) {
-                    final int outCol = start + colInBlock;
-                    double sum = 0.0;
-                    for (int k = 0; k < size; ++k) {
-                        final int blockRow = start + k;
-                        final int blockIndex = transposeBlock
-                                ? outCol * dimension + blockRow
-                                : blockRow * dimension + outCol;
-                        sum += matrixData[rowOffset + blockRow] * blockData[blockIndex];
-                    }
-                    outData[rowOffset + outCol] = sum;
-                }
-            }
-        }
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonalTranspose(
+                matrix.data, blockDiagonal, out.data, matrix.numRows, blockStarts, blockSizes);
     }
 
     private static void fillDenseMatrix(final double[] source,

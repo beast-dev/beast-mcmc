@@ -10,7 +10,7 @@ public final class OrthogonalBlockPreparedBranchBasis {
     double dt;
     final double[] stationaryMean;
     final double[] blockDParams;
-    final DenseMatrix64F expD;
+    final double[] expD;
     final DenseMatrix64F rMatrix;
     final DenseMatrix64F rtMatrix;
     final DenseMatrix64F transitionMatrix;
@@ -22,12 +22,13 @@ public final class OrthogonalBlockPreparedBranchBasis {
     boolean covariancePrepared;
 
     OrthogonalBlockPreparedBranchBasis(final int dimension,
-                                       final int blockDParamDimension) {
+                                       final int blockDParamDimension,
+                                       final int compressedBlockDimension) {
         this.dimension = dimension;
         this.dt = Double.NaN;
         this.stationaryMean = new double[dimension];
         this.blockDParams = new double[blockDParamDimension];
-        this.expD = new DenseMatrix64F(dimension, dimension);
+        this.expD = new double[compressedBlockDimension];
         this.rMatrix = new DenseMatrix64F(dimension, dimension);
         this.rtMatrix = new DenseMatrix64F(dimension, dimension);
         this.transitionMatrix = new DenseMatrix64F(dimension, dimension);

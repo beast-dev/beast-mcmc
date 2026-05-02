@@ -65,6 +65,24 @@ public interface OrthogonalBlockCanonicalParameterization extends SpecializedCan
                                         double[] gradientAccumulator,
                                         OrthogonalBlockBranchGradientWorkspace workspace);
 
+    void accumulateNativeGradientFromTransition(double dt,
+                                                double[] stationaryMean,
+                                                double[][] dLogL_dF,
+                                                double[] dLogL_df,
+                                                double[] compressedDAccumulator,
+                                                double[][] rotationAccumulator);
+
+    void accumulateNativeGradientFromCovarianceStationary(MatrixParameterInterface diffusionMatrix,
+                                                          double dt,
+                                                          double[][] dLogL_dV,
+                                                          double[] compressedDAccumulator,
+                                                          double[][] rotationAccumulator);
+
+    void accumulateDiffusionGradient(MatrixParameterInterface diffusionMatrix,
+                                     double dt,
+                                     double[][] dLogL_dV,
+                                     double[] gradientAccumulator);
+
     void accumulateDiffusionGradientPreparedFlat(OrthogonalBlockPreparedBranchBasis prepared,
                                                  double[] dLogL_dV,
                                                  boolean transposeAdjoint,

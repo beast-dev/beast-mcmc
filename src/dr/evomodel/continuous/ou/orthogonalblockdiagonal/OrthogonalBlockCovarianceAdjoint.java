@@ -88,7 +88,9 @@ final class OrthogonalBlockCovarianceAdjoint {
                 transitionCovDBasis,
                 temp1,
                 out,
-                false);
+                false,
+                blockStarts,
+                blockSizes);
     }
 
     void fillTransitionCovarianceMatrixPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -108,7 +110,9 @@ final class OrthogonalBlockCovarianceAdjoint {
                 workspace.transitionCovDBasis,
                 workspace.temp1,
                 out,
-                true);
+                true,
+                blockStarts,
+                blockSizes);
     }
 
     void prepareAndAccumulateCurrentFlat(final MatrixParameterInterface diffusionMatrix,
@@ -340,7 +344,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private void accumulateCovariancePullback(final DenseMatrix64F rMatrix,
                                               final DenseMatrix64F rtMatrix,
-                                              final DenseMatrix64F expD,
+                                              final double[] expD,
                                               final double[] blockDParams,
                                               final double dt,
                                               final DenseMatrix64F qMatrix,
@@ -374,7 +378,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private void accumulateCovariancePullbackSymmetric(final DenseMatrix64F rMatrix,
                                                        final DenseMatrix64F rtMatrix,
-                                                       final DenseMatrix64F expD,
+                                                       final double[] expD,
                                                        final double[] blockDParams,
                                                        final double dt,
                                                        final DenseMatrix64F qMatrix,
@@ -405,7 +409,7 @@ final class OrthogonalBlockCovarianceAdjoint {
     }
 
     private void accumulateCovariancePullbackFromSharedSymmetric(final DenseMatrix64F rMatrix,
-                                                                 final DenseMatrix64F expD,
+                                                                 final double[] expD,
                                                                  final double[] blockDParams,
                                                                  final double dt,
                                                                  final DenseMatrix64F qMatrix,
@@ -488,7 +492,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private static void accumulateDiffusionGradientSymmetric(final DenseMatrix64F rMatrix,
                                                              final DenseMatrix64F rtMatrix,
-                                                             final DenseMatrix64F expD,
+                                                             final double[] expD,
                                                              final double[] blockDParams,
                                                              final DenseMatrix64F gV,
                                                              final DenseMatrix64F hDBasis,
@@ -530,7 +534,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private static void fillDiffusionGradientDBasisSymmetric(final DenseMatrix64F rMatrix,
                                                              final DenseMatrix64F rtMatrix,
-                                                             final DenseMatrix64F expD,
+                                                             final double[] expD,
                                                              final double[] blockDParams,
                                                              final DenseMatrix64F gV,
                                                              final DenseMatrix64F hDBasis,
@@ -552,7 +556,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
     private static void fillSharedCovarianceAdjointsInDBasis(final DenseMatrix64F rMatrix,
                                                              final DenseMatrix64F rtMatrix,
-                                                             final DenseMatrix64F expD,
+                                                             final double[] expD,
                                                              final DenseMatrix64F gV,
                                                              final DenseMatrix64F hDBasis,
                                                              final DenseMatrix64F gS,
@@ -578,62 +582,22 @@ final class OrthogonalBlockCovarianceAdjoint {
         lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);
     }
 
-    private static void multiplyBlockDiagonalLeftTranspose(final DenseMatrix64F blockDiagonal,
+    private static void multiplyBlockDiagonalLeftTranspose(final double[] blockDiagonal,
                                                            final DenseMatrix64F matrix,
                                                            final DenseMatrix64F out,
                                                            final int[] blockStarts,
                                                            final int[] blockSizes) {
-        final int dimension = matrix.numRows;
-        final double[] blockData = blockDiagonal.data;
-        final double[] matrixData = matrix.data;
-        final double[] outData = out.data;
-
-        for (int b = 0; b < blockStarts.length; ++b) {
-            final int start = blockStarts[b];
-            final int size = blockSizes[b];
-            for (int rowInBlock = 0; rowInBlock < size; ++rowInBlock) {
-                final int outRow = start + rowInBlock;
-                final int outOffset = outRow * dimension;
-                for (int col = 0; col < dimension; ++col) {
-                    double sum = 0.0;
-                    for (int k = 0; k < size; ++k) {
-                        final int blockRow = start + k;
-                        sum += blockData[blockRow * dimension + outRow]
-                                * matrixData[blockRow * dimension + col];
-                    }
-                    outData[outOffset + col] = sum;
-                }
-            }
-        }
+        OrthogonalBlockMatrixOps.multiplyBlockDiagonalLeftTranspose(
+                blockDiagonal, matrix.data, out.data, matrix.numRows, blockStarts, blockSizes);
     }
 
     private static void multiplyBlockDiagonalRight(final DenseMatrix64F matrix,
-                                                   final DenseMatrix64F blockDiagonal,
+                                                   final double[] blockDiagonal,
                                                    final DenseMatrix64F out,
                                                    final int[] blockStarts,
                                                    final int[] blockSizes) {
-        final int dimension = matrix.numRows;
-        final double[] matrixData = matrix.data;
-        final double[] blockData = blockDiagonal.data;
-        final double[] outData = out.data;
-
-        for (int row = 0; row < dimension; ++row) {
-            final int rowOffset = row * dimension;
-            for (int b = 0; b < blockStarts.length; ++b) {
-                final int start = blockStarts[b];
-                final int size = blockSizes[b];
-                for (int colInBlock = 0; colInBlock < size; ++colInBlock) {
-                    final int outCol = start + colInBlock;
-                    double sum = 0.0;
-                    for (int k = 0; k < size; ++k) {
-                        final int blockRow = start + k;
-                        sum += matrixData[rowOffset + blockRow]
-                                * blockData[blockRow * dimension + outCol];
-                    }
-                    outData[rowOffset + outCol] = sum;
-                }
-            }
-        }
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
+                matrix.data, blockDiagonal, matrix.numRows, blockStarts, blockSizes, out.data);
     }
 
     private static void rotateDBasisDiffusionGradientToOriginalBasis(final DenseMatrix64F rMatrix,

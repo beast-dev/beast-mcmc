@@ -34,4 +34,13 @@ public interface CanonicalPreparedTransitionCapability {
     void fillTransitionMatrixPreparedFlat(CanonicalPreparedBranchHandle prepared,
                                           CanonicalBranchWorkspace workspace,
                                           double[] out);
+
+    default boolean fillTransitionMomentsPreparedFlat(CanonicalPreparedBranchHandle prepared,
+                                                      MatrixParameterInterface diffusionMatrix,
+                                                      CanonicalBranchWorkspace workspace,
+                                                      double[] transitionMatrixOut,
+                                                      double[] transitionOffsetOut,
+                                                      double[] transitionCovarianceOut) {
+        return false;
+    }
 }

@@ -12,7 +12,7 @@ final class OrthogonalBlockTransitionCovarianceSolver {
     static void fillTransitionCovariance(final MatrixParameterInterface diffusionMatrix,
                                          final DenseMatrix64F rMatrix,
                                          final DenseMatrix64F rtMatrix,
-                                         final DenseMatrix64F expD,
+                                         final double[] expD,
                                          final double[] blockDParams,
                                          final BlockDiagonalLyapunovSolver lyapunovSolver,
                                          final DenseMatrix64F qMatrix,
@@ -21,13 +21,17 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                                          final DenseMatrix64F transitionCovDBasis,
                                          final DenseMatrix64F temp,
                                          final DenseMatrix64F out,
-                                         final boolean symmetrizeTransitionCovDBasis) {
+                                         final boolean symmetrizeTransitionCovDBasis,
+                                         final int[] blockStarts,
+                                         final int[] blockSizes) {
         fillDenseMatrix(diffusionMatrix, qMatrix);
         CommonOps.mult(rtMatrix, qMatrix, temp);
         CommonOps.mult(temp, rMatrix, qDBasis);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
-        CommonOps.mult(expD, stationaryCovDBasis, temp);
-        CommonOps.multTransB(temp, expD, transitionCovDBasis);
+        OrthogonalBlockMatrixOps.multiplyBlockDiagonalLeft(
+                expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);
+        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonalTranspose(
+                temp.data, expD, transitionCovDBasis.data, transitionCovDBasis.numRows, blockStarts, blockSizes);
         CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         if (symmetrizeTransitionCovDBasis) {
             symmetrize(transitionCovDBasis);

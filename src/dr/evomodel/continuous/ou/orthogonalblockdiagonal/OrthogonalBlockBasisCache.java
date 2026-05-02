@@ -19,7 +19,9 @@ final class OrthogonalBlockBasisCache {
     final double[] rData;
     final double[] rtData;
     final double[] blockDParams;
-    final DenseMatrix64F expD;
+    final int[] blockStarts;
+    final int[] blockSizes;
+    final double[] expD;
     final DenseMatrix64F rMatrix;
     final DenseMatrix64F rtMatrix;
     final DenseMatrix64F transitionMatrix;
@@ -55,10 +57,12 @@ final class OrthogonalBlockBasisCache {
         this.rData = new double[d * d];
         this.rtData = new double[d * d];
         this.blockDParams = new double[blockParameter.getTridiagonalDDimension()];
+        this.blockStarts = blockParameter.getBlockStarts();
+        this.blockSizes = blockParameter.getBlockSizes();
         this.cachedRData = new double[d * d];
         this.cachedRtData = new double[d * d];
         this.cachedBlockDParams = new double[blockParameter.getTridiagonalDDimension()];
-        this.expD = new DenseMatrix64F(d, d);
+        this.expD = new double[blockParameter.getCompressedDDimension()];
         this.rMatrix = new DenseMatrix64F(d, d);
         this.rtMatrix = new DenseMatrix64F(d, d);
         this.transitionMatrix = new DenseMatrix64F(d, d);
@@ -115,7 +119,14 @@ final class OrthogonalBlockBasisCache {
         MatrixOps.fromFlat(rData, rMatrix, d);
         MatrixOps.fromFlat(rtData, rtMatrix, d);
         OrthogonalBlockPreparedBasisBuilder.fillTransitionMatrix(
-                rData, expD.data, rtData, d, workMatrix, transitionMatrix.data);
+                rData,
+                expD,
+                rtData,
+                d,
+                blockStarts,
+                blockSizes,
+                workMatrix,
+                transitionMatrix.data);
         System.arraycopy(rData, 0, cachedRData, 0, rData.length);
         System.arraycopy(rtData, 0, cachedRtData, 0, rtData.length);
         cachedRHash = rHash;
@@ -142,7 +153,7 @@ final class OrthogonalBlockBasisCache {
     }
 
     private void refreshExp(final double dt) {
-        expSolver.compute(blockDParams, dt, expD);
+        expSolver.computeCompressed(blockDParams, dt, expD);
         System.arraycopy(blockDParams, 0, cachedBlockDParams, 0, blockDParams.length);
         cachedBlockDHash = Arrays.hashCode(blockDParams);
         expParameterVersion++;

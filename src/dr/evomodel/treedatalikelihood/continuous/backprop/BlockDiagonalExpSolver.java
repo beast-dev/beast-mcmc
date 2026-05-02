@@ -78,6 +78,37 @@ public final class BlockDiagonalExpSolver {
         }
     }
 
+    /**
+     * Compute out = exp(-D t) in compressed block-diagonal layout:
+     * [diag(0..dim-1), activeUpper(0..num2x2-1), activeLower(0..num2x2-1)].
+     */
+    public void computeCompressed(final double[] blockDParams,
+                                  final double t,
+                                  final double[] out) {
+        validateCompressedParams(blockDParams, dim);
+        final int num2x2Blocks = countTwoByTwoBlocks();
+        final int expected = dim + 2 * num2x2Blocks;
+        if (out.length != expected) {
+            throw new IllegalArgumentException(
+                    "Expected compressed exponential length " + expected + " but got " + out.length);
+        }
+        Arrays.fill(out, 0.0);
+
+        int block2x2Index = 0;
+        for (int b = 0; b < structure.getNumBlocks(); b++) {
+            final int start = structure.getBlockStart(b);
+            final int size = structure.getBlockSize(b);
+            if (size == 1) {
+                out[start] = Math.exp(-blockDParams[start] * t);
+            } else if (size == 2) {
+                fillExp2x2Compressed(blockDParams, t, out, start, block2x2Index, num2x2Blocks);
+                block2x2Index++;
+            } else {
+                throw new IllegalStateException("Only block sizes 1 and 2 are supported, got " + size);
+            }
+        }
+    }
+
     private static void fillExp1x1Block(final double a,
                                         final double t,
                                         final double[] outData,
@@ -99,6 +130,23 @@ public final class BlockDiagonalExpSolver {
         final double c = p[lowerOffset + start];
 
         fillExp2x2GeneralBlock(a, b, c, d, t, outData, dim, start);
+    }
+
+    private void fillExp2x2Compressed(final double[] p,
+                                      final double t,
+                                      final double[] outData,
+                                      final int start,
+                                      final int block2x2Index,
+                                      final int num2x2Blocks) {
+        final int upperOffset = dim;
+        final int lowerOffset = dim + (dim - 1);
+
+        final double a = p[start];
+        final double d = p[start + 1];
+        final double b = p[upperOffset + start];
+        final double c = p[lowerOffset + start];
+
+        fillExp2x2CompressedBlock(a, b, c, d, t, outData, start, block2x2Index, num2x2Blocks);
     }
 
     /**
@@ -151,6 +199,59 @@ public final class BlockDiagonalExpSolver {
         outData[i * dim + j] = m12;
         outData[j * dim + i] = m21;
         outData[j * dim + j] = m22;
+    }
+
+    private static void fillExp2x2CompressedBlock(final double a,
+                                                  final double b,
+                                                  final double c,
+                                                  final double d,
+                                                  final double t,
+                                                  final double[] outData,
+                                                  final int start,
+                                                  final int block2x2Index,
+                                                  final int num2x2Blocks) {
+        final double tau = 0.5 * (a + d);
+        final double diff = 0.5 * (a - d);
+        final double delta2 = diff * diff + b * c;
+
+        final double alpha;
+        final double beta;
+
+        if (Math.abs(delta2) < DEFAULT_EPS_BLOCK) {
+            alpha = 1.0;
+            beta = -t;
+        } else if (delta2 > 0.0) {
+            final double delta = Math.sqrt(delta2);
+            final double z = delta * t;
+            final double expZ    = Math.exp(z);
+            final double invExpZ = 1.0 / expZ;
+            alpha = 0.5 * (expZ + invExpZ);
+            beta  = -0.5 * (expZ - invExpZ) / delta;
+        } else {
+            final double delta = Math.sqrt(-delta2);
+            final double z = delta * t;
+            alpha = Math.cos(z);
+            beta = -Math.sin(z) / delta;
+        }
+
+        final double factor = Math.exp(-tau * t);
+        final double k11 = a - tau;
+        final double k22 = d - tau;
+
+        outData[start] = factor * (alpha + beta * k11);
+        outData[start + 1] = factor * (alpha + beta * k22);
+        outData[outData.length - 2 * num2x2Blocks + block2x2Index] = factor * (beta * b);
+        outData[outData.length - num2x2Blocks + block2x2Index] = factor * (beta * c);
+    }
+
+    private int countTwoByTwoBlocks() {
+        int count = 0;
+        for (int b = 0; b < structure.getNumBlocks(); ++b) {
+            if (structure.getBlockSize(b) == 2) {
+                count++;
+            }
+        }
+        return count;
     }
 
     static void validateCompressedParams(final double[] blockDParams, final int dim) {

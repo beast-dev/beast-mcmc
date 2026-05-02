@@ -211,6 +211,42 @@ final class OrthogonalBlockCovarianceAdjoint {
         accumulateDiffusionGradientPreparedSymmetric(prepared, gradientAccumulator, workspace);
     }
 
+    void accumulateDiffusionGradientPreparedDBasisFlat(final OrthogonalBlockPreparedBranchBasis prepared,
+                                                       final double[] dLogL_dV,
+                                                       final double[] dBasisGradientAccumulator,
+                                                       final OrthogonalBlockBranchGradientWorkspace workspace) {
+        fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
+        fillDiffusionGradientDBasisSymmetric(
+                prepared.rMatrix,
+                prepared.rtMatrix,
+                prepared.expD,
+                prepared.blockDParams,
+                workspace.gV,
+                workspace.hDBasis,
+                workspace.gS,
+                workspace.yAdjoint,
+                workspace.temp1,
+                workspace.temp2,
+                workspace.lyapunovAdjointHelper);
+        addDenseMatrixToFlatArray(workspace.yAdjoint, dBasisGradientAccumulator);
+    }
+
+    void finishDiffusionGradientFromDBasisFlat(final DenseMatrix64F rMatrix,
+                                               final DenseMatrix64F rtMatrix,
+                                               final double[] dBasisGradientAccumulator,
+                                               final double[] gradientAccumulator,
+                                               final OrthogonalBlockBranchGradientWorkspace workspace) {
+        fillDenseMatrix(dBasisGradientAccumulator, workspace.yAdjoint);
+        rotateDBasisDiffusionGradientToOriginalBasis(
+                rMatrix,
+                rtMatrix,
+                workspace.yAdjoint,
+                workspace.temp3,
+                workspace.gS);
+        symmetrize(workspace.gS);
+        addDenseMatrixToFlatArray(workspace.gS, gradientAccumulator);
+    }
+
     private void accumulateDiffusionGradientPreparedSymmetric(final OrthogonalBlockPreparedBranchBasis prepared,
                                                               final double[] gradientAccumulator,
                                                               final OrthogonalBlockBranchGradientWorkspace workspace) {
@@ -367,6 +403,43 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                              final DenseMatrix64F temp2,
                                                              final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
                                                              final double[] gradientAccumulator) {
+        fillDiffusionGradientDBasisSymmetric(
+                rMatrix,
+                rtMatrix,
+                expD,
+                blockDParams,
+                gV,
+                hDBasis,
+                gS,
+                yAdjoint,
+                temp1,
+                temp2,
+                lyapunovAdjointHelper);
+
+        rotateDBasisDiffusionGradientToOriginalBasis(rMatrix, rtMatrix, yAdjoint, temp1, temp2);
+        symmetrize(temp2);
+
+        final int dimension = temp2.numRows;
+        final double[] data = temp2.data;
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                gradientAccumulator[rowOffset + j] += data[rowOffset + j];
+            }
+        }
+    }
+
+    private static void fillDiffusionGradientDBasisSymmetric(final DenseMatrix64F rMatrix,
+                                                             final DenseMatrix64F rtMatrix,
+                                                             final DenseMatrix64F expD,
+                                                             final double[] blockDParams,
+                                                             final DenseMatrix64F gV,
+                                                             final DenseMatrix64F hDBasis,
+                                                             final DenseMatrix64F gS,
+                                                             final DenseMatrix64F yAdjoint,
+                                                             final DenseMatrix64F temp1,
+                                                             final DenseMatrix64F temp2,
+                                                             final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
         CommonOps.mult(rtMatrix, gV, temp1);
         CommonOps.mult(temp1, rMatrix, hDBasis);
         symmetrize(hDBasis);
@@ -379,19 +452,15 @@ final class OrthogonalBlockCovarianceAdjoint {
         yAdjoint.set(gS);
         CommonOps.scale(-1.0, yAdjoint);
         lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);
+    }
 
-        CommonOps.mult(rMatrix, yAdjoint, temp1);
-        CommonOps.mult(temp1, rtMatrix, temp2);
-        symmetrize(temp2);
-
-        final int dimension = temp2.numRows;
-        final double[] data = temp2.data;
-        for (int i = 0; i < dimension; ++i) {
-            final int rowOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                gradientAccumulator[rowOffset + j] += data[rowOffset + j];
-            }
-        }
+    private static void rotateDBasisDiffusionGradientToOriginalBasis(final DenseMatrix64F rMatrix,
+                                                                     final DenseMatrix64F rtMatrix,
+                                                                     final DenseMatrix64F dBasisGradient,
+                                                                     final DenseMatrix64F temp,
+                                                                     final DenseMatrix64F out) {
+        CommonOps.mult(rMatrix, dBasisGradient, temp);
+        CommonOps.mult(temp, rtMatrix, out);
     }
 
     private static void fillDenseAdjointExpGradient(final double[] blockDParams,

@@ -16,6 +16,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
     private final int dimension;
     private final int compressedGradientDim;
     private final int nativeGradientScratchDim;
+    private final boolean delayDiffusionGradientRotation;
 
     SpecializedCanonicalSelectionGradientPullback(
             final SpecializedCanonicalSelectionParameterization selection,
@@ -31,6 +32,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         }
         this.compressedGradientDim = selection.getCompressedSelectionGradientDimension();
         this.nativeGradientScratchDim = selection.getNativeSelectionGradientScratchDimension();
+        this.delayDiffusionGradientRotation = selection.supportsDelayedDiffusionGradientRotation();
         final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         if (compressedGradientDim > gradient.compressedGradientScratch.length
                 || nativeGradientScratchDim > gradient.nativeGradientScratch.length) {
@@ -48,6 +50,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         Arrays.fill(gradient.compressedGradientScratch, 0, compressedGradientDim, 0.0);
         Arrays.fill(gradient.nativeGradientScratch, 0, nativeGradientScratchDim, 0.0);
         Arrays.fill(gradient.rotationGradientFlatScratch, 0.0);
+        Arrays.fill(gradient.diffusionGradientDBasisScratch, 0.0);
         workspace.ensureSpecializedBranchWorkspace(selection);
     }
 
@@ -90,12 +93,21 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                 gradient.compressedGradientScratch,
                 gradient.rotationGradientFlatScratch);
 
-        selection.accumulateDiffusionGradientPreparedFlat(
-                prepared,
-                localAdjoints.dLogL_dOmega,
-                true,
-                gradQ,
-                specializedWorkspace);
+        if (delayDiffusionGradientRotation) {
+            selection.accumulateDiffusionGradientPreparedDBasisFlat(
+                    prepared,
+                    localAdjoints.dLogL_dOmega,
+                    true,
+                    gradient.diffusionGradientDBasisScratch,
+                    specializedWorkspace);
+        } else {
+            selection.accumulateDiffusionGradientPreparedFlat(
+                    prepared,
+                    localAdjoints.dLogL_dOmega,
+                    true,
+                    gradQ,
+                    specializedWorkspace);
+        }
 
         selection.accumulateMeanGradientPrepared(
                 prepared,
@@ -116,18 +128,31 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                 reductionWorkspace.specializedGradient().rotationGradientFlatScratch,
                 worker.specializedGradient().rotationGradientFlatScratch,
                 reductionWorkspace.specializedGradient().rotationGradientFlatScratch.length);
+        if (delayDiffusionGradientRotation) {
+            accumulateVectorInPlace(
+                    reductionWorkspace.specializedGradient().diffusionGradientDBasisScratch,
+                    worker.specializedGradient().diffusionGradientDBasisScratch,
+                    reductionWorkspace.specializedGradient().diffusionGradientDBasisScratch.length);
+        }
     }
 
     @Override
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
-                       final double[] gradA) {
+                       final double[] gradA,
+                       final double[] gradQ) {
         final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         selection.finishNativeSelectionGradient(
                 gradient.compressedGradientScratch,
                 gradient.nativeGradientScratch,
                 gradient.rotationGradientFlatScratch,
                 gradA);
+        if (delayDiffusionGradientRotation) {
+            selection.finishDiffusionGradientFromDBasisFlat(
+                    gradient.diffusionGradientDBasisScratch,
+                    gradQ,
+                    workspace.ensureSpecializedBranchWorkspace(selection));
+        }
     }
 
     private static void accumulateVectorInPlace(final double[] target,

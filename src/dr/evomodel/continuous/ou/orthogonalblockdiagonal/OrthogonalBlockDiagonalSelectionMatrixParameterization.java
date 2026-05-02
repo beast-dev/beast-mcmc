@@ -319,6 +319,24 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 prepared, dLogL_dV, gradientAccumulator, workspace);
     }
 
+    public void accumulateDiffusionGradientPreparedDBasisFlat(final OrthogonalBlockPreparedBranchBasis prepared,
+                                                              final double[] dLogL_dV,
+                                                              final boolean transposeAdjoint,
+                                                              final double[] dBasisGradientAccumulator,
+                                                              final OrthogonalBlockBranchGradientWorkspace workspace) {
+        covarianceAdjoint.accumulateDiffusionGradientPreparedDBasisFlat(
+                prepared, dLogL_dV, dBasisGradientAccumulator, workspace);
+    }
+
+    public void finishDiffusionGradientFromDBasisFlat(final double[] dBasisGradientAccumulator,
+                                                      final double[] gradientAccumulator,
+                                                      final OrthogonalBlockBranchGradientWorkspace workspace) {
+        orthogonalRotation.fillOrthogonalMatrix(workspace.temp1.data);
+        orthogonalRotation.fillOrthogonalTranspose(workspace.temp2.data);
+        covarianceAdjoint.finishDiffusionGradientFromDBasisFlat(
+                workspace.temp1, workspace.temp2, dBasisGradientAccumulator, gradientAccumulator, workspace);
+    }
+
     @Override
     public void accumulateDiffusionGradientPreparedFlat(final CanonicalPreparedBranchHandle prepared,
                                                         final double[] dLogL_dV,
@@ -329,6 +347,35 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 asPreparedBasis(prepared),
                 dLogL_dV,
                 transposeAdjoint,
+                gradientAccumulator,
+                asBranchWorkspace(workspace));
+    }
+
+    @Override
+    public boolean supportsDelayedDiffusionGradientRotation() {
+        return true;
+    }
+
+    @Override
+    public void accumulateDiffusionGradientPreparedDBasisFlat(final CanonicalPreparedBranchHandle prepared,
+                                                              final double[] dLogL_dV,
+                                                              final boolean transposeAdjoint,
+                                                              final double[] dBasisGradientAccumulator,
+                                                              final CanonicalBranchWorkspace workspace) {
+        accumulateDiffusionGradientPreparedDBasisFlat(
+                asPreparedBasis(prepared),
+                dLogL_dV,
+                transposeAdjoint,
+                dBasisGradientAccumulator,
+                asBranchWorkspace(workspace));
+    }
+
+    @Override
+    public void finishDiffusionGradientFromDBasisFlat(final double[] dBasisGradientAccumulator,
+                                                      final double[] gradientAccumulator,
+                                                      final CanonicalBranchWorkspace workspace) {
+        finishDiffusionGradientFromDBasisFlat(
+                dBasisGradientAccumulator,
                 gradientAccumulator,
                 asBranchWorkspace(workspace));
     }

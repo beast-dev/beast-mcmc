@@ -169,7 +169,7 @@ public final class CanonicalTreeGradientEngine {
                                         final BranchGradientWorkspace workspace,
                                         final double[] gradA,
                                         final double[] gradQ) {
-        selectionPullback.finish(inputs, workspace, gradA);
+        selectionPullback.finish(inputs, workspace, gradA, gradQ);
 
         if (inputs.getRootDiffusionScale() > 0.0) {
             accumulateRootDiffusionGradient(

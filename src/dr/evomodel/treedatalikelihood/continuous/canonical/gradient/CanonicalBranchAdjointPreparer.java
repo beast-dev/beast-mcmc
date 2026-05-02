@@ -129,8 +129,6 @@ public final class CanonicalBranchAdjointPreparer {
                     });
             out.compactStagedBranches(rootIndex, preparedTransition != null);
         }
-        out.sortActiveBranchesByLength();
-
         out.setRoot(
                 stateStore.lastRootDiffusionScale,
                 stateStore.branchAboveParent[rootIndex],

@@ -16,6 +16,10 @@ public final class CanonicalGaussianMessageOps {
 
     private static final double SYMMETRIC_JITTER_RELATIVE = 1.0e-12;
     private static final double SYMMETRIC_JITTER_ABSOLUTE = 1.0e-12;
+    private static final boolean USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT =
+            Boolean.parseBoolean(System.getProperty(
+                    "beast.experimental.canonicalUseCholeskySolveMessageProduct",
+                    "true"));
 
     public static final class Workspace {
         private final int dimension;
@@ -98,7 +102,7 @@ public final class CanonicalGaussianMessageOps {
         ensureDimension(workspace, d);
 
         final double[] a      = workspace.eliminationPrecision;
-        final double[] aInv   = workspace.eliminationPrecisionInverse;
+        final double[] aInvOrSolveScratch = workspace.eliminationPrecisionInverse;
         final double[] temp   = workspace.leftProductScratch;
         final double[] temp2  = workspace.symmetricMatrixScratch;
         final double[] h      = workspace.eliminationInformation;
@@ -112,9 +116,17 @@ public final class CanonicalGaussianMessageOps {
             }
         }
 
-        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInv, tempv);
-
-        MatrixOps.matMul(aInv, transition.precisionXY, temp, d);
+        final double eliminated;
+        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
+            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+            solveSymmetricFromCholeskyVector(a, h, tempv, d);
+            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
+            solveSymmetricFromCholeskyMatrix(a, transition.precisionXY, temp, aInvOrSolveScratch, d);
+        } else {
+            eliminated = normalizedLogNormalizer(a, h, d, workspace, aInvOrSolveScratch, tempv);
+            MatrixOps.matMul(aInvOrSolveScratch, transition.precisionXY, temp, d);
+            MatrixOps.matVec(aInvOrSolveScratch, h, tempv, d);
+        }
         MatrixOps.matMul(transition.precisionYX, temp, temp2, d);
 
         final int d2 = d * d;
@@ -123,7 +135,6 @@ public final class CanonicalGaussianMessageOps {
         }
         MatrixOps.symmetrize(out.precision, d);
 
-        MatrixOps.matVec(aInv, h, tempv, d);
         MatrixOps.matVec(transition.precisionYX, tempv, h, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationY[i] - h[i];
@@ -139,7 +150,7 @@ public final class CanonicalGaussianMessageOps {
         ensureDimension(workspace, d);
 
         final double[] a      = workspace.eliminationPrecision;
-        final double[] aInv   = workspace.eliminationPrecisionInverse;
+        final double[] aInvOrSolveScratch = workspace.eliminationPrecisionInverse;
         final double[] temp   = workspace.leftProductScratch;
         final double[] temp2  = workspace.symmetricMatrixScratch;
         final double[] h      = workspace.eliminationInformation;
@@ -153,10 +164,19 @@ public final class CanonicalGaussianMessageOps {
             }
         }
 
-        final double eliminated = normalizedLogNormalizer(a, h, d, workspace, aInv, tempv);
-
-        MatrixOps.matMul(transition.precisionXY, aInv, temp, d);
-        MatrixOps.matMul(temp, transition.precisionYX, temp2, d);
+        final double eliminated;
+        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
+            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+            solveSymmetricFromCholeskyVector(a, h, tempv, d);
+            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
+            solveSymmetricFromCholeskyMatrix(a, transition.precisionYX, temp, aInvOrSolveScratch, d);
+            MatrixOps.matMul(transition.precisionXY, temp, temp2, d);
+        } else {
+            eliminated = normalizedLogNormalizer(a, h, d, workspace, aInvOrSolveScratch, tempv);
+            MatrixOps.matMul(transition.precisionXY, aInvOrSolveScratch, temp, d);
+            MatrixOps.matMul(temp, transition.precisionYX, temp2, d);
+            MatrixOps.matVec(aInvOrSolveScratch, h, tempv, d);
+        }
 
         final int d2 = d * d;
         for (int k = 0; k < d2; ++k) {
@@ -164,7 +184,6 @@ public final class CanonicalGaussianMessageOps {
         }
         MatrixOps.symmetrize(out.precision, d);
 
-        MatrixOps.matVec(aInv, h, tempv, d);
         MatrixOps.matVec(transition.precisionXY, tempv, h, d);
         for (int i = 0; i < d; ++i) {
             out.information[i] = transition.informationX[i] - h[i];
@@ -440,6 +459,14 @@ public final class CanonicalGaussianMessageOps {
         return 0.5 * (dimension * MatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 
+    private static double normalizedLogNormalizerFromSolvedMean(final double logDet,
+                                                                final double[] information,
+                                                                final double[] solvedMean,
+                                                                final int dimension) {
+        final double quadratic = dotFlat(information, solvedMean, dimension);
+        return 0.5 * (dimension * MatrixOps.LOG_TWO_PI - logDet + quadratic);
+    }
+
     /** Same as {@link #normalizedLogNormalizer} but operates on a compact {@code dim x dim} block
      *  stored in the leading portion of the workspace arrays. */
     private static double normalizedLogNormalizerSubmatrix(final double[] precision,
@@ -500,6 +527,47 @@ public final class CanonicalGaussianMessageOps {
             }
         }
         throw new IllegalArgumentException("Matrix is not positive definite (failed robust inversion retries)");
+    }
+
+    private static double factorPositiveDefiniteFlat(final double[] matrix,
+                                                     final int dimension,
+                                                     final Workspace workspace,
+                                                     final double[] choleskyOut) {
+        MatrixOps.copyMatrix(matrix, workspace.symmetricMatrixScratch, dimension);
+        symmetrizeSquareFlat(workspace.symmetricMatrixScratch, dimension);
+        double logDet = factorPositiveDefiniteFromSymmetricCopyFlat(
+                workspace.symmetricMatrixScratch, choleskyOut, dimension);
+        if (!Double.isNaN(logDet)) {
+            return logDet;
+        }
+
+        MatrixOps.copyMatrix(workspace.symmetricMatrixScratch, workspace.leftProductScratch, dimension);
+        final double jitterBase = Math.max(
+                SYMMETRIC_JITTER_ABSOLUTE,
+                SYMMETRIC_JITTER_RELATIVE * Math.max(1.0, maxAbsDiagonalFlat(workspace.leftProductScratch, dimension)));
+
+        double jitter = 0.0;
+        double lowerBound = Double.NaN;
+        for (int attempt = 0; attempt < 12; ++attempt) {
+            MatrixOps.copyMatrix(workspace.leftProductScratch, workspace.symmetricMatrixScratch, dimension);
+            if (jitter > 0.0) {
+                addDiagonalJitterFlat(workspace.symmetricMatrixScratch, jitter, dimension);
+            }
+            logDet = factorPositiveDefiniteFromSymmetricCopyFlat(
+                    workspace.symmetricMatrixScratch, choleskyOut, dimension);
+            if (!Double.isNaN(logDet)) {
+                return logDet;
+            }
+            if (jitter == 0.0) {
+                if (Double.isNaN(lowerBound)) {
+                    lowerBound = gershgorinLowerBoundFlat(workspace.leftProductScratch, dimension);
+                }
+                jitter = lowerBound > 0.0 ? jitterBase : (-lowerBound + jitterBase);
+            } else {
+                jitter *= 10.0;
+            }
+        }
+        throw new IllegalArgumentException("Matrix is not positive definite (failed robust factorization retries)");
     }
 
     private static double invertPositiveDefiniteFlatSubmatrix(final double[] matrix,
@@ -574,6 +642,79 @@ public final class CanonicalGaussianMessageOps {
         }
         MatrixOps.symmetrize(inverseOut, d);
         return 2.0 * logDet;
+    }
+
+    private static double factorPositiveDefiniteFromSymmetricCopyFlat(final double[] matrix,
+                                                                      final double[] choleskyOut,
+                                                                      final int dimension) {
+        final int d = dimension;
+        double logDet = 0.0;
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j <= i; ++j) {
+                double sum = matrix[iOff + j];
+                final int jOff = j * d;
+                for (int k = 0; k < j; ++k) {
+                    sum -= choleskyOut[iOff + k] * choleskyOut[jOff + k];
+                }
+                if (i == j) {
+                    if (sum <= 0.0) return Double.NaN;
+                    choleskyOut[iOff + i] = Math.sqrt(sum);
+                    logDet += Math.log(choleskyOut[iOff + i]);
+                } else {
+                    final double denom = choleskyOut[jOff + j];
+                    if (denom == 0.0) return Double.NaN;
+                    choleskyOut[iOff + j] = sum / denom;
+                }
+            }
+            java.util.Arrays.fill(choleskyOut, iOff + i + 1, iOff + d, 0.0);
+        }
+        return 2.0 * logDet;
+    }
+
+    private static void solveSymmetricFromCholeskyVector(final double[] lower,
+                                                         final double[] rhs,
+                                                         final double[] out,
+                                                         final int dimension) {
+        for (int row = 0; row < dimension; ++row) {
+            double sum = rhs[row];
+            final int rowOffset = row * dimension;
+            for (int k = 0; k < row; ++k) {
+                sum -= lower[rowOffset + k] * out[k];
+            }
+            out[row] = sum / lower[rowOffset + row];
+        }
+        for (int row = dimension - 1; row >= 0; --row) {
+            double sum = out[row];
+            for (int k = row + 1; k < dimension; ++k) {
+                sum -= lower[k * dimension + row] * out[k];
+            }
+            out[row] = sum / lower[row * dimension + row];
+        }
+    }
+
+    private static void solveSymmetricFromCholeskyMatrix(final double[] lower,
+                                                         final double[] rhs,
+                                                         final double[] out,
+                                                         final double[] forwardScratch,
+                                                         final int dimension) {
+        for (int col = 0; col < dimension; ++col) {
+            for (int row = 0; row < dimension; ++row) {
+                double sum = rhs[row * dimension + col];
+                final int rowOffset = row * dimension;
+                for (int k = 0; k < row; ++k) {
+                    sum -= lower[rowOffset + k] * forwardScratch[k * dimension + col];
+                }
+                forwardScratch[row * dimension + col] = sum / lower[rowOffset + row];
+            }
+            for (int row = dimension - 1; row >= 0; --row) {
+                double sum = forwardScratch[row * dimension + col];
+                for (int k = row + 1; k < dimension; ++k) {
+                    sum -= lower[k * dimension + row] * out[k * dimension + col];
+                }
+                out[row * dimension + col] = sum / lower[row * dimension + row];
+            }
+        }
     }
 
     private static double observedQuadraticConstant(final CanonicalGaussianTransition transition,

@@ -14,6 +14,8 @@ import org.ejml.ops.CommonOps;
 final class OrthogonalBlockSelectionAdjoint {
 
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
+    private final int[] blockStarts;
+    private final int[] blockSizes;
     private final OrthogonalMatrixProvider orthogonalRotation;
     private final BlockDiagonalFrechetHelper frechetHelper;
     private final OrthogonalBlockDenseFallbackPolicy denseFallbackPolicy;
@@ -34,6 +36,8 @@ final class OrthogonalBlockSelectionAdjoint {
                                     final BlockDiagonalFrechetHelper frechetHelper,
                                     final OrthogonalBlockDenseFallbackPolicy denseFallbackPolicy) {
         this.blockParameter = blockParameter;
+        this.blockStarts = blockParameter.getBlockStarts();
+        this.blockSizes = blockParameter.getBlockSizes();
         this.orthogonalRotation = orthogonalRotation;
         this.frechetHelper = frechetHelper;
         this.denseFallbackPolicy = denseFallbackPolicy;
@@ -220,10 +224,10 @@ final class OrthogonalBlockSelectionAdjoint {
                 denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        CommonOps.multTransB(rMatrix, expD, temp1);
+        multiplyBlockDiagonalRightTranspose(rMatrix, expD, temp1, blockStarts, blockSizes);
         CommonOps.mult(upstreamF, temp1, gradR);
         CommonOps.multTransA(upstreamF, rMatrix, temp1);
-        CommonOps.mult(temp1, expD, temp2);
+        multiplyBlockDiagonalRight(temp1, expD, temp2, blockStarts, blockSizes);
         CommonOps.addEquals(gradR, temp2);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
@@ -368,6 +372,54 @@ final class OrthogonalBlockSelectionAdjoint {
                 sum += matrix[rowOffset + j] * vector[j];
             }
             out[i] = sum;
+        }
+    }
+
+    private static void multiplyBlockDiagonalRight(final DenseMatrix64F matrix,
+                                                   final DenseMatrix64F blockDiagonal,
+                                                   final DenseMatrix64F out,
+                                                   final int[] blockStarts,
+                                                   final int[] blockSizes) {
+        multiplyBlockDiagonalRight(matrix, blockDiagonal, out, blockStarts, blockSizes, false);
+    }
+
+    private static void multiplyBlockDiagonalRightTranspose(final DenseMatrix64F matrix,
+                                                            final DenseMatrix64F blockDiagonal,
+                                                            final DenseMatrix64F out,
+                                                            final int[] blockStarts,
+                                                            final int[] blockSizes) {
+        multiplyBlockDiagonalRight(matrix, blockDiagonal, out, blockStarts, blockSizes, true);
+    }
+
+    private static void multiplyBlockDiagonalRight(final DenseMatrix64F matrix,
+                                                   final DenseMatrix64F blockDiagonal,
+                                                   final DenseMatrix64F out,
+                                                   final int[] blockStarts,
+                                                   final int[] blockSizes,
+                                                   final boolean transposeBlock) {
+        final int dimension = matrix.numRows;
+        final double[] matrixData = matrix.data;
+        final double[] blockData = blockDiagonal.data;
+        final double[] outData = out.data;
+
+        for (int row = 0; row < dimension; ++row) {
+            final int rowOffset = row * dimension;
+            for (int b = 0; b < blockStarts.length; ++b) {
+                final int start = blockStarts[b];
+                final int size = blockSizes[b];
+                for (int colInBlock = 0; colInBlock < size; ++colInBlock) {
+                    final int outCol = start + colInBlock;
+                    double sum = 0.0;
+                    for (int k = 0; k < size; ++k) {
+                        final int blockRow = start + k;
+                        final int blockIndex = transposeBlock
+                                ? outCol * dimension + blockRow
+                                : blockRow * dimension + outCol;
+                        sum += matrixData[rowOffset + blockRow] * blockData[blockIndex];
+                    }
+                    outData[rowOffset + outCol] = sum;
+                }
+            }
         }
     }
 

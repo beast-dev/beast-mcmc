@@ -118,7 +118,7 @@ public final class CanonicalTreeGradientEngine {
                     gradMu);
         }
 
-        finalizeJointGradients(selectionPullback, inputs, workspace, gradA, gradQ);
+        finalizeJointGradients(selectionPullback, inputs, workspace, gradA, gradQ, gradMu);
     }
 
     private void computeParallel(final BranchGradientInputs inputs,
@@ -161,15 +161,16 @@ public final class CanonicalTreeGradientEngine {
             selectionPullback.reduceWorker(workspace, reductionWorkspace, gradA);
         }
 
-        finalizeJointGradients(selectionPullback, inputs, reductionWorkspace, gradA, gradQ);
+        finalizeJointGradients(selectionPullback, inputs, reductionWorkspace, gradA, gradQ, gradMu);
     }
 
     private void finalizeJointGradients(final CanonicalSelectionGradientPullback selectionPullback,
                                         final BranchGradientInputs inputs,
                                         final BranchGradientWorkspace workspace,
                                         final double[] gradA,
-                                        final double[] gradQ) {
-        selectionPullback.finish(inputs, workspace, gradA, gradQ);
+                                        final double[] gradQ,
+                                        final double[] gradMu) {
+        selectionPullback.finish(inputs, workspace, gradA, gradQ, gradMu);
 
         if (inputs.getRootDiffusionScale() > 0.0) {
             accumulateRootDiffusionGradient(

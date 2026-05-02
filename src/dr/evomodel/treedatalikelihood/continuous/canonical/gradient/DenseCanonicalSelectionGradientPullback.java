@@ -117,7 +117,8 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
                        final double[] gradA,
-                       final double[] gradQ) {
+                       final double[] gradQ,
+                       final double[] gradMu) {
         MatrixOps.transposeInPlace(gradA, dimension);
     }
 

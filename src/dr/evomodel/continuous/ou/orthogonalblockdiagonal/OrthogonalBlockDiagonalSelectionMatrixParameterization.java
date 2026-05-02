@@ -264,6 +264,43 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         }
     }
 
+    public void accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+            final OrthogonalBlockPreparedBranchBasis prepared,
+            final MatrixParameterInterface diffusionMatrix,
+            final CanonicalLocalTransitionAdjoints localAdjoints,
+            final OrthogonalBlockBranchGradientWorkspace workspace,
+            final double[] compressedDAccumulator,
+            final double[] rotationAccumulator,
+            final boolean delayDiffusionGradientRotation,
+            final double[] diffusionGradientAccumulator) {
+        loadOrFillPreparedCovariance(prepared, diffusionMatrix, workspace);
+
+        accumulateNativeGradientFromTransitionPreparedFlat(
+                prepared,
+                localAdjoints.dLogL_dF,
+                localAdjoints.dLogL_df,
+                workspace,
+                compressedDAccumulator,
+                rotationAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException(
+                    "Non-finite orthogonal native transition contribution at dt=" + prepared.dt);
+        }
+
+        covarianceAdjoint.accumulatePreparedCovarianceAndDiffusionGradientFlat(
+                prepared,
+                localAdjoints.dLogL_dOmega,
+                workspace,
+                compressedDAccumulator,
+                rotationAccumulator,
+                delayDiffusionGradientRotation,
+                diffusionGradientAccumulator);
+        if (!isFinite(compressedDAccumulator) || !isFinite(rotationAccumulator)) {
+            throw new IllegalStateException(
+                    "Non-finite orthogonal native covariance contribution at dt=" + prepared.dt);
+        }
+    }
+
     @Override
     public void accumulateNativeGradientFromAdjointsPreparedFlat(final CanonicalPreparedBranchHandle prepared,
                                                                  final MatrixParameterInterface diffusionMatrix,
@@ -278,6 +315,27 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 asBranchWorkspace(workspace),
                 compressedDAccumulator,
                 rotationAccumulator);
+    }
+
+    @Override
+    public void accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+            final CanonicalPreparedBranchHandle prepared,
+            final MatrixParameterInterface diffusionMatrix,
+            final CanonicalLocalTransitionAdjoints localAdjoints,
+            final CanonicalBranchWorkspace workspace,
+            final double[] compressedDAccumulator,
+            final double[] rotationAccumulator,
+            final boolean delayDiffusionGradientRotation,
+            final double[] diffusionGradientAccumulator) {
+        accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+                asPreparedBasis(prepared),
+                diffusionMatrix,
+                localAdjoints,
+                asBranchWorkspace(workspace),
+                compressedDAccumulator,
+                rotationAccumulator,
+                delayDiffusionGradientRotation,
+                diffusionGradientAccumulator);
     }
 
     private void loadOrFillPreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -298,6 +356,21 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 prepared, dLogL_df, gradientAccumulator, workspace);
     }
 
+    public void accumulateMeanGradientPreparedDBasisFlat(final OrthogonalBlockPreparedBranchBasis prepared,
+                                                         final double[] dLogL_df,
+                                                         final double[] dBasisGradientAccumulator,
+                                                         final OrthogonalBlockBranchGradientWorkspace workspace) {
+        selectionAdjoint.accumulateMeanGradientPreparedDBasis(
+                prepared, dLogL_df, dBasisGradientAccumulator, workspace);
+    }
+
+    public void finishMeanGradientFromDBasisFlat(final double[] dBasisGradientAccumulator,
+                                                 final double[] gradientAccumulator,
+                                                 final OrthogonalBlockBranchGradientWorkspace workspace) {
+        selectionAdjoint.finishMeanGradientFromDBasis(
+                dBasisGradientAccumulator, gradientAccumulator, workspace);
+    }
+
     @Override
     public void accumulateMeanGradientPrepared(final CanonicalPreparedBranchHandle prepared,
                                                final double[] dLogL_df,
@@ -306,6 +379,33 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         accumulateMeanGradientPrepared(
                 asPreparedBasis(prepared),
                 dLogL_df,
+                gradientAccumulator,
+                asBranchWorkspace(workspace));
+    }
+
+    @Override
+    public boolean supportsDelayedMeanGradientRotation() {
+        return true;
+    }
+
+    @Override
+    public void accumulateMeanGradientPreparedDBasisFlat(final CanonicalPreparedBranchHandle prepared,
+                                                         final double[] dLogL_df,
+                                                         final double[] dBasisGradientAccumulator,
+                                                         final CanonicalBranchWorkspace workspace) {
+        accumulateMeanGradientPreparedDBasisFlat(
+                asPreparedBasis(prepared),
+                dLogL_df,
+                dBasisGradientAccumulator,
+                asBranchWorkspace(workspace));
+    }
+
+    @Override
+    public void finishMeanGradientFromDBasisFlat(final double[] dBasisGradientAccumulator,
+                                                 final double[] gradientAccumulator,
+                                                 final CanonicalBranchWorkspace workspace) {
+        finishMeanGradientFromDBasisFlat(
+                dBasisGradientAccumulator,
                 gradientAccumulator,
                 asBranchWorkspace(workspace));
     }

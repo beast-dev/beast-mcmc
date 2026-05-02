@@ -17,6 +17,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
     private final int compressedGradientDim;
     private final int nativeGradientScratchDim;
     private final boolean delayDiffusionGradientRotation;
+    private final boolean delayMeanGradientRotation;
 
     SpecializedCanonicalSelectionGradientPullback(
             final SpecializedCanonicalSelectionParameterization selection,
@@ -33,6 +34,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         this.compressedGradientDim = selection.getCompressedSelectionGradientDimension();
         this.nativeGradientScratchDim = selection.getNativeSelectionGradientScratchDimension();
         this.delayDiffusionGradientRotation = selection.supportsDelayedDiffusionGradientRotation();
+        this.delayMeanGradientRotation = selection.supportsDelayedMeanGradientRotation();
         final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         if (compressedGradientDim > gradient.compressedGradientScratch.length
                 || nativeGradientScratchDim > gradient.nativeGradientScratch.length) {
@@ -51,6 +53,7 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
         Arrays.fill(gradient.nativeGradientScratch, 0, nativeGradientScratchDim, 0.0);
         Arrays.fill(gradient.rotationGradientFlatScratch, 0.0);
         Arrays.fill(gradient.diffusionGradientDBasisScratch, 0.0);
+        Arrays.fill(gradient.meanGradientDBasisScratch, 0.0);
         workspace.ensureSpecializedBranchWorkspace(selection);
     }
 
@@ -85,35 +88,29 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                 workspace.ensureSpecializedBranchWorkspace(selection);
         final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
 
-        selection.accumulateNativeGradientFromAdjointsPreparedFlat(
+        selection.accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
                 prepared,
                 processModel.getDiffusionMatrix(),
                 localAdjoints,
                 specializedWorkspace,
                 gradient.compressedGradientScratch,
-                gradient.rotationGradientFlatScratch);
+                gradient.rotationGradientFlatScratch,
+                delayDiffusionGradientRotation,
+                delayDiffusionGradientRotation ? gradient.diffusionGradientDBasisScratch : gradQ);
 
-        if (delayDiffusionGradientRotation) {
-            selection.accumulateDiffusionGradientPreparedDBasisFlat(
+        if (delayMeanGradientRotation) {
+            selection.accumulateMeanGradientPreparedDBasisFlat(
                     prepared,
-                    localAdjoints.dLogL_dOmega,
-                    true,
-                    gradient.diffusionGradientDBasisScratch,
+                    localAdjoints.dLogL_df,
+                    gradient.meanGradientDBasisScratch,
                     specializedWorkspace);
         } else {
-            selection.accumulateDiffusionGradientPreparedFlat(
+            selection.accumulateMeanGradientPrepared(
                     prepared,
-                    localAdjoints.dLogL_dOmega,
-                    true,
-                    gradQ,
+                    localAdjoints.dLogL_df,
+                    gradMu,
                     specializedWorkspace);
         }
-
-        selection.accumulateMeanGradientPrepared(
-                prepared,
-                localAdjoints.dLogL_df,
-                gradMu,
-                specializedWorkspace);
     }
 
     @Override
@@ -134,13 +131,20 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
                     worker.specializedGradient().diffusionGradientDBasisScratch,
                     reductionWorkspace.specializedGradient().diffusionGradientDBasisScratch.length);
         }
+        if (delayMeanGradientRotation) {
+            accumulateVectorInPlace(
+                    reductionWorkspace.specializedGradient().meanGradientDBasisScratch,
+                    worker.specializedGradient().meanGradientDBasisScratch,
+                    reductionWorkspace.specializedGradient().meanGradientDBasisScratch.length);
+        }
     }
 
     @Override
     public void finish(final BranchGradientInputs inputs,
                        final BranchGradientWorkspace workspace,
                        final double[] gradA,
-                       final double[] gradQ) {
+                       final double[] gradQ,
+                       final double[] gradMu) {
         final SpecializedGradientWorkspace gradient = workspace.specializedGradient();
         selection.finishNativeSelectionGradient(
                 gradient.compressedGradientScratch,
@@ -151,6 +155,12 @@ final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSe
             selection.finishDiffusionGradientFromDBasisFlat(
                     gradient.diffusionGradientDBasisScratch,
                     gradQ,
+                    workspace.ensureSpecializedBranchWorkspace(selection));
+        }
+        if (delayMeanGradientRotation) {
+            selection.finishMeanGradientFromDBasisFlat(
+                    gradient.meanGradientDBasisScratch,
+                    gradMu,
                     workspace.ensureSpecializedBranchWorkspace(selection));
         }
     }

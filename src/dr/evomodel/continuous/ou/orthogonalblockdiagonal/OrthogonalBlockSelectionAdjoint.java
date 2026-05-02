@@ -155,6 +155,41 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
+    void accumulateMeanGradientPreparedDBasis(final OrthogonalBlockPreparedBranchBasis prepared,
+                                             final double[] dLogL_df,
+                                             final double[] dBasisGradientAccumulator,
+                                             final OrthogonalBlockBranchGradientWorkspace workspace) {
+        multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
+        applyBlockDiagonalTransposeExp(
+                prepared.expD.data, workspace.tempVector1, workspace.tempVector2, prepared.dimension);
+        for (int i = 0; i < prepared.dimension; ++i) {
+            dBasisGradientAccumulator[i] += workspace.tempVector1[i] - workspace.tempVector2[i];
+        }
+    }
+
+    void finishMeanGradientFromDBasis(final double[] dBasisGradientAccumulator,
+                                      final double[] gradientAccumulator,
+                                      final OrthogonalBlockBranchGradientWorkspace workspace) {
+        if (gradientAccumulator.length == 1) {
+            orthogonalRotation.applyOrthogonal(dBasisGradientAccumulator, workspace.tempVector1);
+            double sum = 0.0;
+            for (int i = 0; i < workspace.tempVector1.length; ++i) {
+                sum += workspace.tempVector1[i];
+            }
+            gradientAccumulator[0] += sum;
+            return;
+        }
+        if (gradientAccumulator.length != dBasisGradientAccumulator.length) {
+            throw new IllegalArgumentException(
+                    "Stationary-mean gradient length must be 1 or "
+                            + dBasisGradientAccumulator.length + ", found " + gradientAccumulator.length);
+        }
+        orthogonalRotation.applyOrthogonal(dBasisGradientAccumulator, workspace.tempVector1);
+        for (int i = 0; i < dBasisGradientAccumulator.length; ++i) {
+            gradientAccumulator[i] += workspace.tempVector1[i];
+        }
+    }
+
     private void accumulateTransitionPullback(final DenseMatrix64F rMatrix,
                                               final DenseMatrix64F rtMatrix,
                                               final DenseMatrix64F expD,

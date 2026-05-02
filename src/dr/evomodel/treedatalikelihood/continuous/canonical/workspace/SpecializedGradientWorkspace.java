@@ -12,6 +12,7 @@ public final class SpecializedGradientWorkspace {
     public final double[] nativeGradientScratch;
     public final double[] rotationGradientFlatScratch;
     public final double[] diffusionGradientDBasisScratch;
+    public final double[] meanGradientDBasisScratch;
     private CanonicalBranchWorkspace specializedBranchWorkspace;
 
     public SpecializedGradientWorkspace(final int dim) {
@@ -21,12 +22,14 @@ public final class SpecializedGradientWorkspace {
         this.nativeGradientScratch = new double[((dim & 1) == 1 ? 1 : 0) + 3 * (dim / 2)];
         this.rotationGradientFlatScratch = new double[dim * dim];
         this.diffusionGradientDBasisScratch = new double[dim * dim];
+        this.meanGradientDBasisScratch = new double[dim];
     }
 
     public void clearSpecializedBuffers(final int compressedGradientLength) {
         Arrays.fill(compressedGradientScratch, 0, compressedGradientLength, 0.0);
         Arrays.fill(rotationGradientFlatScratch, 0.0);
         Arrays.fill(diffusionGradientDBasisScratch, 0.0);
+        Arrays.fill(meanGradientDBasisScratch, 0.0);
     }
 
     public CanonicalBranchWorkspace

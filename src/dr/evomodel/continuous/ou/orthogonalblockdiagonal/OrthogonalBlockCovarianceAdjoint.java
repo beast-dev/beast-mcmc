@@ -231,6 +231,67 @@ final class OrthogonalBlockCovarianceAdjoint {
         addDenseMatrixToFlatArray(workspace.yAdjoint, dBasisGradientAccumulator);
     }
 
+    void accumulatePreparedCovarianceAndDiffusionGradientFlat(final OrthogonalBlockPreparedBranchBasis prepared,
+                                                              final double[] dLogL_dV,
+                                                              final OrthogonalBlockBranchGradientWorkspace workspace,
+                                                              final double[] compressedDAccumulator,
+                                                              final double[] rotationAccumulator,
+                                                              final boolean delayDiffusionGradientRotation,
+                                                              final double[] diffusionGradientAccumulator) {
+        fillSymmetricDenseMatrixFlat(dLogL_dV, workspace.gV);
+        fillSharedCovarianceAdjointsInDBasis(
+                prepared.rMatrix,
+                prepared.rtMatrix,
+                prepared.expD,
+                workspace.gV,
+                workspace.hDBasis,
+                workspace.gS,
+                workspace.temp1);
+
+        accumulateCovariancePullbackFromSharedSymmetric(
+                prepared.rMatrix,
+                prepared.expD,
+                prepared.blockDParams,
+                prepared.dt,
+                workspace.qMatrix,
+                workspace.stationaryCovDBasis,
+                workspace.transitionCovDBasis,
+                workspace.gV,
+                workspace.hDBasis,
+                workspace.gS,
+                workspace.yAdjoint,
+                workspace.gECov,
+                workspace.gradD,
+                workspace.gradR,
+                workspace.temp1,
+                workspace.temp2,
+                workspace.temp3,
+                workspace.lyapunovAdjointHelper,
+                workspace.frechetHelper,
+                workspace.scaledNegativeBlockDScratch,
+                workspace.denseAdjointScratch,
+                compressedDAccumulator);
+        addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
+
+        fillDiffusionGradientDBasisFromSharedSymmetric(
+                prepared.blockDParams,
+                workspace.gS,
+                workspace.yAdjoint,
+                workspace.lyapunovAdjointHelper);
+        if (delayDiffusionGradientRotation) {
+            addDenseMatrixToFlatArray(workspace.yAdjoint, diffusionGradientAccumulator);
+        } else {
+            rotateDBasisDiffusionGradientToOriginalBasis(
+                    prepared.rMatrix,
+                    prepared.rtMatrix,
+                    workspace.yAdjoint,
+                    workspace.temp1,
+                    workspace.temp2);
+            symmetrize(workspace.temp2);
+            addDenseMatrixToFlatArray(workspace.temp2, diffusionGradientAccumulator);
+        }
+    }
+
     void finishDiffusionGradientFromDBasisFlat(final DenseMatrix64F rMatrix,
                                                final DenseMatrix64F rtMatrix,
                                                final double[] dBasisGradientAccumulator,
@@ -322,15 +383,36 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                        final double[] scaledNegativeBlockDScratch,
                                                        final double[] denseAdjointScratch,
                                                        final double[] compressedDAccumulator) {
-        CommonOps.mult(rtMatrix, gV, temp1);
-        CommonOps.mult(temp1, rMatrix, hDBasis);
-        symmetrize(hDBasis);
+        fillSharedCovarianceAdjointsInDBasis(rMatrix, rtMatrix, expD, gV, hDBasis, gS, temp1);
+        accumulateCovariancePullbackFromSharedSymmetric(rMatrix, expD, blockDParams, dt,
+                qMatrix, stationaryCovDBasis, transitionCovDBasis, gV, hDBasis, gS,
+                yAdjoint, gECov, gradD, gradR, temp1, temp2, temp3,
+                lyapunovAdjointHelper, frechetHelper,
+                scaledNegativeBlockDScratch, denseAdjointScratch, compressedDAccumulator);
+    }
 
-        CommonOps.multTransA(expD, hDBasis, temp1);
-        CommonOps.mult(temp1, expD, gS);
-        CommonOps.changeSign(gS);
-        CommonOps.addEquals(gS, hDBasis);
-
+    private void accumulateCovariancePullbackFromSharedSymmetric(final DenseMatrix64F rMatrix,
+                                                                 final DenseMatrix64F expD,
+                                                                 final double[] blockDParams,
+                                                                 final double dt,
+                                                                 final DenseMatrix64F qMatrix,
+                                                                 final DenseMatrix64F stationaryCovDBasis,
+                                                                 final DenseMatrix64F transitionCovDBasis,
+                                                                 final DenseMatrix64F gV,
+                                                                 final DenseMatrix64F hDBasis,
+                                                                 final DenseMatrix64F gS,
+                                                                 final DenseMatrix64F yAdjoint,
+                                                                 final DenseMatrix64F gECov,
+                                                                 final DenseMatrix64F gradD,
+                                                                 final DenseMatrix64F gradR,
+                                                                 final DenseMatrix64F temp1,
+                                                                 final DenseMatrix64F temp2,
+                                                                 final DenseMatrix64F temp3,
+                                                                 final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
+                                                                 final BlockDiagonalFrechetHelper frechetHelper,
+                                                                 final double[] scaledNegativeBlockDScratch,
+                                                                 final double[] denseAdjointScratch,
+                                                                 final double[] compressedDAccumulator) {
         CommonOps.fill(gradD, 0.0);
         lyapunovAdjointHelper.accumulateLyapunovContributionInDBasis(
                 stationaryCovDBasis, gS, blockDParams, gradD);
@@ -440,15 +522,35 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                              final DenseMatrix64F temp1,
                                                              final DenseMatrix64F temp2,
                                                              final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
-        CommonOps.mult(rtMatrix, gV, temp1);
-        CommonOps.mult(temp1, rMatrix, hDBasis);
+        fillSharedCovarianceAdjointsInDBasis(rMatrix, rtMatrix, expD, gV, hDBasis, gS, temp1);
+        fillDiffusionGradientDBasisFromSharedSymmetric(
+                blockDParams,
+                gS,
+                yAdjoint,
+                lyapunovAdjointHelper);
+    }
+
+    private static void fillSharedCovarianceAdjointsInDBasis(final DenseMatrix64F rMatrix,
+                                                             final DenseMatrix64F rtMatrix,
+                                                             final DenseMatrix64F expD,
+                                                             final DenseMatrix64F gV,
+                                                             final DenseMatrix64F hDBasis,
+                                                             final DenseMatrix64F gS,
+                                                             final DenseMatrix64F temp) {
+        CommonOps.mult(rtMatrix, gV, temp);
+        CommonOps.mult(temp, rMatrix, hDBasis);
         symmetrize(hDBasis);
 
-        CommonOps.multTransA(expD, hDBasis, temp1);
-        CommonOps.mult(temp1, expD, gS);
+        CommonOps.multTransA(expD, hDBasis, temp);
+        CommonOps.mult(temp, expD, gS);
         CommonOps.subtract(hDBasis, gS, gS);
-        symmetrize(gS);
+    }
 
+    private static void fillDiffusionGradientDBasisFromSharedSymmetric(final double[] blockDParams,
+                                                                       final DenseMatrix64F gS,
+                                                                       final DenseMatrix64F yAdjoint,
+                                                                       final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
+        symmetrize(gS);
         yAdjoint.set(gS);
         CommonOps.scale(-1.0, yAdjoint);
         lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);

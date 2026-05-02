@@ -32,5 +32,6 @@ interface CanonicalSelectionGradientPullback {
     void finish(BranchGradientInputs inputs,
                 BranchGradientWorkspace workspace,
                 double[] gradA,
-                double[] gradQ);
+                double[] gradQ,
+                double[] gradMu);
 }

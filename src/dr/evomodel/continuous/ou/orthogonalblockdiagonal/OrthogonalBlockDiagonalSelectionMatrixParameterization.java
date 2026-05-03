@@ -185,13 +185,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
             throw new IllegalArgumentException(
                     "prepared basis dimension must be " + dimension + " but is " + prepared.dimension);
         }
-        OrthogonalBlockPreparedBasisBuilder.prepare(
-                blockParameter,
-                orthogonalRotation,
-                expSolver,
-                dt,
-                stationaryMean,
-                prepared);
+        fillPreparedBranchBasis(dt, stationaryMean, prepared);
     }
 
     public OrthogonalBlockBranchGradientWorkspace createBranchGradientWorkspace() {
@@ -199,6 +193,18 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 getDimension(),
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes());
+    }
+
+    private synchronized void fillPreparedBranchBasis(final double dt,
+                                                      final double[] stationaryMean,
+                                                      final OrthogonalBlockPreparedBranchBasis prepared) {
+        OrthogonalBlockPreparedBasisBuilder.prepare(
+                blockParameter,
+                orthogonalRotation,
+                expSolver,
+                dt,
+                stationaryMean,
+                prepared);
     }
 
     public void fillCanonicalTransitionPrepared(final OrthogonalBlockPreparedBranchBasis prepared,

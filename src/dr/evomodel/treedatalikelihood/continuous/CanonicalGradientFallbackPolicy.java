@@ -31,6 +31,7 @@ public final class CanonicalGradientFallbackPolicy {
     private static final String BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY  = "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
     private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY       = "beast.experimental.disableExactTipShortcut";
     private static final String BRANCH_GRADIENT_THREADS_PROPERTY          = "beast.experimental.canonicalBranchGradientThreads";
+    private static final String TRANSITION_PRELOAD_THREADS_PROPERTY        = "beast.experimental.canonicalTransitionPreloadThreads";
     private static final String PREPARED_TRANSITION_MOMENTS_PROPERTY      = "beast.experimental.canonicalUsePreparedTransitionMoments";
 
     /**
@@ -48,6 +49,7 @@ public final class CanonicalGradientFallbackPolicy {
                     BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY,
                     DISABLE_EXACT_TIP_SHORTCUT_PROPERTY,
                     BRANCH_GRADIENT_THREADS_PROPERTY,
+                    TRANSITION_PRELOAD_THREADS_PROPERTY,
                     PREPARED_TRANSITION_MOMENTS_PROPERTY)));
 
     // -----------------------------------------------------------------------
@@ -63,6 +65,7 @@ public final class CanonicalGradientFallbackPolicy {
     private final boolean branchLengthFiniteDifference;
     private final boolean exactTipShortcutDisabled;
     private final int branchGradientParallelism;
+    private final int transitionPreloadParallelism;
 
     private CanonicalGradientFallbackPolicy(final Builder b) {
         this.numericLocalSelectionGradient           = b.numericLocalSelectionGradient;
@@ -74,6 +77,7 @@ public final class CanonicalGradientFallbackPolicy {
         this.branchLengthFiniteDifference            = b.branchLengthFiniteDifference;
         this.exactTipShortcutDisabled                = b.exactTipShortcutDisabled;
         this.branchGradientParallelism               = b.branchGradientParallelism;
+        this.transitionPreloadParallelism            = b.transitionPreloadParallelism;
     }
 
     // -----------------------------------------------------------------------
@@ -92,6 +96,7 @@ public final class CanonicalGradientFallbackPolicy {
      */
     public static CanonicalGradientFallbackPolicy fromSystemProperties() {
         reportUnknownProperties();
+        final int branchGradientParallelism = readBranchGradientParallelism();
         return builder()
                 .numericLocalSelectionGradient(Boolean.getBoolean(NUMERIC_LOCAL_SELECTION_PROPERTY))
                 .numericLocalSelectionFromFrozenLogFactor(Boolean.getBoolean(FROZEN_LOG_FACTOR_NUMERIC_PROPERTY))
@@ -101,7 +106,8 @@ public final class CanonicalGradientFallbackPolicy {
                 .nativeGradientFromContribution(Boolean.getBoolean(NATIVE_FROM_CONTRIBUTION_PROPERTY))
                 .branchLengthFiniteDifference(Boolean.getBoolean(BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY))
                 .exactTipShortcutDisabled(Boolean.getBoolean(DISABLE_EXACT_TIP_SHORTCUT_PROPERTY))
-                .branchGradientParallelism(readParallelism())
+                .branchGradientParallelism(branchGradientParallelism)
+                .transitionPreloadParallelism(readTransitionPreloadParallelism(branchGradientParallelism))
                 .build();
     }
 
@@ -135,7 +141,7 @@ public final class CanonicalGradientFallbackPolicy {
      */
     @Deprecated
     public static int branchGradientParallelismFromSystemProperties() {
-        return readParallelism();
+        return readBranchGradientParallelism();
     }
 
     // -----------------------------------------------------------------------
@@ -153,6 +159,9 @@ public final class CanonicalGradientFallbackPolicy {
 
     /** Number of threads to use for parallel branch-gradient evaluation (>= 1). */
     public int getBranchGradientParallelism()                  { return branchGradientParallelism; }
+
+    /** Number of threads to use for prewarming canonical branch transitions (>= 1). */
+    public int getTransitionPreloadParallelism()                { return transitionPreloadParallelism; }
 
     // -----------------------------------------------------------------------
     // Builder
@@ -173,6 +182,7 @@ public final class CanonicalGradientFallbackPolicy {
         private boolean branchLengthFiniteDifference             = false;
         private boolean exactTipShortcutDisabled                 = false;
         private int     branchGradientParallelism                = 1;
+        private int     transitionPreloadParallelism             = 1;
 
         private Builder() { }
 
@@ -192,6 +202,13 @@ public final class CanonicalGradientFallbackPolicy {
             return this;
         }
 
+        /** Thread count for transition preloading; must be >= 1. */
+        public Builder transitionPreloadParallelism(int v) {
+            if (v < 1) throw new IllegalArgumentException("transitionPreloadParallelism must be >= 1, got " + v);
+            transitionPreloadParallelism = v;
+            return this;
+        }
+
         public CanonicalGradientFallbackPolicy build() {
             return new CanonicalGradientFallbackPolicy(this);
         }
@@ -201,7 +218,7 @@ public final class CanonicalGradientFallbackPolicy {
     // Private helpers
     // -----------------------------------------------------------------------
 
-    private static int readParallelism() {
+    private static int readBranchGradientParallelism() {
         final String value = System.getProperty(BRANCH_GRADIENT_THREADS_PROPERTY);
         if (value != null) {
             try {
@@ -210,6 +227,20 @@ public final class CanonicalGradientFallbackPolicy {
                 dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical gradient property '"
                         + BRANCH_GRADIENT_THREADS_PROPERTY
                         + "' has non-integer value '" + value + "'; using 1.");
+            }
+        }
+        return 1;
+    }
+
+    private static int readTransitionPreloadParallelism(final int branchGradientParallelism) {
+        final String value = System.getProperty(TRANSITION_PRELOAD_THREADS_PROPERTY);
+        if (value != null) {
+            try {
+                return Math.max(1, Integer.parseInt(value));
+            } catch (NumberFormatException e) {
+                dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical gradient property '"
+                        + TRANSITION_PRELOAD_THREADS_PROPERTY
+                        + "' has non-integer value '" + value + "'; using default.");
             }
         }
         return 1;

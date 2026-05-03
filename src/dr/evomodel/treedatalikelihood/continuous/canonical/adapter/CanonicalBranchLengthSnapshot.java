@@ -15,7 +15,7 @@ final class CanonicalBranchLengthSnapshot {
     private final BranchRateModel rateModel;
     private final ContinuousRateTransformation rateTransformation;
     private final double[] phaseCache;
-    private int phaseDepth;
+    private volatile int phaseDepth;
 
     CanonicalBranchLengthSnapshot(final Tree tree,
                                   final BranchRateModel rateModel,
@@ -28,7 +28,8 @@ final class CanonicalBranchLengthSnapshot {
     }
 
     void beginPhase() {
-        if (phaseDepth++ > 0) {
+        if (phaseDepth > 0) {
+            phaseDepth++;
             return;
         }
         final int rootIndex = tree.getRoot().getNumber();
@@ -39,6 +40,7 @@ final class CanonicalBranchLengthSnapshot {
             }
             phaseCache[childNodeIndex] = compute(childNodeIndex);
         }
+        phaseDepth = 1;
     }
 
     void endPhase() {

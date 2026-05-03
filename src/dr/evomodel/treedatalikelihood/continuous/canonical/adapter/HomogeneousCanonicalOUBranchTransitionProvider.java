@@ -37,6 +37,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransition
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCacheDiagnostics;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionPreloader;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.inference.model.AbstractModel;
@@ -47,6 +48,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.util.TaskPool;
 
 /**
  * Homogeneous OU branch-transition provider for the canonical tree pathway.
@@ -55,7 +57,8 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         implements CanonicalBranchTransitionProvider,
         CanonicalOUTransitionProvider,
         CanonicalPreparedBranchSnapshotProvider,
-        CanonicalTransitionCacheDiagnostics {
+        CanonicalTransitionCacheDiagnostics,
+        CanonicalTransitionPreloader {
 
     private final int dimension;
     private final MultivariateDiffusionModel diffusionModel;
@@ -150,6 +153,14 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public CanonicalGaussianTransition getCanonicalTransitionView(final int childNodeIndex) {
         ensureCurrentSnapshot();
         return transitionCache.getTransitionView(childNodeIndex);
+    }
+
+    @Override
+    public void preloadCanonicalTransitions(final int rootNodeIndex,
+                                            final TaskPool taskPool,
+                                            final int chunkSize) {
+        ensureCurrentSnapshot();
+        transitionCache.preloadTransitions(rootNodeIndex, taskPool, chunkSize);
     }
 
     @Override

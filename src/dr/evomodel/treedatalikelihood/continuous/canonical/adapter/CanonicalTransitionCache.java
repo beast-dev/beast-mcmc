@@ -33,7 +33,9 @@ import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.util.TaskPool;
 
 /**
  * Per-branch canonical transition cache for homogeneous OU providers.
@@ -54,7 +56,7 @@ final class CanonicalTransitionCache {
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
     private final CanonicalTransitionCacheEpoch epoch;
-    private boolean stationaryMeanSnapshotValid;
+    private volatile boolean stationaryMeanSnapshotValid;
 
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
@@ -87,6 +89,30 @@ final class CanonicalTransitionCache {
 
     CanonicalGaussianTransition getTransitionView(final int childNodeIndex) {
         return ensureTransition(childNodeIndex);
+    }
+
+    void preloadTransitions(final int rootNodeIndex,
+                            final TaskPool taskPool,
+                            final int chunkSize) {
+        if (taskPool == null || taskPool.getNumThreads() <= 1) {
+            return;
+        }
+        if (preparedTransition != null) {
+            ensureStationaryMeanSnapshot();
+        }
+        taskPool.forkDynamic(
+                entries.length,
+                chunkSize,
+                (childNodeIndex, thread) -> {
+                    final String previousPhase = pushDiagnosticPhase(CanonicalTransitionCachePhases.POSTORDER);
+                    try {
+                        if (childNodeIndex != rootNodeIndex) {
+                            ensureTransition(childNodeIndex);
+                        }
+                    } finally {
+                        popDiagnosticPhase(previousPhase);
+                    }
+                });
     }
 
     CanonicalPreparedBranchHandle getPreparedBranchHandle(final int childNodeIndex) {
@@ -215,7 +241,7 @@ final class CanonicalTransitionCache {
         return prepared;
     }
 
-    private void ensureStationaryMeanSnapshot() {
+    private synchronized void ensureStationaryMeanSnapshot() {
         if (stationaryMeanSnapshotValid) {
             return;
         }

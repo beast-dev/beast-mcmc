@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradie
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchAdjointPreparer;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchLengthGradientEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalTreeGradientEngine;
+import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
@@ -95,6 +96,9 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
         final BranchGradientWorkspace mainWorkspace = WorkspaceFactory.branchGradientWorkspace(dim);
         final TaskPool branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
+        final TaskPool transitionPreloadTaskPool = new TaskPool(
+                nodeCount,
+                Math.max(1, Math.min(branchGradientParallelism, fallbackPolicy.getTransitionPreloadParallelism())));
         final int branchGradientWorkspaceCount =
                 branchGradientTaskPool.getNumThreads() <= 1 ? 1 : branchGradientTaskPool.getNumThreads() + 1;
         final BranchGradientWorkspace[] branchGradientWorkspaces =
@@ -103,7 +107,14 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
             branchGradientWorkspaces[i] = WorkspaceFactory.branchGradientWorkspace(dim);
         }
         final CanonicalTreeTraversal treeTraversal = new CanonicalTreeTraversal(tree, dim);
-        this.traversalRunner = new CanonicalTraversalRunner(treeTraversal, stateStore, mainWorkspace);
+        this.traversalRunner = new CanonicalTraversalRunner(
+                treeTraversal,
+                stateStore,
+                mainWorkspace,
+                tree.getRoot().getNumber(),
+                transitionPreloadTaskPool,
+                new DimensionWeightedChunkSizeStrategy(dim, Math.max(1, transitionPreloadTaskPool.getNumThreads()))
+                        .chunkSize(nodeCount));
         final CanonicalBranchAdjointPreparer branchAdjointPreparer = new CanonicalBranchAdjointPreparer(
                 tree,
                 dim,

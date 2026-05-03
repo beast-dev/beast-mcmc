@@ -14,6 +14,7 @@ public final class CanonicalTraversalTimer {
     private static final int REPORT_EVERY = Math.max(1, Integer.getInteger(REPORT_EVERY_PROPERTY, 50));
 
     private static long postorderTotalNanos;
+    private static long postorderPreloadNanos;
     private static long postorderTransitionNanos;
     private static long postorderTipNanos;
     private static long postorderInternalPushNanos;
@@ -103,6 +104,12 @@ public final class CanonicalTraversalTimer {
         }
     }
 
+    public static void recordPostorderPreload(final long startNanos) {
+        if (ENABLED) {
+            postorderPreloadNanos += elapsedSince(startNanos);
+        }
+    }
+
     public static void recordPostorderTipMessage(final long startNanos) {
         if (ENABLED) {
             postorderTipNanos += elapsedSince(startNanos);
@@ -171,7 +178,7 @@ public final class CanonicalTraversalTimer {
         final String message = String.format(Locale.US,
                 "[canonical-traversal-timing] post.count=%d pre.count=%d nodes=%d leaves=%d internal=%d "
                         + "levels=%d maxWidth=%d meanWidth=%.1f "
-                        + "post.total=%.3fms post.transition=%.3fms post.tip=%.3fms "
+                        + "post.total=%.3fms post.preload=%.3fms post.transition=%.3fms post.tip=%.3fms "
                         + "post.internalPush=%.3fms post.combine=%.3fms post.root=%.3fms "
                         + "post.edges=transition/tip/internal=%d/%d/%d "
                         + "post.cache=requests/misses=%d/%d "
@@ -188,6 +195,7 @@ public final class CanonicalTraversalTimer {
                 lastMaxLevelWidth,
                 lastMeanLevelWidth,
                 toMillis(postorderTotalNanos),
+                toMillis(postorderPreloadNanos),
                 toMillis(postorderTransitionNanos),
                 toMillis(postorderTipNanos),
                 toMillis(postorderInternalPushNanos),
@@ -219,6 +227,7 @@ public final class CanonicalTraversalTimer {
 
     private static void reset() {
         postorderTotalNanos = 0L;
+        postorderPreloadNanos = 0L;
         postorderTransitionNanos = 0L;
         postorderTipNanos = 0L;
         postorderInternalPushNanos = 0L;

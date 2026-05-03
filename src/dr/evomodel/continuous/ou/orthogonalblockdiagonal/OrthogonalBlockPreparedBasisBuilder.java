@@ -61,11 +61,14 @@ final class OrthogonalBlockPreparedBasisBuilder {
         for (int i = 0; i < dimension; ++i) {
             final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += left[rowOffset + k] * rightRowMajor[k * dimension + j];
+                outData[rowOffset + j] = 0.0;
+            }
+            for (int k = 0; k < dimension; ++k) {
+                final double leftValue = left[rowOffset + k];
+                final int rightOffset = k * dimension;
+                for (int j = 0; j < dimension; ++j) {
+                    outData[rowOffset + j] += leftValue * rightRowMajor[rightOffset + j];
                 }
-                outData[rowOffset + j] = sum;
             }
         }
     }

@@ -77,10 +77,13 @@ public final class MatrixOps {
     public static void matMul(double[] A, double[] B, double[] C, int m, int k, int n) {
         for (int i = 0; i < m; i++) {
             final int rA = i * k, rC = i * n;
-            for (int j = 0; j < n; j++) {
-                double s = 0.0;
-                for (int l = 0; l < k; l++) s += A[rA + l] * B[l * n + j];
-                C[rC + j] = s;
+            Arrays.fill(C, rC, rC + n, 0.0);
+            for (int l = 0; l < k; l++) {
+                final double a = A[rA + l];
+                final int rB = l * n;
+                for (int j = 0; j < n; j++) {
+                    C[rC + j] += a * B[rB + j];
+                }
             }
         }
     }

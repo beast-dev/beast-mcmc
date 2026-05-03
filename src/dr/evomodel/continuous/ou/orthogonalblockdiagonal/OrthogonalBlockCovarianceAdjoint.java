@@ -261,6 +261,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                 workspace.temp1,
                 blockStarts,
                 blockSizes);
+        symmetrize(workspace.gS);
 
         accumulateCovariancePullbackFromSharedSymmetric(
                 prepared.rMatrix,
@@ -287,11 +288,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                 compressedDAccumulator);
         addDenseMatrixToFlatArray(workspace.gradR, rotationAccumulator);
 
-        fillDiffusionGradientDBasisFromSharedSymmetric(
-                prepared.blockDParams,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.lyapunovAdjointHelper);
+        CommonOps.scale(-1.0, workspace.yAdjoint);
         if (delayDiffusionGradientRotation) {
             addDenseMatrixToFlatArray(workspace.yAdjoint, diffusionGradientAccumulator);
         } else {

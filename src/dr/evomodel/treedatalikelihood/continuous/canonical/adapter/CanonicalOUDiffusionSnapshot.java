@@ -34,12 +34,19 @@ final class CanonicalOUDiffusionSnapshot {
     void refresh() {
         final double[][] precisionMatrix = diffusionModel.getPrecisionMatrix();
         MatrixOps.toFlat(precisionMatrix, precision.data, dimension);
-        MatrixOps.invertSPDCompact(
-                precision.data,
-                covariance.data,
-                dimension,
-                choleskyForwardScratch,
-                choleskyBackwardScratch);
+        try {
+            MatrixOps.invertSPDCompact(
+                    precision.data,
+                    covariance.data,
+                    dimension,
+                    choleskyForwardScratch,
+                    choleskyBackwardScratch);
+        } catch (IllegalArgumentException e) {
+            final ArithmeticException arithmeticException =
+                    new ArithmeticException("Canonical OU precision matrix is not symmetric positive definite.");
+            arithmeticException.initCause(e);
+            throw arithmeticException;
+        }
 
         final double[] covarianceData = covariance.data;
         for (int i = 0; i < dimension; i++) {

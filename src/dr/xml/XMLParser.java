@@ -40,6 +40,8 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class XMLParser {
@@ -106,6 +108,13 @@ public class XMLParser {
 
     public Iterator getThreads() {
         return threads.iterator();
+    }
+
+    public void interruptThreads() {
+        for (Thread thread : threads) {
+            requestThreadStop(thread);
+            thread.interrupt();
+        }
     }
 
     public void storeObject(String name, Object object) {
@@ -370,9 +379,11 @@ public class XMLParser {
                     for (int i = 0; i < xo.getChildCount(); i++) {
                         Object child = xo.getChild(i);
                         if (child instanceof Runnable) {
-                            Thread thread = new Thread((Runnable) child);
+                            Runnable runnable = (Runnable) child;
+                            Thread thread = new Thread(runnable);
                             thread.start();
                             threads.add(thread);
+                            threadTasks.put(thread, runnable);
                         } else throw new XMLParseException("Concurrent element children must be runnable!");
                     }
                     concurrent = false;
@@ -387,13 +398,16 @@ public class XMLParser {
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();
                     } else {
-                        Thread thread = new Thread((Runnable) obj);
+                        Runnable runnable = (Runnable) obj;
+                        Thread thread = new Thread(runnable);
                         thread.start();
                         threads.add(thread);
+                        threadTasks.put(thread, runnable);
                         waitForThread(thread);
                     }
                 }
                 threads.removeAllElements();
+                threadTasks.clear();
             }
 
             return xo;
@@ -551,8 +565,25 @@ public class XMLParser {
             try {
                 thread.join();
             } catch (InterruptedException ie) {
-                // DO NOTHING
+                interruptThreads();
+                Thread.currentThread().interrupt();
+                return;
             }
+        }
+    }
+
+    private void requestThreadStop(Thread thread) {
+        Runnable runnable = threadTasks.get(thread);
+        if (runnable == null) {
+            return;
+        }
+        try {
+            Method method = runnable.getClass().getMethod("pleaseStop");
+            method.invoke(runnable);
+        } catch (NoSuchMethodException ignored) {
+            // Runnable does not support cooperative stopping.
+        } catch (IllegalAccessException | InvocationTargetException ignored) {
+            // Fall back to interruption.
         }
     }
 
@@ -612,6 +643,7 @@ public class XMLParser {
     private final Map<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
     private final Map<String, XMLObject> objectStore = new LinkedHashMap<String, XMLObject>();
     private final Map<Pair<String, String>, List<Citation>> citationStore = new LinkedHashMap<Pair<String, String>, List<Citation>>();
+    private final Map<Thread, Runnable> threadTasks = new HashMap<Thread, Runnable>();
     private boolean concurrent = false;
     private XMLObject root = null;
 
@@ -656,5 +688,4 @@ public class XMLParser {
     }
 
 }
-
 

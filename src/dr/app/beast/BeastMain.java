@@ -49,7 +49,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.*;
@@ -80,11 +79,8 @@ public class BeastMain {
         }
 
         public void doStop() {
-            Iterator iter = parser.getThreads();
-            while (iter.hasNext()) {
-                Thread thread = (Thread) iter.next();
-                //noinspection removal
-                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+            if (parser != null) {
+                parser.interruptThreads();
             }
         }
 
@@ -1039,5 +1035,3 @@ public class BeastMain {
         }
     }
 }
-
-

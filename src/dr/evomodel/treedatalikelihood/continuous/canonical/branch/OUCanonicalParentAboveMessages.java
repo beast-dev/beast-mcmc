@@ -15,6 +15,11 @@ final class OUCanonicalParentAboveMessages {
         this.transitionState = transitionState;
     }
 
+    DenseMatrix64F recoverOrRequire(final NormalSufficientStatistics aboveChild,
+                                    final NormalSufficientStatistics aboveParent) {
+        return transitionState.recoverOrUseParentAbovePrecision(aboveChild, aboveParent);
+    }
+
     DenseMatrix64F require(final NormalSufficientStatistics aboveParent) {
         return transitionState.requireParentAbovePrecision(aboveParent);
     }

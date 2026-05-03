@@ -69,11 +69,13 @@ final class OUCanonicalBranchContributionAssembler {
                 : classifyExactObservationPattern(statistics.getBelow());
         if (observedCount > 0) {
             fillContributionForPartiallyObservedTip(
+                    statistics.getAbove(),
                     statistics.getAboveParent(),
                     statistics.getBelow(),
                     observedCount);
         } else {
             fillPairPosterior(
+                    statistics.getAbove(),
                     statistics.getAboveParent(),
                     statistics.getBelow());
             fillContributionFromPairPosterior();
@@ -91,9 +93,10 @@ final class OUCanonicalBranchContributionAssembler {
         return frozenLocalFactorEvaluator.evaluate(parentAbovePrecision, parentAboveMean, below);
     }
 
-    private void fillPairPosterior(final NormalSufficientStatistics aboveParent,
+    private void fillPairPosterior(final NormalSufficientStatistics aboveChild,
+                                   final NormalSufficientStatistics aboveParent,
                                    final NormalSufficientStatistics below) {
-        final DenseMatrix64F abovePrecision = parentAboveMessages.require(aboveParent);
+        final DenseMatrix64F abovePrecision = parentAboveMessages.recoverOrRequire(aboveChild, aboveParent);
         final DenseMatrix64F aboveMean = transitionState.getAboveParentMeanVector();
         final DenseMatrix64F belowPrecision = below.getRawPrecision();
         final DenseMatrix64F belowMean = below.getRawMean();
@@ -136,10 +139,11 @@ final class OUCanonicalBranchContributionAssembler {
         }
     }
 
-    private void fillContributionForPartiallyObservedTip(final NormalSufficientStatistics aboveParent,
+    private void fillContributionForPartiallyObservedTip(final NormalSufficientStatistics aboveChild,
+                                                         final NormalSufficientStatistics aboveParent,
                                                          final NormalSufficientStatistics below,
                                                          final int observedCount) {
-        final DenseMatrix64F abovePrecision = parentAboveMessages.require(aboveParent);
+        final DenseMatrix64F abovePrecision = parentAboveMessages.recoverOrRequire(aboveChild, aboveParent);
         final DenseMatrix64F aboveMean = transitionState.getAboveParentMeanVector();
         final DenseMatrix64F observedChild = below.getRawMean();
 

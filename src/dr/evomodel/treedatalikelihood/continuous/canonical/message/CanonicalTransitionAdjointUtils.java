@@ -22,6 +22,7 @@ public final class CanonicalTransitionAdjointUtils {
         final double[] temp2;
         final double[] gP;
         final double[] tempv;
+        final double[] transitionMatrixTimesGX;
         private final int dimension;
 
         public Workspace(final int dimension) {
@@ -35,6 +36,7 @@ public final class CanonicalTransitionAdjointUtils {
             this.temp2             = new double[d2];
             this.gP                = new double[d2];
             this.tempv             = new double[dimension];
+            this.transitionMatrixTimesGX = new double[dimension];
         }
 
         public int getDimension() { return dimension; }
@@ -107,25 +109,24 @@ public final class CanonicalTransitionAdjointUtils {
         final double[] temp1 = workspace.temp1;
         final double[] temp2 = workspace.temp2;
         final double[] tempv = workspace.tempv;
+        final double[] transitionMatrixTimesGX = workspace.transitionMatrixTimesGX;
 
-        // dLogL_dF: precision × (transitionMatrix × (gXx + gXx^T))^T - precision × gXy^T - precision × gYx - precision × (f ⊗ gX)^T
+        // dLogL_dF = precision * (transitionMatrix * (gXx + gXx^T) - gXy^T - gYx - transitionOffset * gX^T)
         multiplyFlat(transitionMatrix, gXxPlusTranspose, temp1, d);
+
+        transposeIntoFlat(gXy, temp2, d);
+        subtractInPlaceFlat(temp1, temp2, d2);
+
+        subtractInPlaceFlat(temp1, gYx, d2);
+
+        outerProductFlat(transitionOffset, gX, temp2, d);
+        subtractInPlaceFlat(temp1, temp2, d2);
+
         multiplyFlat(precision, temp1, out.dLogL_dF, d);
 
-        transposeIntoFlat(gXy, temp1, d);
-        multiplyFlat(precision, temp1, temp2, d);
-        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
-
-        multiplyFlat(precision, gYx, temp2, d);
-        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
-
-        multiplyMatVecFlat(precision, transitionOffset, tempv, d);
-        outerProductFlat(tempv, gX, temp2, d);
-        subtractInPlaceFlat(out.dLogL_dF, temp2, d2);
-
-        multiplyMatVecFlat(transitionMatrix, gX, tempv, d);
+        multiplyMatVecFlat(transitionMatrix, gX, transitionMatrixTimesGX, d);
         for (int i = 0; i < d; ++i) {
-            tempv[i] = -tempv[i] + gY[i] + g0 * transitionOffset[i];
+            tempv[i] = -transitionMatrixTimesGX[i] + gY[i] + g0 * transitionOffset[i];
         }
         multiplyMatVecFlat(precision, tempv, out.dLogL_df, d);
 
@@ -141,16 +142,14 @@ public final class CanonicalTransitionAdjointUtils {
 
         addInPlaceFlat(gP, gYy, d2);
 
-        multiplyMatVecFlat(transitionMatrix, gX, tempv, d);
-        outerProductFlat(tempv, transitionOffset, temp2, d);
-        subtractInPlaceFlat(gP, temp2, d2);
-
-        outerProductFlat(gY, transitionOffset, temp1, d);
+        for (int i = 0; i < d; ++i) {
+            tempv[i] = gY[i] - transitionMatrixTimesGX[i] + 0.5 * g0 * transitionOffset[i];
+        }
+        outerProductFlat(tempv, transitionOffset, temp1, d);
         addInPlaceFlat(gP, temp1, d2);
 
-        outerProductFlat(transitionOffset, transitionOffset, temp1, d);
         for (int k = 0; k < d2; ++k) {
-            gP[k] += 0.5 * g0 * (temp1[k] - omega[k]);
+            gP[k] -= 0.5 * g0 * omega[k];
         }
 
         multiplyFlat(precision, gP, temp1, d);

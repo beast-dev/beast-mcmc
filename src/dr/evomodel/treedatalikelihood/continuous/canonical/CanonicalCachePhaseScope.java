@@ -30,6 +30,15 @@ final class CanonicalCachePhaseScope implements AutoCloseable {
         return 0L;
     }
 
+    static long transitionCacheRequests(final CanonicalBranchTransitionProvider transitionProvider,
+                                        final String phase) {
+        if (transitionProvider instanceof CanonicalTransitionCacheDiagnostics) {
+            return ((CanonicalTransitionCacheDiagnostics) transitionProvider)
+                    .getTransitionCacheRequestCount(phase);
+        }
+        return 0L;
+    }
+
     @Override
     public void close() {
         if (diagnostics != null) {

@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchAdjointWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.GradientPullbackWorkspace;
+import dr.util.CanonicalPhaseTimer;
 import dr.util.TaskPool;
 
 import java.util.Arrays;
@@ -90,10 +91,12 @@ public final class CanonicalTreeGradientEngine {
         final CanonicalSelectionGradientPullback selectionPullback =
                 CanonicalSelectionGradientPullbacks.create(processModel, dimension, gradA, mainWorkspace);
         if (workspaces.length <= 1 || inputs.getActiveBranchCount() <= 1) {
+            CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), 1, false);
             computeSequential(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
             return;
         }
 
+        CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), taskPool.getNumThreads(), true);
         computeParallel(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
     }
 
@@ -106,6 +109,7 @@ public final class CanonicalTreeGradientEngine {
         final BranchGradientWorkspace workspace = mainWorkspace;
         selectionPullback.initialize(workspace, gradA, gradMu);
 
+        long timingStart = CanonicalPhaseTimer.start();
         for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
             selectionPullback.accumulateForBranch(
                     processModel,
@@ -117,8 +121,11 @@ public final class CanonicalTreeGradientEngine {
                     gradQ,
                     gradMu);
         }
+        CanonicalPhaseTimer.recordBranchGradient(timingStart);
 
+        timingStart = CanonicalPhaseTimer.start();
         finalizeJointGradients(selectionPullback, inputs, workspace, gradA, gradQ, gradMu);
+        CanonicalPhaseTimer.recordFinalize(timingStart);
     }
 
     private void computeParallel(final BranchGradientInputs inputs,
@@ -137,6 +144,7 @@ public final class CanonicalTreeGradientEngine {
 
         selectionPullback.initialize(reductionWorkspace, gradA, gradMu);
 
+        long timingStart = CanonicalPhaseTimer.start();
         taskPool.forkDynamicBalanced(
                 inputs.getActiveBranchCount(),
                 branchGradientJointChunkSize(inputs.getActiveBranchCount()),
@@ -153,15 +161,20 @@ public final class CanonicalTreeGradientEngine {
                             workspace.localGradientQ,
                             workspace.localGradientMu(gradMu.length, dimension));
                 });
+        CanonicalPhaseTimer.recordBranchGradient(timingStart);
 
+        timingStart = CanonicalPhaseTimer.start();
         for (int worker = 0; worker < workspaces.length; ++worker) {
             final BranchGradientWorkspace workspace = workspaces[worker];
             accumulateVectorInPlace(gradQ, workspace.localGradientQ, gradQ.length);
             accumulateVectorInPlace(gradMu, workspace.localGradientMu(gradMu.length, dimension), gradMu.length);
             selectionPullback.reduceWorker(workspace, reductionWorkspace, gradA);
         }
+        CanonicalPhaseTimer.recordReduction(timingStart);
 
+        timingStart = CanonicalPhaseTimer.start();
         finalizeJointGradients(selectionPullback, inputs, reductionWorkspace, gradA, gradQ, gradMu);
+        CanonicalPhaseTimer.recordFinalize(timingStart);
     }
 
     private void finalizeJointGradients(final CanonicalSelectionGradientPullback selectionPullback,

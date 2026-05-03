@@ -3,6 +3,7 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.util.CanonicalTraversalTimer;
 
 final class CanonicalTraversalRunner {
 
@@ -22,11 +23,27 @@ final class CanonicalTraversalRunner {
                                          final CanonicalRootPrior rootPrior) {
         try (CanonicalCachePhaseScope ignored = CanonicalCachePhaseScope.push(
                 transitionProvider, CanonicalTransitionCachePhases.POSTORDER)) {
-            return treeTraversal.computePostOrderLogLikelihood(
-                    transitionProvider,
-                    rootPrior,
-                    stateStore,
-                    workspace);
+            final long timingStart = CanonicalTraversalTimer.start();
+            final long requestsBefore = CanonicalCachePhaseScope.transitionCacheRequests(
+                    transitionProvider, CanonicalTransitionCachePhases.POSTORDER);
+            final long missesBefore = CanonicalCachePhaseScope.transitionCacheMisses(
+                    transitionProvider, CanonicalTransitionCachePhases.POSTORDER);
+            try {
+                return treeTraversal.computePostOrderLogLikelihood(
+                        transitionProvider,
+                        rootPrior,
+                        stateStore,
+                        workspace);
+            } finally {
+                final long requestsAfter = CanonicalCachePhaseScope.transitionCacheRequests(
+                        transitionProvider, CanonicalTransitionCachePhases.POSTORDER);
+                final long missesAfter = CanonicalCachePhaseScope.transitionCacheMisses(
+                        transitionProvider, CanonicalTransitionCachePhases.POSTORDER);
+                CanonicalTraversalTimer.finishPostorder(
+                        timingStart,
+                        requestsAfter - requestsBefore,
+                        missesAfter - missesBefore);
+            }
         }
     }
 
@@ -34,11 +51,27 @@ final class CanonicalTraversalRunner {
                          final CanonicalRootPrior rootPrior) {
         try (CanonicalCachePhaseScope ignored = CanonicalCachePhaseScope.push(
                 transitionProvider, CanonicalTransitionCachePhases.PREORDER)) {
-            treeTraversal.computePreOrder(
-                    transitionProvider,
-                    rootPrior,
-                    stateStore,
-                    workspace);
+            final long timingStart = CanonicalTraversalTimer.start();
+            final long requestsBefore = CanonicalCachePhaseScope.transitionCacheRequests(
+                    transitionProvider, CanonicalTransitionCachePhases.PREORDER);
+            final long missesBefore = CanonicalCachePhaseScope.transitionCacheMisses(
+                    transitionProvider, CanonicalTransitionCachePhases.PREORDER);
+            try {
+                treeTraversal.computePreOrder(
+                        transitionProvider,
+                        rootPrior,
+                        stateStore,
+                        workspace);
+            } finally {
+                final long requestsAfter = CanonicalCachePhaseScope.transitionCacheRequests(
+                        transitionProvider, CanonicalTransitionCachePhases.PREORDER);
+                final long missesAfter = CanonicalCachePhaseScope.transitionCacheMisses(
+                        transitionProvider, CanonicalTransitionCachePhases.PREORDER);
+                CanonicalTraversalTimer.finishPreorder(
+                        timingStart,
+                        requestsAfter - requestsBefore,
+                        missesAfter - missesBefore);
+            }
         }
     }
 

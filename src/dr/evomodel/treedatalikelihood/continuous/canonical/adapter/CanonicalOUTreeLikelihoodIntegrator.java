@@ -47,6 +47,7 @@ import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.util.CanonicalPhaseTimer;
 
 /**
  * Integrator-style backend for the canonical OU tree passer path.
@@ -361,6 +362,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (!jointGradientCacheDirty) {
             return;
         }
+        final long timingStart = CanonicalPhaseTimer.start();
         ensureGradientInputs(CanonicalTransitionCachePhases.GRADIENT_PREP);
         passer.computeJointGradients(
                 transitionProvider,
@@ -368,6 +370,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 cachedGradientA,
                 cachedGradientQ,
                 cachedGradientMu);
+        CanonicalPhaseTimer.finishJointGradient(timingStart);
         jointGradientCacheDirty = false;
         reportTransitionCacheDiagnostics("jointGradient");
     }
@@ -376,9 +379,15 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (!gradientInputsDirty) {
             return;
         }
+        long timingStart = CanonicalPhaseTimer.start();
         passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        CanonicalPhaseTimer.recordPostorder(timingStart);
+        timingStart = CanonicalPhaseTimer.start();
         passer.computePreOrder(transitionProvider, rootPrior);
+        CanonicalPhaseTimer.recordPreorder(timingStart);
+        timingStart = CanonicalPhaseTimer.start();
         passer.prepareBranchGradientInputs(transitionProvider, phase, cachedGradientInputs);
+        CanonicalPhaseTimer.recordBranchPrep(timingStart);
         modelDirty = false;
         gradientInputsDirty = false;
     }

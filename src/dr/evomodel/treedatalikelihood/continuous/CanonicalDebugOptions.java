@@ -33,6 +33,14 @@ public final class CanonicalDebugOptions {
     private static final String TRANSITION_CACHE_PROPERTY                 = "beast.debug.canonicalTransitionCache";
     private static final String ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY  =
             "beast.debug.canonicalAssertNoGradientCacheMisses";
+    private static final String CANONICAL_PHASE_TIMING_PROPERTY           =
+            "beast.debug.canonicalPhaseTiming";
+    private static final String CANONICAL_PHASE_TIMING_REPORT_EVERY_PROPERTY =
+            "beast.debug.canonicalPhaseTimingReportEvery";
+    private static final String CANONICAL_TRAVERSAL_TIMING_PROPERTY       =
+            "beast.debug.canonicalTraversalTiming";
+    private static final String CANONICAL_TRAVERSAL_TIMING_REPORT_EVERY_PROPERTY =
+            "beast.debug.canonicalTraversalTimingReportEvery";
 
     /**
      * All property names recognized by this class.
@@ -49,7 +57,11 @@ public final class CanonicalDebugOptions {
                     NATIVE_ASSEMBLY_NODE_PROPERTY,
                     NONFINITE_BRANCH_STATS_PROPERTY,
                     TRANSITION_CACHE_PROPERTY,
-                    ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY)));
+                    ASSERT_NO_GRADIENT_CACHE_MISSES_PROPERTY,
+                    CANONICAL_PHASE_TIMING_PROPERTY,
+                    CANONICAL_PHASE_TIMING_REPORT_EVERY_PROPERTY,
+                    CANONICAL_TRAVERSAL_TIMING_PROPERTY,
+                    CANONICAL_TRAVERSAL_TIMING_REPORT_EVERY_PROPERTY)));
 
     // -----------------------------------------------------------------------
     // Fields

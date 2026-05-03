@@ -37,6 +37,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
+import dr.util.CanonicalTraversalTimer;
 
 /**
  * Canonical post-order and pre-order tree message propagation.
@@ -65,6 +66,7 @@ public final class CanonicalTreeTraversal {
         }
 
         final int nodeCount = tree.getNodeCount();
+        recordTreeShape();
         for (int i = 0; i < nodeCount; i++) {
             if (!tree.isExternal(tree.getNode(i))) {
                 computePostOrderAtInternalNode(i, transitionProvider, stateStore, workspace);
@@ -72,11 +74,14 @@ public final class CanonicalTreeTraversal {
         }
 
         final int rootIndex = tree.getRoot().getNumber();
+        final long rootTimingStart = CanonicalTraversalTimer.start();
         transitionProvider.fillTraitCovarianceFlat(workspace.traitCovariance);
         stateStore.hasPostOrderState = true;
-        return rootPrior.computeLogMarginalLikelihood(
+        final double logLikelihood = rootPrior.computeLogMarginalLikelihood(
                 stateStore.postOrder[rootIndex],
                 workspace.traitCovariance);
+        CanonicalTraversalTimer.recordPostorderRoot(rootTimingStart);
+        return logLikelihood;
     }
 
     public void computePreOrder(final CanonicalBranchTransitionProvider transitionProvider,
@@ -84,6 +89,8 @@ public final class CanonicalTreeTraversal {
                          final CanonicalTreeStateStore stateStore,
                          final BranchGradientWorkspace workspace) {
         final int rootIndex = tree.getRoot().getNumber();
+        recordTreeShape();
+        final long rootTimingStart = CanonicalTraversalTimer.start();
         transitionProvider.fillTraitCovarianceFlat(workspace.traitCovariance);
         CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[rootIndex]);
         stateStore.hasFixedRootValue = rootPrior.isFixedRoot();
@@ -94,6 +101,7 @@ public final class CanonicalTreeTraversal {
             rootPrior.fillRootPriorState(workspace.traitCovariance, stateStore.branchAboveParent[rootIndex]);
             stateStore.lastRootDiffusionScale = rootPrior.getDiffusionScale();
         }
+        CanonicalTraversalTimer.recordPreorderRootInit(rootTimingStart);
         computePreOrderRecursive(rootIndex, transitionProvider, stateStore, workspace);
         stateStore.hasPreOrderState = true;
     }
@@ -104,19 +112,23 @@ public final class CanonicalTreeTraversal {
             final CanonicalTreeStateStore stateStore,
             final BranchGradientWorkspace workspace) {
         final CanonicalGaussianState dest = stateStore.postOrder[nodeIndex];
+        long timingStart = CanonicalTraversalTimer.start();
         CanonicalGaussianMessageOps.clearState(dest);
+        CanonicalTraversalTimer.recordPostorderCombine(timingStart);
 
         final int childCount = tree.getChildCount(tree.getNode(nodeIndex));
         boolean first = true;
         for (int c = 0; c < childCount; c++) {
             final int childIndex = tree.getChild(tree.getNode(nodeIndex), c).getNumber();
-            buildUpwardParentMessage(childIndex, transitionProvider, stateStore, workspace.state, workspace);
+            buildUpwardParentMessage(childIndex, transitionProvider, stateStore, workspace.state, workspace, true);
+            timingStart = CanonicalTraversalTimer.start();
             if (first) {
                 CanonicalGaussianMessageOps.copyState(workspace.state, dest);
                 first = false;
             } else {
                 CanonicalGaussianMessageOps.combineStateInPlace(dest, workspace.state);
             }
+            CanonicalTraversalTimer.recordPostorderCombine(timingStart);
         }
     }
 
@@ -134,23 +146,30 @@ public final class CanonicalTreeTraversal {
         for (int c = 0; c < childCount; c++) {
             final int childIndex = tree.getChild(tree.getNode(parentIndex), c).getNumber();
             if (stateStore.hasFixedRootValue && parentIndex == rootIndex) {
+                final long storeTimingStart = CanonicalTraversalTimer.start();
                 CanonicalGaussianMessageOps.clearState(stateStore.branchAboveParent[childIndex]);
+                CanonicalTraversalTimer.recordPreorderStore(storeTimingStart);
                 computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
                 continue;
             }
 
             fillOutsideAtNode(parentIndex, transitionProvider, stateStore, workspace.downwardParentState, workspace);
 
+            final long siblingTimingStart = CanonicalTraversalTimer.start();
             final boolean hasSiblings = buildSiblingProduct(
                     parentIndex, childIndex, transitionProvider, stateStore, workspace.siblingProduct, workspace);
+            CanonicalTraversalTimer.recordPreorderSiblingProduct(
+                    siblingTimingStart, childCount - 1);
 
             if (hasSiblings) {
                 CanonicalGaussianMessageOps.combineStateInPlace(workspace.downwardParentState, workspace.siblingProduct);
             }
 
+            final long storeTimingStart = CanonicalTraversalTimer.start();
             CanonicalGaussianMessageOps.copyState(
                     workspace.downwardParentState,
                     stateStore.branchAboveParent[childIndex]);
+            CanonicalTraversalTimer.recordPreorderStore(storeTimingStart);
             computePreOrderRecursive(childIndex, transitionProvider, stateStore, workspace);
         }
     }
@@ -163,25 +182,33 @@ public final class CanonicalTreeTraversal {
             final BranchGradientWorkspace workspace) {
         final int rootIndex = tree.getRoot().getNumber();
         if (nodeIndex == rootIndex) {
+            final long timingStart = CanonicalTraversalTimer.start();
             CanonicalGaussianMessageOps.copyState(stateStore.branchAboveParent[rootIndex], out);
+            CanonicalTraversalTimer.recordPreorderOutsidePropagate(timingStart);
             return;
         }
 
         final int parentIndex = tree.getParent(tree.getNode(nodeIndex)).getNumber();
+        long timingStart = CanonicalTraversalTimer.start();
         final CanonicalGaussianTransition transition = transitionFor(nodeIndex, transitionProvider, workspace);
+        CanonicalTraversalTimer.recordPreorderOutsideTransition(timingStart);
         if (stateStore.hasFixedRootValue && parentIndex == rootIndex) {
+            timingStart = CanonicalTraversalTimer.start();
             CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
                     transition,
                     stateStore.fixedRootValue,
                     out);
+            CanonicalTraversalTimer.recordPreorderOutsidePropagate(timingStart);
             return;
         }
 
+        timingStart = CanonicalTraversalTimer.start();
         CanonicalGaussianMessageOps.pushForward(
                 stateStore.branchAboveParent[nodeIndex],
                 transition,
                 workspace.gaussianWorkspace,
                 out);
+        CanonicalTraversalTimer.recordPreorderOutsidePropagate(timingStart);
     }
 
     private boolean buildSiblingProduct(
@@ -199,7 +226,7 @@ public final class CanonicalTreeTraversal {
             if (siblingIndex == excludedChildIndex) {
                 continue;
             }
-            buildUpwardParentMessage(siblingIndex, transitionProvider, stateStore, workspace.state, workspace);
+            buildUpwardParentMessage(siblingIndex, transitionProvider, stateStore, workspace.state, workspace, false);
             if (!found) {
                 CanonicalGaussianMessageOps.copyState(workspace.state, out);
                 found = true;
@@ -223,14 +250,20 @@ public final class CanonicalTreeTraversal {
             final CanonicalBranchTransitionProvider transitionProvider,
             final CanonicalTreeStateStore stateStore,
             final CanonicalGaussianState out,
-            final BranchGradientWorkspace workspace) {
+            final BranchGradientWorkspace workspace,
+            final boolean postorder) {
+        final long transitionTimingStart = CanonicalTraversalTimer.start();
         final CanonicalGaussianTransition transition = transitionFor(childIndex, transitionProvider, workspace);
+        if (postorder) {
+            CanonicalTraversalTimer.recordPostorderTransition(transitionTimingStart);
+        }
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel =
                     stateStore.tipObservationModels[childIndex];
             final CanonicalTransitionMomentProvider momentProvider =
                     momentProviderIfNeeded(observationModel, transitionProvider);
             final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+            final long messageTimingStart = CanonicalTraversalTimer.start();
             observationModel.fillParentMessage(
                     transition,
                     momentProvider,
@@ -238,10 +271,57 @@ public final class CanonicalTreeTraversal {
                     workspace.tipParentMessageWorkspace,
                     workspace.gaussianWorkspace,
                     out);
+            if (postorder) {
+                CanonicalTraversalTimer.recordPostorderTipMessage(messageTimingStart);
+            }
         } else {
+            final long messageTimingStart = CanonicalTraversalTimer.start();
             CanonicalGaussianMessageOps.pushBackward(
                     stateStore.postOrder[childIndex], transition, workspace.gaussianWorkspace, out);
+            if (postorder) {
+                CanonicalTraversalTimer.recordPostorderInternalPush(messageTimingStart);
+            }
         }
+    }
+
+    private void recordTreeShape() {
+        if (!CanonicalTraversalTimer.isEnabled()) {
+            return;
+        }
+        final int nodeCount = tree.getNodeCount();
+        int leafCount = 0;
+        int internalCount = 0;
+        int maxDepth = 0;
+        final int[] depthCounts = new int[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            if (tree.isExternal(tree.getNode(i))) {
+                leafCount++;
+            } else {
+                internalCount++;
+            }
+            int depth = 0;
+            for (int nodeIndex = i; nodeIndex != tree.getRoot().getNumber();) {
+                nodeIndex = tree.getParent(tree.getNode(nodeIndex)).getNumber();
+                depth++;
+            }
+            depthCounts[depth]++;
+            if (depth > maxDepth) {
+                maxDepth = depth;
+            }
+        }
+        int maxWidth = 0;
+        for (int depth = 0; depth <= maxDepth; depth++) {
+            if (depthCounts[depth] > maxWidth) {
+                maxWidth = depthCounts[depth];
+            }
+        }
+        CanonicalTraversalTimer.recordTreeShape(
+                nodeCount,
+                leafCount,
+                internalCount,
+                maxDepth + 1,
+                maxWidth,
+                nodeCount / (double) (maxDepth + 1));
     }
 
     /**

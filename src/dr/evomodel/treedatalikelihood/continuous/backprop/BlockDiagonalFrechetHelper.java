@@ -4,6 +4,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Exact block-space helper for Fréchet derivatives of exp(-D t).
@@ -16,6 +18,41 @@ public final class BlockDiagonalFrechetHelper {
 
     private static final String QUADRATURE_DEBUG_PROPERTY =
             "beast.experimental.nativeUseQuadratureFrechet";
+    private static final String EXACT_PLAN_DIAGNOSTICS_PROPERTY =
+            "beast.debug.canonicalFrechetPlan";
+    private static final String EXACT_PLAN_DIAGNOSTICS_REPORT_EVERY_PROPERTY =
+            "beast.debug.canonicalFrechetPlanReportEvery";
+    private static final boolean EXACT_PLAN_DIAGNOSTICS_ENABLED =
+            Boolean.getBoolean(EXACT_PLAN_DIAGNOSTICS_PROPERTY);
+    private static final int EXACT_PLAN_DIAGNOSTICS_REPORT_EVERY =
+            Math.max(1, Integer.getInteger(EXACT_PLAN_DIAGNOSTICS_REPORT_EVERY_PROPERTY, 50));
+    private static final AtomicLong EXACT_PLAN_CACHE_HITS = new AtomicLong();
+    private static final AtomicLong EXACT_PLAN_CACHE_MISSES = new AtomicLong();
+    private static final AtomicLong EXACT_PLAN_PARAMETER_MISSES = new AtomicLong();
+    private static final AtomicLong EXACT_PLAN_TIME_MISSES = new AtomicLong();
+    private static long exactPlanDiagnosticsCalls;
+    private static long lastReportedParameterUpdates;
+    private static long lastReportedTimeEvaluations;
+    private static long lastReportedApplications;
+    private static long lastReportedCacheHits;
+    private static long lastReportedCacheMisses;
+    private static long lastReportedParameterMisses;
+    private static long lastReportedTimeMisses;
+    private static long lastReportedEqualDiagonalEvaluations;
+    private static long lastReportedGenericSolve4x4Calls;
+    private static long lastReportedKernel1x1Evaluations;
+    private static long lastReportedKernel1x2Evaluations;
+    private static long lastReportedKernel2x1Evaluations;
+    private static long lastReportedKernel2x2EqualDiagonalEvaluations;
+    private static long lastReportedKernel2x2GenericEvaluations;
+    private static long lastReportedCoefficientBivariateSmallRootEvaluations;
+    private static long lastReportedCoefficientSmallLeftRootEvaluations;
+    private static long lastReportedCoefficientSmallRightRootEvaluations;
+    private static long lastReportedCoefficientDistinctEvaluations;
+    private static long lastReportedCoefficientDistinctRealEvaluations;
+    private static long lastReportedCoefficientDistinctLeftImagRightRealEvaluations;
+    private static long lastReportedCoefficientDistinctLeftRealRightImagEvaluations;
+    private static long lastReportedCoefficientDistinctBothImagEvaluations;
 
     private final int dim;
     private final BlockDiagonalExpSolver.BlockStructure structure;
@@ -53,6 +90,11 @@ public final class BlockDiagonalFrechetHelper {
 
     public static void resetExactPlanInstrumentation() {
         BlockDiagonalFrechetExactPlan.resetInstrumentation();
+        EXACT_PLAN_CACHE_HITS.set(0L);
+        EXACT_PLAN_CACHE_MISSES.set(0L);
+        EXACT_PLAN_PARAMETER_MISSES.set(0L);
+        EXACT_PLAN_TIME_MISSES.set(0L);
+        resetExactPlanDiagnosticsSnapshot();
     }
 
     public static long getExactPlanParameterUpdateCount() {
@@ -63,12 +105,95 @@ public final class BlockDiagonalFrechetHelper {
         return BlockDiagonalFrechetExactPlan.getTimeEvaluationCount();
     }
 
+    public static long getExactPlanApplicationCount() {
+        return BlockDiagonalFrechetExactPlan.getApplicationCount();
+    }
+
+    public static long getExactPlanCacheHitCount() {
+        return EXACT_PLAN_CACHE_HITS.get();
+    }
+
+    public static long getExactPlanCacheMissCount() {
+        return EXACT_PLAN_CACHE_MISSES.get();
+    }
+
+    public static long getExactPlanParameterMissCount() {
+        return EXACT_PLAN_PARAMETER_MISSES.get();
+    }
+
+    public static long getExactPlanTimeMissCount() {
+        return EXACT_PLAN_TIME_MISSES.get();
+    }
+
     public static long getExactPlanEqualDiagonalEvaluationCount() {
         return BlockDiagonalFrechetExactPlan.getEqualDiagonalEvaluationCount();
     }
 
     public static long getExactPlanGenericSolve4x4CallCount() {
         return BlockDiagonalFrechetExactPlan.getGenericSolve4x4CallCount();
+    }
+
+    public static long getExactPlanKernel1x1EvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getKernel1x1EvaluationCount();
+    }
+
+    public static long getExactPlanKernel1x2EvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getKernel1x2EvaluationCount();
+    }
+
+    public static long getExactPlanKernel2x1EvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getKernel2x1EvaluationCount();
+    }
+
+    public static long getExactPlanKernel2x2EqualDiagonalEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getKernel2x2EqualDiagonalEvaluationCount();
+    }
+
+    public static long getExactPlanKernel2x2GenericEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getKernel2x2GenericEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientBivariateSmallRootEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientBivariateSmallRootEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientSmallLeftRootEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientSmallLeftRootEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientSmallRightRootEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientSmallRightRootEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientDistinctEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientDistinctEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientDistinctRealEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientDistinctRealEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientDistinctLeftImagRightRealEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientDistinctLeftImagRightRealEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientDistinctLeftRealRightImagEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientDistinctLeftRealRightImagEvaluationCount();
+    }
+
+    public static long getExactPlanCoefficientDistinctBothImagEvaluationCount() {
+        return BlockDiagonalFrechetExactPlan.getCoefficientDistinctBothImagEvaluationCount();
+    }
+
+    public static void reportExactPlanDiagnosticsIfEnabled() {
+        if (!EXACT_PLAN_DIAGNOSTICS_ENABLED) {
+            return;
+        }
+        exactPlanDiagnosticsCalls++;
+        if (exactPlanDiagnosticsCalls % EXACT_PLAN_DIAGNOSTICS_REPORT_EVERY != 0L) {
+            return;
+        }
+        reportExactPlanDiagnosticsAndResetSnapshot();
     }
 
     public DenseMatrix64F computeExpInDBasis(final double[] blockDParams,
@@ -229,9 +354,22 @@ public final class BlockDiagonalFrechetHelper {
         final boolean parametersChanged = !cachedPlanValid
                 || parameterHash != cachedPlanParameterHash
                 || !Arrays.equals(blockDParams, cachedPlanParams);
-        if (!cachedPlanValid
-                || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT)
-                || parametersChanged) {
+        final boolean timeChanged = !cachedPlanValid
+                || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedPlanT);
+        if (!parametersChanged && !timeChanged) {
+            EXACT_PLAN_CACHE_HITS.incrementAndGet();
+            return cachedPlan;
+        }
+
+        EXACT_PLAN_CACHE_MISSES.incrementAndGet();
+        if (parametersChanged) {
+            EXACT_PLAN_PARAMETER_MISSES.incrementAndGet();
+        }
+        if (timeChanged) {
+            EXACT_PLAN_TIME_MISSES.incrementAndGet();
+        }
+
+        if (parametersChanged || timeChanged) {
             if (parametersChanged) {
                 System.arraycopy(blockDParams, 0, cachedPlanParams, 0, blockDParams.length);
                 cachedPlanParameterHash = parameterHash;
@@ -243,5 +381,159 @@ public final class BlockDiagonalFrechetHelper {
             cachedPlanValid = true;
         }
         return cachedPlan;
+    }
+
+    private static void reportExactPlanDiagnosticsAndResetSnapshot() {
+        final long parameterUpdates = getExactPlanParameterUpdateCount();
+        final long timeEvaluations = getExactPlanTimeEvaluationCount();
+        final long applications = getExactPlanApplicationCount();
+        final long cacheHits = getExactPlanCacheHitCount();
+        final long cacheMisses = getExactPlanCacheMissCount();
+        final long parameterMisses = getExactPlanParameterMissCount();
+        final long timeMisses = getExactPlanTimeMissCount();
+        final long equalDiagonalEvaluations = getExactPlanEqualDiagonalEvaluationCount();
+        final long genericSolve4x4Calls = getExactPlanGenericSolve4x4CallCount();
+        final long kernel1x1Evaluations = getExactPlanKernel1x1EvaluationCount();
+        final long kernel1x2Evaluations = getExactPlanKernel1x2EvaluationCount();
+        final long kernel2x1Evaluations = getExactPlanKernel2x1EvaluationCount();
+        final long kernel2x2EqualDiagonalEvaluations = getExactPlanKernel2x2EqualDiagonalEvaluationCount();
+        final long kernel2x2GenericEvaluations = getExactPlanKernel2x2GenericEvaluationCount();
+        final long coefficientBivariateSmallRootEvaluations =
+                getExactPlanCoefficientBivariateSmallRootEvaluationCount();
+        final long coefficientSmallLeftRootEvaluations = getExactPlanCoefficientSmallLeftRootEvaluationCount();
+        final long coefficientSmallRightRootEvaluations = getExactPlanCoefficientSmallRightRootEvaluationCount();
+        final long coefficientDistinctEvaluations = getExactPlanCoefficientDistinctEvaluationCount();
+        final long coefficientDistinctRealEvaluations = getExactPlanCoefficientDistinctRealEvaluationCount();
+        final long coefficientDistinctLeftImagRightRealEvaluations =
+                getExactPlanCoefficientDistinctLeftImagRightRealEvaluationCount();
+        final long coefficientDistinctLeftRealRightImagEvaluations =
+                getExactPlanCoefficientDistinctLeftRealRightImagEvaluationCount();
+        final long coefficientDistinctBothImagEvaluations =
+                getExactPlanCoefficientDistinctBothImagEvaluationCount();
+
+        final long deltaParameterUpdates = parameterUpdates - lastReportedParameterUpdates;
+        final long deltaTimeEvaluations = timeEvaluations - lastReportedTimeEvaluations;
+        final long deltaApplications = applications - lastReportedApplications;
+        final long deltaCacheHits = cacheHits - lastReportedCacheHits;
+        final long deltaCacheMisses = cacheMisses - lastReportedCacheMisses;
+        final long deltaParameterMisses = parameterMisses - lastReportedParameterMisses;
+        final long deltaTimeMisses = timeMisses - lastReportedTimeMisses;
+        final long deltaEqualDiagonalEvaluations =
+                equalDiagonalEvaluations - lastReportedEqualDiagonalEvaluations;
+        final long deltaGenericSolve4x4Calls = genericSolve4x4Calls - lastReportedGenericSolve4x4Calls;
+        final long deltaKernel1x1Evaluations = kernel1x1Evaluations - lastReportedKernel1x1Evaluations;
+        final long deltaKernel1x2Evaluations = kernel1x2Evaluations - lastReportedKernel1x2Evaluations;
+        final long deltaKernel2x1Evaluations = kernel2x1Evaluations - lastReportedKernel2x1Evaluations;
+        final long deltaKernel2x2EqualDiagonalEvaluations =
+                kernel2x2EqualDiagonalEvaluations - lastReportedKernel2x2EqualDiagonalEvaluations;
+        final long deltaKernel2x2GenericEvaluations =
+                kernel2x2GenericEvaluations - lastReportedKernel2x2GenericEvaluations;
+        final long deltaCoefficientBivariateSmallRootEvaluations =
+                coefficientBivariateSmallRootEvaluations - lastReportedCoefficientBivariateSmallRootEvaluations;
+        final long deltaCoefficientSmallLeftRootEvaluations =
+                coefficientSmallLeftRootEvaluations - lastReportedCoefficientSmallLeftRootEvaluations;
+        final long deltaCoefficientSmallRightRootEvaluations =
+                coefficientSmallRightRootEvaluations - lastReportedCoefficientSmallRightRootEvaluations;
+        final long deltaCoefficientDistinctEvaluations =
+                coefficientDistinctEvaluations - lastReportedCoefficientDistinctEvaluations;
+        final long deltaCoefficientDistinctRealEvaluations =
+                coefficientDistinctRealEvaluations - lastReportedCoefficientDistinctRealEvaluations;
+        final long deltaCoefficientDistinctLeftImagRightRealEvaluations =
+                coefficientDistinctLeftImagRightRealEvaluations
+                        - lastReportedCoefficientDistinctLeftImagRightRealEvaluations;
+        final long deltaCoefficientDistinctLeftRealRightImagEvaluations =
+                coefficientDistinctLeftRealRightImagEvaluations
+                        - lastReportedCoefficientDistinctLeftRealRightImagEvaluations;
+        final long deltaCoefficientDistinctBothImagEvaluations =
+                coefficientDistinctBothImagEvaluations
+                        - lastReportedCoefficientDistinctBothImagEvaluations;
+        final long cacheRequests = deltaCacheHits + deltaCacheMisses;
+
+        final String message = String.format(Locale.US,
+                "[canonical-frechet-plan] gradientReports=%d window.applications=%d "
+                        + "window.timeEvaluations=%d window.parameterUpdates=%d "
+                        + "window.cache=requests/hits/misses=%d/%d/%d hitRate=%.1f%% "
+                        + "window.missCauses=parameter/time=%d/%d "
+                        + "window.kernels=1x1/1x2/2x1/2x2equal/2x2generic=%d/%d/%d/%d/%d "
+                        + "window.equalDiagCoeff=bivarSmall/smallLeft/smallRight/distinct=%d/%d/%d/%d "
+                        + "window.distinctShapes=real/leftImagRightReal/leftRealRightImag/bothImag=%d/%d/%d/%d "
+                        + "window.equalDiagonal=%d window.genericSolve4x4=%d",
+                exactPlanDiagnosticsCalls,
+                deltaApplications,
+                deltaTimeEvaluations,
+                deltaParameterUpdates,
+                cacheRequests,
+                deltaCacheHits,
+                deltaCacheMisses,
+                cacheRequests == 0L ? 0.0 : 100.0 * deltaCacheHits / cacheRequests,
+                deltaParameterMisses,
+                deltaTimeMisses,
+                deltaKernel1x1Evaluations,
+                deltaKernel1x2Evaluations,
+                deltaKernel2x1Evaluations,
+                deltaKernel2x2EqualDiagonalEvaluations,
+                deltaKernel2x2GenericEvaluations,
+                deltaCoefficientBivariateSmallRootEvaluations,
+                deltaCoefficientSmallLeftRootEvaluations,
+                deltaCoefficientSmallRightRootEvaluations,
+                deltaCoefficientDistinctEvaluations,
+                deltaCoefficientDistinctRealEvaluations,
+                deltaCoefficientDistinctLeftImagRightRealEvaluations,
+                deltaCoefficientDistinctLeftRealRightImagEvaluations,
+                deltaCoefficientDistinctBothImagEvaluations,
+                deltaEqualDiagonalEvaluations,
+                deltaGenericSolve4x4Calls);
+        System.err.println(message);
+
+        lastReportedParameterUpdates = parameterUpdates;
+        lastReportedTimeEvaluations = timeEvaluations;
+        lastReportedApplications = applications;
+        lastReportedCacheHits = cacheHits;
+        lastReportedCacheMisses = cacheMisses;
+        lastReportedParameterMisses = parameterMisses;
+        lastReportedTimeMisses = timeMisses;
+        lastReportedEqualDiagonalEvaluations = equalDiagonalEvaluations;
+        lastReportedGenericSolve4x4Calls = genericSolve4x4Calls;
+        lastReportedKernel1x1Evaluations = kernel1x1Evaluations;
+        lastReportedKernel1x2Evaluations = kernel1x2Evaluations;
+        lastReportedKernel2x1Evaluations = kernel2x1Evaluations;
+        lastReportedKernel2x2EqualDiagonalEvaluations = kernel2x2EqualDiagonalEvaluations;
+        lastReportedKernel2x2GenericEvaluations = kernel2x2GenericEvaluations;
+        lastReportedCoefficientBivariateSmallRootEvaluations = coefficientBivariateSmallRootEvaluations;
+        lastReportedCoefficientSmallLeftRootEvaluations = coefficientSmallLeftRootEvaluations;
+        lastReportedCoefficientSmallRightRootEvaluations = coefficientSmallRightRootEvaluations;
+        lastReportedCoefficientDistinctEvaluations = coefficientDistinctEvaluations;
+        lastReportedCoefficientDistinctRealEvaluations = coefficientDistinctRealEvaluations;
+        lastReportedCoefficientDistinctLeftImagRightRealEvaluations =
+                coefficientDistinctLeftImagRightRealEvaluations;
+        lastReportedCoefficientDistinctLeftRealRightImagEvaluations =
+                coefficientDistinctLeftRealRightImagEvaluations;
+        lastReportedCoefficientDistinctBothImagEvaluations = coefficientDistinctBothImagEvaluations;
+    }
+
+    private static void resetExactPlanDiagnosticsSnapshot() {
+        exactPlanDiagnosticsCalls = 0L;
+        lastReportedParameterUpdates = 0L;
+        lastReportedTimeEvaluations = 0L;
+        lastReportedApplications = 0L;
+        lastReportedCacheHits = 0L;
+        lastReportedCacheMisses = 0L;
+        lastReportedParameterMisses = 0L;
+        lastReportedTimeMisses = 0L;
+        lastReportedEqualDiagonalEvaluations = 0L;
+        lastReportedGenericSolve4x4Calls = 0L;
+        lastReportedKernel1x1Evaluations = 0L;
+        lastReportedKernel1x2Evaluations = 0L;
+        lastReportedKernel2x1Evaluations = 0L;
+        lastReportedKernel2x2EqualDiagonalEvaluations = 0L;
+        lastReportedKernel2x2GenericEvaluations = 0L;
+        lastReportedCoefficientBivariateSmallRootEvaluations = 0L;
+        lastReportedCoefficientSmallLeftRootEvaluations = 0L;
+        lastReportedCoefficientSmallRightRootEvaluations = 0L;
+        lastReportedCoefficientDistinctEvaluations = 0L;
+        lastReportedCoefficientDistinctRealEvaluations = 0L;
+        lastReportedCoefficientDistinctLeftImagRightRealEvaluations = 0L;
+        lastReportedCoefficientDistinctLeftRealRightImagEvaluations = 0L;
+        lastReportedCoefficientDistinctBothImagEvaluations = 0L;
     }
 }

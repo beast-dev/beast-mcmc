@@ -47,6 +47,7 @@ import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.util.CanonicalPhaseTimer;
 
 /**
@@ -371,6 +372,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 cachedGradientQ,
                 cachedGradientMu);
         CanonicalPhaseTimer.finishJointGradient(timingStart);
+        BlockDiagonalFrechetHelper.reportExactPlanDiagnosticsIfEnabled();
         jointGradientCacheDirty = false;
         reportTransitionCacheDiagnostics("jointGradient");
     }

@@ -41,8 +41,22 @@ final class BlockDiagonalFrechetExactPlan {
             ThreadLocal.withInitial(RealSeriesWorkspace::new);
     private static final AtomicLong PARAMETER_UPDATES = new AtomicLong();
     private static final AtomicLong TIME_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong APPLICATIONS = new AtomicLong();
     private static final AtomicLong EQUAL_DIAGONAL_EVALUATIONS = new AtomicLong();
     private static final AtomicLong GENERIC_SOLVE4X4_CALLS = new AtomicLong();
+    private static final AtomicLong KERNEL_1X1_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong KERNEL_1X2_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong KERNEL_2X1_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong KERNEL_2X2_EQUAL_DIAGONAL_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong KERNEL_2X2_GENERIC_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_BIVARIATE_SMALL_ROOT_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_SMALL_LEFT_ROOT_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_SMALL_RIGHT_ROOT_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_DISTINCT_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_DISTINCT_REAL_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_DISTINCT_LEFT_IMAG_RIGHT_REAL_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_DISTINCT_LEFT_REAL_RIGHT_IMAG_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong COEFFICIENT_DISTINCT_BOTH_IMAG_EVALUATIONS = new AtomicLong();
 
     private BlockDiagonalFrechetExactPlan() {
     }
@@ -54,8 +68,22 @@ final class BlockDiagonalFrechetExactPlan {
     static void resetInstrumentation() {
         PARAMETER_UPDATES.set(0L);
         TIME_EVALUATIONS.set(0L);
+        APPLICATIONS.set(0L);
         EQUAL_DIAGONAL_EVALUATIONS.set(0L);
         GENERIC_SOLVE4X4_CALLS.set(0L);
+        KERNEL_1X1_EVALUATIONS.set(0L);
+        KERNEL_1X2_EVALUATIONS.set(0L);
+        KERNEL_2X1_EVALUATIONS.set(0L);
+        KERNEL_2X2_EQUAL_DIAGONAL_EVALUATIONS.set(0L);
+        KERNEL_2X2_GENERIC_EVALUATIONS.set(0L);
+        COEFFICIENT_BIVARIATE_SMALL_ROOT_EVALUATIONS.set(0L);
+        COEFFICIENT_SMALL_LEFT_ROOT_EVALUATIONS.set(0L);
+        COEFFICIENT_SMALL_RIGHT_ROOT_EVALUATIONS.set(0L);
+        COEFFICIENT_DISTINCT_EVALUATIONS.set(0L);
+        COEFFICIENT_DISTINCT_REAL_EVALUATIONS.set(0L);
+        COEFFICIENT_DISTINCT_LEFT_IMAG_RIGHT_REAL_EVALUATIONS.set(0L);
+        COEFFICIENT_DISTINCT_LEFT_REAL_RIGHT_IMAG_EVALUATIONS.set(0L);
+        COEFFICIENT_DISTINCT_BOTH_IMAG_EVALUATIONS.set(0L);
     }
 
     static long getParameterUpdateCount() {
@@ -66,12 +94,68 @@ final class BlockDiagonalFrechetExactPlan {
         return TIME_EVALUATIONS.get();
     }
 
+    static long getApplicationCount() {
+        return APPLICATIONS.get();
+    }
+
     static long getEqualDiagonalEvaluationCount() {
         return EQUAL_DIAGONAL_EVALUATIONS.get();
     }
 
     static long getGenericSolve4x4CallCount() {
         return GENERIC_SOLVE4X4_CALLS.get();
+    }
+
+    static long getKernel1x1EvaluationCount() {
+        return KERNEL_1X1_EVALUATIONS.get();
+    }
+
+    static long getKernel1x2EvaluationCount() {
+        return KERNEL_1X2_EVALUATIONS.get();
+    }
+
+    static long getKernel2x1EvaluationCount() {
+        return KERNEL_2X1_EVALUATIONS.get();
+    }
+
+    static long getKernel2x2EqualDiagonalEvaluationCount() {
+        return KERNEL_2X2_EQUAL_DIAGONAL_EVALUATIONS.get();
+    }
+
+    static long getKernel2x2GenericEvaluationCount() {
+        return KERNEL_2X2_GENERIC_EVALUATIONS.get();
+    }
+
+    static long getCoefficientBivariateSmallRootEvaluationCount() {
+        return COEFFICIENT_BIVARIATE_SMALL_ROOT_EVALUATIONS.get();
+    }
+
+    static long getCoefficientSmallLeftRootEvaluationCount() {
+        return COEFFICIENT_SMALL_LEFT_ROOT_EVALUATIONS.get();
+    }
+
+    static long getCoefficientSmallRightRootEvaluationCount() {
+        return COEFFICIENT_SMALL_RIGHT_ROOT_EVALUATIONS.get();
+    }
+
+    static long getCoefficientDistinctEvaluationCount() {
+        return COEFFICIENT_DISTINCT_EVALUATIONS.get();
+    }
+
+    static long getCoefficientDistinctRealEvaluationCount() {
+        return COEFFICIENT_DISTINCT_REAL_EVALUATIONS.get();
+    }
+
+    static long getCoefficientDistinctLeftImagRightRealEvaluationCount() {
+        return COEFFICIENT_DISTINCT_LEFT_IMAG_RIGHT_REAL_EVALUATIONS.get();
+    }
+
+    static long getCoefficientDistinctLeftRealRightImagEvaluationCount() {
+        return COEFFICIENT_DISTINCT_LEFT_REAL_RIGHT_IMAG_EVALUATIONS.get();
+    }
+
+    static long getCoefficientDistinctBothImagEvaluationCount() {
+        return COEFFICIENT_DISTINCT_BOTH_IMAG_EVALUATIONS.get();
     }
 
     private static Entry[] buildEntries(final BlockDiagonalExpSolver.BlockStructure structure) {
@@ -128,6 +212,7 @@ final class BlockDiagonalFrechetExactPlan {
         void apply(final DenseMatrix64F input,
                    final DenseMatrix64F out,
                    final Workspace workspace) {
+            APPLICATIONS.incrementAndGet();
             final int dimension = input.numCols;
             final double[] inData = input.data;
             final double[] outData = out.data;
@@ -251,6 +336,15 @@ final class BlockDiagonalFrechetExactPlan {
         public void fill(final double t,
                          final double[] out,
                          final BuildWorkspace workspace) {
+            if (leftDim == 1) {
+                if (rightDim == 1) {
+                    KERNEL_1X1_EVALUATIONS.incrementAndGet();
+                } else {
+                    KERNEL_1X2_EVALUATIONS.incrementAndGet();
+                }
+            } else {
+                KERNEL_2X1_EVALUATIONS.incrementAndGet();
+            }
             fillCoefficients(
                     blockDParams,
                     dimension,
@@ -283,6 +377,10 @@ final class BlockDiagonalFrechetExactPlan {
         private double rightOtherDiagonal;
         private double leftProduct;
         private double rightProduct;
+        private boolean leftProductNonNegative;
+        private boolean rightProductNonNegative;
+        private double leftRootMagnitude;
+        private double rightRootMagnitude;
         private boolean equalDiagonalPair;
 
         private TwoByTwoBlockPairKernel(final int leftStart,
@@ -306,6 +404,10 @@ final class BlockDiagonalFrechetExactPlan {
             rightOtherDiagonal = blockDParams[rightStart + 1];
             leftProduct = leftUpper * leftLower;
             rightProduct = rightUpper * rightLower;
+            leftProductNonNegative = leftProduct >= 0.0;
+            rightProductNonNegative = rightProduct >= 0.0;
+            leftRootMagnitude = Math.sqrt(Math.abs(leftProduct));
+            rightRootMagnitude = Math.sqrt(Math.abs(rightProduct));
             equalDiagonalPair =
                     Math.abs(leftDiagonal - leftOtherDiagonal) < EPS
                             && Math.abs(rightDiagonal - rightOtherDiagonal) < EPS;
@@ -318,7 +420,11 @@ final class BlockDiagonalFrechetExactPlan {
                         rightUpper,
                         rightLower,
                         leftProduct,
-                        rightProduct);
+                        rightProduct,
+                        leftProductNonNegative,
+                        rightProductNonNegative,
+                        leftRootMagnitude,
+                        rightRootMagnitude);
             }
         }
 
@@ -331,6 +437,7 @@ final class BlockDiagonalFrechetExactPlan {
                 return;
             }
 
+            KERNEL_2X2_GENERIC_EVALUATIONS.incrementAndGet();
             fillScaledBlocks(t);
             fillSmallExponential(leftBlock, 2, leftExp);
             fillSmallExponential(rightBlock, 2, rightExp);
@@ -341,6 +448,7 @@ final class BlockDiagonalFrechetExactPlan {
                                                   final double[] out,
                                                   final BuildWorkspace workspace) {
             EQUAL_DIAGONAL_EVALUATIONS.incrementAndGet();
+            KERNEL_2X2_EQUAL_DIAGONAL_EVALUATIONS.incrementAndGet();
             equalDiagonalKernel.fill(t, out, workspace);
         }
 
@@ -366,6 +474,10 @@ final class BlockDiagonalFrechetExactPlan {
         private double rightLower;
         private double leftProduct;
         private double rightProduct;
+        private boolean leftProductNonNegative;
+        private boolean rightProductNonNegative;
+        private double leftRootMagnitude;
+        private double rightRootMagnitude;
 
         void update(final double leftDiagonal,
                     final double leftUpper,
@@ -374,7 +486,11 @@ final class BlockDiagonalFrechetExactPlan {
                     final double rightUpper,
                     final double rightLower,
                     final double leftProduct,
-                    final double rightProduct) {
+                    final double rightProduct,
+                    final boolean leftProductNonNegative,
+                    final boolean rightProductNonNegative,
+                    final double leftRootMagnitude,
+                    final double rightRootMagnitude) {
             this.leftDiagonal = leftDiagonal;
             this.leftUpper = leftUpper;
             this.leftLower = leftLower;
@@ -383,6 +499,10 @@ final class BlockDiagonalFrechetExactPlan {
             this.rightLower = rightLower;
             this.leftProduct = leftProduct;
             this.rightProduct = rightProduct;
+            this.leftProductNonNegative = leftProductNonNegative;
+            this.rightProductNonNegative = rightProductNonNegative;
+            this.leftRootMagnitude = leftRootMagnitude;
+            this.rightRootMagnitude = rightRootMagnitude;
         }
 
         void fill(final double t,
@@ -395,28 +515,45 @@ final class BlockDiagonalFrechetExactPlan {
             final double scaledLeftLower = scale * leftLower;
             final double scaledRightUpper = scale * rightUpper;
             final double scaledRightLower = scale * rightLower;
+            final double tAbs = Math.abs(t);
             final double t2 = t * t;
             final double scaledLeftProduct = t2 * leftProduct;
             final double scaledRightProduct = t2 * rightProduct;
-            final double rRe = scaledLeftProduct >= 0.0 ? Math.sqrt(scaledLeftProduct) : 0.0;
-            final double rIm = scaledLeftProduct >= 0.0 ? 0.0 : Math.sqrt(-scaledLeftProduct);
-            final double qRe = scaledRightProduct >= 0.0 ? Math.sqrt(scaledRightProduct) : 0.0;
-            final double qIm = scaledRightProduct >= 0.0 ? 0.0 : Math.sqrt(-scaledRightProduct);
-            final double rAbs = Math.sqrt(Math.abs(scaledLeftProduct));
-            final double qAbs = Math.sqrt(Math.abs(scaledRightProduct));
+            final double rAbs = tAbs * leftRootMagnitude;
+            final double qAbs = tAbs * rightRootMagnitude;
+            final double rRe = leftProductNonNegative ? rAbs : 0.0;
+            final double rIm = leftProductNonNegative ? 0.0 : rAbs;
+            final double qRe = rightProductNonNegative ? qAbs : 0.0;
+            final double qIm = rightProductNonNegative ? 0.0 : qAbs;
             final ComplexWorkspace complexWorkspace = COMPLEX_WORKSPACE.get();
             final PreparedCoefficients prepared = workspace.prepared;
 
             if (rAbs < SMALL_ROOT_SERIES_CUTOFF && qAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                COEFFICIENT_BIVARIATE_SMALL_ROOT_EVALUATIONS.incrementAndGet();
                 fillCoefficientsBivariateSmallRootSeries(a, b, scaledLeftProduct, scaledRightProduct, prepared);
             } else if (rAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                COEFFICIENT_SMALL_LEFT_ROOT_EVALUATIONS.incrementAndGet();
                 fillCoefficientsSmallLeftRootSeries(
                         a, b, qRe, qIm, scaledLeftProduct, prepared, complexWorkspace);
             } else if (qAbs < SMALL_ROOT_SERIES_CUTOFF) {
+                COEFFICIENT_SMALL_RIGHT_ROOT_EVALUATIONS.incrementAndGet();
                 fillCoefficientsSmallRightRootSeries(
                         a, b, rRe, rIm, scaledRightProduct, prepared, complexWorkspace);
             } else {
-                fillCoefficientsDistinct(a, b, rRe, rIm, qRe, qIm, prepared, complexWorkspace);
+                COEFFICIENT_DISTINCT_EVALUATIONS.incrementAndGet();
+                if (leftProductNonNegative && rightProductNonNegative) {
+                    COEFFICIENT_DISTINCT_REAL_EVALUATIONS.incrementAndGet();
+                    fillCoefficientsDistinctReal(a, b, rRe, qRe, prepared);
+                } else if (!leftProductNonNegative && rightProductNonNegative) {
+                    COEFFICIENT_DISTINCT_LEFT_IMAG_RIGHT_REAL_EVALUATIONS.incrementAndGet();
+                    fillCoefficientsDistinctLeftImagRightReal(a, b, rIm, qRe, prepared, complexWorkspace);
+                } else if (leftProductNonNegative) {
+                    COEFFICIENT_DISTINCT_LEFT_REAL_RIGHT_IMAG_EVALUATIONS.incrementAndGet();
+                    fillCoefficientsDistinctLeftRealRightImag(a, b, rRe, qIm, prepared, complexWorkspace);
+                } else {
+                    COEFFICIENT_DISTINCT_BOTH_IMAG_EVALUATIONS.incrementAndGet();
+                    fillCoefficientsDistinctBothImag(a, b, rIm, qIm, prepared, complexWorkspace);
+                }
             }
 
             fillTwoByTwoCoefficientFromPrepared(
@@ -717,6 +854,76 @@ final class BlockDiagonalFrechetExactPlan {
         out.beta = beta;
         out.gamma = gamma;
         out.eta = 0.25 * scratch.re;
+    }
+
+    private static void fillCoefficientsDistinctReal(final double a,
+                                                     final double b,
+                                                     final double r,
+                                                     final double q,
+                                                     final PreparedCoefficients out) {
+        final double phiPP = dividedDifferenceExp(a + r, b + q);
+        final double phiPM = dividedDifferenceExp(a + r, b - q);
+        final double phiMP = dividedDifferenceExp(a - r, b + q);
+        final double phiMM = dividedDifferenceExp(a - r, b - q);
+
+        out.alpha = 0.25 * (phiPP + phiPM + phiMP + phiMM);
+        out.beta = 0.25 * (phiPP + phiPM - phiMP - phiMM) / r;
+        out.gamma = 0.25 * (phiPP - phiPM + phiMP - phiMM) / q;
+        out.eta = 0.25 * (phiPP - phiPM - phiMP + phiMM) / (r * q);
+    }
+
+    private static void fillCoefficientsDistinctLeftImagRightReal(final double a,
+                                                                  final double b,
+                                                                  final double r,
+                                                                  final double q,
+                                                                  final PreparedCoefficients out,
+                                                                  final ComplexWorkspace workspace) {
+        final MutableComplex phiPlus = workspace.c0;
+        final MutableComplex phiMinus = workspace.c1;
+
+        fillPhiIntegral(a, r, b + q, 0.0, phiPlus, workspace);
+        fillPhiIntegral(a, r, b - q, 0.0, phiMinus, workspace);
+
+        out.alpha = 0.5 * (phiPlus.re + phiMinus.re);
+        out.beta = 0.5 * (phiPlus.im + phiMinus.im) / r;
+        out.gamma = 0.5 * (phiPlus.re - phiMinus.re) / q;
+        out.eta = 0.5 * (phiPlus.im - phiMinus.im) / (r * q);
+    }
+
+    private static void fillCoefficientsDistinctLeftRealRightImag(final double a,
+                                                                  final double b,
+                                                                  final double r,
+                                                                  final double q,
+                                                                  final PreparedCoefficients out,
+                                                                  final ComplexWorkspace workspace) {
+        final MutableComplex phiPlus = workspace.c0;
+        final MutableComplex phiMinus = workspace.c1;
+
+        fillPhiIntegral(a + r, 0.0, b, q, phiPlus, workspace);
+        fillPhiIntegral(a - r, 0.0, b, q, phiMinus, workspace);
+
+        out.alpha = 0.5 * (phiPlus.re + phiMinus.re);
+        out.beta = 0.5 * (phiPlus.re - phiMinus.re) / r;
+        out.gamma = 0.5 * (phiPlus.im + phiMinus.im) / q;
+        out.eta = 0.5 * (phiPlus.im - phiMinus.im) / (r * q);
+    }
+
+    private static void fillCoefficientsDistinctBothImag(final double a,
+                                                         final double b,
+                                                         final double r,
+                                                         final double q,
+                                                         final PreparedCoefficients out,
+                                                         final ComplexWorkspace workspace) {
+        final MutableComplex phiSameSign = workspace.c0;
+        final MutableComplex phiOppositeSign = workspace.c1;
+
+        fillPhiIntegral(a, r, b, q, phiSameSign, workspace);
+        fillPhiIntegral(a, r, b, -q, phiOppositeSign, workspace);
+
+        out.alpha = 0.5 * (phiSameSign.re + phiOppositeSign.re);
+        out.beta = 0.5 * (phiSameSign.im + phiOppositeSign.im) / r;
+        out.gamma = 0.5 * (phiSameSign.im - phiOppositeSign.im) / q;
+        out.eta = -0.5 * (phiSameSign.re - phiOppositeSign.re) / (r * q);
     }
 
     private static void fillCoefficientsBivariateSmallRootSeries(final double a,

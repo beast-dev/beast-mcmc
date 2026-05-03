@@ -1,11 +1,13 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
+import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import org.ejml.data.DenseMatrix64F;
 
 public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTest {
 
@@ -106,9 +108,91 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
                 BlockDiagonalFrechetHelper.getExactPlanTimeEvaluationCount() > 0L);
         assertTrue("orthogonal polar blocks use equal-diagonal kernels",
                 BlockDiagonalFrechetHelper.getExactPlanEqualDiagonalEvaluationCount() > 0L);
+        assertTrue("positive-root polar blocks use real distinct coefficient fast path",
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount() > 0L);
+        assertEquals("all distinct positive-root coefficients use real fast path",
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctEvaluationCount(),
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount());
         assertEquals("orthogonal polar blocks avoid generic Sylvester solves",
                 0L,
                 BlockDiagonalFrechetHelper.getExactPlanGenericSolve4x4CallCount());
+    }
+
+    public void testExactFrechetPlanReusesSameBranchTime() {
+        final BlockDiagonalExpSolver.BlockStructure structure =
+                new BlockDiagonalExpSolver.BlockStructure(4, new int[]{0, 2}, new int[]{2, 2});
+        final BlockDiagonalFrechetHelper helper = new BlockDiagonalFrechetHelper(structure);
+        final double[] blockDParams = new double[]{
+                0.93, 0.93, 1.04, 1.04,
+                0.18, 0.0, -0.14,
+                -0.11, 0.0, 0.09
+        };
+        final DenseMatrix64F firstInput = new DenseMatrix64F(4, 4);
+        final DenseMatrix64F secondInput = new DenseMatrix64F(4, 4);
+        final DenseMatrix64F firstOut = new DenseMatrix64F(4, 4);
+        final DenseMatrix64F secondOut = new DenseMatrix64F(4, 4);
+        for (int i = 0; i < firstInput.data.length; ++i) {
+            firstInput.data[i] = 0.01 * (i + 1);
+            secondInput.data[i] = -0.02 * (i + 1);
+        }
+
+        BlockDiagonalFrechetHelper.resetExactPlanInstrumentation();
+        helper.frechetAdjointExpInDBasis(blockDParams, firstInput, 0.37, firstOut);
+        helper.frechetAdjointExpInDBasis(blockDParams, secondInput, 0.37, secondOut);
+
+        assertEquals("same branch time evaluates coefficients once",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanTimeEvaluationCount());
+        assertEquals("second same branch time call hits cache",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanCacheHitCount());
+        assertEquals("both inputs still apply the exact plan",
+                2L,
+                BlockDiagonalFrechetHelper.getExactPlanApplicationCount());
+        assertEquals("same branch time fills each 2x2 block-pair coefficient once",
+                4L,
+                BlockDiagonalFrechetHelper.getExactPlanKernel2x2EqualDiagonalEvaluationCount());
+        assertEquals("same branch time does not use generic 2x2 kernels",
+                0L,
+                BlockDiagonalFrechetHelper.getExactPlanKernel2x2GenericEvaluationCount());
+    }
+
+    public void testExactFrechetPlanRoutesComplexDistinctShapes() {
+        final BlockDiagonalExpSolver.BlockStructure structure =
+                new BlockDiagonalExpSolver.BlockStructure(4, new int[]{0, 2}, new int[]{2, 2});
+        final BlockDiagonalFrechetHelper helper = new BlockDiagonalFrechetHelper(structure);
+        final double[] blockDParams = new double[]{
+                0.93, 0.93, 1.04, 1.04,
+                0.55, 0.0, 0.48,
+                -0.41, 0.0, 0.36
+        };
+        final DenseMatrix64F input = new DenseMatrix64F(4, 4);
+        final DenseMatrix64F out = new DenseMatrix64F(4, 4);
+        for (int i = 0; i < input.data.length; ++i) {
+            input.data[i] = 0.03 * (i + 1);
+        }
+
+        BlockDiagonalFrechetHelper.resetExactPlanInstrumentation();
+        helper.computeForwardFrechetInDBasis(blockDParams, input, 0.37, out);
+
+        assertEquals("one real/real distinct 2x2 block pair",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount());
+        assertEquals("one imaginary/real distinct 2x2 block pair",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctLeftImagRightRealEvaluationCount());
+        assertEquals("one real/imaginary distinct 2x2 block pair",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctLeftRealRightImagEvaluationCount());
+        assertEquals("one imaginary/imaginary distinct 2x2 block pair",
+                1L,
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctBothImagEvaluationCount());
+        assertEquals("all block pairs used equal-diagonal distinct coefficients",
+                4L,
+                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctEvaluationCount());
+        for (int i = 0; i < out.data.length; ++i) {
+            assertTrue("finite exact Frechet output[" + i + "]", Double.isFinite(out.data[i]));
+        }
     }
 
     private Result computeTransitionGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,

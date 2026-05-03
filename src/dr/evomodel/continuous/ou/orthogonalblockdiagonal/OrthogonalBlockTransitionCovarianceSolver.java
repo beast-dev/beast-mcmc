@@ -37,8 +37,12 @@ final class OrthogonalBlockTransitionCovarianceSolver {
             symmetrize(transitionCovDBasis);
         }
         CommonOps.mult(rMatrix, transitionCovDBasis, temp);
-        CommonOps.mult(temp, rtMatrix, out);
-        symmetrize(out);
+        if (symmetrizeTransitionCovDBasis) {
+            multiplyRightTransposeSymmetric(temp, rMatrix, out);
+        } else {
+            CommonOps.mult(temp, rtMatrix, out);
+            symmetrize(out);
+        }
     }
 
     static void copyPreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
@@ -79,4 +83,26 @@ final class OrthogonalBlockTransitionCovarianceSolver {
             }
         }
     }
+
+    private static void multiplyRightTransposeSymmetric(final DenseMatrix64F left,
+                                                        final DenseMatrix64F right,
+                                                        final DenseMatrix64F out) {
+        final int dimension = left.numRows;
+        final double[] leftData = left.data;
+        final double[] rightData = right.data;
+        final double[] outData = out.data;
+        for (int i = 0; i < dimension; ++i) {
+            final int leftRowOffset = i * dimension;
+            for (int j = i; j < dimension; ++j) {
+                final int rightRowOffset = j * dimension;
+                double sum = 0.0;
+                for (int k = 0; k < dimension; ++k) {
+                    sum += leftData[leftRowOffset + k] * rightData[rightRowOffset + k];
+                }
+                outData[i * dimension + j] = sum;
+                outData[j * dimension + i] = sum;
+            }
+        }
+    }
+
 }

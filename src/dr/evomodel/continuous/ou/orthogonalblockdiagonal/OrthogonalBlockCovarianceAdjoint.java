@@ -297,11 +297,9 @@ final class OrthogonalBlockCovarianceAdjoint {
         } else {
             rotateDBasisDiffusionGradientToOriginalBasis(
                     prepared.rMatrix,
-                    prepared.rtMatrix,
                     workspace.yAdjoint,
                     workspace.temp1,
                     workspace.temp2);
-            symmetrize(workspace.temp2);
             addDenseMatrixToFlatArray(workspace.temp2, diffusionGradientAccumulator);
         }
     }
@@ -314,11 +312,9 @@ final class OrthogonalBlockCovarianceAdjoint {
         fillDenseMatrix(dBasisGradientAccumulator, workspace.yAdjoint);
         rotateDBasisDiffusionGradientToOriginalBasis(
                 rMatrix,
-                rtMatrix,
                 workspace.yAdjoint,
                 workspace.temp3,
                 workspace.gS);
-        symmetrize(workspace.gS);
         addDenseMatrixToFlatArray(workspace.gS, gradientAccumulator);
     }
 
@@ -438,11 +434,8 @@ final class OrthogonalBlockCovarianceAdjoint {
         lyapunovAdjointHelper.solveAdjointInDBasis(gS, blockDParams, yAdjoint);
 
         CommonOps.mult(qMatrix, rMatrix, temp1);
-        CommonOps.multTransB(temp1, yAdjoint, gradR);
-        CommonOps.multTransA(qMatrix, rMatrix, temp1);
-        CommonOps.mult(temp1, yAdjoint, temp2);
-        CommonOps.addEquals(gradR, temp2);
-        CommonOps.scale(-1.0, gradR);
+        CommonOps.mult(temp1, yAdjoint, gradR);
+        CommonOps.scale(-2.0, gradR);
 
         multiplyBlockDiagonalRight(hDBasis, expD, temp1, blockStarts, blockSizes);
         CommonOps.mult(temp1, stationaryCovDBasis, gECov);
@@ -516,8 +509,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                 blockStarts,
                 blockSizes);
 
-        rotateDBasisDiffusionGradientToOriginalBasis(rMatrix, rtMatrix, yAdjoint, temp1, temp2);
-        symmetrize(temp2);
+        rotateDBasisDiffusionGradientToOriginalBasis(rMatrix, yAdjoint, temp1, temp2);
 
         final int dimension = temp2.numRows;
         final double[] data = temp2.data;
@@ -598,12 +590,32 @@ final class OrthogonalBlockCovarianceAdjoint {
     }
 
     private static void rotateDBasisDiffusionGradientToOriginalBasis(final DenseMatrix64F rMatrix,
-                                                                     final DenseMatrix64F rtMatrix,
                                                                      final DenseMatrix64F dBasisGradient,
                                                                      final DenseMatrix64F temp,
                                                                      final DenseMatrix64F out) {
         CommonOps.mult(rMatrix, dBasisGradient, temp);
-        CommonOps.mult(temp, rtMatrix, out);
+        multiplyRightTransposeSymmetric(temp, rMatrix, out);
+    }
+
+    private static void multiplyRightTransposeSymmetric(final DenseMatrix64F left,
+                                                        final DenseMatrix64F right,
+                                                        final DenseMatrix64F out) {
+        final int dimension = left.numRows;
+        final double[] leftData = left.data;
+        final double[] rightData = right.data;
+        final double[] outData = out.data;
+        for (int i = 0; i < dimension; ++i) {
+            final int leftRowOffset = i * dimension;
+            for (int j = i; j < dimension; ++j) {
+                final int rightRowOffset = j * dimension;
+                double sum = 0.0;
+                for (int k = 0; k < dimension; ++k) {
+                    sum += leftData[leftRowOffset + k] * rightData[rightRowOffset + k];
+                }
+                outData[i * dimension + j] = sum;
+                outData[j * dimension + i] = sum;
+            }
+        }
     }
 
     private static void fillDenseAdjointExpGradient(final double[] blockDParams,

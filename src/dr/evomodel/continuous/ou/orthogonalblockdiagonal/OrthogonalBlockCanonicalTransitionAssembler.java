@@ -44,12 +44,13 @@ final class OrthogonalBlockCanonicalTransitionAssembler {
         }
 
         for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
+            for (int j = i; j < dimension; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dimension; ++k) {
                     sum -= transitionData[k * dimension + i] * out.precisionYX[k * dimension + j];
                 }
                 out.precisionXX[i * dimension + j] = sum;
+                out.precisionXX[j * dimension + i] = sum;
             }
         }
 

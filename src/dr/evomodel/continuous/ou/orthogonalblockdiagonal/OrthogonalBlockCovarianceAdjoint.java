@@ -460,10 +460,7 @@ final class OrthogonalBlockCovarianceAdjoint {
 
         CommonOps.mult(gV, rMatrix, temp1);
         CommonOps.mult(temp1, transitionCovDBasis, temp2);
-        CommonOps.multTransA(gV, rMatrix, temp1);
-        CommonOps.mult(temp1, transitionCovDBasis, temp3);
-        CommonOps.addEquals(temp2, temp3);
-        CommonOps.addEquals(gradR, temp2);
+        CommonOps.addEquals(gradR, 2.0, temp2);
     }
 
     private void fillCovarianceExpDGradient(final double[] blockDParams,

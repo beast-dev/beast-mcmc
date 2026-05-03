@@ -25,6 +25,8 @@ final class BlockDiagonalFrechetExactPlan {
     private static final double SMALL_ROOT_SERIES_CUTOFF = 1.0e-3;
     private static final int SMALL_ROOT_SERIES_ORDER = 4;
     private static final double MOMENT_SERIES_CUTOFF = 1.0e-7;
+    private static final double MOMENT_SERIES_CUTOFF_SQUARED =
+            MOMENT_SERIES_CUTOFF * MOMENT_SERIES_CUTOFF;
     private static final int MOMENT_SERIES_TERMS = 30;
     private static final int MAX_SMALL_ROOT_DERIVATIVE_ORDER = 2 * SMALL_ROOT_SERIES_ORDER + 1;
     private static final int MAX_SMALL_ROOT_MOMENT_POWER = 2 * MAX_SMALL_ROOT_DERIVATIVE_ORDER;
@@ -945,7 +947,7 @@ final class BlockDiagonalFrechetExactPlan {
                                            final int power,
                                            final MutableComplex out,
                                            final ComplexWorkspace workspace) {
-        if (Math.hypot(cRe, cIm) < MOMENT_SERIES_CUTOFF) {
+        if (cRe * cRe + cIm * cIm < MOMENT_SERIES_CUTOFF_SQUARED) {
             fillIntegrateMomentSeries(cRe, cIm, power, out);
             return;
         }

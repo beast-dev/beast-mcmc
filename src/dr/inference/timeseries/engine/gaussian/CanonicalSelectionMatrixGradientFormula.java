@@ -44,6 +44,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     // 2-D scratch for pullBackGradient() calls that still require double[][].
     private final double[][] nativeRotationGradient2D;
     private final double[] stationaryMeanScratch;
+    private final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache;
 
     public CanonicalSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
                                                    final int stateDimension) {
@@ -53,6 +54,13 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     public CanonicalSelectionMatrixGradientFormula(final OUProcessModel processModel,
                                                    final Parameter selectionMatrixParameter,
                                                    final int stateDimension) {
+        this(processModel, selectionMatrixParameter, stateDimension, null);
+    }
+
+    public CanonicalSelectionMatrixGradientFormula(final OUProcessModel processModel,
+                                                   final Parameter selectionMatrixParameter,
+                                                   final int stateDimension,
+                                                   final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache) {
         if (selectionMatrixParameter == null) {
             throw new IllegalArgumentException("selectionMatrixParameter must not be null");
         }
@@ -62,6 +70,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.selectionMatrixParameter = selectionMatrixParameter;
         this.stateDimension = stateDimension;
         this.processModel = processModel;
+        this.orthogonalBlockGradientCache = orthogonalBlockGradientCache;
 
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
         this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
@@ -120,29 +129,40 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                                     final CanonicalForwardTrajectory trajectory,
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
+        return computeGradient(parameter, trajectory, null, repr, timeGrid);
+    }
+
+    @Override
+    public double[] computeGradient(final Parameter parameter,
+                                    final CanonicalForwardTrajectory trajectory,
+                                    final CanonicalBranchGradientCache branchGradientCache,
+                                    final GaussianTransitionRepresentation repr,
+                                    final TimeGrid timeGrid) {
         if (shouldUseOrthogonalNativePath(parameter)) {
-            return computeOrthogonalNativeGradient(parameter, trajectory, timeGrid);
+            if (orthogonalBlockGradientCache != null
+                    && orthogonalBlockGradientCache.supportsNativeSelectionParameter(parameter)
+                    && branchGradientCache != null) {
+                return orthogonalBlockGradientCache.getNativeSelectionGradient(
+                        parameter, trajectory, branchGradientCache, timeGrid);
+            }
+            return computeOrthogonalNativeGradient(parameter, trajectory, branchGradientCache, timeGrid);
         }
 
         final int d = stateDimension;
         final int T = trajectory.timeCount;
         final double[] gradientAccumulator = new double[d * d];
+        if (branchGradientCache != null) {
+            branchGradientCache.ensure(trajectory);
+        }
 
         for (int t = 0; t < T - 1; ++t) {
-            CanonicalBranchMessageContributionUtils.fillFromPairState(
-                    trajectory.branchPairStates[t],
-                    contributionWorkspace,
-                    localContribution);
-            CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                    trajectory.transitions[t],
-                    localContribution,
-                    canonicalAdjointWorkspace,
-                    localAdjoints);
-            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dF, dLogL_dF, d);
+            final CanonicalLocalTransitionAdjoints adjoints =
+                    localAdjoints(t, trajectory, branchGradientCache);
+            GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dF, dLogL_dF, d);
             repr.accumulateSelectionGradient(
-                    t, t + 1, timeGrid, dLogL_dF, localAdjoints.dLogL_df, gradientAccumulator);
+                    t, t + 1, timeGrid, dLogL_dF, adjoints.dLogL_df, gradientAccumulator);
 
-            GaussianMatrixOps.copyFlatToMatrix(localAdjoints.dLogL_dOmega, dLogL_dV, d);
+            GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dOmega, dLogL_dV, d);
             repr.accumulateSelectionGradientFromCovariance(t, t + 1, timeGrid, dLogL_dV, gradientAccumulator);
         }
 
@@ -162,8 +182,16 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 instanceof OrthogonalBlockCanonicalParameterization;
     }
 
+    @Override
+    public void makeDirty() {
+        if (orthogonalBlockGradientCache != null) {
+            orthogonalBlockGradientCache.makeDirty();
+        }
+    }
+
     private double[] computeOrthogonalNativeGradient(final Parameter requestedParameter,
                                                      final CanonicalForwardTrajectory trajectory,
+                                                     final CanonicalBranchGradientCache branchGradientCache,
                                                      final TimeGrid timeGrid) {
         final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
                 (OrthogonalBlockCanonicalParameterization) processModel.getSelectionMatrixParameterization();
@@ -176,19 +204,20 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         Arrays.fill(compressedDGradient, 0.0);
         Arrays.fill(rotationGradientFlat, 0.0);
         processModel.getInitialMean(stationaryMean);
+        if (branchGradientCache != null) {
+            branchGradientCache.ensure(trajectory);
+        }
 
         for (int t = 0; t < T - 1; ++t) {
             final double dt = timeGrid.getDelta(t, t + 1);
-            CanonicalBranchMessageContributionUtils.fillFromPairState(
-                    trajectory.branchPairStates[t],
-                    contributionWorkspace,
-                    localContribution);
+            final CanonicalBranchMessageContribution contribution =
+                    localContribution(t, trajectory, branchGradientCache);
             orthogonalParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
                     processModel.getDiffusionMatrix(),
                     stationaryMean,
                     dt,
-                    localContribution,
-                    localAdjoints,
+                    contribution,
+                    localAdjoints(t, trajectory, branchGradientCache),
                     compressedDGradient,
                     rotationGradientFlat);
         }
@@ -260,5 +289,32 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 out[index++] = matrix[row][col];
             }
         }
+    }
+
+    private CanonicalBranchMessageContribution localContribution(final int branchIndex,
+                                                                 final CanonicalForwardTrajectory trajectory,
+                                                                 final CanonicalBranchGradientCache branchGradientCache) {
+        if (branchGradientCache != null) {
+            return branchGradientCache.getContribution(branchIndex);
+        }
+        CanonicalBranchMessageContributionUtils.fillFromPairState(
+                trajectory.branchPairStates[branchIndex],
+                contributionWorkspace,
+                localContribution);
+        return localContribution;
+    }
+
+    private CanonicalLocalTransitionAdjoints localAdjoints(final int branchIndex,
+                                                           final CanonicalForwardTrajectory trajectory,
+                                                           final CanonicalBranchGradientCache branchGradientCache) {
+        if (branchGradientCache != null) {
+            return branchGradientCache.getAdjoints(branchIndex);
+        }
+        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                trajectory.transitions[branchIndex],
+                localContribution(branchIndex, trajectory, null),
+                canonicalAdjointWorkspace,
+                localAdjoints);
+        return localAdjoints;
     }
 }

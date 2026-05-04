@@ -7,6 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
@@ -23,6 +24,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
 
     private final CanonicalGaussianBranchTransitionKernel transitionKernel;
+    private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
     private final GaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
@@ -56,6 +58,13 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     public CanonicalKalmanLikelihoodEngine(final CanonicalGaussianBranchTransitionKernel transitionKernel,
                                            final GaussianObservationModel observationModel,
                                            final TimeGrid timeGrid) {
+        this(transitionKernel, null, observationModel, timeGrid);
+    }
+
+    public CanonicalKalmanLikelihoodEngine(final CanonicalGaussianBranchTransitionKernel transitionKernel,
+                                           final CachedGaussianTransitionRepresentation cachedTransitionRepresentation,
+                                           final GaussianObservationModel observationModel,
+                                           final TimeGrid timeGrid) {
         if (transitionKernel == null) {
             throw new IllegalArgumentException("transitionKernel must not be null");
         }
@@ -66,6 +75,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
             throw new IllegalArgumentException("timeGrid must not be null");
         }
         this.transitionKernel = transitionKernel;
+        this.cachedTransitionRepresentation = cachedTransitionRepresentation;
         this.observationModel = observationModel;
         this.timeGrid = timeGrid;
         this.stateDimension = transitionKernel.getStateDimension();
@@ -97,6 +107,9 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.stateVectorWorkspace = new double[stateDimension];
         this.stateVectorWorkspace2 = new double[stateDimension];
         this.observationVectorWorkspace = new double[observationDimension];
+        if (cachedTransitionRepresentation != null) {
+            cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
+        }
     }
 
     @Override
@@ -126,8 +139,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
             if (timeIndex == 0) {
                 copyState(filteredState, predictedState);
             } else {
-                final double dt = validatedDelta(timeIndex - 1, timeIndex);
-                transitionKernel.fillCanonicalTransition(dt, transition);
+                fillCanonicalTransition(timeIndex - 1, timeIndex, transition);
                 predict(filteredState, transition, predictedState);
             }
 
@@ -208,6 +220,16 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
             throw new IllegalArgumentException("Time increments must be strictly positive");
         }
         return dt;
+    }
+
+    private void fillCanonicalTransition(final int fromIndex,
+                                         final int toIndex,
+                                         final CanonicalGaussianTransition out) {
+        if (cachedTransitionRepresentation != null) {
+            cachedTransitionRepresentation.getCanonicalTransition(fromIndex, toIndex, timeGrid, out);
+        } else {
+            transitionKernel.fillCanonicalTransition(validatedDelta(fromIndex, toIndex), out);
+        }
     }
 
     private static void addMatrices(final double[] left,

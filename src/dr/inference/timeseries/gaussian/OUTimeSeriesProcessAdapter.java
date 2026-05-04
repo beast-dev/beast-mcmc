@@ -9,6 +9,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.representation.GaussianComputationMode;
+import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
@@ -79,6 +80,9 @@ public final class OUTimeSeriesProcessAdapter extends AbstractModel
 
     @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
+        if (transitionRepresentation instanceof CachedGaussianTransitionRepresentation) {
+            ((CachedGaussianTransitionRepresentation) transitionRepresentation).makeDirty();
+        }
         fireModelChanged();
     }
 
@@ -86,6 +90,9 @@ public final class OUTimeSeriesProcessAdapter extends AbstractModel
     protected void handleVariableChangedEvent(final Variable variable,
                                               final int index,
                                               final Parameter.ChangeType type) {
+        if (transitionRepresentation instanceof CachedGaussianTransitionRepresentation) {
+            ((CachedGaussianTransitionRepresentation) transitionRepresentation).makeDirty();
+        }
         fireModelChanged();
     }
 

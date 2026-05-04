@@ -1,0 +1,181 @@
+<?xml version="1.0" standalone="yes"?>
+<beast version="1.10">
+
+    <!-- Shared orthogonal-block OU parameters -->
+    <parameter id="ou.A.angles" value="0.23"/>
+    <givensRotationMatrixParameter id="ou.A.rotation" dimension="2">
+        <angles>
+            <parameter idref="ou.A.angles"/>
+        </angles>
+    </givensRotationMatrixParameter>
+
+    <parameter id="ou.A.scalar" dimension="0"/>
+    <parameter id="ou.A.rho" value="0.72"/>
+    <parameter id="ou.A.theta" value="0.31"/>
+    <parameter id="ou.A.t" value="-0.05"/>
+    <orthogonalBlockDiagonalPolarStableMatrixParameter id="ou.A.block">
+        <orthogonalRotationMatrix>
+            <givensRotationMatrixParameter idref="ou.A.rotation"/>
+        </orthogonalRotationMatrix>
+        <scalarBlock>
+            <parameter idref="ou.A.scalar"/>
+        </scalarBlock>
+        <blockRho>
+            <parameter idref="ou.A.rho"/>
+        </blockRho>
+        <blockTheta>
+            <parameter idref="ou.A.theta"/>
+        </blockTheta>
+        <blockT>
+            <parameter idref="ou.A.t"/>
+        </blockT>
+    </orthogonalBlockDiagonalPolarStableMatrixParameter>
+
+    <matrixParameter id="ou.Q">
+        <parameter id="ou.Q.col1" value="1.20 0.04"/>
+        <parameter id="ou.Q.col2" value="0.04 0.86"/>
+    </matrixParameter>
+    <parameter id="ou.mu" value="0.08 -0.11"/>
+    <matrixParameter id="ou.P0">
+        <parameter id="ou.P0.col1" value="0.95 0.02"/>
+        <parameter id="ou.P0.col2" value="0.02 0.90"/>
+    </matrixParameter>
+
+    <ouProcessModel id="ou.shared" stateDimension="2" selectionChart="orthogonalBlock">
+        <driftMatrix>
+            <orthogonalBlockDiagonalPolarStableMatrixParameter idref="ou.A.block"/>
+        </driftMatrix>
+        <diffusionMatrix>
+            <matrixParameter idref="ou.Q"/>
+        </diffusionMatrix>
+        <stationaryMean>
+            <parameter idref="ou.mu"/>
+        </stationaryMean>
+        <initialCovariance>
+            <matrixParameter idref="ou.P0"/>
+        </initialCovariance>
+    </ouProcessModel>
+
+    <uniformTimeGrid id="shared.grid" timeCount="5" startTime="0.0" timeStep="0.25"/>
+
+    <matrixParameter id="obs.H">
+        <parameter id="obs.H.col1" value="1.0 0.0"/>
+        <parameter id="obs.H.col2" value="0.0 1.0"/>
+    </matrixParameter>
+    <matrixParameter id="obs.R">
+        <parameter id="obs.R.col1" value="0.35 0.02"/>
+        <parameter id="obs.R.col2" value="0.02 0.42"/>
+    </matrixParameter>
+
+    <!-- One orthogonal-block OU time series -->
+    <matrixParameter id="series1.Y">
+        <parameter id="series1.Y.col1" value="0.10 -0.06"/>
+        <parameter id="series1.Y.col2" value="0.14 -0.02"/>
+        <parameter id="series1.Y.col3" value="0.18 0.03"/>
+        <parameter id="series1.Y.col4" value="0.17 0.04"/>
+        <parameter id="series1.Y.col5" value="0.20 0.08"/>
+    </matrixParameter>
+    <gaussianObservationModel id="series1.obs" observationDimension="2">
+        <designMatrix>
+            <matrixParameter idref="obs.H"/>
+        </designMatrix>
+        <noiseCovariance>
+            <matrixParameter idref="obs.R"/>
+        </noiseCovariance>
+        <observations>
+            <matrixParameter idref="series1.Y"/>
+        </observations>
+    </gaussianObservationModel>
+    <timeSeriesModel id="series1.model">
+        <latentProcess>
+            <ouProcessModel idref="ou.shared"/>
+        </latentProcess>
+        <observationModel>
+            <gaussianObservationModel idref="series1.obs"/>
+        </observationModel>
+        <timeGrid>
+            <uniformTimeGrid idref="shared.grid"/>
+        </timeGrid>
+    </timeSeriesModel>
+    <timeSeriesLikelihood id="series1.likelihood">
+        <model>
+            <timeSeriesModel idref="series1.model"/>
+        </model>
+    </timeSeriesLikelihood>
+
+    <!-- Several independent time series sharing the same OU parameters and grid -->
+    <matrixParameter id="series2.Y">
+        <parameter id="series2.Y.col1" value="-0.04 0.11"/>
+        <parameter id="series2.Y.col2" value="NaN NaN"/>
+        <parameter id="series2.Y.col3" value="0.06 0.07"/>
+        <parameter id="series2.Y.col4" value="0.12 0.03"/>
+        <parameter id="series2.Y.col5" value="0.16 0.01"/>
+    </matrixParameter>
+    <gaussianObservationModel id="series2.obs" observationDimension="2">
+        <designMatrix>
+            <matrixParameter idref="obs.H"/>
+        </designMatrix>
+        <noiseCovariance>
+            <matrixParameter idref="obs.R"/>
+        </noiseCovariance>
+        <observations>
+            <matrixParameter idref="series2.Y"/>
+        </observations>
+    </gaussianObservationModel>
+    <timeSeriesModel id="series2.model">
+        <latentProcess>
+            <ouProcessModel idref="ou.shared"/>
+        </latentProcess>
+        <observationModel>
+            <gaussianObservationModel idref="series2.obs"/>
+        </observationModel>
+        <timeGrid>
+            <uniformTimeGrid idref="shared.grid"/>
+        </timeGrid>
+    </timeSeriesModel>
+    <timeSeriesLikelihood id="series2.likelihood">
+        <model>
+            <timeSeriesModel idref="series2.model"/>
+        </model>
+    </timeSeriesLikelihood>
+
+    <parallelTimeSeriesLikelihood id="parallel.series" threads="4">
+        <timeSeriesLikelihood idref="series1.likelihood"/>
+        <timeSeriesLikelihood idref="series2.likelihood"/>
+    </parallelTimeSeriesLikelihood>
+
+    <!-- HMC gradients for native orthogonal-block parameters -->
+    <timeSeriesGradient id="grad.rho">
+        <likelihood>
+            <parallelTimeSeriesLikelihood idref="parallel.series"/>
+        </likelihood>
+        <parameter>
+            <parameter idref="ou.A.rho"/>
+        </parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.theta">
+        <likelihood>
+            <parallelTimeSeriesLikelihood idref="parallel.series"/>
+        </likelihood>
+        <parameter>
+            <parameter idref="ou.A.theta"/>
+        </parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.t">
+        <likelihood>
+            <parallelTimeSeriesLikelihood idref="parallel.series"/>
+        </likelihood>
+        <parameter>
+            <parameter idref="ou.A.t"/>
+        </parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.rotationAngles">
+        <likelihood>
+            <parallelTimeSeriesLikelihood idref="parallel.series"/>
+        </likelihood>
+        <parameter>
+            <parameter idref="ou.A.angles"/>
+        </parameter>
+    </timeSeriesGradient>
+
+</beast>

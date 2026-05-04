@@ -15,4 +15,16 @@ public interface CanonicalGradientFormula {
                              CanonicalForwardTrajectory trajectory,
                              GaussianTransitionRepresentation repr,
                              TimeGrid timeGrid);
+
+    default double[] computeGradient(Parameter parameter,
+                                     CanonicalForwardTrajectory trajectory,
+                                     CanonicalBranchGradientCache branchGradientCache,
+                                     GaussianTransitionRepresentation repr,
+                                     TimeGrid timeGrid) {
+        return computeGradient(parameter, trajectory, repr, timeGrid);
+    }
+
+    default void makeDirty() {
+        // no-op
+    }
 }

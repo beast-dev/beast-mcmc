@@ -16,7 +16,9 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
+import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -117,6 +119,22 @@ public class OUProcessModelTest extends TestCase {
 
     public void testGetStateDimension2D() {
         assertEquals(2, make2D(1, 1, 1, 1, 0, 1).getStateDimension());
+    }
+
+    public void testKernelBackedRepresentationCachesRepeatedDeltas() {
+        final CountingKernel kernel = new CountingKernel();
+        final KernelBackedGaussianTransitionRepresentation representation =
+                new KernelBackedGaussianTransitionRepresentation(kernel);
+        final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.5);
+        final double[][] first = new double[1][1];
+        final double[][] second = new double[1][1];
+
+        representation.prepareTimeGrid(grid);
+        representation.getTransitionMatrix(0, 1, grid, first);
+        representation.getTransitionMatrix(1, 2, grid, second);
+
+        assertEquals(1, kernel.transitionMatrixCalls);
+        assertEquals(first[0][0], second[0][0], TOL);
     }
 
     public void testDefaultCovarianceGradientMethodUsesVanLoanForDenseDrift() {
@@ -381,5 +399,48 @@ public class OUProcessModelTest extends TestCase {
 
     public static Test suite() {
         return new TestSuite(OUProcessModelTest.class);
+    }
+
+    private static final class CountingKernel implements GaussianBranchTransitionKernel {
+        int transitionMatrixCalls;
+
+        @Override
+        public int getStateDimension() {
+            return 1;
+        }
+
+        @Override
+        public void getInitialMean(final double[] out) {
+            out[0] = 0.0;
+        }
+
+        @Override
+        public void getInitialCovariance(final double[][] out) {
+            out[0][0] = 1.0;
+        }
+
+        @Override
+        public void fillTransitionMatrix(final double dt, final double[][] out) {
+            ++transitionMatrixCalls;
+            out[0][0] = Math.exp(-dt);
+        }
+
+        @Override
+        public void fillTransitionOffset(final double dt, final double[] out) {
+            out[0] = 0.0;
+        }
+
+        @Override
+        public void fillTransitionCovariance(final double dt, final double[][] out) {
+            out[0][0] = dt;
+        }
+
+        @Override
+        public void accumulateSelectionGradient(final double dt,
+                                                final double[][] dLogL_dF,
+                                                final double[] dLogL_df,
+                                                final double[] gradientAccumulator) {
+            gradientAccumulator[0] += dLogL_dF[0][0] * dt;
+        }
     }
 }

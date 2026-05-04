@@ -9,6 +9,7 @@ import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -23,6 +24,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
     private final GaussianTransitionRepresentation transitionRepresentation;
+    private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
     private final GaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
@@ -36,6 +38,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final CanonicalGaussianState futureMessage;
     private final ForwardTrajectory trajectory;
     private final CanonicalForwardTrajectory canonicalTrajectory;
+    private final CanonicalBranchGradientCache branchGradientCache;
     private final BranchSmootherStats[] smootherStats;
     private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
 
@@ -56,6 +59,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final double[] stateVectorWorkspace;
     private final double[] stateVectorWorkspace2;
     private final double[] tempD;
+    private final double[] flatInverseWorkspace;
 
     private boolean resultsKnown;
     private double logLikelihood;
@@ -78,6 +82,9 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         }
         this.canonicalKernel = canonicalKernel;
         this.transitionRepresentation = transitionRepresentation;
+        this.cachedTransitionRepresentation = transitionRepresentation instanceof CachedGaussianTransitionRepresentation
+                ? (CachedGaussianTransitionRepresentation) transitionRepresentation
+                : null;
         this.observationModel = observationModel;
         this.timeGrid = timeGrid;
         this.stateDimension = canonicalKernel.getStateDimension();
@@ -91,6 +98,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.futureMessage = new CanonicalGaussianState(stateDimension);
         this.trajectory = new ForwardTrajectory(timeCount, stateDimension);
         this.canonicalTrajectory = new CanonicalForwardTrajectory(timeCount, stateDimension);
+        this.branchGradientCache = new CanonicalBranchGradientCache(timeCount, stateDimension);
         this.smootherStats = new BranchSmootherStats[timeCount];
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
         for (int t = 0; t < timeCount; ++t) {
@@ -114,6 +122,10 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.stateVectorWorkspace = new double[stateDimension];
         this.stateVectorWorkspace2 = new double[stateDimension];
         this.tempD = new double[stateDimension];
+        this.flatInverseWorkspace = new double[stateDimension * stateDimension];
+        if (cachedTransitionRepresentation != null) {
+            cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
+        }
     }
 
     public double getLogLikelihood() {
@@ -124,6 +136,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     @Override
     public void makeDirty() {
         resultsKnown = false;
+        branchGradientCache.makeDirty();
     }
 
     public double[][] getSmoothedMeans() {
@@ -207,6 +220,13 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     @Override
+    public CanonicalBranchGradientCache getCanonicalBranchGradientCache() {
+        ensureResults();
+        branchGradientCache.ensure(canonicalTrajectory);
+        return branchGradientCache;
+    }
+
+    @Override
     public GaussianTransitionRepresentation getTransitionRepresentation() {
         return transitionRepresentation;
     }
@@ -229,8 +249,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
             if (timeIndex == 0) {
                 copyState(filteredCanonical, predictedCanonical);
             } else {
-                final double dt = validatedDelta(timeIndex - 1, timeIndex);
-                canonicalKernel.fillCanonicalTransition(dt, transitionCanonical);
+                fillCanonicalTransition(timeIndex - 1, timeIndex, transitionCanonical);
                 predict(filteredCanonical, transitionCanonical, predictedCanonical);
                 copyTransition(transitionCanonical, canonicalTrajectory.transitions[timeIndex - 1]);
 
@@ -344,9 +363,8 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private double normalizedLogNormalizerFlat(final double[] precision, final double[] information) {
         final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(precision, stateDimension);
         final double logDet = chol.logDeterminant();
-        final double[] flatInverse = new double[stateDimension * stateDimension];
-        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverse, chol);
-        GaussianMatrixOps.copyFlatToMatrix(flatInverse, stateWorkspace, stateDimension);
+        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverseWorkspace, chol);
+        GaussianMatrixOps.copyFlatToMatrix(flatInverseWorkspace, stateWorkspace, stateDimension);
         GaussianMatrixOps.multiplyMatrixVector(stateWorkspace, information, stateVectorWorkspace,
                 stateDimension, stateDimension);
         final double quadratic = dot(information, stateVectorWorkspace);
@@ -357,9 +375,18 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                                                   final double[][] inverseOut,
                                                   final int dimension) {
         final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(matrix, dimension);
-        final double[] flatInverse = new double[dimension * dimension];
-        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverse, chol);
-        GaussianMatrixOps.copyFlatToMatrix(flatInverse, inverseOut, dimension);
+        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverseWorkspace, chol);
+        GaussianMatrixOps.copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
+    }
+
+    private void fillCanonicalTransition(final int fromIndex,
+                                         final int toIndex,
+                                         final CanonicalGaussianTransition out) {
+        if (cachedTransitionRepresentation != null) {
+            cachedTransitionRepresentation.getCanonicalTransition(fromIndex, toIndex, timeGrid, out);
+        } else {
+            canonicalKernel.fillCanonicalTransition(validatedDelta(fromIndex, toIndex), out);
+        }
     }
 
     private static void addMatricesFlatAndRagged(final double[] left, final double[][] right,

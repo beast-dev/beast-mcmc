@@ -1,5 +1,7 @@
 package dr.inference.timeseries.representation;
 
+import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.core.TimeGrid;
 
@@ -7,15 +9,26 @@ import dr.inference.timeseries.core.TimeGrid;
  * Thin time-grid adapter over a branch-length Gaussian transition kernel.
  */
 public final class KernelBackedGaussianTransitionRepresentation
-        implements GaussianTransitionRepresentation {
+        implements CachedGaussianTransitionRepresentation {
 
     private final GaussianBranchTransitionKernel kernel;
+    private final RepeatedDeltaCanonicalTransitionCache repeatedDeltaCache;
 
     public KernelBackedGaussianTransitionRepresentation(final GaussianBranchTransitionKernel kernel) {
+        this(kernel, null);
+    }
+
+    public KernelBackedGaussianTransitionRepresentation(final OUProcessModel processModel) {
+        this(processModel, processModel);
+    }
+
+    private KernelBackedGaussianTransitionRepresentation(final GaussianBranchTransitionKernel kernel,
+                                                         final OUProcessModel processModel) {
         if (kernel == null) {
             throw new IllegalArgumentException("kernel must not be null");
         }
         this.kernel = kernel;
+        this.repeatedDeltaCache = new RepeatedDeltaCanonicalTransitionCache(kernel, processModel);
     }
 
     @Override
@@ -38,7 +51,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                     final int toIndex,
                                     final TimeGrid timeGrid,
                                     final double[][] out) {
-        kernel.fillTransitionMatrix(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionMatrix(validatedDelta(timeGrid, fromIndex, toIndex), out);
     }
 
     @Override
@@ -46,7 +59,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                     final int toIndex,
                                     final TimeGrid timeGrid,
                                     final double[] out) {
-        kernel.fillTransitionOffset(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionOffset(validatedDelta(timeGrid, fromIndex, toIndex), out);
     }
 
     @Override
@@ -54,7 +67,30 @@ public final class KernelBackedGaussianTransitionRepresentation
                                         final int toIndex,
                                         final TimeGrid timeGrid,
                                         final double[][] out) {
-        kernel.fillTransitionCovariance(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionCovariance(validatedDelta(timeGrid, fromIndex, toIndex), out);
+    }
+
+    @Override
+    public void prepareTimeGrid(final TimeGrid timeGrid) {
+        repeatedDeltaCache.prepareTimeGrid(timeGrid);
+    }
+
+    @Override
+    public void getCanonicalTransition(final int fromIndex,
+                                       final int toIndex,
+                                       final TimeGrid timeGrid,
+                                       final CanonicalGaussianTransition out) {
+        repeatedDeltaCache.fillCanonicalTransition(validatedDelta(timeGrid, fromIndex, toIndex), out);
+    }
+
+    @Override
+    public RepeatedDeltaCacheStatistics getCacheStatistics() {
+        return repeatedDeltaCache.getStatistics();
+    }
+
+    @Override
+    public void makeDirty() {
+        repeatedDeltaCache.makeDirty();
     }
 
     @Override
@@ -96,10 +132,6 @@ public final class KernelBackedGaussianTransitionRepresentation
     }
 
     private static double validatedDelta(final TimeGrid timeGrid, final int fromIndex, final int toIndex) {
-        final double dt = timeGrid.getDelta(fromIndex, toIndex);
-        if (!(dt > 0.0)) {
-            throw new IllegalArgumentException("Time increments must be strictly positive");
-        }
-        return dt;
+        return RepeatedDeltaCanonicalTransitionCache.validatedDelta(timeGrid, fromIndex, toIndex);
     }
 }

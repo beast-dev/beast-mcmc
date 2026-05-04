@@ -2,7 +2,7 @@ package dr.inferencexml.timeseries;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.beast.TimeSeriesGradient;
-import dr.inference.timeseries.likelihood.TimeSeriesLikelihood;
+import dr.inference.timeseries.likelihood.TimeSeriesGradientSource;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -25,8 +25,8 @@ public class TimeSeriesGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(final XMLObject xo) throws XMLParseException {
-        final TimeSeriesLikelihood likelihood =
-                (TimeSeriesLikelihood) xo.getElementFirstChild(LIKELIHOOD);
+        final TimeSeriesGradientSource likelihood =
+                (TimeSeriesGradientSource) xo.getElementFirstChild(LIKELIHOOD);
         final Parameter parameter =
                 (Parameter) xo.getElementFirstChild(PARAMETER);
         return new TimeSeriesGradient(likelihood, parameter);
@@ -38,7 +38,7 @@ public class TimeSeriesGradientParser extends AbstractXMLObjectParser {
     }
 
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[] {
-            new ElementRule(LIKELIHOOD, new XMLSyntaxRule[] { new ElementRule(TimeSeriesLikelihood.class) }),
+            new ElementRule(LIKELIHOOD, new XMLSyntaxRule[] { new ElementRule(TimeSeriesGradientSource.class) }),
             new ElementRule(PARAMETER, new XMLSyntaxRule[] { new ElementRule(Parameter.class) })
     };
 

@@ -49,12 +49,15 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
         }
 
         final CanonicalForwardTrajectory trajectory = smootherEngine.getCanonicalTrajectory();
+        final CanonicalBranchGradientCache branchGradientCache =
+                smootherEngine.getCanonicalBranchGradientCache();
 
         for (final CanonicalGradientFormula formula : formulas) {
             if (formula.supportsParameter(parameter)) {
                 return formula.computeGradient(
                         parameter,
                         trajectory,
+                        branchGradientCache,
                         smootherEngine.getTransitionRepresentation(),
                         smootherEngine.getTimeGrid());
             }
@@ -66,5 +69,8 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
     @Override
     public void makeDirty() {
         smootherEngine.makeDirty();
+        for (final CanonicalGradientFormula formula : formulas) {
+            formula.makeDirty();
+        }
     }
 }

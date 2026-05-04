@@ -2,6 +2,7 @@ package dr.inference.timeseries.likelihood;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.engine.DisabledGradientEngine;
@@ -13,6 +14,7 @@ import dr.inference.timeseries.engine.gaussian.CanonicalAnalyticalKalmanGradient
 import dr.inference.timeseries.engine.gaussian.CanonicalDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.CanonicalKalmanSmootherEngine;
 import dr.inference.timeseries.engine.gaussian.CanonicalStationaryMeanGradientFormula;
+import dr.inference.timeseries.engine.gaussian.CanonicalOrthogonalBlockGradientCache;
 import dr.inference.timeseries.engine.gaussian.DiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.GaussianSmootherResults;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
@@ -20,6 +22,7 @@ import dr.inference.timeseries.engine.gaussian.GaussianLikelihoodEngineFactory;
 import dr.inference.timeseries.engine.gaussian.KalmanSmootherEngine;
 import dr.inference.timeseries.engine.gaussian.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.StationaryMeanGradientFormula;
+import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterizationFactory;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
@@ -27,6 +30,7 @@ import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
+import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 
 /**
@@ -34,9 +38,8 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  *
  * <p>This centralizes the current policy:
  * <ul>
- *   <li>forward likelihoods can be built in expectation or canonical form</li>
- *   <li>analytical gradients, when requested, are still computed on the established
- *       expectation/smoother backend</li>
+ *   <li>canonical forward, smoothing, and analytical gradients are the production path</li>
+ *   <li>expectation-form engines remain available for explicit debugging and parity checks</li>
  * </ul>
  */
 public final class GaussianTimeSeriesLikelihoodFactory {
@@ -49,7 +52,15 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                                               final TimeSeriesModel model,
                                               final GaussianForwardComputationMode forwardMode,
                                               final GaussianGradientComputationMode gradientMode) {
-        return create(name, model, forwardMode, GaussianSmootherComputationMode.EXPECTATION, gradientMode);
+        return create(name, model, forwardMode, defaultSmootherModeFor(gradientMode), gradientMode);
+    }
+
+    public static TimeSeriesLikelihood create(final String name,
+                                              final TimeSeriesModel model) {
+        return create(name, model,
+                GaussianForwardComputationMode.CANONICAL,
+                GaussianSmootherComputationMode.CANONICAL,
+                GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
     }
 
     public static TimeSeriesLikelihood create(final String name,
@@ -71,6 +82,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
 
         final LatentProcessModel latentProcess = model.getLatentProcessModel();
         final RepresentableProcess process = representationFor(latentProcess);
+        prepareRepeatedDeltaCache(process, model);
         final GaussianObservationModel observationModel = (GaussianObservationModel) model.getObservationModel();
 
         final LikelihoodEngine likelihoodEngine = GaussianLikelihoodEngineFactory.createForwardEngine(
@@ -90,6 +102,23 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         throw new IllegalArgumentException(
                 "Latent process must be representable for time-series inference: "
                         + latentProcess.getClass().getName());
+    }
+
+    private static GaussianSmootherComputationMode defaultSmootherModeFor(
+            final GaussianGradientComputationMode gradientMode) {
+        return gradientMode == GaussianGradientComputationMode.CANONICAL_ANALYTICAL
+                ? GaussianSmootherComputationMode.CANONICAL
+                : GaussianSmootherComputationMode.EXPECTATION;
+    }
+
+    private static void prepareRepeatedDeltaCache(final RepresentableProcess process,
+                                                  final TimeSeriesModel model) {
+        final GaussianTransitionRepresentation transitionRepresentation =
+                process.getRepresentation(GaussianTransitionRepresentation.class);
+        if (transitionRepresentation instanceof CachedGaussianTransitionRepresentation) {
+            ((CachedGaussianTransitionRepresentation) transitionRepresentation)
+                    .prepareTimeGrid(model.getTimeGrid());
+        }
     }
 
     private static GradientEngine createGradientEngine(final LatentProcessModel latentProcess,
@@ -179,10 +208,21 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                                                              final dr.inference.model.Parameter stationaryMean,
                                                              final MatrixParameter initialCovariance,
                                                              final int stateDimension) {
+        final DiffusionMatrixParameterization diffusionParameterization =
+                DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
+        final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache =
+                createOrthogonalBlockGradientCache(
+                        processModel,
+                        driftMatrix,
+                        diffusionParameterization,
+                        stationaryMean,
+                        initialCovariance,
+                        stateDimension);
         final GradientFormulaBundle formulas = new GradientFormulaBundle(
                 new SelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 processModel != null
-                        ? new CanonicalSelectionMatrixGradientFormula(processModel, driftMatrix, stateDimension)
+                        ? new CanonicalSelectionMatrixGradientFormula(
+                        processModel, driftMatrix, stateDimension, orthogonalBlockGradientCache)
                         : new CanonicalSelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 new StationaryMeanGradientFormula(
                         processModel,
@@ -193,14 +233,16 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         processModel,
                         stationaryMean,
                         initialCovariance,
-                        stateDimension),
+                        stateDimension,
+                        orthogonalBlockGradientCache),
                 new DiffusionMatrixGradientFormula(
-                        DiffusionMatrixParameterizationFactory.create(diffusionMatrix),
+                        diffusionParameterization,
                         stateDimension),
                 new CanonicalDiffusionMatrixGradientFormula(
                         processModel,
-                        DiffusionMatrixParameterizationFactory.create(diffusionMatrix),
-                        stateDimension));
+                        diffusionParameterization,
+                        stateDimension,
+                        orthogonalBlockGradientCache));
         if (smoother instanceof CanonicalKalmanSmootherEngine) {
             return new CanonicalAnalyticalKalmanGradientEngine(
                     (CanonicalKalmanSmootherEngine) smoother,
@@ -236,5 +278,26 @@ public final class GaussianTimeSeriesLikelihoodFactory {
             this.diffusion = diffusion;
             this.canonicalDiffusion = canonicalDiffusion;
         }
+    }
+
+    private static CanonicalOrthogonalBlockGradientCache createOrthogonalBlockGradientCache(
+            final OUProcessModel processModel,
+            final MatrixParameterInterface driftMatrix,
+            final DiffusionMatrixParameterization diffusionParameterization,
+            final dr.inference.model.Parameter stationaryMean,
+            final MatrixParameter initialCovariance,
+            final int stateDimension) {
+        if (processModel == null
+                || !(driftMatrix instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter)
+                || !CanonicalOrthogonalBlockGradientCache.isAvailable(processModel, driftMatrix)) {
+            return null;
+        }
+        return new CanonicalOrthogonalBlockGradientCache(
+                processModel,
+                (OrthogonalBlockDiagonalPolarStableMatrixParameter) driftMatrix,
+                diffusionParameterization,
+                stationaryMean,
+                initialCovariance,
+                stateDimension);
     }
 }

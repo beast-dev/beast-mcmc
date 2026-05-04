@@ -4,7 +4,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.timeseries.likelihood.TimeSeriesLikelihood;
+import dr.inference.timeseries.likelihood.TimeSeriesGradientSource;
 import dr.xml.Reportable;
 
 /**
@@ -12,19 +12,22 @@ import dr.xml.Reportable;
  */
 public class TimeSeriesGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final TimeSeriesLikelihood likelihood;
+    private final Likelihood likelihood;
     private final Parameter parameter;
     private final GradientProvider provider;
 
-    public TimeSeriesGradient(final TimeSeriesLikelihood likelihood,
+    public TimeSeriesGradient(final TimeSeriesGradientSource likelihood,
                               final Parameter parameter) {
         if (likelihood == null) {
             throw new IllegalArgumentException("likelihood must not be null");
         }
+        if (!(likelihood instanceof Likelihood)) {
+            throw new IllegalArgumentException("likelihood must also implement BEAST Likelihood");
+        }
         if (parameter == null) {
             throw new IllegalArgumentException("parameter must not be null");
         }
-        this.likelihood = likelihood;
+        this.likelihood = (Likelihood) likelihood;
         this.parameter = parameter;
         this.provider = likelihood.getGradientWrt(parameter);
     }

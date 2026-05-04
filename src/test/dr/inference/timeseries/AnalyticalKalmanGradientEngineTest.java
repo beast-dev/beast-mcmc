@@ -21,6 +21,7 @@ import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvi
 import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
+import dr.inference.timeseries.beast.TimeSeriesGradient;
 import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
@@ -45,6 +46,7 @@ import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
 import dr.inference.timeseries.likelihood.GaussianTimeSeriesLikelihoodFactory;
+import dr.inference.timeseries.likelihood.ParallelTimeSeriesLikelihood;
 import dr.inference.timeseries.likelihood.TimeSeriesLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
@@ -53,6 +55,8 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
+import java.util.Arrays;
 
 /**
  * Tests for {@link AnalyticalKalmanGradientEngine} using the exact OU process model.
@@ -2112,6 +2116,80 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 expectationGradient[0],
                 canonicalGradient[0],
                 1e-9);
+    }
+
+    public void testParallelTimeSeriesLikelihoodSumsIndependentCanonicalOuSeries() {
+        final MatrixParameter drift = makeMatrix("A.ts.parallel", new double[][]{
+                {0.43, -0.04},
+                {0.06, 0.79}
+        });
+        final MatrixParameter diffusion = makeMatrix("Q.ts.parallel", new double[][]{
+                {1.10, 0.03},
+                {0.03, 0.88}
+        });
+        final Parameter mean = new Parameter.Default(new double[]{0.18, -0.11});
+        final MatrixParameter initCov = makeMatrix("P0.ts.parallel", new double[][]{
+                {0.9, 0.04},
+                {0.04, 0.95}
+        });
+        final OUProcessModel process = new OUProcessModel(
+                "ouTsParallel", 2, drift, diffusion, mean, initCov, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
+
+        final MatrixParameter H = makeMatrix("H.ts.parallel", new double[][]{{1, 0}, {0, 1}});
+        final MatrixParameter R = makeMatrix("R.ts.parallel", new double[][]{
+                {0.30, 0.02},
+                {0.02, 0.36}
+        });
+        final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
+
+        final GaussianObservationModel obs1 = new GaussianObservationModel("obsTsParallel1", 2, H, R,
+                makeMatrix("Y.ts.parallel.1", new double[][]{
+                        {0.2, -0.1, 0.4, 0.6},
+                        {-0.3, 0.5, 0.2, -0.1}
+                }));
+        final GaussianObservationModel obs2 = new GaussianObservationModel("obsTsParallel2", 2, H, R,
+                makeMatrix("Y.ts.parallel.2", new double[][]{
+                        {-0.4, Double.NaN, 0.3, 0.8},
+                        {0.1, Double.NaN, -0.2, 0.5}
+                }));
+
+        final TimeSeriesLikelihood series1 = makeCanonicalAnalyticalLikelihood(
+                "tsParallelSeries1", process, obs1, grid);
+        final TimeSeriesLikelihood series2 = makeCanonicalAnalyticalLikelihood(
+                "tsParallelSeries2", process, obs2, grid);
+        final ParallelTimeSeriesLikelihood aggregate = new ParallelTimeSeriesLikelihood(
+                "tsParallelAggregate", 2, Arrays.asList(series1, series2));
+
+        assertEquals("Parallel aggregate should sum independent canonical OU log likelihoods",
+                series1.getLogLikelihood() + series2.getLogLikelihood(),
+                aggregate.getLogLikelihood(),
+                1e-10);
+
+        final double[] expectedGradient = series1.getGradientWrt(process.getDriftMatrix()).getGradientLogDensity(null);
+        final double[] series2Gradient = series2.getGradientWrt(process.getDriftMatrix()).getGradientLogDensity(null);
+        for (int i = 0; i < expectedGradient.length; ++i) {
+            expectedGradient[i] += series2Gradient[i];
+        }
+
+        final double[] aggregateGradient = aggregate.getGradientWrt(process.getDriftMatrix()).getGradientLogDensity(null);
+        assertEquals("Parallel aggregate gradient dimension",
+                expectedGradient.length,
+                aggregateGradient.length);
+        for (int i = 0; i < expectedGradient.length; ++i) {
+            assertEquals("Parallel aggregate should sum drift gradients at index " + i,
+                    expectedGradient[i],
+                    aggregateGradient[i],
+                    1e-8);
+        }
+
+        final TimeSeriesGradient hmcGradient = new TimeSeriesGradient(aggregate, process.getDriftMatrix());
+        final double[] hmcGradientValues = hmcGradient.getGradientLogDensity();
+        for (int i = 0; i < expectedGradient.length; ++i) {
+            assertEquals("HMC adapter should accept aggregate time-series gradient at index " + i,
+                    expectedGradient[i],
+                    hmcGradientValues[i],
+                    1e-8);
+        }
     }
 
     public void testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu() {

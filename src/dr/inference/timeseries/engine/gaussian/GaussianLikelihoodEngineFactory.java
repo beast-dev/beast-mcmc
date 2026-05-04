@@ -4,6 +4,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
+import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 
@@ -49,8 +50,13 @@ public final class GaussianLikelihoodEngineFactory {
                             "Process does not support canonical Gaussian branch transitions: "
                                     + process.getClass().getName());
                 }
+                final GaussianTransitionRepresentation transitionRepresentation =
+                        process.getRepresentation(GaussianTransitionRepresentation.class);
                 return new CanonicalKalmanLikelihoodEngine(
                         process.getRepresentation(CanonicalGaussianBranchTransitionKernel.class),
+                        transitionRepresentation instanceof CachedGaussianTransitionRepresentation
+                                ? (CachedGaussianTransitionRepresentation) transitionRepresentation
+                                : null,
                         observationModel,
                         timeGrid);
             default:

@@ -10,6 +10,8 @@ public interface CanonicalSmootherResults {
 
     CanonicalForwardTrajectory getCanonicalTrajectory();
 
+    CanonicalBranchGradientCache getCanonicalBranchGradientCache();
+
     GaussianTransitionRepresentation getTransitionRepresentation();
 
     TimeGrid getTimeGrid();

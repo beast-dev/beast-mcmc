@@ -1,0 +1,868 @@
+<?xml version="1.0" standalone="yes"?>
+<beast version="1.10">
+
+    <!--
+        Ten independent 7D time series with 50 observations each.
+        Synthetic data generated with seed 20260503 from one shared orthogonal-block OU process.
+        The 7D selection chart has one scalar block and three 2x2 polar blocks; dt=0.1 is repeated.
+    -->
+
+    <parameter id="ou.A.angles"
+               value="0.23 -0.17 0.11 0.07 -0.13 0.19 0.05 -0.09 0.14 -0.04 0.16 -0.12 0.08 0.21 -0.06 0.1 -0.18 0.03 0.15 -0.07 0.12"
+               lower="-3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793 -3.141592653589793"
+               upper="3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793 3.141592653589793"/>
+    <givensRotationMatrixParameter id="ou.A.rotation" dimension="7">
+        <angles><parameter idref="ou.A.angles"/></angles>
+    </givensRotationMatrixParameter>
+
+    <parameter id="ou.A.scalar" value="0.55" lower="0.0"/>
+    <parameter id="ou.A.rho" value="0.72 0.61 0.48" lower="0.0 0.0 0.0"/>
+    <parameter id="ou.A.theta" value="0.31 -0.24 0.18"
+               lower="-0.7853981633974483 -0.7853981633974483 -0.7853981633974483"
+               upper="0.7853981633974483 0.7853981633974483 0.7853981633974483"/>
+    <parameter id="ou.A.t" value="-0.05 0.04 -0.03"
+               lower="-1.0 -1.0 -1.0"
+               upper="1.0 1.0 1.0"/>
+    <orthogonalBlockDiagonalPolarStableMatrixParameter id="ou.A.block">
+        <orthogonalRotationMatrix><givensRotationMatrixParameter idref="ou.A.rotation"/></orthogonalRotationMatrix>
+        <scalarBlock><parameter idref="ou.A.scalar"/></scalarBlock>
+        <blockRho><parameter idref="ou.A.rho"/></blockRho>
+        <blockTheta><parameter idref="ou.A.theta"/></blockTheta>
+        <blockT><parameter idref="ou.A.t"/></blockT>
+    </orthogonalBlockDiagonalPolarStableMatrixParameter>
+
+    <matrixParameter id="ou.Q">
+        <parameter id="ou.Q.col1" value="0.0676 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.Q.col2" value="0.0000 0.0484 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.Q.col3" value="0.0000 0.0000 0.0576 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.Q.col4" value="0.0000 0.0000 0.0000 0.0441 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.Q.col5" value="0.0000 0.0000 0.0000 0.0000 0.0529 0.0000 0.0000"/>
+        <parameter id="ou.Q.col6" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.0400 0.0000"/>
+        <parameter id="ou.Q.col7" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0324"/>
+    </matrixParameter>
+
+    <matrixParameter id="ou.P0">
+        <parameter id="ou.P0.col1" value="0.1800 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.P0.col2" value="0.0000 0.1600 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.P0.col3" value="0.0000 0.0000 0.1700 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.P0.col4" value="0.0000 0.0000 0.0000 0.1500 0.0000 0.0000 0.0000"/>
+        <parameter id="ou.P0.col5" value="0.0000 0.0000 0.0000 0.0000 0.1400 0.0000 0.0000"/>
+        <parameter id="ou.P0.col6" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.1300 0.0000"/>
+        <parameter id="ou.P0.col7" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.1200"/>
+    </matrixParameter>
+
+    <parameter id="ou.mu" value="0.08 -0.11 0.16 -0.04 0.12 -0.09 0.05"/>
+
+    <ouProcessModel id="ou.shared" stateDimension="7" selectionChart="orthogonalBlock">
+        <driftMatrix><orthogonalBlockDiagonalPolarStableMatrixParameter idref="ou.A.block"/></driftMatrix>
+        <diffusionMatrix><matrixParameter idref="ou.Q"/></diffusionMatrix>
+        <stationaryMean><parameter idref="ou.mu"/></stationaryMean>
+        <initialCovariance><matrixParameter idref="ou.P0"/></initialCovariance>
+    </ouProcessModel>
+
+    <uniformTimeGrid id="shared.grid" timeCount="50" startTime="0.0" timeStep="0.1"/>
+
+    <matrixParameter id="obs.H">
+        <parameter id="obs.H.col1" value="1.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="obs.H.col2" value="0.0 1.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="obs.H.col3" value="0.0 0.0 1.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="obs.H.col4" value="0.0 0.0 0.0 1.0 0.0 0.0 0.0"/>
+        <parameter id="obs.H.col5" value="0.0 0.0 0.0 0.0 1.0 0.0 0.0"/>
+        <parameter id="obs.H.col6" value="0.0 0.0 0.0 0.0 0.0 1.0 0.0"/>
+        <parameter id="obs.H.col7" value="0.0 0.0 0.0 0.0 0.0 0.0 1.0"/>
+    </matrixParameter>
+    <matrixParameter id="obs.R">
+        <parameter id="obs.R.col1" value="0.0064 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="obs.R.col2" value="0.0000 0.0081 0.0000 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="obs.R.col3" value="0.0000 0.0000 0.0049 0.0000 0.0000 0.0000 0.0000"/>
+        <parameter id="obs.R.col4" value="0.0000 0.0000 0.0000 0.0064 0.0000 0.0000 0.0000"/>
+        <parameter id="obs.R.col5" value="0.0000 0.0000 0.0000 0.0000 0.0081 0.0000 0.0000"/>
+        <parameter id="obs.R.col6" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.0049 0.0000"/>
+        <parameter id="obs.R.col7" value="0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0036"/>
+    </matrixParameter>
+
+    <matrixParameter id="series1.Y">
+        <parameter id="series1.Y.col1" value="0.09195 0.40408 -0.43861 -0.25175 -0.57584 -0.42392 0.15998"/>
+        <parameter id="series1.Y.col2" value="0.19951 0.23318 -0.41044 -0.22917 -0.26028 -0.51830 0.15507"/>
+        <parameter id="series1.Y.col3" value="0.19237 0.19685 -0.41359 -0.24045 -0.29323 -0.66971 0.22676"/>
+        <parameter id="series1.Y.col4" value="0.29249 0.25537 -0.24386 -0.00306 -0.23690 -0.65694 0.08733"/>
+        <parameter id="series1.Y.col5" value="0.07839 0.11317 -0.29354 -0.19916 -0.07453 -0.42292 0.12607"/>
+        <parameter id="series1.Y.col6" value="0.21264 0.14972 -0.21591 -0.19411 0.10538 -0.44172 0.02018"/>
+        <parameter id="series1.Y.col7" value="0.18578 0.55196 -0.16172 -0.23842 0.13301 -0.44639 0.25211"/>
+        <parameter id="series1.Y.col8" value="0.01110 0.23890 -0.17875 -0.38397 0.09942 -0.40604 0.29185"/>
+        <parameter id="series1.Y.col9" value="0.00309 0.29754 -0.23703 -0.29083 0.03164 -0.45491 0.33644"/>
+        <parameter id="series1.Y.col10" value="-0.00195 0.05516 -0.28161 -0.08085 -0.28000 -0.43669 0.29102"/>
+        <parameter id="series1.Y.col11" value="0.02925 0.40087 -0.11356 -0.27568 -0.06072 -0.50447 0.06444"/>
+        <parameter id="series1.Y.col12" value="0.01060 0.30676 -0.18246 -0.19773 -0.22623 -0.49287 0.21202"/>
+        <parameter id="series1.Y.col13" value="-0.09599 0.22087 -0.40715 -0.07863 -0.27848 -0.51598 0.24211"/>
+        <parameter id="series1.Y.col14" value="-0.04696 0.19322 -0.37044 -0.13807 -0.07737 -0.62431 0.17289"/>
+        <parameter id="series1.Y.col15" value="-0.18130 0.15243 -0.30591 -0.13614 -0.19720 -0.67549 0.12374"/>
+        <parameter id="series1.Y.col16" value="0.17946 0.36718 -0.25651 0.07773 -0.29957 -0.53280 0.25107"/>
+        <parameter id="series1.Y.col17" value="0.11196 0.45986 -0.22245 -0.19140 -0.26463 -0.40660 0.19539"/>
+        <parameter id="series1.Y.col18" value="0.21633 0.42188 -0.23844 -0.08278 -0.40407 -0.36693 0.22396"/>
+        <parameter id="series1.Y.col19" value="0.14801 0.22756 -0.06464 -0.13631 -0.32085 -0.58372 0.19310"/>
+        <parameter id="series1.Y.col20" value="0.06272 0.34179 0.04495 -0.33477 -0.40901 -0.66017 0.09753"/>
+        <parameter id="series1.Y.col21" value="0.05161 0.28287 -0.03148 -0.14926 -0.20898 -0.36711 0.21452"/>
+        <parameter id="series1.Y.col22" value="-0.02268 0.25303 0.06318 -0.00768 0.15092 -0.43123 0.27329"/>
+        <parameter id="series1.Y.col23" value="-0.03264 0.21051 -0.08759 -0.05053 -0.02273 -0.29831 0.32066"/>
+        <parameter id="series1.Y.col24" value="-0.17527 0.41023 0.12176 0.18100 -0.16114 -0.49240 0.38762"/>
+        <parameter id="series1.Y.col25" value="-0.16028 0.07783 0.27784 -0.01673 -0.22072 -0.39507 0.35494"/>
+        <parameter id="series1.Y.col26" value="0.17727 0.49386 0.13193 0.03906 -0.20538 -0.31094 0.27953"/>
+        <parameter id="series1.Y.col27" value="-0.01696 0.36732 0.35134 -0.05357 -0.28732 -0.29153 0.17502"/>
+        <parameter id="series1.Y.col28" value="-0.09350 0.62612 0.13318 -0.02187 -0.21884 -0.26123 0.13498"/>
+        <parameter id="series1.Y.col29" value="-0.00943 0.43331 0.13776 -0.20756 -0.21925 -0.06286 0.13267"/>
+        <parameter id="series1.Y.col30" value="-0.13972 0.36695 0.17725 0.02943 -0.29395 -0.03471 0.21320"/>
+        <parameter id="series1.Y.col31" value="-0.14014 0.48992 -0.05147 -0.13167 -0.29955 -0.07978 0.13259"/>
+        <parameter id="series1.Y.col32" value="-0.06781 0.34839 -0.00743 -0.27849 -0.35180 -0.31172 0.13654"/>
+        <parameter id="series1.Y.col33" value="-0.05262 0.27866 0.10029 -0.15211 -0.37336 -0.06326 0.20683"/>
+        <parameter id="series1.Y.col34" value="-0.00249 0.27246 0.21269 -0.31101 -0.30096 0.02189 0.12446"/>
+        <parameter id="series1.Y.col35" value="0.05775 0.18309 0.29811 -0.56544 -0.41387 -0.13638 0.12568"/>
+        <parameter id="series1.Y.col36" value="0.02253 0.39975 0.15191 -0.52939 -0.22486 -0.09811 0.11227"/>
+        <parameter id="series1.Y.col37" value="0.26409 0.18672 0.13272 -0.55148 -0.34967 -0.17397 0.01836"/>
+        <parameter id="series1.Y.col38" value="0.13561 0.08380 0.00416 -0.62327 -0.13589 -0.10506 -0.02293"/>
+        <parameter id="series1.Y.col39" value="-0.02087 0.18305 -0.00893 -0.61455 -0.19980 -0.31337 0.01741"/>
+        <parameter id="series1.Y.col40" value="0.12765 0.16883 -0.10318 -0.52265 -0.27269 -0.36247 0.02482"/>
+        <parameter id="series1.Y.col41" value="0.14217 0.07831 -0.27404 -0.51999 -0.31202 -0.37585 0.09006"/>
+        <parameter id="series1.Y.col42" value="0.12658 0.11588 0.09974 -0.40131 -0.21858 -0.36478 0.05952"/>
+        <parameter id="series1.Y.col43" value="-0.06045 0.24286 0.19783 -0.45009 -0.30223 -0.42243 0.06305"/>
+        <parameter id="series1.Y.col44" value="-0.11932 0.32029 0.22176 -0.39100 -0.00251 -0.41259 0.09861"/>
+        <parameter id="series1.Y.col45" value="-0.17247 0.21932 0.31777 -0.23989 -0.23810 -0.42391 0.14704"/>
+        <parameter id="series1.Y.col46" value="-0.29474 0.23909 0.08620 -0.33512 -0.47015 -0.35698 0.05239"/>
+        <parameter id="series1.Y.col47" value="-0.24776 0.31225 0.18834 -0.42561 -0.36882 -0.36412 0.02821"/>
+        <parameter id="series1.Y.col48" value="-0.09025 0.50272 0.22099 -0.24958 -0.34053 -0.27483 -0.04435"/>
+        <parameter id="series1.Y.col49" value="-0.26089 0.37757 0.03914 -0.41262 -0.38777 -0.34174 -0.00615"/>
+        <parameter id="series1.Y.col50" value="-0.23947 0.48320 -0.05208 -0.14763 -0.12676 -0.45935 -0.06568"/>
+    </matrixParameter>
+
+    <matrixParameter id="series2.Y">
+        <parameter id="series2.Y.col1" value="0.70327 0.05303 -0.00487 0.51103 0.49278 -0.43410 -0.00927"/>
+        <parameter id="series2.Y.col2" value="0.50628 0.24944 -0.09019 0.65999 0.35865 -0.30929 -0.05479"/>
+        <parameter id="series2.Y.col3" value="0.44985 0.03964 0.02650 0.54235 0.31749 -0.18163 0.00910"/>
+        <parameter id="series2.Y.col4" value="0.60874 -0.05590 -0.03441 0.50118 0.36720 -0.27960 0.07397"/>
+        <parameter id="series2.Y.col5" value="0.50055 -0.12003 -0.14015 0.54494 0.36161 -0.29798 0.14539"/>
+        <parameter id="series2.Y.col6" value="0.68789 -0.14086 -0.19253 0.46503 0.16758 -0.24931 0.01376"/>
+        <parameter id="series2.Y.col7" value="0.55867 -0.22963 0.02107 0.47371 0.06745 -0.19669 0.04872"/>
+        <parameter id="series2.Y.col8" value="0.13928 0.05775 0.14059 0.15585 0.34216 -0.40567 0.08128"/>
+        <parameter id="series2.Y.col9" value="0.28239 -0.15480 0.28739 0.22757 -0.02773 -0.27625 0.26514"/>
+        <parameter id="series2.Y.col10" value="0.29831 0.05968 0.35184 0.26728 0.05581 -0.22058 0.22856"/>
+        <parameter id="series2.Y.col11" value="0.16668 0.06591 0.24586 0.10959 -0.20660 -0.47841 -0.05796"/>
+        <parameter id="series2.Y.col12" value="0.39921 -0.19017 0.24557 0.20810 0.18911 -0.52406 0.04393"/>
+        <parameter id="series2.Y.col13" value="0.33733 -0.26216 0.59114 0.04688 0.11030 -0.49970 0.24758"/>
+        <parameter id="series2.Y.col14" value="0.44327 -0.16739 0.51685 0.23631 -0.05600 -0.64760 0.16400"/>
+        <parameter id="series2.Y.col15" value="0.01122 -0.26259 0.43284 0.20545 0.04211 -0.51122 0.22913"/>
+        <parameter id="series2.Y.col16" value="0.10644 -0.14454 0.34896 0.00805 0.01080 -0.61510 0.24608"/>
+        <parameter id="series2.Y.col17" value="0.00626 -0.16376 0.21165 -0.02716 0.16269 -0.63812 0.12743"/>
+        <parameter id="series2.Y.col18" value="0.18271 0.02346 0.36811 0.24394 0.26301 -0.73146 0.16878"/>
+        <parameter id="series2.Y.col19" value="0.02175 -0.08279 0.35725 0.32926 0.16061 -0.56133 0.23105"/>
+        <parameter id="series2.Y.col20" value="-0.05868 -0.07339 0.22485 0.10293 0.23112 -0.38995 0.46267"/>
+        <parameter id="series2.Y.col21" value="-0.08827 -0.15101 0.00876 0.43403 0.25956 -0.35683 0.00824"/>
+        <parameter id="series2.Y.col22" value="0.07673 -0.06501 0.04154 0.22030 0.34018 -0.28299 0.09949"/>
+        <parameter id="series2.Y.col23" value="0.25512 -0.02620 0.29307 0.06057 0.45407 -0.39816 0.13789"/>
+        <parameter id="series2.Y.col24" value="0.35730 -0.01534 0.22141 0.06886 0.41812 -0.37975 0.14547"/>
+        <parameter id="series2.Y.col25" value="0.35638 -0.04233 0.30834 0.04584 0.53675 -0.48057 0.18058"/>
+        <parameter id="series2.Y.col26" value="0.26378 -0.09412 0.32068 -0.23070 0.16768 -0.40340 0.13418"/>
+        <parameter id="series2.Y.col27" value="0.30498 0.00363 0.37614 -0.20254 0.25807 -0.30873 0.15820"/>
+        <parameter id="series2.Y.col28" value="0.06377 -0.13123 0.36884 -0.47907 0.07923 -0.18431 0.10923"/>
+        <parameter id="series2.Y.col29" value="-0.00577 -0.09823 0.22537 -0.36252 0.22377 -0.36267 0.00945"/>
+        <parameter id="series2.Y.col30" value="0.15441 -0.33756 0.40153 -0.25775 0.24453 -0.36408 0.02143"/>
+        <parameter id="series2.Y.col31" value="0.11602 -0.33805 0.26023 -0.08008 0.29100 -0.27949 0.07851"/>
+        <parameter id="series2.Y.col32" value="0.24109 -0.43867 0.27970 0.02639 0.23119 -0.35008 0.21854"/>
+        <parameter id="series2.Y.col33" value="0.18166 -0.21944 0.23144 -0.08794 0.19688 -0.40867 0.27159"/>
+        <parameter id="series2.Y.col34" value="0.31435 -0.52873 0.28829 -0.10207 0.23388 -0.46529 0.33260"/>
+        <parameter id="series2.Y.col35" value="0.18354 -0.32969 0.12767 -0.20332 0.32501 -0.45163 0.18860"/>
+        <parameter id="series2.Y.col36" value="0.24281 -0.60003 0.18595 -0.08081 0.32333 -0.39364 0.21209"/>
+        <parameter id="series2.Y.col37" value="0.03439 -0.42102 -0.01788 -0.28288 0.30599 -0.41369 0.22481"/>
+        <parameter id="series2.Y.col38" value="0.08945 -0.35349 -0.02021 -0.18670 0.45665 -0.41172 0.04997"/>
+        <parameter id="series2.Y.col39" value="-0.11799 -0.43982 0.21978 -0.03045 0.31460 -0.33977 0.02968"/>
+        <parameter id="series2.Y.col40" value="-0.02445 -0.37384 0.10674 -0.08606 0.29340 -0.36119 0.09448"/>
+        <parameter id="series2.Y.col41" value="-0.04450 -0.37779 0.14535 -0.03867 0.12345 -0.44691 -0.11049"/>
+        <parameter id="series2.Y.col42" value="-0.16703 -0.41219 -0.06285 -0.15144 0.17624 -0.41625 -0.07895"/>
+        <parameter id="series2.Y.col43" value="-0.23456 -0.43052 0.12014 -0.11319 0.14317 -0.48900 0.03838"/>
+        <parameter id="series2.Y.col44" value="-0.14357 -0.23104 0.19472 -0.24599 0.05455 -0.45428 0.15256"/>
+        <parameter id="series2.Y.col45" value="-0.18583 -0.31115 0.19425 -0.36698 0.27850 -0.33761 0.15093"/>
+        <parameter id="series2.Y.col46" value="-0.22909 -0.21046 0.05076 -0.28755 0.13700 -0.21299 -0.01995"/>
+        <parameter id="series2.Y.col47" value="-0.28521 -0.40017 0.04690 -0.10610 0.07551 -0.27777 0.00421"/>
+        <parameter id="series2.Y.col48" value="-0.48657 -0.18398 0.02254 -0.27074 -0.02493 -0.27145 -0.07951"/>
+        <parameter id="series2.Y.col49" value="-0.39240 -0.35444 0.00830 -0.29382 0.19605 -0.45352 -0.09415"/>
+        <parameter id="series2.Y.col50" value="-0.32123 -0.46276 -0.07704 -0.19761 0.01419 -0.33882 -0.08083"/>
+    </matrixParameter>
+
+    <matrixParameter id="series3.Y">
+        <parameter id="series3.Y.col1" value="0.19324 -0.41815 -0.65375 -0.15959 -0.58016 -0.40635 -0.29046"/>
+        <parameter id="series3.Y.col2" value="0.28966 -0.26921 -0.64093 0.11090 -0.65931 -0.26838 -0.18469"/>
+        <parameter id="series3.Y.col3" value="0.06219 -0.53311 -0.55311 -0.00251 -0.58221 -0.31143 -0.33777"/>
+        <parameter id="series3.Y.col4" value="0.06778 -0.65047 -0.53431 0.13656 -0.29166 -0.66643 -0.19550"/>
+        <parameter id="series3.Y.col5" value="0.03095 -0.55652 -0.64056 0.10893 -0.22973 -0.31979 -0.18945"/>
+        <parameter id="series3.Y.col6" value="-0.06958 -0.55770 -0.72252 0.01626 -0.28762 -0.18728 -0.30512"/>
+        <parameter id="series3.Y.col7" value="0.08611 -0.44205 -0.71223 0.01214 -0.27721 -0.18829 -0.15171"/>
+        <parameter id="series3.Y.col8" value="0.20298 -0.33815 -0.69388 0.02518 -0.04895 -0.24024 -0.26411"/>
+        <parameter id="series3.Y.col9" value="0.16218 -0.34394 -0.56865 -0.00198 -0.00512 -0.30306 -0.23583"/>
+        <parameter id="series3.Y.col10" value="0.38884 -0.36157 -0.66206 0.01375 0.00230 -0.11156 -0.26934"/>
+        <parameter id="series3.Y.col11" value="0.24684 -0.41338 -0.50410 0.00558 -0.07049 -0.14128 -0.35879"/>
+        <parameter id="series3.Y.col12" value="0.14874 -0.39502 -0.33544 -0.13519 -0.21334 -0.15983 -0.23647"/>
+        <parameter id="series3.Y.col13" value="0.21379 -0.34906 -0.43306 -0.08135 -0.16320 -0.19029 -0.34274"/>
+        <parameter id="series3.Y.col14" value="0.10860 -0.40786 -0.47757 0.09145 -0.18824 -0.20853 -0.15997"/>
+        <parameter id="series3.Y.col15" value="0.15463 -0.50616 -0.51471 -0.25697 -0.07169 -0.11461 -0.33552"/>
+        <parameter id="series3.Y.col16" value="0.14706 -0.39145 -0.44264 0.03494 -0.02120 -0.08821 -0.36302"/>
+        <parameter id="series3.Y.col17" value="-0.00132 -0.39078 -0.11500 -0.20714 0.09480 0.03196 -0.37475"/>
+        <parameter id="series3.Y.col18" value="0.14056 -0.26780 -0.18468 -0.13312 0.05362 0.11148 -0.46714"/>
+        <parameter id="series3.Y.col19" value="0.28104 -0.35594 -0.35790 -0.04594 0.03078 0.10542 -0.57800"/>
+        <parameter id="series3.Y.col20" value="0.18797 -0.05692 -0.24744 0.04772 0.42388 0.21908 -0.57333"/>
+        <parameter id="series3.Y.col21" value="-0.07000 -0.18072 -0.13981 -0.12251 0.01754 0.10063 -0.59366"/>
+        <parameter id="series3.Y.col22" value="0.11696 0.04313 -0.07533 -0.10465 0.14033 0.08077 -0.40881"/>
+        <parameter id="series3.Y.col23" value="-0.01829 0.02424 -0.11263 -0.27552 0.08552 0.13446 -0.47583"/>
+        <parameter id="series3.Y.col24" value="0.17010 -0.00808 -0.08389 -0.27055 0.17578 0.06793 -0.20971"/>
+        <parameter id="series3.Y.col25" value="0.28681 -0.01893 -0.08743 -0.11338 0.05415 0.03784 -0.36919"/>
+        <parameter id="series3.Y.col26" value="0.31745 0.26098 -0.03544 -0.10316 0.26191 0.04563 -0.19462"/>
+        <parameter id="series3.Y.col27" value="0.54434 0.04745 -0.07800 -0.21853 0.53333 -0.08970 -0.35491"/>
+        <parameter id="series3.Y.col28" value="0.64534 -0.10845 0.07646 -0.26395 0.35579 -0.22192 -0.22960"/>
+        <parameter id="series3.Y.col29" value="0.51163 -0.32129 0.17305 -0.07387 0.19536 -0.10697 -0.27683"/>
+        <parameter id="series3.Y.col30" value="0.43299 -0.12961 0.16620 0.01626 0.42589 -0.16791 -0.02075"/>
+        <parameter id="series3.Y.col31" value="0.42183 -0.37909 0.13344 0.00730 0.24626 0.01328 -0.17852"/>
+        <parameter id="series3.Y.col32" value="0.16287 -0.38123 0.30800 -0.04052 0.28767 -0.20572 -0.06790"/>
+        <parameter id="series3.Y.col33" value="0.21985 -0.33531 0.32264 0.11981 0.16021 -0.06834 -0.14982"/>
+        <parameter id="series3.Y.col34" value="0.26934 -0.35072 0.29957 -0.04456 0.13974 -0.01450 -0.19824"/>
+        <parameter id="series3.Y.col35" value="0.24387 -0.25739 0.48594 -0.04297 -0.00573 -0.06544 -0.21973"/>
+        <parameter id="series3.Y.col36" value="0.27316 -0.32419 0.49445 -0.13346 0.04981 -0.09583 -0.11241"/>
+        <parameter id="series3.Y.col37" value="0.27159 -0.14513 0.18787 -0.01581 0.23641 -0.35942 -0.21761"/>
+        <parameter id="series3.Y.col38" value="0.19128 -0.45574 0.33097 0.02809 0.17797 -0.10374 -0.21983"/>
+        <parameter id="series3.Y.col39" value="0.22315 -0.35879 0.44261 0.02313 0.17715 0.00182 -0.24902"/>
+        <parameter id="series3.Y.col40" value="0.44609 -0.49936 0.19721 -0.00354 0.28947 -0.06629 -0.20826"/>
+        <parameter id="series3.Y.col41" value="0.47593 -0.36762 0.37099 -0.15070 0.18169 -0.14753 -0.16776"/>
+        <parameter id="series3.Y.col42" value="0.54102 -0.47184 0.21142 0.02763 0.27555 0.00690 -0.24221"/>
+        <parameter id="series3.Y.col43" value="0.65335 -0.38107 0.22564 -0.00830 0.21965 -0.17225 0.06014"/>
+        <parameter id="series3.Y.col44" value="0.74324 -0.35996 -0.03823 0.03973 0.12118 -0.02481 -0.10297"/>
+        <parameter id="series3.Y.col45" value="0.65438 -0.47002 0.08746 -0.08393 0.11868 0.01557 0.06403"/>
+        <parameter id="series3.Y.col46" value="0.52608 -0.45931 0.18972 0.05836 0.06100 0.07734 0.06175"/>
+        <parameter id="series3.Y.col47" value="0.41945 -0.36142 0.29943 -0.02784 0.07942 -0.12588 -0.02011"/>
+        <parameter id="series3.Y.col48" value="0.35133 -0.40811 0.25002 -0.04588 0.05128 0.00837 0.04359"/>
+        <parameter id="series3.Y.col49" value="0.37661 -0.25028 0.28232 -0.03859 0.25558 -0.11747 0.02999"/>
+        <parameter id="series3.Y.col50" value="0.54260 -0.17104 0.32050 -0.09243 0.12940 -0.07980 -0.06450"/>
+    </matrixParameter>
+
+    <matrixParameter id="series4.Y">
+        <parameter id="series4.Y.col1" value="-0.37156 -0.32460 0.18525 -0.24209 -0.37863 0.80334 0.39087"/>
+        <parameter id="series4.Y.col2" value="-0.43954 -0.39866 0.17221 -0.04194 -0.38121 0.86458 0.41716"/>
+        <parameter id="series4.Y.col3" value="-0.47182 -0.47471 0.11246 0.04691 -0.39403 0.72731 0.35570"/>
+        <parameter id="series4.Y.col4" value="-0.35656 -0.15189 -0.04858 -0.09519 -0.45348 0.72210 0.41926"/>
+        <parameter id="series4.Y.col5" value="-0.38957 -0.46380 0.07551 -0.15455 -0.46902 0.50877 0.47675"/>
+        <parameter id="series4.Y.col6" value="-0.42102 -0.56017 -0.17812 0.08445 -0.39197 0.52159 0.41345"/>
+        <parameter id="series4.Y.col7" value="-0.29785 -0.49229 -0.27857 -0.07839 -0.26495 0.47176 0.25762"/>
+        <parameter id="series4.Y.col8" value="-0.38190 -0.45465 -0.32213 0.15764 -0.32173 0.41221 0.42999"/>
+        <parameter id="series4.Y.col9" value="-0.33199 -0.42916 -0.21781 -0.12788 -0.54017 0.32904 0.25103"/>
+        <parameter id="series4.Y.col10" value="-0.05490 -0.21008 -0.33991 -0.04480 -0.57740 0.40204 0.35495"/>
+        <parameter id="series4.Y.col11" value="-0.15067 -0.41695 -0.08272 0.09976 -0.48907 0.29986 0.27686"/>
+        <parameter id="series4.Y.col12" value="-0.09352 -0.31759 -0.08730 0.12111 -0.33611 0.14905 0.36420"/>
+        <parameter id="series4.Y.col13" value="0.22622 -0.14973 -0.17856 -0.05839 -0.46599 0.37127 0.44202"/>
+        <parameter id="series4.Y.col14" value="-0.06221 -0.32098 -0.13925 -0.12062 -0.49303 0.31566 0.49065"/>
+        <parameter id="series4.Y.col15" value="-0.05811 -0.17900 -0.28987 -0.21456 -0.34863 0.18486 0.57405"/>
+        <parameter id="series4.Y.col16" value="-0.02835 -0.16957 -0.06032 -0.07979 -0.69079 0.06710 0.55090"/>
+        <parameter id="series4.Y.col17" value="-0.22439 -0.14265 0.10349 -0.05208 -0.56549 0.11645 0.63694"/>
+        <parameter id="series4.Y.col18" value="-0.12218 -0.29835 0.08663 -0.12377 -0.47623 -0.00237 0.57819"/>
+        <parameter id="series4.Y.col19" value="-0.21840 -0.13766 -0.13117 -0.19763 -0.53262 -0.12291 0.45384"/>
+        <parameter id="series4.Y.col20" value="-0.30396 0.01580 0.08403 -0.12729 -0.71327 -0.09880 0.51006"/>
+        <parameter id="series4.Y.col21" value="-0.21198 -0.19379 -0.04655 -0.10811 -0.60693 -0.11225 0.50511"/>
+        <parameter id="series4.Y.col22" value="-0.47602 -0.21706 0.05485 -0.28586 -0.47160 -0.23007 0.39493"/>
+        <parameter id="series4.Y.col23" value="-0.24045 -0.10068 0.02358 -0.21488 -0.76588 -0.24416 0.45771"/>
+        <parameter id="series4.Y.col24" value="-0.15919 -0.09378 0.16798 -0.20202 -0.51323 -0.25557 0.27322"/>
+        <parameter id="series4.Y.col25" value="-0.12663 -0.18186 0.22059 -0.09672 -0.58245 -0.31171 0.25447"/>
+        <parameter id="series4.Y.col26" value="-0.26133 -0.35373 0.42803 -0.40732 -0.35927 -0.18777 0.21913"/>
+        <parameter id="series4.Y.col27" value="-0.05986 -0.11757 0.25810 -0.18660 -0.44238 -0.27616 0.18843"/>
+        <parameter id="series4.Y.col28" value="-0.07640 0.00558 0.33817 -0.24771 -0.69990 -0.12975 0.23400"/>
+        <parameter id="series4.Y.col29" value="-0.04292 -0.23715 0.27920 -0.04895 -0.48353 -0.19515 0.39234"/>
+        <parameter id="series4.Y.col30" value="0.06517 -0.24433 0.37339 -0.02542 -0.37250 -0.23151 0.18677"/>
+        <parameter id="series4.Y.col31" value="0.05869 -0.26821 0.39561 0.02090 -0.45513 -0.38232 0.15929"/>
+        <parameter id="series4.Y.col32" value="0.12478 -0.36196 0.25983 0.03508 -0.36380 -0.23852 0.27067"/>
+        <parameter id="series4.Y.col33" value="-0.25938 -0.26134 0.24319 -0.26015 -0.27645 -0.32414 0.24054"/>
+        <parameter id="series4.Y.col34" value="0.17028 -0.15045 0.23536 -0.05662 -0.36133 -0.20633 0.19079"/>
+        <parameter id="series4.Y.col35" value="0.11826 -0.27219 0.19842 -0.24343 -0.53607 -0.33123 0.21942"/>
+        <parameter id="series4.Y.col36" value="0.36441 -0.14265 0.10540 -0.04379 -0.31767 -0.39241 0.21577"/>
+        <parameter id="series4.Y.col37" value="0.27744 -0.18084 0.12932 0.18949 -0.33127 -0.33294 0.22808"/>
+        <parameter id="series4.Y.col38" value="0.33715 -0.13482 0.23224 0.16447 -0.53127 -0.32434 0.39384"/>
+        <parameter id="series4.Y.col39" value="0.15689 0.01602 0.18502 0.37232 -0.40154 -0.35150 0.32051"/>
+        <parameter id="series4.Y.col40" value="0.12803 -0.08210 0.07957 0.21026 -0.41484 -0.39172 0.35317"/>
+        <parameter id="series4.Y.col41" value="0.22954 0.15341 0.08746 0.19531 -0.39343 -0.12344 0.34386"/>
+        <parameter id="series4.Y.col42" value="0.24698 0.12424 0.31254 0.08985 -0.06690 -0.28863 0.32684"/>
+        <parameter id="series4.Y.col43" value="0.34490 0.07013 0.36445 0.29956 -0.42416 -0.29327 0.44309"/>
+        <parameter id="series4.Y.col44" value="0.49885 0.02290 0.37617 0.23403 -0.34580 -0.22816 0.40524"/>
+        <parameter id="series4.Y.col45" value="0.17110 0.01160 0.26734 0.11757 -0.27578 -0.27843 0.49662"/>
+        <parameter id="series4.Y.col46" value="0.07886 0.07136 0.16355 0.16845 -0.28447 -0.31855 0.42728"/>
+        <parameter id="series4.Y.col47" value="-0.16500 0.21203 0.31342 0.08342 -0.02393 -0.31580 0.41239"/>
+        <parameter id="series4.Y.col48" value="-0.15381 0.21570 0.32129 0.19569 -0.38967 -0.14821 0.30788"/>
+        <parameter id="series4.Y.col49" value="0.04356 0.32456 0.31027 0.09979 -0.08054 -0.27018 0.31350"/>
+        <parameter id="series4.Y.col50" value="0.17982 0.35398 0.26761 0.01676 0.02082 0.05010 0.26247"/>
+    </matrixParameter>
+
+    <matrixParameter id="series5.Y">
+        <parameter id="series5.Y.col1" value="-0.09134 -0.68940 0.03839 0.43884 -0.39105 -0.58694 0.28155"/>
+        <parameter id="series5.Y.col2" value="-0.19327 -0.72080 -0.05832 0.43485 -0.24205 -0.59932 0.20891"/>
+        <parameter id="series5.Y.col3" value="-0.19057 -0.75644 -0.12961 0.35973 -0.43992 -0.63324 0.29982"/>
+        <parameter id="series5.Y.col4" value="-0.33549 -0.66038 -0.15467 0.30222 -0.27076 -0.49809 0.24228"/>
+        <parameter id="series5.Y.col5" value="-0.20560 -0.56061 -0.04045 0.21999 -0.19291 -0.64535 0.07879"/>
+        <parameter id="series5.Y.col6" value="0.15730 -0.46405 0.12609 0.34882 -0.27192 -0.58763 0.31071"/>
+        <parameter id="series5.Y.col7" value="0.01943 -0.39558 -0.04584 0.30327 -0.32694 -0.60655 0.12245"/>
+        <parameter id="series5.Y.col8" value="0.04971 -0.31714 -0.14198 0.12370 -0.23703 -0.57731 -0.03293"/>
+        <parameter id="series5.Y.col9" value="-0.19693 -0.25126 -0.30939 0.26512 -0.08365 -0.52904 -0.04944"/>
+        <parameter id="series5.Y.col10" value="-0.19406 -0.16476 -0.04783 0.07357 -0.07348 -0.33151 -0.02403"/>
+        <parameter id="series5.Y.col11" value="-0.12404 0.00643 -0.05487 0.36626 -0.04805 -0.29217 0.00112"/>
+        <parameter id="series5.Y.col12" value="0.04294 0.01908 -0.06482 0.26744 -0.09586 -0.37773 -0.01763"/>
+        <parameter id="series5.Y.col13" value="-0.07006 -0.02775 0.13841 0.35172 0.00559 -0.37916 -0.00161"/>
+        <parameter id="series5.Y.col14" value="-0.06908 0.20375 -0.00614 0.23553 -0.10361 -0.17134 0.00323"/>
+        <parameter id="series5.Y.col15" value="-0.06954 -0.16540 -0.15628 0.04010 -0.02951 -0.20164 -0.13218"/>
+        <parameter id="series5.Y.col16" value="-0.29576 -0.01722 -0.11003 0.28990 -0.11053 -0.18918 0.02828"/>
+        <parameter id="series5.Y.col17" value="-0.03775 0.11450 -0.33996 0.07317 0.16691 -0.15367 0.05775"/>
+        <parameter id="series5.Y.col18" value="-0.07825 0.02244 -0.11430 0.04078 0.47034 -0.07379 -0.13109"/>
+        <parameter id="series5.Y.col19" value="0.01837 0.05319 -0.24172 0.35869 0.41809 -0.15333 -0.09029"/>
+        <parameter id="series5.Y.col20" value="0.02037 -0.09898 -0.14331 0.04251 0.34101 -0.08362 -0.19327"/>
+        <parameter id="series5.Y.col21" value="-0.09767 -0.09531 -0.08319 -0.11842 0.03424 -0.12442 -0.20134"/>
+        <parameter id="series5.Y.col22" value="0.02018 -0.16598 -0.06316 -0.03397 -0.00017 0.01248 -0.04589"/>
+        <parameter id="series5.Y.col23" value="0.04694 0.17148 0.05670 0.07702 0.07982 -0.14239 -0.04589"/>
+        <parameter id="series5.Y.col24" value="-0.02153 0.07586 0.13670 0.06993 0.25215 0.08185 -0.05952"/>
+        <parameter id="series5.Y.col25" value="-0.24653 0.05520 -0.10444 -0.00246 0.29596 0.02260 -0.04539"/>
+        <parameter id="series5.Y.col26" value="-0.28846 -0.10336 0.15053 -0.06528 0.20253 -0.04189 -0.04837"/>
+        <parameter id="series5.Y.col27" value="-0.38045 -0.23919 0.27507 -0.28920 0.41173 0.07740 -0.05116"/>
+        <parameter id="series5.Y.col28" value="-0.49532 -0.01859 0.06220 -0.14673 0.26713 0.28436 -0.00746"/>
+        <parameter id="series5.Y.col29" value="-0.56529 0.01109 0.24527 -0.20902 0.16628 0.12682 -0.03566"/>
+        <parameter id="series5.Y.col30" value="-0.41931 -0.20413 0.21623 -0.24029 0.28917 0.11913 -0.01388"/>
+        <parameter id="series5.Y.col31" value="-0.45143 -0.02770 0.09236 -0.35262 0.42963 -0.01277 0.06445"/>
+        <parameter id="series5.Y.col32" value="-0.51613 -0.16151 0.03375 -0.18675 0.53445 0.08832 0.05121"/>
+        <parameter id="series5.Y.col33" value="-0.43772 -0.22741 -0.18930 -0.37773 0.38883 0.12940 -0.00854"/>
+        <parameter id="series5.Y.col34" value="-0.43624 0.01979 -0.25645 -0.14065 0.26595 -0.06645 -0.06720"/>
+        <parameter id="series5.Y.col35" value="-0.73191 -0.10325 -0.24059 -0.12214 0.40070 -0.02606 -0.11808"/>
+        <parameter id="series5.Y.col36" value="-0.60696 -0.16976 -0.29323 -0.08847 0.37005 0.01384 -0.10662"/>
+        <parameter id="series5.Y.col37" value="-0.44732 -0.10869 -0.21497 -0.15082 0.46847 0.10837 -0.06208"/>
+        <parameter id="series5.Y.col38" value="-0.33651 -0.10574 -0.06981 0.11291 0.25650 0.00525 -0.16885"/>
+        <parameter id="series5.Y.col39" value="-0.45571 -0.27363 -0.14154 0.04454 0.27838 -0.01616 -0.31757"/>
+        <parameter id="series5.Y.col40" value="-0.43253 -0.25659 -0.22518 -0.01073 0.10576 -0.14097 -0.20107"/>
+        <parameter id="series5.Y.col41" value="-0.43412 -0.00699 -0.17199 0.08427 0.09825 -0.00042 -0.06697"/>
+        <parameter id="series5.Y.col42" value="-0.44211 -0.01528 -0.29634 -0.00185 0.25125 -0.14305 0.05952"/>
+        <parameter id="series5.Y.col43" value="-0.19968 -0.15712 -0.24320 0.18753 0.16637 -0.01718 -0.00534"/>
+        <parameter id="series5.Y.col44" value="-0.40153 -0.12751 -0.09846 0.19521 0.15789 -0.04647 0.07467"/>
+        <parameter id="series5.Y.col45" value="-0.24036 -0.05056 0.13784 0.13475 -0.02829 0.03763 0.10189"/>
+        <parameter id="series5.Y.col46" value="-0.14501 0.01952 -0.08639 0.15724 0.15072 0.45670 0.15725"/>
+        <parameter id="series5.Y.col47" value="-0.29725 -0.14919 0.00397 0.19153 0.14439 0.20614 0.27876"/>
+        <parameter id="series5.Y.col48" value="-0.12243 0.02619 -0.23480 0.34090 0.15557 0.41695 0.17106"/>
+        <parameter id="series5.Y.col49" value="-0.32509 -0.15351 0.10880 0.15454 0.03566 0.38698 0.16043"/>
+        <parameter id="series5.Y.col50" value="-0.43239 -0.11793 0.23884 0.30027 0.09242 0.10616 0.14268"/>
+    </matrixParameter>
+
+    <matrixParameter id="series6.Y">
+        <parameter id="series6.Y.col1" value="0.47487 -0.63729 0.00756 -0.43250 0.64611 -0.17704 -0.21868"/>
+        <parameter id="series6.Y.col2" value="0.57285 -0.64882 0.06806 -0.25036 0.32813 -0.20977 -0.16521"/>
+        <parameter id="series6.Y.col3" value="0.47411 -0.59830 -0.07655 -0.13473 0.41861 -0.33299 -0.11318"/>
+        <parameter id="series6.Y.col4" value="0.32604 -0.78145 -0.00529 -0.18151 0.29393 -0.27776 -0.05188"/>
+        <parameter id="series6.Y.col5" value="0.53574 -0.80538 0.06607 -0.16887 0.66931 -0.35621 -0.00936"/>
+        <parameter id="series6.Y.col6" value="0.30142 -0.81728 0.10494 -0.39219 0.49518 -0.40881 0.00094"/>
+        <parameter id="series6.Y.col7" value="0.29324 -0.60303 0.06129 -0.04790 0.54407 -0.36146 -0.07630"/>
+        <parameter id="series6.Y.col8" value="0.25599 -0.39434 0.12786 -0.20289 0.49780 -0.26968 -0.08400"/>
+        <parameter id="series6.Y.col9" value="0.11836 -0.31752 0.32834 -0.03349 0.60961 -0.05794 0.01386"/>
+        <parameter id="series6.Y.col10" value="0.09614 -0.57886 0.26098 -0.15111 0.57485 -0.43584 0.05859"/>
+        <parameter id="series6.Y.col11" value="-0.00104 -0.53959 0.31195 0.00003 0.47321 -0.26025 0.06252"/>
+        <parameter id="series6.Y.col12" value="-0.06771 -0.19092 0.38444 -0.13850 0.29056 -0.09387 0.14420"/>
+        <parameter id="series6.Y.col13" value="-0.01185 -0.16446 0.37294 -0.13863 0.31281 -0.14778 0.06616"/>
+        <parameter id="series6.Y.col14" value="-0.06049 -0.09612 0.28134 -0.06950 0.04714 0.09959 0.01794"/>
+        <parameter id="series6.Y.col15" value="-0.05790 -0.18387 0.23611 -0.20434 0.45207 -0.27944 0.06935"/>
+        <parameter id="series6.Y.col16" value="0.16807 -0.11386 0.19806 -0.08715 0.35659 -0.14984 -0.07148"/>
+        <parameter id="series6.Y.col17" value="0.12162 -0.07571 0.17160 -0.08497 0.52701 0.00573 -0.06858"/>
+        <parameter id="series6.Y.col18" value="-0.00661 -0.12293 0.24022 -0.03337 0.27649 -0.06830 -0.04022"/>
+        <parameter id="series6.Y.col19" value="0.18940 -0.13865 0.31619 -0.07270 0.31952 0.21042 -0.02435"/>
+        <parameter id="series6.Y.col20" value="0.13174 -0.24929 0.25197 -0.16672 0.34053 0.10095 -0.13582"/>
+        <parameter id="series6.Y.col21" value="0.20174 -0.15025 0.28784 -0.14286 0.38851 -0.07146 -0.13244"/>
+        <parameter id="series6.Y.col22" value="0.04415 -0.13333 0.48425 -0.11680 0.20811 0.03995 -0.14108"/>
+        <parameter id="series6.Y.col23" value="-0.13405 -0.45799 0.42276 -0.29846 0.25839 0.02585 -0.24839"/>
+        <parameter id="series6.Y.col24" value="0.14480 -0.32310 0.55196 -0.05652 0.30390 0.09828 -0.19049"/>
+        <parameter id="series6.Y.col25" value="0.08007 -0.26719 0.41968 -0.05027 0.33298 0.08670 -0.13233"/>
+        <parameter id="series6.Y.col26" value="-0.12649 -0.18260 0.61516 -0.15127 0.29579 0.15132 -0.07576"/>
+        <parameter id="series6.Y.col27" value="-0.15505 -0.35353 0.53084 -0.14734 0.67157 0.05005 -0.15119"/>
+        <parameter id="series6.Y.col28" value="-0.24931 -0.33981 0.51252 -0.31210 0.35208 -0.00558 -0.04353"/>
+        <parameter id="series6.Y.col29" value="-0.22017 -0.30108 0.66221 -0.16407 0.35318 0.02443 -0.10187"/>
+        <parameter id="series6.Y.col30" value="-0.04445 -0.02973 0.61589 -0.02313 0.10231 -0.13691 -0.06253"/>
+        <parameter id="series6.Y.col31" value="-0.02387 -0.23100 0.57642 -0.14078 0.19542 -0.18061 -0.09696"/>
+        <parameter id="series6.Y.col32" value="-0.10600 -0.52113 0.64613 0.00025 0.15964 -0.17847 -0.02741"/>
+        <parameter id="series6.Y.col33" value="-0.17399 -0.55938 0.62320 -0.05403 0.21325 -0.31515 -0.08443"/>
+        <parameter id="series6.Y.col34" value="-0.15088 -0.55693 0.60564 -0.17873 0.19404 -0.19723 -0.07893"/>
+        <parameter id="series6.Y.col35" value="-0.27988 -0.25289 0.68260 0.04485 0.08379 -0.03235 -0.05923"/>
+        <parameter id="series6.Y.col36" value="-0.11510 -0.36987 0.70618 0.02096 -0.26120 0.04337 0.01212"/>
+        <parameter id="series6.Y.col37" value="-0.10296 -0.25434 0.64057 -0.16886 -0.00550 -0.15801 0.17854"/>
+        <parameter id="series6.Y.col38" value="-0.11038 -0.23581 0.68696 -0.34056 0.16930 -0.01744 0.12001"/>
+        <parameter id="series6.Y.col39" value="-0.07948 -0.44853 0.65616 -0.28274 0.14320 0.08127 0.04505"/>
+        <parameter id="series6.Y.col40" value="0.18004 -0.51429 0.55282 -0.19845 0.05048 -0.05825 0.06239"/>
+        <parameter id="series6.Y.col41" value="0.01697 -0.41015 0.42661 -0.15054 0.08668 0.09448 0.08312"/>
+        <parameter id="series6.Y.col42" value="0.15015 -0.38479 0.55933 -0.20265 0.19858 0.02257 -0.07967"/>
+        <parameter id="series6.Y.col43" value="-0.16202 -0.37245 0.36274 0.03173 0.25483 0.17459 -0.05704"/>
+        <parameter id="series6.Y.col44" value="0.00399 -0.51207 0.61504 0.04216 0.38207 0.19339 0.13497"/>
+        <parameter id="series6.Y.col45" value="-0.16191 -0.41842 0.55120 -0.10467 0.37627 -0.01030 0.18932"/>
+        <parameter id="series6.Y.col46" value="-0.02614 -0.45434 0.57965 -0.16586 0.32736 -0.04705 0.18442"/>
+        <parameter id="series6.Y.col47" value="-0.21366 -0.44116 0.51609 0.12631 0.22334 0.06023 0.13626"/>
+        <parameter id="series6.Y.col48" value="-0.19090 -0.49597 0.42089 0.09169 -0.05231 -0.25707 0.20894"/>
+        <parameter id="series6.Y.col49" value="-0.32008 -0.40893 0.56783 0.39676 -0.02403 -0.06438 0.24885"/>
+        <parameter id="series6.Y.col50" value="-0.49643 -0.34965 0.60126 0.23988 -0.20250 -0.18323 0.31846"/>
+    </matrixParameter>
+
+    <matrixParameter id="series7.Y">
+        <parameter id="series7.Y.col1" value="0.13814 0.03782 0.17427 -0.76734 -0.31476 0.39726 0.18301"/>
+        <parameter id="series7.Y.col2" value="0.12373 0.04803 0.37411 -0.55309 -0.18841 0.44931 0.27372"/>
+        <parameter id="series7.Y.col3" value="0.15241 0.01983 0.35420 -0.75504 -0.16646 0.41157 0.22941"/>
+        <parameter id="series7.Y.col4" value="0.21980 0.07485 0.16429 -0.58951 -0.12266 0.25737 0.22136"/>
+        <parameter id="series7.Y.col5" value="0.18897 0.16472 0.29338 -0.46827 -0.25308 0.24456 0.11831"/>
+        <parameter id="series7.Y.col6" value="0.28647 -0.02415 0.15980 -0.32251 -0.04788 0.13217 0.16308"/>
+        <parameter id="series7.Y.col7" value="0.24244 0.15210 0.19022 -0.46753 -0.13022 0.28528 0.03307"/>
+        <parameter id="series7.Y.col8" value="0.16638 -0.07323 0.20441 -0.35350 -0.13368 0.34355 -0.02122"/>
+        <parameter id="series7.Y.col9" value="0.27680 0.07413 0.26723 -0.34218 -0.38281 0.25133 0.04381"/>
+        <parameter id="series7.Y.col10" value="0.39418 -0.05330 0.24426 -0.38763 -0.26138 0.30980 0.01243"/>
+        <parameter id="series7.Y.col11" value="0.37974 -0.26725 0.31186 -0.49823 -0.14657 0.20838 0.05255"/>
+        <parameter id="series7.Y.col12" value="0.36630 -0.17147 0.25712 -0.36973 -0.26613 0.18861 0.05680"/>
+        <parameter id="series7.Y.col13" value="0.21550 -0.02639 0.26611 -0.30676 -0.10810 0.16534 -0.07698"/>
+        <parameter id="series7.Y.col14" value="0.32109 -0.19831 0.54417 -0.18051 -0.05940 0.11389 0.12598"/>
+        <parameter id="series7.Y.col15" value="0.32899 -0.20118 0.17779 -0.24179 0.00393 0.18674 0.10779"/>
+        <parameter id="series7.Y.col16" value="0.47153 -0.22028 0.30395 -0.28128 0.00842 0.18142 -0.00556"/>
+        <parameter id="series7.Y.col17" value="0.56677 -0.16973 0.11928 -0.20828 -0.03518 0.06727 0.07784"/>
+        <parameter id="series7.Y.col18" value="0.47205 -0.08726 0.05860 -0.13390 -0.13387 0.09866 0.16527"/>
+        <parameter id="series7.Y.col19" value="0.62228 -0.02889 0.13331 -0.10938 0.10492 0.03430 0.10002"/>
+        <parameter id="series7.Y.col20" value="0.44828 -0.30654 0.19644 -0.06367 0.09941 0.05097 0.13710"/>
+        <parameter id="series7.Y.col21" value="0.53295 -0.18622 0.02469 -0.06985 0.26294 -0.09137 0.11055"/>
+        <parameter id="series7.Y.col22" value="0.50051 -0.22866 0.12947 0.18877 0.49805 -0.00037 0.02034"/>
+        <parameter id="series7.Y.col23" value="0.46626 -0.03032 0.09623 0.23444 0.19204 -0.20188 -0.00993"/>
+        <parameter id="series7.Y.col24" value="0.43071 -0.15523 0.13459 0.07083 0.49726 -0.29740 0.01948"/>
+        <parameter id="series7.Y.col25" value="0.48344 -0.09062 0.00850 0.05573 0.03841 -0.14218 0.03875"/>
+        <parameter id="series7.Y.col26" value="0.54501 0.05586 0.03605 -0.00188 0.15491 -0.07793 -0.03155"/>
+        <parameter id="series7.Y.col27" value="0.32808 0.11252 0.11075 -0.04226 0.11599 0.05995 0.25191"/>
+        <parameter id="series7.Y.col28" value="0.36248 -0.01750 0.22288 -0.00252 0.04205 0.03159 0.06277"/>
+        <parameter id="series7.Y.col29" value="0.17890 0.18581 0.15349 0.03873 0.18467 0.00336 0.09262"/>
+        <parameter id="series7.Y.col30" value="0.05261 0.15639 -0.00485 0.03703 0.01542 0.00621 0.27933"/>
+        <parameter id="series7.Y.col31" value="0.32018 0.24897 0.22025 -0.03139 0.24184 -0.13936 0.23486"/>
+        <parameter id="series7.Y.col32" value="0.09663 0.31272 0.04082 0.19719 0.20525 -0.07678 0.25167"/>
+        <parameter id="series7.Y.col33" value="0.29908 0.37861 0.13802 0.02540 0.26030 0.00825 0.14451"/>
+        <parameter id="series7.Y.col34" value="0.26173 0.11867 0.24174 0.09299 0.01645 -0.12228 0.31174"/>
+        <parameter id="series7.Y.col35" value="0.21763 0.12097 0.18061 0.02273 -0.12141 0.06267 0.22013"/>
+        <parameter id="series7.Y.col36" value="0.12817 -0.08475 0.10873 0.08404 -0.06215 0.09637 0.20254"/>
+        <parameter id="series7.Y.col37" value="0.22641 0.44583 0.14732 0.16936 -0.16856 -0.02863 0.14608"/>
+        <parameter id="series7.Y.col38" value="0.34839 0.06915 0.16735 0.18752 -0.07978 -0.07062 0.28326"/>
+        <parameter id="series7.Y.col39" value="0.31213 -0.18788 0.09612 0.02838 -0.03038 -0.00482 0.06473"/>
+        <parameter id="series7.Y.col40" value="0.30557 0.15404 -0.00297 0.07028 -0.11825 -0.03806 0.14871"/>
+        <parameter id="series7.Y.col41" value="0.28418 0.27112 0.05021 0.30786 0.02460 -0.14802 0.13971"/>
+        <parameter id="series7.Y.col42" value="0.44160 0.20758 -0.02752 0.16904 0.32864 -0.19336 0.16301"/>
+        <parameter id="series7.Y.col43" value="0.16458 0.39876 0.04994 0.15515 0.15969 -0.14629 0.16683"/>
+        <parameter id="series7.Y.col44" value="0.11701 0.15425 0.29638 -0.02174 0.08367 -0.03310 0.11164"/>
+        <parameter id="series7.Y.col45" value="0.23939 0.15565 0.18938 0.07601 -0.00094 -0.33402 -0.01037"/>
+        <parameter id="series7.Y.col46" value="0.22077 0.23084 0.14618 -0.15490 0.06425 -0.25058 0.10246"/>
+        <parameter id="series7.Y.col47" value="0.12708 0.12215 0.25756 -0.13839 0.12446 -0.20055 0.10172"/>
+        <parameter id="series7.Y.col48" value="-0.00962 0.01089 0.15953 -0.02088 -0.26282 -0.33488 0.19614"/>
+        <parameter id="series7.Y.col49" value="0.18510 0.07011 0.10702 -0.22517 -0.14841 -0.32036 0.06288"/>
+        <parameter id="series7.Y.col50" value="-0.03418 0.22981 0.25525 -0.16203 -0.08266 -0.29945 0.09979"/>
+    </matrixParameter>
+
+    <matrixParameter id="series8.Y">
+        <parameter id="series8.Y.col1" value="0.15600 -0.09490 0.23991 -0.10502 -0.01948 -0.18683 0.34014"/>
+        <parameter id="series8.Y.col2" value="0.38716 -0.04043 0.19787 -0.13178 -0.23392 -0.02255 0.32018"/>
+        <parameter id="series8.Y.col3" value="0.14530 -0.01434 0.14538 -0.10644 0.07366 -0.13031 0.19620"/>
+        <parameter id="series8.Y.col4" value="0.21110 0.10636 0.22070 -0.04043 -0.17149 -0.18354 0.22588"/>
+        <parameter id="series8.Y.col5" value="0.20629 0.20514 0.13734 -0.06852 0.04530 -0.04556 0.31599"/>
+        <parameter id="series8.Y.col6" value="0.24018 -0.02598 0.18958 0.12773 0.23885 -0.16544 0.47578"/>
+        <parameter id="series8.Y.col7" value="0.10809 -0.09561 0.15563 -0.17217 0.03135 -0.03936 0.34793"/>
+        <parameter id="series8.Y.col8" value="0.18508 -0.07773 0.34007 -0.22250 0.21326 -0.17761 0.49410"/>
+        <parameter id="series8.Y.col9" value="0.26061 -0.20542 0.33664 -0.42984 0.23587 -0.28792 0.33161"/>
+        <parameter id="series8.Y.col10" value="0.30579 -0.10678 0.39485 -0.30665 0.00987 -0.25012 0.44854"/>
+        <parameter id="series8.Y.col11" value="-0.02560 -0.15675 0.34795 -0.23358 0.06512 -0.25555 0.56457"/>
+        <parameter id="series8.Y.col12" value="0.21671 -0.27239 0.45447 -0.28722 0.14490 -0.13374 0.63872"/>
+        <parameter id="series8.Y.col13" value="0.31737 -0.25758 0.24400 -0.14767 0.32061 -0.15012 0.58670"/>
+        <parameter id="series8.Y.col14" value="0.33218 -0.43332 0.26318 -0.14707 0.43885 -0.12999 0.50822"/>
+        <parameter id="series8.Y.col15" value="0.15410 -0.15796 0.12296 -0.15173 0.30061 -0.05537 0.43970"/>
+        <parameter id="series8.Y.col16" value="0.10243 -0.06291 0.27935 -0.07399 0.18969 -0.11219 0.43522"/>
+        <parameter id="series8.Y.col17" value="0.12521 -0.36003 0.23510 -0.13852 0.34810 -0.21679 0.61251"/>
+        <parameter id="series8.Y.col18" value="0.15569 -0.25364 0.17346 -0.03037 0.31620 -0.24537 0.49547"/>
+        <parameter id="series8.Y.col19" value="0.00112 -0.27278 0.19676 -0.15327 0.37961 -0.20499 0.35908"/>
+        <parameter id="series8.Y.col20" value="0.15989 -0.38799 0.15294 0.00847 0.23570 -0.34216 0.33385"/>
+        <parameter id="series8.Y.col21" value="0.24956 -0.08340 0.08102 -0.01182 0.21579 -0.16832 0.34047"/>
+        <parameter id="series8.Y.col22" value="-0.02695 -0.22974 0.13136 0.14042 0.40294 -0.16361 0.53116"/>
+        <parameter id="series8.Y.col23" value="-0.19037 -0.29400 0.06398 0.00673 0.70420 -0.21674 0.48623"/>
+        <parameter id="series8.Y.col24" value="-0.18277 -0.09855 0.01403 -0.11922 0.43393 -0.10445 0.32236"/>
+        <parameter id="series8.Y.col25" value="-0.14732 -0.16411 0.01544 0.21044 0.52053 -0.17185 0.21090"/>
+        <parameter id="series8.Y.col26" value="-0.03868 -0.02118 0.17863 0.27847 0.62827 -0.21067 0.31621"/>
+        <parameter id="series8.Y.col27" value="-0.05709 0.03154 0.03252 0.34057 0.40980 -0.22809 0.40432"/>
+        <parameter id="series8.Y.col28" value="0.08041 0.03602 0.27745 0.38073 0.29974 -0.05152 0.29350"/>
+        <parameter id="series8.Y.col29" value="0.18262 0.05649 0.14469 0.26386 0.33009 -0.18333 0.17726"/>
+        <parameter id="series8.Y.col30" value="0.26938 0.09562 0.08319 0.28233 0.36902 -0.05525 0.46172"/>
+        <parameter id="series8.Y.col31" value="0.11005 0.12002 0.25647 0.15934 0.40620 -0.26010 0.36588"/>
+        <parameter id="series8.Y.col32" value="0.10745 0.28349 0.29003 -0.11054 0.34689 -0.24710 0.29587"/>
+        <parameter id="series8.Y.col33" value="0.21403 0.10324 0.12460 0.21919 0.43644 -0.21303 0.20398"/>
+        <parameter id="series8.Y.col34" value="0.31937 -0.01922 0.15251 0.03676 0.36075 -0.23233 0.22570"/>
+        <parameter id="series8.Y.col35" value="0.24192 0.00941 0.04229 0.10261 0.58077 -0.12223 0.29128"/>
+        <parameter id="series8.Y.col36" value="0.41790 0.09190 0.14608 -0.05669 0.39378 -0.17305 0.28994"/>
+        <parameter id="series8.Y.col37" value="0.34853 -0.02726 0.09029 -0.13941 0.40028 -0.01285 0.32211"/>
+        <parameter id="series8.Y.col38" value="0.48501 0.05285 0.26516 -0.00618 0.28750 -0.24462 0.23659"/>
+        <parameter id="series8.Y.col39" value="0.52871 0.01448 0.24080 0.17875 0.21626 -0.25612 0.24873"/>
+        <parameter id="series8.Y.col40" value="0.62341 -0.10895 0.50992 -0.05412 0.26465 -0.37378 0.31507"/>
+        <parameter id="series8.Y.col41" value="0.56617 -0.24706 0.31155 0.10614 0.42533 -0.21618 0.32505"/>
+        <parameter id="series8.Y.col42" value="0.38719 0.02778 0.49837 -0.02406 0.53836 -0.41533 0.34085"/>
+        <parameter id="series8.Y.col43" value="0.45608 0.00807 0.59338 0.06587 0.27892 -0.46672 0.23107"/>
+        <parameter id="series8.Y.col44" value="0.47290 -0.02447 0.39775 0.04276 0.76204 -0.26694 0.17419"/>
+        <parameter id="series8.Y.col45" value="0.44076 0.00963 0.34380 0.17061 0.51784 -0.59344 0.30433"/>
+        <parameter id="series8.Y.col46" value="0.18301 0.21408 0.39883 0.19823 0.49017 -0.34527 0.29925"/>
+        <parameter id="series8.Y.col47" value="0.02162 0.26299 0.36972 0.18892 0.38627 -0.64760 0.18415"/>
+        <parameter id="series8.Y.col48" value="0.08180 0.05969 0.36655 0.31982 0.42612 -0.42961 0.30546"/>
+        <parameter id="series8.Y.col49" value="0.06933 -0.13196 0.53525 0.26497 0.35899 -0.48499 0.27728"/>
+        <parameter id="series8.Y.col50" value="0.05449 -0.00878 0.46510 0.15420 0.35573 -0.41346 0.19279"/>
+    </matrixParameter>
+
+    <matrixParameter id="series9.Y">
+        <parameter id="series9.Y.col1" value="0.38239 -0.15571 0.64161 -0.43844 -0.29555 -0.56374 0.18814"/>
+        <parameter id="series9.Y.col2" value="0.43546 -0.04591 0.55288 -0.38374 -0.34284 -0.38238 0.17579"/>
+        <parameter id="series9.Y.col3" value="0.31877 -0.16450 0.62024 -0.28830 -0.20195 -0.38990 0.23132"/>
+        <parameter id="series9.Y.col4" value="0.35760 -0.09754 0.55174 -0.11647 -0.24466 -0.45627 0.30214"/>
+        <parameter id="series9.Y.col5" value="0.25108 -0.47106 0.64383 -0.16980 -0.23590 -0.39647 0.29495"/>
+        <parameter id="series9.Y.col6" value="0.30566 -0.45597 0.63440 -0.26646 -0.04283 -0.29654 0.15106"/>
+        <parameter id="series9.Y.col7" value="0.20616 -0.33602 0.50201 -0.05351 -0.13241 -0.23275 0.15103"/>
+        <parameter id="series9.Y.col8" value="-0.01650 -0.08896 0.24641 -0.20006 0.00784 -0.14398 -0.03614"/>
+        <parameter id="series9.Y.col9" value="0.04851 -0.42097 0.25176 -0.08578 0.01135 -0.32674 0.04160"/>
+        <parameter id="series9.Y.col10" value="-0.10226 -0.43774 0.28819 -0.32316 -0.10847 -0.31799 0.03269"/>
+        <parameter id="series9.Y.col11" value="-0.07423 -0.40253 0.21196 -0.21674 -0.17766 -0.16662 0.10681"/>
+        <parameter id="series9.Y.col12" value="-0.26026 -0.44474 0.32069 -0.40399 -0.30830 -0.15329 0.16510"/>
+        <parameter id="series9.Y.col13" value="-0.32857 -0.35674 0.17879 -0.40086 -0.19640 -0.18835 0.17693"/>
+        <parameter id="series9.Y.col14" value="-0.22686 -0.59412 0.21721 -0.26181 -0.31249 -0.18461 0.04554"/>
+        <parameter id="series9.Y.col15" value="-0.29394 -0.45624 0.29649 -0.38174 -0.23068 -0.12005 -0.02381"/>
+        <parameter id="series9.Y.col16" value="-0.23819 -0.35600 0.15104 -0.11423 -0.15547 -0.18753 0.11137"/>
+        <parameter id="series9.Y.col17" value="-0.35520 -0.30411 0.18325 -0.11480 -0.21629 -0.12987 0.03103"/>
+        <parameter id="series9.Y.col18" value="-0.35351 -0.07980 0.26778 -0.18504 -0.20062 -0.20202 0.02700"/>
+        <parameter id="series9.Y.col19" value="-0.39716 -0.30388 0.31876 -0.13201 -0.23184 -0.08042 0.13081"/>
+        <parameter id="series9.Y.col20" value="-0.45340 -0.20153 0.28971 -0.23001 -0.26982 -0.17664 0.27706"/>
+        <parameter id="series9.Y.col21" value="-0.38436 -0.19571 0.12802 -0.22210 -0.27153 -0.32085 0.24383"/>
+        <parameter id="series9.Y.col22" value="-0.11326 -0.20820 -0.00783 -0.16039 -0.25706 -0.30072 0.22481"/>
+        <parameter id="series9.Y.col23" value="0.10475 -0.33075 0.18068 -0.28908 -0.12580 -0.53743 0.11979"/>
+        <parameter id="series9.Y.col24" value="-0.31478 -0.42000 0.15475 -0.42598 -0.32365 -0.36746 0.08285"/>
+        <parameter id="series9.Y.col25" value="-0.27417 -0.38300 0.19286 -0.16205 -0.38718 -0.33783 0.14206"/>
+        <parameter id="series9.Y.col26" value="-0.11145 -0.30626 0.02155 -0.23233 -0.19499 -0.08895 0.12161"/>
+        <parameter id="series9.Y.col27" value="-0.18744 -0.37537 0.55502 -0.46173 -0.10751 -0.15720 0.15778"/>
+        <parameter id="series9.Y.col28" value="-0.11125 -0.39593 0.20546 -0.35495 -0.06501 -0.15245 0.14751"/>
+        <parameter id="series9.Y.col29" value="-0.03716 -0.34616 0.12008 -0.38098 -0.15806 -0.11342 0.31827"/>
+        <parameter id="series9.Y.col30" value="0.05719 -0.31635 0.23440 -0.34985 0.08362 -0.30874 0.21019"/>
+        <parameter id="series9.Y.col31" value="-0.07355 -0.37008 0.26058 -0.36067 0.01291 -0.00869 0.35063"/>
+        <parameter id="series9.Y.col32" value="-0.00098 -0.17654 0.46734 -0.40609 -0.10704 -0.10723 0.32915"/>
+        <parameter id="series9.Y.col33" value="-0.14132 -0.27909 0.58478 -0.34780 0.08237 -0.06433 0.49046"/>
+        <parameter id="series9.Y.col34" value="-0.22660 -0.32182 0.43187 -0.31325 0.02682 -0.04245 0.43527"/>
+        <parameter id="series9.Y.col35" value="0.05857 -0.21997 0.42410 -0.24894 -0.09960 -0.18801 0.54320"/>
+        <parameter id="series9.Y.col36" value="-0.06514 -0.11542 0.46789 -0.06076 0.13734 -0.02234 0.35489"/>
+        <parameter id="series9.Y.col37" value="-0.07468 -0.29287 0.40157 0.07868 0.24469 -0.07755 0.40240"/>
+        <parameter id="series9.Y.col38" value="0.02231 -0.15263 0.36808 -0.06202 0.22791 -0.00444 0.33445"/>
+        <parameter id="series9.Y.col39" value="0.23164 -0.08775 0.38858 -0.24449 0.08722 0.04414 0.32820"/>
+        <parameter id="series9.Y.col40" value="0.17811 -0.39829 0.15951 -0.14548 0.21447 0.01137 0.36673"/>
+        <parameter id="series9.Y.col41" value="0.20811 -0.32957 0.35222 -0.41378 0.18095 -0.02143 0.23648"/>
+        <parameter id="series9.Y.col42" value="0.03325 -0.39644 0.46774 -0.18820 0.16110 0.05878 0.21233"/>
+        <parameter id="series9.Y.col43" value="0.16842 -0.41792 0.47403 -0.25966 0.18936 0.01489 0.32381"/>
+        <parameter id="series9.Y.col44" value="0.11420 -0.46773 0.31619 -0.09542 0.11512 -0.07500 0.19286"/>
+        <parameter id="series9.Y.col45" value="0.28112 -0.32008 0.33168 -0.14089 0.40620 -0.11994 0.19439"/>
+        <parameter id="series9.Y.col46" value="0.38403 -0.43788 0.38029 -0.10321 0.52162 -0.18429 0.19677"/>
+        <parameter id="series9.Y.col47" value="0.27657 -0.25827 0.24920 0.03565 0.59555 -0.22071 0.10794"/>
+        <parameter id="series9.Y.col48" value="0.35712 -0.20579 0.34990 0.05459 0.42005 -0.21749 0.19720"/>
+        <parameter id="series9.Y.col49" value="0.55599 -0.33015 0.20278 0.19856 0.29680 -0.36384 0.18101"/>
+        <parameter id="series9.Y.col50" value="0.52452 -0.36255 0.28091 0.11504 0.42922 -0.33147 0.13192"/>
+    </matrixParameter>
+
+    <matrixParameter id="series10.Y">
+        <parameter id="series10.Y.col1" value="-0.17677 0.55734 -0.23168 -0.38985 -0.28232 -0.63067 -0.51923"/>
+        <parameter id="series10.Y.col2" value="-0.06643 0.62919 -0.26977 -0.52657 -0.40461 -0.67851 -0.56929"/>
+        <parameter id="series10.Y.col3" value="-0.13290 0.45111 -0.19947 -0.31408 -0.39916 -0.67101 -0.43420"/>
+        <parameter id="series10.Y.col4" value="0.10961 0.45364 -0.13648 -0.34887 -0.43847 -0.59840 -0.47978"/>
+        <parameter id="series10.Y.col5" value="-0.13520 0.40134 -0.07628 -0.26011 -0.37700 -0.61814 -0.57449"/>
+        <parameter id="series10.Y.col6" value="0.07176 0.22275 -0.00760 -0.27653 -0.25094 -0.51929 -0.46928"/>
+        <parameter id="series10.Y.col7" value="-0.09436 0.31416 0.23812 -0.23838 -0.20295 -0.38779 -0.34342"/>
+        <parameter id="series10.Y.col8" value="0.25403 0.31381 0.28319 -0.11644 -0.05986 -0.56683 -0.40311"/>
+        <parameter id="series10.Y.col9" value="0.22421 0.31005 0.20362 0.00789 -0.43419 -0.43316 -0.25472"/>
+        <parameter id="series10.Y.col10" value="0.23825 0.18928 0.29466 0.05027 -0.11858 -0.47193 -0.34631"/>
+        <parameter id="series10.Y.col11" value="0.31400 0.28483 0.24810 -0.02917 -0.10249 -0.44110 -0.28507"/>
+        <parameter id="series10.Y.col12" value="0.32599 0.48714 0.15716 0.10329 -0.33972 -0.36427 -0.37052"/>
+        <parameter id="series10.Y.col13" value="0.17708 0.31307 -0.04617 0.07388 -0.53509 -0.50593 -0.23804"/>
+        <parameter id="series10.Y.col14" value="-0.09679 0.35408 -0.03747 -0.01649 -0.30141 -0.27683 -0.27167"/>
+        <parameter id="series10.Y.col15" value="0.01192 0.19502 0.04150 0.23576 -0.18028 -0.29657 -0.39548"/>
+        <parameter id="series10.Y.col16" value="0.00837 0.07530 0.00399 0.09849 -0.33654 -0.20772 -0.27501"/>
+        <parameter id="series10.Y.col17" value="-0.17978 0.17000 -0.12838 0.20250 -0.25815 -0.42111 -0.25213"/>
+        <parameter id="series10.Y.col18" value="-0.13437 0.10003 -0.07231 0.26222 -0.17185 -0.28892 -0.24413"/>
+        <parameter id="series10.Y.col19" value="0.00695 0.07215 -0.00023 0.12995 -0.21558 -0.15114 -0.13325"/>
+        <parameter id="series10.Y.col20" value="0.15949 0.11623 -0.27358 -0.06585 -0.15204 -0.17411 -0.31799"/>
+        <parameter id="series10.Y.col21" value="0.17255 0.16007 -0.03501 0.01313 -0.14315 -0.28592 -0.24246"/>
+        <parameter id="series10.Y.col22" value="0.11804 0.02667 -0.16449 -0.01657 -0.01618 -0.20122 -0.27209"/>
+        <parameter id="series10.Y.col23" value="0.15013 -0.08016 -0.30427 -0.12042 -0.12847 0.03437 -0.12803"/>
+        <parameter id="series10.Y.col24" value="0.01090 -0.07829 -0.16921 -0.14676 -0.35006 0.05903 -0.00319"/>
+        <parameter id="series10.Y.col25" value="0.14423 -0.04482 -0.25634 -0.24279 -0.17167 -0.07371 -0.07352"/>
+        <parameter id="series10.Y.col26" value="0.14992 0.04997 -0.16930 -0.05964 -0.20272 0.10805 -0.00179"/>
+        <parameter id="series10.Y.col27" value="0.07718 0.03783 -0.05092 -0.11841 -0.17665 0.32964 -0.25679"/>
+        <parameter id="series10.Y.col28" value="0.11989 0.14145 -0.05877 -0.14730 -0.27548 0.15250 -0.14450"/>
+        <parameter id="series10.Y.col29" value="0.02214 0.14057 -0.10100 0.08838 -0.29903 -0.00291 -0.11550"/>
+        <parameter id="series10.Y.col30" value="-0.05913 0.15680 0.09675 -0.10049 -0.30371 0.09790 -0.20045"/>
+        <parameter id="series10.Y.col31" value="0.06782 0.23199 0.08316 -0.19609 -0.28536 0.10654 -0.27446"/>
+        <parameter id="series10.Y.col32" value="0.23747 0.43196 0.06199 -0.04798 -0.15599 0.23589 -0.27607"/>
+        <parameter id="series10.Y.col33" value="0.53315 0.52954 -0.04744 0.10921 -0.10404 0.11718 -0.15255"/>
+        <parameter id="series10.Y.col34" value="0.56173 0.07760 -0.18661 0.10868 -0.49741 0.45337 -0.14616"/>
+        <parameter id="series10.Y.col35" value="0.22741 0.26157 -0.09091 0.04710 -0.39002 0.35826 -0.30394"/>
+        <parameter id="series10.Y.col36" value="0.28053 0.15826 -0.07007 0.01737 -0.10689 0.44528 -0.34405"/>
+        <parameter id="series10.Y.col37" value="0.25443 0.08683 0.03452 -0.01935 -0.06239 0.32291 -0.23161"/>
+        <parameter id="series10.Y.col38" value="0.33885 0.05904 -0.09907 -0.14588 -0.23651 0.29090 -0.10385"/>
+        <parameter id="series10.Y.col39" value="0.11578 0.10546 0.01270 -0.24646 -0.02921 0.35932 -0.27576"/>
+        <parameter id="series10.Y.col40" value="0.19310 0.19258 -0.01754 -0.16561 -0.12828 0.23821 -0.21117"/>
+        <parameter id="series10.Y.col41" value="0.23759 0.05112 0.02299 0.01239 -0.23249 0.09469 -0.19382"/>
+        <parameter id="series10.Y.col42" value="0.12726 0.15835 -0.10254 0.04799 -0.25713 0.01354 -0.22180"/>
+        <parameter id="series10.Y.col43" value="0.21126 0.15465 0.02201 0.10787 -0.28382 0.05778 -0.30568"/>
+        <parameter id="series10.Y.col44" value="0.15374 0.13799 0.04075 -0.00220 -0.05773 -0.02772 -0.24950"/>
+        <parameter id="series10.Y.col45" value="-0.13463 0.04083 0.02628 -0.14836 -0.19505 -0.02957 -0.17368"/>
+        <parameter id="series10.Y.col46" value="-0.12063 0.03168 0.07052 -0.02441 -0.12768 -0.12930 -0.20604"/>
+        <parameter id="series10.Y.col47" value="0.04124 0.13511 -0.05585 -0.19417 -0.02821 -0.14263 -0.11315"/>
+        <parameter id="series10.Y.col48" value="0.07319 -0.04389 -0.11536 -0.13571 -0.24431 -0.12527 -0.11719"/>
+        <parameter id="series10.Y.col49" value="-0.12619 -0.08877 0.06353 -0.20342 -0.07125 -0.06891 -0.11972"/>
+        <parameter id="series10.Y.col50" value="-0.15285 -0.06346 0.03973 0.05083 -0.04435 -0.12843 -0.24197"/>
+    </matrixParameter>
+
+    <gaussianObservationModel id="series1.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series1.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series2.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series2.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series3.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series3.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series4.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series4.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series5.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series5.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series6.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series6.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series7.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series7.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series8.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series8.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series9.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series9.Y"/></observations>
+    </gaussianObservationModel>
+    <gaussianObservationModel id="series10.obs" observationDimension="7">
+        <designMatrix><matrixParameter idref="obs.H"/></designMatrix>
+        <noiseCovariance><matrixParameter idref="obs.R"/></noiseCovariance>
+        <observations><matrixParameter idref="series10.Y"/></observations>
+    </gaussianObservationModel>
+    <timeSeriesModel id="series1.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series1.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series2.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series2.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series3.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series3.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series4.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series4.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series5.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series5.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series6.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series6.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series7.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series7.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series8.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series8.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series9.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series9.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesModel id="series10.model">
+        <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
+        <observationModel><gaussianObservationModel idref="series10.obs"/></observationModel>
+        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+    </timeSeriesModel>
+    <timeSeriesLikelihood id="series1.likelihood"><model><timeSeriesModel idref="series1.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series2.likelihood"><model><timeSeriesModel idref="series2.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series3.likelihood"><model><timeSeriesModel idref="series3.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series4.likelihood"><model><timeSeriesModel idref="series4.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series5.likelihood"><model><timeSeriesModel idref="series5.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series6.likelihood"><model><timeSeriesModel idref="series6.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series7.likelihood"><model><timeSeriesModel idref="series7.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series8.likelihood"><model><timeSeriesModel idref="series8.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series9.likelihood"><model><timeSeriesModel idref="series9.model"/></model></timeSeriesLikelihood>
+    <timeSeriesLikelihood id="series10.likelihood"><model><timeSeriesModel idref="series10.model"/></model></timeSeriesLikelihood>
+
+    <parallelTimeSeriesLikelihood id="parallel.series" threads="4">
+        <timeSeriesLikelihood idref="series1.likelihood"/>
+        <timeSeriesLikelihood idref="series2.likelihood"/>
+        <timeSeriesLikelihood idref="series3.likelihood"/>
+        <timeSeriesLikelihood idref="series4.likelihood"/>
+        <timeSeriesLikelihood idref="series5.likelihood"/>
+        <timeSeriesLikelihood idref="series6.likelihood"/>
+        <timeSeriesLikelihood idref="series7.likelihood"/>
+        <timeSeriesLikelihood idref="series8.likelihood"/>
+        <timeSeriesLikelihood idref="series9.likelihood"/>
+        <timeSeriesLikelihood idref="series10.likelihood"/>
+    </parallelTimeSeriesLikelihood>
+
+    <timeSeriesGradient id="grad.scalar">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.A.scalar"/></parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.rho">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.A.rho"/></parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.theta">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.A.theta"/></parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.t">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.A.t"/></parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.rotationAngles">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.A.angles"/></parameter>
+    </timeSeriesGradient>
+    <timeSeriesGradient id="grad.mean">
+        <likelihood><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        <parameter><parameter idref="ou.mu"/></parameter>
+    </timeSeriesGradient>
+
+    <halfNormalPrior id="ou.A.scalar.prior" mean="0" stdev="3"><parameter idref="ou.A.scalar"/></halfNormalPrior>
+    <halfNormalPrior id="ou.A.rho.prior" mean="0" stdev="3"><parameter idref="ou.A.rho"/></halfNormalPrior>
+    <normalPrior id="ou.A.theta.prior" mean="0" stdev="1"><parameter idref="ou.A.theta"/></normalPrior>
+    <normalPrior id="ou.A.t.prior" mean="0" stdev="1"><parameter idref="ou.A.t"/></normalPrior>
+    <normalPrior id="ou.A.angles.prior" mean="0" stdev="3"><parameter idref="ou.A.angles"/></normalPrior>
+    <normalPrior id="ou.mu.prior" mean="0" stdev="5"><parameter idref="ou.mu"/></normalPrior>
+
+    <compoundGradient id="likelihoodGradient">
+        <timeSeriesGradient idref="grad.scalar"/>
+        <timeSeriesGradient idref="grad.rho"/>
+        <timeSeriesGradient idref="grad.theta"/>
+        <timeSeriesGradient idref="grad.t"/>
+        <timeSeriesGradient idref="grad.rotationAngles"/>
+        <timeSeriesGradient idref="grad.mean"/>
+    </compoundGradient>
+
+    <compoundGradient id="priorGradient">
+        <gradient><distributionLikelihood idref="ou.A.scalar.prior"/><parameter idref="ou.A.scalar"/></gradient>
+        <gradient><distributionLikelihood idref="ou.A.rho.prior"/><parameter idref="ou.A.rho"/></gradient>
+        <gradient><distributionLikelihood idref="ou.A.theta.prior"/><parameter idref="ou.A.theta"/></gradient>
+        <gradient><distributionLikelihood idref="ou.A.t.prior"/><parameter idref="ou.A.t"/></gradient>
+        <gradient><distributionLikelihood idref="ou.A.angles.prior"/><parameter idref="ou.A.angles"/></gradient>
+        <gradient><distributionLikelihood idref="ou.mu.prior"/><parameter idref="ou.mu"/></gradient>
+    </compoundGradient>
+
+    <jointGradient id="posteriorGradient">
+        <compoundGradient idref="likelihoodGradient"/>
+        <compoundGradient idref="priorGradient"/>
+    </jointGradient>
+
+    <compoundParameter id="inference.parameter">
+        <parameter idref="ou.A.scalar"/>
+        <parameter idref="ou.A.rho"/>
+        <parameter idref="ou.A.theta"/>
+        <parameter idref="ou.A.t"/>
+        <parameter idref="ou.A.angles"/>
+        <parameter idref="ou.mu"/>
+    </compoundParameter>
+
+    <operators id="operators" optimizationSchedule="log">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.006" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true"
+                                       gradientCheckTolerance="1e-3" gradientCheckCount="1000">
+            <jointGradient idref="posteriorGradient"/>
+            <compoundParameter idref="inference.parameter"/>
+            <multivariateCompoundTransform id="compound.transform">
+                <transform type="log" dim="1"/>
+                <transform type="log" dim="3"/>
+                <composedTransform>
+                    <inner><affineTransform location="-0.7853981633974483" scale="1.5707963267948966" dim="3"/></inner>
+                    <outer><transform type="logit" dim="3"/></outer>
+                </composedTransform>
+                <composedTransform>
+                    <inner><affineTransform location="-1.0" scale="2.0" dim="3"/></inner>
+                    <outer><transform type="logit" dim="3"/></outer>
+                </composedTransform>
+                <composedTransform>
+                    <inner><affineTransform location="-3.141592653589793" scale="6.283185307179586" dim="21"/></inner>
+                    <outer><transform type="logit" dim="21"/></outer>
+                </composedTransform>
+                <transform type="none" dim="7"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <halfNormalPrior idref="ou.A.scalar.prior"/>
+                <halfNormalPrior idref="ou.A.rho.prior"/>
+                <normalPrior idref="ou.A.theta.prior"/>
+                <normalPrior idref="ou.A.t.prior"/>
+                <normalPrior idref="ou.A.angles.prior"/>
+                <normalPrior idref="ou.mu.prior"/>
+            </prior>
+            <likelihood id="likelihood"><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="10">
+            <column label="posterior" dp="4" width="12"><posterior idref="posterior"/></column>
+            <column label="likelihood" dp="4" width="12"><likelihood idref="likelihood"/></column>
+            <parameter idref="ou.A.scalar"/>
+            <parameter idref="ou.A.rho"/>
+            <parameter idref="ou.A.theta"/>
+            <parameter idref="ou.A.t"/>
+            <parameter idref="ou.A.angles"/>
+            <parameter idref="ou.mu"/>
+        </log>
+        <!-- <log id="fileLog" logEvery="100" fileName="orthogonal_block_10x50_inference.log">
+            <posterior idref="posterior"/>
+            <likelihood idref="likelihood"/>
+            <prior idref="prior"/>
+            <parameter idref="ou.A.scalar"/>
+            <parameter idref="ou.A.rho"/>
+            <parameter idref="ou.A.theta"/>
+            <parameter idref="ou.A.t"/>
+            <parameter idref="ou.A.angles"/>
+            <parameter idref="ou.mu"/>
+        </log> -->
+    </mcmc>
+
+    <report>
+        Native gradient adapters available: grad.scalar, grad.rho, grad.theta, grad.t, grad.rotationAngles, grad.mean.
+    </report>
+
+</beast>

@@ -93,6 +93,7 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
     @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
         makeDirty();
+        fireModelChanged(object, index);
     }
 
     @Override
@@ -100,6 +101,7 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
                                               final int index,
                                               final Parameter.ChangeType type) {
         makeDirty();
+        fireModelChanged();
     }
 
     @Override
@@ -112,6 +114,7 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
     protected void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+        likelihoodEngine.makeDirty();
         gradientEngine.makeDirty();
     }
 

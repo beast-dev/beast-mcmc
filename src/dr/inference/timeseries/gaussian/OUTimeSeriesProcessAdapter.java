@@ -103,7 +103,9 @@ public final class OUTimeSeriesProcessAdapter extends AbstractModel
 
     @Override
     protected void restoreState() {
-        // no-op
+        if (transitionRepresentation instanceof CachedGaussianTransitionRepresentation) {
+            ((CachedGaussianTransitionRepresentation) transitionRepresentation).makeDirty();
+        }
     }
 
     @Override

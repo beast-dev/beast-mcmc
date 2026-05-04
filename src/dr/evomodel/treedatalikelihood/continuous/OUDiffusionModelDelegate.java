@@ -32,11 +32,18 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.branch.OUCanonicalBranchGradientBridge;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.OUActualizationStrategies;
+import dr.evomodel.treedatalikelihood.continuous.cdi.OUStrategyBundle;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -53,9 +60,17 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
  */
 public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegate {
 
+    private static final String USE_KERNEL_BRIDGE_PROPERTY =
+            "dr.evomodel.treedatalikelihood.continuous.useCanonicalOUBridge";
+    private static final String VALIDATE_KERNEL_BRIDGE_PROPERTY =
+            "dr.evomodel.treedatalikelihood.continuous.validateCanonicalOUBridge";
+    private static final double KERNEL_BRIDGE_TOLERANCE = 1e-8;
+
     // Here, branchRateModels represents optimal values
 
     private MultivariateElasticModel elasticModel;
+    private final GaussianBranchTransitionProvider branchTransitionProvider;
+    private final OUCanonicalBranchGradientBridge canonicalBranchGradientBridge;
 
     public OUDiffusionModelDelegate(Tree tree,
                                     MultivariateDiffusionModel diffusionModel,
@@ -71,6 +86,11 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                      int partitionNumber) {
         super(tree, diffusionModel, branchRateModels, partitionNumber);
         this.elasticModel = elasticModel;
+        this.branchTransitionProvider =
+                new OUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
+        this.canonicalBranchGradientBridge =
+                new OUCanonicalBranchGradientBridge(
+                        (OUGaussianBranchTransitionProvider) this.branchTransitionProvider);
         addModel(elasticModel);
     }
 
@@ -114,12 +134,164 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         return elasticModel.getEigenVectorsStrengthOfSelection();
     }
 
+    public double[] getActualizationBasisValues() {
+        return elasticModel.getActualizationBasisValues();
+    }
+
+    public double[] getActualizationBasisRotations() {
+        return elasticModel.getActualizationBasisRotations();
+    }
+
+    public GaussianBranchTransitionProvider getBranchTransitionProvider() {
+        return branchTransitionProvider;
+    }
+
+    public OUStrategyBundle getOUStrategyBundle() {
+        return OUActualizationStrategies.bundleFor(elasticModel);
+    }
+
+    // Compatibility accessors for the legacy OU strategy helpers in cdi/.
+    public Tree getTree() {
+        return tree;
+    }
+
+    public MultivariateElasticModel getElasticModel() {
+        return elasticModel;
+    }
+
+    public Parameter getCanonicalStationaryMeanParameter() {
+        return getCanonicalConstantDriftParameter();
+    }
+
+    public int getDimTrait() {
+        return dim;
+    }
+
+    public boolean hasFixedRoot(final ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        return likelihoodDelegate.getRootProcessDelegate().getPseudoObservations() == Double.POSITIVE_INFINITY;
+    }
+
+    public boolean usesDiagonalActualizationBuffer(final ContinuousDiffusionIntegrator cdi) {
+        return cdi instanceof SafeMultivariateDiagonalActualizedWithDriftIntegrator;
+    }
+
+    public DenseMatrix64F rootGradientVarianceWrtVariance(final NodeRef node,
+                                                          final ContinuousDiffusionIntegrator cdi,
+                                                          final ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                          final DenseMatrix64F gradient) {
+        return super.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradient);
+    }
+
+    public double[] getBranchDriftRate(final NodeRef node) {
+        return getDriftRate(node);
+    }
+
+    public boolean isExternalNode(final NodeRef node) {
+        return tree.isExternal(node);
+    }
+
+    public boolean usesCanonicalVarianceGradient() {
+        return elasticModel.hasBlockStructure();
+    }
+
+    public double[] getGradientVarianceForBranch(final BranchSufficientStatistics statistics,
+                                                 final NodeRef node,
+                                                 final ContinuousDiffusionIntegrator cdi,
+                                                 final ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                 final DenseMatrix64F gradQInv) {
+        if (usesCanonicalVarianceGradient()) {
+            return getCanonicalGradientVarianceForBranch(statistics, node, cdi);
+        }
+        return getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv).getData();
+    }
+
+    public double[] getCanonicalGradientVarianceForBranch(final BranchSufficientStatistics statistics,
+                                                          final NodeRef node,
+                                                          final ContinuousDiffusionIntegrator cdi) {
+        if (tree.isRoot(node)) {
+            return new double[dim * dim];
+        }
+        final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
+        final double[] optimum = getDriftRate(node);
+        return canonicalBranchGradientBridge.getGradientWrtVariance(branchLength, optimum, statistics);
+    }
+
+    public double[] getCanonicalGradientDisplacementForBranch(final BranchSufficientStatistics statistics) {
+        return canonicalBranchGradientBridge.getGradientWrtBranchDrift(statistics);
+    }
+
+    public double[] getCanonicalGradientDisplacementForBranch(final BranchSufficientStatistics statistics,
+                                                              final NodeRef node,
+                                                              final ContinuousDiffusionIntegrator cdi) {
+        final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
+        final double[] optimum = getDriftRate(node);
+        return canonicalBranchGradientBridge.getGradientWrtBranchDrift(
+                branchLength,
+                optimum,
+                statistics,
+                node.getNumber());
+    }
+
+    public void fillCanonicalLocalAdjointsForBranch(final BranchSufficientStatistics statistics,
+                                                    final CanonicalLocalTransitionAdjoints out) {
+        canonicalBranchGradientBridge.fillLocalAdjoints(statistics, out);
+    }
+
+    public double[] getCanonicalGradientSelectionForBranch(final BranchSufficientStatistics statistics,
+                                                           final NodeRef node,
+                                                           final ContinuousDiffusionIntegrator cdi) {
+        final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
+        final double[] optimum = getDriftRate(node);
+        return canonicalBranchGradientBridge.getGradientWrtSelection(branchLength, optimum, statistics);
+    }
+
+    public double[] getCanonicalSelectionGradientForRequestedParameter(final BranchSufficientStatistics statistics,
+                                                                       final NodeRef node,
+                                                                       final ContinuousDiffusionIntegrator cdi,
+                                                                       final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+                                                                       final Parameter requestedParameter) {
+        final double branchLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(node.getNumber()));
+        final double[] optimum = getDriftRate(node);
+        return canonicalBranchGradientBridge.getGradientWrtSelection(
+                branchLength,
+                optimum,
+                statistics,
+                tree.isExternal(node),
+                blockParameter,
+                requestedParameter);
+    }
+
+    /**
+     * Accumulates the global pruning-remainder selection gradient for one branch.
+     */
+    public void accumulateCanonicalGlobalRemainderSelectionGradientForBranch(
+            final NodeRef node,
+            final NodeRef parentNode,
+            final int nodeBuffer,
+            final int parentBuffer,
+            final ContinuousDiffusionIntegrator cdi,
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter,
+            final Parameter requestedParameter,
+            final double[] gradOut) {
+
+        final int matrixIndex = getMatrixBufferOffsetIndex(node.getNumber());
+        final double branchLength = cdi.getBranchLength(matrixIndex);
+        final int dimTrait = canonicalBranchGradientBridge.getDimension();
+        final double[] barVdi = new double[dimTrait * dimTrait];
+
+        cdi.computeGlobalRemainderAdjointWrtBranchVariance(
+                nodeBuffer, matrixIndex, parentBuffer, barVdi);
+
+        canonicalBranchGradientBridge.accumulateGlobalRemainderSelectionGradientForBranch(
+                branchLength, barVdi, nativeBlockParameter, requestedParameter, gradOut);
+    }
+
     @Override
     public void setDiffusionModels(ContinuousDiffusionIntegrator cdi, boolean flip) {
         super.setDiffusionModels(cdi, flip);
 
         cdi.setDiffusionStationaryVariance(getEigenBufferOffsetIndex(0),
-                getEigenValuesStrengthOfSelection(), getEigenVectorsStrengthOfSelection());
+                getActualizationBasisValues(), getActualizationBasisRotations());
     }
 
     @Override
@@ -127,6 +299,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                         int updateCount, boolean flip) {
 
         int[] probabilityIndices = new int[updateCount];
+        final double[] driftRates = getDriftRates(branchIndices, updateCount);
 
         for (int i = 0; i < updateCount; i++) {
             if (flip) {
@@ -139,10 +312,187 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                 getEigenBufferOffsetIndex(0),
                 probabilityIndices,
                 edgeLengths,
-                getDriftRates(branchIndices, updateCount),
-                getEigenValuesStrengthOfSelection(),
-                getEigenVectorsStrengthOfSelection(),
+                driftRates,
+                getActualizationBasisValues(),
+                getActualizationBasisRotations(),
                 updateCount);
+
+        if (Boolean.getBoolean(USE_KERNEL_BRIDGE_PROPERTY)) {
+            applyKernelBridgeForwardPath(cdi, probabilityIndices, edgeLengths, driftRates, updateCount);
+        }
+
+        if (Boolean.getBoolean(VALIDATE_KERNEL_BRIDGE_PROPERTY)) {
+            validateKernelBridge(cdi, branchIndices, probabilityIndices, edgeLengths, updateCount);
+        }
+    }
+
+    private void applyKernelBridgeForwardPath(final ContinuousDiffusionIntegrator cdi,
+                                              final int[] probabilityIndices,
+                                              final double[] edgeLengths,
+                                              final double[] optimalRates,
+                                              final int updateCount) {
+        if (hasDiagonalActualization()) {
+            if (!(cdi instanceof SafeMultivariateDiagonalActualizedWithDriftIntegrator)) {
+                throw new IllegalStateException("Kernel bridge replacement requires a diagonal actualized OU integrator");
+            }
+            applyKernelBridgeForwardPathDiagonal(
+                    (SafeMultivariateDiagonalActualizedWithDriftIntegrator) cdi,
+                    probabilityIndices,
+                    edgeLengths,
+                    optimalRates,
+                    updateCount);
+            return;
+        }
+        if (!(cdi instanceof SafeMultivariateActualizedWithDriftIntegrator)) {
+            throw new IllegalStateException("Kernel bridge replacement requires a full actualized OU integrator");
+        }
+        applyKernelBridgeForwardPathFull(
+                (SafeMultivariateActualizedWithDriftIntegrator) cdi,
+                probabilityIndices,
+                edgeLengths,
+                optimalRates,
+                updateCount);
+    }
+
+    private void applyKernelBridgeForwardPathDiagonal(
+            final SafeMultivariateDiagonalActualizedWithDriftIntegrator cdi,
+            final int[] probabilityIndices,
+            final double[] edgeLengths,
+            final double[] optimalRates,
+            final int updateCount) {
+        final double[][] actualizationMatrix = new double[dim][dim];
+        final double[][] varianceMatrix = new double[dim][dim];
+        final double[] diagonalActualization = new double[dim];
+        final double[] displacement = new double[dim];
+        final double[] varianceFlat = new double[dim * dim];
+
+        for (int up = 0; up < updateCount; ++up) {
+            final int probabilityIndex = probabilityIndices[up];
+            final int optimalOffset = up * dim;
+
+            branchTransitionProvider.fillBranchTransitionMatrix(edgeLengths[up], actualizationMatrix);
+            branchTransitionProvider.fillBranchTransitionCovariance(edgeLengths[up], varianceMatrix);
+
+            for (int i = 0; i < dim; ++i) {
+                final double actualization = actualizationMatrix[i][i];
+                diagonalActualization[i] = actualization;
+                displacement[i] = (1.0 - actualization) * optimalRates[optimalOffset + i];
+                for (int j = 0; j < dim; ++j) {
+                    varianceFlat[i * dim + j] = varianceMatrix[i][j];
+                }
+            }
+
+            cdi.overrideOrnsteinUhlenbeckBranchMatrices(
+                    probabilityIndex,
+                    diagonalActualization,
+                    varianceFlat,
+                    displacement);
+        }
+    }
+
+    private void applyKernelBridgeForwardPathFull(
+            final SafeMultivariateActualizedWithDriftIntegrator cdi,
+            final int[] probabilityIndices,
+            final double[] edgeLengths,
+            final double[] optimalRates,
+            final int updateCount) {
+        final double[][] actualizationMatrix = new double[dim][dim];
+        final double[][] varianceMatrix = new double[dim][dim];
+        final double[] actualizationFlat = new double[dim * dim];
+        final double[] displacement = new double[dim];
+        final double[] varianceFlat = new double[dim * dim];
+
+        for (int up = 0; up < updateCount; ++up) {
+            final int probabilityIndex = probabilityIndices[up];
+            final int optimalOffset = up * dim;
+
+            branchTransitionProvider.fillBranchTransitionMatrix(edgeLengths[up], actualizationMatrix);
+            branchTransitionProvider.fillBranchTransitionCovariance(edgeLengths[up], varianceMatrix);
+
+            for (int i = 0; i < dim; ++i) {
+                double propagatedOptimum = 0.0;
+                for (int j = 0; j < dim; ++j) {
+                    final double actualization = actualizationMatrix[i][j];
+                    actualizationFlat[i * dim + j] = actualization;
+                    varianceFlat[i * dim + j] = varianceMatrix[i][j];
+                    propagatedOptimum += actualization * optimalRates[optimalOffset + j];
+                }
+                displacement[i] = optimalRates[optimalOffset + i] - propagatedOptimum;
+            }
+
+            cdi.overrideOrnsteinUhlenbeckBranchMatrices(
+                    probabilityIndex,
+                    actualizationFlat,
+                    varianceFlat,
+                    displacement);
+        }
+    }
+
+    private void validateKernelBridge(final ContinuousDiffusionIntegrator cdi,
+                                      final int[] branchIndices,
+                                      final int[] probabilityIndices,
+                                      final double[] edgeLengths,
+                                      final int updateCount) {
+        final double[][] expectedActualization = new double[dim][dim];
+        final double[][] expectedVariance = new double[dim][dim];
+        final double[] observedActualizationRaw = hasDiagonalActualization()
+                ? new double[dim]
+                : new double[dim * dim];
+        final double[] observedVarianceRaw = new double[dim * dim];
+
+        for (int i = 0; i < updateCount; ++i) {
+            final int branchIndex = branchIndices[i];
+            final int probabilityIndex = probabilityIndices[i];
+            final double branchLength = edgeLengths[i];
+
+            branchTransitionProvider.fillBranchTransitionMatrix(branchLength, expectedActualization);
+            branchTransitionProvider.fillBranchTransitionCovariance(branchLength, expectedVariance);
+
+            cdi.getBranchActualization(probabilityIndex, observedActualizationRaw);
+            cdi.getBranchVariance(probabilityIndex, getEigenBufferOffsetIndex(0), observedVarianceRaw);
+
+            assertActualizationMatches(branchIndex, expectedActualization, observedActualizationRaw);
+            assertMatrixMatches("variance", branchIndex, expectedVariance, observedVarianceRaw);
+        }
+    }
+
+    private void assertActualizationMatches(final int branchIndex,
+                                            final double[][] expected,
+                                            final double[] observedRaw) {
+        if (hasDiagonalActualization()) {
+            for (int i = 0; i < dim; ++i) {
+                assertClose("actualization", branchIndex, i, i, expected[i][i], observedRaw[i]);
+            }
+            return;
+        }
+        assertMatrixMatches("actualization", branchIndex, expected, observedRaw);
+    }
+
+    private void assertMatrixMatches(final String label,
+                                     final int branchIndex,
+                                     final double[][] expected,
+                                     final double[] observedRaw) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                assertClose(label, branchIndex, i, j, expected[i][j], observedRaw[i * dim + j]);
+            }
+        }
+    }
+
+    private static void assertClose(final String label,
+                                    final int branchIndex,
+                                    final int row,
+                                    final int col,
+                                    final double expected,
+                                    final double observed) {
+        final double scale = Math.max(1.0, Math.max(Math.abs(expected), Math.abs(observed)));
+        if (Math.abs(expected - observed) > KERNEL_BRIDGE_TOLERANCE * scale) {
+            throw new IllegalStateException(
+                    "Kernel bridge mismatch for " + label +
+                            " on branch " + branchIndex +
+                            " at [" + row + "," + col + "]: expected=" + expected +
+                            ", observed=" + observed);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -442,7 +792,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
         DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
         DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
-        CommonOps.mult(Actu, gradient, tmp);
+        // Root-mean backprop is a vector-Jacobian product; use A^T * g for full (non-symmetric) actualization.
+        CommonOps.multTransA(Actu, gradient, tmp);
         return tmp.getData();
     }
 

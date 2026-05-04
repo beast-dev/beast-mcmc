@@ -57,6 +57,8 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class DiffusionGradientParser extends AbstractXMLObjectParser {
     private final static String DIFFUSION_GRADIENT = "diffusionGradient";
+    private final static String IMPLEMENTATION = "implementation";
+    private final static String IMPLEMENTATION_LEGACY = "legacy";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -69,6 +71,8 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
 
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+
         List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> derivationParametersList
                 = new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>();
 
@@ -77,10 +81,27 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
 
         List<AbstractDiffusionGradient> diffGradients = xo.getAllChildren(AbstractDiffusionGradient.class);
         if (diffGradients != null) {
+            if (diffGradients.size() == 1) {
+                return diffGradients.get(0);
+            }
+            boolean canUseSharedBranchSpecificPath = true;
             for (AbstractDiffusionGradient grad : diffGradients) {
-                derivationParametersList.add(grad.getDerivationParameter());
+                try {
+                    final ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter derivation =
+                            grad.getDerivationParameter();
+                    derivationParametersList.add(derivation);
+                } catch (ClassCastException | UnsupportedOperationException ex) {
+                    // Some newer gradients (e.g., native orthogonal selection-strength)
+                    // are already parameter-native and do not expose continuous-process
+                    // derivation metadata required by the shared branch-specific combiner.
+                    canUseSharedBranchSpecificPath = false;
+                    break;
+                }
                 compoundParameter.addParameter(grad.getRawParameter());
                 derivativeList.add(grad);
+            }
+            if (!canUseSharedBranchSpecificPath) {
+                return new CompoundDerivative(new ArrayList<GradientWrtParameterProvider>(diffGradients));
             }
         }
 
@@ -94,10 +115,9 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
         Tree tree = treeDataLikelihood.getTree();
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
-                        dim, tree, continuousData,
-                        derivationParametersList);
+        final ProcessGradientSpec gradientSpec = ProcessGradientSpec.fromList(derivationParametersList);
+        final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(
+                dim, tree, continuousData, implementation);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, compoundParameter);
 
@@ -112,6 +132,7 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(AbstractDiffusionGradient.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
     };
 
     @Override
@@ -124,4 +145,3 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
         return PrecisionGradient.class;
     }
 }
-

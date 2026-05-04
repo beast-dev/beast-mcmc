@@ -103,7 +103,8 @@ public class CompactGradient implements HessianWrtParameterProvider, Reportable 
         return  "compactGradient." + sourceParameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                         Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                        GradientWrtParameterProvider.TOLERANCE);
+                        GradientWrtParameterProvider.TOLERANCE,
+                        GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
     private double[] compact(double[] input) {

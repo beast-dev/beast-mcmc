@@ -176,6 +176,7 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
             public double evaluate(double[] argument) {
 
                 setParameter(argument);
+                provider.getLikelihood().makeDirty();
                 return provider.getLikelihood().getLogLikelihood();
             }
 
@@ -211,6 +212,7 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
             NumericalDerivative.gradient(numeric, parameter.getParameterValues(), testGradient, numericStepSize);
 
             setParameter(savedValues);
+            provider.getLikelihood().makeDirty();
             return testGradient;
         }
 
@@ -287,4 +289,5 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
     }
 
     Double TOLERANCE = 1E-1;
+    Double SMALL_NUMBER_THRESHOLD = 1E-5;
 }

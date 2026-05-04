@@ -1,0 +1,517 @@
+package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+
+/**
+ * Legacy shared dense linear-algebra utilities for Gaussian likelihood engines.
+ *
+ * <p>This class remains for compatibility with older non-tree callers. Canonical
+ * tree hot paths should use {@link MatrixOps}, whose primary API is flat
+ * row-major {@code double[]}. The {@code double[][]} overloads here are
+ * deprecated; do not add new canonical tree uses.
+ */
+public final class GaussianMatrixOps {
+
+    /** @see MatrixOps#LOG_TWO_PI */
+    public static final double LOG_TWO_PI = MatrixOps.LOG_TWO_PI;
+    /** @see MatrixOps#MIN_DIAGONAL_JITTER */
+    public static final double MIN_DIAGONAL_JITTER = MatrixOps.MIN_DIAGONAL_JITTER;
+
+    private static final double SYMMETRY_TOLERANCE = 1E-12;
+
+    private GaussianMatrixOps() { }
+
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#matVec(double[], double[], double[], int, int)}
+     *     with a flat row-major matrix instead.
+     */
+    @Deprecated
+    public static void multiplyMatrixVector(final double[][] matrix,
+                                     final double[] vector,
+                                     final double[] out) {
+        multiplyMatrixVector(matrix, vector, out, matrix.length, vector.length);
+    }
+
+    /** @deprecated See {@link #multiplyMatrixVector(double[][], double[], double[])}. */
+    @Deprecated
+    public static void multiplyMatrixVector(final double[][] matrix,
+                                     final double[] vector,
+                                     final double[] out,
+                                     final int rows,
+                                     final int cols) {
+        for (int i = 0; i < rows; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < cols; ++j) {
+                sum += matrix[i][j] * vector[j];
+            }
+            out[i] = sum;
+        }
+    }
+
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#matMul(double[], double[], double[], int, int, int)}
+     *     with flat row-major matrices instead.
+     */
+    @Deprecated
+    public static void multiplyMatrixMatrix(final double[][] left,
+                                     final double[][] right,
+                                     final double[][] out) {
+        multiplyMatrixMatrix(left, right, out, left.length, right.length, right[0].length);
+    }
+
+    /** @deprecated See {@link #multiplyMatrixMatrix(double[][], double[][], double[][])}. */
+    @Deprecated
+    public static void multiplyMatrixMatrix(final double[][] left,
+                                     final double[][] right,
+                                     final double[][] out,
+                                     final int rows,
+                                     final int inner,
+                                     final int cols) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < inner; ++k) {
+                    sum += left[i][k] * right[k][j];
+                }
+                out[i][j] = sum;
+            }
+        }
+    }
+
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
+    public static void multiplyMatrixMatrixTransposedRight(final double[][] left,
+                                                    final double[][] right,
+                                                    final double[][] out) {
+        final int rows = left.length;
+        final int inner = left[0].length;
+        final int cols = right.length;
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < inner; ++k) {
+                    sum += left[i][k] * right[j][k];
+                }
+                out[i][j] = sum;
+            }
+        }
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#addInPlace(double[], double[], int)} with flat arrays instead. */
+    @Deprecated
+    public static void addMatrixInPlace(final double[][] accumulator, final double[][] increment) {
+        for (int i = 0; i < accumulator.length; ++i) {
+            for (int j = 0; j < accumulator[i].length; ++j) {
+                accumulator[i][j] += increment[i][j];
+            }
+        }
+    }
+
+    public static void addInPlace(final double[] accumulator, final double[] increment) {
+        MatrixOps.addInPlace(accumulator, increment, accumulator.length);
+    }
+
+    // -----------------------------------------------------------------------
+    // Flat (row-major) variants – index convention: matrix[i * dim + j]
+    // -----------------------------------------------------------------------
+
+    public static void multiplyMatrixMatrixFlat(final double[] left,
+                                         final double[] right,
+                                         final double[] out,
+                                         final int dim) {
+        MatrixOps.matMul(left, right, out, dim);
+    }
+
+    public static void multiplyMatrixVectorFlat(final double[] matrix,
+                                         final double[] vector,
+                                         final double[] out,
+                                         final int dim) {
+        MatrixOps.matVec(matrix, vector, out, dim);
+    }
+
+    public static void symmetrizeFlat(final double[] matrix, final int dim) {
+        MatrixOps.symmetrize(matrix, dim);
+    }
+
+    public static void copyMatrixFlat(final double[] source, final double[] target, final int dim) {
+        MatrixOps.copyMatrix(source, target, dim);
+    }
+
+    /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
+    public static void copyMatrixToFlat(final double[][] source, final double[] target, final int dim) {
+        matrixToRowMajor(source, target, dim);
+    }
+
+    /** Copy from a 2-D row-major {@code double[][]} into a flat row-major {@code double[]}. */
+    public static void matrixToRowMajor(final double[][] source, final double[] target, final int dim) {
+        MatrixOps.toFlat(source, target, dim);
+    }
+
+    /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
+    public static void copyFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+        rowMajorToMatrix(source, target, dim);
+    }
+
+    /** Copy from a flat row-major {@code double[]} into a 2-D row-major {@code double[][]}. */
+    public static void rowMajorToMatrix(final double[] source, final double[][] target, final int dim) {
+        MatrixOps.fromFlat(source, target, dim);
+    }
+
+    /** Copy a flat row-major square matrix into flat column-major parameter order. */
+    public static void rowMajorToColumnMajorParameter(final double[] source,
+                                                      final double[] target,
+                                                      final int dim) {
+        MatrixOps.toColumnMajorParam(source, target, dim);
+    }
+
+    /** Copy a 2-D row-major square matrix into flat column-major parameter order. */
+    public static void matrixToColumnMajorParameter(final double[][] source,
+                                                    final double[] target,
+                                                    final int dim) {
+        MatrixOps.toColumnMajorParam(source, target, dim);
+    }
+
+    /** Copy a flat column-major parameter vector into flat row-major square-matrix order. */
+    public static void columnMajorParameterToRowMajor(final double[] source,
+                                                      final double[] target,
+                                                      final int dim) {
+        MatrixOps.fromColumnMajorParam(source, target, dim);
+    }
+
+    /** Copy the transpose of a flat row-major square matrix into a 2-D matrix. */
+    public static void transposeFlatToMatrix(final double[] source, final double[][] target, final int dim) {
+        MatrixOps.transposedFromFlat(source, target, dim);
+    }
+
+    public static void transposeFlatSquareInPlace(final double[] matrix, final int dim) {
+        MatrixOps.transposeInPlace(matrix, dim);
+    }
+
+    public static void multiplyFlatByMatrix(final double[] left, final double[][] right,
+                                            final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOff = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[iOff + k] * right[k][j];
+                }
+                out[i][j] = sum;
+            }
+        }
+    }
+
+    public static void multiplyMatrixByFlat(final double[][] left, final double[] right,
+                                            final double[][] out, final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[i][k] * right[k * dim + j];
+                }
+                out[i][j] = sum;
+            }
+        }
+    }
+
+    /**
+     * Cholesky factorization of a flat row-major symmetric positive-definite matrix.
+     * Returns a {@link FlatCholeskyFactor}.
+     */
+    public static FlatCholeskyFactor choleskyFlat(final double[] matrix, final int dim) {
+        final double[] lower = new double[dim * dim];
+        if (!tryCholeskyFlat(matrix, lower, dim)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        return new FlatCholeskyFactor(lower, dim);
+    }
+
+    public static boolean tryCholeskyFlat(final double[] matrix,
+                                    final double[] lowerOut,
+                                    final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j <= i; ++j) {
+                double sum = matrix[i * dim + j];
+                for (int k = 0; k < j; ++k) {
+                    sum -= lowerOut[i * dim + k] * lowerOut[j * dim + k];
+                }
+                if (i == j) {
+                    if (sum <= 0.0) return false;
+                    lowerOut[i * dim + j] = Math.sqrt(sum);
+                } else {
+                    final double denom = lowerOut[j * dim + j];
+                    if (denom == 0.0) return false;
+                    lowerOut[i * dim + j] = sum / denom;
+                }
+            }
+            for (int j = i + 1; j < dim; ++j) {
+                lowerOut[i * dim + j] = 0.0;
+            }
+        }
+        return true;
+    }
+
+    public static void invertPositiveDefiniteFromFlatCholesky(final double[] out,
+                                                        final FlatCholeskyFactor factor) {
+        final int dim = factor.dimension;
+        final double[] lowerInverse = new double[dim * dim];
+        final double[] solution = new double[dim];
+        final double[] basis = new double[dim];
+
+        for (int column = 0; column < dim; ++column) {
+            for (int i = 0; i < dim; ++i) basis[i] = 0.0;
+            basis[column] = 1.0;
+            factor.solveSymmetricSystem(basis, solution);
+            for (int row = 0; row < dim; ++row) {
+                lowerInverse[row * dim + column] = solution[row];
+            }
+        }
+        System.arraycopy(lowerInverse, 0, out, 0, dim * dim);
+        symmetrizeFlat(out, dim);
+    }
+
+    public static final class FlatCholeskyFactor {
+        final double[] lower;
+        final int dimension;
+
+        FlatCholeskyFactor(final double[] lower, final int dimension) {
+            this.lower = lower;
+            this.dimension = dimension;
+        }
+
+        public double logDeterminant() {
+            double value = 0.0;
+            for (int i = 0; i < dimension; ++i) {
+                value += 2.0 * Math.log(lower[i * dimension + i]);
+            }
+            return value;
+        }
+
+        public void solveSymmetricSystem(final double[] rhs, final double[] out) {
+            final int dim = dimension;
+            final double[] y = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                double sum = rhs[i];
+                for (int j = 0; j < i; ++j) {
+                    sum -= lower[i * dim + j] * y[j];
+                }
+                y[i] = sum / lower[i * dim + i];
+            }
+            for (int i = dim - 1; i >= 0; --i) {
+                double sum = y[i];
+                for (int j = i + 1; j < dim; ++j) {
+                    sum -= lower[j * dim + i] * out[j];
+                }
+                out[i] = sum / lower[i * dim + i];
+            }
+        }
+    }
+
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
+    public static void identityMinus(final double[][] matrix) {
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = 0; j < matrix[i].length; ++j) {
+                matrix[i][j] = (i == j ? 1.0 : 0.0) - matrix[i][j];
+            }
+        }
+    }
+
+    public static void copyVector(final double[] source, final double[] target) {
+        System.arraycopy(source, 0, target, 0, source.length);
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#copyMatrix(double[], double[], int)} with flat arrays instead. */
+    @Deprecated
+    public static void copyMatrix(final double[][] source, final double[][] target) {
+        copyMatrix(source, target, source.length, source[0].length);
+    }
+
+    /** @deprecated See {@link #copyMatrix(double[][], double[][])}. */
+    @Deprecated
+    public static void copyMatrix(final double[][] source,
+                           final double[][] target,
+                           final int rows,
+                           final int cols) {
+        for (int i = 0; i < rows; ++i) {
+            System.arraycopy(source[i], 0, target[i], 0, cols);
+        }
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#symmetrize(double[], int)} with a flat array instead. */
+    @Deprecated
+    public static void symmetrize(final double[][] matrix) {
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = i + 1; j < matrix[i].length; ++j) {
+                final double average = 0.5 * (matrix[i][j] + matrix[j][i]);
+                matrix[i][j] = average;
+                matrix[j][i] = average;
+            }
+        }
+    }
+
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
+    public static void addJitterToDiagonal(final double[][] matrix, final double minimumJitter) {
+        for (int i = 0; i < matrix.length; ++i) {
+            if (matrix[i][i] < minimumJitter) {
+                matrix[i][i] = minimumJitter;
+            }
+        }
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#quadraticForm(double[], double[], int, double[])} with a flat array instead. */
+    @Deprecated
+    public static double quadraticForm(final double[][] matrix, final double[] vector) {
+        double result = 0.0;
+        for (int i = 0; i < vector.length; ++i) {
+            double rowSum = 0.0;
+            for (int j = 0; j < vector.length; ++j) {
+                rowSum += matrix[i][j] * vector[j];
+            }
+            result += vector[i] * rowSum;
+        }
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#tryCholesky(double[], double[], int)}
+     *     with flat arrays instead.
+     */
+    @Deprecated
+    public static CholeskyFactor cholesky(final double[][] matrix) {
+        final int dim = matrix.length;
+        final double[][] lower = new double[dim][dim];
+
+        if (!tryCholesky(matrix, lower, dim)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+
+        return new CholeskyFactor(lower);
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#tryCholesky(double[], double[], int)} instead. */
+    @Deprecated
+    public static boolean tryCholesky(final double[][] matrix,
+                               final double[][] lowerOut,
+                               final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            for (int j = 0; j <= i; ++j) {
+                double sum = matrix[i][j];
+                for (int k = 0; k < j; ++k) {
+                    sum -= lowerOut[i][k] * lowerOut[j][k];
+                }
+
+                if (i == j) {
+                    if (sum <= 0.0) {
+                        return false;
+                    }
+                    lowerOut[i][j] = Math.sqrt(sum);
+                } else {
+                    final double denom = lowerOut[j][j];
+                    if (denom == 0.0) {
+                        return false;
+                    }
+                    lowerOut[i][j] = sum / denom;
+                }
+            }
+
+            for (int j = i + 1; j < dimension; ++j) {
+                if (Math.abs(matrix[i][j] - matrix[j][i]) > SYMMETRY_TOLERANCE) {
+                    return false;
+                }
+            }
+            for (int j = i + 1; j < dimension; ++j) {
+                lowerOut[i][j] = 0.0;
+            }
+        }
+        return true;
+    }
+
+    /** @deprecated Use {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps#invertFromCholesky(double[], double[], double[], int)} with flat arrays instead. */
+    @Deprecated
+    public static void invertPositiveDefiniteFromCholesky(final double[][] out,
+                                                   final CholeskyFactor factor) {
+        final int dim = out.length;
+        final double[][] inverse = new double[dim][dim];
+        final double[] basis = new double[dim];
+        final double[] solution = new double[dim];
+
+        for (int column = 0; column < dim; ++column) {
+            for (int i = 0; i < dim; ++i) {
+                basis[i] = 0.0;
+            }
+            basis[column] = 1.0;
+            factor.solveSymmetricSystem(basis, solution);
+            for (int row = 0; row < dim; ++row) {
+                inverse[row][column] = solution[row];
+            }
+        }
+
+        copyMatrix(inverse, out);
+        symmetrize(out);
+    }
+
+    /** @deprecated Use flat row-major operations via {@link dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps} instead. */
+    @Deprecated
+    public static void invertPositiveDefiniteFromLowerTriangular(final double[][] inverseOut,
+                                                          final double[][] lowerTriangular,
+                                                          final double[] yScratch,
+                                                          final int dimension) {
+        for (int column = 0; column < dimension; ++column) {
+            for (int i = 0; i < dimension; ++i) {
+                double sum = (i == column) ? 1.0 : 0.0;
+                for (int j = 0; j < i; ++j) {
+                    sum -= lowerTriangular[i][j] * yScratch[j];
+                }
+                yScratch[i] = sum / lowerTriangular[i][i];
+            }
+
+            for (int i = dimension - 1; i >= 0; --i) {
+                double sum = yScratch[i];
+                for (int j = i + 1; j < dimension; ++j) {
+                    sum -= lowerTriangular[j][i] * inverseOut[j][column];
+                }
+                inverseOut[i][column] = sum / lowerTriangular[i][i];
+            }
+        }
+        symmetrize(inverseOut);
+    }
+
+    public static final class CholeskyFactor {
+        private final double[][] lower;
+
+        CholeskyFactor(final double[][] lower) {
+            this.lower = lower;
+        }
+
+        public double logDeterminant() {
+            double value = 0.0;
+            for (int i = 0; i < lower.length; ++i) {
+                value += 2.0 * Math.log(lower[i][i]);
+            }
+            return value;
+        }
+
+        public void solveSymmetricSystem(final double[] rhs, final double[] out) {
+            final int dim = lower.length;
+            final double[] y = new double[dim];
+
+            for (int i = 0; i < dim; ++i) {
+                double sum = rhs[i];
+                for (int j = 0; j < i; ++j) {
+                    sum -= lower[i][j] * y[j];
+                }
+                y[i] = sum / lower[i][i];
+            }
+
+            for (int i = dim - 1; i >= 0; --i) {
+                double sum = y[i];
+                for (int j = i + 1; j < dim; ++j) {
+                    sum -= lower[j][i] * out[j];
+                }
+                out[i] = sum / lower[i][i];
+            }
+        }
+    }
+}

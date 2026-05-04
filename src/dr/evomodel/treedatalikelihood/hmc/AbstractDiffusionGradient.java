@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Likelihood;
@@ -59,13 +60,56 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
 
     public abstract double[] getGradientLogDensity(double[] gradient);
 
+    /**
+     * Evaluate this gradient using an explicit source offset for this call.
+     * This avoids relying on shared mutable offset state when the same
+     * provider instance is reused across wrappers (e.g. path/source-destination
+     * compositions).
+     */
+    public double[] getGradientLogDensity(double[] gradient, int sourceOffset) {
+        final int previousOffset = this.offset;
+        this.offset = sourceOffset;
+        try {
+            return getGradientLogDensity(gradient);
+        } finally {
+            this.offset = previousOffset;
+        }
+    }
+
     public abstract Parameter getRawParameter();
 
     public void setOffset(int offset) {
         this.offset = offset;
     }
 
+    protected int getSourceOffset() {
+        return offset;
+    }
+
+    protected double[] extractSourceGradient(double[] fullGradient, int requiredDimension) {
+        final double[] result = new double[requiredDimension];
+        if (fullGradient == null) {
+            return result;
+        }
+        if (offset < 0) {
+            throw new IllegalStateException("Negative source gradient offset: " + offset);
+        }
+        if (offset + requiredDimension > fullGradient.length) {
+            throw new IllegalStateException(
+                    "Source gradient slice out of bounds: offset=" + offset +
+                            ", requiredDimension=" + requiredDimension +
+                            ", fullGradientLength=" + fullGradient.length + "."
+            );
+        }
+        System.arraycopy(fullGradient, offset, result, 0, requiredDimension);
+        return result;
+    }
+
     public abstract ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter();
+
+    public ContinuousTraitGradientForBranch.ProcessGradientTarget getProcessGradientTarget() {
+        return ContinuousTraitGradientForBranch.targetForDerivationParameter(getDerivationParameter());
+    }
 
     @Override
     public Likelihood getLikelihood() {
@@ -84,7 +128,8 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this,
-                lowerBound, upperBound, TOLERANCE);
+                lowerBound, upperBound, TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
 //    @Override
@@ -162,7 +207,7 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     public static class ParameterDiffusionGradient extends AbstractDiffusionGradient implements Reportable {
 
         protected final int dim;
-        private final BranchSpecificGradient branchSpecificGradient;
+        protected final BranchSpecificGradient branchSpecificGradient;
 
         private final Parameter parameter;
         private final Parameter rawParameter;
@@ -200,20 +245,150 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
 
         @Override
         public double[] getGradientLogDensity() {
-            double[] gradient = branchSpecificGradient.getGradientLogDensity();
+            double[] gradient = getFullBranchGradient();
             return getGradientLogDensity(gradient);
         }
 
-        public double[] getGradientLogDensity(double[] gradient) {
-            return extractGradient(gradient);
+        protected double[] getFullBranchGradient() {
+            return branchSpecificGradient.getGradientLogDensity();
         }
 
-        private double[] extractGradient(double[] gradient) {
-            double[] result = new double[dim];
-            for (int i = 0; i < dim; i++) {
-                result[i] = gradient[offset + i];
+        public double[] getGradientLogDensity(double[] gradient) {
+            return extractSourceGradient(gradient, dim);
+        }
+
+        /**
+         * Single-state replay diagnostic used by HMC mismatch debugging.
+         *
+         * Compares, at the current parameter state:
+         * 1) full branch analytic vs full branch numeric
+         * 2) extracted native-block analytic vs extracted native-block numeric
+         * and reports repeatability across multiple analytic evaluations.
+         */
+        public String getSingleStateReplayDebug() {
+            final int repeats = Integer.getInteger("beast.debug.parameterDiffusionReplay.repeats", 3);
+            final int[] focus = parseFocusIndices();
+
+            final double[] fullAnalytic0 = branchSpecificGradient.getGradientLogDensity();
+            final double[] fullNumeric = branchSpecificGradient.getNumericalGradientLogDensityDebug();
+            final double[] extractedAnalytic0 = getGradientLogDensity(fullAnalytic0);
+            final double[] extractedNumeric = getGradientLogDensity(fullNumeric);
+            final String dumpPath = System.getProperty("beast.debug.parameterDiffusionReplay.dumpPath");
+            final String dumpOnlyParameterContains = System.getProperty(
+                    "beast.debug.parameterDiffusionReplay.dumpOnlyParameterContains", "");
+            final String rawName = rawParameter == null ? "<null>" : rawParameter.getParameterName();
+            boolean dumpAttempted = false;
+            boolean dumpWritten = false;
+            String dumpError = null;
+            final boolean allowDumpForThisParameter =
+                    dumpOnlyParameterContains.isEmpty() || rawName.contains(dumpOnlyParameterContains);
+            if (allowDumpForThisParameter && dumpPath != null && !dumpPath.isEmpty()) {
+                dumpAttempted = true;
+                try {
+                    branchSpecificGradient.dumpCurrentBranchStateForPythonDebug(dumpPath, fullAnalytic0, fullNumeric);
+                    dumpWritten = true;
+                } catch (RuntimeException ex) {
+                    dumpError = ex.getMessage();
+                }
             }
-            return result;
+
+            double maxRepeatAbsDiff = 0.0;
+            int maxRepeatIdx = -1;
+            for (int r = 1; r < repeats; ++r) {
+                final double[] fullAnalyticR = branchSpecificGradient.getGradientLogDensity();
+                final double[] extractedAnalyticR = getGradientLogDensity(fullAnalyticR);
+                for (int i = 0; i < extractedAnalytic0.length && i < extractedAnalyticR.length; ++i) {
+                    final double d = Math.abs(extractedAnalytic0[i] - extractedAnalyticR[i]);
+                    if (d > maxRepeatAbsDiff) {
+                        maxRepeatAbsDiff = d;
+                        maxRepeatIdx = i;
+                    }
+                }
+            }
+
+            final StringBuilder sb = new StringBuilder();
+            sb.append("parameterDiffusionSingleStateReplay")
+                    .append(" rawParameter=")
+                    .append(rawParameter == null ? "<null>" : rawParameter.getParameterName())
+                    .append(" sourceOffset=").append(getSourceOffset())
+                    .append(" dim=").append(dim)
+                    .append('\n');
+            sb.append("\tfullAnalytic");
+            appendIndexValues(sb, fullAnalytic0, focus);
+            sb.append('\n');
+            sb.append("\tfullNumeric ");
+            appendIndexValues(sb, fullNumeric, focus);
+            sb.append('\n');
+            sb.append("\tfullAbsDiff");
+            appendIndexAbsDiff(sb, fullAnalytic0, fullNumeric, focus);
+            sb.append('\n');
+            sb.append("\textractedAnalytic=").append(new Vector(extractedAnalytic0)).append('\n');
+            sb.append("\textractedNumeric =").append(new Vector(extractedNumeric)).append('\n');
+            sb.append("\textractedAbsDiff=").append(new Vector(absDiff(extractedAnalytic0, extractedNumeric))).append('\n');
+            sb.append("\trepeatability maxAbsDiff=").append(maxRepeatAbsDiff)
+                    .append(" maxIdx=").append(maxRepeatIdx)
+                    .append(" repeats=").append(repeats)
+                    .append('\n');
+            if (dumpAttempted) {
+                sb.append("\tdumpPath=").append(dumpPath)
+                        .append(" dumpWritten=").append(dumpWritten);
+                if (dumpError != null) {
+                    sb.append(" dumpError=").append(dumpError.replace('\n', ' '));
+                }
+                sb.append('\n');
+            }
+            if (Boolean.getBoolean("beast.debug.parameterDiffusionReplay.comparePassStats")) {
+                sb.append('\t')
+                        .append(branchSpecificGradient.getConsecutivePassStatisticsDiffReport().replace("\n", "\n\t"))
+                        .append('\n');
+            }
+            return sb.toString();
+        }
+
+        private int[] parseFocusIndices() {
+            final String raw = System.getProperty("beast.debug.parameterDiffusionSlice.indices", "6,7,8");
+            final String[] tokens = raw.split(",");
+            final int[] out = new int[tokens.length];
+            for (int i = 0; i < tokens.length; ++i) {
+                try {
+                    out[i] = Integer.parseInt(tokens[i].trim());
+                } catch (NumberFormatException ignored) {
+                    out[i] = -1;
+                }
+            }
+            return out;
+        }
+
+        private void appendIndexValues(final StringBuilder sb, final double[] vector, final int[] indices) {
+            for (int idx : indices) {
+                if (idx >= 0 && idx < vector.length) {
+                    sb.append(" i").append(idx).append('=').append(vector[idx]);
+                } else {
+                    sb.append(" i").append(idx).append("=<oob>");
+                }
+            }
+        }
+
+        private void appendIndexAbsDiff(final StringBuilder sb,
+                                        final double[] left,
+                                        final double[] right,
+                                        final int[] indices) {
+            for (int idx : indices) {
+                if (idx >= 0 && idx < left.length && idx < right.length) {
+                    sb.append(" i").append(idx).append('=').append(Math.abs(left[idx] - right[idx]));
+                } else {
+                    sb.append(" i").append(idx).append("=<oob>");
+                }
+            }
+        }
+
+        private double[] absDiff(final double[] a, final double[] b) {
+            final int length = Math.min(a.length, b.length);
+            final double[] out = new double[length];
+            for (int i = 0; i < length; ++i) {
+                out[i] = Math.abs(a[i] - b[i]);
+            }
+            return out;
         }
 
         @Override
@@ -248,7 +423,20 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
                     branchSpecificGradient, likelihood,
                     ((DiagonalMatrix) attenuation).getDiagonalParameter(),
                     (DiagonalMatrix) attenuation,
-                    Double.POSITIVE_INFINITY, 0.0);
+                    Double.POSITIVE_INFINITY, 1.0e-12);
+        }
+
+        public static ParameterDiffusionGradient createSelectionParameterGradient(final BranchSpecificGradient branchSpecificGradient,
+                                                                                 final Likelihood likelihood,
+                                                                                 final Parameter parameter,
+                                                                                 final AbstractBlockDiagonalTwoByTwoMatrixParameter rawParameter) {
+            return new ParameterDiffusionGradient(
+                    branchSpecificGradient,
+                    likelihood,
+                    parameter,
+                    rawParameter.getParameter(),
+                    Double.POSITIVE_INFINITY,
+                    Double.NEGATIVE_INFINITY);
         }
     }
 }

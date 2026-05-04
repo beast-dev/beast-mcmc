@@ -168,10 +168,17 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 
     public double[] getGradientLogDensity(double[] grad) {
 
-        double[] gradient = new double[dim * dim];
-        if (grad != null) System.arraycopy(grad, offset, gradient, 0, dim * dim);
+        double[] gradient = extractSourceGradient(grad, dim * dim);
 
         // parameters
+        // Always refresh cached inverses before extracting vecP/vecV so this
+        // gradient does not rely on upstream change-event invalidation order.
+        if (precision instanceof CachedMatrixInverse) {
+            ((CachedMatrixInverse) precision).forceComputeInverse();
+        }
+        if (variance instanceof CachedMatrixInverse) {
+            ((CachedMatrixInverse) variance).forceComputeInverse();
+        }
         parametrization.updateParameters(variance);
 
         double[] vecV = flatten(variance.getParameterAsMatrix());

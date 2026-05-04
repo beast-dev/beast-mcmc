@@ -116,6 +116,8 @@ public class BranchConditionalDistributionDelegate extends
         int numberOfNodes = (node == null) ? likelihoodDelegate.getPartialBufferCount() : 1;
         double[] belowPartial = new double[dimPartial * numTraits * numberOfNodes];
         double[] abovePartial = new double[dimPartial * numTraits * numberOfNodes];
+        final boolean includeParentAbove = cdi.hasParentPreOrderPartials();
+        double[] aboveParentPartial = includeParentAbove ? new double[dimPartial * numTraits * numberOfNodes] : null;
 //        double[] branchPrecision = new double[dimTrait * dimTrait * numTraits * numberOfNodes];
         DiffusionRepresentation branchPrecision =
                 likelihoodDelegate.getIntegrator().diffusionFactory(numberOfNodes);
@@ -135,7 +137,13 @@ public class BranchConditionalDistributionDelegate extends
         } else {
             cdi.getBranchMatrices(branchNumber, precisionIndex, branchPrecision, branchDisplacement, branchActualization);
         }
+        // IMPORTANT: pre-order ("above") partials are indexed at the current node (child-side endpoint
+        // of the branch), not at the parent endpoint. Branch-specific consumers that need parent-side
+        // moments must explicitly map child-side above moments through the branch transition.
         cdi.getPreOrderPartial(nodeNumber, abovePartial);
+        if (includeParentAbove) {
+            cdi.getParentPreOrderPartial(nodeNumber, aboveParentPartial);
+        }
 
 
 
@@ -145,19 +153,20 @@ public class BranchConditionalDistributionDelegate extends
                 NodeRef tNode = tree.getNode(n);
                 int nodeIndex = likelihoodDelegate.getActiveNodeIndex(tNode.getNumber());
                 int branchIndex = likelihoodDelegate.getActiveMatrixIndex(tNode.getNumber());
-                addOneNode(statistics, belowPartial, abovePartial, branchPrecision, branchDisplacement, branchActualization,
-                        nodeIndex, branchIndex);
+                addOneNode(statistics, belowPartial, abovePartial, aboveParentPartial, includeParentAbove,
+                        branchPrecision, branchDisplacement, branchActualization, nodeIndex, branchIndex);
             }
             throw new RuntimeException("When do we ever get here?");
         } else {
-            addOneNode(statistics, belowPartial, abovePartial, branchPrecision, branchDisplacement, branchActualization,0, 0);
+            addOneNode(statistics, belowPartial, abovePartial, aboveParentPartial, includeParentAbove,
+                    branchPrecision, branchDisplacement, branchActualization,0, 0);
         }
 
         return statistics;
     }
-
     private void addOneNode(List<BranchSufficientStatistics> statistics,
                             double[] belowPartial, double[] abovePartial,
+                            double[] aboveParentPartial, boolean includeParentAbove,
                             DiffusionRepresentation branchPrecision,
                             double[] branchDisplacement,
                             double[] branchActualization,
@@ -185,13 +194,20 @@ public class BranchConditionalDistributionDelegate extends
                         null,
                         choleskyPrecision, likelihoodDelegate.getPrecisionType());
 
+        // "above" here means "message coming from above the node in the tree", but numerically this
+        // object is anchored at the child/node side because it is built from getPreOrderPartial(nodeIndex,...).
         NormalSufficientStatistics above =
                 new NormalSufficientStatistics(abovePartial, nodeIndex, dimTrait,
 //                                Pd,
                         diffusionRepresentation.getPrecision(0),
 //                                choleskyPrecision,
                         likelihoodDelegate.getPrecisionType());
+        NormalSufficientStatistics aboveParent = includeParentAbove ?
+                new NormalSufficientStatistics(aboveParentPartial, nodeIndex, dimTrait,
+                        diffusionRepresentation.getPrecision(0),
+                        likelihoodDelegate.getPrecisionType()) :
+                null;
 
-        statistics.add(new BranchSufficientStatistics(below, branch, above));
+        statistics.add(new BranchSufficientStatistics(below, branch, above, aboveParent));
     }
 }

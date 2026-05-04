@@ -157,7 +157,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
     public DerivativeOrder getHighestOrder() {
         return highestOrder;
     }
-    
+
     @Override
     public double[] getGradientLogDensity() {
         if (parallelExecutor != null)
@@ -187,7 +187,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
-            
+
             double[] tmp = derivativeType.getDerivativeLogDensity(grad);
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();
@@ -201,7 +201,8 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         return  "compoundGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.TOLERANCE);
+                GradientWrtParameterProvider.TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
     public List<GradientWrtParameterProvider> getDerivativeList() {

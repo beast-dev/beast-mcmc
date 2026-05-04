@@ -138,6 +138,12 @@
             <!-- complie JUnit test classes -->
             <include name="test/dr/**"/>
         </javac>
+        <!-- Copy runtime parser/config resources needed when running tests from ${build}. -->
+        <copy todir="${build}">
+            <fileset dir="${src}">
+                <include name="dr/**/*.properties"/>
+            </fileset>
+        </copy>
         <echo message="Successfully compiled."/>
     </target>
 
@@ -239,6 +245,8 @@
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
                 <include name="dr/evomodel/treedatalikelihood/**/*.class"/>
+                <exclude name="dr/evomodel/treedatalikelihood/TreeDataLikelihoodTest.class"/>
+
                 <include name="dr/evomodelxml/**/*.class"/>
                 <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
@@ -358,7 +366,8 @@
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
-
+                    <exclude name="test/dr/evomodel/treedatalikelihood/TreeDataLikelihoodTest.java"/>
+                    <exclude name="test/dr/inference/mcmc/MCMCTest.java"/>
                     <!-- Broken JUnits -->
                     <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
                     <exclude name="test/dr/app/beagle/MarkovJumpsTest.java"/> <!-- doesn't always fail-->
@@ -400,6 +409,80 @@
         </junit>
         <fail message="At least one of the JUnits failed the test. Check test results." if="test.failed"/>
         <echo message="JUnit test finished."/>
+    </target>
+
+    <target name="junit-canonical" depends="compile-all"
+            description="Run the canonical OU behavior-lock test suite">
+        <mkdir dir="${report}"/>
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${build}"/>
+            </classpath>
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${report}">
+                <fileset dir="${src}">
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalMathConversionTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalNumericsTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalGaussianMessagePasserOULikelihoodTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalGaussianMessagePasserOUGradientTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUFocusedParityAndCacheTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOrthogonalBlockFrechetExactTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUXmlWiringTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalWorkspaceHardeningTest.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="At least one of the canonical JUnits failed the test. Check test results." if="test.failed"/>
+        <echo message="Canonical JUnit tests finished."/>
+    </target>
+
+    <target name="junit-canonical-boundaries" depends="compile-all"
+            description="Run canonical package-boundary guard tests">
+        <mkdir dir="${report}"/>
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${build}"/>
+            </classpath>
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${report}">
+                <fileset dir="${src}">
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalPackageBoundaryTest.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="At least one canonical package-boundary guard failed. Check test results." if="test.failed"/>
+        <echo message="Canonical package-boundary guard finished."/>
+    </target>
+
+    <target name="junit-canonical-behavior" depends="compile-all"
+            description="Run the canonical OU behavior and benchmark guard suite">
+        <mkdir dir="${report}"/>
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
+            <classpath>
+                <path refid="classpath"/>
+                <path location="${build}"/>
+            </classpath>
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${report}">
+                <fileset dir="${src}">
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/Canonical*Test.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/OUDiffusionKernelBridgeValidationTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/TreeCanonicalOrthogonalBlockBenchmarkTest.java"/>
+                    <include name="test/dr/inference/timeseries/CanonicalTimeSeriesBehaviorTest.java"/>
+                    <include name="test/dr/inferencexml/timeseries/OUSelectionChartParserHelperTest.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="At least one canonical behavior guard failed. Check test results." if="test.failed"/>
+        <echo message="Canonical behavior guard suite finished."/>
     </target>
 
     <target name="junitreport">

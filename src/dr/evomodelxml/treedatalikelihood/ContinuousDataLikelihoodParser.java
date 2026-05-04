@@ -43,6 +43,7 @@ import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.xml.*;
 
 import java.util.List;
@@ -70,6 +71,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
+    private static final String IMPLEMENTATION = "implementation";
+    private static final String IMPLEMENTATION_LEGACY = "legacy";
+    private static final String IMPLEMENTATION_CANONICAL = "canonical";
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
 
@@ -95,6 +99,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
         boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
         boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+        final boolean useCanonicalImplementation = IMPLEMENTATION_CANONICAL.equals(implementation);
 
         if (reciprocalRates) {
             throw new XMLParseException("Reciprocal rates are not yet implemented.");
@@ -123,6 +129,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
             }
         }
+        OUSelectionChartParserHelper.validateSelectionChart(xo,
+                elasticModel == null ? null : elasticModel.getStrengthOfSelectionMatrixParameter(),
+                CONTINUOUS_DATA_LIKELIHOOD);
 
 
         DiffusionProcessDelegate diffusionProcessDelegate;
@@ -211,8 +220,27 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
 
         boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
+        final boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, forceCompletelyObserved, allowSingular);
+
+        if (useCanonicalImplementation) {
+            if (delegateProvider != DelegateProvider.OU) {
+                throw new XMLParseException(
+                        "traitDataLikelihood implementation=\"canonical\" currently supports only OU models.");
+            }
+            if (reconstructTraits) {
+                throw new XMLParseException(
+                        "traitDataLikelihood implementation=\"canonical\" does not yet support reconstructTraits=\"true\".");
+            }
+            try {
+                delegate.enableCanonicalOULikelihood();
+            } catch (UnsupportedOperationException ex) {
+                throw new XMLParseException(
+                        "traitDataLikelihood implementation=\"canonical\" is not supported here: "
+                                + ex.getMessage());
+            }
+        }
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
             ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
@@ -223,7 +251,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         // End Assemble Model
 
         // Begin Trait Reconstruction Parsing
-        boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
 
 //            if (missingIndices != null && missingIndices.size() == 0) {
@@ -300,6 +327,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
+            new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
+                    "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
+                    OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

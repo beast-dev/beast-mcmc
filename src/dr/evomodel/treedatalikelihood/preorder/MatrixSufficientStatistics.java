@@ -73,6 +73,13 @@ public class MatrixSufficientStatistics extends NormalSufficientStatistics {
 
     }
 
+    MatrixSufficientStatistics(final DenseMatrix64F displacement,
+                               final PreOrderPrecision precision,
+                               final DenseMatrix64F actualization) {
+        super(displacement, precision);
+        this.actualization = actualization;
+    }
+
     public double getDisplacement(int row) {
         return getMean(row);
     }

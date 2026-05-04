@@ -62,6 +62,18 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance);
 
+    /**
+     * Backward pass through branch variance integration for one branch.
+     * Fills {@code barVdiOut} (row-major) with the adjoint of the branch covariance.
+     */
+    default void computeGlobalRemainderAdjointWrtBranchVariance(
+            final int iBuffer,
+            final int iMatrix,
+            final int kBuffer,
+            final double[] barVdiOut) {
+        Arrays.fill(barVdiOut, 0.0);
+    }
+
     void getBranchDisplacement(int bufferIndex, double[] displacement);
 
     void getBranchActualization(int bufferIndex, double[] actualization);
@@ -79,6 +91,18 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void setPreOrderPartial(int bufferIndex, final double[] partial);
 
     void getPreOrderPartial(int bufferIndex, final double[] partial);
+
+    default void setParentPreOrderPartial(int bufferIndex, final double[] partial) {
+        setPreOrderPartial(bufferIndex, partial);
+    }
+
+    default void getParentPreOrderPartial(int bufferIndex, final double[] partial) {
+        getPreOrderPartial(bufferIndex, partial);
+    }
+
+    default boolean hasParentPreOrderPartials() {
+        return false;
+    }
 
     void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts);
 
@@ -419,6 +443,27 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     getArrayLength(bufferIndex));
         }
 
+        @Override
+        public void setParentPreOrderPartial(int bufferIndex, final double[] partial) {
+
+            System.arraycopy(partial, 0,
+                    parentPreOrderPartials, getArrayStart(bufferIndex),
+                    getArrayLength(bufferIndex));
+        }
+
+        @Override
+        public void getParentPreOrderPartial(int bufferIndex, final double[] partial) {
+
+            System.arraycopy(parentPreOrderPartials, getArrayStart(bufferIndex),
+                    partial, 0,
+                    getArrayLength(bufferIndex));
+        }
+
+        @Override
+        public boolean hasParentPreOrderPartials() {
+            return true;
+        }
+
         private int getArrayStart(int bufferIndex) {
             return (bufferIndex == -1) ? 0 : dimPartial * bufferIndex;
         }
@@ -670,6 +715,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         int[] degreesOfFreedom;
         double[] outerProducts;
         double[] preOrderPartials;
+        double[] parentPreOrderPartials;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
         int precisionOffset;
@@ -766,6 +812,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                    double mean = (pk * preOrderPartials[kbo + g] + pjp * partials[jbo + g]) / pip;
                     double mean = pWeight * preOrderPartials[kbo + g] + (1.0 - pWeight) * partials[jbo + g];
                     preOrderPartials[ibo + g] = mean;
+                    parentPreOrderPartials[ibo + g] = mean;
 //                    preBranchPartials[ibo + g] = mean; // TODO Only when necessary
                 }
 
@@ -785,6 +832,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
 //                preOrderPartials[ibo + dimTrait] = pi;
                 preOrderPartials[ibo + dimTrait] = Double.isInfinite(pi) ? Double.POSITIVE_INFINITY : pi;
+                parentPreOrderPartials[ibo + dimTrait] = Double.isInfinite(pip) ? Double.POSITIVE_INFINITY : pip;
 
 //                preBranchPartials[ibo + dimTrait] = pip; // TODO Ony when necessary
 
@@ -816,6 +864,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
             System.arraycopy(partials, dimPartial * priorBufferIndex, // Copy from prior
                     preOrderPartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
+            System.arraycopy(preOrderPartials, dimPartial * rootNodeIndex,
+                    parentPreOrderPartials, dimPartial * rootNodeIndex, dimPartial);
         }
 
         protected void updatePartial(
@@ -1031,6 +1081,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             outerProducts = new double[dimProcess * dimProcess * numTraits];
 
             preOrderPartials = new double[dimPartial * bufferCount];
+            parentPreOrderPartials = new double[dimPartial * bufferCount];
 //            preBranchPartials = new double[dimPartial * bufferCount];
         }
 

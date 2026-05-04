@@ -46,6 +46,9 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
@@ -214,7 +217,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     );
                 } else {
                     if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                        final OUDiffusionModelDelegate ouDelegate =
+                                (OUDiffusionModelDelegate) diffusionProcessDelegate;
+                        if (ouDelegate.hasDiagonalActualization()) {
                             base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
@@ -223,16 +228,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     partialBufferCount,
                                     matrixBufferCount
                             );
-                        } else {
-                            base = new SafeMultivariateActualizedWithDriftIntegrator(
+                        } else if (ouDelegate.getElasticModel().hasBlockStructure()
+                                && ouDelegate.getElasticModel().hasOrthogonalActualizationBasis()) {
+                            base = new SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
                                     dimTrait,
                                     dimTrait,
                                     partialBufferCount,
-                                    matrixBufferCount,
-                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                                    matrixBufferCount
                             );
+                        } else {
+                            final SafeMultivariateActualizedWithDriftIntegrator actualizedIntegrator =
+                                    new SafeMultivariateActualizedWithDriftIntegrator(
+                                            precisionType,
+                                            numTraits,
+                                            dimTrait,
+                                            dimTrait,
+                                            partialBufferCount,
+                                            matrixBufferCount,
+                                            ouDelegate.isSymmetric()
+                                    );
+                            ouDelegate.getOUStrategyBundle().applyTo(actualizedIntegrator);
+                            base = actualizedIntegrator;
                         }
                     } else {
                         if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
@@ -549,6 +567,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
+            if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                // Keep OU report diagnostics aligned with the runtime pruning likelihood path.
+                // The report-side closed form is useful for inspection but can drift from runtime in
+                // some OU pathways where branch-level kernels are computed through CDI updates.
+                logDensity = callbackLikelihood.getLogLikelihood();
+            }
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
 
@@ -737,6 +761,52 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return diffusionProcessDelegate.getDiffusionModel(0);
     }
 
+    public boolean usesCanonicalOULikelihood() {
+        return useCanonicalOULikelihood;
+    }
+
+    public void enableCanonicalOULikelihood() {
+        if (useCanonicalOULikelihood) {
+            return;
+        }
+        if (!(diffusionProcessDelegate instanceof OUDiffusionModelDelegate)) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood is only available for OU diffusion delegates.");
+        }
+        if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood does not yet support integrated OU delegates.");
+        }
+        if (getTraitCount() != 1) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU likelihood currently supports only a single trait partition.");
+        }
+
+        final OUDiffusionModelDelegate ouDelegate = (OUDiffusionModelDelegate) diffusionProcessDelegate;
+        canonicalOUIntegrator = createCanonicalOUIntegrator(ouDelegate);
+        canonicalOUGradientAdapter = new CanonicalOUGradientAdapter(canonicalOUIntegrator, dimTrait);
+        useCanonicalOULikelihood = true;
+    }
+
+    private CanonicalOUIntegrator createCanonicalOUIntegrator(final OUDiffusionModelDelegate ouDelegate) {
+        return new CanonicalOUTreeLikelihoodIntegrator(
+                tree,
+                ouDelegate.getElasticModel(),
+                getDiffusionModel(),
+                dataModel,
+                rootPrior,
+                ouDelegate.getCanonicalStationaryMeanParameter(),
+                rateModel,
+                rateTransformation);
+    }
+
+    public CanonicalOUGradientAdapter getCanonicalOUGradientAdapter() {
+        if (!useCanonicalOULikelihood || canonicalOUGradientAdapter == null) {
+            throw new IllegalStateException("Canonical OU likelihood mode is not enabled on this delegate.");
+        }
+        return canonicalOUGradientAdapter;
+    }
+
     private void setAllTipData(boolean flip) {
         for (int index = 0; index < tipCount; index++) {
             setTipData(index, flip);
@@ -785,6 +855,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                       int rootNodeNumber) {
+
+        if (useCanonicalOULikelihood) {
+            branchNormalization = rateTransformation.getNormalization();
+            return canonicalOUIntegrator.calculateLogLikelihood();
+        }
 
         branchNormalization = rateTransformation.getNormalization();
 
@@ -861,7 +936,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (double d : logLikelihoods) {
             logL += d;
         }
-
         return logL;
     }
 
@@ -900,6 +974,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     @Override
     public void makeDirty() {
         updateDiffusionModel = true;
+        markCanonicalOUModelDirty();
         fireModelChanged(); // Signal simulation processes
     }
 
@@ -907,9 +982,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionProcessDelegate) {
             updateDiffusionModel = true;
+            markCanonicalOUModelDirty();
             // Tell TreeDataLikelihood to update all nodes
             fireModelChanged();
         } else if (model == dataModel) {
+            markCanonicalTipObservationsDirty();
             if (object == dataModel) {
                 if (index == -1) { // all taxa updated
                     updateTipData.addFirst(index);
@@ -921,8 +998,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             }
 
         } else if (model instanceof BranchRateModel) {
+            markCanonicalOUModelDirty();
             fireModelChanged();
         } else if (model == rootProcessDelegate) {
+            markCanonicalOUModelDirty();
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
@@ -945,6 +1024,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         flip = true;
 
         storedBranchNormalization = branchNormalization;
+
+        if (useCanonicalOULikelihood) {
+            canonicalOUIntegrator.storeState();
+        }
     }
 
     /**
@@ -955,10 +1038,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         partialBufferHelper.restoreState();
 
         branchNormalization = storedBranchNormalization;
+
+        if (useCanonicalOULikelihood) {
+            canonicalOUIntegrator.restoreState();
+        }
     }
 
     @Override
     protected void acceptState() {
+        if (useCanonicalOULikelihood) {
+            canonicalOUIntegrator.acceptState();
+        }
     }
 
     public PreOrderSettings getPreOrderSettings() {
@@ -1036,6 +1126,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private final ContinuousDiffusionIntegrator cdi;
 
     private boolean updateDiffusionModel;
+    private boolean useCanonicalOULikelihood = false;
+    private CanonicalOUIntegrator canonicalOUIntegrator;
+    private CanonicalOUGradientAdapter canonicalOUGradientAdapter;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
@@ -1187,4 +1280,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         return mean;
     }
+
+    private void markCanonicalTipObservationsDirty() {
+        if (!useCanonicalOULikelihood || canonicalOUIntegrator == null) {
+            return;
+        }
+        canonicalOUIntegrator.markTipObservationsDirty();
+    }
+
+    private void markCanonicalOUModelDirty() {
+        if (!useCanonicalOULikelihood || canonicalOUIntegrator == null) {
+            return;
+        }
+        canonicalOUIntegrator.markModelDirty();
+    }
+
 }

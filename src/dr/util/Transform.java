@@ -1304,6 +1304,63 @@ public interface Transform {
         }
     }
 
+    class AtanhTanTransform extends UnivariableTransform {
+
+        private static final double LOWER = -Math.PI / 4.0;
+        private static final double UPPER = Math.PI / 4.0;
+
+        public double transform(double value) {
+            return FastMath.atanh(Math.tan(value));
+        }
+
+        public double inverse(double value) {
+            return Math.atan(FastMath.tanh(value));
+        }
+
+        public boolean isInInteriorDomain(double value) {
+            return value > LOWER && value < UPPER;
+        }
+
+        public double gradientInverse(double value) {
+            final double u = FastMath.tanh(value);
+            return (1.0 - u * u) / (1.0 + u * u);
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            return gradient * Math.cos(2.0 * value) - 2.0 * Math.sin(2.0 * value);
+        }
+
+        public double gradientLogJacobianInverse(double value) {
+            final double u = FastMath.tanh(value);
+            return -4.0 * u / (1.0 + u * u);
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian,
+                                                         double gradientI, double gradientJ,
+                                                         double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            return 1.0 / Math.cos(2.0 * value);
+        }
+
+        public String getTransformName() {
+            return "atanhTan";
+        }
+
+        public double logJacobian(double value) {
+            return -Math.log(Math.cos(2.0 * value));
+        }
+    }
+
     class NegateTransform extends UnivariableTransform {
 
         @Override
@@ -2883,6 +2940,7 @@ public interface Transform {
     LogitTransform LOGIT = new LogitTransform();
     SigmoidTransform SIGMOID = new SigmoidTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
+    AtanhTanTransform ATANH_TAN = new AtanhTanTransform();
     AffineTransform AFFINE = new AffineTransform();
 
     enum Type {
@@ -2895,6 +2953,7 @@ public interface Transform {
         LOGIT("logit", new LogitTransform()),
         SIGMOID("sigmoid", new SigmoidTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),
+        ATANH_TAN("atanhTan", new AtanhTanTransform()),
         INVERSE_SUM("inverseSum", new InverseSumTransform()),
         SQUARED("squared", new SquaredTransform()),
         ABS("abs", new AbsTransform()),

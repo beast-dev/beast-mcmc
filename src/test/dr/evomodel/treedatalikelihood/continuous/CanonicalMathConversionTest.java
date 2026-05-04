@@ -200,6 +200,86 @@ public final class CanonicalMathConversionTest extends TestCase {
         assertEquals(0.0, precision[3], TOL);
     }
 
+    public void testMatrixOpsMatMulMatchesReferenceAcrossDimensions() {
+        assertMatMulMatchesReference(3);
+        assertMatMulMatchesReference(7);
+        assertMatMulMatchesReference(8);
+    }
+
+    public void testMatrixOpsMatMulTransposedRightMatchesReferenceAcrossDimensions() {
+        assertMatMulTransposedRightMatchesReference(3);
+        assertMatMulTransposedRightMatchesReference(7);
+        assertMatMulTransposedRightMatchesReference(8);
+    }
+
+    private void assertMatMulMatchesReference(final int dim) {
+        final double[] left = fillPattern(dim, 0.17, -0.03);
+        final double[] right = fillPattern(dim, -0.11, 0.05);
+        final double[] expected = new double[dim * dim];
+        final double[] actual = new double[dim * dim];
+
+        referenceMatMul(left, right, expected, dim);
+        MatrixOps.matMul(left, right, actual, dim);
+
+        assertArrayClose("matMul dim=" + dim, expected, actual, TOL);
+    }
+
+    private void assertMatMulTransposedRightMatchesReference(final int dim) {
+        final double[] left = fillPattern(dim, 0.13, 0.07);
+        final double[] right = fillPattern(dim, -0.19, 0.02);
+        final double[] expected = new double[dim * dim];
+        final double[] actual = new double[dim * dim];
+
+        referenceMatMulTransposedRight(left, right, expected, dim);
+        MatrixOps.matMulTransposedRight(left, right, actual, dim);
+
+        assertArrayClose("matMulTransposedRight dim=" + dim, expected, actual, TOL);
+    }
+
+    public void testSymmetricSandwichTransposeLeftMatchesReference() {
+        assertSymmetricSandwichTransposeLeftMatchesReference(4);
+        assertSymmetricSandwichTransposeLeftMatchesReference(8);
+    }
+
+    public void testSymmetricSandwichTransposeRightMatchesReference() {
+        assertSymmetricSandwichTransposeRightMatchesReference(4);
+        assertSymmetricSandwichTransposeRightMatchesReference(8);
+    }
+
+    private void assertSymmetricSandwichTransposeLeftMatchesReference(final int dim) {
+        final double[] left = fillPattern(dim, 0.09, -0.04);
+        final double[] middle = fillSymmetricPattern(dim);
+        final double[] middleTimesLeft = new double[dim * dim];
+        final double[] expectedScratch = new double[dim * dim];
+        final double[] expected = new double[dim * dim];
+        final double[] actual = new double[dim * dim];
+
+        referenceMatMul(middle, left, expectedScratch, dim);
+        referenceMatMulTransposedLeft(left, expectedScratch, expected, dim);
+        MatrixOps.symmetricSandwichTransposeLeft(left, middle, actual, middleTimesLeft, dim);
+
+        assertArrayClose("symmetric transpose-left sandwich scratch dim=" + dim,
+                expectedScratch, middleTimesLeft, TOL);
+        assertArrayClose("symmetric transpose-left sandwich dim=" + dim, expected, actual, TOL);
+    }
+
+    private void assertSymmetricSandwichTransposeRightMatchesReference(final int dim) {
+        final double[] left = fillPattern(dim, -0.07, 0.06);
+        final double[] middle = fillSymmetricPattern(dim);
+        final double[] leftTimesMiddle = new double[dim * dim];
+        final double[] expectedScratch = new double[dim * dim];
+        final double[] expected = new double[dim * dim];
+        final double[] actual = new double[dim * dim];
+
+        referenceMatMul(left, middle, expectedScratch, dim);
+        referenceMatMulTransposedRight(expectedScratch, left, expected, dim);
+        MatrixOps.symmetricSandwichTransposeRight(left, middle, actual, leftTimesMiddle, dim);
+
+        assertArrayClose("symmetric transpose-right sandwich scratch dim=" + dim,
+                expectedScratch, leftTimesMiddle, TOL);
+        assertArrayClose("symmetric transpose-right sandwich dim=" + dim, expected, actual, TOL);
+    }
+
     private static void assertArrayClose(final String label,
                                          final double[] expected,
                                          final double[] actual,
@@ -207,6 +287,81 @@ public final class CanonicalMathConversionTest extends TestCase {
         assertEquals(label + " length", expected.length, actual.length);
         for (int i = 0; i < expected.length; ++i) {
             assertEquals(label + "[" + i + "]", expected[i], actual[i], tolerance);
+        }
+    }
+
+    private static double[] fillPattern(final int dim,
+                                        final double rowScale,
+                                        final double columnScale) {
+        final double[] values = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                values[rowOffset + j] =
+                        rowScale * (i + 1) + columnScale * (j + 1) + 0.01 * ((i + j) % 3);
+            }
+        }
+        return values;
+    }
+
+    private static double[] fillSymmetricPattern(final int dim) {
+        final double[] values = new double[dim * dim];
+        for (int i = 0; i < dim; ++i) {
+            for (int j = i; j < dim; ++j) {
+                final double value = (i == j ? 2.0 : 0.0) + 0.03 * (i + 1) - 0.02 * (j + 1);
+                values[i * dim + j] = value;
+                values[j * dim + i] = value;
+            }
+        }
+        return values;
+    }
+
+    private static void referenceMatMul(final double[] left,
+                                        final double[] right,
+                                        final double[] out,
+                                        final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[rowOffset + k] * right[k * dim + j];
+                }
+                out[rowOffset + j] = sum;
+            }
+        }
+    }
+
+    private static void referenceMatMulTransposedRight(final double[] left,
+                                                       final double[] right,
+                                                       final double[] out,
+                                                       final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                final int rightOffset = j * dim;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[rowOffset + k] * right[rightOffset + k];
+                }
+                out[rowOffset + j] = sum;
+            }
+        }
+    }
+
+    private static void referenceMatMulTransposedLeft(final double[] left,
+                                                      final double[] right,
+                                                      final double[] out,
+                                                      final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[k * dim + i] * right[k * dim + j];
+                }
+                out[rowOffset + j] = sum;
+            }
         }
     }
 }

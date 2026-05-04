@@ -1,9 +1,9 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 final class OrthogonalBlockTransitionCovarianceSolver {
 
@@ -25,22 +25,26 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                                          final int[] blockStarts,
                                          final int[] blockSizes) {
         fillDenseMatrix(diffusionMatrix, qMatrix);
-        CommonOps.mult(rtMatrix, qMatrix, temp);
-        CommonOps.mult(temp, rMatrix, qDBasis);
+        MatrixOps.symmetricSandwichTransposeLeft(rMatrix.data, qMatrix.data, qDBasis.data, temp.data, qMatrix.numRows);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
         OrthogonalBlockMatrixOps.multiplyBlockDiagonalLeft(
                 expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);
         OrthogonalBlockMatrixOps.multiplyRightBlockDiagonalTranspose(
                 temp.data, expD, transitionCovDBasis.data, transitionCovDBasis.numRows, blockStarts, blockSizes);
-        CommonOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
+        OrthogonalBlockDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         if (symmetrizeTransitionCovDBasis) {
             symmetrize(transitionCovDBasis);
         }
-        CommonOps.mult(rMatrix, transitionCovDBasis, temp);
         if (symmetrizeTransitionCovDBasis) {
-            multiplyRightTransposeSymmetric(temp, rMatrix, out);
+            MatrixOps.symmetricSandwichTransposeRight(
+                    rMatrix.data,
+                    transitionCovDBasis.data,
+                    out.data,
+                    temp.data,
+                    out.numRows);
         } else {
-            CommonOps.mult(temp, rtMatrix, out);
+            OrthogonalBlockDenseMatrixOps.mult(rMatrix, transitionCovDBasis, temp);
+            OrthogonalBlockDenseMatrixOps.mult(temp, rtMatrix, out);
             symmetrize(out);
         }
     }
@@ -80,27 +84,6 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                 final double value = 0.5 * (data[i * dimension + j] + data[j * dimension + i]);
                 data[i * dimension + j] = value;
                 data[j * dimension + i] = value;
-            }
-        }
-    }
-
-    private static void multiplyRightTransposeSymmetric(final DenseMatrix64F left,
-                                                        final DenseMatrix64F right,
-                                                        final DenseMatrix64F out) {
-        final int dimension = left.numRows;
-        final double[] leftData = left.data;
-        final double[] rightData = right.data;
-        final double[] outData = out.data;
-        for (int i = 0; i < dimension; ++i) {
-            final int leftRowOffset = i * dimension;
-            for (int j = i; j < dimension; ++j) {
-                final int rightRowOffset = j * dimension;
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += leftData[leftRowOffset + k] * rightData[rightRowOffset + k];
-                }
-                outData[i * dimension + j] = sum;
-                outData[j * dimension + i] = sum;
             }
         }
     }

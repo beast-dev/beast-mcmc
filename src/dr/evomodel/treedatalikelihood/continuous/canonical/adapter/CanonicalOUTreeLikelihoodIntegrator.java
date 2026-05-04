@@ -43,6 +43,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCa
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -373,6 +374,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 cachedGradientMu);
         CanonicalPhaseTimer.finishJointGradient(timingStart);
         BlockDiagonalFrechetHelper.reportExactPlanDiagnosticsIfEnabled();
+        MatrixOps.reportKernelDiagnosticsIfEnabled();
         jointGradientCacheDirty = false;
         reportTransitionCacheDiagnostics("jointGradient");
     }

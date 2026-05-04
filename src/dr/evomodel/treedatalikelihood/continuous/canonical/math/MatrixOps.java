@@ -3,6 +3,8 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.math;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Flat row-major matrix operations for canonical Gaussian algebra.
@@ -15,6 +17,16 @@ public final class MatrixOps {
 
     public static final double LOG_TWO_PI = Math.log(2.0 * Math.PI);
     public static final double MIN_DIAGONAL_JITTER = 1e-10;
+    private static final boolean MATRIX_KERNEL_DIAGNOSTICS_ENABLED =
+            Boolean.getBoolean("beast.debug.canonicalMatrixKernels");
+    private static final int MATRIX_KERNEL_DIAGNOSTICS_REPORT_EVERY =
+            Math.max(1, Integer.getInteger("beast.debug.canonicalMatrixKernelsReportEvery", 50));
+    private static final int MAX_DIAGNOSTIC_DIMENSION = 32;
+    private static final AtomicLong[] MAT_MUL_CALLS = buildCounters();
+    private static final AtomicLong[] MAT_MUL_TRANSPOSED_RIGHT_CALLS = buildCounters();
+    private static final AtomicLong[] SYMMETRIC_SANDWICH_TRANSPOSE_LEFT_CALLS = buildCounters();
+    private static final AtomicLong[] SYMMETRIC_SANDWICH_TRANSPOSE_RIGHT_CALLS = buildCounters();
+    private static long matrixKernelDiagnosticsCalls;
 
     private MatrixOps() { }
 
@@ -75,6 +87,9 @@ public final class MatrixOps {
      * C must not alias A or B.
      */
     public static void matMul(double[] A, double[] B, double[] C, int m, int k, int n) {
+        if (m == k && k == n) {
+            record(MAT_MUL_CALLS, m);
+        }
         for (int i = 0; i < m; i++) {
             final int rA = i * k, rC = i * n;
             Arrays.fill(C, rC, rC + n, 0.0);
@@ -95,6 +110,7 @@ public final class MatrixOps {
 
     /** {@code C = A B^T}, all {@code dim×dim} square. */
     public static void matMulTransposedRight(double[] A, double[] B, double[] C, int dim) {
+        record(MAT_MUL_TRANSPOSED_RIGHT_CALLS, dim);
         for (int i = 0; i < dim; i++) {
             final int iOff = i * dim;
             for (int j = 0; j < dim; j++) {
@@ -106,6 +122,122 @@ public final class MatrixOps {
                 C[iOff + j] = sum;
             }
         }
+    }
+
+    /**
+     * Computes {@code middleTimesLeft = symmetricMiddle * left} and
+     * {@code out = left^T * symmetricMiddle * left}. Only the upper triangle of
+     * {@code out} is formed directly, then mirrored. Inputs and outputs are row-major
+     * {@code dim x dim}; {@code out} must not alias {@code left}, {@code symmetricMiddle},
+     * or {@code middleTimesLeft}.
+     */
+    public static void symmetricSandwichTransposeLeft(final double[] left,
+                                                      final double[] symmetricMiddle,
+                                                      final double[] out,
+                                                      final double[] middleTimesLeft,
+                                                      final int dim) {
+        record(SYMMETRIC_SANDWICH_TRANSPOSE_LEFT_CALLS, dim);
+        multiplySymmetricLeft(symmetricMiddle, left, middleTimesLeft, dim);
+        for (int i = 0; i < dim; ++i) {
+            for (int j = i; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[k * dim + i] * middleTimesLeft[k * dim + j];
+                }
+                out[i * dim + j] = sum;
+                out[j * dim + i] = sum;
+            }
+        }
+    }
+
+    /**
+     * Computes {@code leftTimesMiddle = left * symmetricMiddle} and
+     * {@code out = left * symmetricMiddle * left^T}. Only the upper triangle of
+     * {@code out} is formed directly, then mirrored. Inputs and outputs are row-major
+     * {@code dim x dim}; {@code out} must not alias {@code left}, {@code symmetricMiddle},
+     * or {@code leftTimesMiddle}.
+     */
+    public static void symmetricSandwichTransposeRight(final double[] left,
+                                                       final double[] symmetricMiddle,
+                                                       final double[] out,
+                                                       final double[] leftTimesMiddle,
+                                                       final int dim) {
+        record(SYMMETRIC_SANDWICH_TRANSPOSE_RIGHT_CALLS, dim);
+        multiplySymmetricRight(left, symmetricMiddle, leftTimesMiddle, dim);
+        for (int i = 0; i < dim; ++i) {
+            final int iOffset = i * dim;
+            for (int j = i; j < dim; ++j) {
+                final int jOffset = j * dim;
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += leftTimesMiddle[iOffset + k] * left[jOffset + k];
+                }
+                out[iOffset + j] = sum;
+                out[jOffset + i] = sum;
+            }
+        }
+    }
+
+    private static void multiplySymmetricLeft(final double[] symmetricLeft,
+                                              final double[] right,
+                                              final double[] out,
+                                              final int dim) {
+        Arrays.fill(out, 0.0);
+        for (int i = 0; i < dim; ++i) {
+            final int iOffset = i * dim;
+            final double diagonal = symmetricLeft[iOffset + i];
+            for (int j = 0; j < dim; ++j) {
+                out[iOffset + j] += diagonal * right[iOffset + j];
+            }
+            for (int k = i + 1; k < dim; ++k) {
+                final int kOffset = k * dim;
+                final double value = symmetricLeft[iOffset + k];
+                for (int j = 0; j < dim; ++j) {
+                    out[iOffset + j] += value * right[kOffset + j];
+                    out[kOffset + j] += value * right[iOffset + j];
+                }
+            }
+        }
+    }
+
+    private static void multiplySymmetricRight(final double[] left,
+                                               final double[] symmetricRight,
+                                               final double[] out,
+                                               final int dim) {
+        Arrays.fill(out, 0.0);
+        for (int i = 0; i < dim; ++i) {
+            final int iOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                final double leftJ = left[iOffset + j];
+                final int jOffset = j * dim;
+                out[iOffset + j] += leftJ * symmetricRight[jOffset + j];
+                for (int k = j + 1; k < dim; ++k) {
+                    final double value = symmetricRight[jOffset + k];
+                    out[iOffset + k] += leftJ * value;
+                    out[iOffset + j] += left[iOffset + k] * value;
+                }
+            }
+        }
+    }
+
+    public static void reportKernelDiagnosticsIfEnabled() {
+        if (!MATRIX_KERNEL_DIAGNOSTICS_ENABLED) {
+            return;
+        }
+        matrixKernelDiagnosticsCalls++;
+        if (matrixKernelDiagnosticsCalls % MATRIX_KERNEL_DIAGNOSTICS_REPORT_EVERY != 0L) {
+            return;
+        }
+        System.err.println(String.format(Locale.US,
+                "[canonical-matrix-kernels] gradientReports=%d window.matMul=%s "
+                        + "window.matMulTransposedRight=%s "
+                        + "window.symmetricSandwichTransposeLeft=%s "
+                        + "window.symmetricSandwichTransposeRight=%s",
+                matrixKernelDiagnosticsCalls,
+                drainCounters(MAT_MUL_CALLS),
+                drainCounters(MAT_MUL_TRANSPOSED_RIGHT_CALLS),
+                drainCounters(SYMMETRIC_SANDWICH_TRANSPOSE_LEFT_CALLS),
+                drainCounters(SYMMETRIC_SANDWICH_TRANSPOSE_RIGHT_CALLS)));
     }
 
     // -----------------------------------------------------------------------
@@ -549,5 +681,41 @@ public final class MatrixOps {
                     label + " matrix must be " + dim + "x" + dim
                             + " but is " + matrix.getNumRows() + "x" + matrix.getNumCols());
         }
+    }
+
+    private static AtomicLong[] buildCounters() {
+        final AtomicLong[] counters = new AtomicLong[MAX_DIAGNOSTIC_DIMENSION + 1];
+        for (int i = 0; i < counters.length; ++i) {
+            counters[i] = new AtomicLong();
+        }
+        return counters;
+    }
+
+    private static void record(final AtomicLong[] counters,
+                               final int dimension) {
+        if (!MATRIX_KERNEL_DIAGNOSTICS_ENABLED) {
+            return;
+        }
+        counters[Math.min(dimension, MAX_DIAGNOSTIC_DIMENSION)].incrementAndGet();
+    }
+
+    private static String drainCounters(final AtomicLong[] counters) {
+        final StringBuilder builder = new StringBuilder();
+        boolean first = true;
+        for (int dim = 0; dim < counters.length; ++dim) {
+            final long count = counters[dim].getAndSet(0L);
+            if (count == 0L) {
+                continue;
+            }
+            if (!first) {
+                builder.append(',');
+            }
+            builder.append(dim == MAX_DIAGNOSTIC_DIMENSION ? ">=" : "")
+                    .append(dim)
+                    .append(':')
+                    .append(count);
+            first = false;
+        }
+        return first ? "-" : builder.toString();
     }
 }

@@ -2,6 +2,7 @@ package dr.evomodel.treedatalikelihood.continuous.backprop;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
 /**
  * Pure block-space adjoint helper for Lyapunov contributions.
@@ -63,10 +64,39 @@ public final class BlockDiagonalLyapunovAdjointHelper {
                                              final DenseMatrix64F sigma,
                                              final DenseMatrix64F gradAcc,
                                              final DenseMatrix64F tmp) {
-        CommonOps.mult(y, sigma, tmp);
-        CommonOps.addEquals(gradAcc, tmp);
-        CommonOps.multTransA(y, sigma, tmp);
-        CommonOps.addEquals(gradAcc, tmp);
+        MatrixOps.matMul(y.data, sigma.data, tmp.data, y.numRows);
+        addEquals(gradAcc, tmp);
+        multiplyTransposeLeft(y, sigma, tmp);
+        addEquals(gradAcc, tmp);
+    }
+
+    private static void multiplyTransposeLeft(final DenseMatrix64F left,
+                                              final DenseMatrix64F right,
+                                              final DenseMatrix64F out) {
+        final int dimension = left.numRows;
+        final double[] leftData = left.data;
+        final double[] rightData = right.data;
+        final double[] outData = out.data;
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dimension; ++k) {
+                    sum += leftData[k * dimension + i] * rightData[k * dimension + j];
+                }
+                outData[rowOffset + j] = sum;
+            }
+        }
+    }
+
+    private static void addEquals(final DenseMatrix64F target,
+                                  final DenseMatrix64F increment) {
+        final int length = target.numRows * target.numCols;
+        final double[] targetData = target.data;
+        final double[] incrementData = increment.data;
+        for (int i = 0; i < length; ++i) {
+            targetData[i] += incrementData[i];
+        }
     }
 
     private void checkSquare(final DenseMatrix64F m, final String name) {

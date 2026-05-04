@@ -1,6 +1,7 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 
@@ -33,11 +34,11 @@ final class OrthogonalBlockPreparedBasisBuilder {
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes(),
                 prepared.workMatrix);
-        multiply(
+        MatrixOps.matMul(
                 prepared.workMatrix,
                 prepared.rtMatrix.data,
-                dimension,
-                prepared.transitionMatrix.data);
+                prepared.transitionMatrix.data,
+                dimension);
         prepared.covariancePrepared = false;
     }
 
@@ -51,25 +52,6 @@ final class OrthogonalBlockPreparedBasisBuilder {
                                      final double[] transitionData) {
         OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
                 rData, expDData, dimension, blockStarts, blockSizes, workMatrix);
-        multiply(workMatrix, rtData, dimension, transitionData);
-    }
-
-    private static void multiply(final double[] left,
-                                 final double[] rightRowMajor,
-                                 final int dimension,
-                                 final double[] outData) {
-        for (int i = 0; i < dimension; ++i) {
-            final int rowOffset = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                outData[rowOffset + j] = 0.0;
-            }
-            for (int k = 0; k < dimension; ++k) {
-                final double leftValue = left[rowOffset + k];
-                final int rightOffset = k * dimension;
-                for (int j = 0; j < dimension; ++j) {
-                    outData[rowOffset + j] += leftValue * rightRowMajor[rightOffset + j];
-                }
-            }
-        }
+        MatrixOps.matMul(workMatrix, rtData, transitionData, dimension);
     }
 }

@@ -430,12 +430,12 @@ final class OrthogonalBlockCovarianceAdjoint {
 
         lyapunovAdjointHelper.solveAdjointInDBasis(gS, blockDParams, yAdjoint);
 
-        CommonOps.mult(qMatrix, rMatrix, temp1);
-        CommonOps.mult(temp1, yAdjoint, gradR);
+        OrthogonalBlockDenseMatrixOps.mult(qMatrix, rMatrix, temp1);
+        OrthogonalBlockDenseMatrixOps.mult(temp1, yAdjoint, gradR);
         CommonOps.scale(-2.0, gradR);
 
         multiplyBlockDiagonalRight(hDBasis, expD, temp1, blockStarts, blockSizes);
-        CommonOps.mult(temp1, stationaryCovDBasis, gECov);
+        OrthogonalBlockDenseMatrixOps.mult(temp1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
         fillCovarianceExpDGradient(
                 blockDParams,
@@ -448,9 +448,9 @@ final class OrthogonalBlockCovarianceAdjoint {
                 denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        CommonOps.mult(gV, rMatrix, temp1);
-        CommonOps.mult(temp1, transitionCovDBasis, temp2);
-        CommonOps.addEquals(gradR, 2.0, temp2);
+        OrthogonalBlockDenseMatrixOps.mult(gV, rMatrix, temp1);
+        OrthogonalBlockDenseMatrixOps.mult(temp1, transitionCovDBasis, temp2);
+        OrthogonalBlockDenseMatrixOps.addEquals(gradR, 2.0, temp2);
     }
 
     private void fillCovarianceExpDGradient(final double[] blockDParams,
@@ -549,13 +549,13 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                              final DenseMatrix64F temp,
                                                              final int[] blockStarts,
                                                              final int[] blockSizes) {
-        CommonOps.mult(rtMatrix, gV, temp);
-        CommonOps.mult(temp, rMatrix, hDBasis);
+        OrthogonalBlockDenseMatrixOps.mult(rtMatrix, gV, temp);
+        OrthogonalBlockDenseMatrixOps.mult(temp, rMatrix, hDBasis);
         symmetrize(hDBasis);
 
         multiplyBlockDiagonalLeftTranspose(expD, hDBasis, temp, blockStarts, blockSizes);
         multiplyBlockDiagonalRight(temp, expD, gS, blockStarts, blockSizes);
-        CommonOps.subtract(hDBasis, gS, gS);
+        OrthogonalBlockDenseMatrixOps.subtract(hDBasis, gS, gS);
     }
 
     private static void fillDiffusionGradientDBasisFromSharedSymmetric(final double[] blockDParams,
@@ -590,7 +590,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                                                                      final DenseMatrix64F dBasisGradient,
                                                                      final DenseMatrix64F temp,
                                                                      final DenseMatrix64F out) {
-        CommonOps.mult(rMatrix, dBasisGradient, temp);
+        OrthogonalBlockDenseMatrixOps.mult(rMatrix, dBasisGradient, temp);
         multiplyRightTransposeSymmetric(temp, rMatrix, out);
     }
 

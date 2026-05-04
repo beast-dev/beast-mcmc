@@ -65,14 +65,17 @@ final class OUCanonicalTransitionBuilder {
                 lowerInverseScratch);
         MatrixOps.transpose(transitionMatrix, transitionTransposeScratch, dimension);
 
-        MatrixOps.matMul(transitionTransposeScratch, precisionScratch, matrixScratch, dimension);
-        MatrixOps.matMul(matrixScratch, transitionMatrix, out.precisionXX, dimension);
-
-        MatrixOps.matMul(transitionTransposeScratch, precisionScratch, out.precisionXY, dimension);
-        MatrixOps.scaleInPlace(out.precisionXY, -1.0, dimension * dimension);
-
-        MatrixOps.matMul(precisionScratch, transitionMatrix, out.precisionYX, dimension);
-        MatrixOps.scaleInPlace(out.precisionYX, -1.0, dimension * dimension);
+        MatrixOps.symmetricSandwichTransposeLeft(
+                transitionMatrix,
+                precisionScratch,
+                out.precisionXX,
+                matrixScratch,
+                dimension);
+        fillCrossPrecisionsFromPrecisionTimesTransition(
+                matrixScratch,
+                out.precisionXY,
+                out.precisionYX,
+                dimension);
 
         System.arraycopy(precisionScratch, 0, out.precisionYY, 0, dimension * dimension);
 
@@ -84,6 +87,20 @@ final class OUCanonicalTransitionBuilder {
                 0.5 * (dimension * Math.log(2.0 * Math.PI)
                         + logDet
                         + dot(transitionOffset, out.informationY, dimension));
+    }
+
+    private static void fillCrossPrecisionsFromPrecisionTimesTransition(final double[] precisionTimesTransition,
+                                                                        final double[] precisionXY,
+                                                                        final double[] precisionYX,
+                                                                        final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                final double value = -precisionTimesTransition[rowOffset + j];
+                precisionYX[rowOffset + j] = value;
+                precisionXY[j * dimension + i] = value;
+            }
+        }
     }
 
     private static double multiplyEntry(final DenseMatrix64F left,

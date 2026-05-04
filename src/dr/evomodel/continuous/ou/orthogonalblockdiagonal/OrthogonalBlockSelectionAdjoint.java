@@ -215,8 +215,8 @@ final class OrthogonalBlockSelectionAdjoint {
                                               final double[] denseAdjointScratch,
                                               final double[] compressedDAccumulator,
                                               final double[] rotationAccumulator) {
-        CommonOps.mult(rtMatrix, upstreamF, temp1);
-        CommonOps.mult(temp1, rMatrix, upstreamFD);
+        OrthogonalBlockDenseMatrixOps.mult(rtMatrix, upstreamF, temp1);
+        OrthogonalBlockDenseMatrixOps.mult(temp1, rMatrix, upstreamFD);
         fillTransitionDGradient(
                 blockDParams,
                 dt,
@@ -229,10 +229,10 @@ final class OrthogonalBlockSelectionAdjoint {
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         multiplyBlockDiagonalRightTranspose(rMatrix, expD, temp1, blockStarts, blockSizes);
-        CommonOps.mult(upstreamF, temp1, gradR);
-        CommonOps.multTransA(upstreamF, rMatrix, temp1);
+        OrthogonalBlockDenseMatrixOps.mult(upstreamF, temp1, gradR);
+        OrthogonalBlockDenseMatrixOps.multTransA(upstreamF, rMatrix, temp1);
         multiplyBlockDiagonalRight(temp1, expD, temp2, blockStarts, blockSizes);
-        CommonOps.addEquals(gradR, temp2);
+        OrthogonalBlockDenseMatrixOps.addEquals(gradR, temp2);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
 

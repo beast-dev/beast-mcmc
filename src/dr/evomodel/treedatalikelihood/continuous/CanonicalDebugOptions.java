@@ -45,6 +45,10 @@ public final class CanonicalDebugOptions {
             "beast.debug.canonicalFrechetPlan";
     private static final String CANONICAL_FRECHET_PLAN_REPORT_EVERY_PROPERTY =
             "beast.debug.canonicalFrechetPlanReportEvery";
+    private static final String CANONICAL_MATRIX_KERNELS_PROPERTY         =
+            "beast.debug.canonicalMatrixKernels";
+    private static final String CANONICAL_MATRIX_KERNELS_REPORT_EVERY_PROPERTY =
+            "beast.debug.canonicalMatrixKernelsReportEvery";
 
     /**
      * All property names recognized by this class.
@@ -67,7 +71,9 @@ public final class CanonicalDebugOptions {
                     CANONICAL_TRAVERSAL_TIMING_PROPERTY,
                     CANONICAL_TRAVERSAL_TIMING_REPORT_EVERY_PROPERTY,
                     CANONICAL_FRECHET_PLAN_PROPERTY,
-                    CANONICAL_FRECHET_PLAN_REPORT_EVERY_PROPERTY)));
+                    CANONICAL_FRECHET_PLAN_REPORT_EVERY_PROPERTY,
+                    CANONICAL_MATRIX_KERNELS_PROPERTY,
+                    CANONICAL_MATRIX_KERNELS_REPORT_EVERY_PROPERTY)));
 
     // -----------------------------------------------------------------------
     // Fields

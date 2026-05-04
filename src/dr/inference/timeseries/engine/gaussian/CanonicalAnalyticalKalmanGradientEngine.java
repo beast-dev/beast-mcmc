@@ -27,6 +27,16 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
         this.formulas = formulas.clone();
     }
 
+    public SharedCanonicalTimeSeriesSchedule createSharedSchedule() {
+        return new SharedCanonicalTimeSeriesSchedule(
+                smootherEngine.getTimeCount(),
+                smootherEngine.getStateDimension());
+    }
+
+    public void setSharedSchedule(final SharedCanonicalTimeSeriesSchedule sharedSchedule) {
+        smootherEngine.setSharedSchedule(sharedSchedule);
+    }
+
     @Override
     public boolean supportsGradientWrt(final Parameter parameter) {
         if (parameter == null) {

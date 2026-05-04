@@ -143,7 +143,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                     && orthogonalBlockGradientCache.supportsNativeSelectionParameter(parameter)
                     && branchGradientCache != null) {
                 return orthogonalBlockGradientCache.getNativeSelectionGradient(
-                        parameter, trajectory, branchGradientCache, timeGrid);
+                        parameter, trajectory, branchGradientCache, repr, timeGrid);
             }
             return computeOrthogonalNativeGradient(parameter, trajectory, branchGradientCache, timeGrid);
         }

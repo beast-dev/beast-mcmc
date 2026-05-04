@@ -4,7 +4,7 @@
     <!--
         Ten independent 7D time series with 50 observations each.
         Synthetic data generated with seed 20260503 from one shared orthogonal-block OU process.
-        The 7D selection chart has one scalar block and three 2x2 polar blocks; dt=0.1 is repeated.
+        The 7D selection chart has one scalar block and three 2x2 polar blocks; all 49 adjacent dt values are distinct.
     -->
 
     <parameter id="ou.A.angles"
@@ -60,7 +60,7 @@
         <initialCovariance><matrixParameter idref="ou.P0"/></initialCovariance>
     </ouProcessModel>
 
-    <uniformTimeGrid id="shared.grid" timeCount="50" startTime="0.0" timeStep="0.1"/>
+    <irregularTimeGrid id="shared.grid" times="0.000000 0.076000 0.153000 0.231000 0.310000 0.390000 0.471000 0.553000 0.636000 0.720000 0.805000 0.891000 0.978000 1.066000 1.155000 1.245000 1.336000 1.428000 1.521000 1.615000 1.710000 1.806000 1.903000 2.001000 2.100000 2.200000 2.301000 2.403000 2.506000 2.610000 2.715000 2.821000 2.928000 3.036000 3.145000 3.255000 3.366000 3.478000 3.591000 3.705000 3.820000 3.936000 4.053000 4.171000 4.290000 4.410000 4.531000 4.653000 4.776000 4.900000"/>
 
     <matrixParameter id="obs.H">
         <parameter id="obs.H.col1" value="1.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
@@ -664,52 +664,52 @@
     <timeSeriesModel id="series1.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series1.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series2.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series2.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series3.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series3.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series4.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series4.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series5.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series5.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series6.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series6.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series7.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series7.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series8.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series8.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series9.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series9.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesModel id="series10.model">
         <latentProcess><ouProcessModel idref="ou.shared"/></latentProcess>
         <observationModel><gaussianObservationModel idref="series10.obs"/></observationModel>
-        <timeGrid><uniformTimeGrid idref="shared.grid"/></timeGrid>
+        <timeGrid><irregularTimeGrid idref="shared.grid"/></timeGrid>
     </timeSeriesModel>
     <timeSeriesLikelihood id="series1.likelihood"><model><timeSeriesModel idref="series1.model"/></model></timeSeriesLikelihood>
     <timeSeriesLikelihood id="series2.likelihood"><model><timeSeriesModel idref="series2.model"/></model></timeSeriesLikelihood>

@@ -24,6 +24,7 @@ public final class CanonicalBranchGradientCache {
     private final double[] transitionOffsetWorkspace;
     private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     private final CanonicalTransitionAdjointUtils.Workspace adjointWorkspace;
+    private SharedCanonicalTimeSeriesSchedule sharedSchedule;
     private boolean known;
     private long buildCount;
 
@@ -47,8 +48,14 @@ public final class CanonicalBranchGradientCache {
         }
         this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
         this.adjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+        this.sharedSchedule = null;
         this.known = false;
         this.buildCount = 0L;
+    }
+
+    public void setSharedSchedule(final SharedCanonicalTimeSeriesSchedule sharedSchedule) {
+        this.sharedSchedule = sharedSchedule;
+        makeDirty();
     }
 
     public void makeDirty() {
@@ -61,10 +68,17 @@ public final class CanonicalBranchGradientCache {
         }
         ++buildCount;
         for (int t = 0; t < contributions.length; ++t) {
-            CanonicalBranchMessageContributionUtils.fillFromPairState(
+            if (sharedSchedule == null
+                    || !sharedSchedule.fillContribution(
+                    t,
                     trajectory.branchPairStates[t],
                     contributionWorkspace,
-                    contributions[t]);
+                    contributions[t])) {
+                CanonicalBranchMessageContributionUtils.fillFromPairState(
+                        trajectory.branchPairStates[t],
+                        contributionWorkspace,
+                        contributions[t]);
+            }
             if (transitionRepresentation == null || timeGrid == null) {
                 CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                         trajectory.transitions[t],

@@ -231,30 +231,83 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
 
         fillIdentity(prefixes, 0, dim);
         for (int k = 0; k < angleCount; ++k) {
-            fillGivens(k, givensScratch);
-            multiplyFlat(prefixes, k * matrixLength, givensScratch, 0,
-                    prefixes, (k + 1) * matrixLength, dim);
+            multiplyRightGivens(prefixes, k * matrixLength, prefixes, (k + 1) * matrixLength, k, dim);
         }
 
         fillIdentity(suffixes, angleCount * matrixLength, dim);
         for (int k = angleCount - 1; k >= 0; --k) {
-            fillGivens(k, givensScratch);
-            multiplyFlat(givensScratch, 0, suffixes, (k + 1) * matrixLength,
-                    suffixes, k * matrixLength, dim);
+            multiplyLeftGivens(suffixes, (k + 1) * matrixLength, suffixes, k * matrixLength, k, dim);
         }
 
         for (int k = 0; k < angleCount; ++k) {
-            fillGivensDerivative(k, givensDerivativeScratch);
-            transposeFlat(prefixes, k * matrixLength, tempLeftScratch, 0, dim);
-            multiplyFlat(tempLeftScratch, 0, gradientWrtMatrixRowMajor, 0, tempScratch, 0, dim);
-            transposeFlat(suffixes, (k + 1) * matrixLength, suffixTransposeScratch, 0, dim);
-            multiplyFlat(tempScratch, 0, suffixTransposeScratch, 0, tempLeftScratch, 0, dim);
+            final int i = pairI[k];
+            final int j = pairJ[k];
+            final double theta = angleParameter.getParameterValue(k);
+            final double c = Math.cos(theta);
+            final double s = Math.sin(theta);
+            final int prefixOffset = k * matrixLength;
+            final int suffixOffset = (k + 1) * matrixLength;
 
-            double grad = 0.0;
-            for (int i = 0; i < matrixLength; ++i) {
-                grad += tempLeftScratch[i] * givensDerivativeScratch[i];
-            }
-            out[offset + k] = grad;
+            out[offset + k] =
+                    -s * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, i, i, dim)
+                            - c * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, i, j, dim)
+                            + c * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, j, i, dim)
+                            - s * projectedGradientEntry(prefixes, prefixOffset, gradientWrtMatrixRowMajor,
+                            suffixes, suffixOffset, j, j, dim);
+        }
+    }
+
+    private void multiplyRightGivens(final double[] left,
+                                     final int leftOffset,
+                                     final double[] out,
+                                     final int outOffset,
+                                     final int angleIndex,
+                                     final int dimension) {
+        final int matrixLength = dimension * dimension;
+        System.arraycopy(left, leftOffset, out, outOffset, matrixLength);
+
+        final int i = pairI[angleIndex];
+        final int j = pairJ[angleIndex];
+        final double theta = angleParameter.getParameterValue(angleIndex);
+        final double c = Math.cos(theta);
+        final double s = Math.sin(theta);
+
+        for (int row = 0; row < dimension; ++row) {
+            final int base = outOffset + row * dimension;
+            final double oldI = left[leftOffset + row * dimension + i];
+            final double oldJ = left[leftOffset + row * dimension + j];
+            out[base + i] = oldI * c + oldJ * s;
+            out[base + j] = -oldI * s + oldJ * c;
+        }
+    }
+
+    private void multiplyLeftGivens(final double[] right,
+                                    final int rightOffset,
+                                    final double[] out,
+                                    final int outOffset,
+                                    final int angleIndex,
+                                    final int dimension) {
+        final int matrixLength = dimension * dimension;
+        System.arraycopy(right, rightOffset, out, outOffset, matrixLength);
+
+        final int i = pairI[angleIndex];
+        final int j = pairJ[angleIndex];
+        final double theta = angleParameter.getParameterValue(angleIndex);
+        final double c = Math.cos(theta);
+        final double s = Math.sin(theta);
+
+        final int rowI = outOffset + i * dimension;
+        final int rowJ = outOffset + j * dimension;
+        final int oldRowI = rightOffset + i * dimension;
+        final int oldRowJ = rightOffset + j * dimension;
+        for (int col = 0; col < dimension; ++col) {
+            final double oldI = right[oldRowI + col];
+            final double oldJ = right[oldRowJ + col];
+            out[rowI + col] = c * oldI - s * oldJ;
+            out[rowJ + col] = s * oldI + c * oldJ;
         }
     }
 

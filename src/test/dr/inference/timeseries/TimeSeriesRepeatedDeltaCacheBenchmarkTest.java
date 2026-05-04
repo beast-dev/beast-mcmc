@@ -8,6 +8,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.BasicTimeSeriesModel;
+import dr.inference.timeseries.core.IrregularTimeGrid;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
@@ -40,6 +41,42 @@ public class TimeSeriesRepeatedDeltaCacheBenchmarkTest extends TestCase {
     public void testRepeatedDtCacheBenchmarkDenseAndOrthogonalBlock() {
         runScenario("dense", makeDenseProcess("dense.bench"));
         runScenario("orthogonalBlock", makeOrthogonalBlockProcess("orthogonal.bench"));
+    }
+
+    public void testHeterogeneousDtCacheIsSharedAcrossOuAdapters() {
+        final OUProcessModel process = makeOrthogonalBlockProcess("orthogonal.heterogeneous");
+        final TimeGrid grid = new IrregularTimeGrid(new double[]{
+                0.0, 0.07, 0.151, 0.244, 0.349, 0.466, 0.595, 0.736, 0.889, 1.054});
+        final OUTimeSeriesProcessAdapter first = new OUTimeSeriesProcessAdapter(process);
+        final OUTimeSeriesProcessAdapter second = new OUTimeSeriesProcessAdapter(process);
+        final CachedGaussianTransitionRepresentation firstCache =
+                (CachedGaussianTransitionRepresentation)
+                        first.getRepresentation(GaussianTransitionRepresentation.class);
+        final CachedGaussianTransitionRepresentation secondCache =
+                (CachedGaussianTransitionRepresentation)
+                        second.getRepresentation(GaussianTransitionRepresentation.class);
+        assertSame("Adapters wrapping the same OU process should share transition cache",
+                firstCache, secondCache);
+
+        firstCache.prepareTimeGrid(grid);
+        final CanonicalGaussianTransition transition = new CanonicalGaussianTransition(DIM);
+        for (int t = 0; t < grid.getTimeCount() - 1; ++t) {
+            firstCache.getCanonicalTransition(t, t + 1, grid, transition);
+        }
+        final RepeatedDeltaCacheStatistics afterFirstSeries = firstCache.getCacheStatistics();
+        assertEquals("Heterogeneous grid should keep one entry per unique dt",
+                grid.getTimeCount() - 1, afterFirstSeries.entryCount);
+        assertEquals("First traversal should build each unique transition once",
+                grid.getTimeCount() - 1, afterFirstSeries.canonicalBuilds);
+
+        for (int t = 0; t < grid.getTimeCount() - 1; ++t) {
+            secondCache.getCanonicalTransition(t, t + 1, grid, transition);
+        }
+        final RepeatedDeltaCacheStatistics afterSecondSeries = secondCache.getCacheStatistics();
+        assertEquals("Second adapter should reuse all heterogeneous-grid transitions",
+                afterFirstSeries.canonicalBuilds, afterSecondSeries.canonicalBuilds);
+        assertTrue("Shared heterogeneous-grid cache should report cross-series hits",
+                afterSecondSeries.canonicalHits() >= grid.getTimeCount() - 1);
     }
 
     public void testAllocationGuardsAfterWarmup() {

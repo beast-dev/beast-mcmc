@@ -1,6 +1,7 @@
 package dr.inference.timeseries.representation;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.core.TimeGrid;
@@ -86,6 +87,11 @@ public final class KernelBackedGaussianTransitionRepresentation
     @Override
     public RepeatedDeltaCacheStatistics getCacheStatistics() {
         return repeatedDeltaCache.getStatistics();
+    }
+
+    public CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final double dt,
+                                                                          final double[] stationaryMean) {
+        return repeatedDeltaCache.getThreadPreparedCanonicalBranch(dt, stationaryMean);
     }
 
     @Override

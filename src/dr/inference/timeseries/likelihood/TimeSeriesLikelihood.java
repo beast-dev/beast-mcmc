@@ -8,6 +8,8 @@ import dr.inference.model.Variable;
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.engine.LikelihoodEngine;
+import dr.inference.timeseries.engine.gaussian.CanonicalAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.gaussian.SharedCanonicalTimeSeriesSchedule;
 
 /**
  * Top-level BEAST likelihood wrapper for time-series models.
@@ -53,6 +55,21 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
 
     public TimeSeriesModel getTimeSeriesModel() {
         return model;
+    }
+
+    SharedCanonicalTimeSeriesSchedule createSharedCanonicalSchedule() {
+        if (gradientEngine instanceof CanonicalAnalyticalKalmanGradientEngine) {
+            return ((CanonicalAnalyticalKalmanGradientEngine) gradientEngine).createSharedSchedule();
+        }
+        return null;
+    }
+
+    boolean setSharedCanonicalSchedule(final SharedCanonicalTimeSeriesSchedule schedule) {
+        if (gradientEngine instanceof CanonicalAnalyticalKalmanGradientEngine) {
+            ((CanonicalAnalyticalKalmanGradientEngine) gradientEngine).setSharedSchedule(schedule);
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -55,6 +55,41 @@ public final class CanonicalBranchMessageContributionUtils {
         }
     }
 
+    public static final class PairMomentCache {
+        private final int stateDimension;
+        private final int pairDimension;
+        private final double[] pairPrecision;
+        private final double[] covarianceXX;
+        private final double[] covarianceXY;
+        private final double[] covarianceYY;
+        private boolean valid;
+
+        public PairMomentCache(final int stateDimension) {
+            if (stateDimension < 1) {
+                throw new IllegalArgumentException("stateDimension must be positive");
+            }
+            this.stateDimension = stateDimension;
+            this.pairDimension = 2 * stateDimension;
+            this.pairPrecision = new double[pairDimension * pairDimension];
+            this.covarianceXX = new double[stateDimension * stateDimension];
+            this.covarianceXY = new double[stateDimension * stateDimension];
+            this.covarianceYY = new double[stateDimension * stateDimension];
+            this.valid = false;
+        }
+
+        public int getStateDimension() {
+            return stateDimension;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public void makeDirty() {
+            valid = false;
+        }
+    }
+
     private CanonicalBranchMessageContributionUtils() {
         // no instances
     }
@@ -86,6 +121,95 @@ public final class CanonicalBranchMessageContributionUtils {
             for (int j = 0; j < d; ++j) {
                 final double currentMeanJ = jointMean[j];
                 final double nextMeanJ = jointMean[d + j];
+                final int ij = i * d + j;
+                final double currentSecondMoment =
+                        covarianceXX[ij] + currentMeanI * currentMeanJ;
+                final double crossSecondMoment =
+                        covarianceXY[j * d + i] + nextMeanI * currentMeanJ;
+                final double nextSecondMoment =
+                        covarianceYY[ij] + nextMeanI * nextMeanJ;
+                out.dLogL_dPrecisionXX[ij] = -0.5 * currentSecondMoment;
+                out.dLogL_dPrecisionXY[ij] =
+                        -0.5 * (covarianceXY[ij] + currentMeanI * nextMeanJ);
+                out.dLogL_dPrecisionYX[ij] = -0.5 * crossSecondMoment;
+                out.dLogL_dPrecisionYY[ij] = -0.5 * nextSecondMoment;
+            }
+        }
+        out.dLogL_dLogNormalizer = -1.0;
+    }
+
+    public static boolean cachedPrecisionMatches(final CanonicalGaussianState pairState,
+                                                 final PairMomentCache cache) {
+        final int pairDimension = pairState.getDimension();
+        if (!cache.valid || pairDimension != cache.pairDimension) {
+            return false;
+        }
+        final int length = pairDimension * pairDimension;
+        for (int i = 0; i < length; ++i) {
+            if (Double.doubleToLongBits(pairState.precision[i])
+                    != Double.doubleToLongBits(cache.pairPrecision[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void fillPairMomentCache(final CanonicalGaussianState pairState,
+                                           final Workspace workspace,
+                                           final PairMomentCache cache) {
+        final int pairDimension = pairState.getDimension();
+        if ((pairDimension & 1) != 0) {
+            throw new IllegalArgumentException("pairState dimension must be even");
+        }
+        final int d = pairDimension / 2;
+        ensureWorkspaceDimension(workspace, d);
+        if (cache.getStateDimension() != d) {
+            throw new IllegalArgumentException("Cache dimension mismatch");
+        }
+
+        fillPairMomentsFromCanonicalBlocks(pairState, workspace, d);
+        System.arraycopy(pairState.precision, 0, cache.pairPrecision, 0, pairDimension * pairDimension);
+        System.arraycopy(workspace.covarianceXX, 0, cache.covarianceXX, 0, d * d);
+        System.arraycopy(workspace.covarianceXY, 0, cache.covarianceXY, 0, d * d);
+        System.arraycopy(workspace.covarianceYY, 0, cache.covarianceYY, 0, d * d);
+        cache.valid = true;
+    }
+
+    public static void fillFromCachedPairMoments(final CanonicalGaussianState pairState,
+                                                 final PairMomentCache cache,
+                                                 final CanonicalBranchMessageContribution out) {
+        final int pairDimension = pairState.getDimension();
+        if ((pairDimension & 1) != 0) {
+            throw new IllegalArgumentException("pairState dimension must be even");
+        }
+        final int d = pairDimension / 2;
+        if (!cache.valid || cache.getStateDimension() != d || out.getDimension() != d) {
+            throw new IllegalArgumentException("Cached pair moments are not compatible");
+        }
+
+        final double[] h = pairState.information;
+        final double[] covarianceXX = cache.covarianceXX;
+        final double[] covarianceXY = cache.covarianceXY;
+        final double[] covarianceYY = cache.covarianceYY;
+        for (int i = 0; i < d; ++i) {
+            double currentMeanI = 0.0;
+            double nextMeanI = 0.0;
+            final int rowOffset = i * d;
+            for (int j = 0; j < d; ++j) {
+                currentMeanI += covarianceXX[rowOffset + j] * h[j]
+                        + covarianceXY[rowOffset + j] * h[d + j];
+                nextMeanI += covarianceXY[j * d + i] * h[j]
+                        + covarianceYY[rowOffset + j] * h[d + j];
+            }
+            out.dLogL_dInformationX[i] = currentMeanI;
+            out.dLogL_dInformationY[i] = nextMeanI;
+        }
+        for (int i = 0; i < d; ++i) {
+            final double currentMeanI = out.dLogL_dInformationX[i];
+            final double nextMeanI = out.dLogL_dInformationY[i];
+            for (int j = 0; j < d; ++j) {
+                final double currentMeanJ = out.dLogL_dInformationX[j];
+                final double nextMeanJ = out.dLogL_dInformationY[j];
                 final int ij = i * d + j;
                 final double currentSecondMoment =
                         covarianceXX[ij] + currentMeanI * currentMeanJ;

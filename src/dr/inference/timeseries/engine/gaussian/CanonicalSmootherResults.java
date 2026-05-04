@@ -16,5 +16,11 @@ public interface CanonicalSmootherResults {
 
     TimeGrid getTimeGrid();
 
+    int getTimeCount();
+
+    int getStateDimension();
+
+    void setSharedSchedule(SharedCanonicalTimeSeriesSchedule sharedSchedule);
+
     void makeDirty();
 }

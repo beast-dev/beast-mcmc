@@ -444,8 +444,8 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 H,
                 R,
                 makeMatrix("Y.parallel.orth.2", new double[][]{
-                        {-0.31, 0.08, Double.NaN, 0.48},
-                        {0.24, -0.27, Double.NaN, 0.17}
+                        {-0.31, 0.08, 0.29, 0.48},
+                        {0.24, -0.27, -0.11, 0.17}
                 }));
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, dt);
 
@@ -2370,6 +2370,13 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 numericalGradient(likelihood, mean, 0, h),
                 likelihood.getGradientWrt(mean).getGradientLogDensity(null)[0],
                 3e-5);
+        assertNotNull("Parallel canonical aggregate should install a shared branch schedule",
+                likelihood.getSharedCanonicalSchedule());
+        assertTrue("Shared branch schedule should be reused across compatible series",
+                likelihood.getSharedCanonicalSchedule().getHitCount() > 0L);
+        assertEquals("Compatible series should not disable the shared branch schedule",
+                0L,
+                likelihood.getSharedCanonicalSchedule().getMismatchCount());
     }
 
     public void testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu() {

@@ -27,6 +27,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
     private long momentBuilds;
     private long canonicalRequests;
     private long canonicalBuilds;
+    private boolean dirty;
 
     RepeatedDeltaCanonicalTransitionCache(final GaussianBranchTransitionKernel kernel,
                                           final OUProcessModel processModel) {
@@ -50,6 +51,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
                 : ThreadLocal.withInitial(() -> new double[kernel.getStateDimension()]);
         this.entries = new Entry[0];
         this.entryCount = 0;
+        this.dirty = true;
     }
 
     synchronized void prepareTimeGrid(final TimeGrid timeGrid) {
@@ -98,6 +100,21 @@ final class RepeatedDeltaCanonicalTransitionCache {
         }
     }
 
+    CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final double dt,
+                                                                   final double[] stationaryMean) {
+        if (preparedTransition == null) {
+            return null;
+        }
+        final Entry entry = ensureEntry(dt);
+        final ThreadPreparedBranch prepared = entry.threadPrepared.get();
+        if (prepared.version != entry.version) {
+            preparedTransition.prepareBranch(dt, stationaryMean, prepared.handle);
+            prepared.version = entry.version;
+            markClean();
+        }
+        return prepared.handle;
+    }
+
     synchronized RepeatedDeltaCacheStatistics getStatistics() {
         return new RepeatedDeltaCacheStatistics(
                 entryCount,
@@ -108,9 +125,13 @@ final class RepeatedDeltaCanonicalTransitionCache {
     }
 
     synchronized void makeDirty() {
+        if (dirty) {
+            return;
+        }
         for (int i = 0; i < entryCount; ++i) {
             entries[i].makeDirty();
         }
+        dirty = true;
     }
 
     private Entry ensureEntry(final double dt) {
@@ -158,6 +179,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
                     entry.canonicalTransition);
         }
         entry.canonicalValid = true;
+        markClean();
     }
 
     private void ensureMoments(final Entry entry, final double dt) {
@@ -184,6 +206,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
             GaussianMatrixOps.copyMatrixToFlat(entry.transitionCovariance, entry.transitionCovarianceFlat, entry.dimension);
         }
         entry.momentsValid = true;
+        markClean();
     }
 
     private void ensurePrepared(final Entry entry, final double dt) {
@@ -194,6 +217,10 @@ final class RepeatedDeltaCanonicalTransitionCache {
         kernel.getInitialMean(stationaryMean);
         preparedTransition.prepareBranch(dt, stationaryMean, entry.prepared);
         entry.preparedValid = true;
+    }
+
+    private synchronized void markClean() {
+        dirty = false;
     }
 
     static double validatedDelta(final TimeGrid timeGrid, final int fromIndex, final int toIndex) {
@@ -214,9 +241,11 @@ final class RepeatedDeltaCanonicalTransitionCache {
         final double[][] transitionMatrix;
         final double[][] transitionCovariance;
         final CanonicalPreparedBranchHandle prepared;
+        final ThreadLocal<ThreadPreparedBranch> threadPrepared;
         boolean canonicalValid;
         boolean momentsValid;
         boolean preparedValid;
+        volatile int version;
 
         Entry(final long dtBits,
               final int dimension,
@@ -230,18 +259,38 @@ final class RepeatedDeltaCanonicalTransitionCache {
             this.transitionMatrix = preparedTransition == null ? new double[dimension][dimension] : null;
             this.transitionCovariance = preparedTransition == null ? new double[dimension][dimension] : null;
             this.prepared = preparedTransition == null ? null : preparedTransition.createPreparedBranchHandle();
+            this.threadPrepared = preparedTransition == null
+                    ? null
+                    : new ThreadLocal<ThreadPreparedBranch>() {
+                        @Override
+                        protected ThreadPreparedBranch initialValue() {
+                            return new ThreadPreparedBranch(preparedTransition.createPreparedBranchHandle());
+                        }
+                    };
             this.canonicalValid = false;
             this.momentsValid = false;
             this.preparedValid = false;
+            this.version = 0;
         }
 
         void makeDirty() {
             canonicalValid = false;
             momentsValid = false;
             preparedValid = false;
+            ++version;
             if (prepared != null) {
                 prepared.invalidateCovariance();
             }
+        }
+    }
+
+    private static final class ThreadPreparedBranch {
+        final CanonicalPreparedBranchHandle handle;
+        int version;
+
+        ThreadPreparedBranch(final CanonicalPreparedBranchHandle handle) {
+            this.handle = handle;
+            this.version = -1;
         }
     }
 }

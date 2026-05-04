@@ -106,7 +106,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                     && orthogonalBlockGradientCache.supportsMeanParameter(parameter)
                     && branchGradientCache != null) {
                 return orthogonalBlockGradientCache.getMeanGradient(
-                        trajectory, branchGradientCache, timeGrid);
+                        trajectory, branchGradientCache, repr, timeGrid);
             }
             return computeScalarGradient(trajectory, branchGradientCache, timeGrid);
         }
@@ -114,7 +114,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                 && orthogonalBlockGradientCache.supportsMeanParameter(parameter)
                 && branchGradientCache != null) {
             return orthogonalBlockGradientCache.getMeanGradient(
-                    trajectory, branchGradientCache, timeGrid);
+                    trajectory, branchGradientCache, repr, timeGrid);
         }
 
         zero(denseGradient);

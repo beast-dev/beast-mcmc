@@ -14,6 +14,8 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 
+import java.util.IdentityHashMap;
+
 /**
  * Time-series representation adapter for the exact OU process model.
  *
@@ -22,6 +24,10 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  */
 public final class OUTimeSeriesProcessAdapter extends AbstractModel
         implements LatentProcessModel, RepresentableProcess {
+
+    private static final IdentityHashMap<OUProcessModel, KernelBackedGaussianTransitionRepresentation>
+            SHARED_TRANSITION_REPRESENTATIONS =
+            new IdentityHashMap<OUProcessModel, KernelBackedGaussianTransitionRepresentation>();
 
     private final OUProcessModel processModel;
     private final GaussianComputationMode defaultComputationMode;
@@ -42,8 +48,19 @@ public final class OUTimeSeriesProcessAdapter extends AbstractModel
         }
         this.processModel = processModel;
         this.defaultComputationMode = defaultComputationMode;
-        this.transitionRepresentation = new KernelBackedGaussianTransitionRepresentation(processModel);
+        this.transitionRepresentation = sharedTransitionRepresentationFor(processModel);
         addModel(processModel);
+    }
+
+    private static synchronized KernelBackedGaussianTransitionRepresentation sharedTransitionRepresentationFor(
+            final OUProcessModel processModel) {
+        KernelBackedGaussianTransitionRepresentation representation =
+                SHARED_TRANSITION_REPRESENTATIONS.get(processModel);
+        if (representation == null) {
+            representation = new KernelBackedGaussianTransitionRepresentation(processModel);
+            SHARED_TRANSITION_REPRESENTATIONS.put(processModel, representation);
+        }
+        return representation;
     }
 
     public OUProcessModel getProcessModel() {

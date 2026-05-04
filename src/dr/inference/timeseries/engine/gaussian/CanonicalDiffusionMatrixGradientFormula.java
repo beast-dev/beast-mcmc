@@ -87,7 +87,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
                 && orthogonalBlockGradientCache.supportsDiffusionParameter(parameter)
                 && branchGradientCache != null) {
             return orthogonalBlockGradientCache.getDiffusionGradient(
-                    parameter, trajectory, branchGradientCache, timeGrid);
+                    parameter, trajectory, branchGradientCache, repr, timeGrid);
         }
         final double[] gradientAccumulator = new double[d * d];
         final OrthogonalBlockCanonicalParameterization orthogonalParameterization =

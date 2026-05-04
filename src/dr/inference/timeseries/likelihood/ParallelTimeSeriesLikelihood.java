@@ -5,6 +5,7 @@ import dr.inference.model.GradientProvider;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inference.timeseries.engine.gaussian.SharedCanonicalTimeSeriesSchedule;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
     private final int threadCount;
     private final ParallelEvaluator parallelEvaluator;
     private final Map<Parameter, GradientProvider[]> gradientProviderCache;
+    private final SharedCanonicalTimeSeriesSchedule sharedCanonicalSchedule;
 
     private boolean likelihoodKnown;
     private double logLikelihood;
@@ -48,6 +50,7 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             this.likelihoods.add(likelihood);
             addModel(likelihood.getModel());
         }
+        this.sharedCanonicalSchedule = installSharedCanonicalSchedule(this.likelihoods);
 
         if (threads < 0 && this.likelihoods.size() > 1) {
             this.threadCount = this.likelihoods.size();
@@ -88,6 +91,10 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         return likelihoods.get(index);
     }
 
+    public SharedCanonicalTimeSeriesSchedule getSharedCanonicalSchedule() {
+        return sharedCanonicalSchedule;
+    }
+
     @Override
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
@@ -118,6 +125,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        if (sharedCanonicalSchedule != null) {
+            sharedCanonicalSchedule.makeDirty();
+        }
         for (final TimeSeriesLikelihood likelihood : likelihoods) {
             likelihood.makeDirty();
         }
@@ -145,6 +155,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
     protected void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+        if (sharedCanonicalSchedule != null) {
+            sharedCanonicalSchedule.makeDirty();
+        }
         for (final TimeSeriesLikelihood likelihood : likelihoods) {
             likelihood.makeDirty();
         }
@@ -176,6 +189,21 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             return gradient;
         }
         return parallelEvaluator.evaluateGradient(parameter, dimension);
+    }
+
+    private static SharedCanonicalTimeSeriesSchedule installSharedCanonicalSchedule(
+            final List<TimeSeriesLikelihood> likelihoods) {
+        SharedCanonicalTimeSeriesSchedule schedule = null;
+        int installed = 0;
+        for (final TimeSeriesLikelihood likelihood : likelihoods) {
+            if (schedule == null) {
+                schedule = likelihood.createSharedCanonicalSchedule();
+            }
+            if (schedule != null && likelihood.setSharedCanonicalSchedule(schedule)) {
+                ++installed;
+            }
+        }
+        return installed > 1 ? schedule : null;
     }
 
     private double[] gradientFor(final int likelihoodIndex, final Parameter parameter) {

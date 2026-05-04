@@ -69,6 +69,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     private boolean resultsKnown;
     private boolean momentTrajectoryKnown;
+    private SharedCanonicalTimeSeriesSchedule sharedSchedule;
     private double logLikelihood;
 
     public CanonicalKalmanSmootherEngine(final CanonicalGaussianBranchTransitionKernel canonicalKernel,
@@ -136,6 +137,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.flatInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.sharedSchedule = null;
         if (cachedTransitionRepresentation != null) {
             cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
         }
@@ -151,6 +153,9 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         resultsKnown = false;
         momentTrajectoryKnown = false;
         branchGradientCache.makeDirty();
+        if (sharedSchedule != null) {
+            sharedSchedule.makeDirty();
+        }
     }
 
     public double[][] getSmoothedMeans() {
@@ -257,6 +262,22 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     @Override
     public TimeGrid getTimeGrid() {
         return timeGrid;
+    }
+
+    @Override
+    public int getTimeCount() {
+        return timeCount;
+    }
+
+    @Override
+    public int getStateDimension() {
+        return stateDimension;
+    }
+
+    @Override
+    public void setSharedSchedule(final SharedCanonicalTimeSeriesSchedule sharedSchedule) {
+        this.sharedSchedule = sharedSchedule;
+        branchGradientCache.setSharedSchedule(sharedSchedule);
     }
 
     private double runForwardPass() {

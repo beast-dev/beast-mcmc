@@ -228,7 +228,7 @@ public final class MatrixOps {
         if (matrixKernelDiagnosticsCalls % MATRIX_KERNEL_DIAGNOSTICS_REPORT_EVERY != 0L) {
             return;
         }
-        System.err.println(String.format(Locale.US,
+        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(String.format(Locale.US,
                 "[canonical-matrix-kernels] gradientReports=%d window.matMul=%s "
                         + "window.matMulTransposedRight=%s "
                         + "window.symmetricSandwichTransposeLeft=%s "

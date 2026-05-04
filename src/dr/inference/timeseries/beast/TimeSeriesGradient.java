@@ -59,6 +59,6 @@ public class TimeSeriesGradient implements GradientWrtParameterProvider, Reporta
 
     @Override
     public double[] getGradientLogDensity() {
-        return provider.getGradientLogDensity(parameter.getParameterValues());
+        return provider.getGradientLogDensity(null);
     }
 }

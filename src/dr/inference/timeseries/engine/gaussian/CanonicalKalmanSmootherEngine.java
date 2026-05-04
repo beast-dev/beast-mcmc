@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatri
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
@@ -31,11 +32,13 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final int stateDimension;
     private final int timeCount;
     private final int observationDimension;
+    private final int maximumMatrixDimension;
 
     private final CanonicalGaussianState filteredCanonical;
     private final CanonicalGaussianState predictedCanonical;
     private final CanonicalGaussianTransition transitionCanonical;
     private final CanonicalGaussianState futureMessage;
+    private final CanonicalGaussianState backwardMessage;
     private final ForwardTrajectory trajectory;
     private final CanonicalForwardTrajectory canonicalTrajectory;
     private final CanonicalBranchGradientCache branchGradientCache;
@@ -59,9 +62,13 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final double[] stateVectorWorkspace;
     private final double[] stateVectorWorkspace2;
     private final double[] tempD;
+    private final double[] flatMatrixWorkspace;
     private final double[] flatInverseWorkspace;
+    private final double[] flatCholeskyWorkspace;
+    private final double[] flatLowerInverseWorkspace;
 
     private boolean resultsKnown;
+    private boolean momentTrajectoryKnown;
     private double logLikelihood;
 
     public CanonicalKalmanSmootherEngine(final CanonicalGaussianBranchTransitionKernel canonicalKernel,
@@ -90,15 +97,18 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.stateDimension = canonicalKernel.getStateDimension();
         this.timeCount = timeGrid.getTimeCount();
         this.observationDimension = observationModel.getObservationDimension();
+        this.maximumMatrixDimension = Math.max(stateDimension, observationDimension);
 
         this.filteredCanonical = new CanonicalGaussianState(stateDimension);
         this.predictedCanonical = new CanonicalGaussianState(stateDimension);
         this.transitionCanonical = new CanonicalGaussianTransition(stateDimension);
 
         this.futureMessage = new CanonicalGaussianState(stateDimension);
+        this.backwardMessage = new CanonicalGaussianState(stateDimension);
         this.trajectory = new ForwardTrajectory(timeCount, stateDimension);
         this.canonicalTrajectory = new CanonicalForwardTrajectory(timeCount, stateDimension);
-        this.branchGradientCache = new CanonicalBranchGradientCache(timeCount, stateDimension);
+        this.branchGradientCache = new CanonicalBranchGradientCache(
+                timeCount, stateDimension, transitionRepresentation, timeGrid);
         this.smootherStats = new BranchSmootherStats[timeCount];
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
         for (int t = 0; t < timeCount; ++t) {
@@ -122,7 +132,10 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.stateVectorWorkspace = new double[stateDimension];
         this.stateVectorWorkspace2 = new double[stateDimension];
         this.tempD = new double[stateDimension];
-        this.flatInverseWorkspace = new double[stateDimension * stateDimension];
+        this.flatMatrixWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         if (cachedTransitionRepresentation != null) {
             cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
         }
@@ -136,11 +149,13 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     @Override
     public void makeDirty() {
         resultsKnown = false;
+        momentTrajectoryKnown = false;
         branchGradientCache.makeDirty();
     }
 
     public double[][] getSmoothedMeans() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyVector(smootherStats[t].smoothedMean, out[t]);
@@ -150,6 +165,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public double[][][] getSmoothedCovariances() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyMatrix(smootherStats[t].smoothedCovariance, out[t]);
@@ -159,6 +175,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public double[][] getFilteredMeans() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyVector(trajectory.filteredMeans[t], out[t]);
@@ -168,6 +185,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public double[][][] getFilteredCovariances() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyMatrix(trajectory.filteredCovariances[t], out[t]);
@@ -177,6 +195,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public double[][] getPredictedMeans() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyVector(trajectory.predictedMeans[t], out[t]);
@@ -186,6 +205,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public double[][][] getPredictedCovariances() {
         ensureResults();
+        ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
             GaussianMatrixOps.copyMatrix(trajectory.predictedCovariances[t], out[t]);
@@ -198,18 +218,21 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
             logLikelihood = runForwardPass();
             runBackwardPass();
             resultsKnown = true;
+            momentTrajectoryKnown = false;
         }
     }
 
     @Override
     public BranchSmootherStats[] getSmootherStats() {
         ensureResults();
+        ensureMomentTrajectory();
         return smootherStats;
     }
 
     @Override
     public ForwardTrajectory getTrajectory() {
         ensureResults();
+        ensureMomentTrajectory();
         return trajectory;
     }
 
@@ -253,17 +276,8 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                 predict(filteredCanonical, transitionCanonical, predictedCanonical);
                 copyTransition(transitionCanonical, canonicalTrajectory.transitions[timeIndex - 1]);
 
-                transitionRepresentation.getTransitionMatrix(timeIndex - 1, timeIndex, timeGrid,
-                        trajectory.transitionMatrices[timeIndex - 1]);
-                transitionRepresentation.getTransitionOffset(timeIndex - 1, timeIndex, timeGrid,
-                        trajectory.transitionOffsets[timeIndex - 1]);
-                transitionRepresentation.getTransitionCovariance(timeIndex - 1, timeIndex, timeGrid,
-                        trajectory.stepCovariances[timeIndex - 1]);
             }
 
-            fillMomentsFromCanonical(predictedCanonical,
-                    trajectory.predictedMeans[timeIndex],
-                    trajectory.predictedCovariances[timeIndex]);
             copyState(predictedCanonical, canonicalTrajectory.predictedStates[timeIndex]);
 
             if (observationModel.isObservationMissing(timeIndex)) {
@@ -282,9 +296,6 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
                         - observationPotentialLogNormalizer(observationVector, noiseLogDet);
             }
 
-            fillMomentsFromCanonical(filteredCanonical,
-                    trajectory.filteredMeans[timeIndex],
-                    trajectory.filteredCovariances[timeIndex]);
             copyState(filteredCanonical, canonicalTrajectory.filteredStates[timeIndex]);
         }
         return value;
@@ -293,23 +304,48 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private void runBackwardPass() {
         final int T = trajectory.timeCount;
         copyState(canonicalTrajectory.filteredStates[T - 1], canonicalTrajectory.smoothedStates[T - 1]);
-        fillMomentsFromCanonical(canonicalTrajectory.smoothedStates[T - 1],
-                smootherStats[T - 1].smoothedMean,
-                smootherStats[T - 1].smoothedCovariance);
 
         for (int t = T - 2; t >= 0; --t) {
             subtractStates(canonicalTrajectory.smoothedStates[t + 1],
                     canonicalTrajectory.predictedStates[t + 1],
                     futureMessage);
+            pushBackward(futureMessage,
+                    canonicalTrajectory.transitions[t],
+                    backwardMessage);
+            combineStates(canonicalTrajectory.filteredStates[t],
+                    backwardMessage,
+                    canonicalTrajectory.smoothedStates[t]);
             buildPairPosterior(canonicalTrajectory.filteredStates[t],
                     canonicalTrajectory.transitions[t],
                     futureMessage,
                     canonicalTrajectory.branchPairStates[t]);
-            marginalizeFirstBlock(canonicalTrajectory.branchPairStates[t], canonicalTrajectory.smoothedStates[t]);
-            fillMomentsFromCanonical(canonicalTrajectory.smoothedStates[t],
-                    smootherStats[t].smoothedMean,
-                    smootherStats[t].smoothedCovariance);
         }
+    }
+
+    private void ensureMomentTrajectory() {
+        if (momentTrajectoryKnown) {
+            return;
+        }
+        for (int timeIndex = 0; timeIndex < timeCount; ++timeIndex) {
+            fillMomentsFromCanonical(canonicalTrajectory.predictedStates[timeIndex],
+                    trajectory.predictedMeans[timeIndex],
+                    trajectory.predictedCovariances[timeIndex]);
+            fillMomentsFromCanonical(canonicalTrajectory.filteredStates[timeIndex],
+                    trajectory.filteredMeans[timeIndex],
+                    trajectory.filteredCovariances[timeIndex]);
+            fillMomentsFromCanonical(canonicalTrajectory.smoothedStates[timeIndex],
+                    smootherStats[timeIndex].smoothedMean,
+                    smootherStats[timeIndex].smoothedCovariance);
+            if (timeIndex < timeCount - 1) {
+                transitionRepresentation.getTransitionMatrix(timeIndex, timeIndex + 1, timeGrid,
+                        trajectory.transitionMatrices[timeIndex]);
+                transitionRepresentation.getTransitionOffset(timeIndex, timeIndex + 1, timeGrid,
+                        trajectory.transitionOffsets[timeIndex]);
+                transitionRepresentation.getTransitionCovariance(timeIndex, timeIndex + 1, timeGrid,
+                        trajectory.stepCovariances[timeIndex]);
+            }
+        }
+        momentTrajectoryKnown = true;
     }
 
     private void predict(final CanonicalGaussianState previous,
@@ -361,12 +397,12 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     private double normalizedLogNormalizerFlat(final double[] precision, final double[] information) {
-        final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(precision, stateDimension);
-        final double logDet = chol.logDeterminant();
-        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverseWorkspace, chol);
-        GaussianMatrixOps.copyFlatToMatrix(flatInverseWorkspace, stateWorkspace, stateDimension);
-        GaussianMatrixOps.multiplyMatrixVector(stateWorkspace, information, stateVectorWorkspace,
-                stateDimension, stateDimension);
+        if (!MatrixOps.tryCholesky(precision, flatCholeskyWorkspace, stateDimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        final double logDet = MatrixOps.invertFromCholesky(
+                flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, stateDimension);
+        MatrixOps.matVec(flatInverseWorkspace, information, stateVectorWorkspace, stateDimension);
         final double quadratic = dot(information, stateVectorWorkspace);
         return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
@@ -374,9 +410,11 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private void invertPositiveDefiniteFlatInput(final double[] matrix,
                                                   final double[][] inverseOut,
                                                   final int dimension) {
-        final GaussianMatrixOps.FlatCholeskyFactor chol = GaussianMatrixOps.choleskyFlat(matrix, dimension);
-        GaussianMatrixOps.invertPositiveDefiniteFromFlatCholesky(flatInverseWorkspace, chol);
-        GaussianMatrixOps.copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
+        if (!MatrixOps.tryCholesky(matrix, flatCholeskyWorkspace, dimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, dimension);
+        copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
     }
 
     private void fillCanonicalTransition(final int fromIndex,
@@ -399,15 +437,33 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         }
     }
 
-    private static double invertPositiveDefinite(final double[][] matrix,
-                                                 final double[][] inverseOut,
-                                                 final int dimension) {
-        final double[][] copy = new double[dimension][dimension];
-        GaussianMatrixOps.copyMatrix(matrix, copy, dimension, dimension);
-        final GaussianMatrixOps.CholeskyFactor chol = GaussianMatrixOps.cholesky(copy);
-        GaussianMatrixOps.copyMatrix(copy, inverseOut, dimension, dimension);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(inverseOut, chol);
-        return chol.logDeterminant();
+    private double invertPositiveDefinite(final double[][] matrix,
+                                          final double[][] inverseOut,
+                                          final int dimension) {
+        copyMatrixToFlat(matrix, flatMatrixWorkspace, dimension);
+        if (!MatrixOps.tryCholesky(flatMatrixWorkspace, flatCholeskyWorkspace, dimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        final double logDet = MatrixOps.invertFromCholesky(
+                flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, dimension);
+        copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
+        return logDet;
+    }
+
+    private static void copyMatrixToFlat(final double[][] source,
+                                         final double[] target,
+                                         final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source[i], 0, target, i * dimension, dimension);
+        }
+    }
+
+    private static void copyFlatToMatrix(final double[] source,
+                                         final double[][] target,
+                                         final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source, i * dimension, target[i], 0, dimension);
+        }
     }
 
     private double validatedDelta(final int fromIndex, final int toIndex) {
@@ -476,9 +532,16 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         CanonicalGaussianMessageOps.buildPairPosterior(filteredState, transition, futureMessage, pairOut);
     }
 
-    private void marginalizeFirstBlock(final CanonicalGaussianState pairState,
-                                       final CanonicalGaussianState out) {
-        CanonicalGaussianMessageOps.marginalizeFirstBlock(pairState, stateDimension, messageWorkspace, out);
+    private void pushBackward(final CanonicalGaussianState futureMessage,
+                              final CanonicalGaussianTransition transition,
+                              final CanonicalGaussianState out) {
+        CanonicalGaussianMessageOps.pushBackward(futureMessage, transition, messageWorkspace, out);
+    }
+
+    private static void combineStates(final CanonicalGaussianState left,
+                                      final CanonicalGaussianState right,
+                                      final CanonicalGaussianState out) {
+        CanonicalGaussianMessageOps.combineStates(left, right, out);
     }
 
     private void fillUpperLeftBlock(final double[][] source, final double[][] out) {

@@ -4,6 +4,9 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
  * Per-smoother cache of branch-local canonical adjoints shared by gradient formulas.
@@ -13,16 +16,31 @@ public final class CanonicalBranchGradientCache {
     private final CanonicalBranchMessageContribution[] contributions;
     private final CanonicalLocalTransitionAdjoints[] adjoints;
     private final double[][] transitionMatrices;
+    private final GaussianTransitionRepresentation transitionRepresentation;
+    private final TimeGrid timeGrid;
+    private final double[][] transitionMatrixWorkspace;
+    private final double[][] transitionCovarianceWorkspace;
+    private final double[] transitionCovarianceFlatWorkspace;
+    private final double[] transitionOffsetWorkspace;
     private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     private final CanonicalTransitionAdjointUtils.Workspace adjointWorkspace;
     private boolean known;
     private long buildCount;
 
-    CanonicalBranchGradientCache(final int timeCount, final int stateDimension) {
+    CanonicalBranchGradientCache(final int timeCount,
+                                 final int stateDimension,
+                                 final GaussianTransitionRepresentation transitionRepresentation,
+                                 final TimeGrid timeGrid) {
         final int branchCount = Math.max(0, timeCount - 1);
         this.contributions = new CanonicalBranchMessageContribution[branchCount];
         this.adjoints = new CanonicalLocalTransitionAdjoints[branchCount];
         this.transitionMatrices = new double[branchCount][stateDimension * stateDimension];
+        this.transitionRepresentation = transitionRepresentation;
+        this.timeGrid = timeGrid;
+        this.transitionMatrixWorkspace = new double[stateDimension][stateDimension];
+        this.transitionCovarianceWorkspace = new double[stateDimension][stateDimension];
+        this.transitionCovarianceFlatWorkspace = new double[stateDimension * stateDimension];
+        this.transitionOffsetWorkspace = new double[stateDimension];
         for (int i = 0; i < branchCount; ++i) {
             contributions[i] = new CanonicalBranchMessageContribution(stateDimension);
             adjoints[i] = new CanonicalLocalTransitionAdjoints(stateDimension);
@@ -47,11 +65,33 @@ public final class CanonicalBranchGradientCache {
                     trajectory.branchPairStates[t],
                     contributionWorkspace,
                     contributions[t]);
-            CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                    trajectory.transitions[t],
-                    contributions[t],
-                    adjointWorkspace,
-                    adjoints[t]);
+            if (transitionRepresentation == null || timeGrid == null) {
+                CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
+                        trajectory.transitions[t],
+                        contributions[t],
+                        adjointWorkspace,
+                        adjoints[t]);
+            } else {
+                transitionRepresentation.getTransitionMatrix(t, t + 1, timeGrid, transitionMatrixWorkspace);
+                transitionRepresentation.getTransitionOffset(t, t + 1, timeGrid, transitionOffsetWorkspace);
+                transitionRepresentation.getTransitionCovariance(t, t + 1, timeGrid, transitionCovarianceWorkspace);
+                GaussianMatrixOps.copyMatrixToFlat(
+                        transitionMatrixWorkspace,
+                        adjointWorkspace.transitionMatrix,
+                        adjointWorkspace.getDimension());
+                GaussianMatrixOps.copyMatrixToFlat(
+                        transitionCovarianceWorkspace,
+                        transitionCovarianceFlatWorkspace,
+                        adjointWorkspace.getDimension());
+                CanonicalTransitionAdjointUtils.fillFromMoments(
+                        trajectory.transitions[t].precisionYY,
+                        transitionCovarianceFlatWorkspace,
+                        adjointWorkspace.transitionMatrix,
+                        transitionOffsetWorkspace,
+                        contributions[t],
+                        adjointWorkspace,
+                        adjoints[t]);
+            }
             System.arraycopy(adjointWorkspace.transitionMatrix, 0,
                     transitionMatrices[t], 0, transitionMatrices[t].length);
         }

@@ -8,12 +8,9 @@ import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.Map;
 
 /**
  * Aggregate likelihood for independent time series that share model parameters.
@@ -26,8 +23,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         implements TimeSeriesGradientSource {
 
     private final List<TimeSeriesLikelihood> likelihoods;
-    private final ExecutorService pool;
     private final int threadCount;
+    private final ParallelEvaluator parallelEvaluator;
+    private final Map<Parameter, GradientProvider[]> gradientProviderCache;
 
     private boolean likelihoodKnown;
     private double logLikelihood;
@@ -60,10 +58,11 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         }
 
         if (threadCount > 0) {
-            this.pool = Executors.newFixedThreadPool(threadCount);
+            this.parallelEvaluator = new ParallelEvaluator(threadCount);
         } else {
-            this.pool = null;
+            this.parallelEvaluator = null;
         }
+        this.gradientProviderCache = new IdentityHashMap<Parameter, GradientProvider[]>();
         this.likelihoodKnown = false;
     }
 
@@ -157,79 +156,51 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
     }
 
     private double computeLogLikelihood() {
-        if (pool == null) {
+        if (parallelEvaluator == null) {
             double value = 0.0;
             for (final TimeSeriesLikelihood likelihood : likelihoods) {
                 value += likelihood.getLogLikelihood();
             }
             return value;
         }
-
-        final List<Callable<Double>> tasks = new ArrayList<Callable<Double>>(likelihoods.size());
-        for (final TimeSeriesLikelihood likelihood : likelihoods) {
-            tasks.add(new Callable<Double>() {
-                @Override
-                public Double call() {
-                    return likelihood.getLogLikelihood();
-                }
-            });
-        }
-        try {
-            double value = 0.0;
-            for (final Future<Double> result : pool.invokeAll(tasks)) {
-                value += result.get();
-            }
-            return value;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while evaluating parallel time-series likelihood", e);
-        } catch (final ExecutionException e) {
-            throw new RuntimeException("Failed to evaluate parallel time-series likelihood", e.getCause());
-        }
+        return parallelEvaluator.evaluateLogLikelihood();
     }
 
     private double[] computeGradient(final Parameter parameter) {
         final int dimension = parameter.getDimension();
-        if (pool == null) {
+        if (parallelEvaluator == null) {
             final double[] gradient = new double[dimension];
             for (int i = 0; i < likelihoods.size(); ++i) {
                 addGradient(gradient, gradientFor(i, parameter), dimension);
             }
             return gradient;
         }
-
-        final List<Callable<double[]>> tasks = new ArrayList<Callable<double[]>>(likelihoods.size());
-        for (int i = 0; i < likelihoods.size(); ++i) {
-            final int index = i;
-            tasks.add(new Callable<double[]>() {
-                @Override
-                public double[] call() {
-                    return gradientFor(index, parameter);
-                }
-            });
-        }
-        try {
-            final double[] gradient = new double[dimension];
-            for (final Future<double[]> result : pool.invokeAll(tasks)) {
-                addGradient(gradient, result.get(), dimension);
-            }
-            return gradient;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while evaluating parallel time-series gradient", e);
-        } catch (final ExecutionException e) {
-            throw new RuntimeException("Failed to evaluate parallel time-series gradient", e.getCause());
-        }
+        return parallelEvaluator.evaluateGradient(parameter, dimension);
     }
 
     private double[] gradientFor(final int likelihoodIndex, final Parameter parameter) {
-        final GradientProvider provider = likelihoods.get(likelihoodIndex).getGradientWrt(parameter);
+        final GradientProvider provider = gradientProviderFor(likelihoodIndex, parameter);
         if (provider.getDimension() != parameter.getDimension()) {
             throw new IllegalArgumentException("Gradient dimension mismatch for time-series likelihood "
                     + likelihoodIndex + ": expected " + parameter.getDimension()
                     + " but got " + provider.getDimension());
         }
         return provider.getGradientLogDensity(null);
+    }
+
+    private GradientProvider gradientProviderFor(final int likelihoodIndex,
+                                                 final Parameter parameter) {
+        GradientProvider[] providers = gradientProviderCache.get(parameter);
+        if (providers == null) {
+            providers = new GradientProvider[likelihoods.size()];
+            gradientProviderCache.put(parameter, providers);
+        }
+        GradientProvider provider = providers[likelihoodIndex];
+        if (provider == null) {
+            provider = likelihoods.get(likelihoodIndex).getGradientWrt(parameter);
+            providers[likelihoodIndex] = provider;
+        }
+        return provider;
     }
 
     private static void addGradient(final double[] accumulator,
@@ -240,6 +211,164 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         }
         for (int i = 0; i < dimension; ++i) {
             accumulator[i] += increment[i];
+        }
+    }
+
+    private final class ParallelEvaluator {
+
+        private static final int MODE_IDLE = 0;
+        private static final int MODE_LIKELIHOOD = 1;
+        private static final int MODE_GRADIENT = 2;
+
+        private final Object monitor = new Object();
+        private final Thread[] workers;
+
+        private int generation;
+        private int mode;
+        private int nextIndex;
+        private int completed;
+        private double logLikelihoodAccumulator;
+        private double[] gradientAccumulator;
+        private Parameter gradientParameter;
+        private RuntimeException failure;
+
+        private ParallelEvaluator(final int workerCount) {
+            this.workers = new Thread[workerCount];
+            this.mode = MODE_IDLE;
+            for (int i = 0; i < workerCount; ++i) {
+                final Thread worker = new Thread(new Worker(), getId() + "-worker-" + (i + 1));
+                worker.setDaemon(true);
+                worker.start();
+                workers[i] = worker;
+            }
+        }
+
+        private double evaluateLogLikelihood() {
+            synchronized (monitor) {
+                startEvaluation(MODE_LIKELIHOOD, null, null);
+                waitForCompletion("Interrupted while evaluating parallel time-series likelihood");
+                if (failure != null) {
+                    throw new RuntimeException("Failed to evaluate parallel time-series likelihood", failure);
+                }
+                return logLikelihoodAccumulator;
+            }
+        }
+
+        private double[] evaluateGradient(final Parameter parameter, final int dimension) {
+            final double[] gradient = new double[dimension];
+            synchronized (monitor) {
+                startEvaluation(MODE_GRADIENT, parameter, gradient);
+                waitForCompletion("Interrupted while evaluating parallel time-series gradient");
+                if (failure != null) {
+                    throw new RuntimeException("Failed to evaluate parallel time-series gradient", failure);
+                }
+                return gradient;
+            }
+        }
+
+        private void startEvaluation(final int evaluationMode,
+                                     final Parameter parameter,
+                                     final double[] gradient) {
+            mode = evaluationMode;
+            nextIndex = 0;
+            completed = 0;
+            logLikelihoodAccumulator = 0.0;
+            gradientAccumulator = gradient;
+            gradientParameter = parameter;
+            failure = null;
+            ++generation;
+            monitor.notifyAll();
+        }
+
+        private void waitForCompletion(final String interruptedMessage) {
+            while (completed < likelihoods.size() && failure == null) {
+                try {
+                    monitor.wait();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(interruptedMessage, e);
+                }
+            }
+            mode = MODE_IDLE;
+            gradientParameter = null;
+            gradientAccumulator = null;
+        }
+
+        private final class Worker implements Runnable {
+
+            private int lastGeneration;
+
+            @Override
+            public void run() {
+                while (true) {
+                    final int activeGeneration = waitForWork();
+                    runEvaluation(activeGeneration);
+                }
+            }
+
+            private int waitForWork() {
+                synchronized (monitor) {
+                    while (lastGeneration == generation) {
+                        try {
+                            monitor.wait();
+                        } catch (final InterruptedException ignored) {
+                            // Daemon worker: keep serving later likelihood evaluations.
+                        }
+                    }
+                    lastGeneration = generation;
+                    return generation;
+                }
+            }
+
+            private void runEvaluation(final int activeGeneration) {
+                while (true) {
+                    final int index;
+                    final int activeMode;
+                    final Parameter activeParameter;
+                    synchronized (monitor) {
+                        if (activeGeneration != generation || failure != null || nextIndex >= likelihoods.size()) {
+                            return;
+                        }
+                        index = nextIndex++;
+                        activeMode = mode;
+                        activeParameter = gradientParameter;
+                    }
+                    try {
+                        if (activeMode == MODE_LIKELIHOOD) {
+                            final double value = likelihoods.get(index).getLogLikelihood();
+                            synchronized (monitor) {
+                                if (activeGeneration == generation && failure == null) {
+                                    logLikelihoodAccumulator += value;
+                                    completeOne();
+                                }
+                            }
+                        } else if (activeMode == MODE_GRADIENT) {
+                            final double[] gradient = gradientFor(index, activeParameter);
+                            synchronized (monitor) {
+                                if (activeGeneration == generation && failure == null) {
+                                    addGradient(gradientAccumulator, gradient, gradientAccumulator.length);
+                                    completeOne();
+                                }
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        synchronized (monitor) {
+                            if (activeGeneration == generation && failure == null) {
+                                failure = e;
+                                monitor.notifyAll();
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+
+            private void completeOne() {
+                ++completed;
+                if (completed >= likelihoods.size()) {
+                    monitor.notifyAll();
+                }
+            }
         }
     }
 }

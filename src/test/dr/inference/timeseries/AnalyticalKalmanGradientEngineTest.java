@@ -99,6 +99,20 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         }
     }
 
+    private static class ParallelOrthogonalBlockModel {
+        final OUProcessModel process;
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter block;
+        final ParallelTimeSeriesLikelihood likelihood;
+
+        ParallelOrthogonalBlockModel(OUProcessModel process,
+                                     OrthogonalBlockDiagonalPolarStableMatrixParameter block,
+                                     ParallelTimeSeriesLikelihood likelihood) {
+            this.process = process;
+            this.block = block;
+            this.likelihood = likelihood;
+        }
+    }
+
     // ── Factory helpers ───────────────────────────────────────────────────────────
 
     private static MatrixParameter makeMatrix(String name, double[][] values) {
@@ -382,6 +396,70 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianForwardComputationMode.EXPECTATION,
                 GaussianSmootherComputationMode.EXPECTATION,
                 GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+    }
+
+    private static ParallelOrthogonalBlockModel makeParallelOrthogonalBlockCanonicalModel() {
+        final double dt = 0.25;
+        final double[][] diffusion = {
+                {1.12, 0.04},
+                {0.04, 0.91}
+        };
+        final double[][] initCov = {
+                {0.84, 0.03},
+                {0.03, 0.78}
+        };
+        final double[][] noise = {
+                {0.28, 0.02},
+                {0.02, 0.34}
+        };
+        final double[][] y1 = {
+                {0.12, -0.18, 0.37, 0.52},
+                {-0.23, 0.31, 0.09, -0.14}
+        };
+
+        final Model base = makeOrthogonalBlockPolarFullWithMethod(
+                "ouParallelOrthCanonical",
+                2,
+                new double[]{0.27},
+                new double[0],
+                new double[]{0.61},
+                new double[]{0.43},
+                new double[]{0.19},
+                diffusion,
+                0.07,
+                initCov,
+                noise,
+                y1,
+                CovarianceGradientMethod.STATIONARY_LYAPUNOV,
+                dt);
+
+        final MatrixParameter H = makeMatrix("H.parallel.orth.2", new double[][]{
+                {1.0, 0.0},
+                {0.0, 1.0}
+        });
+        final MatrixParameter R = makeMatrix("R.parallel.orth.2", noise);
+        final GaussianObservationModel obs2 = new GaussianObservationModel(
+                "obsParallelOrthCanonical2",
+                2,
+                H,
+                R,
+                makeMatrix("Y.parallel.orth.2", new double[][]{
+                        {-0.31, 0.08, Double.NaN, 0.48},
+                        {0.24, -0.27, Double.NaN, 0.17}
+                }));
+        final TimeGrid grid = new UniformTimeGrid(4, 0.0, dt);
+
+        final TimeSeriesLikelihood series1 = makeCanonicalAnalyticalLikelihood(
+                "parallelOrthCanonicalSeries1", base.process, base.obs, grid);
+        final TimeSeriesLikelihood series2 = makeCanonicalAnalyticalLikelihood(
+                "parallelOrthCanonicalSeries2", base.process, obs2, grid);
+        final ParallelTimeSeriesLikelihood aggregate = new ParallelTimeSeriesLikelihood(
+                "parallelOrthCanonicalAggregate", 2, Arrays.asList(series1, series2));
+
+        return new ParallelOrthogonalBlockModel(
+                base.process,
+                (OrthogonalBlockDiagonalPolarStableMatrixParameter) base.process.getDriftMatrix(),
+                aggregate);
     }
 
     /**
@@ -753,6 +831,33 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         engine.makeDirty();
 
         return (llPlus - llMinus) / (2.0 * h);
+    }
+
+    private static double numericalGradient(dr.inference.model.Likelihood likelihood,
+                                            Parameter param, int index, double h) {
+        double orig = param.getParameterValue(index);
+
+        param.setParameterValue(index, orig + h);
+        likelihood.makeDirty();
+        double llPlus = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, orig - h);
+        likelihood.makeDirty();
+        double llMinus = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, orig);
+        likelihood.makeDirty();
+
+        return (llPlus - llMinus) / (2.0 * h);
+    }
+
+    private static void assertFullEvaluationStable(String label,
+                                                   dr.inference.model.Likelihood likelihood,
+                                                   double tolerance) {
+        final double cached = likelihood.getLogLikelihood();
+        likelihood.makeDirty();
+        final double full = likelihood.getLogLikelihood();
+        assertEquals(label, cached, full, tolerance);
     }
 
     // ── supportsGradientWrt ───────────────────────────────────────────────────────
@@ -2190,6 +2295,81 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                     hmcGradientValues[i],
                     1e-8);
         }
+    }
+
+    public void testParallelCanonicalOrthogonalBlockFullEvaluationAfterParameterMoves() {
+        final ParallelOrthogonalBlockModel model = makeParallelOrthogonalBlockCanonicalModel();
+        final ParallelTimeSeriesLikelihood likelihood = model.likelihood;
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter block = model.block;
+
+        assertFullEvaluationStable("Initial parallel orthogonal-block full evaluation",
+                likelihood, 1e-10);
+
+        final Parameter rho = block.getRhoParameter();
+        rho.setParameterValue(0, rho.getParameterValue(0) + 0.015);
+        assertFullEvaluationStable("Full evaluation after rho move",
+                likelihood, 1e-10);
+
+        final Parameter theta = block.getThetaParameter();
+        theta.setParameterValue(0, theta.getParameterValue(0) - 0.012);
+        assertFullEvaluationStable("Full evaluation after theta move",
+                likelihood, 1e-10);
+
+        final Parameter t = block.getTParameter();
+        t.setParameterValue(0, t.getParameterValue(0) + 0.01);
+        assertFullEvaluationStable("Full evaluation after t move",
+                likelihood, 1e-10);
+
+        final Parameter rotation = block.getRotationAngleParameter();
+        rotation.setParameterValue(0, rotation.getParameterValue(0) - 0.02);
+        assertFullEvaluationStable("Full evaluation after rotation move",
+                likelihood, 1e-10);
+
+        final Parameter mean = model.process.getStationaryMeanParameter();
+        mean.setParameterValue(0, mean.getParameterValue(0) + 0.025);
+        assertFullEvaluationStable("Full evaluation after mean move",
+                likelihood, 1e-10);
+
+        final double base = likelihood.getLogLikelihood();
+        likelihood.storeModelState();
+        rho.setParameterValue(0, rho.getParameterValue(0) + 0.035);
+        likelihood.makeDirty();
+        assertTrue("Rho move should change the parallel likelihood",
+                Math.abs(base - likelihood.getLogLikelihood()) > 1e-8);
+        likelihood.restoreModelState();
+        assertEquals("Restored parallel likelihood should match stored value",
+                base, likelihood.getLogLikelihood(), 1e-10);
+        assertFullEvaluationStable("Full evaluation after restore",
+                likelihood, 1e-10);
+    }
+
+    public void testParallelCanonicalOrthogonalBlockNativeGradientsMatchFD_2D() {
+        final ParallelOrthogonalBlockModel model = makeParallelOrthogonalBlockCanonicalModel();
+        final ParallelTimeSeriesLikelihood likelihood = model.likelihood;
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter block = model.block;
+        final Parameter mean = model.process.getStationaryMeanParameter();
+
+        final double h = 1e-6;
+        assertEquals("Parallel rho gradient",
+                numericalGradient(likelihood, block.getRhoParameter(), 0, h),
+                likelihood.getGradientWrt(block.getRhoParameter()).getGradientLogDensity(null)[0],
+                3e-5);
+        assertEquals("Parallel theta gradient",
+                numericalGradient(likelihood, block.getThetaParameter(), 0, h),
+                likelihood.getGradientWrt(block.getThetaParameter()).getGradientLogDensity(null)[0],
+                3e-5);
+        assertEquals("Parallel t gradient",
+                numericalGradient(likelihood, block.getTParameter(), 0, h),
+                likelihood.getGradientWrt(block.getTParameter()).getGradientLogDensity(null)[0],
+                3e-5);
+        assertEquals("Parallel rotation gradient",
+                numericalGradient(likelihood, block.getRotationAngleParameter(), 0, h),
+                likelihood.getGradientWrt(block.getRotationAngleParameter()).getGradientLogDensity(null)[0],
+                3e-5);
+        assertEquals("Parallel mean gradient",
+                numericalGradient(likelihood, mean, 0, h),
+                likelihood.getGradientWrt(mean).getGradientLogDensity(null)[0],
+                3e-5);
     }
 
     public void testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu() {

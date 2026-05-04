@@ -802,7 +802,7 @@
     <operators id="operators" optimizationSchedule="log">
         <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.006" mode="vanilla"
                                        drawVariance="1.0" autoOptimize="true"
-                                       gradientCheckTolerance="1e-3" gradientCheckCount="1000">
+                                       gradientCheckTolerance="1e-3" gradientCheckCount="0">
             <jointGradient idref="posteriorGradient"/>
             <compoundParameter idref="inference.parameter"/>
             <multivariateCompoundTransform id="compound.transform">
@@ -825,7 +825,7 @@
         </hamiltonianMonteCarloOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
                 <halfNormalPrior idref="ou.A.scalar.prior"/>
@@ -838,7 +838,7 @@
             <likelihood id="likelihood"><parallelTimeSeriesLikelihood idref="parallel.series"/></likelihood>
         </posterior>
         <operators idref="operators"/>
-        <log id="screenLog" logEvery="10">
+        <log id="screenLog" logEvery="100">
             <column label="posterior" dp="4" width="12"><posterior idref="posterior"/></column>
             <column label="likelihood" dp="4" width="12"><likelihood idref="likelihood"/></column>
             <parameter idref="ou.A.scalar"/>

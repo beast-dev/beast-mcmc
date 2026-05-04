@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatri
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
@@ -31,6 +32,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private final int stateDimension;
     private final int observationDimension;
     private final int timeCount;
+    private final int maximumMatrixDimension;
 
     private final CanonicalGaussianState filteredState;
     private final CanonicalGaussianState predictedState;
@@ -51,6 +53,10 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private final double[] stateVectorWorkspace;
     private final double[] stateVectorWorkspace2;
     private final double[] observationVectorWorkspace;
+    private final double[] flatMatrixWorkspace;
+    private final double[] flatInverseWorkspace;
+    private final double[] flatCholeskyWorkspace;
+    private final double[] flatLowerInverseWorkspace;
 
     private boolean likelihoodKnown;
     private double logLikelihood;
@@ -81,6 +87,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.stateDimension = transitionKernel.getStateDimension();
         this.observationDimension = observationModel.getObservationDimension();
         this.timeCount = timeGrid.getTimeCount();
+        this.maximumMatrixDimension = Math.max(stateDimension, observationDimension);
 
         if (observationModel.getTimeCount() != timeCount) {
             throw new IllegalArgumentException(
@@ -107,6 +114,10 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.stateVectorWorkspace = new double[stateDimension];
         this.stateVectorWorkspace2 = new double[stateDimension];
         this.observationVectorWorkspace = new double[observationDimension];
+        this.flatMatrixWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         if (cachedTransitionRepresentation != null) {
             cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
         }
@@ -203,15 +214,33 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
     }
 
-    private static double invertPositiveDefinite(final double[][] matrix,
-                                                 final double[][] inverseOut,
-                                                 final int dimension) {
-        final double[][] copy = new double[dimension][dimension];
-        GaussianMatrixOps.copyMatrix(matrix, copy, dimension, dimension);
-        final GaussianMatrixOps.CholeskyFactor chol = GaussianMatrixOps.cholesky(copy);
-        GaussianMatrixOps.copyMatrix(copy, inverseOut, dimension, dimension);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(inverseOut, chol);
-        return chol.logDeterminant();
+    private double invertPositiveDefinite(final double[][] matrix,
+                                          final double[][] inverseOut,
+                                          final int dimension) {
+        copyMatrixToFlat(matrix, flatMatrixWorkspace, dimension);
+        if (!MatrixOps.tryCholesky(flatMatrixWorkspace, flatCholeskyWorkspace, dimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        final double logDet = MatrixOps.invertFromCholesky(
+                flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, dimension);
+        copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
+        return logDet;
+    }
+
+    private static void copyMatrixToFlat(final double[][] source,
+                                         final double[] target,
+                                         final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source[i], 0, target, i * dimension, dimension);
+        }
+    }
+
+    private static void copyFlatToMatrix(final double[] source,
+                                         final double[][] target,
+                                         final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            System.arraycopy(source, i * dimension, target[i], 0, dimension);
+        }
     }
 
     private double validatedDelta(final int fromIndex, final int toIndex) {

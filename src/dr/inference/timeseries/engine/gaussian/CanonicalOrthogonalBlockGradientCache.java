@@ -5,8 +5,8 @@ import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -32,15 +32,18 @@ public final class CanonicalOrthogonalBlockGradientCache {
     private final double[] stationaryMean;
     private final double[] compressedDGradient;
     private final double[] rotationGradientFlat;
-    private final double[][] rotationGradient2D;
     private final double[] nativeGradient;
     private final double[] diffusionGradient;
     private final double[] meanGradient;
     private final double[] smoothedInitialMean;
     private final double[] stateDiff;
-    private final double[][] initialCovInv;
-    private final double[][] smoothedInitialCovariance;
+    private final double[] flatSmoothedInitialCovariance;
+    private final double[] flatInitialCovariance;
+    private final double[] flatInitialCovarianceInverse;
+    private final double[] flatInitialCholesky;
+    private final double[] flatInitialLowerInverse;
     private final double[] initialGradient;
+    private final GaussianFormConverter.Workspace converterWorkspace;
     private final CanonicalPreparedBranchHandle preparedBasis;
     private final CanonicalBranchWorkspace branchWorkspace;
     private boolean known;
@@ -62,15 +65,19 @@ public final class CanonicalOrthogonalBlockGradientCache {
         this.stationaryMean = new double[stateDimension];
         this.compressedDGradient = new double[blockParameter.getCompressedDDimension()];
         this.rotationGradientFlat = new double[stateDimension * stateDimension];
-        this.rotationGradient2D = new double[stateDimension][stateDimension];
         this.nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         this.diffusionGradient = new double[stateDimension * stateDimension];
         this.meanGradient = new double[stateDimension];
         this.smoothedInitialMean = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
-        this.initialCovInv = new double[stateDimension][stateDimension];
-        this.smoothedInitialCovariance = new double[stateDimension][stateDimension];
+        this.flatSmoothedInitialCovariance = new double[stateDimension * stateDimension];
+        this.flatInitialCovariance = new double[stateDimension * stateDimension];
+        this.flatInitialCovarianceInverse = new double[stateDimension * stateDimension];
+        this.flatInitialCholesky = new double[stateDimension * stateDimension];
+        this.flatInitialLowerInverse = new double[stateDimension * stateDimension];
         this.initialGradient = new double[stateDimension];
+        this.converterWorkspace = new GaussianFormConverter.Workspace();
+        this.converterWorkspace.ensureDim(stateDimension);
         this.preparedBasis = orthogonalParameterization.createPreparedBranchHandle();
         this.branchWorkspace = orthogonalParameterization.createBranchWorkspace();
         this.known = false;
@@ -125,9 +132,8 @@ public final class CanonicalOrthogonalBlockGradientCache {
                                                final CanonicalBranchGradientCache branchCache,
                                                final TimeGrid timeGrid) {
         ensure(trajectory, branchCache, timeGrid);
-        GaussianMatrixOps.copyFlatToMatrix(rotationGradientFlat, rotationGradient2D, stateDimension);
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
-        return assembleBlockGradientResult(parameter, nativeGradient, rotationGradient2D);
+        return assembleBlockGradientResult(parameter, nativeGradient, rotationGradientFlat);
     }
 
     public double[] getDiffusionGradient(final Parameter parameter,
@@ -196,11 +202,18 @@ public final class CanonicalOrthogonalBlockGradientCache {
         GaussianFormConverter.fillMomentsFromState(
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
-                smoothedInitialCovariance);
-        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final GaussianMatrixOps.CholeskyFactor initialChol =
-                GaussianMatrixOps.cholesky(initialCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+                flatSmoothedInitialCovariance,
+                stateDimension,
+                converterWorkspace);
+        fillInitialCovarianceFlat();
+        if (!MatrixOps.tryCholesky(flatInitialCovariance, flatInitialCholesky, stateDimension)) {
+            throw new IllegalArgumentException("Initial covariance matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(
+                flatInitialCholesky,
+                flatInitialLowerInverse,
+                flatInitialCovarianceInverse,
+                stateDimension);
         if (stationaryMeanParameter.getDimension() == 1) {
             final double meanValue = stationaryMeanParameter.getParameterValue(0);
             for (int i = 0; i < stateDimension; ++i) {
@@ -211,39 +224,51 @@ public final class CanonicalOrthogonalBlockGradientCache {
                 stateDiff[i] = smoothedInitialMean[i] - stationaryMeanParameter.getParameterValue(i);
             }
         }
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
+        MatrixOps.matVec(flatInitialCovarianceInverse, stateDiff, initialGradient, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             meanGradient[i] += initialGradient[i];
         }
     }
 
+    private void fillInitialCovarianceFlat() {
+        for (int row = 0; row < stateDimension; ++row) {
+            final int rowOffset = row * stateDimension;
+            for (int col = 0; col < stateDimension; ++col) {
+                flatInitialCovariance[rowOffset + col] =
+                        initialCovarianceParameter.getParameterValue(row, col);
+            }
+        }
+    }
+
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
                                                  final double[] nativeGradient,
-                                                 final double[][] gradientR) {
+                                                 final double[] flatGradientR) {
         final int d = stateDimension;
         if (requestedParameter == blockParameter.getParameter()) {
             if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
-                final double[] angleGradient =
-                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                                .pullBackGradient(gradientR);
-                final double[] out = new double[nativeGradient.length + angleGradient.length];
+                final OrthogonalMatrixProvider provider =
+                        (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
+                final int angleCount = provider.getOrthogonalParameter().getDimension();
+                final double[] out = new double[nativeGradient.length + angleCount];
                 System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-                System.arraycopy(angleGradient, 0, out, nativeGradient.length, angleGradient.length);
+                provider.fillPullBackGradientFlat(flatGradientR, d, out, nativeGradient.length);
                 return out;
             }
             final double[] out = new double[nativeGradient.length + d * d];
             System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-            flattenColumnMajor(gradientR, out, nativeGradient.length);
+            flattenColumnMajor(flatGradientR, out, nativeGradient.length, d);
             return out;
         }
         if (requestedParameter == blockParameter.getRotationMatrixParameter()) {
-            return flattenColumnMajor(gradientR);
+            return flattenColumnMajor(flatGradientR, d);
         }
         if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
                 && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
                 .getOrthogonalParameter()) {
-            return ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                    .pullBackGradient(gradientR);
+            final double[] out = new double[requestedParameter.getDimension()];
+            ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
+                    .fillPullBackGradientFlat(flatGradientR, d, out);
+            return out;
         }
         if (requestedParameter == blockParameter.getScalarBlockParameter()) {
             return new double[]{nativeGradient[0]};
@@ -267,20 +292,21 @@ public final class CanonicalOrthogonalBlockGradientCache {
         }
     }
 
-    private static double[] flattenColumnMajor(final double[][] matrix) {
-        final double[] out = new double[matrix.length * matrix.length];
-        flattenColumnMajor(matrix, out, 0);
+    private static double[] flattenColumnMajor(final double[] rowMajor,
+                                               final int dimension) {
+        final double[] out = new double[dimension * dimension];
+        flattenColumnMajor(rowMajor, out, 0, dimension);
         return out;
     }
 
-    private static void flattenColumnMajor(final double[][] matrix,
+    private static void flattenColumnMajor(final double[] rowMajor,
                                            final double[] out,
-                                           final int offset) {
-        final int d = matrix.length;
+                                           final int offset,
+                                           final int dimension) {
         int index = offset;
-        for (int col = 0; col < d; ++col) {
-            for (int row = 0; row < d; ++row) {
-                out[index++] = matrix[row][col];
+        for (int col = 0; col < dimension; ++col) {
+            for (int row = 0; row < dimension; ++row) {
+                out[index++] = rowMajor[row * dimension + col];
             }
         }
     }

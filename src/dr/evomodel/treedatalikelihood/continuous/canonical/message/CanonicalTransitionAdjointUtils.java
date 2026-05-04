@@ -112,7 +112,7 @@ public final class CanonicalTransitionAdjointUtils {
         final double[] transitionMatrixTimesGX = workspace.transitionMatrixTimesGX;
 
         // dLogL_dF = precision * (transitionMatrix * (gXx + gXx^T) - gXy^T - gYx - transitionOffset * gX^T)
-        multiplyFlat(transitionMatrix, gXxPlusTranspose, temp1, d);
+        MatrixOps.multiplySymmetricRight(transitionMatrix, gXxPlusTranspose, temp1, d);
 
         transposeIntoFlat(gXy, temp2, d);
         subtractInPlaceFlat(temp1, temp2, d2);
@@ -122,7 +122,7 @@ public final class CanonicalTransitionAdjointUtils {
         outerProductFlat(transitionOffset, gX, temp2, d);
         subtractInPlaceFlat(temp1, temp2, d2);
 
-        multiplyFlat(precision, temp1, out.dLogL_dF, d);
+        MatrixOps.multiplySymmetricLeft(precision, temp1, out.dLogL_dF, d);
 
         multiplyMatVecFlat(transitionMatrix, gX, transitionMatrixTimesGX, d);
         for (int i = 0; i < d; ++i) {
@@ -152,8 +152,8 @@ public final class CanonicalTransitionAdjointUtils {
             gP[k] -= 0.5 * g0 * omega[k];
         }
 
-        multiplyFlat(precision, gP, temp1, d);
-        multiplyFlat(temp1, precision, out.dLogL_dOmega, d);
+        MatrixOps.multiplySymmetricLeft(precision, gP, temp1, d);
+        MatrixOps.multiplySymmetricRight(temp1, precision, out.dLogL_dOmega, d);
         scaleInPlaceFlat(out.dLogL_dOmega, -1.0, d2);
         MatrixOps.symmetrize(out.dLogL_dOmega, d);
     }

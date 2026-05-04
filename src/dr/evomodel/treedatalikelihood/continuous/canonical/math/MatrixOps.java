@@ -178,10 +178,10 @@ public final class MatrixOps {
         }
     }
 
-    private static void multiplySymmetricLeft(final double[] symmetricLeft,
-                                              final double[] right,
-                                              final double[] out,
-                                              final int dim) {
+    public static void multiplySymmetricLeft(final double[] symmetricLeft,
+                                             final double[] right,
+                                             final double[] out,
+                                             final int dim) {
         Arrays.fill(out, 0.0);
         for (int i = 0; i < dim; ++i) {
             final int iOffset = i * dim;
@@ -200,10 +200,10 @@ public final class MatrixOps {
         }
     }
 
-    private static void multiplySymmetricRight(final double[] left,
-                                               final double[] symmetricRight,
-                                               final double[] out,
-                                               final int dim) {
+    public static void multiplySymmetricRight(final double[] left,
+                                              final double[] symmetricRight,
+                                              final double[] out,
+                                              final int dim) {
         Arrays.fill(out, 0.0);
         for (int i = 0; i < dim; ++i) {
             final int iOffset = i * dim;

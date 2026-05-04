@@ -14,6 +14,18 @@ final class OrthogonalBlockDenseMatrixOps {
         MatrixOps.matMul(left.data, right.data, out.data, left.numRows);
     }
 
+    static void multSymmetricLeft(final DenseMatrix64F symmetricLeft,
+                                  final DenseMatrix64F right,
+                                  final DenseMatrix64F out) {
+        MatrixOps.multiplySymmetricLeft(symmetricLeft.data, right.data, out.data, symmetricLeft.numRows);
+    }
+
+    static void multSymmetricRight(final DenseMatrix64F left,
+                                   final DenseMatrix64F symmetricRight,
+                                   final DenseMatrix64F out) {
+        MatrixOps.multiplySymmetricRight(left.data, symmetricRight.data, out.data, left.numRows);
+    }
+
     static void multTransA(final DenseMatrix64F left,
                            final DenseMatrix64F right,
                            final DenseMatrix64F out) {

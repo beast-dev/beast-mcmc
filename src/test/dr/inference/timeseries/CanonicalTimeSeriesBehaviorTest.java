@@ -41,6 +41,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testParallelTimeSeriesLikelihoodSumsIndependentCanonicalOuSeries",
                 "testParallelCanonicalOrthogonalBlockFullEvaluationAfterParameterMoves",
                 "testParallelCanonicalOrthogonalBlockNativeGradientsMatchFD_2D",
+                "testParallelCanonicalOrthogonalBlockBatchGradientsMatchSingleGradients",
                 "testCanonicalAnalyticalDriftGradientMatchesFD_2D_NonDiagonal",
                 "testCanonicalAnalyticalDiffusionGradientMatchesFD_2D_NonDiagonal",
                 "testCanonicalAnalyticalGradientsMatchFD_3D_Dense",

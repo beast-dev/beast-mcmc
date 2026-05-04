@@ -77,6 +77,11 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
     }
 
     @Override
+    public void prepareGradient() {
+        smootherEngine.getCanonicalTrajectory();
+    }
+
+    @Override
     public void makeDirty() {
         smootherEngine.makeDirty();
         for (final CanonicalGradientFormula formula : formulas) {

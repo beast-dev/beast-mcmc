@@ -191,6 +191,35 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         return parallelEvaluator.evaluateGradient(parameter, dimension);
     }
 
+    public double[][] computeGradients(final List<Parameter> parameters) {
+        if (parameters == null || parameters.isEmpty()) {
+            throw new IllegalArgumentException("parameters must contain at least one parameter");
+        }
+        final int count = parameters.size();
+        final int[] dimensions = new int[count];
+        for (int i = 0; i < count; ++i) {
+            final Parameter parameter = parameters.get(i);
+            if (parameter == null) {
+                throw new IllegalArgumentException("parameters must not contain null entries");
+            }
+            dimensions[i] = parameter.getDimension();
+        }
+        if (parallelEvaluator == null) {
+            final double[][] gradients = new double[count][];
+            for (int p = 0; p < count; ++p) {
+                gradients[p] = new double[dimensions[p]];
+            }
+            for (int i = 0; i < likelihoods.size(); ++i) {
+                likelihoods.get(i).prepareGradient();
+            }
+            for (int i = 0; i < likelihoods.size(); ++i) {
+                addGradients(gradients, gradientsFor(i, parameters), dimensions);
+            }
+            return gradients;
+        }
+        return parallelEvaluator.evaluateGradients(parameters, dimensions);
+    }
+
     private static SharedCanonicalTimeSeriesSchedule installSharedCanonicalSchedule(
             final List<TimeSeriesLikelihood> likelihoods) {
         SharedCanonicalTimeSeriesSchedule schedule = null;
@@ -214,6 +243,14 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
                     + " but got " + provider.getDimension());
         }
         return provider.getGradientLogDensity(null);
+    }
+
+    private double[][] gradientsFor(final int likelihoodIndex, final List<Parameter> parameters) {
+        final double[][] gradients = new double[parameters.size()][];
+        for (int i = 0; i < parameters.size(); ++i) {
+            gradients[i] = gradientFor(likelihoodIndex, parameters.get(i));
+        }
+        return gradients;
     }
 
     private GradientProvider gradientProviderFor(final int likelihoodIndex,
@@ -242,11 +279,24 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         }
     }
 
+    private static void addGradients(final double[][] accumulators,
+                                     final double[][] increments,
+                                     final int[] dimensions) {
+        if (increments == null || increments.length != accumulators.length) {
+            throw new IllegalArgumentException("Gradient batch size mismatch");
+        }
+        for (int i = 0; i < accumulators.length; ++i) {
+            addGradient(accumulators[i], increments[i], dimensions[i]);
+        }
+    }
+
     private final class ParallelEvaluator {
 
         private static final int MODE_IDLE = 0;
         private static final int MODE_LIKELIHOOD = 1;
         private static final int MODE_GRADIENT = 2;
+        private static final int MODE_PREPARE_GRADIENT = 3;
+        private static final int MODE_BATCH_GRADIENT = 4;
 
         private final Object monitor = new Object();
         private final Thread[] workers;
@@ -258,6 +308,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         private double logLikelihoodAccumulator;
         private double[] gradientAccumulator;
         private Parameter gradientParameter;
+        private double[][] gradientBatchAccumulator;
+        private List<Parameter> gradientBatchParameters;
+        private int[] gradientBatchDimensions;
         private RuntimeException failure;
 
         private ParallelEvaluator(final int workerCount) {
@@ -294,6 +347,26 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             }
         }
 
+        private double[][] evaluateGradients(final List<Parameter> parameters, final int[] dimensions) {
+            final double[][] gradients = new double[parameters.size()][];
+            for (int i = 0; i < gradients.length; ++i) {
+                gradients[i] = new double[dimensions[i]];
+            }
+            synchronized (monitor) {
+                startBatchEvaluation(MODE_PREPARE_GRADIENT, parameters, dimensions, gradients);
+                waitForCompletion("Interrupted while preparing parallel time-series gradients");
+                if (failure != null) {
+                    throw new RuntimeException("Failed to prepare parallel time-series gradients", failure);
+                }
+                startBatchEvaluation(MODE_BATCH_GRADIENT, parameters, dimensions, gradients);
+                waitForCompletion("Interrupted while evaluating parallel time-series gradient batch");
+                if (failure != null) {
+                    throw new RuntimeException("Failed to evaluate parallel time-series gradient batch", failure);
+                }
+                return gradients;
+            }
+        }
+
         private void startEvaluation(final int evaluationMode,
                                      final Parameter parameter,
                                      final double[] gradient) {
@@ -303,6 +376,24 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             logLikelihoodAccumulator = 0.0;
             gradientAccumulator = gradient;
             gradientParameter = parameter;
+            failure = null;
+            ++generation;
+            monitor.notifyAll();
+        }
+
+        private void startBatchEvaluation(final int evaluationMode,
+                                          final List<Parameter> parameters,
+                                          final int[] dimensions,
+                                          final double[][] gradients) {
+            mode = evaluationMode;
+            nextIndex = 0;
+            completed = 0;
+            logLikelihoodAccumulator = 0.0;
+            gradientAccumulator = null;
+            gradientParameter = null;
+            gradientBatchParameters = parameters;
+            gradientBatchDimensions = dimensions;
+            gradientBatchAccumulator = gradients;
             failure = null;
             ++generation;
             monitor.notifyAll();
@@ -320,6 +411,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             mode = MODE_IDLE;
             gradientParameter = null;
             gradientAccumulator = null;
+            gradientBatchParameters = null;
+            gradientBatchDimensions = null;
+            gradientBatchAccumulator = null;
         }
 
         private final class Worker implements Runnable {
@@ -375,6 +469,21 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
                             synchronized (monitor) {
                                 if (activeGeneration == generation && failure == null) {
                                     addGradient(gradientAccumulator, gradient, gradientAccumulator.length);
+                                    completeOne();
+                                }
+                            }
+                        } else if (activeMode == MODE_PREPARE_GRADIENT) {
+                            likelihoods.get(index).prepareGradient();
+                            synchronized (monitor) {
+                                if (activeGeneration == generation && failure == null) {
+                                    completeOne();
+                                }
+                            }
+                        } else if (activeMode == MODE_BATCH_GRADIENT) {
+                            final double[][] gradients = gradientsFor(index, gradientBatchParameters);
+                            synchronized (monitor) {
+                                if (activeGeneration == generation && failure == null) {
+                                    addGradients(gradientBatchAccumulator, gradients, gradientBatchDimensions);
                                     completeOne();
                                 }
                             }

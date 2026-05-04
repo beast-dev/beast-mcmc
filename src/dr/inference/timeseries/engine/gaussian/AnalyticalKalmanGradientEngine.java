@@ -99,6 +99,11 @@ public class AnalyticalKalmanGradientEngine implements GradientEngine {
     }
 
     @Override
+    public void prepareGradient() {
+        smootherEngine.getTrajectory();
+    }
+
+    @Override
     public void makeDirty() {
         smootherEngine.makeDirty();
     }

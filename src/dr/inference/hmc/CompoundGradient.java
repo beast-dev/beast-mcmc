@@ -41,6 +41,9 @@ import java.util.concurrent.Future;
 
 public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
 
+    private static final boolean BATCH_GRADIENT_DISABLED =
+            Boolean.getBoolean("beast.disableBatchGradient");
+
     protected final int dimension;
     final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
@@ -160,11 +163,61 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
 
     @Override
     public double[] getGradientLogDensity() {
+        if (!BATCH_GRADIENT_DISABLED) {
+            final double[] batched = getBatchGradientLogDensity();
+            if (batched != null) {
+                return batched;
+            }
+        }
         if (parallelExecutor != null)
             return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.GRADIENT);
         else {
             return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.GRADIENT);
         }
+    }
+
+    private double[] getBatchGradientLogDensity() {
+        if (derivativeList.size() < 2) {
+            return null;
+        }
+        final List<BatchGradientWrtParameterProvider> batch = new ArrayList<BatchGradientWrtParameterProvider>(
+                derivativeList.size());
+        Object key = null;
+        for (final GradientWrtParameterProvider provider : derivativeList) {
+            if (!(provider instanceof BatchGradientWrtParameterProvider)) {
+                return null;
+            }
+            final BatchGradientWrtParameterProvider batchProvider =
+                    (BatchGradientWrtParameterProvider) provider;
+            final Object providerKey = batchProvider.getBatchGradientKey();
+            if (providerKey == null) {
+                return null;
+            }
+            if (key == null) {
+                key = providerKey;
+            } else if (key != providerKey) {
+                return null;
+            }
+            batch.add(batchProvider);
+        }
+
+        final double[][] gradients = batch.get(0).getGradientLogDensityBatch(batch);
+        if (gradients == null || gradients.length != batch.size()) {
+            throw new IllegalStateException("Batched gradient result size mismatch.");
+        }
+        final double[] result = new double[dimension];
+        int offset = 0;
+        for (int i = 0; i < batch.size(); ++i) {
+            final double[] gradient = gradients[i];
+            final int providerDimension = batch.get(i).getDimension();
+            if (gradient == null || gradient.length != providerDimension) {
+                throw new IllegalStateException("Batched gradient dimension mismatch for "
+                        + batch.get(i).getParameter().getParameterName());
+            }
+            System.arraycopy(gradient, 0, result, offset, providerDimension);
+            offset += providerDimension;
+        }
+        return result;
     }
 
     private double[] getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType derivativeType) {

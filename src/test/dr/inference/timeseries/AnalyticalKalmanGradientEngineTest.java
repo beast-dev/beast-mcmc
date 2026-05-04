@@ -15,6 +15,7 @@ import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.hmc.CompoundGradient;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
@@ -306,6 +307,21 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
             for (int i = 0; i < expected[t].length; ++i) {
                 assertEquals(label + " mismatch at t=" + t + " idx=" + i,
                         expected[t][i], observed[t][i], tolerance);
+            }
+        }
+    }
+
+    private static void assertGradientBatchEquals(String label,
+                                                  double[][] expected,
+                                                  double[][] observed,
+                                                  double tolerance) {
+        assertEquals(label + " parameter count", expected.length, observed.length);
+        for (int p = 0; p < expected.length; ++p) {
+            assertEquals(label + " dimension for parameter " + p,
+                    expected[p].length, observed[p].length);
+            for (int i = 0; i < expected[p].length; ++i) {
+                assertEquals(label + " parameter " + p + " entry " + i,
+                        expected[p][i], observed[p][i], tolerance);
             }
         }
     }
@@ -2377,6 +2393,44 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         assertEquals("Compatible series should not disable the shared branch schedule",
                 0L,
                 likelihood.getSharedCanonicalSchedule().getMismatchCount());
+    }
+
+    public void testParallelCanonicalOrthogonalBlockBatchGradientsMatchSingleGradients() {
+        final ParallelOrthogonalBlockModel model = makeParallelOrthogonalBlockCanonicalModel();
+        final ParallelTimeSeriesLikelihood likelihood = model.likelihood;
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter block = model.block;
+        final Parameter[] parameters = new Parameter[]{
+                block.getRhoParameter(),
+                block.getThetaParameter(),
+                block.getTParameter(),
+                block.getRotationAngleParameter(),
+                model.process.getStationaryMeanParameter()
+        };
+
+        final double[][] expected = new double[parameters.length][];
+        for (int i = 0; i < parameters.length; ++i) {
+            expected[i] = likelihood.getGradientWrt(parameters[i]).getGradientLogDensity(null);
+        }
+        likelihood.makeDirty();
+        final double[][] batched = likelihood.computeGradients(Arrays.asList(parameters));
+        assertGradientBatchEquals("parallel batch gradients", expected, batched, 1e-10);
+
+        likelihood.makeDirty();
+        final CompoundGradient compound = new CompoundGradient(Arrays.asList(
+                new TimeSeriesGradient(likelihood, parameters[0]),
+                new TimeSeriesGradient(likelihood, parameters[1]),
+                new TimeSeriesGradient(likelihood, parameters[2]),
+                new TimeSeriesGradient(likelihood, parameters[3]),
+                new TimeSeriesGradient(likelihood, parameters[4])));
+        final double[] compoundGradient = compound.getGradientLogDensity();
+        int offset = 0;
+        for (int i = 0; i < parameters.length; ++i) {
+            for (int j = 0; j < expected[i].length; ++j) {
+                assertEquals("compound batch gradient parameter " + i + " entry " + j,
+                        expected[i][j], compoundGradient[offset++], 1e-10);
+            }
+        }
+        assertEquals("compound batch gradient length", offset, compoundGradient.length);
     }
 
     public void testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu() {

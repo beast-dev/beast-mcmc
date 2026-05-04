@@ -11,5 +11,9 @@ public interface GradientEngine {
 
     double[] getGradientWrt(Parameter parameter);
 
+    default void prepareGradient() {
+        // Optional hook for engines that can warm shared smoother state.
+    }
+
     void makeDirty();
 }

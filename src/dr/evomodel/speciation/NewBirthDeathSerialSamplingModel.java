@@ -72,7 +72,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
     // TODO if we want to supplant other birth-death models, need an ENUM, and choice of options
     // Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)
-    private final boolean conditionOnSurvival;
+    private boolean conditionOnSurvival;
 
     double modelStartTime;
     double A;
@@ -95,30 +95,77 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     private double[] partialQ;
     private boolean partialQKnown;
 
-    private final double[] dQStart;
-    private final double[] dQEnd;
+    private double[] dQStart;
+    private double[] dQEnd;
 
     private double[] temp33;
-    private final double[] temp44;
+    private double[] temp44;
 
     private double eAt_Old;
     private double eAt_End;
 
-    final double[] dA;
-    final double[] dB;
-    private final double[] dG2;
+    double[] dA;
+    double[] dB;
+    double[] dG2;
 
     boolean computedBCurrent;
 
-    private final double[] dPIntervalEnd;
-    protected final double[] dPModelEnd;
+    double[] dPIntervalEnd;
+    double[] dPModelEnd;
 
-    private final double[] dPModelEnd_prev;
+    double[] dPModelEnd_prev;
+
+
+    public CompoundBirthDeathParameters compoundParameters = null;
+
 
     public NewBirthDeathSerialSamplingModel(
-            Parameter birthRate,
-            Parameter deathRate,
-            Parameter serialSamplingRate,
+            Parameter lambda,
+            Parameter mu,
+            Parameter psi,
+            Parameter r,
+            Parameter rho,
+            Parameter origin,
+            boolean condition,
+            int numIntervals,
+            double gridEnd,
+            Type units) {
+            
+        this("NewBirthDeathSerialSamplingModel", lambda, mu, psi,
+                r, rho, origin, condition, numIntervals, gridEnd, units);
+    }
+
+
+    public NewBirthDeathSerialSamplingModel(
+            String modelName,
+            Parameter lambda,
+            Parameter mu,
+            Parameter psi,
+            Parameter r,
+            Parameter rho,
+            Parameter origin,
+            boolean condition,
+            int numIntervals,
+            double gridEnd,
+            Type units) {
+            
+        super(modelName, units);
+        
+
+        initialize(lambda, mu, psi,
+                r, rho, origin,
+                condition, numIntervals, gridEnd);
+                
+
+        this.compoundParameters = new CompoundBirthDeathParameters(
+                lambda, mu, psi, true);
+    }
+
+    // Factory method for compound parameters (compound-as-primary mode)
+    public static NewBirthDeathSerialSamplingModel createWithCompoundParameters(
+            Parameter R0Parameter,
+            Parameter DParameter,
+            Parameter SParameter,
             Parameter treatmentProbability,
             Parameter samplingProbability,
             Parameter originTime,
@@ -126,16 +173,54 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             int numIntervals,
             double gridEnd,
             Type units) {
-
-        this("NewBirthDeathSerialSamplingModel", birthRate, deathRate, serialSamplingRate,
+            
+        return createWithCompoundParameters("NewBirthDeathSerialSamplingModel", R0Parameter, DParameter, SParameter,
                 treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
+    
 
-    public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
-        return this;
+    public static NewBirthDeathSerialSamplingModel createWithCompoundParameters(
+            String modelName,
+            Parameter R0Parameter,
+            Parameter DParameter,
+            Parameter SParameter,
+            Parameter treatmentProbability,
+            Parameter samplingProbability,
+            Parameter originTime,
+            boolean condition,
+            int numIntervals,
+            double gridEnd,
+            Type units) {
+            
+
+        R0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, R0Parameter.getSize()));
+        DParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, DParameter.getSize()));
+        SParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, SParameter.getSize()));
+            
+
+        CompoundBirthDeathParameters compoundParams = new CompoundBirthDeathParameters(
+                R0Parameter, DParameter, SParameter);
+        
+
+        Parameter birthRate = compoundParams.getBirthRate();
+        Parameter deathRate = compoundParams.getDeathRate();
+        Parameter serialSamplingRate = compoundParams.getSamplingRate();
+        
+
+        NewBirthDeathSerialSamplingModel model = new NewBirthDeathSerialSamplingModel(
+                modelName, birthRate, deathRate, serialSamplingRate,
+                treatmentProbability, samplingProbability, originTime,
+                condition, numIntervals, gridEnd, units, compoundParams);
+        
+
+        model.addVariable(R0Parameter);
+        model.addVariable(DParameter);
+        model.addVariable(SParameter);
+        return model;
     }
+    
 
-    public NewBirthDeathSerialSamplingModel(
+    private NewBirthDeathSerialSamplingModel(
             String modelName,
             Parameter birthRate,
             Parameter deathRate,
@@ -146,13 +231,34 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             boolean condition,
             int numIntervals,
             double gridEnd,
-            Type units) {
-
+            Type units,
+            CompoundBirthDeathParameters compoundParams) {
+            
         super(modelName, units);
+        
+
+        initialize(birthRate, deathRate, serialSamplingRate,
+                treatmentProbability, samplingProbability, originTime,
+                condition, numIntervals, gridEnd);
+        
+
+        this.compoundParameters = compoundParams;
+    }
+
+    private void initialize(
+            Parameter birthRate,
+            Parameter deathRate,
+            Parameter serialSamplingRate,
+            Parameter treatmentProbability,
+            Parameter samplingProbability,
+            Parameter originTime,
+            boolean condition,
+            int numIntervals,
+            double gridEnd) {
 
         this.numIntervals = numIntervals;
         this.gridEnd = gridEnd;
-        // setupTimeline();
+
 
         if (birthRate.getSize() != 1 && birthRate.getSize() != numIntervals) {
             throw new RuntimeException("Length of birthRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
@@ -176,19 +282,16 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
 
         this.birthRate = birthRate;
         addVariable(birthRate);
-        birthRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRate.getSize()));
-
+        
         this.deathRate = deathRate;
         addVariable(deathRate);
-        deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, deathRate.getSize()));
-
+        
         this.serialSamplingRate = serialSamplingRate;
         addVariable(serialSamplingRate);
-        deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, serialSamplingRate.getSize()));
-
+        
         this.treatmentProbability = treatmentProbability;
         addVariable(treatmentProbability);
-        samplingProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, treatmentProbability.getSize()));
+        treatmentProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, treatmentProbability.getSize()));
 
         this.samplingProbability = samplingProbability;
         addVariable(samplingProbability);
@@ -202,34 +305,30 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
             originTime.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         }
 
-        this.savedLogQ = Double.NaN;
 
+        if (!(birthRate instanceof Parameter.Proxy)) {
+            birthRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, birthRate.getSize()));
+            deathRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, deathRate.getSize()));
+            serialSamplingRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, serialSamplingRate.getSize()));
+        }
+
+        this.savedLogQ = Double.NaN;
         this.savedQ = Double.NaN;
         this.partialQ = new double[4 * numIntervals];
         this.partialQKnown = false;
-
         this.dA = new double[4];
         this.dG2 = new double[3];
-
         this.dB = new double[numIntervals * 4];
-
         this.dQStart = new double[numIntervals * 4];
         this.dQEnd = new double[numIntervals * 4];
-
         this.temp33 = new double[numIntervals * 4];
         this.temp44 = new double[numIntervals * 4];
-
         this.dPIntervalEnd = new double[numIntervals * 4];
         this.dPModelEnd = new double[numIntervals * 4];
         this.dPModelEnd_prev = new double[numIntervals * 4];
 
-        this.gridEnd = gridEnd;
-        this.numIntervals = numIntervals;
-
         this.gradientFlags = new boolean[5];
         Arrays.fill(gradientFlags, Boolean.TRUE);
-
-        // setupTimeline();
     }
 
     public void setupGradientFlags (boolean[] gradientFlags) {
@@ -1122,6 +1221,11 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     }
 
     // Some useful JVM flags: -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
+
+    @Override
+    public SpeciationModelGradientProvider getProvider() {
+        return this;
+    }
 
     public abstract class ParameterPack implements Iterable<Parameter> {
 

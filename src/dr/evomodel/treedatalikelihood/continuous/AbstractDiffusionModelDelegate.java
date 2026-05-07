@@ -29,6 +29,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.LogDeterminantProvider;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
@@ -68,7 +70,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
 
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
+        dim = diffusionModel.getDimension(); // getPrecisionParameter().getColumnDimension();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);
@@ -124,11 +126,21 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
             eigenBufferHelper.flipOffset(0);
         }
 
-        cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionmatrixAsVector(),
-                Math.log(diffusionModel.getDeterminantPrecisionMatrix())
-
-        );
+        if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+            cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                    ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                    diffusionModel.getLogDeterminantPrecisionMatrix());
+        } else {
+            if (diffusionModel instanceof LogDeterminantProvider) {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        ((LogDeterminantProvider) diffusionModel).getLogDeterminantPrecisionMatrix());
+            } else {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+            }
+        }
     }
 
     @Override

@@ -178,7 +178,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         this.useTreeLength = useTreeLength;
         this.reciprocalRates = reciprocalRates;
 
-        dimTrait = diffusionModel.getPrecisionmatrix().length;
+        dimTrait = diffusionModel.getPrecisionMatrix().length;
         dim = traitParameter != null ? traitParameter.getParameter(0).getDimension() : 0;
         numData = dim / dimTrait;
 
@@ -868,7 +868,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     Parameter meanParameter = (Parameter) cxo.getChild(MultivariateDistributionLikelihood.MVN_MEAN)
                             .getChild(Parameter.class);
 
-                    if (meanParameter.getDimension() != diffusionModel.getPrecisionmatrix().length) {
+                    if (meanParameter.getDimension() != diffusionModel.getPrecisionMatrix().length) {
                         throw new XMLParseException("Root prior mean dimension does not match trait diffusion dimension");
                     }
 
@@ -924,7 +924,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices,
+                utilities.jitter(xo, diffusionModel.getPrecisionMatrix().length, missingIndices,
                         traitParameter.getDimension());
             }
 
@@ -938,7 +938,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             if (!xo.hasAttribute(TreeTraitParserUtilities.ALLOW_IDENTICAL) &&
                     isRRW &&
-                    utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionmatrix().length)) {
+                    utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionMatrix().length)) {
                 throw new XMLParseException("For multivariate trait analyses, all trait values should be unique.\n" +
                         "Check data or add random noise using 'jitter' option.");
             }
@@ -1034,9 +1034,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             final int number = cxo.getChildCount();
 
-            if (number != diffusionModel.getPrecisionmatrix().length) {
+            if (number != diffusionModel.getPrecisionMatrix().length) {
                 throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
-                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                        " dimension " + diffusionModel.getPrecisionMatrix().length + " in " + xo.getId()
                 );
             }
 
@@ -1061,9 +1061,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             final int numberModels = cxo.getChildCount();
 
-            if (numberModels != diffusionModel.getPrecisionmatrix().length) {
+            if (numberModels != diffusionModel.getPrecisionMatrix().length) {
                 throw new XMLParseException("Wrong number of optimal trait models (" + numberModels + ") for a trait of" +
-                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                        " dimension " + diffusionModel.getPrecisionMatrix().length + " in " + xo.getId()
                 );
             }
 

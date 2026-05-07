@@ -1019,22 +1019,35 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        return Arrays.asList(CITATIONS);
     }
 
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("Nicola", "De Maio"),
-                    new Author("Chieh-Hsi", "Wu"),
-                    new Author("Kathleen", "O'Reilly"),
-                    new Author("Daniel", "Wilson")
-            },
-            "New routes to phylogeography: a Bayesian structured coalescent approximation",
-            2015,
-            "PLOS Genetics",
-            11, "e1005421",
-            "10.1371/journal.pgen.1005421"
-    );
+    public static Citation[] CITATIONS = new Citation[] {
+            new Citation(
+                    new Author[]{
+                            new Author("Yucai", "Shao"),
+                            new Author("Marc", "Suchard"),
+                            new Author("Andrew", "Rambaut"),
+                            new Author("Philippe", "Lemey"),
+                            new Author("Tetyana", "Vasylyeva"),
+                            new Author("Guy", "Baele")
+                    },
+                    "Parallel algorithms for phylogenetic inference under a structured coalescent approximation",
+                    2025,
+                    "bioRxiv",
+                    "2025.09.22.677844","https://doi.org/10.1101/2025.09.22.677844"),
+            new Citation(
+                    new Author[]{
+                            new Author("Nicola", "De Maio"),
+                            new Author("Chieh-Hsi", "Wu"),
+                            new Author("Kathleen", "O'Reilly"),
+                            new Author("Daniel", "Wilson")
+                    },
+                    "New routes to phylogeography: a Bayesian structured coalescent approximation",
+                    2015,
+                    "PLOS Genetics",
+                    11, "e1005421"),
+    };
 
     // ****************************************************************
     // Private and protected stuff

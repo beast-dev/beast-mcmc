@@ -1,5 +1,5 @@
 /*
- * RealDifferencesToSimplexTransform.java
+ * FreeRateSimplexTransform.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,23 +27,30 @@
 
 package dr.util;
 
+import dr.evomodel.substmodel.InfinitesimalRatesLogger;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
+import org.apache.commons.math.stat.descriptive.moment.Mean;
 
-public class RealDifferencesToSimplexTransform extends Transform.MultivariateTransform {
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class FreeRateSimplexTransform extends Transform.MultivariateTransform {
 
     private Parameter weights;
 
-    public RealDifferencesToSimplexTransform(int dim, Parameter weights) {
+    public FreeRateSimplexTransform(int dim, Parameter weights) {
         super(dim);
         this.weights = weights;
+        this.outputDimension = dim + 1;
     }
 
-    public RealDifferencesToSimplexTransform(int dim) {
+    public FreeRateSimplexTransform(int dim) {
         super(dim);
         weights = new Parameter.Default(dim, (double) 1 /dim);
+        this.outputDimension = dim + 1;
     }
 
     @Override
@@ -63,8 +70,9 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
 
     @Override
     public String getTransformName() {
-        return "realDifferencesToSimplex";
+        return "freeRateSimplex";
     }
+
 
     @Override
     protected double[] transform(double[] values) {
@@ -72,38 +80,45 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
         // This is a transformation of an n-dimensional vector to another n-dimensional vector but what comes _out_ is a
         // simplex of one greater dimension. The weights parameter has dimension n+1.
 
-        double[] out = new double[values.length + 1];
+        BigDecimal[] bigOut = new BigDecimal[values.length + 1];
 
-        double denominator = 0;
+        BigDecimal denominator = BigDecimal.valueOf(0);
+
+        for(int i=0; i<dim; i++){
+            denominator = denominator.add(BigDecimal.valueOf(values[i]).multiply(BigDecimal.valueOf(weights.getParameterValue(i))));
+        }
+
+        denominator = denominator.add(BigDecimal.valueOf(weights.getParameterValue(dim)));
+
+        for(int i=0; i<dim; i++){
+            bigOut[i] = BigDecimal.valueOf(values[i]).divide(denominator, 12, RoundingMode.HALF_UP);
+        }
+
+        bigOut[dim] = BigDecimal.valueOf(1).divide(denominator, 12, RoundingMode.HALF_UP);
+        double[] out = new double[dim+1];
 
         for(int i=0; i<=dim; i++){
-            double innerSum = 0;
-            for(int j=0; j<=i; j++) {
-                if(j<dim){
-                    innerSum += values[j];
-                } else {
-                    innerSum += 1;
+            out[i] = bigOut[i].doubleValue();
+        }
 
-                }
-            }
-            denominator += innerSum*weights.getParameterValue(i);
+        // just testing the reverse works!
+
+        BigDecimal[] bigIn = new BigDecimal[values.length];
+
+        BigDecimal reverseDenominatorTemp = BigDecimal.valueOf(1);
+
+        for(int i=0; i<dim; i++){
+            reverseDenominatorTemp = reverseDenominatorTemp.subtract(bigOut[i].multiply(BigDecimal.valueOf(weights.getParameterValue(i))));
         }
 
         for(int i=0; i<dim; i++){
-            if(i==0){
-                out[i] = values[i]/denominator;
-            } else if(i<dim) {
-                out[i] = (out[i-1]*denominator + values[i])/denominator;
-            }
-        }
+            bigIn[i] = bigOut[i].multiply(BigDecimal.valueOf(weights.getParameterValue(dim))).divide(reverseDenominatorTemp, 12, RoundingMode.HALF_UP);
 
-        double subtotal = 0;
+        }
 
         for(int i=0; i<dim; i++){
-            subtotal += out[i]*weights.getParameterValue(i);
+            BigDecimal tmp = BigDecimal.valueOf(values[i]);
         }
-
-        out[dim] = (1-subtotal)/weights.getParameterValue(dim);
 
         return(out);
 
@@ -118,42 +133,33 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
     protected double getLogJacobian(double[] values) {
         Matrix partialsMatrix = new Matrix(dim, dim);
 
-        double sqrtDenominator = 0;
-        for(int i=0; i<=dim; i++){
-            double innerSum = 0;
-            for(int j=0; j<=i; j++) {
-                if(j<dim){
-                    innerSum += values[j];
-                } else {
-                    innerSum += 1;
-                }
-            }
-            sqrtDenominator += innerSum*weights.getParameterValue(i);
-        }
+        double logSqrtDenominator;
 
-        double denominator = sqrtDenominator * sqrtDenominator;
+        // reminder: dim is one less than the dimension of the simplex
+
+        double tempSum = 0;
+
+        for(int i=0; i<dim; i++){
+            tempSum += weights.getParameterValue(i)*values[i];
+        }
+        logSqrtDenominator =  Math.log1p(-tempSum);
+
+        assert logSqrtDenominator > -Double.NEGATIVE_INFINITY;
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                double weightSum = 0;
-                for (int d = j; d <= dim; d++) {
-                    weightSum += weights.getParameterValue(d);
-                }
-                double valueSum = 0;
-                for (int a = 0; a < i + 1; a++) {
-                    valueSum += values[a];
-                }
-                if (j <= i) {
-                    partialsMatrix.set(i, j, (sqrtDenominator - weightSum * valueSum) / denominator);
+                if (j == i) {
+                    partialsMatrix.set(i, j, ((1-tempSum) + values[i]*weights.getParameterValue(i)));
                 } else {
-                    partialsMatrix.set(i, j, (-weightSum * valueSum) / denominator);
+                    partialsMatrix.set(i, j, (values[i]*weights.getParameterValue(j)));
                 }
             }
         }
 
         double logJacobian = 0;
         try {
-            logJacobian = Math.log(Math.abs(partialsMatrix.determinant()));
+
+            logJacobian =  dim*Math.log(weights.getParameterValue(dim)) + Math.log(Math.abs(partialsMatrix.determinant())) - dim*2*logSqrtDenominator;
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
@@ -179,22 +185,22 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
 
         public static final String WEIGHTS = "weights";
         public static final String DIMENSION = "dimension";
-        public static final String REAL_DIFFERENCES_TO_SIMPLEX_TRANSFORM = "realDifferencesToSimplexTransform";
+        public static final String FREERATE_SIMPLEX_TRANSFORM = "freeRateSimplexTransform";
         @Override
         public Class getReturnType() {
-            return RealDifferencesToSimplexTransform.class;
+            return FreeRateSimplexTransform.class;
         }
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             if(xo.hasChildNamed(WEIGHTS)){
                 Parameter weights = (Parameter) xo.getElementFirstChild(WEIGHTS);
-                return new RealDifferencesToSimplexTransform(weights.getDimension()-1, weights);
+                return new FreeRateSimplexTransform(weights.getDimension()-1, weights);
             } else if(xo.hasAttribute(DIMENSION)) {
                 int dimension = xo.getIntegerAttribute(DIMENSION);
-                return new RealDifferencesToSimplexTransform(dimension);
+                return new FreeRateSimplexTransform(dimension);
             } else {
-                throw new XMLParseException("RealDifferencesToSimplex must have either a dimension attribute or" +
+                throw new XMLParseException("FreeRateSimplexTransform must have either a dimension attribute or" +
                         "a set of weights");
             }
         }
@@ -216,7 +222,7 @@ public class RealDifferencesToSimplexTransform extends Transform.MultivariateTra
 
         @Override
         public String getParserName() {
-            return REAL_DIFFERENCES_TO_SIMPLEX_TRANSFORM;
+            return FREERATE_SIMPLEX_TRANSFORM;
         }
 
 

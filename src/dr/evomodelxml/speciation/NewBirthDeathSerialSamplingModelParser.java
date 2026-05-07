@@ -28,40 +28,31 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.MasBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
-import dr.evomodel.speciation.TwoParamBirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_SERIAL_MODEL = "newBirthDeathSerialSampling";
+    public static final String BIRTH_RATE = "birthRate";
+    public static final String DEATH_RATE = "deathRate";
+    public static final String SAMPLING_RATE = "samplingRate";
+    public static final String TREATMENT_PROBABILITY = "treatmentProbability";
+    public static final String SAMPLING_PROBABILITY = "samplingProbability";
+    public static final String ORIGIN = "origin";
+    public static final String CONDITION = "conditionOnSurvival";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
-    public static final String LAMBDA = "birthRate";
-    public static final String MU = "deathRate";
-    public static final String PSI = "samplingRate";
-    public static final String RHO = "samplingProbability";
-    public static final String R = "treatmentProbability";
-    public static final String ORIGIN = "origin";
-    public static final String TREE_TYPE = "type";
-    public static final String CONDITION = "conditionOnSurvival";
-
+    public static final String R0 = "R0";
+    public static final String D = "D";
+    public static final String S = "S";
     public static final String GRADIENT_FLAG = "gradientFlag";
-
     public static final String GRIDS = "grids";
-
-    public static final String BDSS = "bdss";
-
-    enum ParametersToUse {
-        ALL,
-        LAM_MU_PSI,
-        LAM_PSI
-    }
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -69,103 +60,100 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final String modelName = xo.getId();
-        final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-
-        final Parameter cutoff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
+        Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        final Parameter originParameter = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
         final Parameter numGridPoints = xo.hasChildNamed(NUM_GRID_POINTS) ? (Parameter) xo.getElementFirstChild(NUM_GRID_POINTS): new Parameter.Default(1.0);
+        final Parameter cutoff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
+        final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getChild(GRIDS).getChild(Parameter.class) : null;
 
-        final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-        final Parameter mu = (Parameter) xo.getElementFirstChild(MU);
-        final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
+        Parameter lambda = null;
+        Parameter mu = null;
+        Parameter psi = null;
+        Parameter r = null;
+        Parameter rho = null;
 
-        final Parameter rho    = xo.hasChildNamed(RHO) ? (Parameter) xo.getElementFirstChild(RHO) : new Parameter.Default(0.0);
-        final Parameter r      = xo.hasChildNamed(R) ? (Parameter) xo.getElementFirstChild(R) : new Parameter.Default(1.0);
+        Parameter R0Parameter = null;
+        Parameter DParameter = null;
+        Parameter SParameter = null;
 
-        final Parameter origin = (Parameter) xo.getElementFirstChild(ORIGIN);
+        boolean[] gradientFlags = new boolean[5];
+        Arrays.fill(gradientFlags, true);
 
-        Boolean condition = xo.getAttribute(CONDITION, false);
+        if (xo.hasChildNamed(BIRTH_RATE)) {
 
-        final boolean[] gradientFlags = new boolean[5];
+            lambda = (Parameter) xo.getChild(BIRTH_RATE).getChild(Parameter.class);
+            mu = (Parameter) xo.getChild(DEATH_RATE).getChild(Parameter.class);
+            psi = (Parameter) xo.getChild(SAMPLING_RATE).getChild(Parameter.class);
 
-        gradientFlags[0] = xo.getChild(LAMBDA).getAttribute(GRADIENT_FLAG, true).booleanValue();
-        gradientFlags[1] = xo.getChild(MU).getAttribute(GRADIENT_FLAG, true).booleanValue();
-        gradientFlags[2] = xo.getChild(PSI).getAttribute(GRADIENT_FLAG, true).booleanValue();
-        gradientFlags[3] = xo.getChild(RHO).getAttribute(GRADIENT_FLAG, true).booleanValue();
-        gradientFlags[4] = xo.getChild(R).getAttribute(GRADIENT_FLAG, true).booleanValue();
-
-        ParametersToUse parametersToUse;
-
-        if (gradientFlags[0] && gradientFlags[1] && gradientFlags[2] && (!gradientFlags[3]) && (!gradientFlags[4])) {
-            // three true, two false
-            parametersToUse = ParametersToUse.LAM_MU_PSI;
-        } else if (gradientFlags[0] && (!gradientFlags[1]) && gradientFlags[2] && (!gradientFlags[3]) && (!gradientFlags[4])) {
-            // two true, three false
-            parametersToUse = ParametersToUse.LAM_PSI;
+            if (xo.getChild(BIRTH_RATE).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[0] = xo.getChild(BIRTH_RATE).getAttribute(GRADIENT_FLAG, true);
+            }
+            if (xo.getChild(DEATH_RATE).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[1] = xo.getChild(DEATH_RATE).getAttribute(GRADIENT_FLAG, true);
+            }
+            if (xo.getChild(SAMPLING_RATE).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[2] = xo.getChild(SAMPLING_RATE).getAttribute(GRADIENT_FLAG, true);
+            }
         } else {
-            parametersToUse = ParametersToUse.ALL;
+
+            R0Parameter = (Parameter) xo.getChild(R0).getChild(Parameter.class);
+            DParameter = (Parameter) xo.getChild(D).getChild(Parameter.class);
+            SParameter = (Parameter) xo.getChild(S).getChild(Parameter.class);
+
+
+            if (xo.getChild(R0).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[0] = xo.getChild(R0).getAttribute(GRADIENT_FLAG, true);
+            }
+            if (xo.getChild(D).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[1] = xo.getChild(D).getAttribute(GRADIENT_FLAG, true);
+            }
+            if (xo.getChild(S).hasAttribute(GRADIENT_FLAG)) {
+                gradientFlags[2] = xo.getChild(S).getAttribute(GRADIENT_FLAG, true);
+        }
         }
 
-        final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getElementFirstChild(GRIDS): null;
+        r = (Parameter) xo.getChild(TREATMENT_PROBABILITY).getChild(Parameter.class);
+        rho = (Parameter) xo.getChild(SAMPLING_PROBABILITY).getChild(Parameter.class);
 
+        if (xo.getChild(TREATMENT_PROBABILITY).hasAttribute(GRADIENT_FLAG)) {
+            gradientFlags[3] = xo.getChild(TREATMENT_PROBABILITY).getAttribute(GRADIENT_FLAG, true);
+        }
+        if (xo.getChild(SAMPLING_PROBABILITY).hasAttribute(GRADIENT_FLAG)) {
+            gradientFlags[4] = xo.getChild(SAMPLING_PROBABILITY).getAttribute(GRADIENT_FLAG, true);
+        }
 
-        String citeThisModel;
-        if ( r.getParameterValue(0) < Double.MIN_VALUE ) {
-            citeThisModel = getCitationFBD();
-        } else if ( rho.getParameterValue(0) > Double.MIN_VALUE ) {
-            citeThisModel = getCitationSABDP();
+        boolean condition = xo.getAttribute(CONDITION, false);
+
+        NewBirthDeathSerialSamplingModel model;
+
+        if (R0Parameter != null) {
+            model = NewBirthDeathSerialSamplingModel.createWithCompoundParameters(
+                    R0Parameter, DParameter, SParameter,
+                    r, rho, originParameter,
+                    condition, (int)numGridPoints.getParameterValue(0), 
+                    cutoff.getParameterValue(0), units);
         } else {
-            citeThisModel = getCitationR0();
+            model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, originParameter, 
+                    condition, (int)(numGridPoints.getParameterValue(0)), 
+                    cutoff.getParameterValue(0), units);
         }
 
-        Logger.getLogger("dr.evomodel").info(citeThisModel);
 
-//        NewBirthDeathSerialSamplingModel model = MAS_TEST ?
-//                new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units) :
-//                new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
+        model.setupGradientFlags(gradientFlags);
 
-        NewBirthDeathSerialSamplingModel model = null;
+        model.setupTimeline(grids != null ? grids.getParameterValues() : null);
 
-        switch (parametersToUse) {
-            case ALL:
-                model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
-                break;
-            case LAM_MU_PSI:
-                model = new MasBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
-                break;
-            case LAM_PSI:
-                model = new TwoParamBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, origin, condition, (int)(numGridPoints.getParameterValue(0)), cutoff.getParameterValue(0), units);
-                break;
-        }
+        Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model");
+        Logger.getLogger("dr.evomodel").info("\tCondition on root: " + condition);
+        Logger.getLogger("dr.evomodel").info("\tGrid size: " + (int)numGridPoints.getParameterValue(0));
+        Logger.getLogger("dr.evomodel").info("\tGrid end: " + cutoff.getParameterValue(0));
+        Logger.getLogger("dr.evomodel").info("\tParameter mode: " + (R0Parameter != null ? "compound" : "raw"));
 
-        // model.setupGradientFlags(gradientFlags);
-        model.setupTimeline(grids != null ? grids.getParameterValues(): null);
         return model;
     }
 
-    private static final boolean MAS_TEST = true;
-
-    //************************************************************************
-    // AbstractXMLObjectParser implementation
-    //************************************************************************
-
-    public static String getCitationFBD() {
-        return "Stadler, T; Sampling-through-time in birth–death trees, " +
-                "J. Theor. Biol. (2010) doi: 10.1016/j.jtbi.2010.09.010";
-    }
-
-    public static String getCitationSABDP() {
-        return "Gavryushkina et al, Bayesian inference of sampled ancestor trees for epidemiology and fossil calibration, " +
-                "PLoS Comp. Biol., doi: 10.1371/journal.pcbi.1003919, 2014";
-    }
-
-    public static String getCitationR0() {
-        return "Stadler et al, Estimating the basic reproductive number from viral sequence data, " +
-                "Mol. Biol. Evol., doi: 10.1093/molbev/msr217, 2012";
-    }
-
     public String getParserDescription() {
-        return "A serially-sampled birth-death model with the possibility of treatment and sampling at present.";
+        return "A birth-death model with serial sampling through time and sampled ancestors.";
     }
 
     public Class getReturnType() {
@@ -177,15 +165,48 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TREE_TYPE, true),
-            new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", false),
-            new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(R, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(RHO, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(CONDITION, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
-            new ElementRule(GRADIENT_FLAG, new XMLSyntaxRule[]{new ElementRule(boolean.class)}, true),
+            AttributeRule.newBooleanRule(CONDITION, true),
+            new XORRule(
+                    new ElementRule(BIRTH_RATE,
+                            new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class),
+                                AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                            }),
+                    new ElementRule(R0,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+            ),
+            new ElementRule(DEATH_RATE,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                    }, true),
+            new ElementRule(SAMPLING_RATE,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                    }, true),
+            new ElementRule(D,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(S,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(TREATMENT_PROBABILITY,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                    }),
+            new ElementRule(SAMPLING_PROBABILITY,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                    }),
+            new ElementRule(ORIGIN,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(NUM_GRID_POINTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(CUT_OFF,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true),
+            new ElementRule(GRIDS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             XMLUnits.SYNTAX_RULES[0]
     };
 }

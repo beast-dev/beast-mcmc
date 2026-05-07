@@ -41,6 +41,8 @@ public interface HiddenDataType {
 
     String getCodeWithoutHiddenState(int state);
 
+    String DESCRIPTION = "hidden";
+
     static String getCodeImpl(int state, int stateCount,
                               Function<Integer, String> parentGetCode) {
         int hiddenState = state / stateCount;

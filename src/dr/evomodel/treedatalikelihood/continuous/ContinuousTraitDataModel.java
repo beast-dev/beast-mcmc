@@ -177,7 +177,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
 //    private boolean allDataChange = false;
 
-    private int getTaxonIndex(int parameterIndex) {
+    protected int getTaxonIndex(int parameterIndex) {
         return parameterIndex / (dimTrait * numTraits);
     }
 

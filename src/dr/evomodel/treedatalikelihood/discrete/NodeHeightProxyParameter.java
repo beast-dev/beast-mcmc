@@ -27,6 +27,8 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -51,6 +53,11 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
         this.indexHelper = new TreeParameterModel(tree,
                 new Parameter.Default(includeRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1, 0.0),
                 includeRoot);
+    }
+
+    @Override
+    public Bounds<Double> getBounds() {
+        return null;
     }
 
     public TreeModel getTree() {

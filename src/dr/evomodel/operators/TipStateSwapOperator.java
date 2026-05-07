@@ -27,7 +27,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.treedatalikelihood.TipStateAccessor;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
@@ -38,7 +38,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     public static final String TIP_STATE_OPERATOR = "tipStateSwapOperator";
 
-    public TipStateSwapOperator(AncestralStateBeagleTreeLikelihood treeLikelihood,
+    public TipStateSwapOperator(TipStateAccessor treeLikelihood,
                                 double weight, boolean uniformRandomization) {
         this.treeLikelihood = treeLikelihood;
         setWeight(weight);
@@ -56,7 +56,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     public double doOperation() {
 
-        int tipCount = treeLikelihood.getTreeModel().getExternalNodeCount();
+        int tipCount = treeLikelihood.getTipCount();
 
         // Choose two tips to swap
         index1 = MathUtils.nextInt(tipCount);
@@ -66,7 +66,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
         swap(index1, index2);
 
-        treeLikelihood.makeDirty();
+        treeLikelihood.makeDirty(); // TODO Should be handled by setTipStates()
 
         return uniformRandomization ? Double.POSITIVE_INFINITY : 0.0;
     }
@@ -90,7 +90,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
         return TIP_STATE_OPERATOR;
     }
 
-    private final AncestralStateBeagleTreeLikelihood treeLikelihood;
+    private final TipStateAccessor treeLikelihood;
 
     private final boolean uniformRandomization;
 }

@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
 
-import beagle.BeaglePreorderType;
+import dr.evomodel.treedatalikelihood.preorder.PreorderType;
 
 /**
  * Narrow interface exposing pre-order branch-side messages in the STANDARD basis.
@@ -28,5 +28,5 @@ public interface PreOrderMessageProvider {
      */
     void getPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial);
 
-    void getPreorderPartials(int nodeNumber, BeaglePreorderType type, double[] out);
+    void getPreorderPartials(int nodeNumber, PreorderType type, double[] out);
 }

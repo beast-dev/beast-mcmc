@@ -1,13 +1,13 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
-import beagle.BeaglePreorderType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
+import dr.evomodel.treedatalikelihood.preorder.PreorderType;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.Reportable;
@@ -111,8 +111,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
                 }
                 sb.append('\n');
 
-                discreteDelegate.getPreorderPartials(nodeNumber, BeaglePreorderType.TOP, allStart);
-                discreteDelegate.getPreorderPartials(nodeNumber, BeaglePreorderType.BOTTOM, allEnd);
+                discreteDelegate.getPreorderPartials(nodeNumber, PreorderType.TOP, allStart);
+                discreteDelegate.getPreorderPartials(nodeNumber, PreorderType.BOTTOM, allEnd);
 
                 for (int c = 0; c < categoryCount; c++) {
                     for (int p = 0; p < patternCount; p++) {

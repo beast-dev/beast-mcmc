@@ -109,6 +109,26 @@
             <treeDataLikelihood idref="host.treeLikelihood"/>
         </discretePreOrderReport>
     </report>
+    
+    
+    <treeDataLikelihood id="old.treeLikelihood"
+                        useAmbiguities="false"
+                        usePreOrder="true">
+        <patterns idref="host.pattern"/>
+        <siteModel idref="host.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <strictClockBranchRates idref="host.branchRates"/>
+    </treeDataLikelihood>    
+    
+    <report>
+        <treeDataLikelihood idref="old.treeLikelihood"/>
+    </report>
+
+    <report>
+        <discretePreOrderReport>
+            <treeDataLikelihood idref="old.treeLikelihood"/>
+        </discretePreOrderReport>
+    </report>    
 
     <!--
     <operators id="operators" optimizationSchedule="log">

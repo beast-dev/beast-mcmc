@@ -5,11 +5,13 @@ package dr.evomodel.treedatalikelihood.preorder;
  * @author Filippo Monti
  * @version $Id$
  */
-public enum PreorderType {
-    BOTTOM(0, "bottom"),
-    TOP(1, "top");
+public enum DiscretePreOrderType {
 
-    PreorderType(int type, String meaning) {
+    BOTTOM(0, "bottom"),
+    TOP(1, "top"),
+    ROTATED(2, "rotated at top");
+
+    DiscretePreOrderType(int type, String meaning) {
         this.type = type;
         this.meaning = meaning;
     }

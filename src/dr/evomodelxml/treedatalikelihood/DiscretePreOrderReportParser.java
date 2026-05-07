@@ -3,11 +3,14 @@ package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
-import dr.evomodel.treedatalikelihood.preorder.PreorderType;
+import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
+import dr.evomodel.treedatalikelihood.preorder.DiscretePreOrderType;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.Reportable;
@@ -62,24 +65,80 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
 
         private final TreeDataLikelihood treeDataLikelihood;
         private final PreOrderMessageProvider discreteDelegate;
+        private final TreeTrait treeTrait;
 
         private DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood) {
             this.treeDataLikelihood = treeDataLikelihood;
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-            if (!(delegate instanceof PreOrderMessageProvider)) {
-                throw new IllegalStateException(PARSER_NAME + " requires a PreOrderMessageProvider");
-            }
+            if (delegate instanceof PreOrderMessageProvider) {
+                this.discreteDelegate = (PreOrderMessageProvider) delegate;
+                this.treeTrait = null;
+            } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
-            this.discreteDelegate = (PreOrderMessageProvider) delegate;
+                BeagleDataLikelihoodDelegate likelihoodDelegate = (BeagleDataLikelihoodDelegate) delegate;
+                String name = "preorder.partials";
+
+                if (treeDataLikelihood.getTreeTrait(name) == null) {
+
+                    ProcessSimulationDelegate preOrderDelegate = new AbstractBeagleGradientDelegate(
+                            "test", treeDataLikelihood.getTree(), likelihoodDelegate) {
+                        @Override
+                        protected int getGradientLength() {
+                            return 0;
+                        }
+
+                        @Override
+                        protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+                        }
+
+                        @Override
+                        protected void constructTraits(Helper treeTraitHelper) {
+
+                            treeTraitHelper.addTrait(new TreeTrait.DA() {
+                                @Override
+                                public String getTraitName() {
+                                    return name;
+                                }
+
+                                @Override
+                                public Intent getIntent() {
+                                    return Intent.WHOLE_TREE;
+                                }
+
+                                @Override
+                                public double[] getTrait(Tree tree, NodeRef node) {
+                                    return getGradient(node);
+                                }
+                            });
+                        }
+                    };
+
+                    TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, preOrderDelegate);
+                    treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
+
+                    this.discreteDelegate = (PreOrderMessageProvider) preOrderDelegate;
+                    this.treeTrait = treeDataLikelihood.getTreeTrait("preorder.partials");
+
+                } else {
+                    throw new RuntimeException("Unknown error");
+                }
+            } else {
+                throw new IllegalArgumentException("Unknown likelihood");
+            }
         }
 
         @Override
         public String getReport() {
 
             treeDataLikelihood.getLogLikelihood();
-
             Tree tree = treeDataLikelihood.getTree();
+
+            if (treeTrait != null) {
+                treeTrait.getTrait(tree, null);
+            }
+
             int categoryCount = discreteDelegate.getCategoryCount();
             int patternCount = discreteDelegate.getPatternCount();
             int stateCount = discreteDelegate.getStateCount();
@@ -111,8 +170,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
                 }
                 sb.append('\n');
 
-                discreteDelegate.getPreorderPartials(nodeNumber, PreorderType.TOP, allStart);
-                discreteDelegate.getPreorderPartials(nodeNumber, PreorderType.BOTTOM, allEnd);
+                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePreOrderType.TOP, allStart);
+                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePreOrderType.BOTTOM, allEnd);
 
                 for (int c = 0; c < categoryCount; c++) {
                     for (int p = 0; p < patternCount; p++) {

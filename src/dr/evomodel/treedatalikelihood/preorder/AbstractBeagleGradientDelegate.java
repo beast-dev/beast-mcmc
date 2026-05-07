@@ -28,13 +28,16 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
+import beagle.BeaglePreorderType;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
 import dr.inference.model.Model;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,7 +46,8 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDelegate.AbstractDelegate {
+public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDelegate.AbstractDelegate
+        implements PreOrderMessageProvider {
 
     private static final String GRADIENT_TRAIT_NAME = "Gradient";
     private static final String HESSIAN_TRAIT_NAME = "Hessian";
@@ -74,6 +78,28 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         likelihoodDelegate.addModelRestoreListener(this);
 
         this.substitutionProcessKnown = false;
+    }
+
+    @Override
+    public int getStateCount() { return stateCount; }
+
+    @Override
+    public int getPatternCount() { return patternCount; }
+
+    @Override
+    public int getCategoryCount() { return categoryCount; }
+
+    @Override
+    public void getPreorderPartials(int nodeNumber, DiscretePreOrderType type, double[] out) {
+
+        assert out.length >= categoryCount * patternCount * stateCount;
+        if (type == DiscretePreOrderType.TOP) {
+            Arrays.fill(out, 0.0); // TODO
+        } else if (type == DiscretePreOrderType.BOTTOM) {
+            beagle.getPartials(getPreOrderPartialIndex(nodeNumber), Beagle.NONE, out);
+        } else {
+            throw new IllegalArgumentException("Unknown pre-order type");
+        }
     }
 
     abstract protected int getGradientLength();
@@ -117,7 +143,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
         if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
 
-        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
+        beagle.updatePrePartials(operations, operationCount, Beagle.NONE, BeaglePreorderType.BOTTOM);
 
         if (gradient == null) {
             gradient = new double[getGradientLength()];

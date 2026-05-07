@@ -10,7 +10,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.*;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.*;
-import dr.evomodel.treedatalikelihood.preorder.PreorderType;
+import dr.evomodel.treedatalikelihood.preorder.DiscretePreOrderType;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -799,18 +799,18 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
 
     @Override
-    public void getPreorderPartials(int node, PreorderType type, double[] out) {
+    public void getPreorderPartials(int node, DiscretePreOrderType type, double[] out) {
 
         assert out.length >= categoryCount * patternCount * stateCount;
 
         ensurePreOrderComputed();
 
-        if (type == PreorderType.BOTTOM) {
+        if (type == DiscretePreOrderType.BOTTOM) {
             requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
             System.arraycopy(preOrderAtBranchEnd[node], 0, out, 0,
                     categoryCount * patternCount * stateCount);
 
-        } else if (type == PreorderType.TOP) {
+        } else if (type == DiscretePreOrderType.TOP) {
             requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
             System.arraycopy(preOrderAtBranchStart[node], 0, out, 0,
                     categoryCount * patternCount * stateCount);

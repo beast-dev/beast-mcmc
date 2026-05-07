@@ -1118,21 +1118,121 @@ final class BlockDiagonalFrechetExactPlan {
                                             final ComplexWorkspace workspace) {
         final double cRe = muRe - lambdaRe;
         final double cIm = muIm - lambdaIm;
+        final int maxMomentPower = rightOrder + leftOrder;
+
+        fillComplexMomentTable(cRe, cIm, maxMomentPower, workspace);
+
         double totalRe = 0.0;
         double totalIm = 0.0;
-        final MutableComplex moment = workspace.c5;
+
         for (int i = 0; i <= leftOrder; ++i) {
-            final double coefficient = ((i & 1) == 0 ? 1.0 : -1.0) * choose(leftOrder, i);
-            fillIntegralMoment(cRe, cIm, rightOrder + i, moment, workspace);
-            totalRe += coefficient * moment.re;
-            totalIm += coefficient * moment.im;
+            final double coefficient =
+                    ((i & 1) == 0 ? 1.0 : -1.0) * BINOMIAL[leftOrder][i];
+            final int momentIndex = rightOrder + i;
+            totalRe += coefficient * workspace.momentRe[momentIndex];
+            totalIm += coefficient * workspace.momentIm[momentIndex];
         }
 
         final double scale = Math.exp(lambdaRe);
         final double cos = Math.cos(lambdaIm);
         final double sin = Math.sin(lambdaIm);
+
         out.re = scale * (cos * totalRe - sin * totalIm);
         out.im = scale * (sin * totalRe + cos * totalIm);
+    }
+
+    private static void fillComplexMomentTable(final double cRe,
+                                               final double cIm,
+                                               final int maxPower,
+                                               final ComplexWorkspace workspace) {
+        if (workspace.momentCacheValid
+                && Double.doubleToLongBits(cRe) == Double.doubleToLongBits(workspace.momentCacheCRe)
+                && Double.doubleToLongBits(cIm) == Double.doubleToLongBits(workspace.momentCacheCIm)
+                && maxPower <= workspace.momentCacheMaxPower) {
+            return;
+        }
+
+        if (cRe * cRe + cIm * cIm < MOMENT_SERIES_CUTOFF_SQUARED) {
+            fillComplexMomentTableSeries(cRe, cIm, maxPower, workspace);
+            markComplexMomentCache(cRe, cIm, maxPower, workspace);
+            return;
+        }
+
+        final double scale = Math.exp(cRe);
+        final double cos = Math.cos(cIm);
+        final double sin = Math.sin(cIm);
+
+        final double expRe = scale * cos;
+        final double expIm = scale * sin;
+
+        final double denom = cRe * cRe + cIm * cIm;
+
+        workspace.momentRe[0] = ((expRe - 1.0) * cRe + expIm * cIm) / denom;
+        workspace.momentIm[0] = (expIm * cRe - (expRe - 1.0) * cIm) / denom;
+
+        if (maxPower > 0) {
+            final double expOverCRe = (expRe * cRe + expIm * cIm) / denom;
+            final double expOverCIm = (expIm * cRe - expRe * cIm) / denom;
+
+            for (int power = 1; power <= maxPower; ++power) {
+                final double previousRe = workspace.momentRe[power - 1];
+                final double previousIm = workspace.momentIm[power - 1];
+
+                final double numeratorRe = power * previousRe;
+                final double numeratorIm = power * previousIm;
+
+                final double dividedRe = (numeratorRe * cRe + numeratorIm * cIm) / denom;
+                final double dividedIm = (numeratorIm * cRe - numeratorRe * cIm) / denom;
+
+                workspace.momentRe[power] = expOverCRe - dividedRe;
+                workspace.momentIm[power] = expOverCIm - dividedIm;
+            }
+        }
+
+        markComplexMomentCache(cRe, cIm, maxPower, workspace);
+    }
+    private static void markComplexMomentCache(final double cRe,
+                                               final double cIm,
+                                               final int maxPower,
+                                               final ComplexWorkspace workspace) {
+        workspace.momentCacheValid = true;
+        workspace.momentCacheCRe = cRe;
+        workspace.momentCacheCIm = cIm;
+        workspace.momentCacheMaxPower = maxPower;
+    }
+
+    private static void fillComplexMomentTableSeries(final double cRe,
+                                                     final double cIm,
+                                                     final int maxPower,
+                                                     final ComplexWorkspace workspace) {
+        for (int power = 0; power <= maxPower; ++power) {
+            workspace.momentRe[power] = 0.0;
+            workspace.momentIm[power] = 0.0;
+        }
+
+        double cPowerRe = 1.0;
+        double cPowerIm = 0.0;
+        double factorial = 1.0;
+
+        for (int n = 0; n < MOMENT_SERIES_TERMS; ++n) {
+            if (n > 0) {
+                factorial *= n;
+
+                final double nextRe = cPowerRe * cRe - cPowerIm * cIm;
+                final double nextIm = cPowerRe * cIm + cPowerIm * cRe;
+                cPowerRe = nextRe;
+                cPowerIm = nextIm;
+            }
+
+            final double baseRe = cPowerRe / factorial;
+            final double baseIm = cPowerIm / factorial;
+
+            for (int power = 0; power <= maxPower; ++power) {
+                final double denominator = n + power + 1.0;
+                workspace.momentRe[power] += baseRe / denominator;
+                workspace.momentIm[power] += baseIm / denominator;
+            }
+        }
     }
 
     private static void fillPhiIntegral(final double lambdaRe,
@@ -1782,6 +1882,16 @@ final class BlockDiagonalFrechetExactPlan {
         private final MutableComplex c5 = new MutableComplex();
         private final MutableComplex c6 = new MutableComplex();
         private final MutableComplex c7 = new MutableComplex();
+        private boolean momentCacheValid;
+        private double momentCacheCRe;
+        private double momentCacheCIm;
+        private int momentCacheMaxPower;
+
+//        final double[] cachedMomentRe = new double[MAX_SMALL_ROOT_MOMENT_POWER + 1];
+//        final double[] cachedMomentIm = new double[MAX_SMALL_ROOT_MOMENT_POWER + 1];
+
+        private final double[] momentRe = new double[MAX_SMALL_ROOT_MOMENT_POWER + 1];
+        private final double[] momentIm = new double[MAX_SMALL_ROOT_MOMENT_POWER + 1];
     }
 
     private static final class RealSeriesWorkspace {

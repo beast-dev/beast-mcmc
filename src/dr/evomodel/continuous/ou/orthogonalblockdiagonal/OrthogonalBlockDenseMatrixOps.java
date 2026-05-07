@@ -2,7 +2,7 @@ package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import org.ejml.data.DenseMatrix64F;
-
+import org.ejml.ops.CommonOps;
 final class OrthogonalBlockDenseMatrixOps {
 
     private OrthogonalBlockDenseMatrixOps() {
@@ -11,19 +11,22 @@ final class OrthogonalBlockDenseMatrixOps {
     static void mult(final DenseMatrix64F left,
                      final DenseMatrix64F right,
                      final DenseMatrix64F out) {
-        MatrixOps.matMul(left.data, right.data, out.data, left.numRows);
+//        MatrixOps.matMul(left.data, right.data, out.data, left.numRows);
+        CommonOps.mult(left, right, out);
     }
 
     static void multSymmetricLeft(final DenseMatrix64F symmetricLeft,
                                   final DenseMatrix64F right,
                                   final DenseMatrix64F out) {
-        MatrixOps.multiplySymmetricLeft(symmetricLeft.data, right.data, out.data, symmetricLeft.numRows);
+        CommonOps.mult(symmetricLeft, right, out);
+//        MatrixOps.multiplySymmetricLeft(symmetricLeft.data, right.data, out.data, symmetricLeft.numRows);
     }
 
     static void multSymmetricRight(final DenseMatrix64F left,
                                    final DenseMatrix64F symmetricRight,
                                    final DenseMatrix64F out) {
-        MatrixOps.multiplySymmetricRight(left.data, symmetricRight.data, out.data, left.numRows);
+        CommonOps.mult(left, symmetricRight, out);
+//        MatrixOps.multiplySymmetricRight(left.data, symmetricRight.data, out.data, left.numRows);
     }
 
     static void multTransA(final DenseMatrix64F left,

@@ -199,7 +199,6 @@ public final class MatrixOps {
             }
         }
     }
-
     public static void multiplySymmetricRight(final double[] left,
                                               final double[] symmetricRight,
                                               final double[] out,
@@ -207,18 +206,35 @@ public final class MatrixOps {
         Arrays.fill(out, 0.0);
         for (int i = 0; i < dim; ++i) {
             final int iOffset = i * dim;
-            for (int j = 0; j < dim; ++j) {
-                final double leftJ = left[iOffset + j];
-                final int jOffset = j * dim;
-                out[iOffset + j] += leftJ * symmetricRight[jOffset + j];
-                for (int k = j + 1; k < dim; ++k) {
-                    final double value = symmetricRight[jOffset + k];
-                    out[iOffset + k] += leftJ * value;
-                    out[iOffset + j] += left[iOffset + k] * value;
+            for (int k = 0; k < dim; ++k) {
+                final double leftIK = left[iOffset + k];
+                final int kOffset = k * dim;
+                for (int j = 0; j < dim; ++j) {
+                    out[iOffset + j] += leftIK * symmetricRight[kOffset + j];
                 }
             }
         }
     }
+
+//    public static void multiplySymmetricRight(final double[] left,
+//                                              final double[] symmetricRight,
+//                                              final double[] out,
+//                                              final int dim) {
+//        Arrays.fill(out, 0.0);
+//        for (int i = 0; i < dim; ++i) {
+//            final int iOffset = i * dim;
+//            for (int j = 0; j < dim; ++j) {
+//                final double leftJ = left[iOffset + j];
+//                final int jOffset = j * dim;
+//                out[iOffset + j] += leftJ * symmetricRight[jOffset + j];
+//                for (int k = j + 1; k < dim; ++k) {
+//                    final double value = symmetricRight[jOffset + k];
+//                    out[iOffset + k] += leftJ * value;
+//                    out[iOffset + j] += left[iOffset + k] * value;
+//                }
+//            }
+//        }
+//    }
 
     public static void reportKernelDiagnosticsIfEnabled() {
         if (!MATRIX_KERNEL_DIAGNOSTICS_ENABLED) {
@@ -370,27 +386,79 @@ public final class MatrixOps {
      * @param dim        matrix dimension
      * @return log-determinant of A (= 2 * sum of log-diagonals of L)
      */
+//    public static double invertFromCholesky(double[] lower, double[] lowerInvOut, double[] out, int dim) {
+//        double logDet = 0.0;
+//        for (int i = 0; i < dim; i++) logDet += Math.log(lower[i * dim + i]);
+//        logDet *= 2.0;
+//
+//        for (int col = 0; col < dim; col++) {
+//            for (int row = 0; row < dim; row++) {
+//                double s = (row == col) ? 1.0 : 0.0;
+//                for (int k = 0; k < row; k++) s -= lower[row * dim + k] * lowerInvOut[k * dim + col];
+//                lowerInvOut[row * dim + col] = s / lower[row * dim + row];
+//            }
+//        }
+//
+//        for (int i = 0; i < dim; i++) {
+//            for (int j = 0; j < dim; j++) {
+//                double s = 0.0;
+//                for (int k = 0; k < dim; k++) s += lowerInvOut[k * dim + i] * lowerInvOut[k * dim + j];
+//                out[i * dim + j] = s;
+//            }
+//        }
+//        symmetrize(out, dim);
+//        return logDet;
+//    }
+
     public static double invertFromCholesky(double[] lower, double[] lowerInvOut, double[] out, int dim) {
+        // 1. Log determinant — unchanged
         double logDet = 0.0;
         for (int i = 0; i < dim; i++) logDet += Math.log(lower[i * dim + i]);
         logDet *= 2.0;
 
-        for (int col = 0; col < dim; col++) {
-            for (int row = 0; row < dim; row++) {
-                double s = (row == col) ? 1.0 : 0.0;
-                for (int k = 0; k < row; k++) s -= lower[row * dim + k] * lowerInvOut[k * dim + col];
-                lowerInvOut[row * dim + col] = s / lower[row * dim + row];
+        // 2. Compute L^{-1} row by row
+        // Instead of col-outer (strided reads), accumulate into each row using
+        // already-computed rows above — all accesses are sequential
+        for (int row = 0; row < dim; row++) {
+            final int rowOffset = row * dim;
+            for (int col = 0; col < row; col++) lowerInvOut[rowOffset + col] = 0.0;
+            lowerInvOut[rowOffset + row] = 1.0;
+            for (int k = 0; k < row; k++) {
+                final double factor = lower[rowOffset + k];
+                final int kOffset = k * dim;
+                for (int col = 0; col <= k; col++) {  // L_inv[k] is zero beyond col=k
+                    lowerInvOut[rowOffset + col] -= factor * lowerInvOut[kOffset + col];
+                }
+            }
+            final double diagInv = 1.0 / lower[rowOffset + row];
+            for (int col = 0; col <= row; col++) {
+                lowerInvOut[rowOffset + col] *= diagInv;
             }
         }
 
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                double s = 0.0;
-                for (int k = 0; k < dim; k++) s += lowerInvOut[k * dim + i] * lowerInvOut[k * dim + j];
-                out[i * dim + j] = s;
+        // 3. out = L_inv^T * L_inv via rank-1 updates
+        // Original: k-loop was outer with strided column reads.
+        // Fix: make k the outer loop, accumulating row k's outer product into out.
+        // All inner reads/writes are sequential.
+        Arrays.fill(out, 0.0);
+        for (int k = 0; k < dim; k++) {
+            final int kOffset = k * dim;
+            for (int i = 0; i <= k; i++) {          // L_inv[k][i] == 0 for i > k
+                final double lik = lowerInvOut[kOffset + i];
+                final int iOffset = i * dim;
+                for (int j = 0; j <= i; j++) {      // only lower triangle
+                    out[iOffset + j] += lik * lowerInvOut[kOffset + j];
+                }
             }
         }
-        symmetrize(out, dim);
+
+        // 4. Symmetrize
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < i; j++) {
+                out[j * dim + i] = out[i * dim + j];
+            }
+        }
+
         return logDet;
     }
 

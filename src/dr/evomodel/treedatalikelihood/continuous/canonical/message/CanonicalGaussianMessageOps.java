@@ -698,24 +698,66 @@ public final class CanonicalGaussianMessageOps {
                                                          final double[] out,
                                                          final double[] forwardScratch,
                                                          final int dimension) {
-        for (int col = 0; col < dimension; ++col) {
-            for (int row = 0; row < dimension; ++row) {
-                double sum = rhs[row * dimension + col];
-                final int rowOffset = row * dimension;
-                for (int k = 0; k < row; ++k) {
-                    sum -= lower[rowOffset + k] * forwardScratch[k * dimension + col];
+        // Forward substitution: row-outer, process all cols at once
+        System.arraycopy(rhs, 0, forwardScratch, 0, dimension * dimension);
+        for (int row = 0; row < dimension; row++) {
+            final int rowOffset = row * dimension;
+            for (int k = 0; k < row; k++) {
+                final double factor = lower[rowOffset + k];  // sequential
+                final int kOffset = k * dimension;
+                for (int col = 0; col < dimension; col++) {  // sequential reads+writes
+                    forwardScratch[rowOffset + col] -= factor * forwardScratch[kOffset + col];
                 }
-                forwardScratch[row * dimension + col] = sum / lower[rowOffset + row];
             }
-            for (int row = dimension - 1; row >= 0; --row) {
-                double sum = forwardScratch[row * dimension + col];
-                for (int k = row + 1; k < dimension; ++k) {
-                    sum -= lower[k * dimension + row] * out[k * dimension + col];
+            final double diagInv = 1.0 / lower[rowOffset + row];
+            for (int col = 0; col < dimension; col++) {
+                forwardScratch[rowOffset + col] *= diagInv;
+            }
+        }
+
+        // Back substitution: bottom-to-top scatter
+        // For each k, divide its row then push its contribution up to rows above it.
+        // lower[kOffset + row] for row < k is sequential (reading along row k of lower).
+        System.arraycopy(forwardScratch, 0, out, 0, dimension * dimension);
+        for (int k = dimension - 1; k >= 0; k--) {
+            final int kOffset = k * dimension;
+            final double diagInv = 1.0 / lower[kOffset + k];
+            for (int col = 0; col < dimension; col++) {
+                out[kOffset + col] *= diagInv;             // sequential
+            }
+            for (int row = 0; row < k; row++) {
+                final double factor = lower[kOffset + row]; // sequential (along row k)
+                final int rowOffset = row * dimension;
+                for (int col = 0; col < dimension; col++) { // sequential reads+writes
+                    out[rowOffset + col] -= factor * out[kOffset + col];
                 }
-                out[row * dimension + col] = sum / lower[row * dimension + row];
             }
         }
     }
+
+//    private static void solveSymmetricFromCholeskyMatrix(final double[] lower,
+//                                                         final double[] rhs,
+//                                                         final double[] out,
+//                                                         final double[] forwardScratch,
+//                                                         final int dimension) {
+//        for (int col = 0; col < dimension; ++col) {
+//            for (int row = 0; row < dimension; ++row) {
+//                double sum = rhs[row * dimension + col];
+//                final int rowOffset = row * dimension;
+//                for (int k = 0; k < row; ++k) {
+//                    sum -= lower[rowOffset + k] * forwardScratch[k * dimension + col];
+//                }
+//                forwardScratch[row * dimension + col] = sum / lower[rowOffset + row];
+//            }
+//            for (int row = dimension - 1; row >= 0; --row) {
+//                double sum = forwardScratch[row * dimension + col];
+//                for (int k = row + 1; k < dimension; ++k) {
+//                    sum -= lower[k * dimension + row] * out[k * dimension + col];
+//                }
+//                out[row * dimension + col] = sum / lower[row * dimension + row];
+//            }
+//        }
+//    }
 
     private static double observedQuadraticConstant(final CanonicalGaussianTransition transition,
                                                     final double[] observedValues,

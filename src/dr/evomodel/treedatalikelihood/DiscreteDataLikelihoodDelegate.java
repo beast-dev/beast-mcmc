@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood;
 
+import beagle.BeaglePreorderType;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
@@ -794,6 +795,28 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
             throw new IllegalArgumentException("Destination length must equal stateCount");
         }
         System.arraycopy(preOrderAtBranchEnd[nodeNumber], 0, dest, 0, stateCount);
+    }
+
+
+    @Override
+    public void getPreorderPartials(int node, BeaglePreorderType type, double[] out) {
+
+        assert out.length >= categoryCount * patternCount * stateCount;
+
+        ensurePreOrderComputed();
+
+        if (type == BeaglePreorderType.BOTTOM) {
+            requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
+            System.arraycopy(preOrderAtBranchEnd[node], 0, out, 0,
+                    categoryCount * patternCount * stateCount);
+
+        } else if (type == BeaglePreorderType.TOP) {
+            requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
+            System.arraycopy(preOrderAtBranchStart[node], 0, out, 0,
+                    categoryCount * patternCount * stateCount);
+        } else {
+            throw new IllegalArgumentException("Partial type is not yet implemented");
+        }
     }
 
     @Override

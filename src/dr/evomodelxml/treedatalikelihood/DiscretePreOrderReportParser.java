@@ -1,12 +1,13 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import beagle.BeaglePreorderType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.Reportable;
@@ -67,14 +68,11 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
         @Override
         public String getReport() {
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-            if (!(delegate instanceof DiscreteDataLikelihoodDelegate)) {
+            if (!(delegate instanceof PreOrderMessageProvider)) {
                 throw new IllegalStateException(PARSER_NAME + " requires a DiscreteDataLikelihoodDelegate");
             }
 
-            DiscreteDataLikelihoodDelegate discreteDelegate = (DiscreteDataLikelihoodDelegate) delegate;
-            if (!discreteDelegate.hasPreOrder()) {
-                throw new IllegalStateException(PARSER_NAME + " requires usePreOrder=\"true\"");
-            }
+            PreOrderMessageProvider discreteDelegate = (PreOrderMessageProvider) delegate;
 
             treeDataLikelihood.getLogLikelihood();
 
@@ -82,6 +80,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
             int categoryCount = discreteDelegate.getCategoryCount();
             int patternCount = discreteDelegate.getPatternCount();
             int stateCount = discreteDelegate.getStateCount();
+            double[] allStart = new double[stateCount * categoryCount * patternCount];
+            double[] allEnd = new double[stateCount * categoryCount * patternCount];
             double[] start = new double[stateCount];
             double[] end = new double[stateCount];
 
@@ -106,10 +106,16 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
                 }
                 sb.append('\n');
 
+                discreteDelegate.getPreorderPartials(nodeNumber, BeaglePreorderType.TOP, allStart);
+                discreteDelegate.getPreorderPartials(nodeNumber, BeaglePreorderType.BOTTOM, allEnd);
+
                 for (int c = 0; c < categoryCount; c++) {
                     for (int p = 0; p < patternCount; p++) {
-                        discreteDelegate.getPreOrderBranchTopInto(nodeNumber, c, p, start);
-                        discreteDelegate.getPreOrderBranchBottomInto(nodeNumber, c, p, end);
+
+                        int offset = (c * patternCount + p) * stateCount;
+                        System.arraycopy(allStart, offset, start, 0, stateCount);
+                        System.arraycopy(allEnd, offset, end, 0, stateCount);
+
                         sb.append("  category ").append(c)
                                 .append(" pattern ").append(p)
                                 .append(" start=").append(Arrays.toString(start))

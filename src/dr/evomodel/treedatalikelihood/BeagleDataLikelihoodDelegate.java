@@ -893,10 +893,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 operations[k + 2] = Beagle.NONE;
             }
 
-            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-            operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
-            operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+            if (!op.isDegreeTwo()) {
+                operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+                operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+                operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+                operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+            } else {
+                operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getChild()); // source node 1
+                operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getChild()); // source matrix 1
+                operations[k + 5] = Beagle.NONE; // no source node 2
+                operations[k + 6] = Beagle.NONE; // no source matrix 2
+            }
 
             k += Beagle.OPERATION_TUPLE_SIZE;
         }

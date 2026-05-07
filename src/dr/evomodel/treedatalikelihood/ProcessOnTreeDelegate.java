@@ -68,6 +68,12 @@ public interface ProcessOnTreeDelegate {
             this.rightChild = rightChild;
         }
 
+        NodeOperation(int nodeNumber, int child) {
+            this.nodeNumber = nodeNumber;
+            this.leftChild = child;
+            this.rightChild = -1;
+        }
+
         public int getNodeNumber() {
             return nodeNumber;
         }
@@ -78,6 +84,14 @@ public interface ProcessOnTreeDelegate {
 
         public int getRightChild() {
             return rightChild;
+        }
+
+        public boolean isDegreeTwo() {
+            return rightChild == -1;
+        }
+
+        public int getChild() {
+            return leftChild;
         }
 
         public String toString() {

@@ -1,6 +1,9 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.LinearSolverFactory;
+import org.ejml.interfaces.linsol.LinearSolver;
 
 /**
  * Utilities for recovering local canonical branch contributions from canonical
@@ -28,6 +31,9 @@ public final class CanonicalBranchMessageContributionUtils {
         final double[] lowerInverseScratch;
         final double[] symmetricScratch;
         private final int stateDimension;
+        final LinearSolver<DenseMatrix64F> solver;
+        final DenseMatrix64F matWrapper;
+        final DenseMatrix64F invWrapper;
 
         public Workspace(final int stateDimension) {
             this.stateDimension = stateDimension;
@@ -48,6 +54,9 @@ public final class CanonicalBranchMessageContributionUtils {
             this.choleskyScratch = new double[d2];
             this.lowerInverseScratch = new double[d2];
             this.symmetricScratch = new double[d2];
+            this.solver = LinearSolverFactory.symmPosDef(stateDimension);
+            this.matWrapper = new DenseMatrix64F(stateDimension, stateDimension);
+            this.invWrapper = new DenseMatrix64F(stateDimension, stateDimension);
         }
 
         public int getStateDimension() {
@@ -309,25 +318,41 @@ public final class CanonicalBranchMessageContributionUtils {
             mean[d + i] = meanY;
         }
     }
-
     private static void invertPositiveDefiniteSymmetric(final double[] matrix,
                                                         final double[] inverseOut,
                                                         final int d,
                                                         final Workspace workspace) {
-        for (int i = 0; i < d; ++i) {
-            final int rowOffset = i * d;
-            for (int j = 0; j < d; ++j) {
-                workspace.symmetricScratch[rowOffset + j] =
-                        0.5 * (matrix[rowOffset + j] + matrix[j * d + i]);
-            }
-        }
-        if (!MatrixOps.tryCholesky(workspace.symmetricScratch, workspace.choleskyScratch, d)) {
+        // Symmetrize directly into pre-allocated wrapper
+        final DenseMatrix64F mat = workspace.matWrapper;
+        for (int i = 0; i < d; i++)
+            for (int j = 0; j < d; j++)
+                mat.data[i*d+j] = 0.5 * (matrix[i*d+j] + matrix[j*d+i]);
+
+        if (!workspace.solver.setA(mat))
             throw new IllegalArgumentException("Pair precision block is not positive definite.");
-        }
-        MatrixOps.invertFromCholesky(
-                workspace.choleskyScratch,
-                workspace.lowerInverseScratch,
-                inverseOut,
-                d);
+
+        workspace.solver.invert(workspace.invWrapper);
+        System.arraycopy(workspace.invWrapper.data, 0, inverseOut, 0, d * d);
     }
+
+//    private static void invertPositiveDefiniteSymmetric(final double[] matrix,
+//                                                        final double[] inverseOut,
+//                                                        final int d,
+//                                                        final Workspace workspace) {
+//        for (int i = 0; i < d; ++i) {
+//            final int rowOffset = i * d;
+//            for (int j = 0; j < d; ++j) {
+//                workspace.symmetricScratch[rowOffset + j] =
+//                        0.5 * (matrix[rowOffset + j] + matrix[j * d + i]);
+//            }
+//        }
+//        if (!MatrixOps.tryCholesky(workspace.symmetricScratch, workspace.choleskyScratch, d)) {
+//            throw new IllegalArgumentException("Pair precision block is not positive definite.");
+//        }
+//        MatrixOps.invertFromCholesky(
+//                workspace.choleskyScratch,
+//                workspace.lowerInverseScratch,
+//                inverseOut,
+//                d);
+//    }
 }

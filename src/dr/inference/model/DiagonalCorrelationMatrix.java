@@ -54,6 +54,7 @@ public class DiagonalCorrelationMatrix extends CompoundParameter implements Matr
     private final boolean asCorrelation;
     private final boolean isCholesky;
     private final int dim;
+    private final CorrelationToCholesky correlationToCholesky;
 
     public DiagonalCorrelationMatrix(String name,
                                      Parameter diagonals, Parameter offDiagonal,
@@ -63,11 +64,12 @@ public class DiagonalCorrelationMatrix extends CompoundParameter implements Matr
         assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
+        correlationToCholesky = isCholesky ? new CorrelationToCholesky(dim) : null;
         if (!isCholesky) {
             offDiagonalParameter = offDiagonal;
         } else {
             offDiagonalParameter
-                    = new TransformedMultivariateParameter(offDiagonal, new CorrelationToCholesky(dim), true);
+                    = new TransformedMultivariateParameter(offDiagonal, correlationToCholesky, true);
         }
         addParameter(diagonalParameter);
         addParameter(offDiagonal);
@@ -250,16 +252,10 @@ public class DiagonalCorrelationMatrix extends CompoundParameter implements Matr
         if (!isCholesky) {
             return gradient;
         } else {
-            CorrelationToCholesky transform = new CorrelationToCholesky(dim);
-            double[][] jacobian
-                    = transform.computeJacobianMatrixInverse(((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues());
-            // Matrix multiplication (upper triangular)
             double[] updatedGradient = new double[gradient.length];
-            for (int i = 0; i < gradient.length; i++) {
-                for (int j = i; j < gradient.length; j++) {
-                    updatedGradient[i] += jacobian[i][j] * gradient[j];
-                }
-            }
+            correlationToCholesky.updateGradientInverseUnWeightedLogDensity(gradient,
+                    ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
+                    updatedGradient);
             return updatedGradient;
         }
     }

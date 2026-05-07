@@ -33,9 +33,10 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.xml.*;
 
+import java.util.Arrays;
+
 import static dr.math.matrixAlgebra.SymmetricMatrix.compoundCorrelationSymmetricMatrix;
 import static dr.math.matrixAlgebra.SymmetricMatrix.extractUpperTriangular;
-import static dr.math.matrixAlgebra.WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal;
 
 /**
  * @author Paul Bastide
@@ -46,16 +47,18 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     // Transform a correlation matrix into a Cholesky matrix
 
     private int dimVector;
+    private final ThreadLocal<double[]> diagonalScratch;
 
     public CorrelationToCholesky(int dimVector) {
         super(dimVector * (dimVector - 1) / 2);
         this.dimVector = dimVector;
+        this.diagonalScratch = ThreadLocal.withInitial(() -> new double[dimVector]);
     }
 
     // values = cholesky
     @Override
     protected double[] inverse(double[] values) {
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dimVector);
+        WrappedMatrix.WrappedUpperTriangularMatrix L = WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal(values, dimVector);
 
         SymmetricMatrix R = L.transposedProduct();
 
@@ -102,7 +105,7 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     @Override
     protected double getLogJacobian(double[] values) {
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(transform(values), dimVector);
+        WrappedMatrix.WrappedUpperTriangularMatrix L = WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal(transform(values), dimVector);
         double logJacobian = 0;
         for (int i = 0; i < dimVector - 1; i++) {
             logJacobian += (dimVector - i - 1) * Math.log(L.get(i, i));
@@ -112,12 +115,13 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
 
     @Override
     protected double[] getGradientLogJacobianInverse(double[] values) {
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(values, dimVector);
+        double[] diagonal = diagonalScratch.get();
+        fillDiagonal(values, diagonal);
         double[] gradientLogJacobian = new double[values.length];
         int k = 0;
         for (int i = 0; i < dimVector - 1; i++) {
             for (int j = i + 1; j < dimVector; j++) {
-                gradientLogJacobian[k] = -(dimVector - j - 1) * L.get(i, j) / Math.pow(L.get(j, j), 2);
+                gradientLogJacobian[k] = -(dimVector - j - 1) * getStrictUpper(values, i, j) / Math.pow(diagonal[j], 2);
                 k++;
             }
         }
@@ -132,7 +136,7 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     public double[][] computeJacobianMatrixInverse(double[] values) {
         double[][] jacobian = new double[dim][dim];
 
-        WrappedMatrix.WrappedUpperTriangularMatrix W = fillDiagonal(values, dimVector);
+        WrappedMatrix.WrappedUpperTriangularMatrix W = WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal(values, dimVector);
 
         for (int i = 0; i < dimVector - 1; i++) {
             for (int j = i + 1; j < dimVector; j++) {
@@ -148,12 +152,68 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
         return jacobian;
     }
 
+    @Override
+    protected double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value) {
+        double[] updatedGradient = new double[gradient.length];
+        updateGradientInverseUnWeightedLogDensity(gradient, value, updatedGradient);
+        return updatedGradient;
+    }
+
+    public void updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, double[] result) {
+        updateGradientInverseUnWeightedLogDensity(gradient, value, result, diagonalScratch.get());
+    }
+
+    public void updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, double[] result, double[] diagonal) {
+        assert gradient.length == dim && value.length == dim && result.length == dim;
+        assert diagonal.length >= dimVector;
+
+        Arrays.fill(result, 0.0);
+        fillDiagonal(value, diagonal);
+
+        for (int i = 0; i < dimVector - 1; i++) {
+            double wii = diagonal[i];
+            for (int j = i + 1; j < dimVector; j++) {
+                int ij = posStrict(i, j);
+                double gradientIJ = gradient[ij];
+                double temp = getStrictUpper(value, i, j) / wii;
+                for (int k = 0; k < i; k++) {
+                    double wki = getStrictUpper(value, k, i);
+                    result[posStrict(k, i)] += (getStrictUpper(value, k, j) - wki * temp) * gradientIJ;
+                    result[posStrict(k, j)] += wki * gradientIJ;
+                }
+                result[ij] += wii * gradientIJ;
+            }
+        }
+    }
+
     // ************************************************************************* //
     // Helper functions to deal with upper triangular matrices
     // ************************************************************************* //
 
     private int posStrict(int i, int j) {
         return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
+    }
+
+    private double getStrictUpper(double[] values, int i, int j) {
+        return values[posStrict(i, j)];
+    }
+
+    private void fillDiagonal(double[] values, double[] diagonal) {
+        for (int j = 0; j < dimVector; j++) {
+            double sum = 0.0;
+            for (int i = 0; i < j; i++) {
+                double value = getStrictUpper(values, i, j);
+                sum += value * value;
+            }
+            if (sum > 1.0) {
+                if (Math.abs(sum - 1.0) > 1E-6) {
+                    throw new RuntimeException("Values are not consistent with the cholesky decomposition of " +
+                            "a correlation matrix. Sum of squared values must be less than 1 (got " + sum + ")");
+                }
+                sum = 1.0;
+            }
+            diagonal[j] = Math.sqrt(1 - sum);
+        }
     }
 
 
@@ -193,4 +253,3 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
     };
 
 }
-

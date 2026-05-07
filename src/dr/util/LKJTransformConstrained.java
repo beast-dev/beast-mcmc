@@ -151,6 +151,11 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
         return jacobian;
     }
 
+    @Override
+    protected double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value) {
+        return updateGradientJacobian(gradient, computeJacobianMatrixInverse(value));
+    }
+
     private void recursionJacobian(double[][] jacobian, double[] values) {
         for (int i = 1; i < dimVector - 1; i++) {
             for (int j = i + 1; j < dimVector; j++) {

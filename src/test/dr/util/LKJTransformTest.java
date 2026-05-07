@@ -334,6 +334,72 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(jacobianDetBis));
     }
 
+    public void testCorrelationToCholeskyGradientUpdateMatchesJacobianProduct() {
+        int[] dimensions = new int[]{2, 3, 6, 10, 30};
+
+        for (int dimension : dimensions) {
+            CorrelationToCholesky correlationToCholesky = new CorrelationToCholesky(dimension);
+            int length = dimension * (dimension - 1) / 2;
+            double[] choleskyValues = new double[length];
+            double[] gradient = new double[length];
+
+            for (int i = 0; i < length; i++) {
+                choleskyValues[i] = 0.01 * (((i % 7) + 1) * ((i % 2 == 0) ? 1.0 : -1.0));
+                gradient[i] = 0.03 * ((i % 11) - 5);
+            }
+
+            double[][] jacobian = correlationToCholesky.computeJacobianMatrixInverse(choleskyValues);
+            double[] expected = new double[length];
+            for (int i = 0; i < length; i++) {
+                for (int j = 0; j < length; j++) {
+                    expected[i] += jacobian[i][j] * gradient[j];
+                }
+            }
+
+            double[] actual = new double[length];
+            double[] diagonalScratch = new double[dimension];
+            correlationToCholesky.updateGradientInverseUnWeightedLogDensity(
+                    gradient, choleskyValues, actual, diagonalScratch);
+
+            for (int i = 0; i < length; i++) {
+                assertEquals("gradient update dimension=" + dimension + " i=" + i,
+                        expected[i], actual[i], 1E-12);
+            }
+        }
+    }
+
+    public void testLKJCholeskyGradientUpdateMatchesJacobianProduct() {
+        int[] dimensions = new int[]{2, 3, 6, 10, 30};
+
+        for (int dimension : dimensions) {
+            LKJCholeskyTransformConstrained transform = new LKJCholeskyTransformConstrained(dimension);
+            int length = dimension * (dimension - 1) / 2;
+            double[] cpcs = new double[length];
+            double[] gradient = new double[length];
+
+            for (int i = 0; i < length; i++) {
+                cpcs[i] = 0.01 * (((i % 7) + 1) * ((i % 2 == 0) ? 1.0 : -1.0));
+                gradient[i] = 0.03 * ((i % 11) - 5);
+            }
+
+            double[][] jacobian = transform.computeJacobianMatrixInverse(cpcs);
+            double[] expected = new double[length];
+            for (int i = 0; i < length; i++) {
+                for (int j = 0; j < length; j++) {
+                    expected[i] += jacobian[i][j] * gradient[j];
+                }
+            }
+
+            double[] actual = new double[length];
+            transform.updateGradientInverseUnWeightedLogDensity(gradient, cpcs, actual);
+
+            for (int i = 0; i < length; i++) {
+                assertEquals("gradient update dimension=" + dimension + " i=" + i,
+                        expected[i], actual[i], 1E-12);
+            }
+        }
+    }
+
     public void testJacobianComposition() {
         System.out.println("\nTest LKJ Composition Cholesky Jacobian.");
 

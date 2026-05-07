@@ -29,6 +29,8 @@ package dr.util;
 
 import dr.math.matrixAlgebra.WrappedMatrix;
 
+import java.util.Arrays;
+
 /**
  * @author Paul Bastide
  */
@@ -178,6 +180,44 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
         return jacobian;
     }
 
+    @Override
+    protected double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value) {
+        double[] updatedGradient = new double[gradient.length];
+        updateGradientInverseUnWeightedLogDensity(gradient, value, updatedGradient);
+        return updatedGradient;
+    }
+
+    public void updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, double[] result) {
+        assert gradient.length == dim && value.length == dim && result.length == dim;
+
+        Arrays.fill(result, 0.0);
+        for (int j = 1; j < dimVector; j++) {
+            for (int k = 0; k < j; k++) {
+                result[posStrict(k, j)] = updateGradientJacobianColumn(gradient, value, k, j);
+            }
+        }
+    }
+
+    private double updateGradientJacobianColumn(double[] gradient, double[] values, int k, int j) {
+        double acc = 1.0;
+        for (int i = 0; i < k; i++) {
+            double value = getStrictUpper(values, i, j);
+            acc *= Math.sqrt(1 - value * value);
+        }
+
+        double result = acc * gradient[posStrict(k, j)];
+        double value = getStrictUpper(values, k, j);
+        acc *= -value / Math.sqrt(1 - value * value);
+
+        for (int i = k + 1; i < j; i++) {
+            value = getStrictUpper(values, i, j);
+            result += value * acc * gradient[posStrict(i, j)];
+            acc *= Math.sqrt(1 - value * value);
+        }
+
+        return result;
+    }
+
     private void recursionJacobian(double[][] jacobian, WrappedMatrix.WrappedStrictlyUpperTriangularMatrix Z,
                                    int k, int j) {
         // 0 <= k < j
@@ -210,5 +250,9 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
 
     private int posStrict(int i, int j) {
         return i * (2 * dimVector - i - 1) / 2 + (j - i - 1);
+    }
+
+    private double getStrictUpper(double[] values, int i, int j) {
+        return values[posStrict(i, j)];
     }
 }

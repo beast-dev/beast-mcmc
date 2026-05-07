@@ -76,6 +76,11 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
         return appendIdentityMatrix(jacobian);
     }
 
+    @Override
+    protected double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value) {
+        return updateGradientJacobian(gradient, computeJacobianMatrixInverse(value));
+    }
+
     public double[] getGradientLogJacobianInverse(double[] values) {
 
         double[] CPCs = subsetCholeskyOrCPCs(values);

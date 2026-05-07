@@ -59,20 +59,23 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
     public static final XMLObjectParser PARSER = new DiscretePreOrderReportParser();
 
     public static final class DiscretePreOrderReport implements Reportable {
+
         private final TreeDataLikelihood treeDataLikelihood;
+        private final PreOrderMessageProvider discreteDelegate;
 
         private DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood) {
             this.treeDataLikelihood = treeDataLikelihood;
+
+            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+            if (!(delegate instanceof PreOrderMessageProvider)) {
+                throw new IllegalStateException(PARSER_NAME + " requires a PreOrderMessageProvider");
+            }
+
+            this.discreteDelegate = (PreOrderMessageProvider) delegate;
         }
 
         @Override
         public String getReport() {
-            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-            if (!(delegate instanceof PreOrderMessageProvider)) {
-                throw new IllegalStateException(PARSER_NAME + " requires a DiscreteDataLikelihoodDelegate");
-            }
-
-            PreOrderMessageProvider discreteDelegate = (PreOrderMessageProvider) delegate;
 
             treeDataLikelihood.getLogLikelihood();
 
@@ -80,8 +83,10 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
             int categoryCount = discreteDelegate.getCategoryCount();
             int patternCount = discreteDelegate.getPatternCount();
             int stateCount = discreteDelegate.getStateCount();
+
             double[] allStart = new double[stateCount * categoryCount * patternCount];
             double[] allEnd = new double[stateCount * categoryCount * patternCount];
+
             double[] start = new double[stateCount];
             double[] end = new double[stateCount];
 

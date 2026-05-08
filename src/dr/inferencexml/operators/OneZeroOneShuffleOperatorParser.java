@@ -8,8 +8,14 @@ import dr.xml.*;
 
 /**
  * <oneZeroOneShuffleOperator id="..." weight="..." tol="...">
- *   <alphaRates><parameter idref="ind.rewardRates"/></alphaRates>
- *   <extremeIndex><parameter idref="extremeIndex"/></extremeIndex>
+ *   <rewardRates>
+ *     <values>
+ *       <parameter idref="ind.rewardRates.values"/>
+ *     </values>
+ *     <stateIndices>
+ *       <parameter idref="ind.rewardRates.stateIndices"/>
+ *     </stateIndices>
+ *   </rewardRates>
  * </oneZeroOneShuffleOperator>
  */
 
@@ -50,7 +56,7 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
 
     @Override
     public String getParserDescription() {
-        return "Relabels which alphaRates entries are forced to be 0 and 1 via a length-2 extremeIndex parameter.";
+        return "Swaps one fixed extreme reward-rate label (0 or 1) with one non-extreme reward-rate label in the state-to-reward-rate mapping.";
     }
 
     @Override
@@ -67,17 +73,10 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newDoubleRule(TOL, true),
 
-//            new ElementRule(ALPHA_RATES,
-//                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-//                    "The K-length alphaRates parameter (e.g., ind.rewardRates).", false),
-
             new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES, new XMLSyntaxRule[]{
                     new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     }),
-//                        new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES, new XMLSyntaxRule[] {
-//                                new ElementRule(Parameter.class)
-//                        }),
                     new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     })

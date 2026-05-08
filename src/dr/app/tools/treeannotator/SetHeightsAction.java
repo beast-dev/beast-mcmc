@@ -36,6 +36,8 @@ import dr.util.HeapSort;
 import java.util.*;
 
 public class SetHeightsAction implements CladeAction {
+    private static final boolean DEBUG_NEGATIVE = true;
+
     // the smallest a height range can be before we consider it a single value
     double HEIGHT_EPSILON = 3e-8; // one second in decimal years
 
@@ -84,6 +86,12 @@ public class SetHeightsAction implements CladeAction {
         clade.setMeanHeight(DiscreteStatistics.mean(values));
         clade.setMedianHeight(DiscreteStatistics.median(values));
 
+        if (DEBUG_NEGATIVE) {
+            if (clade.bestLeft != null && clade.bestLeft.getMeanHeight() > clade.getMeanHeight() ||
+                    clade.bestRight != null && clade.bestRight.getMeanHeight() > clade.getMeanHeight()) {
+                System.out.println("Negative branch length detected: " + clade.getMeanHeight() + " < " + clade.bestLeft.getMeanHeight() + " or " + clade.getMeanHeight() + " < " + clade.bestRight.getMeanHeight());
+            }
+        }
         if (clade.getSize() > 1 && Math.abs(range[0] - range[1]) > HEIGHT_EPSILON && heights.size() >= filterCount) {
             clade.setHeightRange(range);
             clade.setHeightHPD(getHPDs(0.95, values));

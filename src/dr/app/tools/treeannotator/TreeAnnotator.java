@@ -225,8 +225,9 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
 
+        CladeSystem targetCladeSystem = new CladeSystem(targetTree);
+
         if (referenceTreeFileName != null) {
-            CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 

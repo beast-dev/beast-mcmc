@@ -979,7 +979,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         heightsOption,
                         posteriorLimit,
                         0,
-                        5,
+                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -1088,7 +1088,7 @@ public class TreeAnnotator extends BaseTreeTool {
             posteriorLimit = arguments.getRealOption("limitFrequency");
         }
 
-        int countLimit = 5;
+        int countLimit = 0;
         if (arguments.hasOption("limitCount")) {
             countLimit = arguments.getIntegerOption("limitCount");
         }

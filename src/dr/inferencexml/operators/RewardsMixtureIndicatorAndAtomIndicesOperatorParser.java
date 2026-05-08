@@ -39,6 +39,9 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
     private static final String INDICATOR_Z = "indicatorZ";
     private static final String ATOM_INDEX = "atomIndex";
     private static final String UPDATE_PROPORTION = "updateProportion";
+    private static final String USE_CLUSTER_MOVES = "useClusterMoves";
+    private static final String CLUSTER_SIZE = "clusterSize";
+    private static final String CLUSTER_BORDER_BIAS = "clusterBorderBias";
 
     @Override
     public String getParserName() {
@@ -55,6 +58,16 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             throw new XMLParseException("updateProportion must be in (0,1]. Found: " + updateProportion);
         }
         final boolean adapt = xo.getBooleanAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE, false);
+        final boolean useClusterMoves = xo.getBooleanAttribute(USE_CLUSTER_MOVES, false);
+        final int clusterSize = xo.getIntegerAttribute(CLUSTER_SIZE, 2);
+        final double clusterBorderBias = xo.getDoubleAttribute(CLUSTER_BORDER_BIAS, 0.5);
+
+        if (clusterSize < 1) {
+            throw new XMLParseException("clusterSize must be >= 1. Found: " + clusterSize);
+        }
+        if (clusterBorderBias < 0.0 || clusterBorderBias > 1.0) {
+            throw new XMLParseException("clusterBorderBias must be in [0,1]. Found: " + clusterBorderBias);
+        }
 
         // required: indicatorZ
         final XMLObject zxo = xo.getChild(INDICATOR_Z);
@@ -76,6 +89,9 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 treeDataLikelihood,
                 updateProportion,
                 adapt,
+                useClusterMoves,
+                clusterSize,
+                clusterBorderBias,
                 weight
         );
     }
@@ -99,6 +115,9 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(UPDATE_PROPORTION, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(USE_CLUSTER_MOVES, true),
+            AttributeRule.newIntegerRule(CLUSTER_SIZE, true),
+            AttributeRule.newDoubleRule(CLUSTER_BORDER_BIAS, true),
 
             new ElementRule(RewardsAwareBranchModel.class, false),
             new ElementRule(TreeDataLikelihood.class, false),

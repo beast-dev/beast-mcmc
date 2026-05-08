@@ -10,6 +10,20 @@ public final class RewardsMixtureBranchResamplingHelper {
         // no instances
     }
 
+    public static final class BranchWeights {
+        public final double[] logAtomicWeights;
+        public final double logAtomicTotalWeight;
+        public final double logCtsWeight;
+
+        public BranchWeights(final double[] logAtomicWeights,
+                             final double logAtomicTotalWeight,
+                             final double logCtsWeight) {
+            this.logAtomicWeights = logAtomicWeights;
+            this.logAtomicTotalWeight = logAtomicTotalWeight;
+            this.logCtsWeight = logCtsWeight;
+        }
+    }
+
     public static int sampleIndicatorFromLogs(final double logAtomicWeight,
                                               final double logCtsWeight) {
 
@@ -119,6 +133,18 @@ public final class RewardsMixtureBranchResamplingHelper {
         return Math.log(pre) + Math.log(post) + logLocalFactor;
     }
 
+    public static double logAtomicWeight(final double pre,
+                                         final double post,
+                                         final double logLocalFactor,
+                                         final double preScale,
+                                         final double postScale) {
+        if (!(pre > 0.0) || !(post > 0.0)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        return Math.log(pre) + Math.log(post) + logLocalFactor + safeScale(preScale) + safeScale(postScale);
+    }
+
     public static double logContinuousWeight(final double[] pre,
                                              final double[] D,
                                              final double[] post,
@@ -129,6 +155,24 @@ public final class RewardsMixtureBranchResamplingHelper {
         }
 
         return Math.log(inner);
+    }
+
+    public static double logContinuousWeight(final double[] pre,
+                                             final double[] D,
+                                             final double[] post,
+                                             final int nstates,
+                                             final double preScale,
+                                             final double postScale) {
+        final double inner = bilinearFormStable(pre, D, post, nstates);
+        if (!(inner > 0.0) || Double.isNaN(inner)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        return Math.log(inner) + safeScale(preScale) + safeScale(postScale);
+    }
+
+    private static double safeScale(final double scale) {
+        return Double.isFinite(scale) ? scale : 0.0;
     }
 
     public static double logSum(final double[] x, final int n) {

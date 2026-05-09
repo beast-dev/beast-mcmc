@@ -27,7 +27,7 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.evomodel.branchratemodel.LatentStateBranchRateModel;
+import dr.evomodel.branchratemodel.latentStateBranchRate.LatentStateBranchRateModel;
 import dr.inference.markovjumps.MarkovReward;
 import dr.inference.markovjumps.SericolaSeriesMarkovReward;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;

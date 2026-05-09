@@ -429,6 +429,11 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return branchLengths[childNodeNumber];
     }
 
+    public boolean isSpectralRepresentation() {
+        return bidirectionalRepresentation instanceof
+                dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.SpectralRotatedPartialsRepresentation;
+    }
+
     public double[] getPatternWeights() {
         return patternWeights;
     }

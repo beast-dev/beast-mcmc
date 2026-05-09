@@ -184,11 +184,23 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                         (BeagleDataLikelihoodDelegate) likelihoodDelegate,
                         treeDataLikelihood.getBranchRateModel(),
                         substitutionModel.getDataType().getStateCount());
-            } else if (likelihoodDelegate instanceof  DiscreteDataLikelihoodDelegate){
-                gradientDelegate = new DiscreteSubstitutionModelCrossProductDelegate(traitName,
-                        treeDataLikelihood.getTree(),
-                        (DiscreteDataLikelihoodDelegate) likelihoodDelegate,
-                        substitutionModel.getDataType().getStateCount());
+            } else if (likelihoodDelegate instanceof DiscreteDataLikelihoodDelegate) {
+                final DiscreteDataLikelihoodDelegate discreteDelegate =
+                        (DiscreteDataLikelihoodDelegate) likelihoodDelegate;
+                final int stateCount = substitutionModel.getDataType().getStateCount();
+                if (discreteDelegate.isSpectralRepresentation()) {
+                    gradientDelegate = new SpectralExactGradientDelegate(
+                            traitName,
+                            treeDataLikelihood.getTree(),
+                            discreteDelegate,
+                            stateCount);
+                } else {
+                    gradientDelegate = new DiscreteSubstitutionModelCrossProductDelegate(
+                            traitName,
+                            treeDataLikelihood.getTree(),
+                            discreteDelegate,
+                            stateCount);
+                }
             } else {
                 throw new RuntimeException("Other likelihood delegates are currently not supported");
             }
@@ -203,8 +215,14 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.branchModel.addModelListener(this);
         this.substitutionModel.addModelListener(this);
         
-        Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
-                "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
+        if (likelihoodDelegate instanceof DiscreteDataLikelihoodDelegate
+                && ((DiscreteDataLikelihoodDelegate) likelihoodDelegate).isSpectralRepresentation()) {
+            Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
+                    "Gradient wrt " + traitName + " using exact spectral Frechet derivative");
+        } else {
+            Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
+                    "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
+        }
     }
 
     protected int[][] makeAsymmetricMap() {

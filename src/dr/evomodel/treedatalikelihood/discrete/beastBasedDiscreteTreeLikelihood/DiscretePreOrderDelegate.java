@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  *
  * This class is intentionally separate from the post-order delegate.
  * It depends on post-order only through {@link PostOrderMessageProvider},
- * which exposes sibling messages in the standard basis.
+ * which exposes sibling messages in the paired post-order representation.
  *
  * Internal pre-order storage is determined by {@link PreOrderRepresentation}.
  */
@@ -41,6 +41,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private final int stateCount;
 
     // internal representation buffers: [node][flattened(category,pattern,state)]
+    private double[][] branchStartPreOrder;
+    private double[][] storedBranchStartPreOrder;
     private double[][] nodePreOrder;
     private double[][] storedNodePreOrder;
 
@@ -58,7 +60,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     // scratch
     private final double[] tmpParentNodePreOrder;
-    private final double[] tmpSiblingPostOrderStandard;
+    private final double[] tmpSiblingPostOrder;
     private final double[] tmpChildBranchTopPreOrder;
     private final double[] tmpChildNodePreOrder;
     private final double[] tmpStandardExport;
@@ -99,6 +101,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         final int nodeBufferLength = flattenedLength();
 
+        this.branchStartPreOrder = new double[nodeCount][nodeBufferLength];
+        this.storedBranchStartPreOrder = new double[nodeCount][nodeBufferLength];
         this.nodePreOrder = new double[nodeCount][nodeBufferLength];
         this.storedNodePreOrder = new double[nodeCount][nodeBufferLength];
 
@@ -115,7 +119,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.preOrderEndKnown = preOrderAtBranchEnd != null ? new boolean[nodeCount] : null;
 
         this.tmpParentNodePreOrder = new double[stateCount];
-        this.tmpSiblingPostOrderStandard = new double[stateCount];
+        this.tmpSiblingPostOrder = new double[stateCount];
         this.tmpChildBranchTopPreOrder = new double[stateCount];
         this.tmpChildNodePreOrder = new double[stateCount];
         this.tmpStandardExport = new double[stateCount];
@@ -150,6 +154,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     @Override
     public void storeState() {
+        copy2D(branchStartPreOrder, storedBranchStartPreOrder);
         copy2D(nodePreOrder, storedNodePreOrder);
         copy2D(nodePreOrderLogScales, storedNodePreOrderLogScales);
         preOrderRepresentation.storeState();
@@ -157,6 +162,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     @Override
     public void restoreState() {
+        double[][] tmpStart = branchStartPreOrder;
+        branchStartPreOrder = storedBranchStartPreOrder;
+        storedBranchStartPreOrder = tmpStart;
+
         double[][] tmpA = nodePreOrder;
         nodePreOrder = storedNodePreOrder;
         storedNodePreOrder = tmpA;
@@ -204,7 +213,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     private void initializeRoot(int rootNumber, double[] rootFrequencies) {
         final double[] rootBuffer = nodePreOrder[rootNumber];
+        final double[] rootStartBuffer = branchStartPreOrder[rootNumber];
         Arrays.fill(rootBuffer, 0.0);
+        Arrays.fill(rootStartBuffer, 0.0);
         Arrays.fill(nodePreOrderLogScales[rootNumber], 0.0);
 
         for (int c = 0; c < categoryCount; c++) {
@@ -214,12 +225,13 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 System.arraycopy(tmpChildNodePreOrder, 0, rootBuffer, off, stateCount);
             }
         }
+        System.arraycopy(rootBuffer, 0, rootStartBuffer, 0, rootBuffer.length);
 
         nodePreOrderKnown[rootNumber] = true;
 
         // ROOT MUST BE EXPORTED TO BRANCH START, NOT BRANCH END
         if (preOrderAtBranchStart != null) {
-            exportNodeToStandard(rootNumber, preOrderAtBranchStart[rootNumber]);
+            exportInternalBufferToStandard(rootStartBuffer, preOrderAtBranchStart[rootNumber]);
             preOrderStartKnown[rootNumber] = true;
         }
     }
@@ -257,29 +269,21 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         final int siblingNumber = sibling.getNumber();
 
-        if (preOrderAtBranchStart == null) {
-            throw new IllegalStateException("Pre-order branch-start cache is required");
-        }
-        if (preOrderAtBranchEnd == null) {
-            throw new IllegalStateException("Pre-order branch-end cache is required");
-        }
-
         // Root uses root-start preorder.
         // Non-root parent uses the END of the parent branch, i.e. preorder at the node.
         final double[] parentNodePreOrder =
                 tree.isRoot(parent)
-                        ? preOrderAtBranchStart[parentNumber]
-                        : preOrderAtBranchEnd[parentNumber];
+                        ? branchStartPreOrder[parentNumber]
+                        : nodePreOrder[parentNumber];
 
-        final double[] childPreOrderStart = preOrderAtBranchStart[childNumber];
-        final double[] childPreOrderEnd = preOrderAtBranchEnd[childNumber];
+        final double[] childPreOrderStart = branchStartPreOrder[childNumber];
+        final double[] childPreOrderEnd = nodePreOrder[childNumber];
 
         final double[] childScale = nodePreOrderLogScales[childNumber];
         final double[] parentScale = nodePreOrderLogScales[parentNumber];
         final double[] siblingScale = tmpSiblingScales;
         postOrderMessageProvider.getPostOrderBranchScalesInto(siblingNumber, siblingScale);
 
-        final double siblingLength = effectiveBranchLengths[siblingNumber];
         final double childLength = effectiveBranchLengths[childNumber];
 
         Arrays.fill(childPreOrderStart, 0.0);
@@ -292,16 +296,16 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
 
-                // sibling branch-top postorder in STANDARD basis
-                postOrderMessageProvider.getPostOrderBranchTopInto(siblingNumber, c, p, tmpSiblingPostOrderStandard);
+                // sibling branch-top postorder in the paired post-order representation
+                postOrderMessageProvider.getPostOrderBranchTopInto(siblingNumber, c, p, tmpSiblingPostOrder);
 
-                // parent preorder at the correct side (already STANDARD basis here because caches are exported)
-                System.arraycopy(parentNodePreOrder, off, tmpStandardExport, 0, stateCount);
+                // parent preorder at the correct side, in the representation's internal basis
+                System.arraycopy(parentNodePreOrder, off, tmpParentNodePreOrder, 0, stateCount);
 
                 // combine parent preorder with sibling branch-top postorder
                 preOrderRepresentation.combineParentAndSibling(
-                        tmpStandardExport,
-                        tmpSiblingPostOrderStandard,
+                        tmpParentNodePreOrder,
+                        tmpSiblingPostOrder,
                         tmpChildBranchTopPreOrder
                 );
 
@@ -334,8 +338,15 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         }
 
         nodePreOrderKnown[childNumber] = true;
-        preOrderStartKnown[childNumber] = true;
-        preOrderEndKnown[childNumber] = true;
+
+        if (preOrderAtBranchStart != null) {
+            exportInternalBufferToStandard(childPreOrderStart, preOrderAtBranchStart[childNumber]);
+            preOrderStartKnown[childNumber] = true;
+        }
+        if (preOrderAtBranchEnd != null) {
+            exportInternalBufferToStandard(childPreOrderEnd, preOrderAtBranchEnd[childNumber]);
+            preOrderEndKnown[childNumber] = true;
+        }
 
         for (int i = 0; i < childPreOrderEnd.length; i++) {
             if (!Double.isFinite(childPreOrderEnd[i])) {
@@ -344,9 +355,6 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             }
         }
 
-        // keep internal representation aligned with exported end-of-branch preorder
-        // since standard representation currently stores standard vectors
-        System.arraycopy(childPreOrderEnd, 0, nodePreOrder[childNumber], 0, childPreOrderEnd.length);
     }
 
     private static final double DEFAULT_SCALING_FLOOR = 1.0e-200;
@@ -417,13 +425,12 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         System.arraycopy(nodePreOrderLogScales[nodeNumber], 0, out, 0, patternCount);
     }
 
-    private void exportNodeToStandard(int nodeNumber, double[] dest) {
-        final double[] source = nodePreOrder[nodeNumber];
+    private void exportInternalBufferToStandard(double[] source, double[] dest) {
         for (int c = 0; c < categoryCount; c++) {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
                 sliceInto(source, off, tmpParentNodePreOrder);
-                preOrderRepresentation.toStandard(tmpParentNodePreOrder, tmpStandardExport);
+                preOrderRepresentation.preOrderToStandard(tmpParentNodePreOrder, tmpStandardExport);
                 System.arraycopy(tmpStandardExport, 0, dest, off, stateCount);
             }
         }

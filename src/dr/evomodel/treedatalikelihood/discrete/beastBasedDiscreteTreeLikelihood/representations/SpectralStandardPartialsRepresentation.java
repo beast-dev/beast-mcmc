@@ -247,7 +247,12 @@ public final class SpectralStandardPartialsRepresentation
     // ------------------------------------------------------------------
 
     @Override
-    public void toStandard(double[] partial, double[] outStandardPartial) {
+    public void postOrderToStandard(double[] partial, double[] outStandardPartial) {
+        System.arraycopy(partial, 0, outStandardPartial, 0, stateCount);
+    }
+
+    @Override
+    public void preOrderToStandard(double[] partial, double[] outStandardPartial) {
         System.arraycopy(partial, 0, outStandardPartial, 0, stateCount);
     }
 

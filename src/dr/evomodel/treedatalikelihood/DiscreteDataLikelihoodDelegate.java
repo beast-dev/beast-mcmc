@@ -201,7 +201,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //    private double[][] nodePreOrderPatternLogScales;
 //    private double[][] storedNodePreOrderPatternLogScales;
 
-    // Optional caches exposed in STANDARD basis
+    // Optional caches. Branch-start post-order is kept in the representation basis
+    // for pre-order traversal; external accessors export it to standard basis.
     private final double[][] postOrderAtBranchStart;
     private final double[][] postOrderAtBranchEnd;
     private final double[][] preOrderAtBranchStart;
@@ -538,6 +539,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) {
             postOrderRepresentation.updateForLikelihood();
+            if (updateSubstitutionModel) {
+                initialiseTipPartials();
+            }
         }
 
         final double[] categoryRates = siteRateModel.getCategoryRates();
@@ -756,7 +760,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     public double[] getPostOrderAtBranchStart(int nodeNumber) {
         requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
-        return Arrays.copyOf(postOrderAtBranchStart[nodeNumber], postOrderAtBranchStart[nodeNumber].length);
+        convertNodeBufferToStandard(postOrderAtBranchStart[nodeNumber], tmpNodeStandardBuffer);
+        return Arrays.copyOf(tmpNodeStandardBuffer, tmpNodeStandardBuffer.length);
     }
 
     public double[] getPreOrderAtBranchStart(int nodeNumber) {
@@ -930,18 +935,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //                    postOrderStartKnown[rightNumber] = true;
 //                }
                 if (postOrderAtBranchStart != null) {
-                    postOrderRepresentation.toStandard(leftPropagated, tmpVectorA);
-                    System.arraycopy(tmpVectorA, 0, postOrderAtBranchStart[leftNumber], childOffset, stateCount);
+                    System.arraycopy(leftPropagated, 0, postOrderAtBranchStart[leftNumber], childOffset, stateCount);
                     postOrderStartKnown[leftNumber] = true;
 
-                    postOrderRepresentation.toStandard(rightPropagated, tmpVectorB);
-                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStart[rightNumber], childOffset, stateCount);
+                    System.arraycopy(rightPropagated, 0, postOrderAtBranchStart[rightNumber], childOffset, stateCount);
                     postOrderStartKnown[rightNumber] = true;
                 }
 
 //                if (postOrderAtBranchStart != null) {
 //                    sliceInto(nodeBuffer, parentOffset, tmpVectorA);
-//                    postOrderRepresentation.toStandard(tmpVectorA, tmpVectorB);
+//                    postOrderRepresentation.postOrderToStandard(tmpVectorA, tmpVectorB);
 //                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStart[nodeNumber], parentOffset, stateCount);
 //                    postOrderStartKnown[nodeNumber] = true;
 //                }
@@ -1001,10 +1004,10 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     }
 
     @Override
-    public void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    public void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
-        System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outStandardPartial, 0, stateCount);
+        System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outPartial, 0, stateCount);
     }
 
     @Override
@@ -1012,6 +1015,14 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         requireCache(postOrderAtBranchEnd, "postOrderAtBranchEnd");
         final int off = offset(category, pattern, 0);
         System.arraycopy(postOrderAtBranchEnd[childNodeNumber], off, outStandardPartial, 0, stateCount);
+    }
+
+    @Override
+    public void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+        requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
+        final int off = offset(category, pattern, 0);
+        sliceInto(postOrderAtBranchStart[childNodeNumber], off, tmpVectorA);
+        postOrderRepresentation.postOrderToStandard(tmpVectorA, outStandardPartial);
     }
 
     @Override
@@ -1152,16 +1163,14 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
             if (preOrderAtBranchStart != null) {
-//                final double[] src = preOrderDelegate.getPreOrderAtBranchStart(nodeNumber);
-//                System.arraycopy(src, 0, preOrderAtBranchStart[nodeNumber], 0, src.length);
-                preOrderDelegate.getPreOrderAtBranchStartInto(nodeNumber, 0, 0, preOrderAtBranchStart[nodeNumber]);
+                final double[] src = preOrderDelegate.getPreOrderAtBranchStart(nodeNumber);
+                System.arraycopy(src, 0, preOrderAtBranchStart[nodeNumber], 0, src.length);
                 preOrderStartKnown[nodeNumber] = true;
             }
 
             if (preOrderAtBranchEnd != null) {
-//                final double[] src = preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
-//                System.arraycopy(src, 0, preOrderAtBranchEnd[nodeNumber], 0, src.length);
-                preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, 0,0, preOrderAtBranchEnd[nodeNumber]);
+                final double[] src = preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
+                System.arraycopy(src, 0, preOrderAtBranchEnd[nodeNumber], 0, src.length);
                 preOrderEndKnown[nodeNumber] = true;
             }
 
@@ -1332,7 +1341,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
                 sliceInto(source, off, tmpVectorA);
-                postOrderRepresentation.toStandard(tmpVectorA, tmpVectorB);
+                postOrderRepresentation.postOrderToStandard(tmpVectorA, tmpVectorB);
                 System.arraycopy(tmpVectorB, 0, target, off, stateCount);
             }
         }

@@ -81,7 +81,7 @@ public interface PostOrderRepresentation {
      * @param partial             input partial in internal representation
      * @param outStandardPartial  output partial in standard basis
      */
-    void toStandard(double[] partial, double[] outStandardPartial);
+    void postOrderToStandard(double[] partial, double[] outStandardPartial);
 
     /**
      * Whether it is valid to apply scaling directly to the internal representation.

@@ -39,11 +39,11 @@ public interface PreOrderRepresentation {
      * Combine the parent-node pre-order message with the sibling branch-top post-order
      * message to obtain the pre-order message at the TOP of the child's branch.
      *
-     * All inputs/outputs are in the internal pre-order representation except the sibling
-     * post-order message, which is given in standard basis.
+     * The parent input/output are in the internal pre-order representation. The sibling
+     * input is in the paired post-order representation's internal basis.
      */
     void combineParentAndSibling(double[] parentNodePreOrder,
-                                 double[] siblingBranchTopPostOrderStandard,
+                                 double[] siblingBranchTopPostOrder,
                                  double[] outChildBranchTopPreOrder);
 
     /**
@@ -58,5 +58,5 @@ public interface PreOrderRepresentation {
     /**
      * Convert one internal pre-order slice to standard basis.
      */
-    void toStandard(double[] preOrderPartial, double[] outStandardPartial);
+    void preOrderToStandard(double[] preOrderPartial, double[] outStandardPartial);
 }

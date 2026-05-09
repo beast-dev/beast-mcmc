@@ -628,6 +628,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 //Do nothing
                 break;
 
+            case DataType.TREE:
+            //Do nothing
+                break;
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -820,6 +823,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 //Do nothing
                 break;
 
+            case DataType.TREE:
+                // Do nothing
+                break;
             default:
                 throw new IllegalArgumentException("Unknown data type");
 

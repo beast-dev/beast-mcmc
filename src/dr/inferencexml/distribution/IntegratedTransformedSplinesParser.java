@@ -12,20 +12,24 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
     private static final String COEFFICIENTS = "coefficients";
     private static final String INTERCEPT = "intercept";
     private static final String KNOTS = "knots";
+    private static final String LOWERBOUNDARY = "lowerBoundary";
+    private static final String UPPERBOUNDARY = "upperBoundary";
     private static final String DEGREE = "degree";
-    private static final String TRANSFORM = "transform";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
-        Parameter intercept = (Parameter) xo.getElementFirstChild(INTERCEPT);
+        Parameter intercept = null;
+        if (xo.hasChildNamed(INTERCEPT)) {
+            intercept = (Parameter) xo.getElementFirstChild(INTERCEPT);
+        }
         double[] knots = xo.getDoubleArrayAttribute(KNOTS);
-        String transform = xo.getStringAttribute(TRANSFORM);
+        Double lowerBoundary = xo.getDoubleAttribute(LOWERBOUNDARY);
+        Double upperBoundary = xo.getDoubleAttribute(UPPERBOUNDARY);
         int degree = xo.getIntegerAttribute(DEGREE);
-        String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new IntegratedTransformedSplines(coefficients, intercept, knots, degree, transform);
+        return new IntegratedTransformedSplines(coefficients, intercept, knots, lowerBoundary, upperBoundary, degree);
     }
 
     @Override
@@ -52,9 +56,10 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
             new ElementRule(COEFFICIENTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(INTERCEPT,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newDoubleArrayRule(KNOTS),
+            AttributeRule.newDoubleRule(LOWERBOUNDARY),
+            AttributeRule.newDoubleRule(UPPERBOUNDARY),
             AttributeRule.newIntegerRule(DEGREE),
-            AttributeRule.newStringRule(TRANSFORM),
     };
 }

@@ -1,5 +1,4 @@
 /*
- * TimeVaryingBranchRateModel.java
  *
  * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -29,7 +28,6 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.TrapezoidIntegrator;
-import dr.math.distributions.BSplines;
 
 /**
  * @author Pratyusa Datta
@@ -44,39 +42,47 @@ public class IntegratedTransformedSplines {
     private final Parameter coefficient;
     private final Parameter intercept;
     private final double[] knots;
+    private final double lowerBoundary;
+    private final double upperBoundary;
     private final double[] expandedKnots;
     private final int degree;
-    private final String transform;
     private boolean expandedKnotsKnown;
-    private double[][] temp;
-    private final SplinesIntegral splinesIntegral;
+
+
 
     public IntegratedTransformedSplines(Parameter coefficient,
                                     Parameter intercept,
                                     double[] knots,
-                                    int degree,
-                                    String transform) {
+                                    double lowerBoundary,
+                                    double upperBoundary,
+                                    int degree) {
 
-        if (degree != 2 && degree != 3) {
-            throw new IllegalArgumentException("Only degree 2 and 3 supported");
+        if (coefficient.getDimension() != knots.length + degree + 1 && intercept == null) {
+            throw new IllegalArgumentException("Coefficient dimension must be equal to number of knots + degree + 1 if intercept is null");
         }
+
+        if (coefficient.getDimension() != knots.length + degree && intercept != null) {
+            throw new IllegalArgumentException("Coefficient dimension must be equal to number of knots + degree if intercept is non-null");
+        }
+
         this.coefficient = coefficient;
         this.intercept = intercept;
         this.knots = knots;
-        this.expandedKnots = new double[knots.length + 2 * degree];
+        this.lowerBoundary = lowerBoundary;
+        this.upperBoundary = upperBoundary;
+        this.expandedKnots = new double[knots.length + 2 * (degree + 1)];
         this.degree = degree;
         this.expandedKnotsKnown = false;
-        this.transform = transform;
 
-
-        this.temp = new double[coefficient.getDimension()][coefficient.getDimension()];
-        this.splinesIntegral = (degree == 2) ? new Quadratic() : new Cubic();
     }
 
     public Parameter getCoefficients() { return coefficient; }
     public Parameter getIntercept() { return intercept; }
     public int getCoefficientDim() {
         return coefficient.getDimension();
+    }
+    public boolean isInterceptNull() {
+        return(intercept == null);
     }
     public double[] getCoefficientValues() {
         double[] values = new double[getCoefficientDim()];
@@ -87,459 +93,21 @@ public class IntegratedTransformedSplines {
     }
 
     public void getExpandedKnots() {
+
         if (!expandedKnotsKnown) {
-            for (int i = 0; i < degree; i++) {
-                expandedKnots[i] = knots[0];
-                expandedKnots[degree + knots.length + i] = knots[knots.length - 1];
+
+            for (int i = 0; i < degree + 1; i++) {
+                expandedKnots[i] = lowerBoundary;
+                expandedKnots[degree + knots.length + i + 1] = upperBoundary;
             }
             for (int i = 0; i < knots.length; i++) {
-                expandedKnots[degree + i] = knots[i];
+                expandedKnots[degree + i + 1] = knots[i];
             }
-        }
-    }
-
-    private interface SplinesIntegral {
-        double getDiagonal(int i, double start, double end);
-        double getOffDiagonalOrder1(int i, double start, double end);
-        double getOffDiagonalOrder2(int i, double start, double end);
-        double getOffDiagonalOrder3(int i, double start, double end); // may return 0 for degree 2
-    }
-
-    private class Quadratic implements SplinesIntegral {
-        public double getDiagonal(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            low = Math.max(start, expandedKnots[i]);
-            up = Math.min(end, expandedKnots[i + 1]);
-            if (expandedKnots[i + 2] != expandedKnots[i] && expandedKnots[i + 1] != expandedKnots[i] && low < up) {
-                value += ((Math.pow(up - expandedKnots[i], 5) - Math.pow(low - expandedKnots[i], 5))/
-                        (5 * Math.pow((expandedKnots[i + 2] - expandedKnots[i]) * (expandedKnots[i + 1] - expandedKnots[i]), 2)));
-            }
-            low = Math.max(start, expandedKnots[i + 1]);
-            up = Math.min(end, expandedKnots[i + 2]);
-            if (low < up) {
-                value += getSquaredQuadraticIntegral(getQuadratic(i), low, up);
-            }
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 2] && low < up) {
-                value += ((Math.pow(up - expandedKnots[i + 3], 5) - Math.pow(low - expandedKnots[i + 3], 5))/
-                        (5 * Math.pow((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 2]), 2)));
-            }
-            return value;
-        }
-
-        public double getOffDiagonalOrder1(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            double[] y = new double[3];
-            double c;
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                c = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            } else {
-                c = 0;
-            }
-            y[0] = (expandedKnots[i + 1] * expandedKnots[i + 1]) * c;
-            y[1] = -2 * expandedKnots[i + 1] * c;
-            y[2] = c;
-            low = Math.max(start, expandedKnots[i + 1]);
-            up = Math.min(end, expandedKnots[i + 2]);
-            if (low < up) {
-                value += getQuadraticProductIntegral(getQuadratic(i), y, low, up);
-            }
-
-
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                c = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                c = 0;
-            }
-            y[0] = (expandedKnots[i + 3] * expandedKnots[i + 3]) * c;
-            y[1] = -2 * expandedKnots[i + 3] * c;
-            y[2] = c;
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (low < up) {
-                value += getQuadraticProductIntegral(getQuadratic(i + 1), y, low, up);
-            }
-            return value;
-        }
-
-        public double getOffDiagonalOrder2(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            double[] y = new double[3];
-            double[] x = new double[3];
-            double c;
-            if (expandedKnots[i + 4] != expandedKnots[i + 2] && expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                c = 1/((expandedKnots[i + 4] - expandedKnots[i + 2]) * (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                c = 0;
-            }
-            x[0] = (expandedKnots[i + 2] * expandedKnots[i + 2]) * c;
-            x[1] = (-2 * expandedKnots[i + 2]) * c;
-            x[2] = c;
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                c = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                c = 0;
-            }
-            y[0] = expandedKnots[i + 3] * expandedKnots[i + 3] * c;
-            y[1] = (-2 * expandedKnots[i + 3]) * c;
-            y[2] = c;
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (low < up) {
-                value += getQuadraticProductIntegral(x, y, low, up);
-            }
-
-            return value;
-        }
-
-        @Override
-        public double getOffDiagonalOrder3(int i, double start, double end) {
-            return 0;
-        }
-
-        private double[] getQuadratic(int i) {
-            double[] values = new double[3];
-            double x;
-            double y;
-            if (expandedKnots[i + 2] != expandedKnots[i] && expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                x = 1/((expandedKnots[i + 2] - expandedKnots[i]) * (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            }
-            else {
-                x = 0;
-            }
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                y = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            }
-            else {
-                y = 0;
-            }
-            values[2] = -x - y;
-            values[1] = x * (expandedKnots[i + 2] + expandedKnots[i]) + y * (expandedKnots[i + 3] + expandedKnots[i + 1]);
-            values[0] = -x * expandedKnots[i] * expandedKnots[i + 2] - expandedKnots[i + 3] * expandedKnots[i + 1] * y;
-            return values;
-        }
-
-        private double getSquaredQuadraticIntegral(double[] coeff, double low, double up) {
-            java.util.function.DoubleFunction<Double> F = x ->
-                    (coeff[2] * coeff[2] / 5.0) * Math.pow(x, 5)
-                            + (coeff[2] * coeff[1] / 2.0) * Math.pow(x, 4)
-                            + ((coeff[1] * coeff[1] + 2 * coeff[2] * coeff[0]) / 3.0) * Math.pow(x, 3)
-                            + (coeff[1] * coeff[0]) * Math.pow(x, 2)
-                            + (coeff[0] * coeff[0]) * x;
-
-            if (low < up) {
-                return F.apply(up) - F.apply(low);
-            } else {
-                return 0;
-            }
-        }
-
-        private double getQuadraticProductIntegral(double[] x, double[] y, double low, double up) {
-            double a0 = x[0]*y[0];
-            double a1 = x[0]*y[1] + x[1]*y[0];
-            double a2 = x[0]*y[2] + x[1]*y[1] + x[2]*y[0];
-            double a3 = x[1]*y[2] + x[2]*y[1];
-            double a4 = x[2]*y[2];
-
-            java.util.function.DoubleFunction<Double> F = (t) ->
-                    a0 * t +
-                            a1 * Math.pow(t, 2) / 2.0 +
-                            a2 * Math.pow(t, 3) / 3.0 +
-                            a3 * Math.pow(t, 4) / 4.0 +
-                            a4 * Math.pow(t, 5) / 5.0;
-
-            if (TEST) {
-
-                java.util.function.DoubleFunction<Double> FF = (t) -> evaluatePolynomialIntegralEndPt(t,
-                        a0, a1, a2, a3, a4);
-
-                double f1 = F.apply(up); double f0 = F.apply(low);
-                double ff1 = FF.apply(up); double ff0 = FF.apply(low);
-                System.err.println(f1 + " " + f0);
-                System.err.println(ff1 + " " + ff0);
-                System.err.println("test!");
-                System.exit(-1);
-            }
-
-            if (low < up) {
-                return F.apply(up) - F.apply(low);
-            } else {
-                return 0;
-            }
-
+            expandedKnotsKnown = true;
         }
     }
 
 
-    private class Cubic implements SplinesIntegral{
-
-        private double getCubicProductIntegral(double[] x, double[] y, double low, double up) {
-
-            double c0 = x[0] * y[0];
-
-            double c1 = x[0] * y[1] + x[1] * y[0];
-
-            double c2 = x[0] * y[2] + x[1] * y[1] + x[2] * y[0];
-
-            double c3 = x[0] * y[3] + x[1] * y[2] + x[2] * y[1] + x[3] * y[0];
-
-            double c4 = x[1] * y[3] + x[2] * y[2] + x[3] * y[1];
-
-            double c5 = x[2] * y[3] + x[3] * y[2];
-
-            double c6 = x[3] * y[3];
-
-            java.util.function.DoubleFunction<Double> F = (t) ->
-                    c0 * t +
-                            c1 * Math.pow(t, 2) / 2.0 +
-                            c2 * Math.pow(t, 3) / 3.0 +
-                            c3 * Math.pow(t, 4) / 4.0 +
-                            c4 * Math.pow(t, 5) / 5.0 +
-                            c5 * Math.pow(t, 6) / 6.0 +
-                            c6 * Math.pow(t, 7) / 7.0;
-
-            if (low < up) {
-                return F.apply(up) - F.apply(low);
-            } else {
-                return 0.0;
-            }
-        }
-
-        private double[] getCubic1(int i){
-            double[] a = new double[3];
-            double[] cubicCoeff = new double[4];
-            if (expandedKnots[i + 3] != expandedKnots[i] && expandedKnots[i + 2] != expandedKnots[i] &&
-                    expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                a[0] = 1/((expandedKnots[i + 3] - expandedKnots[i]) * (expandedKnots[i + 2] - expandedKnots[i]) *
-                        (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            } else {
-                a[0] = 0;
-            }
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i] &&
-                    expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                a[1] = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i]) *
-                        (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            } else {
-                a[1] = 0;
-            }
-            if (expandedKnots[i + 4] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 1] &&
-                    expandedKnots[i + 2] != expandedKnots[i + 1]) {
-                a[2] = 1/((expandedKnots[i + 4] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 1]) *
-                        (expandedKnots[i + 2] - expandedKnots[i + 1]));
-            } else {
-                a[2] = 0;
-            }
-            cubicCoeff[3] = -(a[0] + a[1] + a[2]);
-            cubicCoeff[2] = 2 * a[0] * expandedKnots[i] + a[1] * expandedKnots[i] + a[1] * expandedKnots[i + 1] +
-                    2 * a[2] * expandedKnots[i + 1] + a[0] * expandedKnots[i + 2] + a[1] * expandedKnots[i + 3] +
-                    a[2] * expandedKnots[i + 4];
-            cubicCoeff[1] = -(a[0] * expandedKnots[i] * expandedKnots[i] + a[2] * expandedKnots[i + 1] * expandedKnots[i + 1]
-                    + a[1] * expandedKnots[i] * expandedKnots[i + 1] + 2 * a[0] * expandedKnots[i] * expandedKnots[i + 2]
-                    + a[1] * expandedKnots[i] * expandedKnots[i + 3] + a[1] * expandedKnots[i + 1] * expandedKnots[i + 3]
-                    + 2 * a[2] * expandedKnots[i + 1] * expandedKnots[i + 4]);
-            cubicCoeff[0] = a[0] * expandedKnots[i] * expandedKnots[i] * expandedKnots[i + 2] +
-                    a[1] * expandedKnots[i] * expandedKnots[i + 1] * expandedKnots[i + 3] +
-                    a[2] * expandedKnots[i + 1] * expandedKnots[i + 1] * expandedKnots[i + 4];
-            return  cubicCoeff;
-        }
-
-
-        private double[] getCubic2(int i) {
-
-
-            double[] cubicCoeff = new double[4];
-            double c;
-
-            if (expandedKnots[i + 3] != expandedKnots[i] &&
-                    expandedKnots[i + 2] != expandedKnots[i] &&
-                    expandedKnots[i + 1] != expandedKnots[i]) {
-
-                c = 1/((expandedKnots[i + 3] - expandedKnots[i]) *
-                        (expandedKnots[i + 2] - expandedKnots[i]) *
-                        (expandedKnots[i + 1] - expandedKnots[i]));
-
-                cubicCoeff[0] = -Math.pow(expandedKnots[i], 3) * c;
-                cubicCoeff[1] = 3 * Math.pow(expandedKnots[i], 2) * c;
-                cubicCoeff[2] = -3 * expandedKnots[i] * c;
-                cubicCoeff[3] = c;
-            }
-
-            return cubicCoeff;
-        }
-
-        private double[] getCubic3(int i){
-            double[] a = new double[3];
-            double[] cubicCoeff = new double[4];
-            if (expandedKnots[i + 3] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i] &&
-                    expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                a[0] = 1/((expandedKnots[i + 3] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i]) *
-                        (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                a[0] = 0;
-            }
-            if (expandedKnots[i + 4] != expandedKnots[i + 1] && expandedKnots[i + 3] != expandedKnots[i + 1] &&
-                    expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                a[1] = 1/((expandedKnots[i + 4] - expandedKnots[i + 1]) * (expandedKnots[i + 3] - expandedKnots[i + 1]) *
-                        (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                a[1] = 0;
-            }
-            if (expandedKnots[i + 4] != expandedKnots[i + 1] && expandedKnots[i + 4] != expandedKnots[i + 2] &&
-                    expandedKnots[i + 3] != expandedKnots[i + 2]) {
-                a[2] = 1/((expandedKnots[i + 4] - expandedKnots[i + 1]) * (expandedKnots[i + 4] - expandedKnots[i + 2]) *
-                        (expandedKnots[i + 3] - expandedKnots[i + 2]));
-            } else {
-                a[2] = 0;
-            }
-            cubicCoeff[3] = a[0] + a[1] + a[2];
-            cubicCoeff[2] = -(a[0] * expandedKnots[i] + a[1] * expandedKnots[i + 1] + a[2] * expandedKnots[i + 2] +
-                    2 * a[0] * expandedKnots[i + 3] + a[1] * expandedKnots[i + 3] + a[1] * expandedKnots[i + 4] +
-                    2 * a[2] * expandedKnots[i + 4]);
-            cubicCoeff[1] = a[0] * expandedKnots[i + 3] * expandedKnots[i + 3] + a[2] * expandedKnots[i + 4] * expandedKnots[i + 4]
-                    + 2 * a[0] * expandedKnots[i] * expandedKnots[i + 3] + a[1] * expandedKnots[i + 1] * expandedKnots[i + 3]
-                    + a[1] * expandedKnots[i + 1] * expandedKnots[i + 4] + 2 * a[2] * expandedKnots[i + 2] * expandedKnots[i + 4]
-                    + a[1] * expandedKnots[i + 3] * expandedKnots[i + 4];
-            cubicCoeff[0] = -(a[0] * expandedKnots[i] * expandedKnots[i + 3] * expandedKnots[i + 3] +
-                    a[2] * expandedKnots[i + 2] * expandedKnots[i + 4] * expandedKnots[i + 4] +
-                    a[1] * expandedKnots[i + 1] * expandedKnots[i + 3] * expandedKnots[i + 4]);
-            return  cubicCoeff;
-        }
-
-        private double[] getCubic4(int i) {
-
-
-            double[] cubicCoeff = new double[4];
-            double c;
-
-            if (expandedKnots[i + 4] != expandedKnots[i + 1] &&
-                    expandedKnots[i + 4] != expandedKnots[i + 2] &&
-                    expandedKnots[i + 4] != expandedKnots[i + 3]) {
-
-                c = 1/((expandedKnots[i + 4] - expandedKnots[i + 1]) *
-                        (expandedKnots[i + 4] - expandedKnots[i + 2]) *
-                        (expandedKnots[i + 4] - expandedKnots[i + 3]));
-
-                cubicCoeff[0] = Math.pow(expandedKnots[i + 4], 3) * c;
-                cubicCoeff[1] = - 3 * Math.pow(expandedKnots[i + 4], 2) * c;
-                cubicCoeff[2] = 3 * expandedKnots[i + 4] * c;
-                cubicCoeff[3] = -c;
-            }
-
-            return cubicCoeff;
-        }
-
-
-
-        public double getDiagonal(int i, double start, double end) {
-
-            double value = 0;
-            double low;
-            double up;
-
-
-            low = Math.max(start, expandedKnots[i]);
-            up = Math.min(end, expandedKnots[i + 1]);
-            if (expandedKnots[i + 3] != expandedKnots[i] && expandedKnots[i + 2] != expandedKnots[i] &&
-                    expandedKnots[i + 1] != expandedKnots[i] && low < up) {
-                value += ((Math.pow(up - expandedKnots[i], 7) - Math.pow(low - expandedKnots[i], 7))/
-                        (7 * Math.pow((expandedKnots[i + 3] - expandedKnots[i]) * (expandedKnots[i + 2] - expandedKnots[i])
-                                * (expandedKnots[i + 1] - expandedKnots[i]), 2)));
-            }
-
-
-            low = Math.max(start, expandedKnots[i + 1]);
-            up = Math.min(end, expandedKnots[i + 2]);
-
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic1(i), getCubic1(i), low, up);
-            }
-
-
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic3(i), getCubic3(i), low, up);
-            }
-
-            low = Math.max(start, expandedKnots[i + 3]);
-            up = Math.min(end, expandedKnots[i + 4]);
-            if (expandedKnots[i + 4] != expandedKnots[i + 1] && expandedKnots[i + 4] != expandedKnots[i + 2] &&
-                    expandedKnots[i + 4] != expandedKnots[i + 3] && low < up) {
-                value += ((Math.pow(up - expandedKnots[i + 4], 7) - Math.pow(low - expandedKnots[i + 4], 7))/
-                        (7 * Math.pow((expandedKnots[i + 4] - expandedKnots[i + 1])
-                                * (expandedKnots[i + 4] - expandedKnots[i + 2])
-                                * (expandedKnots[i + 4] - expandedKnots[i + 3]), 2)));
-            }
-
-            return value;
-        }
-
-        public double getOffDiagonalOrder1(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            low = Math.max(start, expandedKnots[i + 1]);
-            up = Math.min(end, expandedKnots[i + 2]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic2(i + 1), getCubic1(i), low, up);
-            }
-
-
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic1(i + 1), getCubic3(i), low, up);
-            }
-
-            low = Math.max(start, expandedKnots[i + 3]);
-            up = Math.min(end, expandedKnots[i + 4]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic3(i + 1), getCubic4(i), low, up);
-            }
-
-            return value;
-        }
-
-        public double getOffDiagonalOrder2(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            low = Math.max(start, expandedKnots[i + 2]);
-            up = Math.min(end, expandedKnots[i + 3]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic2(i + 2), getCubic3(i), low, up);
-            }
-
-
-            low = Math.max(start, expandedKnots[i + 3]);
-            up = Math.min(end, expandedKnots[i + 4]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic1(i + 2), getCubic4(i), low, up);
-            }
-
-            return value;
-        }
-
-        public double getOffDiagonalOrder3(int i, double start, double end) {
-            double value = 0;
-            double low;
-            double up;
-            low = Math.max(start, expandedKnots[i + 3]);
-            up = Math.min(end, expandedKnots[i + 4]);
-            if (low < up) {
-                value += getCubicProductIntegral(getCubic2(i + 3), getCubic4(i), low, up);
-            }
-
-            return value;
-        }
-    }
 
 
     // TODO check
@@ -626,80 +194,46 @@ public class IntegratedTransformedSplines {
         return product;
     }
 
+    public double getSplineBasis(int i, int d, double x, double[] knots) {
+        if (d == 0) {
+            if (x >= knots[i] && x < knots[i + 1]) {
+                return 1.0;
+            } else {
+                return 0.0;
+            }
+        }
 
+        double denom1 = knots[i + d] - knots[i];
+        double denom2 = knots[i + d + 1] - knots[i + 1];
 
-    public double[][] getIntegratedSquaredBasisMatrix(double start, double end) {
-        int dim = coefficient.getDimension();
-//        double[][] mat = new double[dim][dim];
-        double[][] mat = this.temp;
-        for (int i = 0; i < dim ; i++) {
-            mat[i][i] = splinesIntegral.getDiagonal(i, start, end);
+        double term1 = 0.0;
+        double term2 = 0.0;
+
+        if (denom1 != 0) {
+            term1 = ((x - knots[i]) / denom1) * getSplineBasis(i, d - 1, x, knots);
         }
-        for (int i = 0; i < dim - 1; i++) {
-            double order1 = splinesIntegral.getOffDiagonalOrder1(i, start, end);
-            mat[i][i + 1] = order1;
-            mat[i + 1][i] = order1;
+        if (denom2 != 0) {
+            term2 = ((knots[i + d + 1] - x) / denom2) * getSplineBasis(i + 1, d - 1, x, knots);
         }
-        for (int i = 0; i < dim - 2; i++) {
-            double order2 = splinesIntegral.getOffDiagonalOrder2(i, start, end);
-            mat[i][i + 2] = order2;
-            mat[i + 2][i] = order2;
-        }
-        for (int i = 0; i < dim - 3; i++) {
-            double order3 = splinesIntegral.getOffDiagonalOrder3(i, start, end);
-            mat[i][i + 3] = order3;
-            mat[i + 3][i] = order3;
-        }
-        return mat;
+
+        return term1 + term2;
     }
 
-    public double getSquaredSplinesIntegral (double start, double end){
-        getExpandedKnots();
-        int dim = coefficient.getDimension();
-        double[][] mat = getIntegratedSquaredBasisMatrix(start, end);
-        double sum = 0;
-        if (end > start) {
-            for (int i = 0; i < dim; i++) {
-                sum += mat[i][i] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i);
-            }
-            for (int i = 0; i < dim - 1; i++) {
-                sum += 2 * mat[i][i + 1] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 1);
-            }
-            for (int i = 0; i < dim - 2; i++) {
-                sum += 2 * mat[i][i + 2] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 2);
-            }
-            for (int i = 0; i < dim - 3; i++) {
-                sum += 2 * mat[i][i + 3] * coefficient.getParameterValue(i) * coefficient.getParameterValue(i + 3);
-            }
-        }
-
-        return sum + intercept.getParameterValue(0) * (end - start);
-    }
-
-
-
-    public double[] getSquaredSplinesGradient (double start, double end){
-        getExpandedKnots();
-        int dim = coefficient.getDimension();
-        double[][] mat = getIntegratedSquaredBasisMatrix(start, end);
-        double[] gradient = new double[dim];
-        if (end > start) {
-            for (int i = 0; i < dim; i++) {
-                for (int j = 0; j < dim; j++) {
-                    gradient[i] += 2 * mat[i][j] * coefficient.getParameterValue(j);
-                }
-            }
-        }
-        return gradient;
-    }
 
     public double evaluateExpSpline(double x) {
         double sum = 0.0;
         getExpandedKnots();
-
-        for (int i = 0; i < coefficient.getDimension(); i++) {
-            sum += coefficient.getParameterValue(i) * BSplines.getSplineBasis(i, degree, x, expandedKnots);
+        if (isInterceptNull()) {
+            for (int i = 0; i < coefficient.getDimension(); i++) {
+                sum += coefficient.getParameterValue(i) * getSplineBasis(i, degree, x, expandedKnots);
+            }
+        } else {
+            for (int i = 0; i < coefficient.getDimension(); i++) {
+                sum += coefficient.getParameterValue(i) * getSplineBasis(i + 1, degree, x, expandedKnots);
+            }
+            sum += intercept.getParameterValue(0);
         }
+
 
         return Math.exp(sum);
     }
@@ -716,26 +250,13 @@ public class IntegratedTransformedSplines {
         };
 
         TrapezoidIntegrator integrator = new TrapezoidIntegrator();
-        return integrator.integrate(f, a, b) + intercept.getParameterValue(0) * (b - a);
+        return integrator.integrate(f, a, b);
     }
 
     public double getIntegral (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
-        if ("squared".equals(transform)) {
-            return getSquaredSplinesIntegral(start, end);
-        }
-        else if ("exponential".equals(transform)) {
-            return getExponentialSplinesIntegral(start, end);
-        } else {
-            throw new IllegalArgumentException("Only squared and exponential transforms supported");
-        }
-    }
 
-    public double[] getGradient (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
-        if ("squared".equals(transform)) {
-            return getSquaredSplinesGradient(start, end);
-        } else {
-            return new double[getCoefficientDim()];
-        }
+            return getExponentialSplinesIntegral(start, end);
+
     }
 
 }

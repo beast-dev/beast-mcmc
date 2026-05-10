@@ -45,6 +45,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private double[][] storedBranchStartPreOrder;
     private double[][] nodePreOrder;
     private double[][] storedNodePreOrder;
+    private double[][] nodePreOrderStandard;
+    private double[][] storedNodePreOrderStandard;
 
     // log scales [node][pattern]
     private double[][] nodePreOrderLogScales;
@@ -60,7 +62,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     // scratch
     private final double[] tmpParentNodePreOrder;
+    private final double[] tmpParentNodePreOrderStandard;
     private final double[] tmpSiblingPostOrder;
+    private final double[] tmpSiblingPostOrderStandard;
+    private final double[] tmpChildBranchTopPreOrderStandard;
     private final double[] tmpChildBranchTopPreOrder;
     private final double[] tmpChildNodePreOrder;
     private final double[] tmpExport;
@@ -105,6 +110,13 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.storedBranchStartPreOrder = new double[nodeCount][nodeBufferLength];
         this.nodePreOrder = new double[nodeCount][nodeBufferLength];
         this.storedNodePreOrder = new double[nodeCount][nodeBufferLength];
+        if (preOrderRepresentation.storesPartialsInStandardBasis()) {
+            this.nodePreOrderStandard = null;
+            this.storedNodePreOrderStandard = null;
+        } else {
+            this.nodePreOrderStandard = new double[nodeCount][nodeBufferLength];
+            this.storedNodePreOrderStandard = new double[nodeCount][nodeBufferLength];
+        }
 
         this.nodePreOrderLogScales = new double[nodeCount][patternCount];
         this.storedNodePreOrderLogScales = new double[nodeCount][patternCount];
@@ -119,7 +131,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.preOrderEndKnown = preOrderAtBranchEnd != null ? new boolean[nodeCount] : null;
 
         this.tmpParentNodePreOrder = new double[stateCount];
+        this.tmpParentNodePreOrderStandard = new double[stateCount];
         this.tmpSiblingPostOrder = new double[stateCount];
+        this.tmpSiblingPostOrderStandard = new double[stateCount];
+        this.tmpChildBranchTopPreOrderStandard = new double[stateCount];
         this.tmpChildBranchTopPreOrder = new double[stateCount];
         this.tmpChildNodePreOrder = new double[stateCount];
         this.tmpExport = new double[stateCount];
@@ -156,6 +171,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     public void storeState() {
         copy2D(branchStartPreOrder, storedBranchStartPreOrder);
         copy2D(nodePreOrder, storedNodePreOrder);
+        if (nodePreOrderStandard != null) {
+            copy2D(nodePreOrderStandard, storedNodePreOrderStandard);
+        }
         copy2D(nodePreOrderLogScales, storedNodePreOrderLogScales);
         preOrderRepresentation.storeState();
     }
@@ -169,6 +187,12 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         double[][] tmpA = nodePreOrder;
         nodePreOrder = storedNodePreOrder;
         storedNodePreOrder = tmpA;
+
+        if (nodePreOrderStandard != null) {
+            double[][] tmpStandard = nodePreOrderStandard;
+            nodePreOrderStandard = storedNodePreOrderStandard;
+            storedNodePreOrderStandard = tmpStandard;
+        }
 
         double[][] tmpB = nodePreOrderLogScales;
         nodePreOrderLogScales = storedNodePreOrderLogScales;
@@ -214,8 +238,12 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private void initializeRoot(int rootNumber, double[] rootFrequencies) {
         final double[] rootBuffer = nodePreOrder[rootNumber];
         final double[] rootStartBuffer = branchStartPreOrder[rootNumber];
+        final double[] rootStandardBuffer = nodePreOrderStandard == null ? null : nodePreOrderStandard[rootNumber];
         Arrays.fill(rootBuffer, 0.0);
         Arrays.fill(rootStartBuffer, 0.0);
+        if (rootStandardBuffer != null) {
+            Arrays.fill(rootStandardBuffer, 0.0);
+        }
         Arrays.fill(nodePreOrderLogScales[rootNumber], 0.0);
 
         for (int c = 0; c < categoryCount; c++) {
@@ -223,6 +251,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 final int off = offset(c, p, 0);
                 preOrderRepresentation.initializeRootPartial(rootFrequencies, tmpChildNodePreOrder);
                 System.arraycopy(tmpChildNodePreOrder, 0, rootBuffer, off, stateCount);
+                if (rootStandardBuffer != null) {
+                    System.arraycopy(rootFrequencies, 0, rootStandardBuffer, off, stateCount);
+                }
             }
         }
         System.arraycopy(rootBuffer, 0, rootStartBuffer, 0, rootBuffer.length);
@@ -271,9 +302,17 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 tree.isRoot(parent)
                         ? branchStartPreOrder[parentNumber]
                         : nodePreOrder[parentNumber];
+        final double[] parentNodePreOrderStandard =
+                nodePreOrderStandard == null
+                        ? null
+                        : nodePreOrderStandard[parentNumber];
 
         final double[] childPreOrderStart = branchStartPreOrder[childNumber];
         final double[] childPreOrderEnd = nodePreOrder[childNumber];
+        final double[] childPreOrderEndStandard =
+                nodePreOrderStandard == null
+                        ? null
+                        : nodePreOrderStandard[childNumber];
 
         final double[] childScale = nodePreOrderLogScales[childNumber];
         final double[] parentScale = nodePreOrderLogScales[parentNumber];
@@ -284,6 +323,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         Arrays.fill(childPreOrderStart, 0.0);
         Arrays.fill(childPreOrderEnd, 0.0);
+        if (childPreOrderEndStandard != null) {
+            Arrays.fill(childPreOrderEndStandard, 0.0);
+        }
 
         for (int c = 0; c < categoryCount; c++) {
 //            final double siblingEffectiveLength = siblingLength * categoryRates[c];
@@ -292,18 +334,31 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
 
-                // sibling branch-top postorder in the paired post-order representation
-                postOrderMessageProvider.getPostOrderBranchTopInto(siblingNumber, c, p, tmpSiblingPostOrder);
+                if (nodePreOrderStandard == null) {
+                    // sibling branch-top postorder in the paired post-order representation
+                    postOrderMessageProvider.getPostOrderBranchTopInto(siblingNumber, c, p, tmpSiblingPostOrder);
 
-                // parent preorder at the correct side, in the representation's internal basis
-                System.arraycopy(parentNodePreOrder, off, tmpParentNodePreOrder, 0, stateCount);
+                    // parent preorder at the correct side, in the representation's internal basis
+                    System.arraycopy(parentNodePreOrder, off, tmpParentNodePreOrder, 0, stateCount);
 
-                // combine parent preorder with sibling branch-top postorder
-                preOrderRepresentation.combineParentAndSibling(
-                        tmpParentNodePreOrder,
-                        tmpSiblingPostOrder,
-                        tmpChildBranchTopPreOrder
-                );
+                    // combine parent preorder with sibling branch-top postorder
+                    preOrderRepresentation.combineParentAndSibling(
+                            tmpParentNodePreOrder,
+                            tmpSiblingPostOrder,
+                            tmpChildBranchTopPreOrder
+                    );
+                } else {
+                    postOrderMessageProvider.getPostOrderBranchTopStandardInto(
+                            siblingNumber, c, p, tmpSiblingPostOrderStandard);
+                    System.arraycopy(parentNodePreOrderStandard, off,
+                            tmpParentNodePreOrderStandard, 0, stateCount);
+                    for (int s = 0; s < stateCount; s++) {
+                        tmpChildBranchTopPreOrderStandard[s] =
+                                tmpParentNodePreOrderStandard[s] * tmpSiblingPostOrderStandard[s];
+                    }
+                    preOrderRepresentation.importPreOrderPartialFromStandard(
+                            tmpChildBranchTopPreOrderStandard, tmpChildBranchTopPreOrder);
+                }
 
                 System.arraycopy(tmpChildBranchTopPreOrder, 0, childPreOrderStart, off, stateCount);
 
@@ -330,6 +385,14 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 // normalize END too
                 final double extraScaleEnd = normalizePatternSlice(childPreOrderEnd, off);
                 childScale[p] += extraScaleEnd;
+
+                if (childPreOrderEndStandard != null) {
+                    System.arraycopy(childPreOrderEnd, off, tmpChildNodePreOrder, 0, stateCount);
+                    preOrderRepresentation.exportPreOrderPartialToStandard(
+                            tmpChildNodePreOrder, tmpChildBranchTopPreOrderStandard);
+                    System.arraycopy(tmpChildBranchTopPreOrderStandard, 0,
+                            childPreOrderEndStandard, off, stateCount);
+                }
             }
         }
 

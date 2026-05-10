@@ -44,6 +44,29 @@ public interface PreOrderRepresentation {
                                  double[] outChildBranchTopPreOrder);
 
     /**
+     * Whether the internal pre-order partials are already expressed in the
+     * standard data-type basis.
+     */
+    default boolean storesPartialsInStandardBasis() {
+        return true;
+    }
+
+    /**
+     * Convert a standard-basis pre-order partial to this representation's
+     * internal basis.
+     */
+    default void importPreOrderPartialFromStandard(double[] standardPartial, double[] outPreOrderPartial) {
+        System.arraycopy(standardPartial, 0, outPreOrderPartial, 0, standardPartial.length);
+    }
+
+    /**
+     * Export one internal pre-order partial slice to the standard data-type basis.
+     */
+    default void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
+        exportPreOrderPartial(preOrderPartial, outStandardPartial);
+    }
+
+    /**
      * Propagate a pre-order message from the TOP of the child's branch to the BOTTOM
      * of the child's branch (i.e. to the child node).
      */

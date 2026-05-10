@@ -27,6 +27,13 @@ public interface PostOrderMessageProvider {
     void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial);
 
     /**
+     * Get the post-order message at the TOP of the branch in standard data-type
+     * coordinates. Traversals that combine messages in standard basis can use
+     * this to avoid repeated internal-to-standard conversion.
+     */
+    void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outPartial);
+
+    /**
      * Get the post-order message at the BOTTOM of the branch leading into childNodeNumber,
      * in exported coordinates, for a single category/pattern slice.
      *

@@ -105,6 +105,7 @@ public final class SpectralRotatedPartialsRepresentation
     @Override public String  getName()                { return "spectral-rotated-partials"; }
     @Override public int     getStateCount()          { return stateCount; }
     @Override public boolean supportsInternalScaling() { return true; }
+    @Override public boolean storesPartialsInStandardBasis() { return false; }
 
     @Override
     public void markDirty() { eigenDirty = true; }
@@ -141,6 +142,27 @@ public final class SpectralRotatedPartialsRepresentation
         ensureEigenSystemCurrent();
         multiplyMatrixVector(matrixR,    leftBranchTopPartial,  tmpStandardA, stateCount);
         multiplyMatrixVector(matrixR,    rightBranchTopPartial, tmpStandardB, stateCount);
+        for (int i = 0; i < stateCount; i++) {
+            tmpA[i] = tmpStandardA[i] * tmpStandardB[i];
+        }
+        multiplyMatrixVector(matrixRInv, tmpA, outParentPartial, stateCount);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         double[] rightBranchTopPartial,
+                                         double[] outParentPartial,
+                                         double[] outLeftStandard,
+                                         double[] outRightStandard) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVector(matrixR, leftBranchTopPartial, tmpStandardA, stateCount);
+        multiplyMatrixVector(matrixR, rightBranchTopPartial, tmpStandardB, stateCount);
+        if (outLeftStandard != null) {
+            System.arraycopy(tmpStandardA, 0, outLeftStandard, 0, stateCount);
+        }
+        if (outRightStandard != null) {
+            System.arraycopy(tmpStandardB, 0, outRightStandard, 0, stateCount);
+        }
         for (int i = 0; i < stateCount; i++) {
             tmpA[i] = tmpStandardA[i] * tmpStandardB[i];
         }
@@ -191,8 +213,26 @@ public final class SpectralRotatedPartialsRepresentation
     }
 
     @Override
+    public void exportPostOrderPartialToStandard(double[] partial, double[] outPartial) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVector(matrixR, partial, outPartial, stateCount);
+    }
+
+    @Override
     public void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial) {
         System.arraycopy(preOrderPartial, 0, outPartial, 0, stateCount);
+    }
+
+    @Override
+    public void importPreOrderPartialFromStandard(double[] standardPartial, double[] outPreOrderPartial) {
+        ensureEigenSystemCurrent();
+        multiplyTransposeMatrixVector(matrixR, standardPartial, outPreOrderPartial, stateCount);
+    }
+
+    @Override
+    public void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
+        ensureEigenSystemCurrent();
+        multiplyTransposeMatrixVector(matrixRInv, preOrderPartial, outStandardPartial, stateCount);
     }
 
     // -------------------------------------------------------------------------

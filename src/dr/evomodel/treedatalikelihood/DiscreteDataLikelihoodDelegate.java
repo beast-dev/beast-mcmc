@@ -204,6 +204,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     // Optional caches. Branch-start post-order is kept in representation-native coordinates
     // for pre-order traversal; external accessors ask the representation to export it.
     private final double[][] postOrderAtBranchStart;
+    private final double[][] postOrderAtBranchStartStandard;
     private final double[][] postOrderAtBranchEnd;
     private final double[][] preOrderAtBranchStart;
     private final double[][] preOrderAtBranchEnd;
@@ -229,6 +230,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private final double[] rightPropagated;
     private final double[] tmpVectorA;
     private final double[] tmpVectorB;
+    private final double[] tmpVectorC;
 
     // Scratch buffer for exporting a whole node buffer
     private final double[] tmpNodeExportBuffer;
@@ -348,6 +350,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //        this.storedNodePreOrderPatternLogScales = new double[nodeCount][patternCount];
 
         this.postOrderAtBranchStart = cacheSettings.cacheBranchStartPostOrder ? new double[nodeCount][nodeBufferLength] : null;
+        this.postOrderAtBranchStartStandard =
+                cacheSettings.cacheBranchStartPostOrder && !postOrderRepresentation.storesPartialsInStandardBasis()
+                        ? new double[nodeCount][nodeBufferLength] : null;
         this.postOrderAtBranchEnd = cacheSettings.cacheBranchEndPostOrder ? new double[nodeCount][nodeBufferLength] : null;
 
         this.transformedPostOrder = cacheSettings.cacheTransformedPostOrder ? new double[nodeCount][nodeBufferLength] : null;
@@ -373,6 +378,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         this.rightPropagated = new double[stateCount];
         this.tmpVectorA = new double[stateCount];
         this.tmpVectorB = new double[stateCount];
+        this.tmpVectorC = new double[stateCount];
         this.tmpNodeExportBuffer = new double[nodeBufferLength];
 
         initialiseTipPartials();
@@ -950,7 +956,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
                 nodeScales[p] = leftScales[p] + rightScales[p];
 
-                postOrderRepresentation.combineBranchTopPartials(leftPropagated, rightPropagated, tmpVectorA);
+                if (postOrderAtBranchStartStandard != null) {
+                    postOrderRepresentation.combineBranchTopPartials(
+                            leftPropagated, rightPropagated, tmpVectorA, tmpVectorB, tmpVectorC);
+                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStartStandard[leftNumber],
+                            childOffset, stateCount);
+                    System.arraycopy(tmpVectorC, 0, postOrderAtBranchStartStandard[rightNumber],
+                            childOffset, stateCount);
+                } else {
+                    postOrderRepresentation.combineBranchTopPartials(leftPropagated, rightPropagated, tmpVectorA);
+                }
                 System.arraycopy(tmpVectorA, 0, nodeBuffer, parentOffset, stateCount);
 
                 if (cacheSettings.applyPatternScaling) {
@@ -1016,6 +1031,17 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
         System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outPartial, 0, stateCount);
+    }
+
+    @Override
+    public void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
+        final int off = offset(category, pattern, 0);
+        if (postOrderAtBranchStartStandard != null) {
+            System.arraycopy(postOrderAtBranchStartStandard[childNodeNumber], off, outPartial, 0, stateCount);
+        } else {
+            System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outPartial, 0, stateCount);
+        }
     }
 
     @Override

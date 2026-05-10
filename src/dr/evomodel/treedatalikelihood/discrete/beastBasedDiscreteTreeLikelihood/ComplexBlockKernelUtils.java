@@ -29,10 +29,26 @@ public final class ComplexBlockKernelUtils {
         int[] blockStarts = new int[stateCount];
         int[] blockDims = new int[stateCount];
         int blockCount = buildEigenBlocks(decomposition.getEigenValues(), blockStarts, blockDims, stateCount);
-        ComplexKernelEntry[] entries = new ComplexKernelEntry[blockCount * blockCount];
-        int entryIndex = 0;
 
         double[] eigenValues = decomposition.getEigenValues();
+
+        // Pre-compute exp(t*real) and, for complex blocks, cos(t*imag) and sin(t*imag) once per block.
+        // This reduces transcendental calls in the nested (leftBlock, rightBlock) loop from O(K^2) to O(K).
+        double[] expR = new double[blockCount];
+        double[] cosB = new double[blockCount];
+        double[] sinB = new double[blockCount];
+        for (int b = 0; b < blockCount; ++b) {
+            int start = blockStarts[b];
+            expR[b] = Math.exp(time * eigenValues[start]);
+            if (blockDims[b] == 2) {
+                double imag = eigenValues[start + stateCount];
+                cosB[b] = Math.cos(time * imag);
+                sinB[b] = Math.sin(time * imag);
+            }
+        }
+
+        ComplexKernelEntry[] entries = new ComplexKernelEntry[blockCount * blockCount];
+        int entryIndex = 0;
 
         for (int leftBlock = 0; leftBlock < blockCount; ++leftBlock) {
             final int leftStart = blockStarts[leftBlock];
@@ -41,7 +57,8 @@ public final class ComplexBlockKernelUtils {
                 final int rightStart = blockStarts[rightBlock];
                 final int rightDim = blockDims[rightBlock];
                 double[] coefficients = buildCoefficients(
-                        eigenValues, leftStart, leftDim, rightStart, rightDim, stateCount, time);
+                        eigenValues, leftStart, leftDim, rightStart, rightDim, stateCount, time,
+                        leftBlock, rightBlock, expR, cosB, sinB);
                 entries[entryIndex++] = new ComplexKernelEntry(leftStart, leftDim, rightStart, rightDim, coefficients);
             }
         }
@@ -155,21 +172,6 @@ public final class ComplexBlockKernelUtils {
         return blockCount;
     }
 
-    private static void fillEigenBlock(double[][] localQ,
-                                       int offset,
-                                       int eigenStart,
-                                       int blockDim,
-                                       double[] eigenValues,
-                                       int stateCount) {
-        localQ[offset][offset] = eigenValues[eigenStart];
-        if (blockDim == 2) {
-            double imag = eigenValues[eigenStart + stateCount];
-            localQ[offset][offset + 1] = imag;
-            localQ[offset + 1][offset] = -imag;
-            localQ[offset + 1][offset + 1] = eigenValues[eigenStart];
-        }
-    }
-
     private static void zeroSquare(double[][] matrix, int dim) {
         for (int i = 0; i < dim; ++i) {
             java.util.Arrays.fill(matrix[i], 0, dim, 0.0);
@@ -182,12 +184,20 @@ public final class ComplexBlockKernelUtils {
                                               int rightStart,
                                               int rightDim,
                                               int stateCount,
-                                              double time) {
+                                              double time,
+                                              int leftBlock,
+                                              int rightBlock,
+                                              double[] expR,
+                                              double[] cosB,
+                                              double[] sinB) {
         if (leftDim == 1 && rightDim == 1) {
-            return buildScalarCoefficient(eigenValues[leftStart], eigenValues[rightStart], time);
+            return buildScalarCoefficient(expR[leftBlock], expR[rightBlock],
+                    eigenValues[leftStart], eigenValues[rightStart], time);
         }
         if (leftDim == 1 && rightDim == 2) {
             return buildOneByTwoCoefficient(
+                    expR[leftBlock], expR[rightBlock],
+                    cosB[rightBlock], sinB[rightBlock],
                     eigenValues[leftStart],
                     eigenValues[rightStart],
                     eigenValues[rightStart + stateCount],
@@ -195,6 +205,8 @@ public final class ComplexBlockKernelUtils {
         }
         if (leftDim == 2 && rightDim == 1) {
             return buildTwoByOneCoefficient(
+                    expR[leftBlock], expR[rightBlock],
+                    cosB[leftBlock], sinB[leftBlock],
                     eigenValues[leftStart],
                     eigenValues[leftStart + stateCount],
                     eigenValues[rightStart],
@@ -202,6 +214,9 @@ public final class ComplexBlockKernelUtils {
         }
         if (leftDim == 2 && rightDim == 2) {
             return buildTwoByTwoCoefficient(
+                    expR[leftBlock], expR[rightBlock],
+                    cosB[leftBlock], sinB[leftBlock],
+                    cosB[rightBlock], sinB[rightBlock],
                     eigenValues[leftStart],
                     eigenValues[leftStart + stateCount],
                     eigenValues[rightStart],
@@ -225,46 +240,62 @@ public final class ComplexBlockKernelUtils {
         return coefficients;
     }
 
-    private static double[] buildScalarCoefficient(double leftEigenvalue,
+    // Uses pre-computed expLeft = exp(t*leftEigenvalue), expRight = exp(t*rightEigenvalue).
+    private static double[] buildScalarCoefficient(double expLeft,
+                                                   double expRight,
+                                                   double leftEigenvalue,
                                                    double rightEigenvalue,
                                                    double time) {
         double[] coefficients = new double[1];
         double delta = leftEigenvalue - rightEigenvalue;
         if (Math.abs(delta) < EIGEN_TOLERANCE) {
-            coefficients[0] = time * Math.exp(time * leftEigenvalue);
+            coefficients[0] = time * expLeft;
         } else {
-            coefficients[0] = (Math.exp(time * leftEigenvalue) - Math.exp(time * rightEigenvalue)) / delta;
+            coefficients[0] = (expLeft - expRight) / delta;
         }
         return coefficients;
     }
 
-    private static double[] buildOneByTwoCoefficient(double leftEigenvalue,
+    // expLeft  = exp(t*leftEigenvalue)
+    // expRight = exp(t*rightReal)
+    // cosRight = cos(t*rightImag), sinRight = sin(t*rightImag)
+    private static double[] buildOneByTwoCoefficient(double expLeft,
+                                                     double expRight,
+                                                     double cosRight,
+                                                     double sinRight,
+                                                     double leftEigenvalue,
                                                      double rightReal,
                                                      double rightImag,
                                                      double time) {
         double[] integral = new double[4];
-        fillScaledRotationIntegral(rightReal - leftEigenvalue, rightImag, time, integral);
-        double scale = Math.exp(time * leftEigenvalue);
+        double realShift = rightReal - leftEigenvalue;
+        // exp(t*realShift) = expRight / expLeft; trig part uses cosRight, sinRight (imagShift = rightImag)
+        fillScaledRotationIntegralPrecomputed(realShift, rightImag, time, expRight / expLeft, cosRight, sinRight, integral);
         for (int i = 0; i < integral.length; ++i) {
-            integral[i] *= scale;
+            integral[i] *= expLeft;
         }
         return integral;
     }
 
-    private static double[] buildTwoByOneCoefficient(double leftReal,
+    // expLeft  = exp(t*leftReal),  expRight = exp(t*rightEigenvalue)
+    // cosLeft  = cos(t*leftImag),  sinLeft  = sin(t*leftImag)
+    private static double[] buildTwoByOneCoefficient(double expLeft,
+                                                     double expRight,
+                                                     double cosLeft,
+                                                     double sinLeft,
+                                                     double leftReal,
                                                      double leftImag,
                                                      double rightEigenvalue,
                                                      double time) {
         double[] integral = new double[4];
-        fillScaledRotationIntegral(rightEigenvalue - leftReal, leftImag, time, integral);
+        double realShift = rightEigenvalue - leftReal;
+        // exp(t*realShift) = expRight / expLeft; imagShift = leftImag → cosLeft, sinLeft
+        fillScaledRotationIntegralPrecomputed(realShift, leftImag, time, expRight / expLeft, cosLeft, sinLeft, integral);
 
-        double exp = Math.exp(time * leftReal);
-        double cos = Math.cos(time * leftImag);
-        double sin = Math.sin(time * leftImag);
-        double l00 = exp * cos;
-        double l01 = -exp * sin;
-        double l10 = exp * sin;
-        double l11 = exp * cos;
+        double l00 =  expLeft * cosLeft;
+        double l01 = -expLeft * sinLeft;
+        double l10 =  expLeft * sinLeft;
+        double l11 =  expLeft * cosLeft;
 
         double[] coefficients = new double[4];
         coefficients[0] = l00 * integral[0] + l01 * integral[2];
@@ -274,19 +305,41 @@ public final class ComplexBlockKernelUtils {
         return coefficients;
     }
 
-    private static double[] buildTwoByTwoCoefficient(double leftReal,
+    // expLeft  = exp(t*leftReal),  expRight = exp(t*rightReal)
+    // cosLeft  = cos(t*leftImag),  sinLeft  = sin(t*leftImag)
+    // cosRight = cos(t*rightImag), sinRight = sin(t*rightImag)
+    // Uses angle-addition identities to avoid all transcendental calls.
+    private static double[] buildTwoByTwoCoefficient(double expLeft,
+                                                     double expRight,
+                                                     double cosLeft,
+                                                     double sinLeft,
+                                                     double cosRight,
+                                                     double sinRight,
+                                                     double leftReal,
                                                      double leftImag,
                                                      double rightReal,
                                                      double rightImag,
                                                      double time) {
-        double[] plus = complexMatrix(
-                multiplyComplex(
-                        expComplex(leftReal, -leftImag, time),
-                        integralComplex(rightReal - leftReal, leftImag + rightImag, time)));
-        double[] minus = complexMatrix(
-                multiplyComplex(
-                        expComplex(leftReal, leftImag, time),
-                        integralComplex(rightReal - leftReal, rightImag - leftImag, time)));
+        double expShift = expRight / expLeft;  // exp(t*(rightReal - leftReal))
+        double realShift = rightReal - leftReal;
+
+        // Angle-addition: cos/sin of t*(leftImag + rightImag)
+        double cosPlusImag  = cosLeft * cosRight - sinLeft * sinRight;
+        double sinPlusImag  = sinLeft * cosRight + cosLeft * sinRight;
+        // Angle-addition: cos/sin of t*(rightImag - leftImag)
+        double cosMinusImag = cosRight * cosLeft + sinRight * sinLeft;
+        double sinMinusImag = sinRight * cosLeft - cosRight * sinLeft;
+
+        // expComplex(leftReal, -leftImag, time) = [expLeft*cosLeft, -expLeft*sinLeft]
+        double[] expNeg = {expLeft * cosLeft, -expLeft * sinLeft};
+        // expComplex(leftReal, +leftImag, time) = [expLeft*cosLeft, +expLeft*sinLeft]
+        double[] expPos = {expLeft * cosLeft,  expLeft * sinLeft};
+
+        double[] plusIntegral  = integralComplexPrecomputed(realShift, leftImag + rightImag,  time, expShift, cosPlusImag,  sinPlusImag);
+        double[] minusIntegral = integralComplexPrecomputed(realShift, rightImag - leftImag, time, expShift, cosMinusImag, sinMinusImag);
+
+        double[] plus  = complexMatrix(multiplyComplex(expNeg, plusIntegral));
+        double[] minus = complexMatrix(multiplyComplex(expPos, minusIntegral));
 
         double[] coefficients = new double[16];
         double[][] basisColumns = {
@@ -307,28 +360,26 @@ public final class ComplexBlockKernelUtils {
             double outP = plus[0] * p + plus[1] * q;
             double outQ = plus[2] * p + plus[3] * q;
 
-            coefficients[col] = outU + outP;
-            coefficients[4 + col] = outV + outQ;
-            coefficients[8 + col] = -outV + outQ;
+            coefficients[col]      = outU + outP;
+            coefficients[4  + col] = outV + outQ;
+            coefficients[8  + col] = -outV + outQ;
             coefficients[12 + col] = outU - outP;
         }
         return coefficients;
     }
 
-    private static double[] expComplex(double real, double imag, double time) {
-        double scale = Math.exp(time * real);
-        return new double[] {scale * Math.cos(time * imag), scale * Math.sin(time * imag)};
-    }
-
-    private static double[] integralComplex(double real, double imag, double time) {
+    // Uses pre-computed exp(t*real)*cos(t*imag) and exp(t*real)*sin(t*imag).
+    private static double[] integralComplexPrecomputed(double real, double imag, double time,
+                                                       double expReal, double cosImag, double sinImag) {
         double denom = real * real + imag * imag;
         if (denom < EIGEN_TOLERANCE) {
             return new double[] {time, 0.0};
         }
-        double[] exp = expComplex(real, imag, time);
+        double expCos = expReal * cosImag;
+        double expSin = expReal * sinImag;
         return new double[] {
-                (real * (exp[0] - 1.0) + imag * exp[1]) / denom,
-                (real * exp[1] - imag * (exp[0] - 1.0)) / denom
+                (real * (expCos - 1.0) + imag * expSin) / denom,
+                (real * expSin - imag * (expCos - 1.0)) / denom
         };
     }
 
@@ -346,10 +397,14 @@ public final class ComplexBlockKernelUtils {
         };
     }
 
-    private static void fillScaledRotationIntegral(double realShift,
-                                                   double imagShift,
-                                                   double time,
-                                                   double[] out) {
+    // Uses pre-computed expShift = exp(t*realShift), cosShift = cos(t*imagShift), sinShift = sin(t*imagShift).
+    private static void fillScaledRotationIntegralPrecomputed(double realShift,
+                                                              double imagShift,
+                                                              double time,
+                                                              double expShift,
+                                                              double cosShift,
+                                                              double sinShift,
+                                                              double[] out) {
         double denominator = realShift * realShift + imagShift * imagShift;
         if (denominator < EIGEN_TOLERANCE) {
             out[0] = time;
@@ -359,12 +414,8 @@ public final class ComplexBlockKernelUtils {
             return;
         }
 
-        double exp = Math.exp(time * realShift);
-        double cos = Math.cos(time * imagShift);
-        double sin = Math.sin(time * imagShift);
-
-        double integralCos = (exp * (realShift * cos + imagShift * sin) - realShift) / denominator;
-        double integralSin = (exp * (realShift * sin - imagShift * cos) + imagShift) / denominator;
+        double integralCos = (expShift * (realShift * cosShift + imagShift * sinShift) - realShift) / denominator;
+        double integralSin = (expShift * (realShift * sinShift - imagShift * cosShift) + imagShift) / denominator;
 
         out[0] = integralCos;
         out[1] = integralSin;

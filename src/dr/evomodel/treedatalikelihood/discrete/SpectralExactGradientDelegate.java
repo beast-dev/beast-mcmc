@@ -46,7 +46,6 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     private final double[] tmpPostBottom; // standard post-order at child end of branch
     private final double[] rotatedPre;   // x = R^T * tmpPreTop
     private final double[] rotatedPost;  // y = R^{-1} * tmpPostBottom
-    private final double[] outerProduct; // x * y^T  (stateCount x stateCount, row-major)
 
     // Per-model accumulation in the rotated (eigen) basis
     private final double[][] eigenBasisAccumByModel;
@@ -75,7 +74,6 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         this.tmpPostBottom = new double[stateCount];
         this.rotatedPre   = new double[stateCount];
         this.rotatedPost  = new double[stateCount];
-        this.outerProduct = new double[K2];
         this.midBuffer    = new double[K2];
 
         this.eigenBasisAccumByModel = new double[substitutionModelCount][K2];
@@ -268,17 +266,9 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
                 }
 
-                // Outer product M[i][j] = scale * x[i] * y[j]
-                for (int i = 0; i < stateCount; i++) {
-                    final double xi = rotatedPre[i] * scale;
-                    final int rowOff = i * stateCount;
-                    for (int j = 0; j < stateCount; j++) {
-                        outerProduct[rowOff + j] = xi * rotatedPost[j];
-                    }
-                }
-
                 // Accumulate Fréchet integral contributions into eigenBasisAccum
-                ComplexBlockKernelUtils.applyPlan(plan, outerProduct, eigenBasisAccum, workspace, stateCount);
+                ComplexBlockKernelUtils.applyPlanToOuterProduct(
+                        plan, rotatedPre, rotatedPost, scale, eigenBasisAccum, stateCount);
             }
         }
     }

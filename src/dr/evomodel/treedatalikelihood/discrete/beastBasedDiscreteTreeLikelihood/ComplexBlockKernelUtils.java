@@ -218,6 +218,102 @@ public final class ComplexBlockKernelUtils {
         }
     }
 
+    public static void applyPlanToOuterProduct(ComplexKernelPlan plan,
+                                               double[] leftVector,
+                                               double[] rightVector,
+                                               double scale,
+                                               double[] eigenBasisGradient,
+                                               int stateCount) {
+        final double[] c = plan.coefficients;
+        for (int e = 0; e < plan.entryCount; e++) {
+            final int leftStart  = plan.eLeftStart[e];
+            final int rightStart = plan.eRightStart[e];
+            final int coeffBase  = e * 16;
+
+            if (plan.eKind[e] == ENTRY_SCALAR) {
+                eigenBasisGradient[leftStart * stateCount + rightStart] +=
+                        c[coeffBase] * scale * leftVector[leftStart] * rightVector[rightStart];
+                continue;
+            }
+
+            if (plan.eKind[e] == ENTRY_ONE_BY_TWO) {
+                final double x = scale * leftVector[leftStart];
+                final double in0 = x * rightVector[rightStart];
+                final double in1 = x * rightVector[rightStart + 1];
+                final double out0 = c[coeffBase]     * in0 + c[coeffBase + 1] * in1;
+                final double out1 = c[coeffBase + 2] * in0 + c[coeffBase + 3] * in1;
+                final int base = leftStart * stateCount + rightStart;
+                eigenBasisGradient[base]     += out0;
+                eigenBasisGradient[base + 1] += out1;
+                continue;
+            }
+
+            if (plan.eKind[e] == ENTRY_TWO_BY_ONE) {
+                final double y = rightVector[rightStart];
+                final double in0 = scale * leftVector[leftStart] * y;
+                final double in1 = scale * leftVector[leftStart + 1] * y;
+                final double out0 = c[coeffBase]     * in0 + c[coeffBase + 1] * in1;
+                final double out1 = c[coeffBase + 2] * in0 + c[coeffBase + 3] * in1;
+                final int base = leftStart * stateCount + rightStart;
+                eigenBasisGradient[base]              += out0;
+                eigenBasisGradient[base + stateCount] += out1;
+                continue;
+            }
+
+            if (plan.eKind[e] == ENTRY_TWO_BY_TWO) {
+                final double x0 = scale * leftVector[leftStart];
+                final double x1 = scale * leftVector[leftStart + 1];
+                final double y0 = rightVector[rightStart];
+                final double y1 = rightVector[rightStart + 1];
+                final double in0 = x0 * y0;
+                final double in1 = x0 * y1;
+                final double in2 = x1 * y0;
+                final double in3 = x1 * y1;
+                final double out0 = c[coeffBase]      * in0 + c[coeffBase + 1]  * in1 + c[coeffBase + 2]  * in2 + c[coeffBase + 3]  * in3;
+                final double out1 = c[coeffBase + 4]  * in0 + c[coeffBase + 5]  * in1 + c[coeffBase + 6]  * in2 + c[coeffBase + 7]  * in3;
+                final double out2 = c[coeffBase + 8]  * in0 + c[coeffBase + 9]  * in1 + c[coeffBase + 10] * in2 + c[coeffBase + 11] * in3;
+                final double out3 = c[coeffBase + 12] * in0 + c[coeffBase + 13] * in1 + c[coeffBase + 14] * in2 + c[coeffBase + 15] * in3;
+                final int base = leftStart * stateCount + rightStart;
+                eigenBasisGradient[base]                  += out0;
+                eigenBasisGradient[base + 1]              += out1;
+                eigenBasisGradient[base + stateCount]     += out2;
+                eigenBasisGradient[base + stateCount + 1] += out3;
+                continue;
+            }
+
+            applyGeneralOuterProductBlock(plan, e, leftVector, rightVector, scale, eigenBasisGradient, stateCount);
+        }
+    }
+
+    private static void applyGeneralOuterProductBlock(ComplexKernelPlan plan,
+                                                      int entryIndex,
+                                                      double[] leftVector,
+                                                      double[] rightVector,
+                                                      double scale,
+                                                      double[] eigenBasisGradient,
+                                                      int stateCount) {
+        final int leftStart = plan.eLeftStart[entryIndex];
+        final int rightStart = plan.eRightStart[entryIndex];
+        final int leftDim = plan.eLeftDim[entryIndex];
+        final int rightDim = plan.eRightDim[entryIndex];
+        final int size = leftDim * rightDim;
+        final int coeffBase = entryIndex * 16;
+
+        for (int out = 0; out < size; out++) {
+            double sum = 0.0;
+            for (int inLeft = 0; inLeft < leftDim; inLeft++) {
+                final double x = scale * leftVector[leftStart + inLeft];
+                for (int inRight = 0; inRight < rightDim; inRight++) {
+                    final int in = inLeft * rightDim + inRight;
+                    sum += plan.coefficients[coeffBase + out * size + in] * x * rightVector[rightStart + inRight];
+                }
+            }
+            final int outLeft = out / rightDim;
+            final int outRight = out - outLeft * rightDim;
+            eigenBasisGradient[(leftStart + outLeft) * stateCount + rightStart + outRight] += sum;
+        }
+    }
+
     public static final class Workspace {
         final double[][] kernelInput;
 

@@ -14,6 +14,8 @@ import dr.evomodel.treedatalikelihood.preorder.DiscretePreOrderType;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.xml.Reportable;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
 public final class DiscretePreOrderReport implements Reportable {
@@ -21,9 +23,18 @@ public final class DiscretePreOrderReport implements Reportable {
     private final TreeDataLikelihood treeDataLikelihood;
     private final PreOrderMessageProvider discreteDelegate;
     private final TreeTrait treeTrait;
+    private final double roundingTolerance;
+    private final int roundingScale;
 
     public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood) {
+        this(treeDataLikelihood, 0.0);
+    }
+
+    public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood, double roundingTolerance) {
         this.treeDataLikelihood = treeDataLikelihood;
+        this.roundingTolerance = roundingTolerance;
+        this.roundingScale = roundingTolerance > 0.0 ?
+                Math.max(0, BigDecimal.valueOf(roundingTolerance).stripTrailingZeros().scale()) : -1;
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (delegate instanceof PreOrderMessageProvider) {
@@ -137,13 +148,30 @@ public final class DiscretePreOrderReport implements Reportable {
 
                     sb.append("  category ").append(c)
                             .append(" pattern ").append(p)
-                            .append(" start=").append(Arrays.toString(start))
-                            .append(" end=").append(Arrays.toString(end))
+                            .append(" start=").append(formatArray(start))
+                            .append(" end=").append(formatArray(end))
                             .append('\n');
                 }
             }
         }
 
+        return sb.toString();
+    }
+
+    private String formatArray(double[] values) {
+        if (roundingTolerance <= 0.0) {
+            return Arrays.toString(values);
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            BigDecimal rounded = BigDecimal.valueOf(values[i]).setScale(roundingScale, RoundingMode.HALF_UP);
+            sb.append(rounded.stripTrailingZeros().toPlainString());
+        }
+        sb.append(']');
         return sb.toString();
     }
 }

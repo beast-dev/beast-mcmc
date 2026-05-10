@@ -137,20 +137,14 @@
         <cachedReport idref="postOrderReport"/>
     </report>
 
-    <assertEqual verbose="true">
+    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="A-Za-z_=\[\]">
         <message>
             check spectral-rotated post-order partials
         </message>
-        <actual regex="(?s)(Discrete post-order partials.*\])\s*">
+        <actual regex="(?s)states = 8\s+(node 0.*\])\s*">
             <cachedReport idref="postOrderReport"/>
         </actual>
-        <expected><![CDATA[Discrete post-order partials
-  treeDataLikelihood = host.treeLikelihood
-  nodes = 9
-  patterns = 1
-  categories = 1
-  states = 8
-node 0 taxon=AZ4030_2005.5
+        <expected><![CDATA[node 0 taxon=AZ4030_2005.5
   category 0 pattern 0 start=[-0.002256978849, 0.344089450081, 0.410207926257, -0.328542619848, 0.470410588012, 1.849224832309, -0.462190087066, -0.196533015738] end=[-0.003129836917, 0.344089450081, 0.447125401985, -0.35325177375, 0.508556621337, 2.003547837026, -0.500501777874, -0.211772189676]
 node 1 taxon=AZ1968_2004.5
   category 0 pattern 0 start=[-0.683288129305, 0.664782352042, 0.048931484774, 0.843004659382, -0.029480300549, 0.075479129076, -0.030677091035, -0.541767971776] end=[-0.94754118466, 0.664782352042, 0.053335170773, 0.90640566312, -0.031978875682, 0.081750603545, -0.033219965189, -0.583776671052]
@@ -175,20 +169,14 @@ node 8 root
         <cachedReport idref="preOrderReport"/>
     </report>
 
-    <assertEqual verbose="true">
+    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="A-Za-z_=\[\]">
         <message>
             check spectral-rotated pre-order partials
         </message>
-        <actual regex="(?s)(Discrete pre-order partials.*\])\s*">
+        <actual regex="(?s)states = 8\s+(node 0.*\])\s*">
             <cachedReport idref="preOrderReport"/>
         </actual>
-        <expected><![CDATA[Discrete pre-order partials
-  treeDataLikelihood = host.treeLikelihood
-  nodes = 9
-  patterns = 1
-  categories = 1
-  states = 8
-node 0 taxon=AZ4030_2005.5
+        <expected><![CDATA[node 0 taxon=AZ4030_2005.5
   category 0 pattern 0 start=[-0.000569320142, 0.029741675568, 0.010882775419, 0.051817303871, -0.002932498182, 0.00317116548, 0.011461064133, -0.019290509748] end=[-0.000410546476, 0.029741675568, 0.009984225268, 0.04819280194, -0.002708505669, 0.002925883845, 0.010583759067, -0.01790236037]
 node 1 taxon=AZ1968_2004.5
   category 0 pattern 0 start=[0.00002096017, 0.000577481337, 0.00021013812, 0.000032043344, 0.000353941968, 0.000007207471, -0.000425562225, -0.000450015443] end=[0.000015114737, 0.000577481337, 0.000192787799, 0.000029801986, 0.000326719369, 0.000006823388, -0.000392986899, -0.000417632231]

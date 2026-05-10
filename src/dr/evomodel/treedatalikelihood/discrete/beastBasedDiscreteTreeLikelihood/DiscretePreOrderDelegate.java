@@ -397,6 +397,16 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         return Arrays.copyOf(preOrderAtBranchEnd[nodeNumber], preOrderAtBranchEnd[nodeNumber].length);
     }
 
+    public void getPreOrderAtBranchStartInto(int nodeNumber, double[] out) {
+        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
+        copyFullNodeBuffer(preOrderAtBranchStart[nodeNumber], out);
+    }
+
+    public void getPreOrderAtBranchEndInto(int nodeNumber, double[] out) {
+        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
+        copyFullNodeBuffer(preOrderAtBranchEnd[nodeNumber], out);
+    }
+
     public void getPreOrderAtBranchStartInto(int nodeNumber, int category, int pattern, double[] out) {
         requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
@@ -462,6 +472,14 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         for (int i = 0; i < src.length; i++) {
             System.arraycopy(src[i], 0, dst[i], 0, src[i].length);
         }
+    }
+
+    private void copyFullNodeBuffer(double[] source, double[] dest) {
+        final int length = flattenedLength();
+        if (dest.length < length) {
+            throw new IllegalArgumentException("Destination length must be at least " + length);
+        }
+        System.arraycopy(source, 0, dest, 0, length);
     }
 
     private static void requireCache(Object cache, String name) {

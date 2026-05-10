@@ -543,6 +543,12 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) {
+            if (updateSubstitutionModel) {
+                postOrderRepresentation.markDirty();
+                if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
+                    preOrderRepresentation.markDirty();
+                }
+            }
             postOrderRepresentation.updateForLikelihood();
             if (updateSubstitutionModel) {
                 initialiseTipPartials();
@@ -1146,6 +1152,12 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         final int rootNodeNumber = tree.getRoot().getNumber();
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) { //TODO check this better
+            if (updateSubstitutionModel) {
+                postOrderRepresentation.markDirty();
+                if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
+                    preOrderRepresentation.markDirty();
+                }
+            }
             postOrderRepresentation.updateForLikelihood();
             if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
                 preOrderRepresentation.updateForLikelihood();
@@ -1168,22 +1180,23 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
             if (preOrderAtBranchStart != null) {
-                final double[] src = preOrderDelegate.getPreOrderAtBranchStart(nodeNumber);
-                System.arraycopy(src, 0, preOrderAtBranchStart[nodeNumber], 0, src.length);
+                preOrderDelegate.getPreOrderAtBranchStartInto(nodeNumber, preOrderAtBranchStart[nodeNumber]);
                 preOrderStartKnown[nodeNumber] = true;
             }
 
             if (preOrderAtBranchEnd != null) {
-                final double[] src = preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
-                System.arraycopy(src, 0, preOrderAtBranchEnd[nodeNumber], 0, src.length);
+                preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, preOrderAtBranchEnd[nodeNumber]);
                 preOrderEndKnown[nodeNumber] = true;
             }
 
             if (transformedPreOrder != null) {
-                final double[] sourceStandard =
-                        preOrderAtBranchEnd != null
-                                ? preOrderAtBranchEnd[nodeNumber]
-                                : preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
+                final double[] sourceStandard;
+                if (preOrderAtBranchEnd != null) {
+                    sourceStandard = preOrderAtBranchEnd[nodeNumber];
+                } else {
+                    preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, tmpNodeStandardBuffer);
+                    sourceStandard = tmpNodeStandardBuffer;
+                }
 
                 transformNodeBuffer(sourceStandard, transformedPreOrder[nodeNumber], preOrderTransform);
                 transformedPreOrderKnown[nodeNumber] = true;

@@ -116,7 +116,6 @@ public final class SpectralRotatedPartialsRepresentation
 
     @Override
     public void updateForLikelihood() {
-        eigenDirty = true;
         ensureEigenSystemCurrent();
     }
 

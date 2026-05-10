@@ -154,7 +154,6 @@ public final class SpectralStandardPartialsRepresentation
 
     @Override
     public void updateForLikelihood() {
-        eigenDirty = true;
         ensureEigenSystemCurrent();
     }
 

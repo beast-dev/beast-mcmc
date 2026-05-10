@@ -229,11 +229,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         nodePreOrderKnown[rootNumber] = true;
 
-        // ROOT MUST BE EXPORTED TO BRANCH START, NOT BRANCH END
-        if (preOrderAtBranchStart != null) {
-            exportInternalBuffer(rootStartBuffer, preOrderAtBranchStart[rootNumber]);
-            preOrderStartKnown[rootNumber] = true;
-        }
+        // Root has a branch-start preorder value, but exported caches are filled lazily.
     }
 
 //    private void initializeRoot(int rootNumber, double[] rootFrequencies) {
@@ -339,15 +335,6 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         nodePreOrderKnown[childNumber] = true;
 
-        if (preOrderAtBranchStart != null) {
-            exportInternalBuffer(childPreOrderStart, preOrderAtBranchStart[childNumber]);
-            preOrderStartKnown[childNumber] = true;
-        }
-        if (preOrderAtBranchEnd != null) {
-            exportInternalBuffer(childPreOrderEnd, preOrderAtBranchEnd[childNumber]);
-            preOrderEndKnown[childNumber] = true;
-        }
-
         for (int i = 0; i < childPreOrderEnd.length; i++) {
             if (!Double.isFinite(childPreOrderEnd[i])) {
                 throw new IllegalStateException("Non-finite preorder partial at node " + childNumber
@@ -388,35 +375,57 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     }
 
     public double[] getPreOrderAtBranchStart(int nodeNumber) {
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
-        return Arrays.copyOf(preOrderAtBranchStart[nodeNumber], preOrderAtBranchStart[nodeNumber].length);
+        final double[] out = new double[flattenedLength()];
+        getPreOrderAtBranchStartInto(nodeNumber, out);
+        return out;
     }
 
     public double[] getPreOrderAtBranchEnd(int nodeNumber) {
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
-        return Arrays.copyOf(preOrderAtBranchEnd[nodeNumber], preOrderAtBranchEnd[nodeNumber].length);
+        final double[] out = new double[flattenedLength()];
+        getPreOrderAtBranchEndInto(nodeNumber, out);
+        return out;
     }
 
     public void getPreOrderAtBranchStartInto(int nodeNumber, double[] out) {
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
-        copyFullNodeBuffer(preOrderAtBranchStart[nodeNumber], out);
+        if (preOrderAtBranchStart != null) {
+            ensurePreOrderAtBranchStartExported(nodeNumber);
+            copyFullNodeBuffer(preOrderAtBranchStart[nodeNumber], out);
+        } else {
+            exportInternalBuffer(branchStartPreOrder[nodeNumber], out);
+        }
     }
 
     public void getPreOrderAtBranchEndInto(int nodeNumber, double[] out) {
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
-        copyFullNodeBuffer(preOrderAtBranchEnd[nodeNumber], out);
+        if (preOrderAtBranchEnd != null) {
+            ensurePreOrderAtBranchEndExported(nodeNumber);
+            copyFullNodeBuffer(preOrderAtBranchEnd[nodeNumber], out);
+        } else if (tree.isRoot(tree.getNode(nodeNumber))) {
+            Arrays.fill(out, 0, flattenedLength(), 0.0);
+        } else {
+            exportInternalBuffer(nodePreOrder[nodeNumber], out);
+        }
     }
 
     public void getPreOrderAtBranchStartInto(int nodeNumber, int category, int pattern, double[] out) {
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
-        System.arraycopy(preOrderAtBranchStart[nodeNumber], off, out, 0, stateCount);
+        if (preOrderAtBranchStart != null) {
+            ensurePreOrderAtBranchStartExported(nodeNumber);
+            System.arraycopy(preOrderAtBranchStart[nodeNumber], off, out, 0, stateCount);
+        } else {
+            exportInternalSlice(branchStartPreOrder[nodeNumber], off, out);
+        }
     }
 
     public void getPreOrderAtBranchEndInto(int nodeNumber, int category, int pattern, double[] out) {
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
         final int off = offset(category, pattern, 0);
-        System.arraycopy(preOrderAtBranchEnd[nodeNumber], off, out, 0, stateCount);
+        if (preOrderAtBranchEnd != null) {
+            ensurePreOrderAtBranchEndExported(nodeNumber);
+            System.arraycopy(preOrderAtBranchEnd[nodeNumber], off, out, 0, stateCount);
+        } else if (tree.isRoot(tree.getNode(nodeNumber))) {
+            Arrays.fill(out, 0.0);
+        } else {
+            exportInternalSlice(nodePreOrder[nodeNumber], off, out);
+        }
     }
 
     public void getInternalPreOrderAtBranchStartInto(int nodeNumber, int category, int pattern, double[] out) {
@@ -441,13 +450,38 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     }
 
     private void exportInternalBuffer(double[] source, double[] dest) {
+        if (dest.length < flattenedLength()) {
+            throw new IllegalArgumentException("Destination length must be at least " + flattenedLength());
+        }
         for (int c = 0; c < categoryCount; c++) {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
-                sliceInto(source, off, tmpParentNodePreOrder);
-                preOrderRepresentation.exportPreOrderPartial(tmpParentNodePreOrder, tmpExport);
+                exportInternalSlice(source, off, tmpExport);
                 System.arraycopy(tmpExport, 0, dest, off, stateCount);
             }
+        }
+    }
+
+    private void exportInternalSlice(double[] source, int off, double[] dest) {
+        sliceInto(source, off, tmpParentNodePreOrder);
+        preOrderRepresentation.exportPreOrderPartial(tmpParentNodePreOrder, dest);
+    }
+
+    private void ensurePreOrderAtBranchStartExported(int nodeNumber) {
+        if (preOrderStartKnown != null && !preOrderStartKnown[nodeNumber]) {
+            exportInternalBuffer(branchStartPreOrder[nodeNumber], preOrderAtBranchStart[nodeNumber]);
+            preOrderStartKnown[nodeNumber] = true;
+        }
+    }
+
+    private void ensurePreOrderAtBranchEndExported(int nodeNumber) {
+        if (preOrderEndKnown != null && !preOrderEndKnown[nodeNumber]) {
+            if (tree.isRoot(tree.getNode(nodeNumber))) {
+                Arrays.fill(preOrderAtBranchEnd[nodeNumber], 0.0);
+            } else {
+                exportInternalBuffer(nodePreOrder[nodeNumber], preOrderAtBranchEnd[nodeNumber]);
+            }
+            preOrderEndKnown[nodeNumber] = true;
         }
     }
 

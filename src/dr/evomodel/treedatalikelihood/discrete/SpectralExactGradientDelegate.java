@@ -54,6 +54,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     // Scratch for the final rotation step
     private final double[] midBuffer;
 
+    // Pre-allocated plan reused across all (branch, category) iterations — zero per-call allocation.
+    private final ComplexBlockKernelUtils.ComplexKernelPlan planScratch;
     private final ComplexBlockKernelUtils.Workspace workspace;
 
     public SpectralExactGradientDelegate(String name,
@@ -77,6 +79,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         this.midBuffer    = new double[K2];
 
         this.eigenBasisAccumByModel = new double[substitutionModelCount][K2];
+        this.planScratch = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
         this.workspace = new ComplexBlockKernelUtils.Workspace();
     }
 
@@ -209,8 +212,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             final double wc = categoryWeights[c];
             final double tc = branchLength * categoryRates[c];
 
-            final ComplexBlockKernelUtils.ComplexKernelPlan plan =
-                    ComplexBlockKernelUtils.buildPlan(eigenDecomp, tc, stateCount);
+            ComplexBlockKernelUtils.fillPlan(planScratch, eigenDecomp, tc, stateCount);
+            final ComplexBlockKernelUtils.ComplexKernelPlan plan = planScratch;
 
             for (int p = 0; p < patternCount; p++) {
                 final double wp = patternWeights[p];

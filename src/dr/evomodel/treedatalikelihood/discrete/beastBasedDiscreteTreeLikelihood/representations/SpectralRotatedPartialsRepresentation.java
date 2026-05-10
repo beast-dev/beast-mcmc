@@ -21,6 +21,10 @@ public final class SpectralRotatedPartialsRepresentation
     private static final byte REAL_BLOCK = 1;
     private static final byte COMPLEX_BLOCK = 2;
 
+    // Per-node branch-coefficient cache: up to CACHE_SLOTS different branch lengths
+    // cached simultaneously so multi-category models don't evict each other.
+    private static final int CACHE_SLOTS = 16;
+
     private final BaseSubstitutionModel substitutionModel;
     private final int stateCount;
 
@@ -41,10 +45,15 @@ public final class SpectralRotatedPartialsRepresentation
     private boolean eigenDirty = true;
     private long eigenVersion = 0L;
 
-    private double[][] coeffAByNode;
-    private double[][] coeffBByNode;
-    private double[] cachedBranchLength;
-    private long[] cachedCoeffVersion;
+    // [node][slot][state] — stateCount doubles per slot per node
+    private double[][][] coeffAByNode;
+    private double[][][] coeffBByNode;
+    // [node][slot]
+    private double[][] cachedBranchLength;
+    private long[][]   cachedCoeffVersion;
+    // [node] — round-robin eviction pointer and last-activated slot for apply methods
+    private int[] nextSlotByNode;
+    private int[] activeSlotByNode;
 
     public SpectralRotatedPartialsRepresentation(BaseSubstitutionModel substitutionModel) {
         if (substitutionModel == null) {
@@ -67,10 +76,12 @@ public final class SpectralRotatedPartialsRepresentation
         this.tmpStandardA = new double[stateCount];
         this.tmpStandardB = new double[stateCount];
 
-        this.coeffAByNode = new double[0][];
-        this.coeffBByNode = new double[0][];
-        this.cachedBranchLength = new double[0];
-        this.cachedCoeffVersion = new long[0];
+        this.coeffAByNode = new double[0][][];
+        this.coeffBByNode = new double[0][][];
+        this.cachedBranchLength = new double[0][];
+        this.cachedCoeffVersion = new long[0][];
+        this.nextSlotByNode   = new int[0];
+        this.activeSlotByNode = new int[0];
     }
 
     @Override
@@ -314,15 +325,22 @@ public final class SpectralRotatedPartialsRepresentation
 
         final int newSize = Math.max(nodeNumber + 1, Math.max(4, coeffAByNode.length * 2));
 
-        coeffAByNode = Arrays.copyOf(coeffAByNode, newSize);
-        coeffBByNode = Arrays.copyOf(coeffBByNode, newSize);
+        coeffAByNode      = Arrays.copyOf(coeffAByNode,      newSize);
+        coeffBByNode      = Arrays.copyOf(coeffBByNode,      newSize);
         cachedBranchLength = Arrays.copyOf(cachedBranchLength, newSize);
         cachedCoeffVersion = Arrays.copyOf(cachedCoeffVersion, newSize);
+        nextSlotByNode    = Arrays.copyOf(nextSlotByNode,    newSize);
+        activeSlotByNode  = Arrays.copyOf(activeSlotByNode,  newSize);
 
-        for (int i = nodeNumber; i < newSize; i++) {
+        for (int i = 0; i < newSize; i++) {
             if (coeffAByNode[i] == null) {
-                cachedCoeffVersion[i] = Long.MIN_VALUE;
-                cachedBranchLength[i] = Double.NaN;
+                coeffAByNode[i] = new double[CACHE_SLOTS][stateCount];
+                coeffBByNode[i] = new double[CACHE_SLOTS][stateCount];
+                cachedBranchLength[i] = new double[CACHE_SLOTS];
+                cachedCoeffVersion[i] = new long[CACHE_SLOTS];
+                Arrays.fill(cachedCoeffVersion[i], Long.MIN_VALUE);
+                Arrays.fill(cachedBranchLength[i], Double.NaN);
+                // nextSlotByNode[i] and activeSlotByNode[i] default to 0
             }
         }
     }
@@ -334,22 +352,26 @@ public final class SpectralRotatedPartialsRepresentation
 
         ensureNodeCapacity(nodeNumber);
 
-        if (cachedCoeffVersion[nodeNumber] == eigenVersion
-                && Double.doubleToLongBits(cachedBranchLength[nodeNumber]) == Double.doubleToLongBits(branchLength)) {
-            return;
+        // Fast path: scan all slots for a matching (eigenVersion, branchLength) pair.
+        final long curVersion = eigenVersion;
+        final long branchBits = Double.doubleToLongBits(branchLength);
+        final long[] versions = cachedCoeffVersion[nodeNumber];
+        final double[] lengths = cachedBranchLength[nodeNumber];
+
+        for (int s = 0; s < CACHE_SLOTS; s++) {
+            if (versions[s] == curVersion && Double.doubleToLongBits(lengths[s]) == branchBits) {
+                activeSlotByNode[nodeNumber] = s;
+                return;
+            }
         }
 
-        double[] coeffA = coeffAByNode[nodeNumber];
-        double[] coeffB = coeffBByNode[nodeNumber];
+        // Cache miss: evict the next round-robin slot.
+        final int slot = nextSlotByNode[nodeNumber];
+        nextSlotByNode[nodeNumber] = (slot + 1 == CACHE_SLOTS) ? 0 : slot + 1;
+        activeSlotByNode[nodeNumber] = slot;
 
-        if (coeffA == null) {
-            coeffA = new double[stateCount];
-            coeffAByNode[nodeNumber] = coeffA;
-        }
-        if (coeffB == null) {
-            coeffB = new double[stateCount];
-            coeffBByNode[nodeNumber] = coeffB;
-        }
+        final double[] coeffA = coeffAByNode[nodeNumber][slot];
+        final double[] coeffB = coeffBByNode[nodeNumber][slot];
 
         for (int b = 0; b < blockCount; b++) {
             final int i = blockStart[b];
@@ -358,22 +380,22 @@ public final class SpectralRotatedPartialsRepresentation
                 coeffA[i] = Math.exp(branchLength * eigenReal[i]);
                 coeffB[i] = 0.0;
             } else {
-                final double a = eigenReal[i];
+                final double a    = eigenReal[i];
                 final double beta = eigenImag[i];
                 final double expat = Math.exp(branchLength * a);
-                final double bt = branchLength * beta;
+                final double bt    = branchLength * beta;
                 coeffA[i] = expat * Math.cos(bt);
                 coeffB[i] = expat * Math.sin(bt);
             }
         }
 
-        cachedBranchLength[nodeNumber] = branchLength;
-        cachedCoeffVersion[nodeNumber] = eigenVersion;
+        lengths[slot]  = branchLength;
+        versions[slot] = curVersion;
     }
 
     private void applyForwardCoefficients(int nodeNumber, double[] in, double[] out) {
-        final double[] coeffA = coeffAByNode[nodeNumber];
-        final double[] coeffB = coeffBByNode[nodeNumber];
+        final double[] coeffA = coeffAByNode[nodeNumber][activeSlotByNode[nodeNumber]];
+        final double[] coeffB = coeffBByNode[nodeNumber][activeSlotByNode[nodeNumber]];
 
         for (int b = 0; b < blockCount; b++) {
             final int i = blockStart[b];
@@ -386,15 +408,15 @@ public final class SpectralRotatedPartialsRepresentation
                 final double x = in[i];
                 final double y = in[i + 1];
 
-                out[i] = c * x + s * y;
+                out[i]     = c * x + s * y;
                 out[i + 1] = -s * x + c * y;
             }
         }
     }
 
     private void applyTransposeCoefficients(int nodeNumber, double[] in, double[] out) {
-        final double[] coeffA = coeffAByNode[nodeNumber];
-        final double[] coeffB = coeffBByNode[nodeNumber];
+        final double[] coeffA = coeffAByNode[nodeNumber][activeSlotByNode[nodeNumber]];
+        final double[] coeffB = coeffBByNode[nodeNumber][activeSlotByNode[nodeNumber]];
 
         for (int b = 0; b < blockCount; b++) {
             final int i = blockStart[b];
@@ -407,7 +429,7 @@ public final class SpectralRotatedPartialsRepresentation
                 final double x = in[i];
                 final double y = in[i + 1];
 
-                out[i] = c * x - s * y;
+                out[i]     = c * x - s * y;
                 out[i + 1] = s * x + c * y;
             }
         }

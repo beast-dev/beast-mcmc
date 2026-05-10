@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
 
 import dr.evomodel.substmodel.EigenDecomposition;
+import org.apache.commons.math.util.FastMath;
 
 public final class ComplexBlockKernelUtils {
 
@@ -142,7 +143,7 @@ public final class ComplexBlockKernelUtils {
         // Pre-compute exp(t*real) and, for complex blocks, cos/sin(t*imag) once per block.
         for (int b = 0; b < plan.blockCount; ++b) {
             final int start = plan.blockStarts[b];
-            plan.expR[b] = Math.exp(time * eigenValues[start]);
+            plan.expR[b] = FastMath.exp(time * eigenValues[start]);
             if (plan.blockDims[b] == 2) {
                 final double imag = eigenValues[start + stateCount];
                 plan.cosB[b] = Math.cos(time * imag);

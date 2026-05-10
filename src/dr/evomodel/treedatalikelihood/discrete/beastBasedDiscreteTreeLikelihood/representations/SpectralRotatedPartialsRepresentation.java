@@ -2,6 +2,7 @@ package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
+import org.apache.commons.math.util.FastMath;
 
 import java.util.Arrays;
 
@@ -374,12 +375,12 @@ public final class SpectralRotatedPartialsRepresentation
             final int i = blockStart[b];
 
             if (blockType[b] == REAL_BLOCK) {
-                coeffA[i] = Math.exp(branchLength * eigenReal[i]);
+                coeffA[i] = FastMath.exp(branchLength * eigenReal[i]);
                 coeffB[i] = 0.0;
             } else {
                 final double a    = eigenReal[i];
                 final double beta = eigenImag[i];
-                final double expat = Math.exp(branchLength * a);
+                final double expat = FastMath.exp(branchLength * a);
                 final double bt    = branchLength * beta;
                 coeffA[i] = expat * Math.cos(bt);
                 coeffB[i] = expat * Math.sin(bt);

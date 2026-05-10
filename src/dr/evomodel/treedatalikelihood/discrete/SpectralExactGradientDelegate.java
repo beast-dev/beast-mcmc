@@ -11,7 +11,9 @@ import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteGradientDelegate;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Exact spectral gradient delegate for discrete substitution models.
@@ -34,28 +36,55 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
     private static final String GRADIENT_TRAIT_NAME = "substitutionModelCrossProductGradient";
 
+    /** System property to control parallelism; defaults to 1 (single-threaded). */
+    private static final String THREADS_PROPERTY = "beast.gradient.threads";
+
     private final String name;
     private final DiscreteDataLikelihoodDelegate likelihoodDelegate;
     private final BranchModel branchModel;
     private final int stateCount;
     private final int substitutionModelCount;
 
-    // Per-branch scratch buffers
-    private final double[] tmpPreTop;    // standard pre-order at parent end of branch
-    private final double[] tmpPreBottom; // standard pre-order at child end (for denom)
-    private final double[] tmpPostBottom; // standard post-order at child end of branch
-    private final double[] rotatedPre;   // x = R^T * tmpPreTop
-    private final double[] rotatedPost;  // y = R^{-1} * tmpPostBottom
-
-    // Per-model accumulation in the rotated (eigen) basis
+    // Per-model accumulation in the rotated (eigen) basis (used only in single-thread path)
     private final double[][] eigenBasisAccumByModel;
 
     // Scratch for the final rotation step
     private final double[] midBuffer;
 
-    // Pre-allocated plans reused across all (branch, category) iterations — zero per-call allocation.
-    private final ComplexBlockKernelUtils.ComplexKernelPlan[] planByModel;
-    private final ComplexBlockKernelUtils.Workspace workspace;
+    // Parallelism
+    private final int nThreads;
+    private final ExecutorService pool;
+    private final ThreadWorkspace[] workspaces;
+
+    // -------------------------------------------------------------------------
+    // Per-thread workspace
+    // -------------------------------------------------------------------------
+
+    private final class ThreadWorkspace {
+        final double[][] eigenBasisAccum;
+        final double[] tmpPreTop;
+        final double[] tmpPreBottom;
+        final double[] tmpPostBottom;
+        final double[] rotatedPre;
+        final double[] rotatedPost;
+        final ComplexBlockKernelUtils.ComplexKernelPlan[] planByModel;
+
+        ThreadWorkspace() {
+            final int K2 = stateCount * stateCount;
+            eigenBasisAccum = new double[substitutionModelCount][K2];
+            tmpPreTop       = new double[stateCount];
+            tmpPreBottom    = new double[stateCount];
+            tmpPostBottom   = new double[stateCount];
+            rotatedPre      = new double[stateCount];
+            rotatedPost     = new double[stateCount];
+            planByModel     = new ComplexBlockKernelUtils.ComplexKernelPlan[substitutionModelCount];
+            for (int i = 0; i < substitutionModelCount; i++) {
+                planByModel[i] = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
 
     public SpectralExactGradientDelegate(String name,
                                          Tree tree,
@@ -69,19 +98,23 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         this.substitutionModelCount = branchModel.getSubstitutionModels().size();
 
         final int K2 = stateCount * stateCount;
-        this.tmpPreTop    = new double[stateCount];
-        this.tmpPreBottom = new double[stateCount];
-        this.tmpPostBottom = new double[stateCount];
-        this.rotatedPre   = new double[stateCount];
-        this.rotatedPost  = new double[stateCount];
-        this.midBuffer    = new double[K2];
-
         this.eigenBasisAccumByModel = new double[substitutionModelCount][K2];
-        this.planByModel = new ComplexBlockKernelUtils.ComplexKernelPlan[substitutionModelCount];
-        for (int i = 0; i < substitutionModelCount; i++) {
-            this.planByModel[i] = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+        this.midBuffer = new double[K2];
+
+        this.nThreads = Integer.getInteger(THREADS_PROPERTY, 1);
+        if (nThreads > 1) {
+            this.pool = Executors.newFixedThreadPool(nThreads, r -> {
+                Thread t = new Thread(r, "gradient-worker");
+                t.setDaemon(true);
+                return t;
+            });
+        } else {
+            this.pool = null;
         }
-        this.workspace = new ComplexBlockKernelUtils.Workspace();
+        this.workspaces = new ThreadWorkspace[Math.max(nThreads, 1)];
+        for (int t = 0; t < workspaces.length; t++) {
+            workspaces[t] = new ThreadWorkspace();
+        }
     }
 
     public static String getName(String name) {
@@ -130,25 +163,90 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
         likelihoodDelegate.ensurePreOrderComputed();
 
-        // Reset per-model accumulation buffers
-        for (double[] buf : eigenBasisAccumByModel) {
-            Arrays.fill(buf, 0.0);
-        }
-
         final List<SubstitutionModel> models = branchModel.getSubstitutionModels();
         final double[] patternWeights  = likelihoodDelegate.getPatternWeights();
         final double[] categoryWeights = likelihoodDelegate.getCategoryWeights();
         final double[] categoryRates   = likelihoodDelegate.getSiteRateModel().getCategoryRates();
         final boolean useInternalRotatedMessages = likelihoodDelegate.isSpectralRepresentation();
 
+        // Cache all eigen decompositions once — avoids 598× synchronized calls per gradient eval.
+        final EigenDecomposition[] eigenDecomps = new EigenDecomposition[substitutionModelCount];
         for (int m = 0; m < substitutionModelCount; m++) {
-            final EigenDecomposition eigenDecomp = models.get(m).getEigenDecomposition();
-            if (eigenDecomp != null) {
-                ComplexBlockKernelUtils.fillStructure(planByModel[m], eigenDecomp, stateCount);
+            eigenDecomps[m] = models.get(m).getEigenDecomposition();
+        }
+
+        // Fill structural plan (time-independent) into every workspace
+        for (int m = 0; m < substitutionModelCount; m++) {
+            if (eigenDecomps[m] != null) {
+                for (ThreadWorkspace ws : workspaces) {
+                    ComplexBlockKernelUtils.fillStructure(ws.planByModel[m], eigenDecomps[m], stateCount);
+                }
             }
         }
 
-        for (int childNumber = 0; childNumber < tree.getNodeCount(); childNumber++) {
+        // Reset per-workspace accumulation buffers
+        for (ThreadWorkspace ws : workspaces) {
+            for (double[] buf : ws.eigenBasisAccum) {
+                Arrays.fill(buf, 0.0);
+            }
+        }
+
+        if (nThreads <= 1) {
+            processBranchRange(0, tree.getNodeCount(), workspaces[0],
+                    eigenDecomps, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
+        } else {
+            final int nodeCount = tree.getNodeCount();
+            final int chunkSize = (nodeCount + nThreads - 1) / nThreads;
+            final List<Callable<Void>> tasks = new ArrayList<>(nThreads);
+            for (int t = 0; t < nThreads; t++) {
+                final int start = t * chunkSize;
+                final int end   = Math.min(start + chunkSize, nodeCount);
+                if (start >= nodeCount) break;
+                final ThreadWorkspace ws = workspaces[t];
+                tasks.add(() -> {
+                    processBranchRange(start, end, ws,
+                            eigenDecomps, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
+                    return null;
+                });
+            }
+            try {
+                final List<Future<Void>> futures = pool.invokeAll(tasks);
+                for (Future<Void> f : futures) f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Parallel gradient computation failed", e);
+            }
+        }
+
+        // Reduce: sum per-workspace accumulations into eigenBasisAccumByModel
+        for (int m = 0; m < substitutionModelCount; m++) {
+            final double[] dest = eigenBasisAccumByModel[m];
+            Arrays.fill(dest, 0.0);
+            for (ThreadWorkspace ws : workspaces) {
+                final double[] src = ws.eigenBasisAccum[m];
+                for (int k = 0; k < K2; k++) {
+                    dest[k] += src[k];
+                }
+            }
+        }
+
+        // Rotate each model's accumulation matrix and write into first
+        // gradient = R^{-T} * eigenBasisAccum * R^T
+        for (int m = 0; m < substitutionModelCount; m++) {
+            if (eigenDecomps[m] == null) continue;
+            final double[] evec = eigenDecomps[m].getEigenVectors();
+            final double[] ievc = eigenDecomps[m].getInverseEigenVectors();
+            rotateIntoOutput(eigenBasisAccumByModel[m], evec, ievc, first, m * K2);
+        }
+    }
+
+    private void processBranchRange(int start, int end,
+                                    ThreadWorkspace ws,
+                                    EigenDecomposition[] eigenDecomps,
+                                    double[] patternWeights,
+                                    double[] categoryWeights,
+                                    double[] categoryRates,
+                                    boolean useInternalRotatedMessages) {
+        for (int childNumber = start; childNumber < end; childNumber++) {
             final NodeRef child = tree.getNode(childNumber);
             if (tree.isRoot(child)) {
                 continue;
@@ -161,17 +259,17 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             final double[] weights = mapping.getWeights();
 
             for (int mixtureIndex = 0; mixtureIndex < order.length; mixtureIndex++) {
-                final int modelNumber   = order[mixtureIndex];
+                final int modelNumber    = order[mixtureIndex];
                 final double modelWeight = relativeWeight(mixtureIndex, weights);
                 final double branchLengthForModel = baseBranchLength * modelWeight;
 
-                final EigenDecomposition eigenDecomp = models.get(modelNumber).getEigenDecomposition();
+                final EigenDecomposition eigenDecomp = eigenDecomps[modelNumber];
                 if (eigenDecomp == null) {
                     continue;
                 }
 
-                final double[] evec = eigenDecomp.getEigenVectors();   // R
-                final double[] ievc = eigenDecomp.getInverseEigenVectors(); // R^{-1}
+                final double[] evec = eigenDecomp.getEigenVectors();
+                final double[] ievc = eigenDecomp.getInverseEigenVectors();
 
                 accumulateBranchContribution(
                         childNumber,
@@ -180,26 +278,14 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                         categoryWeights,
                         patternWeights,
                         eigenDecomp,
-                        planByModel[modelNumber],
+                        ws.planByModel[modelNumber],
                         evec,
                         ievc,
-                        eigenBasisAccumByModel[modelNumber],
+                        ws.eigenBasisAccum[modelNumber],
+                        ws,
                         useInternalRotatedMessages
                 );
             }
-        }
-
-        // Rotate each model's accumulation matrix and write into first
-        // gradient = R^{-T} * eigenBasisAccum * R^T
-        for (int m = 0; m < substitutionModelCount; m++) {
-            final EigenDecomposition eigenDecomp = models.get(m).getEigenDecomposition();
-            if (eigenDecomp == null) {
-                continue;
-            }
-            final double[] evec = eigenDecomp.getEigenVectors();
-            final double[] ievc = eigenDecomp.getInverseEigenVectors();
-            final int modelOffset = m * K2;
-            rotateIntoOutput(eigenBasisAccumByModel[m], evec, ievc, first, modelOffset);
         }
     }
 
@@ -217,6 +303,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                                                double[] evec,
                                                double[] ievc,
                                                double[] eigenBasisAccum,
+                                               ThreadWorkspace ws,
                                                boolean useInternalRotatedMessages) {
         final int categoryCount = likelihoodDelegate.getCategoryCount();
         final int patternCount  = likelihoodDelegate.getPatternCount();
@@ -234,29 +321,29 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
                 double denom = 0.0;
                 if (useInternalRotatedMessages) {
-                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, rotatedPre);
-                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, tmpPreBottom);
-                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, rotatedPost);
+                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
+                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
                     for (int s = 0; s < stateCount; s++) {
-                        denom += tmpPreBottom[s] * rotatedPost[s];
+                        denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
                     }
                 } else {
-                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, tmpPreTop);
-                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, tmpPreBottom);
-                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, tmpPostBottom);
+                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
+                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, ws.tmpPostBottom);
                     for (int s = 0; s < stateCount; s++) {
-                        denom += tmpPreBottom[s] * tmpPostBottom[s];
+                        denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
                     }
                 }
                 if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
 
                 if (!useInternalRotatedMessages) {
-                    multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
-                    multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
+                    multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
+                    multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
                 }
 
                 ComplexBlockKernelUtils.fillAndApplyToOuterProduct(
-                        plan, eigenDecomp, tc, rotatedPre, rotatedPost,
+                        plan, eigenDecomp, tc, ws.rotatedPre, ws.rotatedPost,
                         (wp * wc) / denom, eigenBasisAccum, stateCount);
             } else {
                 // Multi-pattern path: fill coefficients once, apply across all patterns.
@@ -268,29 +355,29 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
                     double denom = 0.0;
                     if (useInternalRotatedMessages) {
-                        likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, rotatedPre);
-                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
-                        likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, rotatedPost);
+                        likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
+                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
                         for (int s = 0; s < stateCount; s++) {
-                            denom += tmpPreBottom[s] * rotatedPost[s];
+                            denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
                         }
                     } else {
-                        likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, tmpPreTop);
-                        likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
-                        likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, tmpPostBottom);
+                        likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);
+                        likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, ws.tmpPostBottom);
                         for (int s = 0; s < stateCount; s++) {
-                            denom += tmpPreBottom[s] * tmpPostBottom[s];
+                            denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
                         }
                     }
                     if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
 
                     if (!useInternalRotatedMessages) {
-                        multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
-                        multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
+                        multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
+                        multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
                     }
 
                     ComplexBlockKernelUtils.applyPlanToOuterProduct(
-                            plan, rotatedPre, rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
+                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
                 }
             }
         }

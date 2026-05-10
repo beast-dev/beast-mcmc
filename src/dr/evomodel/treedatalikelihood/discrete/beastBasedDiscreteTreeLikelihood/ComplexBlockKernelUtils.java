@@ -23,6 +23,12 @@ public final class ComplexBlockKernelUtils {
     };
     private static final double THETA13 = 5.371920351148152;
 
+    private static final byte ENTRY_SCALAR = 1;
+    private static final byte ENTRY_ONE_BY_TWO = 2;
+    private static final byte ENTRY_TWO_BY_ONE = 3;
+    private static final byte ENTRY_TWO_BY_TWO = 4;
+    private static final byte ENTRY_GENERAL = 5;
+
     private ComplexBlockKernelUtils() { }
 
     // -------------------------------------------------------------------------
@@ -38,11 +44,23 @@ public final class ComplexBlockKernelUtils {
         final double[] sinB;         // [stateCount]  sin(t * imag_eigenvalue) per block
 
         // per-entry metadata; at most stateCount^2 entries
+        int blockCount;
         int entryCount;
         final int[] eLeftStart;   // [stateCount^2]
         final int[] eLeftDim;     // [stateCount^2]
+        final int[] eLeftBlock;   // [stateCount^2]
         final int[] eRightStart;  // [stateCount^2]
         final int[] eRightDim;    // [stateCount^2]
+        final int[] eRightBlock;  // [stateCount^2]
+        final byte[] eKind;       // [stateCount^2]
+        final double[] eRealShift;
+        final double[] eLeftImag;
+        final double[] eRightImag;
+        final double[] eInvDenom;
+        final double[] ePlusImagShift;
+        final double[] eMinusImagShift;
+        final double[] eInvPlusDenom;
+        final double[] eInvMinusDenom;
 
         // flat coefficient storage: entry e uses slots [e*16 .. e*16+15]
         // 16 is the max coefficient count for a 2×2 block pair
@@ -57,8 +75,19 @@ public final class ComplexBlockKernelUtils {
             this.sinB         = new double[stateCount];
             this.eLeftStart   = new int[maxPairs];
             this.eLeftDim     = new int[maxPairs];
+            this.eLeftBlock   = new int[maxPairs];
             this.eRightStart  = new int[maxPairs];
             this.eRightDim    = new int[maxPairs];
+            this.eRightBlock  = new int[maxPairs];
+            this.eKind        = new byte[maxPairs];
+            this.eRealShift   = new double[maxPairs];
+            this.eLeftImag    = new double[maxPairs];
+            this.eRightImag   = new double[maxPairs];
+            this.eInvDenom    = new double[maxPairs];
+            this.ePlusImagShift  = new double[maxPairs];
+            this.eMinusImagShift = new double[maxPairs];
+            this.eInvPlusDenom   = new double[maxPairs];
+            this.eInvMinusDenom  = new double[maxPairs];
             this.coefficients = new double[maxPairs * 16];
         }
     }
@@ -71,19 +100,15 @@ public final class ComplexBlockKernelUtils {
                                 EigenDecomposition decomposition,
                                 double time,
                                 int stateCount) {
+        fillStructure(plan, decomposition, stateCount);
+        fillTimeDependentCoefficients(plan, decomposition, time, stateCount);
+    }
+
+    public static void fillStructure(ComplexKernelPlan plan,
+                                     EigenDecomposition decomposition,
+                                     int stateCount) {
         final double[] eigenValues = decomposition.getEigenValues();
         final int blockCount = buildEigenBlocks(eigenValues, plan.blockStarts, plan.blockDims, stateCount);
-
-        // Pre-compute exp(t*real) and, for complex blocks, cos/sin(t*imag) once per block.
-        for (int b = 0; b < blockCount; ++b) {
-            final int start = plan.blockStarts[b];
-            plan.expR[b] = Math.exp(time * eigenValues[start]);
-            if (plan.blockDims[b] == 2) {
-                final double imag = eigenValues[start + stateCount];
-                plan.cosB[b] = Math.cos(time * imag);
-                plan.sinB[b] = Math.sin(time * imag);
-            }
-        }
 
         int entryIndex = 0;
         for (int leftBlock = 0; leftBlock < blockCount; ++leftBlock) {
@@ -95,16 +120,39 @@ public final class ComplexBlockKernelUtils {
 
                 plan.eLeftStart[entryIndex]  = leftStart;
                 plan.eLeftDim[entryIndex]    = leftDim;
+                plan.eLeftBlock[entryIndex]  = leftBlock;
                 plan.eRightStart[entryIndex] = rightStart;
                 plan.eRightDim[entryIndex]   = rightDim;
-
-                fillCoefficients(plan, entryIndex, eigenValues, stateCount, time,
-                        leftStart, leftDim, rightStart, rightDim,
-                        leftBlock, rightBlock);
+                plan.eRightBlock[entryIndex] = rightBlock;
+                fillEntryMetadata(plan, entryIndex, eigenValues, stateCount,
+                        leftStart, leftDim, rightStart, rightDim);
                 entryIndex++;
             }
         }
+        plan.blockCount = blockCount;
         plan.entryCount = entryIndex;
+    }
+
+    public static void fillTimeDependentCoefficients(ComplexKernelPlan plan,
+                                                     EigenDecomposition decomposition,
+                                                     double time,
+                                                     int stateCount) {
+        final double[] eigenValues = decomposition.getEigenValues();
+
+        // Pre-compute exp(t*real) and, for complex blocks, cos/sin(t*imag) once per block.
+        for (int b = 0; b < plan.blockCount; ++b) {
+            final int start = plan.blockStarts[b];
+            plan.expR[b] = Math.exp(time * eigenValues[start]);
+            if (plan.blockDims[b] == 2) {
+                final double imag = eigenValues[start + stateCount];
+                plan.cosB[b] = Math.cos(time * imag);
+                plan.sinB[b] = Math.sin(time * imag);
+            }
+        }
+
+        for (int e = 0; e < plan.entryCount; e++) {
+            fillCoefficients(plan, e, eigenValues, stateCount, time);
+        }
     }
 
     public static void applyPlan(ComplexKernelPlan plan,
@@ -200,66 +248,121 @@ public final class ComplexBlockKernelUtils {
         return blockCount;
     }
 
+    private static void fillEntryMetadata(ComplexKernelPlan plan,
+                                          int entryIndex,
+                                          double[] eigenValues,
+                                          int stateCount,
+                                          int leftStart,
+                                          int leftDim,
+                                          int rightStart,
+                                          int rightDim) {
+        final double leftReal = eigenValues[leftStart];
+        final double rightReal = eigenValues[rightStart];
+        final double realShift = rightReal - leftReal;
+        plan.eRealShift[entryIndex] = realShift;
+
+        if (leftDim == 1 && rightDim == 1) {
+            plan.eKind[entryIndex] = ENTRY_SCALAR;
+            final double delta = leftReal - rightReal;
+            plan.eInvDenom[entryIndex] = Math.abs(delta) < EIGEN_TOLERANCE ? 0.0 : 1.0 / delta;
+            return;
+        }
+
+        if (leftDim == 1 && rightDim == 2) {
+            plan.eKind[entryIndex] = ENTRY_ONE_BY_TWO;
+            final double rightImag = eigenValues[rightStart + stateCount];
+            plan.eRightImag[entryIndex] = rightImag;
+            final double denom = realShift * realShift + rightImag * rightImag;
+            plan.eInvDenom[entryIndex] = denom < EIGEN_TOLERANCE ? 0.0 : 1.0 / denom;
+            return;
+        }
+
+        if (leftDim == 2 && rightDim == 1) {
+            plan.eKind[entryIndex] = ENTRY_TWO_BY_ONE;
+            final double leftImag = eigenValues[leftStart + stateCount];
+            plan.eLeftImag[entryIndex] = leftImag;
+            final double denom = realShift * realShift + leftImag * leftImag;
+            plan.eInvDenom[entryIndex] = denom < EIGEN_TOLERANCE ? 0.0 : 1.0 / denom;
+            return;
+        }
+
+        if (leftDim == 2 && rightDim == 2) {
+            plan.eKind[entryIndex] = ENTRY_TWO_BY_TWO;
+            final double leftImag = eigenValues[leftStart + stateCount];
+            final double rightImag = eigenValues[rightStart + stateCount];
+            final double plusImagShift = leftImag + rightImag;
+            final double minusImagShift = rightImag - leftImag;
+            final double plusDenom = realShift * realShift + plusImagShift * plusImagShift;
+            final double minusDenom = realShift * realShift + minusImagShift * minusImagShift;
+            plan.eLeftImag[entryIndex] = leftImag;
+            plan.eRightImag[entryIndex] = rightImag;
+            plan.ePlusImagShift[entryIndex] = plusImagShift;
+            plan.eMinusImagShift[entryIndex] = minusImagShift;
+            plan.eInvPlusDenom[entryIndex] = plusDenom < EIGEN_TOLERANCE ? 0.0 : 1.0 / plusDenom;
+            plan.eInvMinusDenom[entryIndex] = minusDenom < EIGEN_TOLERANCE ? 0.0 : 1.0 / minusDenom;
+            return;
+        }
+
+        plan.eKind[entryIndex] = ENTRY_GENERAL;
+    }
+
     private static void fillCoefficients(ComplexKernelPlan plan,
                                          int entryIndex,
                                          double[] eigenValues,
                                          int stateCount,
-                                         double time,
-                                         int leftStart,
-                                         int leftDim,
-                                         int rightStart,
-                                         int rightDim,
-                                         int leftBlock,
-                                         int rightBlock) {
+                                         double time) {
         final int offset = entryIndex * 16;
+        final int leftBlock = plan.eLeftBlock[entryIndex];
+        final int rightBlock = plan.eRightBlock[entryIndex];
 
-        if (leftDim == 1 && rightDim == 1) {
-            fillScalarCoefficient(plan.coefficients, offset,
-                    plan.expR[leftBlock], plan.expR[rightBlock],
-                    eigenValues[leftStart], eigenValues[rightStart], time);
+        if (plan.eKind[entryIndex] == ENTRY_SCALAR) {
+            fillScalarCoefficient(plan.coefficients, offset, plan.expR[leftBlock],
+                    plan.expR[rightBlock], plan.eInvDenom[entryIndex], time);
             return;
         }
-        if (leftDim == 1 && rightDim == 2) {
+        if (plan.eKind[entryIndex] == ENTRY_ONE_BY_TWO) {
             fillOneByTwoCoefficients(plan.coefficients, offset,
                     plan.expR[leftBlock], plan.expR[rightBlock],
                     plan.cosB[rightBlock], plan.sinB[rightBlock],
-                    eigenValues[leftStart], eigenValues[rightStart],
-                    eigenValues[rightStart + stateCount], time);
+                    plan.eRealShift[entryIndex], plan.eRightImag[entryIndex],
+                    plan.eInvDenom[entryIndex], time);
             return;
         }
-        if (leftDim == 2 && rightDim == 1) {
+        if (plan.eKind[entryIndex] == ENTRY_TWO_BY_ONE) {
             fillTwoByOneCoefficients(plan.coefficients, offset,
                     plan.expR[leftBlock], plan.expR[rightBlock],
                     plan.cosB[leftBlock], plan.sinB[leftBlock],
-                    eigenValues[leftStart], eigenValues[leftStart + stateCount],
-                    eigenValues[rightStart], time);
+                    plan.eRealShift[entryIndex], plan.eLeftImag[entryIndex],
+                    plan.eInvDenom[entryIndex], time);
             return;
         }
-        if (leftDim == 2 && rightDim == 2) {
+        if (plan.eKind[entryIndex] == ENTRY_TWO_BY_TWO) {
             fillTwoByTwoCoefficients(plan.coefficients, offset,
                     plan.expR[leftBlock], plan.expR[rightBlock],
                     plan.cosB[leftBlock], plan.sinB[leftBlock],
                     plan.cosB[rightBlock], plan.sinB[rightBlock],
-                    eigenValues[leftStart], eigenValues[leftStart + stateCount],
-                    eigenValues[rightStart], eigenValues[rightStart + stateCount],
+                    plan.eRealShift[entryIndex],
+                    plan.ePlusImagShift[entryIndex], plan.eMinusImagShift[entryIndex],
+                    plan.eInvPlusDenom[entryIndex], plan.eInvMinusDenom[entryIndex],
                     time);
             return;
         }
 
         // General fallback for blocks larger than 2 (very rare): use Padé-13.
         fillGeneralCoefficients(plan.coefficients, offset, eigenValues,
-                leftStart, leftDim, rightStart, rightDim, stateCount, time);
+                plan.eLeftStart[entryIndex], plan.eLeftDim[entryIndex],
+                plan.eRightStart[entryIndex], plan.eRightDim[entryIndex],
+                stateCount, time);
     }
 
     // 1×1 scalar block pair. Uses pre-computed expLeft, expRight.
     private static void fillScalarCoefficient(double[] c, int off,
                                               double expLeft, double expRight,
-                                              double leftEigenvalue, double rightEigenvalue,
+                                              double inverseDelta,
                                               double time) {
-        final double delta = leftEigenvalue - rightEigenvalue;
-        c[off] = (Math.abs(delta) < EIGEN_TOLERANCE)
+        c[off] = inverseDelta == 0.0
                 ? time * expLeft
-                : (expLeft - expRight) / delta;
+                : (expLeft - expRight) * inverseDelta;
     }
 
     // 1×2 block pair (scalar left, complex right).
@@ -268,20 +371,18 @@ public final class ComplexBlockKernelUtils {
     private static void fillOneByTwoCoefficients(double[] c, int off,
                                                   double expLeft, double expRight,
                                                   double cosRight, double sinRight,
-                                                  double leftEigenvalue,
-                                                  double rightReal, double rightImag,
+                                                  double realShift, double rightImag,
+                                                  double inverseDenom,
                                                   double time) {
-        final double realShift = rightReal - leftEigenvalue;
         final double expShift  = expRight / expLeft;  // exp(t * realShift)
         // Inline fillScaledRotationIntegralPrecomputed(realShift, rightImag, time, expShift, cosRight, sinRight)
-        final double denom = realShift * realShift + rightImag * rightImag;
         final double ic, is;
-        if (denom < EIGEN_TOLERANCE) {
+        if (inverseDenom == 0.0) {
             ic = time;
             is = 0.0;
         } else {
-            ic = (expShift * (realShift * cosRight + rightImag * sinRight) - realShift) / denom;
-            is = (expShift * (realShift * sinRight - rightImag * cosRight) + rightImag) / denom;
+            ic = (expShift * (realShift * cosRight + rightImag * sinRight) - realShift) * inverseDenom;
+            is = (expShift * (realShift * sinRight - rightImag * cosRight) + rightImag) * inverseDenom;
         }
         // Multiply by expLeft and write rotation matrix [ic, is; -is, ic] into c[off..off+3]
         c[off]     =  expLeft * ic;
@@ -296,20 +397,18 @@ public final class ComplexBlockKernelUtils {
     private static void fillTwoByOneCoefficients(double[] c, int off,
                                                   double expLeft, double expRight,
                                                   double cosLeft, double sinLeft,
-                                                  double leftReal, double leftImag,
-                                                  double rightEigenvalue,
+                                                  double realShift, double leftImag,
+                                                  double inverseDenom,
                                                   double time) {
-        final double realShift = rightEigenvalue - leftReal;
         final double expShift  = expRight / expLeft;  // exp(t * realShift)
         // Inline fillScaledRotationIntegralPrecomputed(realShift, leftImag, time, expShift, cosLeft, sinLeft)
-        final double denom = realShift * realShift + leftImag * leftImag;
         final double ic, is;
-        if (denom < EIGEN_TOLERANCE) {
+        if (inverseDenom == 0.0) {
             ic = time;
             is = 0.0;
         } else {
-            ic = (expShift * (realShift * cosLeft + leftImag * sinLeft) - realShift) / denom;
-            is = (expShift * (realShift * sinLeft - leftImag * cosLeft) + leftImag) / denom;
+            ic = (expShift * (realShift * cosLeft + leftImag * sinLeft) - realShift) * inverseDenom;
+            is = (expShift * (realShift * sinLeft - leftImag * cosLeft) + leftImag) * inverseDenom;
         }
         // leftExp matrix: L = exp(t*leftReal) * [cos  -sin ; sin  cos]
         final double l00 =  expLeft * cosLeft;
@@ -330,11 +429,11 @@ public final class ComplexBlockKernelUtils {
                                                   double expLeft, double expRight,
                                                   double cosLeft, double sinLeft,
                                                   double cosRight, double sinRight,
-                                                  double leftReal, double leftImag,
-                                                  double rightReal, double rightImag,
+                                                  double realShift,
+                                                  double plusImagShift, double minusImagShift,
+                                                  double inversePlusDenom, double inverseMinusDenom,
                                                   double time) {
         final double expShift  = expRight / expLeft;   // exp(t*(rightReal - leftReal))
-        final double realShift = rightReal - leftReal;
 
         // cos/sin of t*(leftImag + rightImag) via angle addition
         final double cosPlusImag  = cosLeft * cosRight - sinLeft * sinRight;
@@ -344,29 +443,25 @@ public final class ComplexBlockKernelUtils {
         final double sinMinusImag = sinRight * cosLeft - cosRight * sinLeft;
 
         // plusIntegral = integralComplexPrecomputed(realShift, leftImag + rightImag, ...)
-        final double plusImagShift = leftImag + rightImag;
-        final double plusDenom = realShift * realShift + plusImagShift * plusImagShift;
         final double pi0, pi1;
-        if (plusDenom < EIGEN_TOLERANCE) {
+        if (inversePlusDenom == 0.0) {
             pi0 = time; pi1 = 0.0;
         } else {
             final double expCos = expShift * cosPlusImag;
             final double expSin = expShift * sinPlusImag;
-            pi0 = (realShift * (expCos - 1.0) + plusImagShift * expSin) / plusDenom;
-            pi1 = (realShift * expSin - plusImagShift * (expCos - 1.0)) / plusDenom;
+            pi0 = (realShift * (expCos - 1.0) + plusImagShift * expSin) * inversePlusDenom;
+            pi1 = (realShift * expSin - plusImagShift * (expCos - 1.0)) * inversePlusDenom;
         }
 
         // minusIntegral = integralComplexPrecomputed(realShift, rightImag - leftImag, ...)
-        final double minusImagShift = rightImag - leftImag;
-        final double minusDenom = realShift * realShift + minusImagShift * minusImagShift;
         final double mi0, mi1;
-        if (minusDenom < EIGEN_TOLERANCE) {
+        if (inverseMinusDenom == 0.0) {
             mi0 = time; mi1 = 0.0;
         } else {
             final double expCos = expShift * cosMinusImag;
             final double expSin = expShift * sinMinusImag;
-            mi0 = (realShift * (expCos - 1.0) + minusImagShift * expSin) / minusDenom;
-            mi1 = (realShift * expSin - minusImagShift * (expCos - 1.0)) / minusDenom;
+            mi0 = (realShift * (expCos - 1.0) + minusImagShift * expSin) * inverseMinusDenom;
+            mi1 = (realShift * expSin - minusImagShift * (expCos - 1.0)) * inverseMinusDenom;
         }
 
         // expNeg = expComplex(leftReal, -leftImag, t) = {eL*cL, -eL*sL}

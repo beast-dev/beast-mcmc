@@ -54,8 +54,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     // Scratch for the final rotation step
     private final double[] midBuffer;
 
-    // Pre-allocated plan reused across all (branch, category) iterations — zero per-call allocation.
-    private final ComplexBlockKernelUtils.ComplexKernelPlan planScratch;
+    // Pre-allocated plans reused across all (branch, category) iterations — zero per-call allocation.
+    private final ComplexBlockKernelUtils.ComplexKernelPlan[] planByModel;
     private final ComplexBlockKernelUtils.Workspace workspace;
 
     public SpectralExactGradientDelegate(String name,
@@ -79,7 +79,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         this.midBuffer    = new double[K2];
 
         this.eigenBasisAccumByModel = new double[substitutionModelCount][K2];
-        this.planScratch = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+        this.planByModel = new ComplexBlockKernelUtils.ComplexKernelPlan[substitutionModelCount];
+        for (int i = 0; i < substitutionModelCount; i++) {
+            this.planByModel[i] = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+        }
         this.workspace = new ComplexBlockKernelUtils.Workspace();
     }
 
@@ -140,6 +143,13 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         final double[] categoryRates   = likelihoodDelegate.getSiteRateModel().getCategoryRates();
         final boolean useInternalRotatedMessages = likelihoodDelegate.isSpectralRepresentation();
 
+        for (int m = 0; m < substitutionModelCount; m++) {
+            final EigenDecomposition eigenDecomp = models.get(m).getEigenDecomposition();
+            if (eigenDecomp != null) {
+                ComplexBlockKernelUtils.fillStructure(planByModel[m], eigenDecomp, stateCount);
+            }
+        }
+
         for (int childNumber = 0; childNumber < tree.getNodeCount(); childNumber++) {
             final NodeRef child = tree.getNode(childNumber);
             if (tree.isRoot(child)) {
@@ -172,6 +182,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                         categoryWeights,
                         patternWeights,
                         eigenDecomp,
+                        planByModel[modelNumber],
                         evec,
                         ievc,
                         eigenBasisAccumByModel[modelNumber],
@@ -204,6 +215,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                                                double[] categoryWeights,
                                                double[] patternWeights,
                                                EigenDecomposition eigenDecomp,
+                                               ComplexBlockKernelUtils.ComplexKernelPlan plan,
                                                double[] evec,
                                                double[] ievc,
                                                double[] eigenBasisAccum,
@@ -215,8 +227,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             final double wc = categoryWeights[c];
             final double tc = branchLength * categoryRates[c];
 
-            ComplexBlockKernelUtils.fillPlan(planScratch, eigenDecomp, tc, stateCount);
-            final ComplexBlockKernelUtils.ComplexKernelPlan plan = planScratch;
+            ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc, stateCount);
 
             for (int p = 0; p < patternCount; p++) {
                 final double wp = patternWeights[p];

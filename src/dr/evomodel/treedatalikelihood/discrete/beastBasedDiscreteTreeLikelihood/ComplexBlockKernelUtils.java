@@ -391,6 +391,204 @@ public final class ComplexBlockKernelUtils {
         }
     }
 
+    /**
+     * Single-pass fused fill+apply for one (leftVector ⊗ rightVector) pattern.
+     * Computes each entry's coefficients on-the-fly and immediately accumulates
+     * into eigenBasisGradient, avoiding the K²×16 intermediate coefficient store/load.
+     * For patternCount=1 (phylogeography) this eliminates ~100 MB of memory traffic
+     * per gradient evaluation at K=26/598 branches.
+     */
+    public static void fillAndApplyToOuterProduct(ComplexKernelPlan plan,
+                                                   EigenDecomposition decomposition,
+                                                   double time,
+                                                   double[] leftVector,
+                                                   double[] rightVector,
+                                                   double scale,
+                                                   double[] eigenBasisGradient,
+                                                   int stateCount) {
+        final double[] eigenValues = decomposition.getEigenValues();
+
+        // Pre-compute exp/cos/sin per block — identical to fillTimeDependentCoefficients header.
+        for (int b = 0; b < plan.blockCount; ++b) {
+            final int start = plan.blockStarts[b];
+            plan.expR[b] = FastMath.exp(time * eigenValues[start]);
+            if (plan.blockDims[b] == 2) {
+                final double imag = eigenValues[start + stateCount];
+                plan.cosB[b] = Math.cos(time * imag);
+                plan.sinB[b] = Math.sin(time * imag);
+            }
+        }
+
+        // SCALAR: coefficient is a single scalar, used immediately.
+        for (int e = plan.scalarStart; e < plan.scalarEnd; e++) {
+            final int leftStart  = plan.eLeftStart[e];
+            final int rightStart = plan.eRightStart[e];
+            final double expLeft  = plan.expR[plan.eLeftBlock[e]];
+            final double expRight = plan.expR[plan.eRightBlock[e]];
+            final double invDenom  = plan.eInvDenom[e];
+            final double coeff = invDenom == 0.0
+                    ? time * expLeft
+                    : (expLeft - expRight) * invDenom;
+            eigenBasisGradient[leftStart * stateCount + rightStart] +=
+                    coeff * scale * leftVector[leftStart] * rightVector[rightStart];
+        }
+
+        // ONE_BY_TWO: 2×2 rotation kernel [eic, eis; -eis, eic] applied to a rank-1 input.
+        for (int e = plan.oneByTwoStart; e < plan.oneByTwoEnd; e++) {
+            final int leftStart  = plan.eLeftStart[e];
+            final int rightStart = plan.eRightStart[e];
+            final int rb         = plan.eRightBlock[e];
+            final double expLeft  = plan.expR[plan.eLeftBlock[e]];
+            final double expShift = plan.expR[rb] / expLeft;
+            final double cosRight = plan.cosB[rb];
+            final double sinRight = plan.sinB[rb];
+            final double realShift = plan.eRealShift[e];
+            final double rightImag = plan.eRightImag[e];
+            final double invDenom  = plan.eInvDenom[e];
+            final double ic, is;
+            if (invDenom == 0.0) {
+                ic = time; is = 0.0;
+            } else {
+                ic = (expShift * (realShift * cosRight + rightImag * sinRight) - realShift) * invDenom;
+                is = (expShift * (realShift * sinRight - rightImag * cosRight) + rightImag) * invDenom;
+            }
+            final double eic = expLeft * ic;
+            final double eis = expLeft * is;
+            final double x   = scale * leftVector[leftStart];
+            final double in0 = x * rightVector[rightStart];
+            final double in1 = x * rightVector[rightStart + 1];
+            final int base = leftStart * stateCount + rightStart;
+            eigenBasisGradient[base]     += eic * in0 + eis * in1;
+            eigenBasisGradient[base + 1] += -eis * in0 + eic * in1;
+        }
+
+        // TWO_BY_ONE: 2×2 rotation kernel [A, B; -B, A] where A=cosLeft*eic+sinLeft*eis.
+        for (int e = plan.twoByOneStart; e < plan.twoByOneEnd; e++) {
+            final int leftStart  = plan.eLeftStart[e];
+            final int rightStart = plan.eRightStart[e];
+            final int lb         = plan.eLeftBlock[e];
+            final double expLeft  = plan.expR[lb];
+            final double expShift = plan.expR[plan.eRightBlock[e]] / expLeft;
+            final double cosLeft  = plan.cosB[lb];
+            final double sinLeft  = plan.sinB[lb];
+            final double realShift = plan.eRealShift[e];
+            final double leftImag  = plan.eLeftImag[e];
+            final double invDenom  = plan.eInvDenom[e];
+            final double ic, is;
+            if (invDenom == 0.0) {
+                ic = time; is = 0.0;
+            } else {
+                ic = (expShift * (realShift * cosLeft + leftImag * sinLeft) - realShift) * invDenom;
+                is = (expShift * (realShift * sinLeft - leftImag * cosLeft) + leftImag) * invDenom;
+            }
+            final double eic = expLeft * ic;
+            final double eis = expLeft * is;
+            final double A   = cosLeft * eic + sinLeft * eis;
+            final double B   = cosLeft * eis - sinLeft * eic;
+            final double y   = rightVector[rightStart];
+            final double in0 = scale * leftVector[leftStart]     * y;
+            final double in1 = scale * leftVector[leftStart + 1] * y;
+            final int base = leftStart * stateCount + rightStart;
+            eigenBasisGradient[base]              +=  A * in0 + B * in1;
+            eigenBasisGradient[base + stateCount] += -B * in0 + A * in1;
+        }
+
+        // TWO_BY_TWO: factored 4×4 matvec — only 8 multiplications for the apply step
+        // (vs 16 in the naive matvec), using sum/difference identities on the outer-product inputs.
+        for (int e = plan.twoByTwoStart; e < plan.twoByTwoEnd; e++) {
+            final int leftStart  = plan.eLeftStart[e];
+            final int rightStart = plan.eRightStart[e];
+            final int lb = plan.eLeftBlock[e];
+            final int rb = plan.eRightBlock[e];
+            final double expLeft  = plan.expR[lb];
+            final double expShift = plan.expR[rb] / expLeft;
+            final double cosLeft  = plan.cosB[lb];
+            final double sinLeft  = plan.sinB[lb];
+            final double cosRight = plan.cosB[rb];
+            final double sinRight = plan.sinB[rb];
+            final double realShift      = plan.eRealShift[e];
+            final double plusImagShift  = plan.ePlusImagShift[e];
+            final double minusImagShift = plan.eMinusImagShift[e];
+            final double invPlusDenom   = plan.eInvPlusDenom[e];
+            final double invMinusDenom  = plan.eInvMinusDenom[e];
+
+            // Cross-block angle-addition identities
+            final double cosPlusImag  = cosLeft * cosRight - sinLeft * sinRight;
+            final double sinPlusImag  = sinLeft * cosRight + cosLeft * sinRight;
+            final double cosMinusImag = cosRight * cosLeft + sinRight * sinLeft;
+            final double sinMinusImag = sinRight * cosLeft - cosRight * sinLeft;
+
+            final double pi0, pi1;
+            if (invPlusDenom == 0.0) {
+                pi0 = time; pi1 = 0.0;
+            } else {
+                final double expCosPl = expShift * cosPlusImag;
+                final double expSinPl = expShift * sinPlusImag;
+                pi0 = (realShift * (expCosPl - 1.0) + plusImagShift  * expSinPl) * invPlusDenom;
+                pi1 = (realShift * expSinPl - plusImagShift  * (expCosPl - 1.0)) * invPlusDenom;
+            }
+
+            final double mi0, mi1;
+            if (invMinusDenom == 0.0) {
+                mi0 = time; mi1 = 0.0;
+            } else {
+                final double expCosMi = expShift * cosMinusImag;
+                final double expSinMi = expShift * sinMinusImag;
+                mi0 = (realShift * (expCosMi - 1.0) + minusImagShift * expSinMi) * invMinusDenom;
+                mi1 = (realShift * expSinMi - minusImagShift * (expCosMi - 1.0)) * invMinusDenom;
+            }
+
+            // expNeg / expPos complex exponentials for the left block
+            final double enR =  expLeft * cosLeft;
+            final double enI = -expLeft * sinLeft;
+            final double epI =  expLeft * sinLeft;
+
+            // plus = expNeg * plusIntegral,  minus = expPos * minusIntegral  (complex multiply)
+            final double plR = enR * pi0 - enI * pi1;
+            final double plI = enR * pi1 + enI * pi0;
+            final double miR = enR * mi0 - epI * mi1;
+            final double miI = enR * mi1 + epI * mi0;
+
+            // Outer-product inputs (rank-1 2×2 matrix, stored as 4 scalars)
+            final double x0 = scale * leftVector[leftStart];
+            final double x1 = scale * leftVector[leftStart + 1];
+            final double y0 = rightVector[rightStart];
+            final double y1 = rightVector[rightStart + 1];
+
+            // Sum/difference factoring: reduces 4×4 matvec from 16 to 8 multiplications.
+            // in0=x0y0, in1=x0y1, in2=x1y0, in3=x1y1
+            final double sPlusV  = x0 * y0 + x1 * y1;   // in0 + in3
+            final double sMinusV = x0 * y0 - x1 * y1;   // in0 - in3
+            final double tPlusV  = x0 * y1 + x1 * y0;   // in1 + in2
+            final double tMinusV = x0 * y1 - x1 * y0;   // in1 - in2
+
+            final double A = miR * sPlusV  + miI * tMinusV;
+            final double B = plR * sMinusV + plI * tPlusV;
+            final double C = miR * tMinusV - miI * sPlusV;
+            final double D = plR * tPlusV  - plI * sMinusV;
+
+            final int base = leftStart * stateCount + rightStart;
+            eigenBasisGradient[base]                  += (A + B) * 0.5;
+            eigenBasisGradient[base + 1]              += (C + D) * 0.5;
+            eigenBasisGradient[base + stateCount]     += (D - C) * 0.5;
+            eigenBasisGradient[base + stateCount + 1] += (A - B) * 0.5;
+        }
+
+        // GENERAL fallback (very rare): fill coefficient slots then apply.
+        if (plan.generalStart < plan.generalEnd) {
+            for (int e = plan.generalStart; e < plan.generalEnd; e++) {
+                fillGeneralCoefficients(plan.coefficients, e * 16, eigenValues,
+                        plan.eLeftStart[e], plan.eLeftDim[e],
+                        plan.eRightStart[e], plan.eRightDim[e],
+                        stateCount, time);
+            }
+            for (int e = plan.generalStart; e < plan.generalEnd; e++) {
+                applyGeneralOuterProductBlock(plan, e, leftVector, rightVector,
+                        scale, eigenBasisGradient, stateCount);
+            }
+        }
+    }
+
     private static void applyGeneralOuterProductBlock(ComplexKernelPlan plan,
                                                       int entryIndex,
                                                       double[] leftVector,

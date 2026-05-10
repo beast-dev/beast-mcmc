@@ -225,50 +225,73 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             final double wc = categoryWeights[c];
             final double tc = branchLength * categoryRates[c];
 
-            ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc, stateCount);
-
-            for (int p = 0; p < patternCount; p++) {
-                final double wp = patternWeights[p];
-                if (wp == 0.0) {
-                    continue;
-                }
+            if (patternCount == 1) {
+                // Fast path for single-pattern data (e.g. phylogeography): fuse coefficient
+                // computation with the outer-product accumulation in one pass, eliminating
+                // the K²×16 intermediate coefficient store/load (~100 MB/gradient at K=26).
+                final double wp = patternWeights[0];
+                if (wp == 0.0) continue;
 
                 double denom = 0.0;
                 if (useInternalRotatedMessages) {
-                    // Internal rotated basis: pre-order is R^T q and post-order is R^-1 p.
-                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, rotatedPre);
-                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
-                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, rotatedPost);
-
+                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, rotatedPre);
+                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, tmpPreBottom);
+                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, rotatedPost);
                     for (int s = 0; s < stateCount; s++) {
                         denom += tmpPreBottom[s] * rotatedPost[s];
                     }
                 } else {
-                    // Standard-basis fallback for non-rotated representations.
-                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, tmpPreTop);
-                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
-                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, tmpPostBottom);
-
+                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, tmpPreTop);
+                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, tmpPostBottom);
                     for (int s = 0; s < stateCount; s++) {
                         denom += tmpPreBottom[s] * tmpPostBottom[s];
                     }
                 }
-                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) {
-                    continue;
-                }
-
-                final double scale = (wp * wc) / denom;
+                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
 
                 if (!useInternalRotatedMessages) {
-                    // x = R^T * preTop
                     multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
-                    // y = R^{-1} * postBottom
                     multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
                 }
 
-                // Accumulate Fréchet integral contributions into eigenBasisAccum
-                ComplexBlockKernelUtils.applyPlanToOuterProduct(
-                        plan, rotatedPre, rotatedPost, scale, eigenBasisAccum, stateCount);
+                ComplexBlockKernelUtils.fillAndApplyToOuterProduct(
+                        plan, eigenDecomp, tc, rotatedPre, rotatedPost,
+                        (wp * wc) / denom, eigenBasisAccum, stateCount);
+            } else {
+                // Multi-pattern path: fill coefficients once, apply across all patterns.
+                ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc, stateCount);
+
+                for (int p = 0; p < patternCount; p++) {
+                    final double wp = patternWeights[p];
+                    if (wp == 0.0) continue;
+
+                    double denom = 0.0;
+                    if (useInternalRotatedMessages) {
+                        likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, rotatedPre);
+                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
+                        likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, rotatedPost);
+                        for (int s = 0; s < stateCount; s++) {
+                            denom += tmpPreBottom[s] * rotatedPost[s];
+                        }
+                    } else {
+                        likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, tmpPreTop);
+                        likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
+                        likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, tmpPostBottom);
+                        for (int s = 0; s < stateCount; s++) {
+                            denom += tmpPreBottom[s] * tmpPostBottom[s];
+                        }
+                    }
+                    if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
+
+                    if (!useInternalRotatedMessages) {
+                        multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
+                        multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
+                    }
+
+                    ComplexBlockKernelUtils.applyPlanToOuterProduct(
+                            plan, rotatedPre, rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
+                }
             }
         }
     }

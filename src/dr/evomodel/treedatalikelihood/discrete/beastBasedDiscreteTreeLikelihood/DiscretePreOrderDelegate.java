@@ -50,7 +50,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private double[][] nodePreOrderLogScales;
     private double[][] storedNodePreOrderLogScales;
 
-    // exported caches in STANDARD basis
+    // optional exported caches
     private final double[][] preOrderAtBranchStart;
     private final double[][] preOrderAtBranchEnd;
 
@@ -63,7 +63,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private final double[] tmpSiblingPostOrder;
     private final double[] tmpChildBranchTopPreOrder;
     private final double[] tmpChildNodePreOrder;
-    private final double[] tmpStandardExport;
+    private final double[] tmpExport;
 
     public DiscretePreOrderDelegate(Tree tree,
                                     double[] branchLengths,
@@ -122,7 +122,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.tmpSiblingPostOrder = new double[stateCount];
         this.tmpChildBranchTopPreOrder = new double[stateCount];
         this.tmpChildNodePreOrder = new double[stateCount];
-        this.tmpStandardExport = new double[stateCount];
+        this.tmpExport = new double[stateCount];
 
         LOGGER.info("Creating DiscretePreOrderDelegate");
         LOGGER.info("    Pre-order representation: " + preOrderRepresentation.getName());
@@ -231,7 +231,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
         // ROOT MUST BE EXPORTED TO BRANCH START, NOT BRANCH END
         if (preOrderAtBranchStart != null) {
-            exportInternalBufferToStandard(rootStartBuffer, preOrderAtBranchStart[rootNumber]);
+            exportInternalBuffer(rootStartBuffer, preOrderAtBranchStart[rootNumber]);
             preOrderStartKnown[rootNumber] = true;
         }
     }
@@ -252,7 +252,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 //        nodePreOrderKnown[rootNumber] = true;
 //
 //        if (preOrderAtBranchEnd != null) {
-//            exportNodeToStandard(rootNumber, preOrderAtBranchEnd[rootNumber]);
+//            exportNode(rootNumber, preOrderAtBranchEnd[rootNumber]);
 //            preOrderEndKnown[rootNumber] = true;
 //        }
 //    }
@@ -340,11 +340,11 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         nodePreOrderKnown[childNumber] = true;
 
         if (preOrderAtBranchStart != null) {
-            exportInternalBufferToStandard(childPreOrderStart, preOrderAtBranchStart[childNumber]);
+            exportInternalBuffer(childPreOrderStart, preOrderAtBranchStart[childNumber]);
             preOrderStartKnown[childNumber] = true;
         }
         if (preOrderAtBranchEnd != null) {
-            exportInternalBufferToStandard(childPreOrderEnd, preOrderAtBranchEnd[childNumber]);
+            exportInternalBuffer(childPreOrderEnd, preOrderAtBranchEnd[childNumber]);
             preOrderEndKnown[childNumber] = true;
         }
 
@@ -440,13 +440,13 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         System.arraycopy(nodePreOrderLogScales[nodeNumber], 0, out, 0, patternCount);
     }
 
-    private void exportInternalBufferToStandard(double[] source, double[] dest) {
+    private void exportInternalBuffer(double[] source, double[] dest) {
         for (int c = 0; c < categoryCount; c++) {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
                 sliceInto(source, off, tmpParentNodePreOrder);
-                preOrderRepresentation.preOrderToStandard(tmpParentNodePreOrder, tmpStandardExport);
-                System.arraycopy(tmpStandardExport, 0, dest, off, stateCount);
+                preOrderRepresentation.exportPreOrderPartial(tmpParentNodePreOrder, tmpExport);
+                System.arraycopy(tmpExport, 0, dest, off, stateCount);
             }
         }
     }

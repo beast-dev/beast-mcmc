@@ -194,15 +194,13 @@ public final class SpectralRotatedPartialsRepresentation
     }
 
     @Override
-    public void postOrderToStandard(double[] partial, double[] outStandardPartial) {
-        ensureEigenSystemCurrent();
-        multiplyMatrixVector(matrixR, partial, outStandardPartial, stateCount);
+    public void exportPostOrderPartial(double[] partial, double[] outPartial) {
+        System.arraycopy(partial, 0, outPartial, 0, stateCount);
     }
 
     @Override
-    public void preOrderToStandard(double[] preOrderPartial, double[] outStandardPartial) {
-        ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixRInv, preOrderPartial, outStandardPartial, stateCount);
+    public void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial) {
+        System.arraycopy(preOrderPartial, 0, outPartial, 0, stateCount);
     }
 
     private void ensureEigenSystemCurrent() {

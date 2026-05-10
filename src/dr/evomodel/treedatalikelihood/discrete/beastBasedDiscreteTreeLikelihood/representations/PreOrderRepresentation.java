@@ -6,10 +6,7 @@ import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.
  * Defines the internal algebra of pre-order partials used by
  * {@link DiscretePreOrderDelegate}.
  *
- * The internal representation may be:
- * - standard basis: q
- * - spectral dual basis: y = R^T q
- * - etc.
+ * The internal representation is fully owned by the implementation.
  *
  * All methods are allocation-free with caller-owned buffers.
  */
@@ -56,7 +53,7 @@ public interface PreOrderRepresentation {
                                  double[] outChildNodePreOrder);
 
     /**
-     * Convert one internal pre-order slice to standard basis.
+     * Export one internal pre-order slice to the representation's external/reporting coordinates.
      */
-    void preOrderToStandard(double[] preOrderPartial, double[] outStandardPartial);
+    void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial);
 }

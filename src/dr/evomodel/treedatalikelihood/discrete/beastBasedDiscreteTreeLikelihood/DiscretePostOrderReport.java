@@ -61,7 +61,7 @@ public final class DiscretePostOrderReport implements Reportable {
 
             for (int c = 0; c < categoryCount; c++) {
                 for (int p = 0; p < patternCount; p++) {
-                    discreteDelegate.getPostOrderBranchTopStandardInto(nodeNumber, c, p, start);
+                    discreteDelegate.getPostOrderBranchTopExportInto(nodeNumber, c, p, start);
                     discreteDelegate.getPostOrderBranchBottomInto(nodeNumber, c, p, end);
 
                     sb.append("  category ").append(c)

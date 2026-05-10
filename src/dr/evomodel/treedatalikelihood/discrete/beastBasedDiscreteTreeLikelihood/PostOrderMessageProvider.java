@@ -4,7 +4,7 @@ package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood
  * Narrow interface exposing post-order branch-side messages.
  *
  * Algorithmic accessors return messages in the post-order representation's
- * internal basis. Explicit standard-basis accessors are for reporting/debugging.
+ * internal coordinates. Export accessors are for reporting/debugging.
  */
 /*
  * @author Filippo Monti
@@ -28,17 +28,17 @@ public interface PostOrderMessageProvider {
 
     /**
      * Get the post-order message at the BOTTOM of the branch leading into childNodeNumber,
-     * in the standard basis, for a single category/pattern slice.
+     * in exported coordinates, for a single category/pattern slice.
      *
      * This is the child-node post-order message before propagation along the branch.
      */
-    void getPostOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial);
+    void getPostOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial);
 
     /**
-     * Get the post-order message at the TOP of the branch in standard basis.
+     * Get the post-order message at the TOP of the branch in exported coordinates.
      * This is intended for report/export code, not traversal coordination.
      */
-    void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial);
+    void getPostOrderBranchTopExportInto(int childNodeNumber, int category, int pattern, double[] outPartial);
 
     void getPostOrderBranchScalesInto(int nodeNumber, double[] dest);
 }

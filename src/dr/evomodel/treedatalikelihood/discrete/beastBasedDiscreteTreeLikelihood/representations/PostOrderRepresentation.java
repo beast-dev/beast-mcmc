@@ -6,14 +6,13 @@ import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
  * Defines the internal algebra of post-order partials used by
  * {@link DiscreteDataLikelihoodDelegate}.
  *
- * Implementations may store partials in the standard basis, a spectral basis,
- * or any other representation, as long as they provide:
+ * Implementations may store partials in any coordinate system, as long as they provide:
  *
  * 1. tip initialization,
  * 2. branch propagation to the branch top,
  * 3. child combination at internal nodes,
  * 4. root evaluation,
- * 5. export to standard basis for caches/debugging.
+ * 5. export for caches/debugging.
  *
  * All methods are allocation-free with caller-owned buffers.
  */
@@ -76,12 +75,12 @@ public interface PostOrderRepresentation {
     double rootContribution(double[] rootFrequencies, double[] rootPartial);
 
     /**
-     * Convert one partial slice from the internal representation to the standard basis.
+     * Export one partial slice from the internal representation.
      *
-     * @param partial             input partial in internal representation
-     * @param outStandardPartial  output partial in standard basis
+     * @param partial    input partial in internal representation
+     * @param outPartial output partial in the representation's external/reporting coordinates
      */
-    void postOrderToStandard(double[] partial, double[] outStandardPartial);
+    void exportPostOrderPartial(double[] partial, double[] outPartial);
 
     /**
      * Whether it is valid to apply scaling directly to the internal representation.

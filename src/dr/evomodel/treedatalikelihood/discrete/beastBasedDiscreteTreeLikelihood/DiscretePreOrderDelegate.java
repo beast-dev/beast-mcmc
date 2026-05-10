@@ -419,6 +419,11 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         System.arraycopy(preOrderAtBranchEnd[nodeNumber], off, out, 0, stateCount);
     }
 
+    public void getInternalPreOrderAtBranchStartInto(int nodeNumber, int category, int pattern, double[] out) {
+        final int off = offset(category, pattern, 0);
+        System.arraycopy(branchStartPreOrder[nodeNumber], off, out, 0, stateCount);
+    }
+
     public void getInternalPreOrderAtNodeInto(int nodeNumber, int category, int pattern, double[] out) {
         final int off = offset(category, pattern, 0);
         System.arraycopy(nodePreOrder[nodeNumber], off, out, 0, stateCount);

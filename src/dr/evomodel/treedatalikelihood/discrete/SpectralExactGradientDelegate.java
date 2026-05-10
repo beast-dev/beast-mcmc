@@ -138,6 +138,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         final double[] patternWeights  = likelihoodDelegate.getPatternWeights();
         final double[] categoryWeights = likelihoodDelegate.getCategoryWeights();
         final double[] categoryRates   = likelihoodDelegate.getSiteRateModel().getCategoryRates();
+        final boolean useInternalRotatedMessages = likelihoodDelegate.isSpectralRepresentation();
 
         for (int childNumber = 0; childNumber < tree.getNodeCount(); childNumber++) {
             final NodeRef child = tree.getNode(childNumber);
@@ -173,7 +174,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                         eigenDecomp,
                         evec,
                         ievc,
-                        eigenBasisAccumByModel[modelNumber]
+                        eigenBasisAccumByModel[modelNumber],
+                        useInternalRotatedMessages
                 );
             }
         }
@@ -204,7 +206,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                                                EigenDecomposition eigenDecomp,
                                                double[] evec,
                                                double[] ievc,
-                                               double[] eigenBasisAccum) {
+                                               double[] eigenBasisAccum,
+                                               boolean useInternalRotatedMessages) {
         final int categoryCount = likelihoodDelegate.getCategoryCount();
         final int patternCount  = likelihoodDelegate.getPatternCount();
 
@@ -221,18 +224,25 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     continue;
                 }
 
-                // Pre-order at parent end of branch (standard basis)
-                likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, tmpPreTop);
-                // Pre-order at child end (standard basis) — used only for denom normalization
-                likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
-                // Post-order at child end of branch (standard basis)
-                likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, tmpPostBottom);
-
-                // Denom = sum_s preBottom[s] * postBottom[s]  (= likelihood at child node)
-                // Equivalent to preTop^T * P(t) * postBottom = site likelihood contribution.
                 double denom = 0.0;
-                for (int s = 0; s < stateCount; s++) {
-                    denom += tmpPreBottom[s] * tmpPostBottom[s];
+                if (useInternalRotatedMessages) {
+                    // Internal rotated basis: pre-order is R^T q and post-order is R^-1 p.
+                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, rotatedPre);
+                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
+                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, rotatedPost);
+
+                    for (int s = 0; s < stateCount; s++) {
+                        denom += tmpPreBottom[s] * rotatedPost[s];
+                    }
+                } else {
+                    // Standard-basis fallback for non-rotated representations.
+                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, tmpPreTop);
+                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, tmpPostBottom);
+
+                    for (int s = 0; s < stateCount; s++) {
+                        denom += tmpPreBottom[s] * tmpPostBottom[s];
+                    }
                 }
                 if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) {
                     continue;
@@ -240,10 +250,12 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
                 final double scale = (wp * wc) / denom;
 
-                // x = R^T * preTop
-                multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
-                // y = R^{-1} * postBottom
-                multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
+                if (!useInternalRotatedMessages) {
+                    // x = R^T * preTop
+                    multiplyTransposeMatrixVector(evec, tmpPreTop, rotatedPre);
+                    // y = R^{-1} * postBottom
+                    multiplyMatrixVector(ievc, tmpPostBottom, rotatedPost);
+                }
 
                 // Outer product M[i][j] = scale * x[i] * y[j]
                 for (int i = 0; i < stateCount; i++) {

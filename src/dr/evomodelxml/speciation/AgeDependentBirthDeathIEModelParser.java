@@ -1,13 +1,14 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentSkylineBirthDeathModel;
+import dr.evomodel.speciation.AgeDependentBirthDeathIEModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectParser {
+public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser {
 
-    private static final String PARSER_NAME = "ageDependentSkylineBirthDeathModel";
+    private static final String PARSER_NAME = "ageDependentBirthDeathIEModel";
+    private static final String ORIGIN_TIME = "originTime";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
     private static final String BIRTH_SHAPE = "birthShape";
@@ -18,6 +19,8 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
     private static final String EPS_PICARD = "epsPicard";
     private static final String MAX_ITER_PICARD = "maxIterPicard";
     private static final String SOLVER = "solver";
+    private static final String THREADS = "threads";
+    private static final String EXCLUDE_ROOT_BRANCH = "excludeRootBranch";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -26,7 +29,13 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Tree tree = (Tree) xo.getChild(Tree.class);
 
-        Parameter epochTimes = (Parameter) xo.getElementFirstChild(EPOCH_TIMES);
+        double originTime = xo.getDoubleAttribute(ORIGIN_TIME);
+
+        Parameter epochTimes = null;
+        if (xo.hasChildNamed(EPOCH_TIMES)) {
+            epochTimes = (Parameter) xo.getElementFirstChild(EPOCH_TIMES);
+        }
+
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
         Parameter birthShape = (Parameter) xo.getElementFirstChild(BIRTH_SHAPE);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
@@ -46,12 +55,14 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
             }
         }
 
-        int numEpochs = epochTimes.getDimension();
+        int numThreads = xo.getAttribute(THREADS, 1);
+        boolean excludeRootBranch = xo.getAttribute(EXCLUDE_ROOT_BRANCH, false);
 
-        // TODO: Check up on these....
-        if (birthScale.getDimension() != numEpochs) {
+        int numEpochs = (epochTimes != null) ? epochTimes.getDimension() + 1 : 1;
+
+        if (birthScale.getDimension() != 1 && birthScale.getDimension() != numEpochs) {
             throw new XMLParseException("birthScale dimension (" + birthScale.getDimension() +
-                    ") must equal epochTimes dimension (" + numEpochs + ")");
+                    ") must be 1 or equal to epochTimes dimension (" + numEpochs + ")");
         }
         if (deathScale.getDimension() != 1 && deathScale.getDimension() != numEpochs) {
             throw new XMLParseException("deathScale dimension (" + deathScale.getDimension() +
@@ -64,10 +75,11 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
             throw new XMLParseException("deathShape must have dimension 2 [b, gamma], got " + deathShape.getDimension());
         }
 
-        return new AgeDependentSkylineBirthDeathModel(
+        return new AgeDependentBirthDeathIEModel(
                 xo.getId(),
                 tree,
                 epochTimes,
+                originTime,
                 birthScale,
                 birthShape,
                 deathScale,
@@ -75,19 +87,19 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
                 numSteps,
                 epsPicard,
                 maxIterPicard,
-                useDirectQuadrature
+                useDirectQuadrature,
+                numThreads,
+                excludeRootBranch
         );
     }
 
     public String getParserDescription() {
-        return "Age-dependent skyline birth-death model using FFT-based Picard iteration. " +
-               "Rates are lambda(a) = birthScale * (1 + b*a) * exp(-gamma*a) and " +
-               "mu(a) = deathScale * (1 + b*a) * exp(-gamma*a) within each epoch, " +
-               "where shape = [b, gamma].";
+        return "Optimized variant of ageDependentSkylineBirthDeathModel: same algorithm, " +
+               "preallocated scratch pools, kernel caching, partial store/restore.";
     }
 
     public Class getReturnType() {
-        return AgeDependentSkylineBirthDeathModel.class;
+        return AgeDependentBirthDeathIEModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -96,24 +108,17 @@ public class AgeDependentSkylineBirthDeathModelParser extends AbstractXMLObjectP
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
-            new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
+            AttributeRule.newDoubleRule(ORIGIN_TIME),
+            new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }, true),
+            new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
+            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
+            new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
+            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
             AttributeRule.newIntegerRule(STEPS),
             AttributeRule.newDoubleRule(EPS_PICARD),
             AttributeRule.newIntegerRule(MAX_ITER_PICARD),
             AttributeRule.newStringRule(SOLVER, true),
+            AttributeRule.newIntegerRule(THREADS, true),
+            AttributeRule.newBooleanRule(EXCLUDE_ROOT_BRANCH, true),
     };
 }

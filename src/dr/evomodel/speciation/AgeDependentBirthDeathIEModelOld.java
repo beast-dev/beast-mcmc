@@ -6,7 +6,10 @@ import dr.inference.model.*;
 import dr.math.FastFourierTransform;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author Frederik M. Andersen
@@ -28,7 +31,7 @@ import java.util.Arrays;
  * Per-node caching: when only the tree changes (node height proposals), only affected nodes
  * and their direct children are recomputed. The p0/S grids (tree-independent) are reused.
  */
-public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood implements Reportable {
+public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood implements Reportable {
     private final Tree tree;
     private final Parameter times;
     private final Parameter birthScale;
@@ -71,6 +74,11 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     // Solver selection
     private final boolean useDirectQuadrature;
 
+    // Likelihood variant: when true, drop the root-branch term (from root height to origin).
+    // Implicitly condition on non-extinction of both subtrees at root height, which falls out
+    // automatically from the per-node -log(1 - p0(parentHeight)) terms of root's two children.
+    private final boolean excludeRootBranch;
+
     // Direct quadrature arrays (allocated only when useDirectQuadrature = true)
     private double[] birthRateAtGrid;
     private double[] deathRateAtGrid;
@@ -92,20 +100,54 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     private boolean parametersDirty = true;
     private boolean storedParametersDirty = true;
 
-    /**
-     * useDirectQuadrature: if true, use direct quadrature solver; if false, use FFT-Picard
-     */
-    public AgeDependentSkylineBirthDeathModel(String name,
-                                              Tree tree,
-                                              Parameter times,
-                                              Parameter birthScale,
-                                              Parameter birthShape,
-                                              Parameter deathScale,
-                                              Parameter deathShape,
-                                              int numSteps,
-                                              double epsPicard,
-                                              int maxIterPicard,
-                                              boolean useDirectQuadrature) {
+    // Parallel computation
+    private final int numThreads;
+    private final ExecutorService threadPool;
+
+    public AgeDependentBirthDeathIEModelOld(String name,
+                                            Tree tree,
+                                            Parameter times,
+                                            Parameter birthScale,
+                                            Parameter birthShape,
+                                            Parameter deathScale,
+                                            Parameter deathShape,
+                                            int numSteps,
+                                            double epsPicard,
+                                            int maxIterPicard,
+                                            boolean useDirectQuadrature) {
+        this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
+             numSteps, epsPicard, maxIterPicard, useDirectQuadrature, 1, false);
+    }
+
+    public AgeDependentBirthDeathIEModelOld(String name,
+                                            Tree tree,
+                                            Parameter times,
+                                            Parameter birthScale,
+                                            Parameter birthShape,
+                                            Parameter deathScale,
+                                            Parameter deathShape,
+                                            int numSteps,
+                                            double epsPicard,
+                                            int maxIterPicard,
+                                            boolean useDirectQuadrature,
+                                            int numThreads) {
+        this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
+             numSteps, epsPicard, maxIterPicard, useDirectQuadrature, numThreads, false);
+    }
+
+    public AgeDependentBirthDeathIEModelOld(String name,
+                                            Tree tree,
+                                            Parameter times,
+                                            Parameter birthScale,
+                                            Parameter birthShape,
+                                            Parameter deathScale,
+                                            Parameter deathShape,
+                                            int numSteps,
+                                            double epsPicard,
+                                            int maxIterPicard,
+                                            boolean useDirectQuadrature,
+                                            int numThreads,
+                                            boolean excludeRootBranch) {
         super(name);
 
         this.tree = tree;
@@ -122,6 +164,9 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         this.epsPicard = epsPicard;
         this.maxIterPicard = maxIterPicard;
         this.useDirectQuadrature = useDirectQuadrature;
+        this.excludeRootBranch = excludeRootBranch;
+        this.numThreads = numThreads;
+        this.threadPool = (numThreads > 1) ? Executors.newFixedThreadPool(numThreads) : null;
 
         if (tree instanceof Model) {
             addModel((Model) tree);
@@ -166,16 +211,16 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         this.storedS = new double[maxSteps + 1];
     }
 
-    public AgeDependentSkylineBirthDeathModel(String name,
-                                              Tree tree,
-                                              Parameter times,
-                                              Parameter birthScale,
-                                              Parameter birthShape,
-                                              Parameter deathScale,
-                                              Parameter deathShape,
-                                              int numSteps,
-                                              double epsPicard,
-                                              int maxIterPicard) {
+    public AgeDependentBirthDeathIEModelOld(String name,
+                                            Tree tree,
+                                            Parameter times,
+                                            Parameter birthScale,
+                                            Parameter birthShape,
+                                            Parameter deathScale,
+                                            Parameter deathShape,
+                                            int numSteps,
+                                            double epsPicard,
+                                            int maxIterPicard) {
         this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
              numSteps, epsPicard, maxIterPicard, false);
     }
@@ -602,7 +647,7 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     }
 
     /**
-     * FFT-Picard likelihood computation
+     * FFT-Picard likelihood computation (non-cached path)
      */
     private double calculateLogLikelihoodFFT() {
         computeP0AndS();
@@ -610,25 +655,61 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
         double originTime = times.getParameterValue(times.getDimension() - 1);
         double logL = 0.0;
 
-        // Internal nodes, computes branch length densities
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef node = tree.getInternalNode(i);
-            double nodeHeight = tree.getNodeHeight(node);
-
-            double branchLength;
-            if (tree.isRoot(node)) {
-                branchLength = originTime - nodeHeight;
-            } else {
-                branchLength = tree.getBranchLength(node);
+        if (numThreads > 1) {
+            // Collect internal node tasks
+            List<double[]> tasks = new ArrayList<>();
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef node = tree.getInternalNode(i);
+                double nodeHeight = tree.getNodeHeight(node);
+                double branchLength;
+                if (tree.isRoot(node)) {
+                    branchLength = originTime - nodeHeight;
+                } else {
+                    branchLength = tree.getBranchLength(node);
+                }
+                branchLength = Math.max(branchLength, h);
+                tasks.add(new double[]{nodeHeight, branchLength});
             }
-            branchLength = Math.max(branchLength, h);
 
-            double gt = branchLenDens(nodeHeight, branchLength);
+            List<Future<Double>> futures = new ArrayList<>(tasks.size());
+            for (double[] task : tasks) {
+                final double nodeHeight = task[0];
+                final double branchLength = task[1];
+                futures.add(threadPool.submit(() -> {
+                    double gt = branchLenDens(nodeHeight, branchLength);
+                    double parentHeight = nodeHeight + branchLength;
+                    double p0Parent = interpolate(p0, parentHeight);
+                    return Math.log(gt) - Math.log(1.0 - p0Parent);
+                }));
+            }
 
-            double parentHeight = nodeHeight + branchLength;
-            double p0Parent = interpolate(p0, parentHeight);
+            for (Future<Double> f : futures) {
+                try {
+                    logL += f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException("Parallel node computation failed", e);
+                }
+            }
+        } else {
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef node = tree.getInternalNode(i);
+                double nodeHeight = tree.getNodeHeight(node);
 
-            logL += Math.log(gt) - Math.log(1.0 - p0Parent);
+                double branchLength;
+                if (tree.isRoot(node)) {
+                    branchLength = originTime - nodeHeight;
+                } else {
+                    branchLength = tree.getBranchLength(node);
+                }
+                branchLength = Math.max(branchLength, h);
+
+                double gt = branchLenDens(nodeHeight, branchLength);
+
+                double parentHeight = nodeHeight + branchLength;
+                double p0Parent = interpolate(p0, parentHeight);
+
+                logL += Math.log(gt) - Math.log(1.0 - p0Parent);
+            }
         }
 
         // External nodes, evaluates survival probabilities
@@ -657,31 +738,78 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
     /**
      * Compute per-node log-likelihood contributions (FFT path).
      * Only computes contributions for nodes where nodeValid[nodeNum] is false.
+     * When numThreads > 1, internal node contributions are computed in parallel.
      */
     private void computeNodeContributionsFFT(double[] contributions) {
         double originTime = times.getParameterValue(times.getDimension() - 1);
 
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef node = tree.getInternalNode(i);
-            int nodeNum = node.getNumber();
-            if (nodeValid[nodeNum]) continue;
+        if (numThreads > 1) {
+            // Collect invalidated internal nodes
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef node = tree.getInternalNode(i);
+                final int nodeNum = node.getNumber();
+                if (nodeValid[nodeNum]) continue;
 
-            double nodeHeight = tree.getNodeHeight(node);
-            double branchLength;
-            if (tree.isRoot(node)) {
-                branchLength = originTime - nodeHeight;
-            } else {
-                branchLength = tree.getBranchLength(node);
+                if (excludeRootBranch && tree.isRoot(node)) {
+                    contributions[nodeNum] = 0.0;
+                    continue;
+                }
+
+                final double nodeHeight = tree.getNodeHeight(node);
+                double bl;
+                if (tree.isRoot(node)) {
+                    bl = originTime - nodeHeight;
+                } else {
+                    bl = tree.getBranchLength(node);
+                }
+                final double branchLength = Math.max(bl, h);
+
+                futures.add(threadPool.submit(() -> {
+                    double gt = branchLenDens(nodeHeight, branchLength);
+                    double parentHeight = nodeHeight + branchLength;
+                    double p0Parent = interpolate(p0, parentHeight);
+                    contributions[nodeNum] = Math.log(gt) - Math.log(1.0 - p0Parent);
+                }));
             }
-            branchLength = Math.max(branchLength, h);
 
-            double gt = branchLenDens(nodeHeight, branchLength);
-            double parentHeight = nodeHeight + branchLength;
-            double p0Parent = interpolate(p0, parentHeight);
+            // Wait for all tasks
+            for (Future<?> f : futures) {
+                try {
+                    f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException("Parallel node computation failed", e);
+                }
+            }
+        } else {
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef node = tree.getInternalNode(i);
+                int nodeNum = node.getNumber();
+                if (nodeValid[nodeNum]) continue;
 
-            contributions[nodeNum] = Math.log(gt) - Math.log(1.0 - p0Parent);
+                if (excludeRootBranch && tree.isRoot(node)) {
+                    contributions[nodeNum] = 0.0;
+                    continue;
+                }
+
+                double nodeHeight = tree.getNodeHeight(node);
+                double branchLength;
+                if (tree.isRoot(node)) {
+                    branchLength = originTime - nodeHeight;
+                } else {
+                    branchLength = tree.getBranchLength(node);
+                }
+                branchLength = Math.max(branchLength, h);
+
+                double gt = branchLenDens(nodeHeight, branchLength);
+                double parentHeight = nodeHeight + branchLength;
+                double p0Parent = interpolate(p0, parentHeight);
+
+                contributions[nodeNum] = Math.log(gt) - Math.log(1.0 - p0Parent);
+            }
         }
 
+        // External nodes are cheap (just interpolation), no need to parallelize
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
             int nodeNum = node.getNumber();
@@ -706,6 +834,11 @@ public class AgeDependentSkylineBirthDeathModel extends AbstractModelLikelihood 
             NodeRef node = tree.getInternalNode(i);
             int nodeNum = node.getNumber();
             if (nodeValid[nodeNum]) continue;
+
+            if (excludeRootBranch && tree.isRoot(node)) {
+                contributions[nodeNum] = 0.0;
+                continue;
+            }
 
             int k = (int) Math.round(tree.getNodeHeight(node) / h);
             int l;

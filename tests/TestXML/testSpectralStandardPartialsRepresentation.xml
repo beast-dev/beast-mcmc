@@ -1,0 +1,246 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast version="10.5.0-beta4">
+
+    <taxa id="taxa">
+        <taxon id="AZ4030_2005.5">
+            <date value="2005.5" direction="forwards" units="years"/>
+            <attr name="host">A</attr>
+            <attr name="state">Arizona</attr>
+        </taxon>
+        <taxon id="AZ1968_2004.5">
+            <date value="2004.5" direction="forwards" units="years"/>
+            <attr name="host">B</attr>
+            <attr name="state">Arizona</attr>
+        </taxon>
+        <taxon id="AZ7590_2005.5">
+            <date value="2005.5" direction="forwards" units="years"/>
+            <attr name="host">B</attr>
+            <attr name="state">Arizona</attr>
+        </taxon>
+        <taxon id="CA237_2002.5">
+            <date value="2002.5" direction="forwards" units="years"/>
+            <attr name="host">B</attr>
+            <attr name="state">California</attr>
+        </taxon>
+        <taxon id="CA29_2002.5">
+            <date value="2002.5" direction="forwards" units="years"/>
+            <attr name="host">B</attr>
+            <attr name="state">California</attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="host.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+        <state code="D"/>
+        <state code="E"/>
+        <state code="F"/>
+        <state code="G"/>
+        <state code="H"/>
+    </generalDataType>
+
+    <attributePatterns id="host.pattern" attribute="host">
+        <taxa idref="taxa"/>
+        <generalDataType idref="host.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="false" usingDates="false">
+        (((AZ4030_2005.5:0.10,AZ1968_2004.5:0.10):0.10,AZ7590_2005.5:0.20):0.10,(CA237_2002.5:0.15,CA29_2002.5:0.15):0.15);
+    </newick>
+
+    <treeModel id="treeModel">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="host.branchRates">
+        <rate>
+            <parameter id="host.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <logRateSubstitutionModel id="host.model" normalize="true" scaleRatesByFrequencies="false">
+        <generalDataType idref="host.dataType"/>
+        <rootFrequencies>
+            <frequencyModel id="host.frequencyModel" normalize="true">
+                <generalDataType idref="host.dataType"/>
+                <frequencies>
+                    <parameter id="host.frequencies" dimension="8" value="0.125 0.125 0.125 0.125 0.125 0.125 0.125 0.125"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
+        <logRates>
+            <parameter id="host.logRates" dimension="56" value="-3.456536 -3.255278 -3.379363 -3.499922 -3.285188 -3.498754 -3.190026 -3.397031 -3.38825 -3.491649 -3.468161 -3.408565 -3.463033 -3.598224 -3.542831 -3.177722 -3.09128 -3.229845 -3.37488 -3.124096 -3.602779 -3.020614 -3.250227 -3.240071 -3.36432 -3.334986 -3.263655 -3.587467 -3.523418 -3.432392 -3.007411 -3.171982 -3.612372 -3.515814 -3.152871 -0.0794951 -3.58147 -3.14033 -3.273638 -3.241769 -3.165336 -3.100441 -3.455226 -3.349001 -3.319173 -3.580477 -3.58553 -3.286829 -3.338398 -3.612372 -3.275295 -3.395575 -3.367351 -3.298255 -3.238372 -3.544765"/>
+        </logRates>
+    </logRateSubstitutionModel>
+
+    <siteModel id="host.siteModel">
+        <substitutionModel>
+            <logRateSubstitutionModel idref="host.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="host.treeLikelihood"
+                        useAmbiguities="false"
+                        usePreOrder="true"
+                        phyloGeoFast="true">
+        <patterns idref="host.pattern"/>
+        <siteModel idref="host.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <strictClockBranchRates idref="host.branchRates"/>
+    </treeDataLikelihood>
+
+    <cachedReport id="treeLikelihoodReport">
+        <treeDataLikelihood idref="host.treeLikelihood"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="treeLikelihoodReport"/>
+    </report>
+
+    <assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check spectral-standard TreeDataLikelihood
+        </message>
+        <actual regex="dr.evomodel.treedatalikelihood.TreeDataLikelihood\((.*?)\)">
+            <cachedReport idref="treeLikelihoodReport"/>
+        </actual>
+        <expected>
+            -7.332645915351344
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="postOrderReport">
+        <discretePostOrderReport tolerance="1e-12">
+            <treeDataLikelihood idref="host.treeLikelihood"/>
+        </discretePostOrderReport>
+    </cachedReport>
+
+    <cachedReport id="preOrderReport">
+        <discretePreOrderReport tolerance="1e-12">
+            <treeDataLikelihood idref="host.treeLikelihood"/>
+        </discretePreOrderReport>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="postOrderReport"/>
+    </report>
+
+    <assertEqual verbose="true">
+        <message>
+            check spectral-standard post-order partials
+        </message>
+        <actual regex="(?s)(Discrete post-order partials.*\])\s*">
+            <cachedReport idref="postOrderReport"/>
+        </actual>
+        <expected><![CDATA[Discrete post-order partials
+  treeDataLikelihood = host.treeLikelihood
+  nodes = 9
+  patterns = 1
+  categories = 1
+  states = 8
+node 0 taxon=AZ4030_2005.5
+  category 0 pattern 0 start=[0.934741503305, 0.007976755828, 0.008617364525, 0.013108800974, 0.011177349384, 0.007337815251, 0.008035559587, 0.011391786134] end=[1, 0, 0, 0, 0, 0, 0, 0]
+node 1 taxon=AZ1968_2004.5
+  category 0 pattern 0 start=[0.009705384174, 0.941075554652, 0.214022741044, 0.00894646575, 0.012532696047, 0.011243250127, 0.011589771103, 0.012149051404] end=[0, 1, 0, 0, 0, 0, 0, 0]
+node 2 taxon=AZ7590_2005.5
+  category 0 pattern 0 start=[0.020686297475, 0.887891840651, 0.358084166136, 0.019591454508, 0.025605242265, 0.023383026157, 0.024072177136, 0.024724785251] end=[0, 1, 0, 0, 0, 0, 0, 0]
+node 3 taxon=CA237_2002.5
+  category 0 pattern 0 start=[0.015080841368, 0.913824027591, 0.293378100189, 0.014111377848, 0.019033207692, 0.017239173902, 0.017758517752, 0.01841060264] end=[0, 1, 0, 0, 0, 0, 0, 0]
+node 4 taxon=CA29_2002.5
+  category 0 pattern 0 start=[0.015080841368, 0.913824027591, 0.293378100189, 0.014111377848, 0.019033207692, 0.017239173902, 0.017758517752, 0.01841060264] end=[0, 1, 0, 0, 0, 0, 0, 0]
+node 5
+  category 0 pattern 0 start=[0.008575029007, 0.007156376392, 0.003034840833, 0.000318985397, 0.000343828191, 0.000248254358, 0.000267146052, 0.000340030868] end=[0.009072025393, 0.007506729916, 0.001844311976, 0.000117277439, 0.000140082322, 0.000082500892, 0.000093130296, 0.000138399395]
+node 6
+  category 0 pattern 0 start=[0.000237744731, 0.005990067635, 0.002154102652, 0.000076790164, 0.000098267581, 0.000087536193, 0.000090690383, 0.000094591054] end=[0.000177385601, 0.006354088207, 0.001086728449, 0.000006249388, 0.000008803804, 0.000005804938, 0.000006430787, 0.00000840719]
+node 7
+  category 0 pattern 0 start=[0.013911449416, 0.764088143866, 0.298677207695, 0.013248036479, 0.017144594748, 0.015683583435, 0.016161882668, 0.016504939285] end=[0.000227431776, 0.835074353402, 0.08607070967, 0.000199130985, 0.000362262995, 0.000297189117, 0.000315364953, 0.00033895029]
+node 8 root
+  category 0 pattern 0 start=[0, 0, 0, 0, 0, 0, 0, 0] end=[0.000003307374, 0.004576939661, 0.000643381365, 0.000001017319, 0.000001684758, 0.000001372881, 0.000001465727, 0.00000156122]
+]]></expected>
+    </assertEqual>
+
+    <report>
+        <cachedReport idref="preOrderReport"/>
+    </report>
+
+    <assertEqual verbose="true">
+        <message>
+            check spectral-standard pre-order partials
+        </message>
+        <actual regex="(?s)(Discrete pre-order partials.*\])\s*">
+            <cachedReport idref="preOrderReport"/>
+        </actual>
+        <expected><![CDATA[Discrete pre-order partials
+  treeDataLikelihood = host.treeLikelihood
+  nodes = 9
+  patterns = 1
+  categories = 1
+  states = 8
+node 0 taxon=AZ4030_2005.5
+  category 0 pattern 0 start=[0.000008140384, 0.07909276378, 0.001718272476, 0.000008167491, 0.000010891579, 0.000010275886, 0.000011224395, 0.000011155924] end=[0.000653841288, 0.074800685661, 0.001884270407, 0.000733337575, 0.000671099482, 0.00069492327, 0.000734682599, 0.000698051633]
+node 1 taxon=AZ1968_2004.5
+  category 0 pattern 0 start=[0.000784013807, 0.000670407027, 0.000069184145, 0.000011967409, 0.00000971371, 0.000006706473, 0.000007782233, 0.000010460562] end=[0.000739290464, 0.000653841288, 0.000063349923, 0.000025052038, 0.000021780131, 0.000020957122, 0.000020791302, 0.000025173095]
+node 2 taxon=AZ7590_2005.5
+  category 0 pattern 0 start=[0.000024085793, 0.000701343637, 0.000085215857, 0.00000088077, 0.000001085015, 0.000000779286, 0.000000871358, 0.000001094629] end=[0.000033412143, 0.000653841288, 0.000055577325, 0.000014593049, 0.000013739095, 0.000014400238, 0.000015099732, 0.000014693475]
+node 3 taxon=CA237_2002.5
+  category 0 pattern 0 start=[0.000000602177, 0.000698759504, 0.00005198703, 0.000000316846, 0.000000459351, 0.000000423183, 0.000000454303, 0.000000464328] end=[0.000009466598, 0.000653841288, 0.000040199123, 0.000010131812, 0.000009462326, 0.000009923236, 0.000010477099, 0.000009965241]
+node 4 taxon=CA29_2002.5
+  category 0 pattern 0 start=[0.000000602177, 0.000698759504, 0.00005198703, 0.000000316846, 0.000000459351, 0.000000423183, 0.000000454303, 0.000000464328] end=[0.000009466598, 0.000653841288, 0.000040199123, 0.000010131812, 0.000009462326, 0.000009923236, 0.000010477099, 0.000009965241]
+node 5
+  category 0 pattern 0 start=[0.00005810428, 0.087015726808, 0.010054711533, 0.000054095135, 0.000080802173, 0.000073400792, 0.000078516898, 0.000079594168] end=[0.000838749327, 0.084045073096, 0.008028457479, 0.00091292936, 0.000869053113, 0.000913960416, 0.00096847426, 0.000918254735]
+node 6
+  category 0 pattern 0 start=[0.001738931178, 0.095511017907, 0.037334650992, 0.001656004559, 0.002143074345, 0.001960447928, 0.002020235335, 0.002063117409] end=[0.002808829353, 0.098002620167, 0.028079184962, 0.00276115971, 0.003155688681, 0.003139062976, 0.003261728174, 0.003219205629]
+node 7
+  category 0 pattern 0 start=[0.000029718091, 0.000748758454, 0.000269262832, 0.00000959877, 0.000012283448, 0.000010942024, 0.000011336298, 0.000011823882] end=[0.000039929924, 0.000764654335, 0.000177201469, 0.000022453198, 0.000024134208, 0.000024547735, 0.000025582241, 0.000025220688]
+node 8 root
+  category 0 pattern 0 start=[0.1250000001, 0.1249999999, 0.1250000001, 0.1249999999, 0.1250000001, 0.1249999999, 0.1250000001, 0.1249999999] end=[0, 0, 0, 0, 0, 0, 0, 0]
+]]></expected>
+    </assertEqual>
+    <!--
+    <operators id="operators" optimizationSchedule="log">
+        <randomWalkOperator windowSize="0.1" weight="0.5" autoOptimize="false">
+            <parameter idref="host.logRates"/>
+        </randomWalkOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="25000" autoOptimize="false" fullEvaluation="0"
+          operatorAnalysis="rabies_5taxa_8states_preorder.ops">
+        <joint id="joint">
+            <prior id="prior">
+                <strictClockBranchRates idref="host.branchRates"/>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="host.treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="5000">
+            <column label="Joint" dp="4" width="12">
+                <joint idref="joint"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="host.clock.rate" sf="6" width="12">
+                <parameter idref="host.clock.rate"/>
+            </column>
+        </log>
+    </mcmc>
+    -->
+
+</beast>

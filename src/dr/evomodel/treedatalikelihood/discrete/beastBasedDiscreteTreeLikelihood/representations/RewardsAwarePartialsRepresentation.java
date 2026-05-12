@@ -261,11 +261,19 @@ public final class RewardsAwarePartialsRepresentation
     }
 
     @Override
-    public void toStandard(double[] partial, double[] outStandardPartial) {
+    public void exportPostOrderPartial(double[] partial, double[] outPartial) {
         checkLength(partial, "partial");
-        checkLength(outStandardPartial, "outStandardPartial");
+        checkLength(outPartial, "outPartial");
 
-        System.arraycopy(partial, 0, outStandardPartial, 0, stateCount);
+        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+    }
+
+    @Override
+    public void exportPreOrderPartial(double[] partial, double[] outPartial) {
+        checkLength(partial, "partial");
+        checkLength(outPartial, "outPartial");
+
+        System.arraycopy(partial, 0, outPartial, 0, stateCount);
     }
 
     private void checkLength(double[] x, String name) {

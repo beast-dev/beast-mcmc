@@ -6,14 +6,13 @@ import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
  * Defines the internal algebra of post-order partials used by
  * {@link DiscreteDataLikelihoodDelegate}.
  *
- * Implementations may store partials in the standard basis, a spectral basis,
- * or any other representation, as long as they provide:
+ * Implementations may store partials in any coordinate system, as long as they provide:
  *
  * 1. tip initialization,
  * 2. branch propagation to the branch top,
  * 3. child combination at internal nodes,
  * 4. root evaluation,
- * 5. export to standard basis for caches/debugging.
+ * 5. export for caches/debugging.
  *
  * All methods are allocation-free with caller-owned buffers.
  */
@@ -67,6 +66,25 @@ public interface PostOrderRepresentation {
                                   double[] outParentPartial);
 
     /**
+     * Combine child branch-top partials and optionally expose their standard-basis
+     * forms to the caller. Implementations that already compute standard-basis
+     * intermediates can override this to avoid duplicate basis transforms.
+     */
+    default void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                          double[] rightBranchTopPartial,
+                                          double[] outParentPartial,
+                                          double[] outLeftStandard,
+                                          double[] outRightStandard) {
+        combineBranchTopPartials(leftBranchTopPartial, rightBranchTopPartial, outParentPartial);
+        if (outLeftStandard != null) {
+            exportPostOrderPartialToStandard(leftBranchTopPartial, outLeftStandard);
+        }
+        if (outRightStandard != null) {
+            exportPostOrderPartialToStandard(rightBranchTopPartial, outRightStandard);
+        }
+    }
+
+    /**
      * Evaluate the root contribution for one root partial slice.
      *
      * @param rootFrequencies root frequencies in standard basis
@@ -76,12 +94,29 @@ public interface PostOrderRepresentation {
     double rootContribution(double[] rootFrequencies, double[] rootPartial);
 
     /**
-     * Convert one partial slice from the internal representation to the standard basis.
+     * Export one partial slice from the internal representation.
      *
-     * @param partial             input partial in internal representation
-     * @param outStandardPartial  output partial in standard basis
+     * @param partial    input partial in internal representation
+     * @param outPartial output partial in the representation's external/reporting coordinates
      */
-    void toStandard(double[] partial, double[] outStandardPartial);
+    void exportPostOrderPartial(double[] partial, double[] outPartial);
+
+    /**
+     * Whether the internal post-order partials are already expressed in the
+     * standard data-type basis. Implementations with spectral/internal bases can
+     * override this so traversal code can maintain standard-basis side caches.
+     */
+    default boolean storesPartialsInStandardBasis() {
+        return true;
+    }
+
+    /**
+     * Export one partial slice to the standard data-type basis. For standard-basis
+     * implementations this is identical to the usual export operation.
+     */
+    default void exportPostOrderPartialToStandard(double[] partial, double[] outPartial) {
+        exportPostOrderPartial(partial, outPartial);
+    }
 
     /**
      * Whether it is valid to apply scaling directly to the internal representation.

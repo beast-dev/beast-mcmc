@@ -3,7 +3,7 @@ package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 
 /**
- * Narrow interface exposing pre-order branch-side messages in the STANDARD basis.
+ * Narrow interface exposing exported pre-order branch-side messages.
  */
 /*
  * @author Filippo Monti
@@ -17,18 +17,18 @@ public interface PreOrderMessageProvider {
     int getCategoryCount();
 
     /**
-     * Get the pre-order message at the TOP of the branch leading into childNodeNumber,
-     * in the standard basis, for a single category/pattern slice.
+     * Get the exported pre-order message at the TOP of the branch leading into childNodeNumber,
+     * for a single category/pattern slice.
      */
-    default void getPreOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    default void getPreOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         throw new RuntimeException("Not implemented");
     }
 
     /**
-     * Get the pre-order message at the BOTTOM of the branch leading into childNodeNumber,
-     * in the standard basis, for a single category/pattern slice.
+     * Get the exported pre-order message at the BOTTOM of the branch leading into childNodeNumber,
+     * for a single category/pattern slice.
      */
-    default void getPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    default void getPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         throw new RuntimeException("Not implemented");
     }
 

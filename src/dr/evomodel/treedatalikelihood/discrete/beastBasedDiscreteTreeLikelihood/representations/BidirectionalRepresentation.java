@@ -2,4 +2,9 @@ package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood
 
 public interface BidirectionalRepresentation
         extends PostOrderRepresentation, PreOrderRepresentation {
+
+    @Override
+    default boolean storesPartialsInStandardBasis() {
+        return PostOrderRepresentation.super.storesPartialsInStandardBasis();
+    }
 }

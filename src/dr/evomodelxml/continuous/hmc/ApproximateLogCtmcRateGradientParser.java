@@ -54,12 +54,13 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
 
     private static final String PARSER_NAME = "approximateLogCtmcRateGradient";
     private static final String TRANSFORMED_PARSER_NAME = "approximateTransformedCtmcRateGradient";
+    private static final String EXACT_PARSER_NAME = "exactLogCtmcRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     public String getParserName(){ return PARSER_NAME; }
 
     public String[] getParserNames() {
-        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME };
+        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME, EXACT_PARSER_NAME };
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -6,10 +6,7 @@ import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.
  * Defines the internal algebra of pre-order partials used by
  * {@link DiscretePreOrderDelegate}.
  *
- * The internal representation may be:
- * - standard basis: q
- * - spectral dual basis: y = R^T q
- * - etc.
+ * The internal representation is fully owned by the implementation.
  *
  * All methods are allocation-free with caller-owned buffers.
  */
@@ -39,12 +36,35 @@ public interface PreOrderRepresentation {
      * Combine the parent-node pre-order message with the sibling branch-top post-order
      * message to obtain the pre-order message at the TOP of the child's branch.
      *
-     * All inputs/outputs are in the internal pre-order representation except the sibling
-     * post-order message, which is given in standard basis.
+     * The parent input/output are in the internal pre-order representation. The sibling
+     * input is in the paired post-order representation's internal basis.
      */
     void combineParentAndSibling(double[] parentNodePreOrder,
-                                 double[] siblingBranchTopPostOrderStandard,
+                                 double[] siblingBranchTopPostOrder,
                                  double[] outChildBranchTopPreOrder);
+
+    /**
+     * Whether the internal pre-order partials are already expressed in the
+     * standard data-type basis.
+     */
+    default boolean storesPartialsInStandardBasis() {
+        return true;
+    }
+
+    /**
+     * Convert a standard-basis pre-order partial to this representation's
+     * internal basis.
+     */
+    default void importPreOrderPartialFromStandard(double[] standardPartial, double[] outPreOrderPartial) {
+        System.arraycopy(standardPartial, 0, outPreOrderPartial, 0, standardPartial.length);
+    }
+
+    /**
+     * Export one internal pre-order partial slice to the standard data-type basis.
+     */
+    default void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
+        exportPreOrderPartial(preOrderPartial, outStandardPartial);
+    }
 
     /**
      * Propagate a pre-order message from the TOP of the child's branch to the BOTTOM
@@ -56,7 +76,7 @@ public interface PreOrderRepresentation {
                                  double[] outChildNodePreOrder);
 
     /**
-     * Convert one internal pre-order slice to standard basis.
+     * Export one internal pre-order slice to the representation's external/reporting coordinates.
      */
-    void toStandard(double[] preOrderPartial, double[] outStandardPartial);
+    void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial);
 }

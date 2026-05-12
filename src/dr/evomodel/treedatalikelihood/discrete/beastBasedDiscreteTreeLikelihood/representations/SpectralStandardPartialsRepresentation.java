@@ -154,7 +154,6 @@ public final class SpectralStandardPartialsRepresentation
 
     @Override
     public void updateForLikelihood() {
-        eigenDirty = true;
         ensureEigenSystemCurrent();
     }
 
@@ -243,12 +242,17 @@ public final class SpectralStandardPartialsRepresentation
     }
 
     // ------------------------------------------------------------------
-    // Common standard-basis conversion
+    // Common export
     // ------------------------------------------------------------------
 
     @Override
-    public void toStandard(double[] partial, double[] outStandardPartial) {
-        System.arraycopy(partial, 0, outStandardPartial, 0, stateCount);
+    public void exportPostOrderPartial(double[] partial, double[] outPartial) {
+        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+    }
+
+    @Override
+    public void exportPreOrderPartial(double[] partial, double[] outPartial) {
+        System.arraycopy(partial, 0, outPartial, 0, stateCount);
     }
 
     // ------------------------------------------------------------------

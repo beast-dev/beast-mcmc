@@ -96,7 +96,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         public static final class Builder {
             private boolean usePreOrder = false;
             private boolean cacheBranchStartPostOrder = false;
-            private boolean cacheBranchEndPostOrder = true;
+            private boolean cacheBranchEndPostOrder = false;
             private boolean cacheBranchStartPreOrder = false;
             private boolean cacheBranchEndPreOrder = false;
             private boolean cacheTransformedPostOrder = false;
@@ -201,8 +201,10 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //    private double[][] nodePreOrderPatternLogScales;
 //    private double[][] storedNodePreOrderPatternLogScales;
 
-    // Optional caches exposed in STANDARD basis
+    // Optional caches. Branch-start post-order is kept in representation-native coordinates
+    // for pre-order traversal; external accessors ask the representation to export it.
     private final double[][] postOrderAtBranchStart;
+    private final double[][] postOrderAtBranchStartStandard;
     private final double[][] postOrderAtBranchEnd;
     private final double[][] preOrderAtBranchStart;
     private final double[][] preOrderAtBranchEnd;
@@ -228,9 +230,10 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private final double[] rightPropagated;
     private final double[] tmpVectorA;
     private final double[] tmpVectorB;
+    private final double[] tmpVectorC;
 
-    // Scratch buffer for exporting a whole node buffer to standard basis
-    private final double[] tmpNodeStandardBuffer;
+    // Scratch buffer for exporting a whole node buffer
+    private final double[] tmpNodeExportBuffer;
 
     private boolean updateSubstitutionModel = true;
     private boolean updateSiteModel = true;
@@ -347,6 +350,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //        this.storedNodePreOrderPatternLogScales = new double[nodeCount][patternCount];
 
         this.postOrderAtBranchStart = cacheSettings.cacheBranchStartPostOrder ? new double[nodeCount][nodeBufferLength] : null;
+        this.postOrderAtBranchStartStandard =
+                cacheSettings.cacheBranchStartPostOrder && !postOrderRepresentation.storesPartialsInStandardBasis()
+                        ? new double[nodeCount][nodeBufferLength] : null;
         this.postOrderAtBranchEnd = cacheSettings.cacheBranchEndPostOrder ? new double[nodeCount][nodeBufferLength] : null;
 
         this.transformedPostOrder = cacheSettings.cacheTransformedPostOrder ? new double[nodeCount][nodeBufferLength] : null;
@@ -372,7 +378,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         this.rightPropagated = new double[stateCount];
         this.tmpVectorA = new double[stateCount];
         this.tmpVectorB = new double[stateCount];
-        this.tmpNodeStandardBuffer = new double[nodeBufferLength];
+        this.tmpVectorC = new double[stateCount];
+        this.tmpNodeExportBuffer = new double[nodeBufferLength];
 
         initialiseTipPartials();
 
@@ -415,9 +422,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return CacheSettings.newBuilder()
                 .usePreOrder(enablePreOrder)
                 .cacheBranchStartPostOrder(true)
-                .cacheBranchEndPostOrder(true)
-                .cacheBranchStartPreOrder(enablePreOrder)
-                .cacheBranchEndPreOrder(enablePreOrder)
+                .cacheBranchEndPostOrder(false)
+                .cacheBranchStartPreOrder(false)
+                .cacheBranchEndPreOrder(false)
                 .cacheTransformedPostOrder(false)
                 .cacheTransformedPreOrder(false)
                 .applyPatternScaling(true)
@@ -426,6 +433,11 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     public double getEffectiveBranchLength(int childNodeNumber) {
         return branchLengths[childNodeNumber];
+    }
+
+    public boolean isSpectralRepresentation() {
+        return bidirectionalRepresentation instanceof
+                dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.SpectralRotatedPartialsRepresentation;
     }
 
     public double[] getPatternWeights() {
@@ -537,7 +549,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) {
+            if (updateSubstitutionModel) {
+                postOrderRepresentation.markDirty();
+                if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
+                    preOrderRepresentation.markDirty();
+                }
+            }
             postOrderRepresentation.updateForLikelihood();
+            if (updateSubstitutionModel) {
+                initialiseTipPartials();
+            }
         }
 
         final double[] categoryRates = siteRateModel.getCategoryRates();
@@ -750,51 +771,57 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     // -------------------------------------------------------------------------
 
     public double[] getPostOrderAtBranchEnd(int nodeNumber) {
-        requireCache(postOrderAtBranchEnd, "postOrderAtBranchEnd");
-        return Arrays.copyOf(postOrderAtBranchEnd[nodeNumber], postOrderAtBranchEnd[nodeNumber].length);
+        final double[] out = new double[flattenedPartialLength()];
+        exportPostOrderNode(nodeNumber, out);
+        return out;
     }
 
     public double[] getPostOrderAtBranchStart(int nodeNumber) {
         requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
-        return Arrays.copyOf(postOrderAtBranchStart[nodeNumber], postOrderAtBranchStart[nodeNumber].length);
+        exportNodeBuffer(postOrderAtBranchStart[nodeNumber], tmpNodeExportBuffer);
+        return Arrays.copyOf(tmpNodeExportBuffer, tmpNodeExportBuffer.length);
     }
 
     public double[] getPreOrderAtBranchStart(int nodeNumber) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
-        return Arrays.copyOf(preOrderAtBranchStart[nodeNumber], preOrderAtBranchStart[nodeNumber].length);
+        return preOrderDelegate.getPreOrderAtBranchStart(nodeNumber);
     }
 
     public double[] getPreOrderAtBranchEnd(int nodeNumber) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
-        return Arrays.copyOf(preOrderAtBranchEnd[nodeNumber], preOrderAtBranchEnd[nodeNumber].length);
+        return preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
     }
 
     public void getPostOrderAtBranchEndInto(int nodeNumber, double[] dest) {
-        requireCache(postOrderAtBranchEnd, "postOrderAtBranchEnd");
-        if (dest.length != stateCount) {
-            throw new IllegalArgumentException("Destination length must equal stateCount");
+        if (dest.length >= flattenedPartialLength()) {
+            exportPostOrderNode(nodeNumber, dest);
+        } else if (dest.length == stateCount) {
+            exportPostOrderSlice(nodeNumber, 0, dest);
+        } else {
+            throw new IllegalArgumentException("Destination length must equal stateCount or flattened partial length");
         }
-        System.arraycopy(postOrderAtBranchEnd[nodeNumber], 0, dest, 0, stateCount);
     }
 
     public void getPreOrderAtBranchStartInto(int nodeNumber, double[] dest) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
-        if (dest.length != stateCount) {
-            throw new IllegalArgumentException("Destination length must equal stateCount");
+        if (dest.length >= flattenedPartialLength()) {
+            preOrderDelegate.getPreOrderAtBranchStartInto(nodeNumber, dest);
+        } else if (dest.length == stateCount) {
+            preOrderDelegate.getPreOrderAtBranchStartInto(nodeNumber, 0, 0, dest);
+        } else {
+            throw new IllegalArgumentException("Destination length must equal stateCount or flattened partial length");
         }
-        System.arraycopy(preOrderAtBranchStart[nodeNumber], 0, dest, 0, stateCount);
     }
 
     public void getPreOrderAtBranchEndInto(int nodeNumber, double[] dest) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
-        if (dest.length != stateCount) {
-            throw new IllegalArgumentException("Destination length must equal stateCount");
+        if (dest.length >= flattenedPartialLength()) {
+            preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, dest);
+        } else if (dest.length == stateCount) {
+            preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, 0, 0, dest);
+        } else {
+            throw new IllegalArgumentException("Destination length must equal stateCount or flattened partial length");
         }
-        System.arraycopy(preOrderAtBranchEnd[nodeNumber], 0, dest, 0, stateCount);
     }
 
 
@@ -806,53 +833,68 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         ensurePreOrderComputed();
 
         if (type == DiscretePartialsType.BOTTOM) {
-            requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
-            System.arraycopy(preOrderAtBranchEnd[node], 0, out, 0,
-                    categoryCount * patternCount * stateCount);
+            preOrderDelegate.getPreOrderAtBranchEndInto(node, out);
 
         } else if (type == DiscretePartialsType.TOP) {
-            requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
-            System.arraycopy(preOrderAtBranchStart[node], 0, out, 0,
-                    categoryCount * patternCount * stateCount);
+            preOrderDelegate.getPreOrderAtBranchStartInto(node, out);
+
         } else {
             throw new IllegalArgumentException("Partial type is not yet implemented");
         }
     }
 
     @Override
-    public void getPreOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    public void getPreOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchStart, "preOrderAtBranchStart");
 
-        if (outStandardPartial.length != stateCount) {
+        if (outPartial.length != stateCount) {
             throw new IllegalArgumentException("Output length must equal stateCount");
         }
 
-        final int off = offset(category, pattern, 0);
-        System.arraycopy(preOrderAtBranchStart[childNodeNumber], off, outStandardPartial, 0, stateCount);
+        preOrderDelegate.getPreOrderAtBranchStartInto(childNodeNumber, category, pattern, outPartial);
     }
 
     @Override
-    public void getPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    public void getPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         ensurePreOrderComputed();
-        requireCache(preOrderAtBranchEnd, "preOrderAtBranchEnd");
 
-        if (outStandardPartial.length != stateCount) {
+        if (outPartial.length != stateCount) {
             throw new IllegalArgumentException("Output length must equal stateCount");
         }
 
-        final int off = offset(category, pattern, 0);
-        System.arraycopy(preOrderAtBranchEnd[childNodeNumber], off, outStandardPartial, 0, stateCount);
+        preOrderDelegate.getPreOrderAtBranchEndInto(childNodeNumber, category, pattern, outPartial);
+    }
+
+    public void getInternalPreOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        ensurePreOrderComputed();
+
+        if (outPartial.length != stateCount) {
+            throw new IllegalArgumentException("Output length must equal stateCount");
+        }
+
+        preOrderDelegate.getInternalPreOrderAtBranchStartInto(childNodeNumber, category, pattern, outPartial);
+    }
+
+    public void getInternalPreOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        ensurePreOrderComputed();
+
+        if (outPartial.length != stateCount) {
+            throw new IllegalArgumentException("Output length must equal stateCount");
+        }
+
+        preOrderDelegate.getInternalPreOrderAtNodeInto(childNodeNumber, category, pattern, outPartial);
     }
 
     public double[] getTransformedPostOrder(int nodeNumber) {
         requireCache(transformedPostOrder, "transformedPostOrder");
+        ensureTransformedPostOrder(nodeNumber);
         return Arrays.copyOf(transformedPostOrder[nodeNumber], transformedPostOrder[nodeNumber].length);
     }
 
     public double[] getTransformedPreOrder(int nodeNumber) {
         ensurePreOrderComputed();
         requireCache(transformedPreOrder, "transformedPreOrder");
+        ensureTransformedPreOrder(nodeNumber);
         return Arrays.copyOf(transformedPreOrder[nodeNumber], transformedPreOrder[nodeNumber].length);
     }
 
@@ -877,7 +919,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         if (tree.isExternal(node)) {
             nodePartialKnown[nodeNumber] = true;
-            materializeOptionalPostOrderCaches(nodeNumber);
             return;
         }
 
@@ -916,7 +957,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
                 nodeScales[p] = leftScales[p] + rightScales[p];
 
-                postOrderRepresentation.combineBranchTopPartials(leftPropagated, rightPropagated, tmpVectorA);
+                if (postOrderAtBranchStartStandard != null) {
+                    postOrderRepresentation.combineBranchTopPartials(
+                            leftPropagated, rightPropagated, tmpVectorA, tmpVectorB, tmpVectorC);
+                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStartStandard[leftNumber],
+                            childOffset, stateCount);
+                    System.arraycopy(tmpVectorC, 0, postOrderAtBranchStartStandard[rightNumber],
+                            childOffset, stateCount);
+                } else {
+                    postOrderRepresentation.combineBranchTopPartials(leftPropagated, rightPropagated, tmpVectorA);
+                }
                 System.arraycopy(tmpVectorA, 0, nodeBuffer, parentOffset, stateCount);
 
                 if (cacheSettings.applyPatternScaling) {
@@ -930,18 +980,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //                    postOrderStartKnown[rightNumber] = true;
 //                }
                 if (postOrderAtBranchStart != null) {
-                    postOrderRepresentation.toStandard(leftPropagated, tmpVectorA);
-                    System.arraycopy(tmpVectorA, 0, postOrderAtBranchStart[leftNumber], childOffset, stateCount);
+                    System.arraycopy(leftPropagated, 0, postOrderAtBranchStart[leftNumber], childOffset, stateCount);
                     postOrderStartKnown[leftNumber] = true;
 
-                    postOrderRepresentation.toStandard(rightPropagated, tmpVectorB);
-                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStart[rightNumber], childOffset, stateCount);
+                    System.arraycopy(rightPropagated, 0, postOrderAtBranchStart[rightNumber], childOffset, stateCount);
                     postOrderStartKnown[rightNumber] = true;
                 }
 
 //                if (postOrderAtBranchStart != null) {
 //                    sliceInto(nodeBuffer, parentOffset, tmpVectorA);
-//                    postOrderRepresentation.toStandard(tmpVectorA, tmpVectorB);
+//                    postOrderRepresentation.exportPostOrderPartial(tmpVectorA, tmpVectorB);
 //                    System.arraycopy(tmpVectorB, 0, postOrderAtBranchStart[nodeNumber], parentOffset, stateCount);
 //                    postOrderStartKnown[nodeNumber] = true;
 //                }
@@ -949,7 +997,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         nodePartialKnown[nodeNumber] = true;
-        materializeOptionalPostOrderCaches(nodeNumber);
     }
 
     private double computeRootLogLikelihood(NodeRef root, double[] rootFrequencies, double[] categoryWeights) {
@@ -980,38 +1027,40 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return totalLogLikelihood;
     }
 
-    private void materializeOptionalPostOrderCaches(int nodeNumber) {
-        final double[] source = nodePartials[nodeNumber];
-
-        if (postOrderAtBranchEnd == null && transformedPostOrder == null) {
-            return;
-        }
-
-        convertNodeBufferToStandard(source, tmpNodeStandardBuffer);
-
-        if (postOrderAtBranchEnd != null) {
-            System.arraycopy(tmpNodeStandardBuffer, 0, postOrderAtBranchEnd[nodeNumber], 0, source.length);
-            postOrderEndKnown[nodeNumber] = true;
-        }
-
-        if (transformedPostOrder != null) {
-            transformNodeBuffer(tmpNodeStandardBuffer, transformedPostOrder[nodeNumber], postOrderTransform);
-            transformedPostOrderKnown[nodeNumber] = true;
-        }
-    }
-
     @Override
-    public void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
+    public void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
         requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
-        System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outStandardPartial, 0, stateCount);
+        System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outPartial, 0, stateCount);
     }
 
     @Override
-    public void getPostOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outStandardPartial) {
-        requireCache(postOrderAtBranchEnd, "postOrderAtBranchEnd");
+    public void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
         final int off = offset(category, pattern, 0);
-        System.arraycopy(postOrderAtBranchEnd[childNodeNumber], off, outStandardPartial, 0, stateCount);
+        if (postOrderAtBranchStartStandard != null) {
+            System.arraycopy(postOrderAtBranchStartStandard[childNodeNumber], off, outPartial, 0, stateCount);
+        } else {
+            System.arraycopy(postOrderAtBranchStart[childNodeNumber], off, outPartial, 0, stateCount);
+        }
+    }
+
+    @Override
+    public void getPostOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        exportPostOrderSlice(childNodeNumber, offset(category, pattern, 0), outPartial);
+    }
+
+    public void getInternalPostOrderBranchBottomInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        final int off = offset(category, pattern, 0);
+        System.arraycopy(nodePartials[childNodeNumber], off, outPartial, 0, stateCount);
+    }
+
+    @Override
+    public void getPostOrderBranchTopExportInto(int childNodeNumber, int category, int pattern, double[] outPartial) {
+        requireCache(postOrderAtBranchStart, "postOrderAtBranchStart");
+        final int off = offset(category, pattern, 0);
+        sliceInto(postOrderAtBranchStart[childNodeNumber], off, tmpVectorA);
+        postOrderRepresentation.exportPostOrderPartial(tmpVectorA, outPartial);
     }
 
     @Override
@@ -1084,7 +1133,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         nodePartialKnown[nodeNumber] = true;
-        materializeOptionalPostOrderCaches(nodeNumber);
     }
 
     private void fillTipStateVector(int sequenceIndex, int patternIndex, double[] dest) {
@@ -1130,6 +1178,12 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         final int rootNodeNumber = tree.getRoot().getNumber();
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) { //TODO check this better
+            if (updateSubstitutionModel) {
+                postOrderRepresentation.markDirty();
+                if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
+                    preOrderRepresentation.markDirty();
+                }
+            }
             postOrderRepresentation.updateForLikelihood();
             if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
                 preOrderRepresentation.updateForLikelihood();
@@ -1140,54 +1194,10 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
 //        preOrderDelegate.makeDirty();
         preOrderDelegate.ensurePreOrder(rootNodeNumber, categoryRates, rootFrequencies);
-        materializeOptionalPreOrderCaches();
 
         preOrderValid = true;
     }
 
-    private void materializeOptionalPreOrderCaches() {
-        if (!preOrderEnabled) {
-            return;
-        }
-
-        for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
-            if (preOrderAtBranchStart != null) {
-//                final double[] src = preOrderDelegate.getPreOrderAtBranchStart(nodeNumber);
-//                System.arraycopy(src, 0, preOrderAtBranchStart[nodeNumber], 0, src.length);
-                preOrderDelegate.getPreOrderAtBranchStartInto(nodeNumber, 0, 0, preOrderAtBranchStart[nodeNumber]);
-                preOrderStartKnown[nodeNumber] = true;
-            }
-
-            if (preOrderAtBranchEnd != null) {
-//                final double[] src = preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
-//                System.arraycopy(src, 0, preOrderAtBranchEnd[nodeNumber], 0, src.length);
-                preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, 0,0, preOrderAtBranchEnd[nodeNumber]);
-                preOrderEndKnown[nodeNumber] = true;
-            }
-
-            if (transformedPreOrder != null) {
-                final double[] sourceStandard =
-                        preOrderAtBranchEnd != null
-                                ? preOrderAtBranchEnd[nodeNumber]
-                                : preOrderDelegate.getPreOrderAtBranchEnd(nodeNumber);
-
-                transformNodeBuffer(sourceStandard, transformedPreOrder[nodeNumber], preOrderTransform);
-                transformedPreOrderKnown[nodeNumber] = true;
-            }
-        }
-
-//        for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
-//            nodePreOrderKnown[nodeNumber] = true;
-//
-//            System.arraycopy(
-//                    preOrderDelegate.getPreOrderBranchScales(nodeNumber),
-//                    0,
-//                    nodePreOrderPatternLogScales[nodeNumber],
-//                    0,
-//                    patternCount
-//            );
-//        }
-    }
     // -------------------------------------------------------------------------
     // Dirtying / pattern weights
     // -------------------------------------------------------------------------
@@ -1212,7 +1222,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         for (int i = 0; i < tipCount; i++) {
             nodePartialKnown[i] = true;
-            materializeOptionalPostOrderCaches(i);
         }
     }
 
@@ -1327,14 +1336,62 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
     }
 
-    private void convertNodeBufferToStandard(double[] source, double[] target) {
+    private void exportNodeBuffer(double[] source, double[] target) {
         for (int c = 0; c < categoryCount; c++) {
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
                 sliceInto(source, off, tmpVectorA);
-                postOrderRepresentation.toStandard(tmpVectorA, tmpVectorB);
+                postOrderRepresentation.exportPostOrderPartial(tmpVectorA, tmpVectorB);
                 System.arraycopy(tmpVectorB, 0, target, off, stateCount);
             }
+        }
+    }
+
+    private void exportPostOrderNode(int nodeNumber, double[] dest) {
+        if (dest.length < flattenedPartialLength()) {
+            throw new IllegalArgumentException("Destination length must be at least " + flattenedPartialLength());
+        }
+        if (postOrderAtBranchEnd != null) {
+            ensurePostOrderAtBranchEndExported(nodeNumber);
+            System.arraycopy(postOrderAtBranchEnd[nodeNumber], 0, dest, 0, flattenedPartialLength());
+        } else {
+            exportNodeBuffer(nodePartials[nodeNumber], dest);
+        }
+    }
+
+    private void exportPostOrderSlice(int nodeNumber, int off, double[] dest) {
+        if (dest.length != stateCount) {
+            throw new IllegalArgumentException("Destination length must equal stateCount");
+        }
+        if (postOrderAtBranchEnd != null) {
+            ensurePostOrderAtBranchEndExported(nodeNumber);
+            System.arraycopy(postOrderAtBranchEnd[nodeNumber], off, dest, 0, stateCount);
+        } else {
+            sliceInto(nodePartials[nodeNumber], off, tmpVectorA);
+            postOrderRepresentation.exportPostOrderPartial(tmpVectorA, dest);
+        }
+    }
+
+    private void ensurePostOrderAtBranchEndExported(int nodeNumber) {
+        if (postOrderEndKnown != null && !postOrderEndKnown[nodeNumber]) {
+            exportNodeBuffer(nodePartials[nodeNumber], postOrderAtBranchEnd[nodeNumber]);
+            postOrderEndKnown[nodeNumber] = true;
+        }
+    }
+
+    private void ensureTransformedPostOrder(int nodeNumber) {
+        if (transformedPostOrderKnown != null && !transformedPostOrderKnown[nodeNumber]) {
+            exportPostOrderNode(nodeNumber, tmpNodeExportBuffer);
+            transformNodeBuffer(tmpNodeExportBuffer, transformedPostOrder[nodeNumber], postOrderTransform);
+            transformedPostOrderKnown[nodeNumber] = true;
+        }
+    }
+
+    private void ensureTransformedPreOrder(int nodeNumber) {
+        if (transformedPreOrderKnown != null && !transformedPreOrderKnown[nodeNumber]) {
+            preOrderDelegate.getPreOrderAtBranchEndInto(nodeNumber, tmpNodeExportBuffer);
+            transformNodeBuffer(tmpNodeExportBuffer, transformedPreOrder[nodeNumber], preOrderTransform);
+            transformedPreOrderKnown[nodeNumber] = true;
         }
     }
 

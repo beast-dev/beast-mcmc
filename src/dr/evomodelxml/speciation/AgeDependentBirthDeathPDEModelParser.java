@@ -17,7 +17,9 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
     private static final String AGE_STEPS = "ageSteps";
     private static final String TIME_STEPS = "timeSteps";
     private static final String SYMMETRIC = "symmetric";
-    private static final String USE_NODE_CACHING = "useNodeCaching";
+    private static final String EXCLUDE_ROOT_BRANCH = "excludeRootBranch";
+    private static final String RATE_ZERO_THRESHOLD = "rateZeroThreshold";
+    private static final String NUM_THREADS = "numThreads";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -40,14 +42,21 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
 
         int ageSteps = xo.getIntegerAttribute(AGE_STEPS);
         int timeSteps = xo.getIntegerAttribute(TIME_STEPS);
-        boolean symmetric = xo.getAttribute(SYMMETRIC, false);
-        boolean useNodeCaching = xo.getAttribute(USE_NODE_CACHING, true);
+        boolean symmetric = xo.getAttribute(SYMMETRIC, true);
+        boolean excludeRootBranch = xo.getAttribute(EXCLUDE_ROOT_BRANCH, true);
+        double rateZeroThreshold = xo.getAttribute(RATE_ZERO_THRESHOLD, 1e-12);
+        int numThreads = xo.getAttribute(NUM_THREADS, 1);
+
+        if (excludeRootBranch && !symmetric) {
+            throw new XMLParseException(
+                    EXCLUDE_ROOT_BRANCH + " is only supported when " + SYMMETRIC + "=true");
+        }
 
         if (birthShape.getDimension() != 2) {
-            throw new XMLParseException("birthShape must have dimension 2 [b, gamma], got " + birthShape.getDimension());
+            throw new XMLParseException("birthShape must have dimension 2 [r, gamma], got " + birthShape.getDimension());
         }
         if (deathShape.getDimension() != 2) {
-            throw new XMLParseException("deathShape must have dimension 2 [b, gamma], got " + deathShape.getDimension());
+            throw new XMLParseException("deathShape must have dimension 2 [r, gamma], got " + deathShape.getDimension());
         }
 
         int numEpochs = (epochTimes != null) ? epochTimes.getDimension() + 1 : 1;
@@ -72,7 +81,9 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
                 ageSteps,
                 timeSteps,
                 symmetric,
-                useNodeCaching
+                excludeRootBranch,
+                rateZeroThreshold,
+                numThreads
         );
     }
 
@@ -111,6 +122,8 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
             AttributeRule.newIntegerRule(AGE_STEPS),
             AttributeRule.newIntegerRule(TIME_STEPS),
             AttributeRule.newBooleanRule(SYMMETRIC, true),
-            AttributeRule.newBooleanRule(USE_NODE_CACHING, true),
+            AttributeRule.newBooleanRule(EXCLUDE_ROOT_BRANCH, true),
+            AttributeRule.newDoubleRule(RATE_ZERO_THRESHOLD, true),
+            AttributeRule.newIntegerRule(NUM_THREADS, true),
     };
 }

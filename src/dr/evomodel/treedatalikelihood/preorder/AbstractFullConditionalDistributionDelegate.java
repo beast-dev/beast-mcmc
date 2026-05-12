@@ -59,7 +59,9 @@ public abstract class AbstractFullConditionalDistributionDelegate
         this.partialRootBuffer = new double[numTraits * dimPartial];
     }
 
+    @Override
     public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations,
+                                       final int rootNodeNumber,
                                        final int[] operations) {
         return likelihoodDelegate.vectorizeNodeOperations(nodeOperations, operations);
     }

@@ -28,6 +28,11 @@
             <attr name="host">B</attr>
             <attr name="state">California</attr>
         </taxon>
+        <taxon id="outgroup">
+            <date value="2002.5" direction="forwards" units="years"/>
+            <attr name="host">G</attr>
+            <attr name="state">California</attr>
+        </taxon>        
     </taxa>
 
     <generalDataType id="host.dataType">
@@ -47,7 +52,7 @@
     </attributePatterns>
 
     <newick id="startingTree" usingHeights="false" usingDates="false">
-        (((AZ4030_2005.5:0.10,AZ1968_2004.5:0.10):0.10,AZ7590_2005.5:0.20):0.10,(CA237_2002.5:0.15,CA29_2002.5:0.15):0.15);
+        ((((AZ4030_2005.5:0.10,AZ1968_2004.5:0.10):0.10,AZ7590_2005.5:0.20):0.10,(CA237_2002.5:0.15,CA29_2002.5:0.15):0.15):0.1,outgroup:0.1);
     </newick>
 
     <treeModel id="treeModel">

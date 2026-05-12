@@ -61,7 +61,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     void setCallback(ProcessSimulation simulationProcess);
 
-    int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
+    int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int rootNodeNumber, int[] operations);
 
     int getSingleOperationSize();
 

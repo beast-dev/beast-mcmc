@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
 
-import dr.evomodel.treedatalikelihood.preorder.DiscretePreOrderType;
+import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 
 /**
  * Narrow interface exposing pre-order branch-side messages in the STANDARD basis.
@@ -32,5 +32,5 @@ public interface PreOrderMessageProvider {
         throw new RuntimeException("Not implemented");
     }
 
-    void getPreorderPartials(int nodeNumber, DiscretePreOrderType type, double[] out);
+    void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out);
 }

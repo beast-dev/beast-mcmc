@@ -28,7 +28,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
-import beagle.BeaglePreorderType;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -59,6 +58,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.tree = tree;
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
+        this.preOrderType = getPreOrderType();
 
         assert (this.likelihoodDelegate.isUsePreOrder()); /// TODO: reinitialize beagle instance if usePreOrder = false
 
@@ -90,16 +90,19 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     public int getCategoryCount() { return categoryCount; }
 
     @Override
-    public void getPreorderPartials(int nodeNumber, DiscretePreOrderType type, double[] out) {
+    public void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out) {
 
         assert out.length >= categoryCount * patternCount * stateCount;
-        if (type == DiscretePreOrderType.TOP) {
-            Arrays.fill(out, 0.0); // TODO
-        } else if (type == DiscretePreOrderType.BOTTOM) {
+
+        if (type == preOrderType) {
             beagle.getPartials(getPreOrderPartialIndex(nodeNumber), Beagle.NONE, out);
         } else {
-            throw new IllegalArgumentException("Unknown pre-order type");
+            Arrays.fill(out, 0.0);
         }
+    }
+
+    protected DiscretePartialsType getPreOrderType() {
+        return DiscretePartialsType.BOTTOM;
     }
 
     abstract protected int getGradientLength();
@@ -143,7 +146,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
         if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
 
-        beagle.updatePrePartials(operations, operationCount, Beagle.NONE, BeaglePreorderType.BOTTOM);
+        beagle.updatePrePartials_v5(operations, operationCount, Beagle.NONE, preOrderType.getBeagleType());
 
         if (gradient == null) {
             gradient = new double[getGradientLength()];
@@ -230,7 +233,17 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
+        if (preOrderType == DiscretePartialsType.BOTTOM) {
+            return vectorizeNodeOperationsBottom(nodeOperations, operations);
+        } else if (preOrderType == DiscretePartialsType.TOP) {
+            return vectorizeNodeOperationsTop(nodeOperations, rootNodeNumber, operations);
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    private int vectorizeNodeOperationsBottom(List<NodeOperation> nodeOperations, int[] operations) {
         int k = 0;
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
@@ -239,6 +252,22 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
+            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
+        }
+        return nodeOperations.size();
+    }
+
+    private int vectorizeNodeOperationsTop(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
+        int k = 0;
+        for (NodeOperation tmpNodeOperation : nodeOperations) {
+            //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
+            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
+            operations[k++] = Beagle.NONE;
+            operations[k++] = Beagle.NONE;
+            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
+            operations[k++] = (tmpNodeOperation.getNodeNumber() == rootNodeNumber) ? Beagle.NONE :
+                    evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
         }
@@ -279,6 +308,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected EvolutionaryProcessDelegate evolutionaryProcessDelegate;
     protected final SiteRateModel siteRateModel;
     protected final PatternList patternList;
+    protected final DiscretePartialsType preOrderType;
 
     protected final int patternCount;
     protected final int stateCount;

@@ -116,7 +116,7 @@ public abstract class AbstractDiscreteGradientDelegate extends ProcessSimulation
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
         // No explicit traversal operations are needed here because the discrete
         // delegate computes and caches pre/post-order internally.
         return 0;

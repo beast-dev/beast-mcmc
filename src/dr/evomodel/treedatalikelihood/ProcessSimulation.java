@@ -108,9 +108,10 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(), operations);
 
         final NodeRef root = tree.getRoot();
+        int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(),
+                root.getNumber(), operations);
         simulationDelegate.simulate(operations, count, root.getNumber());
 
         treeTraversalDelegate.setAllNodesUpdated();

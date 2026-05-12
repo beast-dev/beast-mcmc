@@ -102,9 +102,11 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        int count = branchRateDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(),operations);
 
         final NodeRef root = tree.getRoot();
+        int count = branchRateDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(),
+                root.getNumber(), operations);
+
         branchRateDelegate.simulate(operations, count, root.getNumber());
 
         treeTraversalDelegate.setAllNodesUpdated();

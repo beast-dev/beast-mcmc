@@ -113,7 +113,7 @@ public final class RewardsAwarePartialLikelihoodProvider {
         }
 
         @Override
-        public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, final int[] operations) {
+        public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, int rootNodeNumber, final int[] operations) {
             int k = 0;
 
             for (NodeOperation op : nodeOperations) {

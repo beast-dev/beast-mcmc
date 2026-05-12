@@ -9,7 +9,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
-import dr.evomodel.treedatalikelihood.preorder.DiscretePreOrderType;
+import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
@@ -83,6 +83,12 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
 
                     ProcessSimulationDelegate preOrderDelegate = new AbstractBeagleGradientDelegate(
                             "test", treeDataLikelihood.getTree(), likelihoodDelegate) {
+
+                        @Override
+                        protected DiscretePartialsType getPreOrderType() {
+                            return DiscretePartialsType.TOP;
+                        }
+
                         @Override
                         protected int getGradientLength() {
                             return 0;
@@ -170,8 +176,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
                 }
                 sb.append('\n');
 
-                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePreOrderType.TOP, allStart);
-                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePreOrderType.BOTTOM, allEnd);
+                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, allStart);
+                discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, allEnd);
 
                 for (int c = 0; c < categoryCount; c++) {
                     for (int p = 0; p < patternCount; p++) {

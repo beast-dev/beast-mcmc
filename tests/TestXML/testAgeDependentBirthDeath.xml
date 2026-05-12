@@ -1,0 +1,351 @@
+<?xml version="1.0" standalone="yes"?>
+<!--
+  Cross-validation of the two primary age-dependent birth-death implementations:
+    - ageDependentBirthDeathIEModel  (integral-equation, FFT-Picard)
+    - ageDependentBirthDeathPDEModel (PDE, method of lines + RK4)
+  on a single fixed tree. Both run under symmetric speciation with the same
+  conditioning (excludeRootBranch=true). Linear-exponential age hazard
+  h(a) = (1 + r*gamma*a) * exp(-gamma*a).
+
+  Scenario 1b anchors both solvers against the closed-form Stadler/Gernhard
+  2008 reconstructed-BD labelled-tree density, conditioned on survival of
+  the process from the origin:
+      f(T | t_or, survival) =
+          lambda^(n-1) * p1(t_or) * prod_{i=1}^{n-1} p1(x_i) / (1 - p0(t_or))
+  with p1(t) = r^2 * exp(-r*t) / (lambda - mu*exp(-r*t))^2,
+       p0(t) = mu*(1 - exp(-r*t)) / (lambda - mu*exp(-r*t)),  r = lambda - mu.
+  For lambda=1.5, mu=0.8, t_or=10.0 on the 35-tip tree above, the conditioned
+  log-likelihood evaluates to -68.4247409600 (un-conditioned: -69.1863945567;
+  log(1 - p0(t_or)) = -0.7616535967).
+
+  Scenarios:
+    1.  Constant rates                      (r=gamma=0,    1 epoch, MRCA)
+    1b. Stadler closed-form anchor (IE)     (origin conditioning, high-res)
+    2.  Age-dependent rates                 (r,gamma > 0,  1 epoch, MRCA)
+    3.  Skyline + age-dependent rates       (r,gamma > 0,  2 epochs, MRCA)
+    4.  Conditioning on origin              (excludeRootBranch=false, age-dep)
+    5.  Optional optimizations vs baselines (IE quadrature solver, IE/PDE
+                                             multi-threading, PDE birth-rate
+                                             truncation)
+-->
+<beast>
+    <taxa id="taxa">
+        <taxon id="tip_1"/>  <taxon id="tip_2"/>  <taxon id="tip_3"/>  <taxon id="tip_4"/>
+        <taxon id="tip_5"/>  <taxon id="tip_6"/>  <taxon id="tip_7"/>  <taxon id="tip_8"/>
+        <taxon id="tip_9"/>  <taxon id="tip_10"/> <taxon id="tip_11"/> <taxon id="tip_12"/>
+        <taxon id="tip_13"/> <taxon id="tip_14"/> <taxon id="tip_15"/> <taxon id="tip_16"/>
+        <taxon id="tip_17"/> <taxon id="tip_18"/> <taxon id="tip_19"/> <taxon id="tip_20"/>
+        <taxon id="tip_21"/> <taxon id="tip_22"/> <taxon id="tip_23"/> <taxon id="tip_24"/>
+        <taxon id="tip_25"/> <taxon id="tip_26"/> <taxon id="tip_27"/> <taxon id="tip_28"/>
+        <taxon id="tip_29"/> <taxon id="tip_30"/> <taxon id="tip_31"/> <taxon id="tip_32"/>
+        <taxon id="tip_33"/> <taxon id="tip_34"/> <taxon id="tip_35"/>
+    </taxa>
+
+    <newick id="tree">
+        (((tip_1:0.722444,tip_2:0.722444):3.759228,((((tip_3:1.177025,(tip_4:0.703425,tip_5:0.703425):0.473599):0.074742,(tip_6:1.13443,(tip_7:0.630106,tip_8:0.630106):0.504324):0.117337):2.961029,tip_9:4.212795):0.232294,((((tip_10:2.92872,((((tip_11:0.310773,tip_12:0.310773):0.260839,tip_13:0.571613):0.770319,(tip_14:0.470111,tip_15:0.470111):0.87182):1.426213,((tip_16:0.245491,(tip_17:0.160518,tip_18:0.160518):0.084974):1.370669,(tip_19:1.087233,tip_20:1.087233):0.528928):1.151984):0.160576):0.190406,(tip_21:1.710327,(tip_22:0.977763,tip_23:0.977763):0.732564):1.408799):0.268499,tip_24:3.387625):0.492118,((tip_25:0.235218,tip_26:0.235218):2.709911,((tip_27:1.290976,(tip_28:0.544531,(tip_29:0.174645,tip_30:0.174645):0.369886):0.746445):0.614245,tip_31:1.905221):1.039908):0.934614):0.565347):0.036583):1.049099,(((tip_32:0.123621,tip_33:0.123621):1.050313,tip_34:1.173934):1.100494,tip_35:2.274428):3.256344);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 1: Constant rates, condition on MRCA                -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.const" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.0 0.0"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.const" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.0 0.0"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Constant rates — IE:  <ageDependentBirthDeathIEModel idref="ie.const"/></report>
+    <report>Constant rates — PDE: <ageDependentBirthDeathPDEModel idref="pde.const"/></report>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 1 (constant rates, MRCA conditioning): IE vs PDE</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.const"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.const"/>
+        </expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 1b: Closed-form Stadler/Gernhard anchor with        -->
+    <!-- survival conditioning at the origin. See header comment for  -->
+    <!-- the formula and numeric breakdown (target: -68.4247409600).  -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.anchor" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="false">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.0 0.0"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.anchor" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="false">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.0 0.0"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Anchor (origin) — IE:  <ageDependentBirthDeathIEModel idref="ie.anchor"/></report>
+    <report>Anchor (origin) — PDE: <ageDependentBirthDeathPDEModel idref="pde.anchor"/></report>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 1b anchor: IE (origin) vs Stadler/Gernhard closed-form</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.anchor"/>
+        </actual>
+        <expected>-68.4247409600</expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 1b anchor: PDE (origin) vs Stadler/Gernhard closed-form</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.anchor"/>
+        </actual>
+        <expected>-68.4247409600</expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 2: Age-dependent rates, condition on MRCA           -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.linexp" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.2 0.1"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.linexp" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.2 0.1"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Age-dep rates — IE:  <ageDependentBirthDeathIEModel idref="ie.linexp"/></report>
+    <report>Age-dep rates — PDE: <ageDependentBirthDeathPDEModel idref="pde.linexp"/></report>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 2 (age-dependent rates, MRCA conditioning): IE vs PDE</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.linexp"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.linexp"/>
+        </expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 3: Skyline (2 epochs) + age-dependent rates         -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.skyline" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.skyline" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Skyline + age-dep — IE:  <ageDependentBirthDeathIEModel idref="ie.skyline"/></report>
+    <report>Skyline + age-dep — PDE: <ageDependentBirthDeathPDEModel idref="pde.skyline"/></report>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 3 (skyline + age-dependent, MRCA conditioning): IE vs PDE</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.skyline"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.skyline"/>
+        </expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 4: Age-dependent rates, condition on origin         -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.origin" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="false">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.2 0.1"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.origin" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="false">
+        <treeModel idref="treeModel"/>
+        <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.2 0.1"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Origin-conditioned — IE:  <ageDependentBirthDeathIEModel idref="ie.origin"/></report>
+    <report>Origin-conditioned — PDE: <ageDependentBirthDeathPDEModel idref="pde.origin"/></report>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 4 (age-dependent, origin conditioning): IE vs PDE</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.origin"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.origin"/>
+        </expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 5: Optional optimizations should not change result. -->
+    <!-- Re-runs the skyline+age-dep configuration of scenario 3 with: -->
+    <!--   - IE direct-quadrature solver (vs default FFT-Picard)      -->
+    <!--   - IE multi-threaded internal-branch solves                  -->
+    <!--   - PDE multi-threaded internal-branch solves                 -->
+    <!--   - PDE birth-rate truncation (rateZeroThreshold > 0)         -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathIEModel id="ie.quad" originTime="10.0"
+            solver="quadrature"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathIEModel id="ie.parallel" originTime="10.0"
+            timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
+            threads="4" excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathIEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.parallel" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true"
+            numThreads="4">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <ageDependentBirthDeathPDEModel id="pde.trunc" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true"
+            rateZeroThreshold="1e-6">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathShape><parameter value="0.3 0.15"/></deathShape>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Skyline+age-dep — IE (quadrature):       <ageDependentBirthDeathIEModel idref="ie.quad"/></report>
+    <report>Skyline+age-dep — IE (4 threads):        <ageDependentBirthDeathIEModel idref="ie.parallel"/></report>
+    <report>Skyline+age-dep — PDE (4 threads):       <ageDependentBirthDeathPDEModel idref="pde.parallel"/></report>
+    <report>Skyline+age-dep — PDE (rate truncation): <ageDependentBirthDeathPDEModel idref="pde.trunc"/></report>
+
+    <!-- IE optimizations: must match IE FFT-Picard baseline tightly -->
+    <assertEqual tolerance="0.1" verbose="true">
+        <message>Scenario 5a: IE quadrature vs IE FFT-Picard (same algorithm class)</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.quad"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.skyline"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>Scenario 5b: IE parallel vs IE single-threaded (should be bitwise-close)</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.parallel"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathIEModel idref="ie.skyline"/>
+        </expected>
+    </assertEqual>
+
+    <!-- PDE optimizations: must match PDE single-threaded baseline tightly -->
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>Scenario 5c: PDE parallel vs PDE single-threaded (should be bitwise-close)</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.parallel"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.skyline"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true">
+        <message>Scenario 5d: PDE rate-truncation vs PDE no-truncation</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.trunc"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.skyline"/>
+        </expected>
+    </assertEqual>
+
+</beast>

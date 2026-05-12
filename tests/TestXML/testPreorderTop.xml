@@ -96,7 +96,7 @@
     </siteModel>
 
     <treeDataLikelihood id="host.treeLikelihood"
-                        useAmbiguities="false"
+                        useAmbiguities="true"
                         usePreOrder="true"
                         phyloGeoFast="true">
         <patterns idref="host.pattern"/>
@@ -117,8 +117,9 @@
     
     
     <treeDataLikelihood id="old.treeLikelihood"
-                        useAmbiguities="false"
-                        usePreOrder="true">
+                        useAmbiguities="true"
+                        usePreOrder="true"
+                        useSpectralRepresentation="true">
         <patterns idref="host.pattern"/>
         <siteModel idref="host.siteModel"/>
         <treeModel idref="treeModel"/>

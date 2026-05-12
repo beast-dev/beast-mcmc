@@ -75,6 +75,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
+    public static final String USE_SPECTRAL_REPRESENTATION = "useSpectralRepresentation";
     public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
     public static final String INITIAL_NUM_CATS = "initialNumCats";
@@ -367,13 +368,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
+        boolean useSpectralRepresentation = xo.getAttribute(USE_SPECTRAL_REPRESENTATION, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
         boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, useRewardAwareBranchModelDelegate);
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);

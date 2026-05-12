@@ -281,6 +281,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
             }
 
+            if (settings.useSpectralRepresentation) {
+                requirementFlags |= BeagleFlag.SPECTRAL_REPRESENTATION.getMask();
+            }
+
             if (preferredOrder.size() > 0) {
                 preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
             }

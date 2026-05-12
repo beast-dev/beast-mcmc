@@ -20,9 +20,7 @@ import java.util.logging.Logger;
  * Birth and death rates of the form
  *     lambda(t, a) = birthScale(t) * h_b(a)
  *     mu(t, a) = deathScale(t) * h_d(a)
- *     with h(a) = (1 + b*a) * exp(-gamma*a)
- *
- * Time runs backwards from originTime to 0, matching the PDE model convention.
+ *     with h(a) = (1 + r * gamma * a) * exp(-gamma * a)
  */
 public class AgeDependentBirthDeathSimulator {
     private final double[] birthScale;
@@ -43,8 +41,8 @@ public class AgeDependentBirthDeathSimulator {
     /**
      * @param birthScale  piecewise-constant birth scale, one per epoch
      * @param deathScale  piecewise-constant death scale, one per epoch (or length 1 for constant)
-     * @param birthShape  [b, gamma] for birth hazard
-     * @param deathShape  [b, gamma] for death hazard
+     * @param birthShape  [r, gamma] for birth hazard, with b = r*gamma
+     * @param deathShape  [r, gamma] for death hazard, with b = r*gamma
      * @param epochTimes  internal epoch boundaries in backwards time (ascending); does not include origin
      * @param originTime  the origin time (most ancient point)
      * @param symmetric   if true, both daughters get age 0; if false, one inherits parent age
@@ -60,10 +58,10 @@ public class AgeDependentBirthDeathSimulator {
                                            int maxLineages) {
         this.birthScale = birthScale;
         this.deathScale = deathScale;
-        this.birthB = birthShape[0];
         this.birthGamma = birthShape[1];
-        this.deathB = deathShape[0];
+        this.birthB = birthShape[0] * this.birthGamma;
         this.deathGamma = deathShape[1];
+        this.deathB = deathShape[0] * this.deathGamma;
         this.epochBounds = new double[epochTimes.length + 2];
         this.epochBounds[0] = 0.0;
         System.arraycopy(epochTimes, 0, this.epochBounds, 1, epochTimes.length);
@@ -306,66 +304,5 @@ public class AgeDependentBirthDeathSimulator {
             this.node = node;
             this.age = age;
         }
-    }
-
-    // ========================================================================
-    // Standalone test
-    // ========================================================================
-
-    public static void main(String[] args) {
-        // Single epoch, moderate age-dependence (Scenario B from simulation plan)
-        double[] birthScale = {0.3};
-        double[] deathScale = {0.1};
-        double[] birthShape = {5.0, 1.0};
-        double[] deathShape = {2.0, 0.5};
-        double[] epochTimes = {}; // no internal boundaries
-        double originTime = 10.0;
-
-        AgeDependentBirthDeathSimulator sim = new AgeDependentBirthDeathSimulator(
-                birthScale, deathScale, birthShape, deathShape, epochTimes,
-                originTime,
-                true, // symmetric
-                10000
-        );
-
-        Tree tree = sim.simulate(2, 1000);
-        System.out.println("Tips: " + tree.getExternalNodeCount());
-        System.out.println("Root height: " + tree.getNodeHeight(tree.getRoot()));
-        System.out.println(TreeUtils.newick(tree));
-
-        // Two-epoch test (Scenario D)
-        double[] birthScale2 = {0.3, 0.2};
-        double[] deathScale2 = {0.1, 0.15};
-        double[] birthShape2 = {10.0, 2.0};
-        double[] deathShape2 = {3.0, 1.0};
-        double[] epochTimes2 = {5.0}; // one internal boundary
-        double originTime2 = 10.0;
-
-        AgeDependentBirthDeathSimulator sim2 = new AgeDependentBirthDeathSimulator(
-                birthScale2, deathScale2, birthShape2, deathShape2, epochTimes2,
-                originTime2,
-                true,
-                10000
-        );
-
-        Tree tree2 = sim2.simulate(2, 1000);
-        System.out.println("\nTwo-epoch tree:");
-        System.out.println("Tips: " + tree2.getExternalNodeCount());
-        System.out.println("Root height: " + tree2.getNodeHeight(tree2.getRoot()));
-        System.out.println(TreeUtils.newick(tree2));
-
-        // Asymmetric test
-        AgeDependentBirthDeathSimulator sim3 = new AgeDependentBirthDeathSimulator(
-                birthScale, deathScale, birthShape, deathShape, epochTimes,
-                originTime,
-                false, // asymmetric
-                10000
-        );
-
-        Tree tree3 = sim3.simulate(2, 1000);
-        System.out.println("\nAsymmetric tree:");
-        System.out.println("Tips: " + tree3.getExternalNodeCount());
-        System.out.println("Root height: " + tree3.getNodeHeight(tree3.getRoot()));
-        System.out.println(TreeUtils.newick(tree3));
     }
 }

@@ -36,6 +36,7 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
     private static final String MAX_ATTEMPTS = "maxAttempts";
     private static final String MAX_LINEAGES = "maxLineages";
     private static final String SEED = "seed";
+    private static final String SEED_PROPERTY = "simulator.seed";
     private static final String ORIGIN_TIME = "originTime";
 
     public String getParserName() {
@@ -68,6 +69,15 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
         if (xo.hasAttribute(SEED)) {
             long seed = xo.getLongIntegerAttribute(SEED);
             MathUtils.setSeed(seed);
+        } else {
+            // Fallback: -Dsimulator.seed=N reseeds the global RNG immediately before
+            // simulation so the resulting tree (and any downstream draws like
+            // beagleSequenceSimulator's alignment) are byte-identical across XMLs
+            // that share the same simulator parameters and the same property value.
+            String seedProperty = System.getProperty(SEED_PROPERTY);
+            if (seedProperty != null) {
+                MathUtils.setSeed(Long.parseLong(seedProperty));
+            }
         }
 
         int numEpochs = epochTimesValues.length + 1;
@@ -81,10 +91,10 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
                     ") must be 1 or equal to number of epochs (" + numEpochs + ")");
         }
         if (birthShape.getDimension() != 2) {
-            throw new XMLParseException("birthShape must have dimension 2 [b, gamma], got " + birthShape.getDimension());
+            throw new XMLParseException("birthShape must have dimension 2 [r, gamma], got " + birthShape.getDimension());
         }
         if (deathShape.getDimension() != 2) {
-            throw new XMLParseException("deathShape must have dimension 2 [b, gamma], got " + deathShape.getDimension());
+            throw new XMLParseException("deathShape must have dimension 2 [r, gamma], got " + deathShape.getDimension());
         }
 
         AgeDependentBirthDeathSimulator simulator = new AgeDependentBirthDeathSimulator(

@@ -254,6 +254,12 @@ public final class SpectralRotatedPartialsRepresentation
         multiplyTransposeMatrixVector(matrixRInv, preOrderPartial, outStandardPartial, stateCount);
     }
 
+    @Override
+    public void exportPreOrderPartialToStandard(double[] src, int srcOff, double[] dst, int dstOff) {
+        ensureEigenSystemCurrent();
+        multiplyTransposeMatrixVectorOffset(matrixRInv, src, srcOff, dst, dstOff, stateCount);
+    }
+
     // -------------------------------------------------------------------------
 
     private void ensureEigenSystemCurrent() {
@@ -427,6 +433,18 @@ public final class SpectralRotatedPartialsRepresentation
         for (int row = 0; row < dim; row++) {
             final double v = vector[row];
             for (int col = 0; col < dim; col++) out[col] += matrix[base + col] * v;
+            base += dim;
+        }
+    }
+
+    private static void multiplyTransposeMatrixVectorOffset(double[] matrix,
+                                                             double[] vector, int vecOff,
+                                                             double[] out, int outOff, int dim) {
+        Arrays.fill(out, outOff, outOff + dim, 0.0);
+        int base = 0;
+        for (int row = 0; row < dim; row++) {
+            final double v = vector[vecOff + row];
+            for (int col = 0; col < dim; col++) out[outOff + col] += matrix[base + col] * v;
             base += dim;
         }
     }

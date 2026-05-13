@@ -350,27 +350,21 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 } else {
                     postOrderMessageProvider.getPostOrderBranchTopStandardInto(
                             siblingNumber, c, p, tmpSiblingPostOrderStandard);
-                    System.arraycopy(parentNodePreOrderStandard, off,
-                            tmpParentNodePreOrderStandard, 0, stateCount);
+                    //  index parent standard directly — avoids K-element copy to tmp
                     for (int s = 0; s < stateCount; s++) {
                         tmpChildBranchTopPreOrderStandard[s] =
-                                tmpParentNodePreOrderStandard[s] * tmpSiblingPostOrderStandard[s];
+                                parentNodePreOrderStandard[off + s] * tmpSiblingPostOrderStandard[s];
                     }
                     preOrderRepresentation.importPreOrderPartialFromStandard(
                             tmpChildBranchTopPreOrderStandard, tmpChildBranchTopPreOrder);
                 }
 
-                System.arraycopy(tmpChildBranchTopPreOrder, 0, childPreOrderStart, off, stateCount);
-
-                // THIS is missing in your new code
                 childScale[p] = parentScale[p] + siblingScale[p];
 
-                // normalize START before transpose propagation
-                final double extraScaleStart = normalizePatternSlice(childPreOrderStart, off);
+                //  normalize tmp in-place (offset 0), then store once — avoids round-trip copy
+                final double extraScaleStart = normalizePatternSlice(tmpChildBranchTopPreOrder, 0);
                 childScale[p] += extraScaleStart;
-
-                // use normalized START vector for transpose propagation
-                System.arraycopy(childPreOrderStart, off, tmpChildBranchTopPreOrder, 0, stateCount);
+                System.arraycopy(tmpChildBranchTopPreOrder, 0, childPreOrderStart, off, stateCount);
 
                 // propagate down the child branch
                 preOrderRepresentation.propagateToBranchBottom(
@@ -387,11 +381,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                 childScale[p] += extraScaleEnd;
 
                 if (childPreOrderEndStandard != null) {
-                    System.arraycopy(childPreOrderEnd, off, tmpChildNodePreOrder, 0, stateCount);
+                    // [fix 3] offset-aware export — avoids two K-element round-trip copies
                     preOrderRepresentation.exportPreOrderPartialToStandard(
-                            tmpChildNodePreOrder, tmpChildBranchTopPreOrderStandard);
-                    System.arraycopy(tmpChildBranchTopPreOrderStandard, 0,
-                            childPreOrderEndStandard, off, stateCount);
+                            childPreOrderEnd, off, childPreOrderEndStandard, off);
                 }
             }
         }

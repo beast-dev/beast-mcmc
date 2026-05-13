@@ -140,10 +140,16 @@ public final class SpectralRotatedPartialsRepresentation
                                          double[] rightBranchTopPartial,
                                          double[] outParentPartial) {
         ensureEigenSystemCurrent();
-        multiplyMatrixVector(matrixR,    leftBranchTopPartial,  tmpStandardA, stateCount);
-        multiplyMatrixVector(matrixR,    rightBranchTopPartial, tmpStandardB, stateCount);
+        // Fuse R×left and R×right into one pass over matrixR (saves K² reads), inline Hadamard.
         for (int i = 0; i < stateCount; i++) {
-            tmpA[i] = tmpStandardA[i] * tmpStandardB[i];
+            double sumA = 0.0, sumB = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                final double rij = matrixR[base + j];
+                sumA += rij * leftBranchTopPartial[j];
+                sumB += rij * rightBranchTopPartial[j];
+            }
+            tmpA[i] = sumA * sumB;
         }
         multiplyMatrixVector(matrixRInv, tmpA, outParentPartial, stateCount);
     }
@@ -155,16 +161,24 @@ public final class SpectralRotatedPartialsRepresentation
                                          double[] outLeftStandard,
                                          double[] outRightStandard) {
         ensureEigenSystemCurrent();
-        multiplyMatrixVector(matrixR, leftBranchTopPartial, tmpStandardA, stateCount);
-        multiplyMatrixVector(matrixR, rightBranchTopPartial, tmpStandardB, stateCount);
+        // Fuse R×left and R×right into one pass over matrixR (saves K² reads), inline Hadamard.
+        for (int i = 0; i < stateCount; i++) {
+            double sumA = 0.0, sumB = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                final double rij = matrixR[base + j];
+                sumA += rij * leftBranchTopPartial[j];
+                sumB += rij * rightBranchTopPartial[j];
+            }
+            tmpStandardA[i] = sumA;
+            tmpStandardB[i] = sumB;
+            tmpA[i] = sumA * sumB;
+        }
         if (outLeftStandard != null) {
             System.arraycopy(tmpStandardA, 0, outLeftStandard, 0, stateCount);
         }
         if (outRightStandard != null) {
             System.arraycopy(tmpStandardB, 0, outRightStandard, 0, stateCount);
-        }
-        for (int i = 0; i < stateCount; i++) {
-            tmpA[i] = tmpStandardA[i] * tmpStandardB[i];
         }
         multiplyMatrixVector(matrixRInv, tmpA, outParentPartial, stateCount);
     }
@@ -189,10 +203,15 @@ public final class SpectralRotatedPartialsRepresentation
                                         double[] siblingBranchTopPostOrder,
                                         double[] outChildBranchTopPreOrder) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixRInv, parentNodePreOrder,      tmpStandardA, stateCount);
-        multiplyMatrixVector         (matrixR,    siblingBranchTopPostOrder, tmpStandardB, stateCount);
+        multiplyTransposeMatrixVector(matrixRInv, parentNodePreOrder, tmpStandardA, stateCount);
+        // Fuse R×sibling + Hadamard into one pass.
         for (int i = 0; i < stateCount; i++) {
-            tmpStandardB[i] = tmpStandardA[i] * tmpStandardB[i];
+            double sum = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixR[base + j] * siblingBranchTopPostOrder[j];
+            }
+            tmpStandardB[i] = tmpStandardA[i] * sum;
         }
         multiplyTransposeMatrixVector(matrixR, tmpStandardB, outChildBranchTopPreOrder, stateCount);
     }

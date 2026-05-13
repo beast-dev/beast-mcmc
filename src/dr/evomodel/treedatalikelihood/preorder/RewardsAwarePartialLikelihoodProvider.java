@@ -1,7 +1,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
-import beagle.BeaglePreorderType;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -87,7 +86,7 @@ public final class RewardsAwarePartialLikelihoodProvider {
 
             ensureSubstitutionProcessUpToDate();
             simulateRoot(rootNodeNumber);
-            beagle.updatePrePartials(operations, operationCount, Beagle.NONE, BeaglePreorderType.BOTTOM);
+            beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
         }
 
         @Override

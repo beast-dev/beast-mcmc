@@ -5,6 +5,7 @@ bin/
 build/
 dist/
 out/
+Testing/
 .idea
 .DS_Store
 
@@ -23,8 +24,10 @@ src/revision.txt
 release/Mac
 release/Linux
 release/Windows
+release*
 src/revision.txt
 
 *.citations.txt
 *.ops
 *.MLE
+packaging_tools/mac/signing_certificates_how_to.txt

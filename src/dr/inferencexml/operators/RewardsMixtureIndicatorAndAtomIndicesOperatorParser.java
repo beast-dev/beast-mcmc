@@ -26,7 +26,6 @@ package dr.inferencexml.operators;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;

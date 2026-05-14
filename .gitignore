@@ -5,6 +5,7 @@ bin/
 build/
 dist/
 out/
+Testing/
 .idea
 .DS_Store
 
@@ -20,9 +21,7 @@ src/revision.txt
 *.dmg
 *.zip
 *.tgz
-release/Mac
-release/Linux
-release/Windows
+release*
 src/revision.txt
 
 *.citations.txt

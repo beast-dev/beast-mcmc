@@ -7,7 +7,7 @@ dist/
 out/
 packaging_tools/**/.*
 Testing/
-Benchmarking/
+Benchmarking/Results/
 .idea
 .DS_Store
 

@@ -7,7 +7,6 @@ dist/
 out/
 packaging_tools/**/.*
 Testing/
-Benchmarking/Results/
 .idea
 .DS_Store
 
@@ -17,6 +16,8 @@ Benchmarking/Results/
 *.xml
 !examples/**/*.xml
 !tests/**/*.xml
+!benchmarking/**/*.xml
+benchmarking/Results/
 
 zig_zag
 src/revision.txt

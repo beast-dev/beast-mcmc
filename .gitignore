@@ -5,7 +5,9 @@ bin/
 build/
 dist/
 out/
+packaging_tools/**/.*
 Testing/
+Benchmarking/
 .idea
 .DS_Store
 

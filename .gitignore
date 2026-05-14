@@ -30,4 +30,3 @@ src/revision.txt
 *.citations.txt
 *.ops
 *.MLE
-packaging_tools/mac/signing_certificates_how_to.txt

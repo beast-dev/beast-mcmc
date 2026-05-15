@@ -255,8 +255,18 @@ public class IntegratedTransformedSplines {
 
     public double getIntegral (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
 
-            return getExponentialSplinesIntegral(start, end);
-
+            double integral = 0;
+            if (end <= upperBoundary) {
+                integral = getExponentialSplinesIntegral(start, end);
+            }
+            if (end > upperBoundary && start < upperBoundary) {
+                integral = evaluateExpSpline(upperBoundary) * (end - upperBoundary) +
+                        getExponentialSplinesIntegral(start, upperBoundary);
+            }
+            if (start >= upperBoundary) {
+                integral = evaluateExpSpline(upperBoundary) * (end - start);
+            }
+            return  integral;
     }
 
 }

@@ -20,9 +20,11 @@ public final class ComplexBlockKernelUtils {
     private ComplexBlockKernelUtils() { }
 
     // -------------------------------------------------------------------------
-    // Public flat plan type — all storage pre-allocated at construction time.
+    // Public flat plan type — metadata storage pre-allocated at construction time;
+    // coefficient storage is sized exactly after the block structure is known.
     // -------------------------------------------------------------------------
     public static final class ComplexKernelPlan {
+        private final int stateCount;
         final int[]    blockStarts;
         final int[]    blockDims;
         final double[] expR;
@@ -32,12 +34,9 @@ public final class ComplexBlockKernelUtils {
         int blockCount;
         int entryCount;
         final int[]    eLeftStart;
-        final int[]    eLeftDim;
         final int[]    eLeftBlock;
         final int[]    eRightStart;
-        final int[]    eRightDim;
         final int[]    eRightBlock;
-        final byte[]   eKind;
         final double[] eRealShift;
         final double[] eLeftImag;
         final double[] eRightImag;
@@ -47,8 +46,12 @@ public final class ComplexBlockKernelUtils {
         final double[] eInvPlusDenom;
         final double[] eInvMinusDenom;
 
-        // flat coefficient storage: entry e uses slots [e*16 .. e*16+15]
-        final double[] coefficients;
+        // Kind-specialized coefficient storage.  Offsets are dense within each
+        // grouped entry range, avoiding the 16-double stride for smaller blocks.
+        double[] scalarCoefficients;
+        double[] oneByTwoCoefficients;
+        double[] twoByOneCoefficients;
+        double[] twoByTwoCoefficients;
 
         // Entry ranges grouped by kind — type-specific loops, no per-entry branch dispatch.
         int scalarStart,   scalarEnd;
@@ -57,6 +60,10 @@ public final class ComplexBlockKernelUtils {
         int twoByTwoStart, twoByTwoEnd;
 
         public ComplexKernelPlan(int stateCount) {
+            if (stateCount <= 0) {
+                throw new IllegalArgumentException("stateCount must be positive");
+            }
+            this.stateCount = stateCount;
             final int maxPairs = stateCount * stateCount;
             this.blockStarts  = new int[stateCount];
             this.blockDims    = new int[stateCount];
@@ -64,12 +71,9 @@ public final class ComplexBlockKernelUtils {
             this.cosB         = new double[stateCount];
             this.sinB         = new double[stateCount];
             this.eLeftStart   = new int[maxPairs];
-            this.eLeftDim     = new int[maxPairs];
             this.eLeftBlock   = new int[maxPairs];
             this.eRightStart  = new int[maxPairs];
-            this.eRightDim    = new int[maxPairs];
             this.eRightBlock  = new int[maxPairs];
-            this.eKind        = new byte[maxPairs];
             this.eRealShift   = new double[maxPairs];
             this.eLeftImag    = new double[maxPairs];
             this.eRightImag   = new double[maxPairs];
@@ -78,13 +82,13 @@ public final class ComplexBlockKernelUtils {
             this.eMinusImagShift = new double[maxPairs];
             this.eInvPlusDenom   = new double[maxPairs];
             this.eInvMinusDenom  = new double[maxPairs];
-            this.coefficients = new double[maxPairs * 16];
         }
     }
 
     public static void fillStructure(ComplexKernelPlan plan,
                                      EigenDecomposition decomposition,
                                      int stateCount) {
+        checkStateCount(plan, stateCount);
         final double[] eigenValues = decomposition.getEigenValues();
         final int blockCount = buildEigenBlocks(eigenValues, plan.blockStarts, plan.blockDims, stateCount);
         plan.blockCount = blockCount;
@@ -103,6 +107,34 @@ public final class ComplexBlockKernelUtils {
         entryIndex = fillEntriesByKind(plan, eigenValues, stateCount, blockCount, entryIndex, ENTRY_TWO_BY_TWO);
         plan.twoByTwoEnd   = entryIndex;
         plan.entryCount    = entryIndex;
+
+        ensureCoefficientCapacity(plan);
+    }
+
+    private static void ensureCoefficientCapacity(ComplexKernelPlan plan) {
+        final int scalarCount   = plan.scalarEnd   - plan.scalarStart;
+        final int oneByTwoCount = plan.oneByTwoEnd - plan.oneByTwoStart;
+        final int twoByOneCount = plan.twoByOneEnd - plan.twoByOneStart;
+        final int twoByTwoCount = plan.twoByTwoEnd - plan.twoByTwoStart;
+
+        if (plan.scalarCoefficients == null || plan.scalarCoefficients.length != scalarCount) {
+            plan.scalarCoefficients = new double[scalarCount];
+        }
+        if (plan.oneByTwoCoefficients == null || plan.oneByTwoCoefficients.length != oneByTwoCount * 4) {
+            plan.oneByTwoCoefficients = new double[oneByTwoCount * 4];
+        }
+        if (plan.twoByOneCoefficients == null || plan.twoByOneCoefficients.length != twoByOneCount * 4) {
+            plan.twoByOneCoefficients = new double[twoByOneCount * 4];
+        }
+        if (plan.twoByTwoCoefficients == null || plan.twoByTwoCoefficients.length != twoByTwoCount * 16) {
+            plan.twoByTwoCoefficients = new double[twoByTwoCount * 16];
+        }
+    }
+
+    private static void checkStateCount(ComplexKernelPlan plan, int stateCount) {
+        if (stateCount != plan.stateCount) {
+            throw new IllegalArgumentException("stateCount does not match plan");
+        }
     }
 
     private static int fillEntriesByKind(ComplexKernelPlan plan,
@@ -128,12 +160,9 @@ public final class ComplexBlockKernelUtils {
                 if (entryKind != kind) continue;
 
                 plan.eLeftStart[entryIndex]  = leftStart;
-                plan.eLeftDim[entryIndex]    = leftDim;
                 plan.eLeftBlock[entryIndex]  = leftBlock;
                 plan.eRightStart[entryIndex] = rightStart;
-                plan.eRightDim[entryIndex]   = rightDim;
                 plan.eRightBlock[entryIndex] = rightBlock;
-                plan.eKind[entryIndex]       = kind;
                 fillEntryMetadata(plan, entryIndex, eigenValues, stateCount,
                         leftStart, leftDim, rightStart, rightDim);
                 entryIndex++;
@@ -146,6 +175,7 @@ public final class ComplexBlockKernelUtils {
                                                      EigenDecomposition decomposition,
                                                      double time,
                                                      int stateCount) {
+        checkStateCount(plan, stateCount);
         final double[] eigenValues = decomposition.getEigenValues();
 
         for (int b = 0; b < plan.blockCount; ++b) {
@@ -158,33 +188,32 @@ public final class ComplexBlockKernelUtils {
             }
         }
 
-        final double[] c = plan.coefficients;
-
-        for (int e = plan.scalarStart; e < plan.scalarEnd; e++) {
-            fillScalarCoefficient(c, e * 16, plan.expR[plan.eLeftBlock[e]],
+        for (int e = plan.scalarStart, k = 0; e < plan.scalarEnd; e++, k++) {
+            fillScalarCoefficient(plan.scalarCoefficients, k,
+                    plan.expR[plan.eLeftBlock[e]],
                     plan.expR[plan.eRightBlock[e]], plan.eInvDenom[e], time);
         }
 
-        for (int e = plan.oneByTwoStart; e < plan.oneByTwoEnd; e++) {
+        for (int e = plan.oneByTwoStart, k = 0; e < plan.oneByTwoEnd; e++, k += 4) {
             final int rb = plan.eRightBlock[e];
-            fillOneByTwoCoefficients(c, e * 16,
+            fillOneByTwoCoefficients(plan.oneByTwoCoefficients, k,
                     plan.expR[plan.eLeftBlock[e]], plan.expR[rb],
                     plan.cosB[rb], plan.sinB[rb],
                     plan.eRealShift[e], plan.eRightImag[e], plan.eInvDenom[e], time);
         }
 
-        for (int e = plan.twoByOneStart; e < plan.twoByOneEnd; e++) {
+        for (int e = plan.twoByOneStart, k = 0; e < plan.twoByOneEnd; e++, k += 4) {
             final int lb = plan.eLeftBlock[e];
-            fillTwoByOneCoefficients(c, e * 16,
+            fillTwoByOneCoefficients(plan.twoByOneCoefficients, k,
                     plan.expR[lb], plan.expR[plan.eRightBlock[e]],
                     plan.cosB[lb], plan.sinB[lb],
                     plan.eRealShift[e], plan.eLeftImag[e], plan.eInvDenom[e], time);
         }
 
-        for (int e = plan.twoByTwoStart; e < plan.twoByTwoEnd; e++) {
+        for (int e = plan.twoByTwoStart, k = 0; e < plan.twoByTwoEnd; e++, k += 16) {
             final int lb = plan.eLeftBlock[e];
             final int rb = plan.eRightBlock[e];
-            fillTwoByTwoCoefficients(c, e * 16,
+            fillTwoByTwoCoefficients(plan.twoByTwoCoefficients, k,
                     plan.expR[lb], plan.expR[rb],
                     plan.cosB[lb], plan.sinB[lb],
                     plan.cosB[rb], plan.sinB[rb],
@@ -200,43 +229,43 @@ public final class ComplexBlockKernelUtils {
                                                double scale,
                                                double[] eigenBasisGradient,
                                                int stateCount) {
-        final double[] c = plan.coefficients;
-
-        for (int e = plan.scalarStart; e < plan.scalarEnd; e++) {
+        checkStateCount(plan, stateCount);
+        for (int e = plan.scalarStart, k = 0; e < plan.scalarEnd; e++, k++) {
             final int leftStart  = plan.eLeftStart[e];
             final int rightStart = plan.eRightStart[e];
             eigenBasisGradient[leftStart * stateCount + rightStart] +=
-                    c[e * 16] * scale * leftVector[leftStart] * rightVector[rightStart];
+                    plan.scalarCoefficients[k] *
+                            scale * leftVector[leftStart] * rightVector[rightStart];
         }
 
-        for (int e = plan.oneByTwoStart; e < plan.oneByTwoEnd; e++) {
+        final double[] c12 = plan.oneByTwoCoefficients;
+        for (int e = plan.oneByTwoStart, k = 0; e < plan.oneByTwoEnd; e++, k += 4) {
             final int leftStart  = plan.eLeftStart[e];
             final int rightStart = plan.eRightStart[e];
-            final int coeffBase  = e * 16;
             final double x   = scale * leftVector[leftStart];
             final double in0 = x * rightVector[rightStart];
             final double in1 = x * rightVector[rightStart + 1];
             final int base   = leftStart * stateCount + rightStart;
-            eigenBasisGradient[base]     += c[coeffBase]     * in0 + c[coeffBase + 1] * in1;
-            eigenBasisGradient[base + 1] += c[coeffBase + 2] * in0 + c[coeffBase + 3] * in1;
+            eigenBasisGradient[base]     += c12[k]     * in0 + c12[k + 1] * in1;
+            eigenBasisGradient[base + 1] += c12[k + 2] * in0 + c12[k + 3] * in1;
         }
 
-        for (int e = plan.twoByOneStart; e < plan.twoByOneEnd; e++) {
+        final double[] c21 = plan.twoByOneCoefficients;
+        for (int e = plan.twoByOneStart, k = 0; e < plan.twoByOneEnd; e++, k += 4) {
             final int leftStart  = plan.eLeftStart[e];
             final int rightStart = plan.eRightStart[e];
-            final int coeffBase  = e * 16;
             final double y   = rightVector[rightStart];
             final double in0 = scale * leftVector[leftStart]     * y;
             final double in1 = scale * leftVector[leftStart + 1] * y;
             final int base   = leftStart * stateCount + rightStart;
-            eigenBasisGradient[base]              += c[coeffBase]     * in0 + c[coeffBase + 1] * in1;
-            eigenBasisGradient[base + stateCount] += c[coeffBase + 2] * in0 + c[coeffBase + 3] * in1;
+            eigenBasisGradient[base]              += c21[k]     * in0 + c21[k + 1] * in1;
+            eigenBasisGradient[base + stateCount] += c21[k + 2] * in0 + c21[k + 3] * in1;
         }
 
-        for (int e = plan.twoByTwoStart; e < plan.twoByTwoEnd; e++) {
+        final double[] c22 = plan.twoByTwoCoefficients;
+        for (int e = plan.twoByTwoStart, k = 0; e < plan.twoByTwoEnd; e++, k += 16) {
             final int leftStart  = plan.eLeftStart[e];
             final int rightStart = plan.eRightStart[e];
-            final int coeffBase  = e * 16;
             final double x0 = scale * leftVector[leftStart];
             final double x1 = scale * leftVector[leftStart + 1];
             final double y0 = rightVector[rightStart];
@@ -246,10 +275,10 @@ public final class ComplexBlockKernelUtils {
             final double in2 = x1 * y0;
             final double in3 = x1 * y1;
             final int base = leftStart * stateCount + rightStart;
-            eigenBasisGradient[base]                  += c[coeffBase]      * in0 + c[coeffBase + 1]  * in1 + c[coeffBase + 2]  * in2 + c[coeffBase + 3]  * in3;
-            eigenBasisGradient[base + 1]              += c[coeffBase + 4]  * in0 + c[coeffBase + 5]  * in1 + c[coeffBase + 6]  * in2 + c[coeffBase + 7]  * in3;
-            eigenBasisGradient[base + stateCount]     += c[coeffBase + 8]  * in0 + c[coeffBase + 9]  * in1 + c[coeffBase + 10] * in2 + c[coeffBase + 11] * in3;
-            eigenBasisGradient[base + stateCount + 1] += c[coeffBase + 12] * in0 + c[coeffBase + 13] * in1 + c[coeffBase + 14] * in2 + c[coeffBase + 15] * in3;
+            eigenBasisGradient[base]                  += c22[k]      * in0 + c22[k + 1]  * in1 + c22[k + 2]  * in2 + c22[k + 3]  * in3;
+            eigenBasisGradient[base + 1]              += c22[k + 4]  * in0 + c22[k + 5]  * in1 + c22[k + 6]  * in2 + c22[k + 7]  * in3;
+            eigenBasisGradient[base + stateCount]     += c22[k + 8]  * in0 + c22[k + 9]  * in1 + c22[k + 10] * in2 + c22[k + 11] * in3;
+            eigenBasisGradient[base + stateCount + 1] += c22[k + 12] * in0 + c22[k + 13] * in1 + c22[k + 14] * in2 + c22[k + 15] * in3;
         }
     }
 
@@ -266,6 +295,7 @@ public final class ComplexBlockKernelUtils {
                                                    double scale,
                                                    double[] eigenBasisGradient,
                                                    int stateCount) {
+        checkStateCount(plan, stateCount);
         final double[] eigenValues = decomposition.getEigenValues();
 
         for (int b = 0; b < plan.blockCount; ++b) {
@@ -456,14 +486,12 @@ public final class ComplexBlockKernelUtils {
         plan.eRealShift[entryIndex] = realShift;
 
         if (leftDim == 1 && rightDim == 1) {
-            plan.eKind[entryIndex] = ENTRY_SCALAR;
             final double delta = leftReal - rightReal;
             plan.eInvDenom[entryIndex] = Math.abs(delta) < EIGEN_TOLERANCE ? 0.0 : 1.0 / delta;
             return;
         }
 
         if (leftDim == 1 && rightDim == 2) {
-            plan.eKind[entryIndex] = ENTRY_ONE_BY_TWO;
             final double rightImag = eigenValues[rightStart + stateCount];
             plan.eRightImag[entryIndex] = rightImag;
             final double denom = realShift * realShift + rightImag * rightImag;
@@ -472,7 +500,6 @@ public final class ComplexBlockKernelUtils {
         }
 
         if (leftDim == 2 && rightDim == 1) {
-            plan.eKind[entryIndex] = ENTRY_TWO_BY_ONE;
             final double leftImag = eigenValues[leftStart + stateCount];
             plan.eLeftImag[entryIndex] = leftImag;
             final double denom = realShift * realShift + leftImag * leftImag;
@@ -481,7 +508,6 @@ public final class ComplexBlockKernelUtils {
         }
 
         // leftDim == 2 && rightDim == 2
-        plan.eKind[entryIndex] = ENTRY_TWO_BY_TWO;
         final double leftImag  = eigenValues[leftStart  + stateCount];
         final double rightImag = eigenValues[rightStart + stateCount];
         final double plusImagShift  = leftImag + rightImag;

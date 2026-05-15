@@ -44,6 +44,20 @@ public interface PreOrderRepresentation {
                                  double[] outChildBranchTopPreOrder);
 
     /**
+     * Combine parent pre-order with sibling post-order, reading the parent slice
+     * from {@code parentNodePreOrder[parentOff..parentOff+K]}.
+     * Default: copies the slice into a temp buffer, then calls the zero-offset variant.
+     */
+    default void combineParentAndSibling(double[] parentNodePreOrder, int parentOff,
+                                         double[] siblingBranchTopPostOrder,
+                                         double[] outChildBranchTopPreOrder) {
+        final int K = getStateCount();
+        final double[] tmp = new double[K];
+        System.arraycopy(parentNodePreOrder, parentOff, tmp, 0, K);
+        combineParentAndSibling(tmp, siblingBranchTopPostOrder, outChildBranchTopPreOrder);
+    }
+
+    /**
      * Whether the internal pre-order partials are already expressed in the
      * standard data-type basis.
      */
@@ -67,9 +81,8 @@ public interface PreOrderRepresentation {
     }
 
     /**
-     * Offset-aware variant — reads src[srcOff..srcOff+K] and writes dst[dstOff..dstOff+K].
-     * Avoids round-trip copies when src/dst are flat multi-pattern buffers.
-     * Subclasses with non-trivial basis transforms should override for efficiency.
+     * Offset-aware export: reads src[srcOff..srcOff+K] and writes dst[dstOff..dstOff+K].
+     * Default: copies slices into temp buffers, then calls the zero-offset variant.
      */
     default void exportPreOrderPartialToStandard(double[] src, int srcOff, double[] dst, int dstOff) {
         final int K = getStateCount();
@@ -88,6 +101,20 @@ public interface PreOrderRepresentation {
                                  double branchLength,
                                  double[] childBranchTopPreOrder,
                                  double[] outChildNodePreOrder);
+
+    /**
+     * Offset-aware variant: writes the result to {@code out[outOff..outOff+K]}.
+     * Default: calls the zero-offset variant into a temp buffer, then copies.
+     */
+    default void propagateToBranchBottom(int childNodeNumber,
+                                         double branchLength,
+                                         double[] childBranchTopPreOrder,
+                                         double[] out, int outOff) {
+        final int K = getStateCount();
+        final double[] tmp = new double[K];
+        propagateToBranchBottom(childNodeNumber, branchLength, childBranchTopPreOrder, tmp);
+        System.arraycopy(tmp, 0, out, outOff, K);
+    }
 
     /**
      * Export one internal pre-order slice to the representation's external/reporting coordinates.

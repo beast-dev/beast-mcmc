@@ -338,19 +338,15 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                     // sibling branch-top postorder in the paired post-order representation
                     postOrderMessageProvider.getPostOrderBranchTopInto(siblingNumber, c, p, tmpSiblingPostOrder);
 
-                    // parent preorder at the correct side, in the representation's internal basis
-                    System.arraycopy(parentNodePreOrder, off, tmpParentNodePreOrder, 0, stateCount);
-
-                    // combine parent preorder with sibling branch-top postorder
+                    // combine parent preorder with sibling postorder — reads parent at offset
                     preOrderRepresentation.combineParentAndSibling(
-                            tmpParentNodePreOrder,
+                            parentNodePreOrder, off,
                             tmpSiblingPostOrder,
                             tmpChildBranchTopPreOrder
                     );
                 } else {
                     postOrderMessageProvider.getPostOrderBranchTopStandardInto(
                             siblingNumber, c, p, tmpSiblingPostOrderStandard);
-                    //  index parent standard directly — avoids K-element copy to tmp
                     for (int s = 0; s < stateCount; s++) {
                         tmpChildBranchTopPreOrderStandard[s] =
                                 parentNodePreOrderStandard[off + s] * tmpSiblingPostOrderStandard[s];
@@ -361,27 +357,23 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
                 childScale[p] = parentScale[p] + siblingScale[p];
 
-                //  normalize tmp in-place (offset 0), then store once — avoids round-trip copy
                 final double extraScaleStart = normalizePatternSlice(tmpChildBranchTopPreOrder, 0);
                 childScale[p] += extraScaleStart;
                 System.arraycopy(tmpChildBranchTopPreOrder, 0, childPreOrderStart, off, stateCount);
 
-                // propagate down the child branch
+                // propagate down the child branch — writes directly to childPreOrderEnd at off
                 preOrderRepresentation.propagateToBranchBottom(
                         childNumber,
                         childEffectiveLength,
                         tmpChildBranchTopPreOrder,
-                        tmpChildNodePreOrder
+                        childPreOrderEnd, off
                 );
 
-                System.arraycopy(tmpChildNodePreOrder, 0, childPreOrderEnd, off, stateCount);
-
-                // normalize END too
                 final double extraScaleEnd = normalizePatternSlice(childPreOrderEnd, off);
                 childScale[p] += extraScaleEnd;
 
                 if (childPreOrderEndStandard != null) {
-                    // [fix 3] offset-aware export — avoids two K-element round-trip copies
+                    // offset-aware export — no round-trip copies
                     preOrderRepresentation.exportPreOrderPartialToStandard(
                             childPreOrderEnd, off, childPreOrderEndStandard, off);
                 }

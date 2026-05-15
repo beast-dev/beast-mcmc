@@ -208,7 +208,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     if (isAllRealCache[m]) {
                         RealKernelUtils.fillStructure(ws.realPlanByModel[m], eigenDecomps[m], stateCount);
                     } else {
-                        ComplexBlockKernelUtils.fillStructure(ws.planByModel[m], eigenDecomps[m], stateCount);
+                        ComplexBlockKernelUtils.fillStructure(ws.planByModel[m], eigenDecomps[m]);
                     }
                 }
             }
@@ -392,10 +392,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
                 ComplexBlockKernelUtils.fillAndApplyToOuterProduct(
                         plan, eigenDecomp, tc, ws.rotatedPre, ws.rotatedPost,
-                        (wp * wc) / denom, eigenBasisAccum, stateCount);
+                        (wp * wc) / denom, eigenBasisAccum);
             } else {
                 // Multi-pattern path: fill coefficients once, apply across all patterns.
-                ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc, stateCount);
+                ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc);
 
                 for (int p = 0; p < patternCount; p++) {
                     final double wp = patternWeights[p];
@@ -425,7 +425,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     }
 
                     ComplexBlockKernelUtils.applyPlanToOuterProduct(
-                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
+                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum);
                 }
             }
         }

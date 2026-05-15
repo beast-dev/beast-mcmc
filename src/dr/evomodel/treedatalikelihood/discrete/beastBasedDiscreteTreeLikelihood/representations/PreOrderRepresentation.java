@@ -109,6 +109,43 @@ public interface PreOrderRepresentation {
     }
 
     /**
+     * Normalize one internal pre-order slice in place and export the normalized
+     * value to the standard data-type basis.
+     *
+     * @return the log scale added by normalization.
+     */
+    default double normalizeAndExportPreOrderPartialToStandard(double[] src, int srcOff,
+                                                               double[] dst, int dstOff,
+                                                               double scalingFloor,
+                                                               double scalingCeiling) {
+        final int K = getStateCount();
+        double max = 0.0;
+        for (int s = 0; s < K; s++) {
+            max = Math.max(max, Math.abs(src[srcOff + s]));
+        }
+
+        if (max == 0.0) {
+            final double uniform = 1.0 / K;
+            for (int s = 0; s < K; s++) {
+                src[srcOff + s] = uniform;
+            }
+            exportPreOrderPartialToStandard(src, srcOff, dst, dstOff);
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (max < scalingFloor || max > scalingCeiling) {
+            for (int s = 0; s < K; s++) {
+                src[srcOff + s] /= max;
+            }
+            exportPreOrderPartialToStandard(src, srcOff, dst, dstOff);
+            return Math.log(max);
+        }
+
+        exportPreOrderPartialToStandard(src, srcOff, dst, dstOff);
+        return 0.0;
+    }
+
+    /**
      * Propagate a pre-order message from the TOP of the child's branch to the BOTTOM
      * of the child's branch (i.e. to the child node).
      */

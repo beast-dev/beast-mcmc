@@ -365,13 +365,13 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                         childPreOrderEnd, off
                 );
 
-                final double extraScaleEnd = normalizePatternSlice(childPreOrderEnd, off);
-                childScale[p] += extraScaleEnd;
-
                 if (childPreOrderEndStandard != null) {
-                    // offset-aware export — no round-trip copies
-                    preOrderRepresentation.exportPreOrderPartialToStandard(
-                            childPreOrderEnd, off, childPreOrderEndStandard, off);
+                    childScale[p] += preOrderRepresentation.normalizeAndExportPreOrderPartialToStandard(
+                            childPreOrderEnd, off,
+                            childPreOrderEndStandard, off,
+                            DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
+                } else {
+                    childScale[p] += normalizePatternSlice(childPreOrderEnd, off);
                 }
             }
         }

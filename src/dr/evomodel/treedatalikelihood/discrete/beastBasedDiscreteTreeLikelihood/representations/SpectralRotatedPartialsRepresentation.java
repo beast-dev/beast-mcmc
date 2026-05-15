@@ -290,6 +290,40 @@ public final class SpectralRotatedPartialsRepresentation
         multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
     }
 
+    @Override
+    public double normalizeAndExportPreOrderPartialToStandard(double[] src, int srcOff,
+                                                              double[] dst, int dstOff,
+                                                              double scalingFloor,
+                                                              double scalingCeiling) {
+        ensureEigenSystemCurrent();
+
+        double max = 0.0;
+        for (int s = 0; s < stateCount; s++) {
+            max = Math.max(max, Math.abs(src[srcOff + s]));
+        }
+
+        if (max == 0.0) {
+            final double uniform = 1.0 / stateCount;
+            for (int s = 0; s < stateCount; s++) {
+                src[srcOff + s] = uniform;
+            }
+            multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (max < scalingFloor || max > scalingCeiling) {
+            final double invMax = 1.0 / max;
+            multiplyMatrixVectorOffsetScaled(matrixRInvT, src, srcOff, dst, dstOff, stateCount, invMax);
+            for (int s = 0; s < stateCount; s++) {
+                src[srcOff + s] *= invMax;
+            }
+            return Math.log(max);
+        }
+
+        multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
+        return 0.0;
+    }
+
     // -------------------------------------------------------------------------
 
     private void ensureEigenSystemCurrent() {
@@ -468,6 +502,20 @@ public final class SpectralRotatedPartialsRepresentation
             double sum = 0.0;
             for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[vecOff + j];
             out[outOff + i] = sum;
+            base += dim;
+        }
+    }
+
+    private static void multiplyMatrixVectorOffsetScaled(double[] matrix,
+                                                         double[] vector, int vecOff,
+                                                         double[] out, int outOff,
+                                                         int dim,
+                                                         double scale) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[vecOff + j];
+            out[outOff + i] = sum * scale;
             base += dim;
         }
     }

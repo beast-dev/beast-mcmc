@@ -39,6 +39,8 @@ public final class SpectralRotatedPartialsRepresentation
 
     private final double[] matrixR;
     private final double[] matrixRInv;
+    private final double[] matrixRT;
+    private final double[] matrixRInvT;
     private final double[] eigenReal;
     private final double[] eigenImag;
 
@@ -79,6 +81,8 @@ public final class SpectralRotatedPartialsRepresentation
 
         this.matrixR    = new double[stateCount * stateCount];
         this.matrixRInv = new double[stateCount * stateCount];
+        this.matrixRT   = new double[stateCount * stateCount];
+        this.matrixRInvT = new double[stateCount * stateCount];
         this.eigenReal  = new double[stateCount];
         this.eigenImag  = new double[stateCount];
 
@@ -186,7 +190,7 @@ public final class SpectralRotatedPartialsRepresentation
     @Override
     public double rootContribution(double[] rootFrequencies, double[] rootPartial) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixR, rootFrequencies, tmpA, stateCount);
+        multiplyMatrixVector(matrixRT, rootFrequencies, tmpA, stateCount);
         double sum = 0.0;
         for (int i = 0; i < stateCount; i++) sum += tmpA[i] * rootPartial[i];
         return sum;
@@ -195,7 +199,7 @@ public final class SpectralRotatedPartialsRepresentation
     @Override
     public void initializeRootPartial(double[] rootFrequencies, double[] outPartial) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixR, rootFrequencies, outPartial, stateCount);
+        multiplyMatrixVector(matrixRT, rootFrequencies, outPartial, stateCount);
     }
 
     @Override
@@ -203,7 +207,7 @@ public final class SpectralRotatedPartialsRepresentation
                                         double[] siblingBranchTopPostOrder,
                                         double[] outChildBranchTopPreOrder) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixRInv, parentNodePreOrder, tmpStandardA, stateCount);
+        multiplyMatrixVector(matrixRInvT, parentNodePreOrder, tmpStandardA, stateCount);
         // Fuse R×sibling + Hadamard into one pass.
         for (int i = 0; i < stateCount; i++) {
             double sum = 0.0;
@@ -213,7 +217,7 @@ public final class SpectralRotatedPartialsRepresentation
             }
             tmpStandardB[i] = tmpStandardA[i] * sum;
         }
-        multiplyTransposeMatrixVector(matrixR, tmpStandardB, outChildBranchTopPreOrder, stateCount);
+        multiplyMatrixVector(matrixRT, tmpStandardB, outChildBranchTopPreOrder, stateCount);
     }
 
     @Override
@@ -255,19 +259,19 @@ public final class SpectralRotatedPartialsRepresentation
     @Override
     public void importPreOrderPartialFromStandard(double[] standardPartial, double[] outPreOrderPartial) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixR, standardPartial, outPreOrderPartial, stateCount);
+        multiplyMatrixVector(matrixRT, standardPartial, outPreOrderPartial, stateCount);
     }
 
     @Override
     public void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVector(matrixRInv, preOrderPartial, outStandardPartial, stateCount);
+        multiplyMatrixVector(matrixRInvT, preOrderPartial, outStandardPartial, stateCount);
     }
 
     @Override
     public void exportPreOrderPartialToStandard(double[] src, int srcOff, double[] dst, int dstOff) {
         ensureEigenSystemCurrent();
-        multiplyTransposeMatrixVectorOffset(matrixRInv, src, srcOff, dst, dstOff, stateCount);
+        multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
     }
 
     // -------------------------------------------------------------------------
@@ -279,6 +283,8 @@ public final class SpectralRotatedPartialsRepresentation
         if (eigen == null) {
             Arrays.fill(matrixR,    0.0);
             Arrays.fill(matrixRInv, 0.0);
+            Arrays.fill(matrixRT,   0.0);
+            Arrays.fill(matrixRInvT, 0.0);
             Arrays.fill(eigenReal,  0.0);
             Arrays.fill(eigenImag,  0.0);
             blockCount = 0;
@@ -288,6 +294,8 @@ public final class SpectralRotatedPartialsRepresentation
         }
 
         loadEigenDecomposition(eigen, matrixR, matrixRInv, eigenReal, eigenImag, stateCount);
+        transposeSquare(matrixR, matrixRT, stateCount);
+        transposeSquare(matrixRInv, matrixRInvT, stateCount);
         buildBlockPlan(eigenReal, eigenImag, stateCount, blockType, blockStart);
         eigenVersion++;
         eigenDirty = false;
@@ -436,26 +444,24 @@ public final class SpectralRotatedPartialsRepresentation
         }
     }
 
-    private static void multiplyTransposeMatrixVector(double[] matrix, double[] vector,
-                                                      double[] out, int dim) {
-        Arrays.fill(out, 0, dim, 0.0);
+    private static void multiplyMatrixVectorOffset(double[] matrix,
+                                                   double[] vector, int vecOff,
+                                                   double[] out, int outOff, int dim) {
         int base = 0;
-        for (int row = 0; row < dim; row++) {
-            final double v = vector[row];
-            for (int col = 0; col < dim; col++) out[col] += matrix[base + col] * v;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[vecOff + j];
+            out[outOff + i] = sum;
             base += dim;
         }
     }
 
-    private static void multiplyTransposeMatrixVectorOffset(double[] matrix,
-                                                             double[] vector, int vecOff,
-                                                             double[] out, int outOff, int dim) {
-        Arrays.fill(out, outOff, outOff + dim, 0.0);
-        int base = 0;
-        for (int row = 0; row < dim; row++) {
-            final double v = vector[vecOff + row];
-            for (int col = 0; col < dim; col++) out[outOff + col] += matrix[base + col] * v;
-            base += dim;
+    private static void transposeSquare(double[] matrix, double[] transpose, int dim) {
+        for (int i = 0; i < dim; i++) {
+            final int rowBase = i * dim;
+            for (int j = 0; j < dim; j++) {
+                transpose[j * dim + i] = matrix[rowBase + j];
+            }
         }
     }
 

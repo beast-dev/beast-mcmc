@@ -541,25 +541,28 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
         // Step 1: mid = R^{-T} * accum
         for (int row = 0; row < K; row++) {
-            for (int col = 0; col < K; col++) {
-                double sum = 0.0;
-                for (int k = 0; k < K; k++) {
-                    sum += ievc[k * K + row] * eigenBasisAccum[k * K + col];
+            final int rowOff = row * K;
+            Arrays.fill(midBuffer, rowOff, rowOff + K, 0.0);
+            for (int k = 0; k < K; k++) {
+                final double a = ievc[k * K + row];
+                final int accumOff = k * K;
+                for (int col = 0; col < K; col++) {
+                    midBuffer[rowOff + col] += a * eigenBasisAccum[accumOff + col];
                 }
-                midBuffer[row * K + col] = sum;
             }
         }
 
         // Step 2: out = mid * R^T
         for (int row = 0; row < K; row++) {
             final int rowOff = row * K;
+            final int outRowOff = modelOffset + rowOff;
             for (int col = 0; col < K; col++) {
                 double sum = 0.0;
                 final int colOff = col * K;
                 for (int j = 0; j < K; j++) {
                     sum += midBuffer[rowOff + j] * evec[colOff + j];
                 }
-                out[modelOffset + rowOff + col] = sum;
+                out[outRowOff + col] = sum;
             }
         }
     }

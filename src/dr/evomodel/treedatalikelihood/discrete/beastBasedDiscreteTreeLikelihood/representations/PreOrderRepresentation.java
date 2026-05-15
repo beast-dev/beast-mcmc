@@ -74,6 +74,21 @@ public interface PreOrderRepresentation {
     }
 
     /**
+     * Convert the element-wise product of two standard-basis partials to the
+     * internal pre-order representation.
+     */
+    default void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                   double[] rightStandard,
+                                                   double[] outPreOrderPartial) {
+        final int K = getStateCount();
+        final double[] tmp = new double[K];
+        for (int s = 0; s < K; s++) {
+            tmp[s] = leftStandard[leftOff + s] * rightStandard[s];
+        }
+        importPreOrderPartialFromStandard(tmp, outPreOrderPartial);
+    }
+
+    /**
      * Export one internal pre-order partial slice to the standard data-type basis.
      */
     default void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {

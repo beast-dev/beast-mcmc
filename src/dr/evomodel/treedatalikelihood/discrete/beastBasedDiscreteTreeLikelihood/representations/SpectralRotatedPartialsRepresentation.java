@@ -263,6 +263,22 @@ public final class SpectralRotatedPartialsRepresentation
     }
 
     @Override
+    public void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                  double[] rightStandard,
+                                                  double[] outPreOrderPartial) {
+        ensureEigenSystemCurrent();
+        int base = 0;
+        for (int i = 0; i < stateCount; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixRT[base + j] * leftStandard[leftOff + j] * rightStandard[j];
+            }
+            outPreOrderPartial[i] = sum;
+            base += stateCount;
+        }
+    }
+
+    @Override
     public void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
         ensureEigenSystemCurrent();
         multiplyMatrixVector(matrixRInvT, preOrderPartial, outStandardPartial, stateCount);

@@ -8,6 +8,7 @@ import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.ComplexBlockKernelUtils;
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.RealKernelUtils;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteGradientDelegate;
 
 import java.util.Arrays;
@@ -56,6 +57,11 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     private final ExecutorService pool;
     private final ThreadWorkspace[] workspaces;
 
+    // When true, skip repeated RealKernelUtils.isAllReal() detection per gradient call.
+    private final boolean forceAllReal;
+    // Pre-allocated isAllReal array — reused across gradient calls to avoid hot-path allocation.
+    private final boolean[] isAllRealCache;
+
     // -------------------------------------------------------------------------
     // Per-thread workspace
     // -------------------------------------------------------------------------
@@ -68,18 +74,21 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         final double[] rotatedPre;
         final double[] rotatedPost;
         final ComplexBlockKernelUtils.ComplexKernelPlan[] planByModel;
+        final RealKernelUtils.RealKernelPlan[] realPlanByModel;
 
         ThreadWorkspace() {
             final int K2 = stateCount * stateCount;
-            eigenBasisAccum = new double[substitutionModelCount][K2];
-            tmpPreTop       = new double[stateCount];
-            tmpPreBottom    = new double[stateCount];
-            tmpPostBottom   = new double[stateCount];
-            rotatedPre      = new double[stateCount];
-            rotatedPost     = new double[stateCount];
-            planByModel     = new ComplexBlockKernelUtils.ComplexKernelPlan[substitutionModelCount];
+            eigenBasisAccum  = new double[substitutionModelCount][K2];
+            tmpPreTop        = new double[stateCount];
+            tmpPreBottom     = new double[stateCount];
+            tmpPostBottom    = new double[stateCount];
+            rotatedPre       = new double[stateCount];
+            rotatedPost      = new double[stateCount];
+            planByModel      = new ComplexBlockKernelUtils.ComplexKernelPlan[substitutionModelCount];
+            realPlanByModel  = new RealKernelUtils.RealKernelPlan[substitutionModelCount];
             for (int i = 0; i < substitutionModelCount; i++) {
-                planByModel[i] = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+                planByModel[i]     = new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount);
+                realPlanByModel[i] = new RealKernelUtils.RealKernelPlan(stateCount);
             }
         }
     }
@@ -89,7 +98,8 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     public SpectralExactGradientDelegate(String name,
                                          Tree tree,
                                          DiscreteDataLikelihoodDelegate likelihoodDelegate,
-                                         int stateCount) {
+                                         int stateCount,
+                                         boolean forceAllReal) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.likelihoodDelegate = likelihoodDelegate;
@@ -100,6 +110,12 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         final int K2 = stateCount * stateCount;
         this.eigenBasisAccumByModel = new double[substitutionModelCount][K2];
         this.midBuffer = new double[K2];
+
+        this.forceAllReal   = forceAllReal;
+        this.isAllRealCache = new boolean[substitutionModelCount];
+        if (forceAllReal) {
+            Arrays.fill(isAllRealCache, true);
+        }
 
         this.nThreads = Integer.getInteger(THREADS_PROPERTY, 1);
         if (nThreads > 1) {
@@ -175,11 +191,25 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             eigenDecomps[m] = models.get(m).getEigenDecomposition();
         }
 
-        // Fill structural plan (time-independent) into every workspace
+        // Detect all-real eigensystems per model (reversible CTMCs).
+        // When forceAllReal=true the cache is already all-true; skip the O(K) detection calls.
+        if (!forceAllReal) {
+            for (int m = 0; m < substitutionModelCount; m++) {
+                isAllRealCache[m] = eigenDecomps[m] != null &&
+                        RealKernelUtils.isAllReal(eigenDecomps[m], stateCount);
+            }
+        }
+
+        // Fill structural plan (time-independent) into every workspace.
+        // Real models use RealKernelUtils (packed K² table); complex models use ComplexBlockKernelUtils.
         for (int m = 0; m < substitutionModelCount; m++) {
             if (eigenDecomps[m] != null) {
                 for (ThreadWorkspace ws : workspaces) {
-                    ComplexBlockKernelUtils.fillStructure(ws.planByModel[m], eigenDecomps[m], stateCount);
+                    if (isAllRealCache[m]) {
+                        RealKernelUtils.fillStructure(ws.realPlanByModel[m], eigenDecomps[m], stateCount);
+                    } else {
+                        ComplexBlockKernelUtils.fillStructure(ws.planByModel[m], eigenDecomps[m], stateCount);
+                    }
                 }
             }
         }
@@ -193,7 +223,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
         if (nThreads <= 1) {
             processBranchRange(0, tree.getNodeCount(), workspaces[0],
-                    eigenDecomps, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
+                    eigenDecomps, isAllRealCache, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
         } else {
             final int nodeCount = tree.getNodeCount();
             final int chunkSize = (nodeCount + nThreads - 1) / nThreads;
@@ -205,7 +235,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                 final ThreadWorkspace ws = workspaces[t];
                 tasks.add(() -> {
                     processBranchRange(start, end, ws,
-                            eigenDecomps, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
+                            eigenDecomps, isAllRealCache, patternWeights, categoryWeights, categoryRates, useInternalRotatedMessages);
                     return null;
                 });
             }
@@ -242,6 +272,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
     private void processBranchRange(int start, int end,
                                     ThreadWorkspace ws,
                                     EigenDecomposition[] eigenDecomps,
+                                    boolean[] isAllReal,
                                     double[] patternWeights,
                                     double[] categoryWeights,
                                     double[] categoryRates,
@@ -271,20 +302,37 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                 final double[] evec = eigenDecomp.getEigenVectors();
                 final double[] ievc = eigenDecomp.getInverseEigenVectors();
 
-                accumulateBranchContribution(
-                        childNumber,
-                        branchLengthForModel,
-                        categoryRates,
-                        categoryWeights,
-                        patternWeights,
-                        eigenDecomp,
-                        ws.planByModel[modelNumber],
-                        evec,
-                        ievc,
-                        ws.eigenBasisAccum[modelNumber],
-                        ws,
-                        useInternalRotatedMessages
-                );
+                if (isAllReal[modelNumber]) {
+                    accumulateBranchContributionReal(
+                            childNumber,
+                            branchLengthForModel,
+                            categoryRates,
+                            categoryWeights,
+                            patternWeights,
+                            eigenDecomp,
+                            ws.realPlanByModel[modelNumber],
+                            evec,
+                            ievc,
+                            ws.eigenBasisAccum[modelNumber],
+                            ws,
+                            useInternalRotatedMessages
+                    );
+                } else {
+                    accumulateBranchContribution(
+                            childNumber,
+                            branchLengthForModel,
+                            categoryRates,
+                            categoryWeights,
+                            patternWeights,
+                            eigenDecomp,
+                            ws.planByModel[modelNumber],
+                            evec,
+                            ievc,
+                            ws.eigenBasisAccum[modelNumber],
+                            ws,
+                            useInternalRotatedMessages
+                    );
+                }
             }
         }
     }
@@ -377,6 +425,96 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     }
 
                     ComplexBlockKernelUtils.applyPlanToOuterProduct(
+                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
+                }
+            }
+        }
+    }
+
+    /**
+     * Same as {@link #accumulateBranchContribution} but uses the packed real-eigenvalue
+     * kernel (RealKernelUtils) for models whose eigensystem is all-real.
+     */
+    private void accumulateBranchContributionReal(int childNumber,
+                                                   double branchLength,
+                                                   double[] categoryRates,
+                                                   double[] categoryWeights,
+                                                   double[] patternWeights,
+                                                   EigenDecomposition eigenDecomp,
+                                                   RealKernelUtils.RealKernelPlan plan,
+                                                   double[] evec,
+                                                   double[] ievc,
+                                                   double[] eigenBasisAccum,
+                                                   ThreadWorkspace ws,
+                                                   boolean useInternalRotatedMessages) {
+        final int categoryCount = likelihoodDelegate.getCategoryCount();
+        final int patternCount  = likelihoodDelegate.getPatternCount();
+
+        for (int c = 0; c < categoryCount; c++) {
+            final double wc = categoryWeights[c];
+            final double tc = branchLength * categoryRates[c];
+
+            if (patternCount == 1) {
+                final double wp = patternWeights[0];
+                if (wp == 0.0) continue;
+
+                double denom = 0.0;
+                if (useInternalRotatedMessages) {
+                    likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
+                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
+                    for (int s = 0; s < stateCount; s++) {
+                        denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                    }
+                } else {
+                    likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
+                    likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, ws.tmpPostBottom);
+                    for (int s = 0; s < stateCount; s++) {
+                        denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
+                    }
+                }
+                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
+
+                if (!useInternalRotatedMessages) {
+                    multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
+                    multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
+                }
+
+                RealKernelUtils.fillAndApplyToOuterProduct(
+                        plan, eigenDecomp, tc, ws.rotatedPre, ws.rotatedPost,
+                        (wp * wc) / denom, eigenBasisAccum, stateCount);
+            } else {
+                RealKernelUtils.fillCoefficients(plan, eigenDecomp, tc, stateCount);
+
+                for (int p = 0; p < patternCount; p++) {
+                    final double wp = patternWeights[p];
+                    if (wp == 0.0) continue;
+
+                    double denom = 0.0;
+                    if (useInternalRotatedMessages) {
+                        likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
+                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
+                        for (int s = 0; s < stateCount; s++) {
+                            denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                        }
+                    } else {
+                        likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);
+                        likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, ws.tmpPostBottom);
+                        for (int s = 0; s < stateCount; s++) {
+                            denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
+                        }
+                    }
+                    if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
+
+                    if (!useInternalRotatedMessages) {
+                        multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
+                        multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
+                    }
+
+                    RealKernelUtils.applyToOuterProduct(
                             plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
                 }
             }

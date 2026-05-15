@@ -163,6 +163,15 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                                                         GradientDataLikelihoodDelegate likelihoodDelegate,
                                                         ComplexSubstitutionModel substitutionModel,
                                                         ApproximationMode mode) {
+        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode, false);
+    }
+
+    public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
+                                                        TreeDataLikelihood treeDataLikelihood,
+                                                        GradientDataLikelihoodDelegate likelihoodDelegate,
+                                                        ComplexSubstitutionModel substitutionModel,
+                                                        ApproximationMode mode,
+                                                        boolean forceAllReal) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchModel = likelihoodDelegate.getBranchModel();
@@ -193,7 +202,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                             traitName,
                             treeDataLikelihood.getTree(),
                             discreteDelegate,
-                            stateCount);
+                            stateCount,
+                            forceAllReal);
                 } else {
                     gradientDelegate = new DiscreteSubstitutionModelCrossProductDelegate(
                             traitName,

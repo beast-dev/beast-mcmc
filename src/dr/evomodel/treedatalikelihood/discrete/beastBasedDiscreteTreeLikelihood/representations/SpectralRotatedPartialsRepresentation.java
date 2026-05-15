@@ -132,7 +132,7 @@ public final class SpectralRotatedPartialsRepresentation
                                      double[] outBranchTopPartial) {
         ensureEigenSystemCurrent();
         ensureBranchCoefficients(nodeNumber, branchLength);
-        applyForwardCoefficients(nodeNumber, childPartial, outBranchTopPartial);
+        applyForwardCoefficients(nodeNumber, childPartial, 0, outBranchTopPartial);
     }
 
     @Override
@@ -223,7 +223,17 @@ public final class SpectralRotatedPartialsRepresentation
                                         double[] outChildNodePreOrder) {
         ensureEigenSystemCurrent();
         ensureBranchCoefficients(childNodeNumber, branchLength);
-        applyTransposeCoefficients(childNodeNumber, childBranchTopPreOrder, outChildNodePreOrder);
+        applyTransposeCoefficients(childNodeNumber, childBranchTopPreOrder, outChildNodePreOrder, 0);
+    }
+
+    @Override
+    public void propagateToBranchBottom(int childNodeNumber,
+                                        double branchLength,
+                                        double[] childBranchTopPreOrder,
+                                        double[] out, int outOff) {
+        ensureEigenSystemCurrent();
+        ensureBranchCoefficients(childNodeNumber, branchLength);
+        applyTransposeCoefficients(childNodeNumber, childBranchTopPreOrder, out, outOff);
     }
 
     @Override
@@ -379,38 +389,38 @@ public final class SpectralRotatedPartialsRepresentation
         cachedCoeffVersion[nodeSlotBase + slot]  = curVersion;
     }
 
-    private void applyForwardCoefficients(int nodeNumber, double[] in, double[] out) {
+    private void applyForwardCoefficients(int nodeNumber, double[] in, int inOff, double[] out) {
         final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
 
         for (int b = 0; b < blockCount; b++) {
             final int i = blockStart[b];
             if (blockType[b] == REAL_BLOCK) {
-                out[i] = coeffA[coeffBase + i] * in[i];
+                out[i] = coeffA[coeffBase + i] * in[inOff + i];
             } else {
                 final double c = coeffA[coeffBase + i];
                 final double s = coeffB[coeffBase + i];
-                final double x = in[i];
-                final double y = in[i + 1];
+                final double x = in[inOff + i];
+                final double y = in[inOff + i + 1];
                 out[i]     =  c * x + s * y;
                 out[i + 1] = -s * x + c * y;
             }
         }
     }
 
-    private void applyTransposeCoefficients(int nodeNumber, double[] in, double[] out) {
+    private void applyTransposeCoefficients(int nodeNumber, double[] in, double[] out, int outOff) {
         final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
 
         for (int b = 0; b < blockCount; b++) {
             final int i = blockStart[b];
             if (blockType[b] == REAL_BLOCK) {
-                out[i] = coeffA[coeffBase + i] * in[i];
+                out[outOff + i] = coeffA[coeffBase + i] * in[i];
             } else {
                 final double c = coeffA[coeffBase + i];
                 final double s = coeffB[coeffBase + i];
                 final double x = in[i];
                 final double y = in[i + 1];
-                out[i]     = c * x - s * y;
-                out[i + 1] = s * x + c * y;
+                out[outOff + i]     = c * x - s * y;
+                out[outOff + i + 1] = s * x + c * y;
             }
         }
     }
@@ -448,4 +458,5 @@ public final class SpectralRotatedPartialsRepresentation
             base += dim;
         }
     }
+
 }

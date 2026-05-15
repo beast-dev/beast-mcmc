@@ -223,6 +223,16 @@ public final class SpectralStandardPartialsRepresentation
     }
 
     @Override
+    public void combineParentAndSibling(double[] parentPreOrderStandard, int parentOff,
+                                        double[] siblingPostOrderStandard,
+                                        double[] outChildBranchTopPreOrder) {
+        for (int i = 0; i < stateCount; i++) {
+            outChildBranchTopPreOrder[i] =
+                    parentPreOrderStandard[parentOff + i] * siblingPostOrderStandard[i];
+        }
+    }
+
+    @Override
     public void propagateToBranchBottom(int nodeNumber,
                                         double branchLength,
                                         double[] branchTopPreOrder,
@@ -231,14 +241,23 @@ public final class SpectralStandardPartialsRepresentation
         ensureEigenSystemCurrent();
         ensureBranchCoefficients(nodeNumber, branchLength);
 
-        // tmpA = R^T q_top
         multiplyTransposeMatrixVector(matrixR, branchTopPreOrder, tmpA, stateCount);
-
-        // tmpB = exp(tD)^T tmpA
         applyTransposeCoefficients(nodeNumber, tmpA, tmpB);
-
-        // out = (R^{-1})^T tmpB
         multiplyTransposeMatrixVector(matrixRInv, tmpB, outBranchBottomPreOrder, stateCount);
+    }
+
+    @Override
+    public void propagateToBranchBottom(int nodeNumber,
+                                        double branchLength,
+                                        double[] branchTopPreOrder,
+                                        double[] out, int outOff) {
+
+        ensureEigenSystemCurrent();
+        ensureBranchCoefficients(nodeNumber, branchLength);
+
+        multiplyTransposeMatrixVector(matrixR, branchTopPreOrder, tmpA, stateCount);
+        applyTransposeCoefficients(nodeNumber, tmpA, tmpB);
+        multiplyTransposeMatrixVectorOffset(matrixRInv, tmpB, out, outOff, stateCount);
     }
 
     // ------------------------------------------------------------------
@@ -527,6 +546,22 @@ public final class SpectralStandardPartialsRepresentation
             final double v = vector[row];
             for (int col = 0; col < dim; col++) {
                 out[col] += matrix[base + col] * v;
+            }
+            base += dim;
+        }
+    }
+
+    private static void multiplyTransposeMatrixVectorOffset(double[] matrix,
+                                                             double[] vector,
+                                                             double[] out, int outOff,
+                                                             int dim) {
+        Arrays.fill(out, outOff, outOff + dim, 0.0);
+
+        int base = 0;
+        for (int row = 0; row < dim; row++) {
+            final double v = vector[row];
+            for (int col = 0; col < dim; col++) {
+                out[outOff + col] += matrix[base + col] * v;
             }
             base += dim;
         }

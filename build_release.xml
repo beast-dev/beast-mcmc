@@ -25,10 +25,28 @@
     extra_release_tag    e.g. -beta4   (default: empty)
     dist.dir             directory containing pre-built beast.jar / beauti.jar
                          (default: build/dist)
-    apple.signer.app     Full "Developer ID Application: ..." identity string.
-                         Only needed for the package-mac target.
-    entitlements.file    Path to the JVM entitlements plist
-                         (default: packaging_tools/mac/entitlements.plist)
+
+  package-mac-bundled-jvm (optional, depends on package-mac):
+    Embeds a JDK inside each .app bundle so the app is self-contained and
+    runs without requiring a system-installed Java.
+
+    Required extra property:
+      jdk.bundle.dir     Absolute path to the JDK .jdk directory to embed.
+                         On macOS this is typically a directory such as:
+                           /Library/Java/JavaVirtualMachines/zulu-21.jdk
+                         (install with Homebrew: brew install -cask zulu@21)
+                         The Azul Zulu cask installs a universal binary
+                         (aarch64 + x86_64) so one DMG runs natively on
+                         both Apple Silicon and Intel Macs.
+
+    The last path component (e.g. zulu-21.jdk) becomes the PlugIns sub-
+    directory name and is written into each Info.plist as JVMRuntime so that
+    universalJavaApplicationStub can locate the bundled JVM.
+
+    Example:
+      ant -f build_release.xml package-mac-bundled-jvm \\
+          -Dversion=10.5.1 \\
+          -Djdk.bundle.dir=/Library/Java/JavaVirtualMachines/zulu-21.jdk
 -->
 <project basedir="." default="package-all" name="BEAST-Release">
 
@@ -71,14 +89,6 @@
     <property name="Windows_package_dir"
               value="${Windows_dir}/${BEAST_package_name} v${version}"/>
 
-    <!-- ============================================================
-         Mac signing (supply apple.signer.app via -D in CI)
-         ============================================================ -->
-    <property name="apple.signer.app"
-              value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
-    <property name="entitlements.file"
-              value="${packaging_tools}/mac/entitlements.plist"/>
-
 
     <!-- ==============================================================
          package-linux
@@ -119,13 +129,13 @@
         <copy file="${common_dir}/README.txt"          todir="${Linux_package_dir}"/>
 
         <!--
-            format="gnu" produces a GNU-tar-compatible archive regardless of whether
-            this runs on macOS (BSD tar) or Linux. The filemode attribute on the bin
-            tarfileset preserves executable permissions for the shell scripts.
+            ANT's built-in tar task is Java-based and writes a POSIX-compatible
+            archive that GNU tar (Linux) reads correctly.  The filemode attribute
+            on the bin tarfileset preserves executable permissions for scripts.
         -->
         <tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}${extra_release_tag}.tgz"
              compression="gzip"
-             format="gnu">
+             longfile="gnu">
             <tarfileset dir="${Linux_package_dir}"
                         prefix="${BEAST_name}v${version}"
                         filemode="755">
@@ -224,14 +234,16 @@
 
     <!-- ==============================================================
          package-mac
-         Produces:  release/BEAST X v<version><tag>.dmg  (unsigned by this
-                    target — notarization and stapling happen in the workflow)
-         Runs on:   macOS runner only (requires jarbundler, hdiutil, codesign)
+         Produces:  release/Mac/BEAST X v<version>/  — staging directory
+                    containing the four unsigned .app bundles.
 
-         Signing identity is passed via -Dapple.signer.app="..." or looked
-         up automatically from the keychain in the GitHub Actions workflow.
+         Runs on:   macOS runner only (requires jarbundler).
+
+         Signing, DMG creation, notarisation and stapling are all handled
+         by the GitHub Actions workflow so that this target can be run
+         locally without any Apple certificates.
          ============================================================== -->
-    <target name="package-mac" description="Package Mac release with Hardened Runtime signing">
+    <target name="package-mac" description="Create Mac .app bundles (unsigned) in staging directory">
         <delete dir="${Mac_package_dir}"/>
         <mkdir  dir="${Mac_package_dir}"/>
 
@@ -288,15 +300,6 @@
                 <include name="**/beast.jar"/>
             </jarfileset>
         </jarbundler>
-        <exec executable="codesign" failonerror="true">
-            <arg value="--deep"/>
-            <arg value="--force"/>
-            <arg value="--options"/>  <arg value="runtime"/>
-            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
-            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
-            <arg value="--verbose"/>
-            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
-        </exec>
 
         <!-- ── BEAUti.app ───────────────────────────────────────── -->
         <jarbundler dir="${Mac_package_dir}"
@@ -321,15 +324,6 @@
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
         </jarbundler>
-        <exec executable="codesign" failonerror="true">
-            <arg value="--deep"/>
-            <arg value="--force"/>
-            <arg value="--options"/>  <arg value="runtime"/>
-            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
-            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
-            <arg value="--verbose"/>
-            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
-        </exec>
 
         <!-- ── LogCombiner.app ──────────────────────────────────── -->
         <jarbundler dir="${Mac_package_dir}"
@@ -350,15 +344,6 @@
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
         </jarbundler>
-        <exec executable="codesign" failonerror="true">
-            <arg value="--deep"/>
-            <arg value="--force"/>
-            <arg value="--options"/>  <arg value="runtime"/>
-            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
-            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
-            <arg value="--verbose"/>
-            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
-        </exec>
 
         <!-- ── TreeAnnotator.app ────────────────────────────────── -->
         <jarbundler dir="${Mac_package_dir}"
@@ -379,43 +364,78 @@
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
         </jarbundler>
-        <exec executable="codesign" failonerror="true">
-            <arg value="--deep"/>
-            <arg value="--force"/>
-            <arg value="--options"/>  <arg value="runtime"/>
-            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
-            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
-            <arg value="--verbose"/>
-            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
-        </exec>
 
-        <!-- ── Create DMG ───────────────────────────────────────── -->
-        <exec executable="/usr/bin/hdiutil" failonerror="true">
-            <arg value="create"/>
-            <arg value="-ov"/>
-            <arg value="-srcfolder"/>
-            <arg value="${Mac_package_dir}"/>
-            <arg value="-volname"/>
-            <arg value="${BEAST_name} v${version}"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
-        </exec>
+        <echo message="Mac bundles created in: ${Mac_package_dir}"/>
+        <echo message="Next (CI): codesign each .app, hdiutil create DMG, codesign DMG, notarytool, stapler."/>
+    </target>
 
-        <!--
-            Sign the DMG with the Application certificate.
-            Note: Developer ID Installer certs are for .pkg files, not DMGs.
-            Notarisation and stapling happen outside this target (in the
-            GitHub Actions workflow) so that this target can be used locally
-            without a network connection.
-        -->
-        <exec executable="codesign" failonerror="true">
-            <arg value="--sign"/>
-            <arg value="${apple.signer.app}"/>
-            <arg value="--verbose"/>
-            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
-        </exec>
 
-        <echo message="Mac package: ${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
-        <echo message="Next: notarize with xcrun notarytool, then staple with xcrun stapler."/>
+    <!-- ==============================================================
+         embed-jvm macrodef
+         Copies an external JDK into a single .app bundle's PlugIns
+         directory and writes the JVMRuntime key into its Info.plist.
+
+         universalJavaApplicationStub checks for JVMRuntime in the JavaX
+         dict of Info.plist; when present it uses the bundled JDK instead
+         of searching the system.
+
+         cp -rp is used instead of ANT <copy> so that symlinks and
+         execute bits inside the JDK tree are preserved exactly.
+         ============================================================== -->
+    <macrodef name="embed-jvm">
+        <attribute name="appdir" description="Path to the .app bundle"/>
+        <sequential>
+            <mkdir dir="@{appdir}/Contents/PlugIns"/>
+
+            <!-- Preserve symlinks and execute bits (required for a valid JDK) -->
+            <exec executable="cp" failonerror="true">
+                <arg value="-rp"/>
+                <arg value="${jdk.bundle.dir}"/>
+                <arg value="@{appdir}/Contents/PlugIns/"/>
+            </exec>
+
+            <!-- Point universalJavaApplicationStub at the bundled JVM -->
+            <exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+                <arg value="-c"/>
+                <arg value="Add :JavaX:JVMRuntime string ${jdk.plugin.name}"/>
+                <arg value="@{appdir}/Contents/Info.plist"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+    <!-- ==============================================================
+         package-mac-bundled-jvm
+         Produces:  release/Mac/BEAST X v<version>/  — same staging dir
+                    as package-mac but with a JDK embedded in each .app.
+
+         Requires:
+           -Djdk.bundle.dir=/path/to/jdk-21.jdk
+
+         Note for CI signing:
+           Apple requires each Mach-O binary inside the PlugIns JDK to be
+           individually signed (codesign with the -deep flag covers it)
+           before the outer .app is submitted for notarisation.
+         ============================================================== -->
+    <target name="package-mac-bundled-jvm" depends="package-mac"
+            description="Create Mac .app bundles with embedded JDK (self-contained)">
+
+        <fail unless="jdk.bundle.dir"
+              message="Supply the JDK to embed via -Djdk.bundle.dir=/path/to/jdk.jdk"/>
+
+        <!-- Derive the PlugIns subfolder name from the last path component -->
+        <basename property="jdk.plugin.name" file="${jdk.bundle.dir}"/>
+
+        <echo message="Embedding JDK '${jdk.plugin.name}' into .app bundles..."/>
+
+        <embed-jvm appdir="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
+        <embed-jvm appdir="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
+        <embed-jvm appdir="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
+        <embed-jvm appdir="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
+
+        <echo message="JDK '${jdk.plugin.name}' embedded into all four .app bundles."/>
+        <echo message="Next (CI): codesign --deep each .app (PlugIns binaries are covered),"/>
+        <echo message="           hdiutil create DMG, codesign DMG, notarytool, stapler."/>
     </target>
 
 

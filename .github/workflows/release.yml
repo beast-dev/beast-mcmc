@@ -144,8 +144,7 @@ jobs:
 
       # ── launch4j native helpers must be executable ─────────────
       - name: Make launch4j binaries executable
-        run: chmod +x packaging_tools/windows/launch4j/bin/ld \
-                      packaging_tools/windows/launch4j/bin/windres
+        run: chmod +x packaging_tools/windows/launch4j/bin/ld packaging_tools/windows/launch4j/bin/windres
 
       # ── Windows packaging ──────────────────────────────────────
       - name: Package Windows (.exe + ZIP)

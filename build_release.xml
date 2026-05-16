@@ -1,0 +1,427 @@
+<!--
+  build_release.xml
+
+  ANT build file used by GitHub Actions to package BEAST X releases for
+  Mac, Windows and Linux. It is intentionally separate from build.xml so
+  that CI packaging concerns (pre-built JARs, hardened-runtime signing,
+  GNU-tar archives) do not pollute the local development build.
+
+  Usage (all three targets run on a macOS runner):
+
+    ant -f build_release.xml package-mac \
+        -Dversion=10.5.1 \
+        -Dapple.signer.app="Developer ID Application: ..."
+
+    ant -f build_release.xml package-windows \
+        -Dversion=10.5.1
+
+    ant -f build_release.xml package-linux \
+        -Dversion=10.5.1
+
+  Required property (must be supplied via -D):
+    version              e.g. 10.5.1
+
+  Optional properties (all have sensible defaults):
+    extra_release_tag    e.g. -beta4   (default: empty)
+    dist.dir             directory containing pre-built beast.jar / beauti.jar
+                         (default: build/dist)
+    apple.signer.app     Full "Developer ID Application: ..." identity string.
+                         Only needed for the package-mac target.
+    entitlements.file    Path to the JVM entitlements plist
+                         (default: packaging_tools/mac/entitlements.plist)
+-->
+<project basedir="." default="package-all" name="BEAST-Release">
+
+    <!-- ============================================================
+         Version / release properties  (override with -D on CLI)
+         ============================================================ -->
+    <property name="version"           value="10.5.0"/>
+    <property name="version_number"    value="${version}"/>
+    <property name="extra_release_tag" value=""/>
+    <property name="jvm_version"       value="1.8+"/>
+    <property name="copyright"         value="Copyright 2002-2025"/>
+
+    <!-- Pre-built JARs location -->
+    <property name="dist.dir"          value="build/dist"/>
+
+    <!-- ============================================================
+         Directory layout  (mirrors build.xml conventions)
+         ============================================================ -->
+    <property name="release_dir"   value="release"/>
+    <property name="common_dir"    value="${release_dir}/common"/>
+    <property name="Mac_dir"       value="${release_dir}/Mac"/>
+    <property name="Linux_dir"     value="${release_dir}/Linux"/>
+    <property name="Windows_dir"   value="${release_dir}/Windows"/>
+    <property name="packaging_tools" value="packaging_tools"/>
+    <property name="Packaging_dir" value="${packaging_tools}/windows"/>
+
+    <!-- Package / app names -->
+    <property name="BEAST_name"              value="BEAST"/>
+    <property name="BEAST_package_name"      value="BEAST X"/>
+    <property name="BEAST_package_name_linux" value="BEAST_X"/>
+    <property name="BEAUti_name"             value="BEAUti"/>
+    <property name="TreeAnnotator_name"      value="TreeAnnotator"/>
+    <property name="LogCombiner_name"        value="LogCombiner"/>
+
+    <!-- Platform package staging directories -->
+    <property name="Mac_package_dir"
+              value="${Mac_dir}/${BEAST_package_name} v${version}"/>
+    <property name="Linux_package_dir"
+              value="${Linux_dir}/${BEAST_package_name_linux}_v${version}"/>
+    <property name="Windows_package_dir"
+              value="${Windows_dir}/${BEAST_package_name} v${version}"/>
+
+    <!-- ============================================================
+         Mac signing (supply apple.signer.app via -D in CI)
+         ============================================================ -->
+    <property name="apple.signer.app"
+              value="Developer ID Application: Marc Suchard (LC992Z5R7E)"/>
+    <property name="entitlements.file"
+              value="${packaging_tools}/mac/entitlements.plist"/>
+
+
+    <!-- ==============================================================
+         package-linux
+         Produces:  release/BEAST_X_v<version><tag>.tgz
+         Runs on:   macOS or Linux runner
+         Uses GNU tar format (via ANT tar task) for Linux compatibility.
+         ============================================================== -->
+    <target name="package-linux" description="Package Linux/Unix release">
+        <delete dir="${Linux_package_dir}"/>
+        <mkdir  dir="${Linux_package_dir}"/>
+
+        <copy todir="${Linux_package_dir}/bin">
+            <fileset dir="${Linux_dir}/scripts"/>
+        </copy>
+        <!-- Preserve executable bits on the shell scripts -->
+        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
+
+        <copy todir="${Linux_package_dir}/doc">
+            <fileset dir="${common_dir}/doc"/>
+        </copy>
+        <copy todir="${Linux_package_dir}/examples">
+            <fileset dir="examples"/>
+        </copy>
+        <copy todir="${Linux_package_dir}/native">
+            <fileset dir="native">
+                <exclude name="deprecated/**"/>
+            </fileset>
+        </copy>
+
+        <copy file="${common_dir}/icons/beast.png"   todir="${Linux_package_dir}/images"/>
+        <copy file="${common_dir}/icons/beauti.png"  todir="${Linux_package_dir}/images"/>
+        <copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
+
+        <copy file="${dist.dir}/beast.jar"  todir="${Linux_package_dir}/lib"/>
+        <copy file="${dist.dir}/beauti.jar" todir="${Linux_package_dir}/lib"/>
+
+        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
+        <copy file="${common_dir}/README.txt"          todir="${Linux_package_dir}"/>
+
+        <!--
+            format="gnu" produces a GNU-tar-compatible archive regardless of whether
+            this runs on macOS (BSD tar) or Linux. The filemode attribute on the bin
+            tarfileset preserves executable permissions for the shell scripts.
+        -->
+        <tar destfile="${release_dir}/${BEAST_package_name_linux}_v${version}${extra_release_tag}.tgz"
+             compression="gzip"
+             format="gnu">
+            <tarfileset dir="${Linux_package_dir}"
+                        prefix="${BEAST_name}v${version}"
+                        filemode="755">
+                <include name="bin/**"/>
+            </tarfileset>
+            <tarfileset dir="${Linux_package_dir}"
+                        prefix="${BEAST_name}v${version}">
+                <exclude name="bin/**"/>
+                <include name="**/**"/>
+            </tarfileset>
+        </tar>
+
+        <echo message="Linux/Unix package: ${release_dir}/${BEAST_package_name_linux}_v${version}${extra_release_tag}.tgz"/>
+    </target>
+
+
+    <!-- ==============================================================
+         package-windows
+         Produces:  release/BEAST X v<version><tag>.zip
+         Runs on:   macOS runner (the repo ships the macOS launch4j binaries,
+                    which cross-compile Windows PE executables on macOS).
+         ============================================================== -->
+    <target name="package-windows" description="Package Windows release (cross-compiled on macOS)">
+        <delete dir="${Windows_package_dir}"/>
+        <mkdir  dir="${Windows_package_dir}"/>
+
+        <!-- launch4j is bundled with macOS binaries in packaging_tools/windows/launch4j -->
+        <property name="launch4j.dir" location="${Packaging_dir}/launch4j"/>
+        <taskdef name="launch4j"
+                 classname="net.sf.launch4j.ant.Launch4jTask"
+                 classpath="${launch4j.dir}/launch4j.jar${path.separator}${launch4j.dir}/lib/xstream.jar"/>
+
+        <copy todir="${Windows_package_dir}/doc">
+            <fileset dir="${common_dir}/doc"/>
+        </copy>
+        <copy todir="${Windows_package_dir}/examples">
+            <fileset dir="examples"/>
+        </copy>
+        <copy todir="${Windows_package_dir}/native">
+            <fileset dir="native">
+                <exclude name="deprecated/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${Windows_package_dir}/bin">
+            <fileset dir="${Windows_dir}/scripts"/>
+        </copy>
+        <copy file="${dist.dir}/beast.jar"  todir="${Windows_package_dir}/lib"/>
+        <copy file="${dist.dir}/beauti.jar" todir="${Windows_package_dir}/lib"/>
+        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_package_dir}"/>
+        <copy file="${common_dir}/README.txt"          todir="${Windows_package_dir}"/>
+
+        <!-- BEAUti -->
+        <launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
+                  jar="${dist.dir}/beauti.jar"
+                  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- BEAST -->
+        <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
+                  jar="${dist.dir}/beast.jar"
+                  outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- TreeAnnotator -->
+        <launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
+                  jar="${dist.dir}/beast.jar"
+                  outfile="${Windows_package_dir}/${TreeAnnotator_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- LogCombiner -->
+        <launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
+                  jar="${dist.dir}/beast.jar"
+                  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <zip destfile="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip">
+            <zipfileset dir="${Windows_package_dir}"
+                        prefix="${BEAST_package_name} v${version}"/>
+        </zip>
+
+        <echo message="Windows package: ${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip"/>
+    </target>
+
+
+    <!-- ==============================================================
+         package-mac
+         Produces:  release/BEAST X v<version><tag>.dmg  (unsigned by this
+                    target — notarization and stapling happen in the workflow)
+         Runs on:   macOS runner only (requires jarbundler, hdiutil, codesign)
+
+         Signing identity is passed via -Dapple.signer.app="..." or looked
+         up automatically from the keychain in the GitHub Actions workflow.
+         ============================================================== -->
+    <target name="package-mac" description="Package Mac release with Hardened Runtime signing">
+        <delete dir="${Mac_package_dir}"/>
+        <mkdir  dir="${Mac_package_dir}"/>
+
+        <copy todir="${Mac_package_dir}/bin">
+            <fileset dir="${Mac_dir}/scripts"/>
+        </copy>
+        <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
+
+        <copy todir="${Mac_package_dir}/doc">
+            <fileset dir="${common_dir}/doc"/>
+        </copy>
+        <copy todir="${Mac_package_dir}/examples">
+            <fileset dir="examples"/>
+        </copy>
+        <copy todir="${Mac_package_dir}/native">
+            <fileset dir="native">
+                <exclude name="deprecated/**"/>
+            </fileset>
+        </copy>
+
+        <!-- beast.jar / beauti.jar from the pre-built dist directory -->
+        <copy file="${dist.dir}/beast.jar"  todir="${Mac_package_dir}/lib"/>
+        <copy file="${dist.dir}/beauti.jar" todir="${Mac_package_dir}/lib"/>
+        <!-- Additional lib JARs (for BEAUti plugins etc.) -->
+        <copy todir="${Mac_package_dir}/lib">
+            <fileset dir="lib">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+
+        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
+        <copy file="${common_dir}/README.txt"          todir="${Mac_package_dir}"/>
+
+        <taskdef name="jarbundler"
+                 classname="com.ultramixer.jarbundler.JarBundler"
+                 classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
+
+        <!-- ── BEAST.app ────────────────────────────────────────── -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${BEAST_name} v${version}"
+                    mainclass="dr.app.beast.BeastMain"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    useJavaXKey="true"
+                    icon="${common_dir}/icons/beast.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
+                    arguments="-window -working -options"
+                    highresolutioncapable="true"
+                    version="${version}"
+                    copyright="${BEAST_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
+                    bundleid="dr.app.beast">
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+        </jarbundler>
+        <exec executable="codesign" failonerror="true">
+            <arg value="--deep"/>
+            <arg value="--force"/>
+            <arg value="--options"/>  <arg value="runtime"/>
+            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
+            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
+            <arg value="--verbose"/>
+            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
+        </exec>
+
+        <!-- ── BEAUti.app ───────────────────────────────────────── -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${BEAUti_name} v${version}"
+                    mainclass="dr.app.beauti.BeautiApp"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    useJavaXKey="true"
+                    icon="${common_dir}/icons/beauti.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M"
+                    arguments=""
+                    version="${version}"
+                    highresolutioncapable="true"
+                    copyright="${BEAUti_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
+                    bundleid="dr.app.beauti">
+            <documenttype name="BEAUti document"
+                          extensions="beauti bti"
+                          iconFile="beautidoc.icns"
+                          role="Editor"/>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beauti.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+        </jarbundler>
+        <exec executable="codesign" failonerror="true">
+            <arg value="--deep"/>
+            <arg value="--force"/>
+            <arg value="--options"/>  <arg value="runtime"/>
+            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
+            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
+            <arg value="--verbose"/>
+            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
+        </exec>
+
+        <!-- ── LogCombiner.app ──────────────────────────────────── -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${LogCombiner_name} v${version}"
+                    mainclass="dr.app.tools.logcombiner.LogCombiner"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    useJavaXKey="true"
+                    icon="${common_dir}/icons/utility.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M"
+                    highresolutioncapable="true"
+                    arguments=""
+                    version="${version}"
+                    copyright="${LogCombiner_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
+                    bundleid="dr.app.tools.logcombiner">
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+        </jarbundler>
+        <exec executable="codesign" failonerror="true">
+            <arg value="--deep"/>
+            <arg value="--force"/>
+            <arg value="--options"/>  <arg value="runtime"/>
+            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
+            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
+            <arg value="--verbose"/>
+            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
+        </exec>
+
+        <!-- ── TreeAnnotator.app ────────────────────────────────── -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${TreeAnnotator_name} v${version}"
+                    mainclass="dr.app.tools.treeannotator.TreeAnnotator"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    useJavaXKey="true"
+                    icon="${common_dir}/icons/utility.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx4096M"
+                    highresolutioncapable="true"
+                    arguments=""
+                    version="${version}"
+                    copyright="${TreeAnnotator_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
+                    bundleid="dr.app.tools.treeannotator">
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+        </jarbundler>
+        <exec executable="codesign" failonerror="true">
+            <arg value="--deep"/>
+            <arg value="--force"/>
+            <arg value="--options"/>  <arg value="runtime"/>
+            <arg value="--entitlements"/> <arg value="${entitlements.file}"/>
+            <arg value="--sign"/>         <arg value="${apple.signer.app}"/>
+            <arg value="--verbose"/>
+            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
+        </exec>
+
+        <!-- ── Create DMG ───────────────────────────────────────── -->
+        <exec executable="/usr/bin/hdiutil" failonerror="true">
+            <arg value="create"/>
+            <arg value="-ov"/>
+            <arg value="-srcfolder"/>
+            <arg value="${Mac_package_dir}"/>
+            <arg value="-volname"/>
+            <arg value="${BEAST_name} v${version}"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
+        </exec>
+
+        <!--
+            Sign the DMG with the Application certificate.
+            Note: Developer ID Installer certs are for .pkg files, not DMGs.
+            Notarisation and stapling happen outside this target (in the
+            GitHub Actions workflow) so that this target can be used locally
+            without a network connection.
+        -->
+        <exec executable="codesign" failonerror="true">
+            <arg value="--sign"/>
+            <arg value="${apple.signer.app}"/>
+            <arg value="--verbose"/>
+            <arg value="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
+        </exec>
+
+        <echo message="Mac package: ${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.dmg"/>
+        <echo message="Next: notarize with xcrun notarytool, then staple with xcrun stapler."/>
+    </target>
+
+
+    <!-- ── Convenience target: build all three packages ────────── -->
+    <target name="package-all"
+            depends="package-linux, package-windows, package-mac"
+            description="Build all three platform packages (macOS runner only)"/>
+
+</project>

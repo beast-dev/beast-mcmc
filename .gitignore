@@ -16,8 +16,7 @@ Testing/
 *.xml
 !examples/**/*.xml
 !tests/**/*.xml
-!benchmarking/**/*.xml
-benchmarking/Results/
+!build*.xml
 
 zig_zag
 src/revision.txt

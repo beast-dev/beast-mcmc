@@ -312,7 +312,11 @@ jobs:
       # ── Clean up keychain ──────────────────────────────────────
       - name: Delete signing keychain
         if: always()
-        run: security delete-keychain "$KEYCHAIN_PATH"
+        run: |
+          # Restore the login keychain as default before deleting ours;
+          # macOS runners reject deletion of the active default keychain.
+          security default-keychain -s ~/Library/Keychains/login.keychain-db
+          security delete-keychain "$KEYCHAIN_PATH" || true
 
       # ── Upload platform artifacts ──────────────────────────────
       - name: Upload Mac DMG

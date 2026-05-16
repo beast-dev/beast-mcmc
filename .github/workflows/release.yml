@@ -10,7 +10,10 @@
 #
 #  package           macos-latest    Download JARs, then produce all three
 #                                    platform packages in one runner:
-#                                      • Mac   – .app bundles → signed DMG → notarised
+#                                      • Mac   – .app bundles → three signed DMGs → notarised
+#                                              (no JVM / Zulu 21 universal JVM /
+#                                               Temurin 21 arm64 JVM + BEAGLE built for
+#                                               Apple Silicon)
 #                                      • Windows – .exe wrappers (cross-compiled
 #                                        with the bundled macOS launch4j) → ZIP
 #                                      • Linux   – shell scripts + JARs → GNU-tar TGZ
@@ -176,6 +179,32 @@ jobs:
           brew install --cask zulu@21
           echo "JDK_BUNDLE_DIR=/Library/Java/JavaVirtualMachines/zulu-21.jdk" >> "$GITHUB_ENV"
 
+      # ── Install Temurin 21 arm64 and build BEAGLE ─────────────
+      #
+      # The arm64-only DMG embeds:
+      #   • Eclipse Temurin 21 (aarch64-only, smaller than the universal Zulu)
+      #   • BEAGLE native library built for Apple Silicon
+      # Both are installed / built up-front so they are ready when needed.
+      - name: Install Temurin 21 (arm64) for Apple Silicon bundling
+        run: |
+          brew install --cask temurin@21
+          echo "ARM64_JDK_DIR=/Library/Java/JavaVirtualMachines/temurin-21.jdk" >> "$GITHUB_ENV"
+
+      - name: Build BEAGLE library for Apple Silicon
+        run: |
+          BEAGLE_SRC="$RUNNER_TEMP/beagle-src"
+          BEAGLE_BUILD="$RUNNER_TEMP/beagle-build"
+          git clone --depth=1 https://github.com/beagle-dev/beagle-lib.git "$BEAGLE_SRC"
+          mkdir -p "$BEAGLE_BUILD"
+          cd "$BEAGLE_BUILD"
+          cmake "$BEAGLE_SRC" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_OPENCL=OFF
+          make -j$(sysctl -n hw.logicalcpu)
+          echo "BEAGLE_BUILD_DIR=$BEAGLE_BUILD" >> "$GITHUB_ENV"
+
       # ── Mac code-signing setup ─────────────────────────────────
       #
       # We import both certificates into a short-lived keychain that only
@@ -236,21 +265,39 @@ jobs:
           echo "Resolved Application signer: $APP_SIGNER"
 
       # ── Mac packaging ──────────────────────────────────────────
-      # Step 1: create .app bundles with Temurin 21 embedded in each
-      #         Contents/PlugIns/ directory (unsigned at this stage).
-      - name: Create Mac .app bundles with embedded JDK (unsigned)
+      #
+      # Three DMGs are produced:
+      #   BEAST X v<ver>.dmg                   — no bundled JVM (smaller; requires
+      #                                          a Java installation on the user's Mac)
+      #   BEAST X v<ver>-bundled-jvm.dmg       — Zulu 21 universal JDK embedded
+      #                                          (self-contained; no system Java needed;
+      #                                          runs natively on both Apple Silicon
+      #                                          and Intel)
+      #   BEAST X v<ver>-arm64.dmg             — Temurin 21 arm64-only JDK + BEAGLE
+      #                                          library built for Apple Silicon
+      #                                          (best performance on M-series Macs)
+      #
+      # The same staging directory is reused between the first two:
+      #   1. Create .app bundles (no JVM)
+      #   2. Sign them  →  create + sign no-JVM DMG
+      #   3. Embed JVM in-place (invalidates signatures)
+      #   4. Re-sign    →  create + sign bundled-JVM DMG
+      #   5. Notarise and staple both DMGs
+      # Then a fresh set of bundles is created for the arm64 variant:
+      #   6. Recreate .app bundles  →  embed Temurin arm64 JDK + BEAGLE dylibs
+      #   7. Sign  →  create + sign arm64 DMG  →  notarise + staple
+
+      # Step 1: create the four .app bundles without a bundled JVM
+      - name: Create Mac .app bundles (unsigned, no bundled JVM)
         run: |
-          ant -f build_release.xml package-mac-bundled-jvm \
+          ant -f build_release.xml package-mac \
             -Dversion="$VERSION" \
             -Dversion_number="$VERSION_NUMBER" \
             -Dextra_release_tag="$EXTRA_TAG" \
-            -Ddist.dir=build/dist \
-            -Djdk.bundle.dir="$JDK_BUNDLE_DIR"
+            -Ddist.dir=build/dist
 
-      # Step 2: sign each .app with Hardened Runtime + entitlements
-      # (must happen before the DMG is created so the signed bundles
-      #  are baked into the image that notarisation will validate)
-      - name: Sign .app bundles
+      # Step 2a: sign the no-JVM apps
+      - name: Sign .app bundles (no bundled JVM)
         run: |
           MAC_DIR="release/Mac/BEAST X v${VERSION}"
           for APP in \
@@ -267,46 +314,198 @@ jobs:
               "${MAC_DIR}/${APP}"
           done
 
-      # Step 3: create the DMG from the now-signed staging directory
-      - name: Create DMG
+      # Step 2b: create the no-JVM DMG
+      - name: Create DMG (no bundled JVM)
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
             -volname "BEAST v${VERSION}" \
             "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
 
-      # Step 4: sign the DMG itself
-      # (Developer ID Application cert; Installer certs are for .pkg only)
-      - name: Sign DMG
+      # Step 2c: sign the no-JVM DMG
+      - name: Sign DMG (no bundled JVM)
         run: |
           codesign \
             --sign "$APP_SIGNER" \
             --verbose \
             "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
 
+      # Step 3: embed Zulu 21 JVM into each .app bundle in-place.
+      # This adds files to Contents/PlugIns/ and sets JVMRuntime in
+      # Info.plist so universalJavaApplicationStub uses the bundled JDK.
+      # Embedding new files invalidates the codesign signatures; the apps
+      # are re-signed in the next step.
+      - name: Embed JVM into .app bundles
+        run: |
+          MAC_DIR="release/Mac/BEAST X v${VERSION}"
+          JDK_NAME=$(basename "$JDK_BUNDLE_DIR")
+          for APP in \
+            "BEAST v${VERSION}.app" \
+            "BEAUti v${VERSION}.app" \
+            "LogCombiner v${VERSION}.app" \
+            "TreeAnnotator v${VERSION}.app"; do
+            mkdir -p "${MAC_DIR}/${APP}/Contents/PlugIns"
+            cp -rp "$JDK_BUNDLE_DIR" "${MAC_DIR}/${APP}/Contents/PlugIns/"
+            /usr/libexec/PlistBuddy \
+              -c "Add :JavaX:JVMRuntime string ${JDK_NAME}" \
+              "${MAC_DIR}/${APP}/Contents/Info.plist"
+          done
+
+      # Step 4a: re-sign with the bundled JDK now included
+      - name: Sign .app bundles (bundled JVM)
+        run: |
+          MAC_DIR="release/Mac/BEAST X v${VERSION}"
+          for APP in \
+            "BEAST v${VERSION}.app" \
+            "BEAUti v${VERSION}.app" \
+            "LogCombiner v${VERSION}.app" \
+            "TreeAnnotator v${VERSION}.app"; do
+            codesign \
+              --deep --force \
+              --options runtime \
+              --entitlements packaging_tools/mac/entitlements.plist \
+              --sign "$APP_SIGNER" \
+              --verbose \
+              "${MAC_DIR}/${APP}"
+          done
+
+      # Step 4b: create the bundled-JVM DMG
+      - name: Create DMG (bundled JVM)
+        run: |
+          /usr/bin/hdiutil create -ov \
+            -srcfolder "release/Mac/BEAST X v${VERSION}" \
+            -volname "BEAST v${VERSION} (bundled JVM)" \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+
+      # Step 4c: sign the bundled-JVM DMG
+      - name: Sign DMG (bundled JVM)
+        run: |
+          codesign \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+
       # ── Notarisation ───────────────────────────────────────────
       #
-      # xcrun notarytool --wait blocks until Apple's service responds
-      # (typically 2–10 minutes).  The workflow will fail here if the
-      # submission is rejected, giving you clear feedback in the job log.
-      - name: Notarise DMG
+      # Both DMGs are submitted sequentially. xcrun notarytool --wait
+      # blocks until Apple's service responds (typically 2-10 minutes).
+      - name: Notarise DMGs
         env:
           APPLE_ID:       ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
           NOTARIZE_PASS:  ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
         run: |
-          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
-          xcrun notarytool submit "$DMG" \
-            --apple-id  "$APPLE_ID" \
-            --team-id   "$TEAM_ID" \
-            --password  "$NOTARIZE_PASS" \
-            --wait \
-            --output-format plist
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format plist
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format plist
 
-      - name: Staple notarisation ticket to DMG
+      - name: Staple notarisation tickets
         run: |
-          xcrun stapler staple "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
+          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
           xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
+          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+
+      # ── Apple Silicon DMG (arm64 JVM + BEAGLE) ────────────────
+      #
+      # Steps 6-7: fresh .app bundles → embed Temurin 21 arm64 + BEAGLE dylibs
+      # → update BEAST.app java.library.path → sign → DMG → notarise + staple
+
+      # Step 6a: fresh .app bundles (no JVM) as the base for the arm64 variant
+      - name: Recreate Mac .app bundles for arm64 variant
+        run: |
+          ant -f build_release.xml package-mac \
+            -Dversion="$VERSION" \
+            -Dversion_number="$VERSION_NUMBER" \
+            -Dextra_release_tag="$EXTRA_TAG" \
+            -Ddist.dir=build/dist
+
+      # Step 6b: embed Temurin arm64 JDK and BEAGLE native libraries.
+      # BEAGLE dylibs go into Contents/MacOS/ (the standard location for
+      # native libraries inside macOS .app bundles).
+      # BEAST.app's VMOptions are updated so java.library.path points to
+      # $APP_PACKAGE/Contents/MacOS at runtime; the universalJavaApplicationStub
+      # expands $APP_PACKAGE to the absolute bundle path via 'eval echo'.
+      - name: Embed arm64 JVM and BEAGLE into .app bundles
+        run: |
+          MAC_DIR="release/Mac/BEAST X v${VERSION}"
+          JDK_NAME=$(basename "$ARM64_JDK_DIR")
+          for APP in \
+            "BEAST v${VERSION}.app" \
+            "BEAUti v${VERSION}.app" \
+            "LogCombiner v${VERSION}.app" \
+            "TreeAnnotator v${VERSION}.app"; do
+            APP_DIR="${MAC_DIR}/${APP}"
+            # Embed arm64 JDK
+            mkdir -p "${APP_DIR}/Contents/PlugIns"
+            cp -rp "$ARM64_JDK_DIR" "${APP_DIR}/Contents/PlugIns/"
+            /usr/libexec/PlistBuddy \
+              -c "Add :JavaX:JVMRuntime string ${JDK_NAME}" \
+              "${APP_DIR}/Contents/Info.plist"
+            # Copy all BEAGLE dylibs (real files and symlinks) into Contents/MacOS/
+            find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
+              -exec cp -P {} "${APP_DIR}/Contents/MacOS/" \;
+          done
+          # Point BEAST.app's java.library.path at the bundled MacOS directory.
+          # $APP_PACKAGE is a variable expanded at runtime by universalJavaApplicationStub.
+          /usr/libexec/PlistBuddy \
+            -c 'Set :JavaX:VMOptions -Xmx2048M -Djava.library.path=$APP_PACKAGE/Contents/MacOS' \
+            "${MAC_DIR}/BEAST v${VERSION}.app/Contents/Info.plist"
+
+      # Step 6c: sign the arm64 app bundles (--deep also signs the JDK binaries
+      # and BEAGLE dylibs inside Contents/MacOS/ and Contents/PlugIns/)
+      - name: Sign .app bundles (arm64 + BEAGLE)
+        run: |
+          MAC_DIR="release/Mac/BEAST X v${VERSION}"
+          for APP in \
+            "BEAST v${VERSION}.app" \
+            "BEAUti v${VERSION}.app" \
+            "LogCombiner v${VERSION}.app" \
+            "TreeAnnotator v${VERSION}.app"; do
+            codesign \
+              --deep --force \
+              --options runtime \
+              --entitlements packaging_tools/mac/entitlements.plist \
+              --sign "$APP_SIGNER" \
+              --verbose \
+              "${MAC_DIR}/${APP}"
+          done
+
+      # Step 7a: create the arm64 DMG
+      - name: Create DMG (arm64 + BEAGLE)
+        run: |
+          /usr/bin/hdiutil create -ov \
+            -srcfolder "release/Mac/BEAST X v${VERSION}" \
+            -volname "BEAST v${VERSION} (arm64+BEAGLE)" \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
+
+      # Step 7b: sign the arm64 DMG
+      - name: Sign DMG (arm64 + BEAGLE)
+        run: |
+          codesign \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
+
+      # Step 7c: notarise the arm64 DMG
+      - name: Notarise DMG (arm64 + BEAGLE)
+        env:
+          APPLE_ID:       ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
+          TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
+          NOTARIZE_PASS:  ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
+        run: |
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format plist
+
+      # Step 7d: staple the arm64 DMG
+      - name: Staple notarisation ticket (arm64 + BEAGLE)
+        run: |
+          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
+          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
 
       # ── Clean up keychain ──────────────────────────────────────
       - name: Delete signing keychain

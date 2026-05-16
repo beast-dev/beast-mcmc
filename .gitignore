@@ -24,6 +24,7 @@ src/revision.txt
 *.zip
 *.tgz
 release*
+!release.yml
 src/revision.txt
 
 *.citations.txt

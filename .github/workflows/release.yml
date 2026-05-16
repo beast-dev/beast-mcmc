@@ -450,9 +450,17 @@ jobs:
               -exec cp -P {} "${APP_DIR}/Contents/MacOS/" \;
           done
           # Point BEAST.app's java.library.path at the bundled MacOS directory.
-          # $APP_PACKAGE is a variable expanded at runtime by universalJavaApplicationStub.
+          # IMPORTANT: use the Properties dict, NOT VMOptions, for this path.
+          # The stub uses unquoted $JVMDefaultOptions for VMOptions (line 926),
+          # so a path with spaces (e.g. "/Applications/BEAST v10.5.1.app/...")
+          # gets word-split, breaking the java command.  Properties entries go
+          # through the JVMOptionsArr array (line 925) which is properly quoted.
+          # $APP_PACKAGE is a variable expanded at runtime by the stub via eval.
           /usr/libexec/PlistBuddy \
-            -c 'Set :JavaX:VMOptions -Xmx2048M -Djava.library.path=$APP_PACKAGE/Contents/MacOS' \
+            -c 'Set :JavaX:VMOptions -Xmx2048M' \
+            "${MAC_DIR}/BEAST v${VERSION}.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy \
+            -c 'Add :JavaX:Properties:java.library.path string $APP_PACKAGE/Contents/MacOS' \
             "${MAC_DIR}/BEAST v${VERSION}.app/Contents/Info.plist"
 
       # Step 6c: sign the arm64 app bundles (--deep also signs the JDK binaries

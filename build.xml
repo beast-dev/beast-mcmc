@@ -92,8 +92,14 @@
         </copy>
     </target>
 
+    <target name="version" description="write version.txt resource from version and extra_release_tag properties">
+        <echo file="${src}/version.txt">File created by build process. Do not edit by hand
+${version}
+${extra_release_tag}</echo>
+    </target>
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init,revision">
+    <target name="compile-all" depends="init,revision,version">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -192,6 +198,7 @@
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
                 <include name="revision.txt"/>
+                <include name="version.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>

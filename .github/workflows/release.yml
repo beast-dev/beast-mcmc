@@ -267,9 +267,9 @@ jobs:
       # ── Mac packaging ──────────────────────────────────────────
       #
       # Three DMGs are produced:
-      #   BEAST X v<ver>.dmg                   — no bundled JVM (smaller; requires
+      #   BEAST X v<ver>-no-jvm.dmg            — no bundled JVM (smaller; requires
       #                                          a Java installation on the user's Mac)
-      #   BEAST X v<ver>-bundled-jvm.dmg       — Zulu 21 universal JDK embedded
+      #   BEAST X v<ver>.dmg                   — Zulu 21 universal JDK embedded
       #                                          (self-contained; no system Java needed;
       #                                          runs natively on both Apple Silicon
       #                                          and Intel)
@@ -319,8 +319,8 @@ jobs:
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
-            -volname "BEAST v${VERSION}" \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
+            -volname "BEAST v${VERSION} (no JVM)" \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
 
       # Step 2c: sign the no-JVM DMG
       - name: Sign DMG (no bundled JVM)
@@ -328,7 +328,7 @@ jobs:
           codesign \
             --sign "$APP_SIGNER" \
             --verbose \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
 
       # Step 3: embed Zulu 21 JVM into each .app bundle in-place.
       # This adds files to Contents/PlugIns/ and sets JVMRuntime in
@@ -374,8 +374,8 @@ jobs:
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
-            -volname "BEAST v${VERSION} (bundled JVM)" \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+            -volname "BEAST v${VERSION}" \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
 
       # Step 4c: sign the bundled-JVM DMG
       - name: Sign DMG (bundled JVM)
@@ -383,7 +383,7 @@ jobs:
           codesign \
             --sign "$APP_SIGNER" \
             --verbose \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
+            "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
 
       # ── Notarisation ───────────────────────────────────────────
       #
@@ -395,19 +395,19 @@ jobs:
           TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
           NOTARIZE_PASS:  ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
         run: |
-          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg" \
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg" \
             --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
             --wait --output-format plist
-          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg" \
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg" \
             --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
             --wait --output-format plist
 
       - name: Staple notarisation tickets
         run: |
+          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
+          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
           xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
           xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}.dmg"
-          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
-          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-bundled-jvm.dmg"
 
       # ── Apple Silicon DMG (arm64 JVM + BEAGLE) ────────────────
       #

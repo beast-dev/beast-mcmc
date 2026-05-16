@@ -1,7 +1,7 @@
 /*
  * BeastVersion.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -58,20 +58,41 @@ public class BeastVersion implements Version, Citable {
     public static final BeastVersion INSTANCE = new BeastVersion();
 
     /**
-     * Version string: assumed to be in format x.x.x
+     * Version number (x.x.x) and optional pre-release tag (e.g. "-beta6") loaded
+     * from the /version.txt resource written by the ANT build.  Falls back to
+     * "10.x.x" / "" when running from an IDE without a built JAR.
      */
-    private static final String VERSION = "10.5.0";
+    private static final String VERSION;
+    private static final String EXTRA_TAG;
 
-    private static final String DATE_STRING = "2002-2025";
+    static {
+        String[] v = readVersionResource();
+        VERSION  = v[0];
+        EXTRA_TAG = v[1];
+    }
 
-    private static final boolean IS_PRERELEASE = false;
+    private static String[] readVersionResource() {
+        try (InputStream in = BeastVersion.class.getResourceAsStream("/version.txt")) {
+            if (in != null) {
+                List<String> lines = new BufferedReader(
+                        new InputStreamReader(in, StandardCharsets.UTF_8))
+                        .lines().collect(Collectors.toList());
+                String version  = lines.size() > 1 ? lines.get(1).trim() : "10.x.x";
+                String extraTag = lines.size() > 2 ? lines.get(2).trim() : "";
+                return new String[]{version, extraTag};
+            }
+        } catch (IOException e) { /* fall through */ }
+        return new String[]{"10.x.x", ""};
+    }
+
+    private static final String DATE_STRING = "2002-2026";
 
     public String getVersion() {
         return VERSION;
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease #" + getRevision() : "");
+        return "v" + VERSION + EXTRA_TAG;
     }
 
     public String getDateString() {
@@ -137,8 +158,6 @@ public class BeastVersion implements Version, Citable {
     }
 
     public String getBuildString() {
-        // I think having the tag release is more useful than the last commit...
-    //    return "https://github.com/beast-dev/beast-mcmc/commit/" + getRevision();
         return "https://github.com/beast-dev/beast-mcmc/releases/tag/v" + getVersion();
     }
     @Override

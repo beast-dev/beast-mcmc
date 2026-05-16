@@ -20,6 +20,7 @@ Testing/
 
 zig_zag
 src/revision.txt
+src/version.txt
 *.dmg
 *.zip
 *.tgz

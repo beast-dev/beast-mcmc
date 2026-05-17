@@ -558,17 +558,49 @@ jobs:
           open(cfg, 'w').write(txt)
           "
 
-      # Step 8c: sign the jpackage .app bundle with the same identity and
-      # entitlements used for the other Mac bundles.
+      # Step 8c: sign the jpackage .app bundle for Apple notarisation.
+      #
+      # codesign --deep is NOT used here because it does not reliably apply
+      # --options runtime to every Mach-O inside the jpackage JRE image
+      # (Contents/runtime/).  Apple's notarisation rejects any bundle that
+      # contains a Mach-O binary without the Hardened Runtime flag set.
+      #
+      # Instead we sign in three explicit passes so that every binary is
+      # handled before the outer bundle is sealed:
+      #   Pass 1 – all Mach-O files inside Contents/runtime/ (jlink JRE binaries
+      #            and dylibs, including libjvm.dylib, libjli.dylib, java, …)
+      #   Pass 2 – the BEAGLE dylibs we copied into Contents/MacOS/
+      #   Pass 3 – the whole .app bundle last (seals Contents/MacOS/BEAST and
+      #            embeds our hardened-runtime entitlements)
       - name: Sign jpackage .app bundle (arm64 + BEAGLE)
         run: |
-          codesign \
-            --deep --force \
+          APP_BUNDLE="staging-mac/BEAST.app"
+
+          # Pass 1: sign every Mach-O file in the jlink runtime.
+          # The `file` test skips plain-text scripts and data files that
+          # happen to have execute permission.
+          find "${APP_BUNDLE}/Contents/runtime" -type f \
+            \( -name "*.dylib" -o -name "*.so" -o -perm +0111 \) \
+            | while read -r f; do
+                if file "$f" 2>/dev/null | grep -q "Mach-O"; then
+                  codesign --force --options runtime \
+                    --sign "$APP_SIGNER" "$f"
+                fi
+              done
+
+          # Pass 2: sign the BEAGLE dylibs in Contents/MacOS/.
+          find "${APP_BUNDLE}/Contents/MacOS" -name "*.dylib" \
+            -exec codesign --force --options runtime \
+              --sign "$APP_SIGNER" {} \;
+
+          # Pass 3: sign the whole bundle (seals the native launcher).
+          # Entitlements are applied only to the top-level bundle here.
+          codesign --force \
             --options runtime \
             --entitlements packaging_tools/mac/entitlements.plist \
             --sign "$APP_SIGNER" \
             --verbose \
-            "staging-mac/BEAST.app"
+            "$APP_BUNDLE"
 
       # Step 8d: wrap the signed .app in a DMG.
       - name: Create DMG (jpackage arm64 + BEAGLE)
@@ -586,21 +618,47 @@ jobs:
             --verbose \
             "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
 
-      # Step 8f: notarise and staple the jpackage DMG.
+      # Step 8f: notarise the jpackage DMG.
+      # Use JSON output so we can extract and verify the status string —
+      # notarytool exits 0 for "Accepted" and non-zero for "Invalid"/"Rejected",
+      # but checking the status field here makes the failure reason explicit.
       - name: Notarise DMG (jpackage arm64 + BEAGLE)
         env:
           APPLE_ID:      ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
           NOTARIZE_PASS: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
         run: |
-          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg" \
+          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          OUTPUT=$(xcrun notarytool submit "$DMG" \
             --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
-            --wait --output-format plist
+            --wait --output-format json)
+          echo "$OUTPUT"
+          STATUS=$(echo "$OUTPUT" | python3 -c \
+            "import json,sys; print(json.load(sys.stdin).get('status',''))")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarisation status: '$STATUS' (expected 'Accepted')" >&2
+            exit 1
+          fi
 
+      # Step 8g: staple the notarisation ticket.
+      # The jpackage DMG is typically larger than the traditional ones (it
+      # bundles a full JRE) so Apple's CloudKit CDN may need a moment to
+      # propagate the ticket after notarytool returns.  Retry up to 5 times
+      # with a 30 s pause to handle any propagation delay.
       - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
         run: |
-          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
-          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          n=1
+          until xcrun stapler staple "$DMG"; do
+            if [ $n -ge 5 ]; then
+              echo "stapler failed after $n attempts" >&2
+              exit 1
+            fi
+            n=$((n + 1))
+            echo "Attempt $n/5: waiting 30 s for CDN propagation..."
+            sleep 30
+          done
+          xcrun stapler validate "$DMG"
 
       # ── Clean up keychain ──────────────────────────────────────
       - name: Delete signing keychain

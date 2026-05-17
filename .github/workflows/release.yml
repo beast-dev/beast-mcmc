@@ -8,18 +8,19 @@
 #  build-jars        ubuntu-latest   Compile Java sources, upload beast.jar /
 #                                    beauti.jar as a reusable artifact.
 #
-#  package           macos-latest    Download JARs, then produce all three
-#                                    platform packages in one runner:
-#                                      • Mac   – .app bundles → three signed DMGs → notarised
+#  package           macos-latest    Download JARs, produce Mac and Linux packages:
+#                                      • Mac   – .app bundles → three traditional DMGs
 #                                              (no JVM / Zulu 21 universal JVM /
-#                                               Temurin 21 arm64 JVM + BEAGLE built for
-#                                               Apple Silicon)
-#                                      • Windows – .exe wrappers (cross-compiled
-#                                        with the bundled macOS launch4j) → ZIP
-#                                      • Linux   – shell scripts + JARs → GNU-tar TGZ
+#                                               Temurin 21 arm64 JVM + BEAGLE) → notarised
+#                                              + one experimental jpackage arm64 DMG
+#                                      • Linux – shell scripts + JARs → GNU-tar TGZ
+#
+#  windows-package   windows-latest  jpackage app-image with bundled Temurin 21
+#                                    JRE; BEAST, BEAUTi, TreeAnnotator and
+#                                    LogCombiner share one runtime → ZIP
 #
 #  release           ubuntu-latest   Create a (draft) GitHub Release and attach
-#                                    the three platform archives.
+#                                    the four platform archives.
 #
 # Required GitHub repository secrets
 # ────────────────────────────────────
@@ -107,10 +108,8 @@ jobs:
 
 
   # ───────────────────────────────────────────────────────────────────────────
-  # 2. Build all three platform packages on a single macOS runner.
+  # 2. Build Mac and Linux packages on a macOS runner.
   #
-  #    • The repo ships the macOS edition of launch4j (bin/ld and bin/windres
-  #      are macOS x86_64 Mach-O binaries) which cross-compiles Windows EXEs.
   #    • GNU tar format is used for the Linux archive (set in build_release.xml)
   #      so the tarball is compatible with Linux GNU tar regardless of the host.
   #    • Mac .app bundles are signed with Hardened Runtime (--options runtime)
@@ -118,7 +117,7 @@ jobs:
   #      them.
   # ───────────────────────────────────────────────────────────────────────────
   package:
-    name: Package (Mac · Windows · Linux)
+    name: Package (Mac · Linux)
     needs: build-jars
     runs-on: macos-latest
 
@@ -144,19 +143,6 @@ jobs:
           echo "VERSION=${{ needs.build-jars.outputs.version }}"                  >> "$GITHUB_ENV"
           echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}"    >> "$GITHUB_ENV"
           echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"              >> "$GITHUB_ENV"
-
-      # ── launch4j native helpers must be executable ─────────────
-      - name: Make launch4j binaries executable
-        run: chmod +x packaging_tools/windows/launch4j/bin/ld packaging_tools/windows/launch4j/bin/windres
-
-      # ── Windows packaging ──────────────────────────────────────
-      - name: Package Windows (.exe + ZIP)
-        run: |
-          ant -f build_release.xml package-windows \
-            -Dversion="$VERSION" \
-            -Dversion_number="$VERSION_NUMBER" \
-            -Dextra_release_tag="$EXTRA_TAG" \
-            -Ddist.dir=build/dist
 
       # ── Linux packaging ────────────────────────────────────────
       - name: Package Linux (TGZ)
@@ -266,7 +252,7 @@ jobs:
 
       # ── Mac packaging ──────────────────────────────────────────
       #
-      # Three DMGs are produced:
+      # Four DMGs are produced:
       #   BEAST X v<ver>-no-jvm.dmg            — no bundled JVM (smaller; requires
       #                                          a Java installation on the user's Mac)
       #   BEAST X v<ver>.dmg                   — Zulu 21 universal JDK embedded
@@ -276,6 +262,10 @@ jobs:
       #   BEAST X v<ver>-arm64.dmg             — Temurin 21 arm64-only JDK + BEAGLE
       #                                          library built for Apple Silicon
       #                                          (best performance on M-series Macs)
+      #   BEAST X v<ver>-arm64-jp.dmg          — same as above but packaged with
+      #                                          jpackage instead of the traditional
+      #                                          universalJavaApplicationStub launcher
+      #                                          (experimental; for comparison testing)
       #
       # The same staging directory is reused between the first two:
       #   1. Create .app bundles (no JVM)
@@ -286,6 +276,8 @@ jobs:
       # Then a fresh set of bundles is created for the arm64 variant:
       #   6. Recreate .app bundles  →  embed Temurin arm64 JDK + BEAGLE dylibs
       #   7. Sign  →  create + sign arm64 DMG  →  notarise + staple
+      # Finally a jpackage-based arm64 bundle is built:
+      #   8. jpackage app-image  →  embed BEAGLE dylibs  →  sign  →  DMG  →  notarise + staple
 
       # Step 1: create the four .app bundles without a bundled JVM
       - name: Create Mac .app bundles (unsigned, no bundled JVM)
@@ -515,6 +507,101 @@ jobs:
           xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
           xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
 
+      # ── jpackage arm64 DMG (experimental) ─────────────────────
+      #
+      # An additional arm64 package produced with jpackage instead of the
+      # traditional universalJavaApplicationStub approach.  The jpackage
+      # native launcher replaces the shell stub.  BEAGLE dylibs go into
+      # Contents/MacOS/ and the jpackage launcher cfg is patched to set
+      # java.library.path using jpackage's $APPDIR substitution variable
+      # (which expands to the Contents/app/ directory at runtime, so
+      # $APPDIR/../MacOS resolves to Contents/MacOS/).
+      #
+      # The Temurin 21 arm64 JDK already installed in step 6 provides both
+      # the jpackage tool and the runtime embedded in the app-image.
+
+      # Step 8a: build the jpackage app-image.
+      - name: Build Mac arm64 app-image with jpackage
+        run: |
+          JPACKAGE="$ARM64_JDK_DIR/Contents/Home/bin/jpackage"
+          mkdir -p jpackage-mac-input staging-mac
+          cp build/dist/beast.jar  jpackage-mac-input/
+          cp build/dist/beauti.jar jpackage-mac-input/
+          "$JPACKAGE" \
+            --type app-image \
+            --name "BEAST" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.beast \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.beast.BeastMain \
+            --java-options "-Xmx8192m" \
+            --add-modules java.se \
+            --icon "release/common/icons/beast.icns" \
+            --dest staging-mac
+
+      # Step 8b: copy BEAGLE dylibs into Contents/MacOS/ (same directory as the
+      # jpackage native launcher binary) then patch the launcher cfg file to add
+      # java.library.path.  $APPDIR is expanded by the jpackage launcher at
+      # runtime to the absolute path of Contents/app/, so $APPDIR/../MacOS
+      # resolves to Contents/MacOS/ where the dylibs live.
+      - name: Add BEAGLE dylibs and set java.library.path in jpackage app
+        run: |
+          APP_BUNDLE="staging-mac/BEAST.app"
+          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
+            -exec cp -P {} "${APP_BUNDLE}/Contents/MacOS/" \;
+          python3 -c "
+          cfg = '${APP_BUNDLE}/Contents/app/BEAST.cfg'
+          txt = open(cfg).read()
+          txt = txt.replace('[JavaOptions]', '[JavaOptions]\n-Djava.library.path=\$APPDIR/../MacOS', 1)
+          open(cfg, 'w').write(txt)
+          "
+
+      # Step 8c: sign the jpackage .app bundle with the same identity and
+      # entitlements used for the other Mac bundles.
+      - name: Sign jpackage .app bundle (arm64 + BEAGLE)
+        run: |
+          codesign \
+            --deep --force \
+            --options runtime \
+            --entitlements packaging_tools/mac/entitlements.plist \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "staging-mac/BEAST.app"
+
+      # Step 8d: wrap the signed .app in a DMG.
+      - name: Create DMG (jpackage arm64 + BEAGLE)
+        run: |
+          /usr/bin/hdiutil create -ov \
+            -srcfolder staging-mac \
+            -volname "BEAST v${VERSION} (arm64+BEAGLE jpackage)" \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+
+      # Step 8e: sign the DMG.
+      - name: Sign DMG (jpackage arm64 + BEAGLE)
+        run: |
+          codesign \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+
+      # Step 8f: notarise and staple the jpackage DMG.
+      - name: Notarise DMG (jpackage arm64 + BEAGLE)
+        env:
+          APPLE_ID:      ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
+          TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
+          NOTARIZE_PASS: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
+        run: |
+          xcrun notarytool submit "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format plist
+
+      - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
+        run: |
+          xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+
       # ── Clean up keychain ──────────────────────────────────────
       - name: Delete signing keychain
         if: always()
@@ -531,12 +618,6 @@ jobs:
           name: beast-mac
           path: "release/BEAST X v*.dmg"
 
-      - name: Upload Windows ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: beast-windows
-          path: "release/BEAST X v*.zip"
-
       - name: Upload Linux TGZ
         uses: actions/upload-artifact@v4
         with:
@@ -545,7 +626,131 @@ jobs:
 
 
   # ───────────────────────────────────────────────────────────────────────────
-  # 3. Create a draft GitHub Release and attach the three archives.
+  # 3. Build the Windows package on a native Windows runner.
+  #
+  #    jpackage (JDK 21) produces a self-contained app-image with a bundled
+  #    Temurin 21 JRE.  A single jpackage invocation creates four launchers
+  #    (BEAST, BEAUTi, TreeAnnotator, LogCombiner) sharing one JRE — so the
+  #    ZIP is much smaller than four separate app-images would be.
+  #    The runtime is automatically trimmed by jpackage's internal jlink to
+  #    include only the modules the application actually uses.
+  # ───────────────────────────────────────────────────────────────────────────
+  windows-package:
+    name: Package (Windows)
+    needs: build-jars
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # JDK 21 provides both the jpackage tool and the JRE that gets embedded
+      # in the app-image.
+      - name: Set up JDK 21 (jpackage + bundled runtime)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: beast-jars
+          path: build/dist/
+
+      - name: Set version env vars
+        run: |
+          echo "VERSION=${{ needs.build-jars.outputs.version }}"               >> "$GITHUB_ENV"
+          echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}" >> "$GITHUB_ENV"
+          echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"           >> "$GITHUB_ENV"
+
+      # Each additional launcher (BEAUTi, TreeAnnotator, LogCombiner) is
+      # described in a small properties file.  All four apps use the Windows
+      # GUI subsystem (no console window), matching the previous launch4j
+      # <headerType>gui</headerType> setting.
+      # The heredoc content is indented to match the YAML block indentation;
+      # the literal-block-scalar parser strips those leading spaces so the
+      # resulting properties files contain no leading whitespace.
+      - name: Write add-launcher properties files
+        run: |
+          cat > beauti.properties << 'EOF'
+          main-class=dr.app.beauti.BeautiApp
+          main-jar=beauti.jar
+          java-options=-Xmx1024m
+          icon=release/common/icons/beauti.ico
+          win-console=false
+          EOF
+
+          cat > treeannotator.properties << 'EOF'
+          main-class=dr.app.tools.treeannotator.TreeAnnotator
+          main-jar=beast.jar
+          java-options=-Xmx4096m
+          icon=release/common/icons/utility.ico
+          win-console=false
+          EOF
+
+          cat > logcombiner.properties << 'EOF'
+          main-class=dr.app.tools.logcombiner.LogCombiner
+          main-jar=beast.jar
+          java-options=-Xmx2048m
+          icon=release/common/icons/utility.ico
+          win-console=false
+          EOF
+
+      # jpackage creates a self-contained app-image at staging/BEAST/.
+      # --type app-image produces a directory (not an MSI installer) that can
+      # be zipped with the same layout users are familiar with.
+      # --app-version must be a dotted-numeric string (e.g. 10.5.1); the
+      # pre-release tag (e.g. -beta7) is applied to the ZIP filename only.
+      - name: Build Windows app-image with jpackage
+        run: |
+          mkdir -p jpackage-input staging release
+          cp build/dist/beast.jar  jpackage-input/
+          cp build/dist/beauti.jar jpackage-input/
+          jpackage \
+            --type app-image \
+            --name "BEAST" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --input jpackage-input \
+            --main-jar beast.jar \
+            --main-class dr.app.beast.BeastMain \
+            --java-options "-Xmx8192m" \
+            --icon "release/common/icons/beast.ico" \
+            --add-launcher "BEAUTi=beauti.properties" \
+            --add-launcher "TreeAnnotator=treeannotator.properties" \
+            --add-launcher "LogCombiner=logcombiner.properties" \
+            --dest staging
+
+      # Rename the staging directory to the versioned package name, then
+      # add documentation and support files alongside the app-image.
+      - name: Assemble final package directory
+        run: |
+          PKG_DIR="staging/BEAST X v${VERSION}${EXTRA_TAG}"
+          mv "staging/BEAST" "$PKG_DIR"
+          cp -r "release/common/doc"               "$PKG_DIR/doc"
+          cp -r examples                           "$PKG_DIR/examples"
+          cp -r native                             "$PKG_DIR/native"
+          cp "release/common/VERSION HISTORY.txt"  "$PKG_DIR/"
+          cp "release/common/README.txt"           "$PKG_DIR/"
+
+      - name: Create Windows ZIP
+        run: |
+          cd staging
+          7z a "../release/BEAST X v${VERSION}${EXTRA_TAG}.zip" \
+            "BEAST X v${VERSION}${EXTRA_TAG}/"
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: beast-windows
+          path: "release/BEAST X v*.zip"
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 4. Create a draft GitHub Release and attach the four archives.
   #
   #    The release is created as a draft so you can review the artefacts and
   #    edit the release notes before publishing.  Pre-release tags (those
@@ -553,7 +758,7 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   release:
     name: Create GitHub Release
-    needs: [build-jars, package]
+    needs: [build-jars, package, windows-package]
     runs-on: ubuntu-latest
     permissions:
       contents: write

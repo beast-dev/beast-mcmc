@@ -620,9 +620,14 @@ jobs:
       - name: Add BEAGLE dylibs to jpackage app
         run: |
           APP_BUNDLE="staging-mac/BEAST.app"
-          # Copy only real files (not symlinks) so codesign can sign them later.
-          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' -type f \
-            -exec cp {} "${APP_BUNDLE}/Contents/app/" \;
+          # Copy all BEAGLE dylibs — real files AND symlinks — into Contents/app/.
+          # -L dereferences symlinks so that the unversioned name
+          # libhmsbeagle-jni.dylib (which Java resolves via System.loadLibrary)
+          # is present as a real file alongside the versioned variants.
+          # All resulting files are real Mach-O binaries that codesign and
+          # install_name_tool can process without complaint.
+          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
+            -exec cp -L {} "${APP_BUNDLE}/Contents/app/" \;
           # Patch each dylib RPATH so siblings are resolved from the same dir.
           for dylib in "${APP_BUNDLE}/Contents/app/"libhmsbeagle*.dylib; do
             install_name_tool -add_rpath @loader_path "$dylib" 2>/dev/null || true

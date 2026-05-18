@@ -277,7 +277,8 @@ jobs:
       #   6. Recreate .app bundles  →  embed Temurin arm64 JDK + BEAGLE dylibs
       #   7. Sign  →  create + sign arm64 DMG  →  notarise + staple
       # Finally a jpackage-based arm64 bundle is built:
-      #   8. jpackage app-image  →  embed BEAGLE dylibs  →  sign  →  DMG  →  notarise + staple
+      #   8. jlink runtime  →  4 × jpackage app-image  →  embed BEAGLE dylibs in BEAST.app
+      #      →  sign all 4 bundles  →  DMG  →  notarise + staple
 
       # Step 1: create the four .app bundles without a bundled JVM
       - name: Create Mac .app bundles (unsigned, no bundled JVM)
@@ -510,23 +511,42 @@ jobs:
       # ── jpackage arm64 DMG (experimental) ─────────────────────
       #
       # An additional arm64 package produced with jpackage instead of the
-      # traditional universalJavaApplicationStub approach.  The jpackage
-      # native launcher replaces the shell stub.  BEAGLE dylibs go into
-      # Contents/MacOS/ and the jpackage launcher cfg is patched to set
-      # java.library.path using jpackage's $APPDIR substitution variable
-      # (which expands to the Contents/app/ directory at runtime, so
-      # $APPDIR/../MacOS resolves to Contents/MacOS/).
+      # traditional universalJavaApplicationStub approach.  Four separate .app
+      # bundles are created (BEAST, BEAUTi, TreeAnnotator, LogCombiner) — the
+      # same layout as the traditional DMGs — so all four apps appear as
+      # first-class macOS applications in the DMG window.
+      #
+      # A single jlink runtime is built first and passed to every jpackage
+      # invocation via --runtime-image, so the JRE is only compiled once.
+      # Each .app bundle still embeds its own runtime copy (this is required
+      # for notarisation), but the build is faster than four independent jlinks.
+      #
+      # BEAGLE dylibs are placed only in BEAST.app (the other three tools do
+      # not use BEAGLE).
       #
       # The Temurin 21 arm64 JDK already installed in step 6 provides both
-      # the jpackage tool and the runtime embedded in the app-image.
+      # the jpackage/jlink tools and the runtime source for the app-image.
 
-      # Step 8a: build the jpackage app-image.
-      - name: Build Mac arm64 app-image with jpackage
+      # Step 8a: build jlink runtime image once, then build all 4 app-images.
+      - name: Build Mac arm64 app-images with jpackage (4 apps)
         run: |
           JPACKAGE="$ARM64_JDK_DIR/Contents/Home/bin/jpackage"
+          JLINK="$ARM64_JDK_DIR/Contents/Home/bin/jlink"
+          ICONS="release/common/icons"
           mkdir -p jpackage-mac-input staging-mac
           cp build/dist/beast.jar  jpackage-mac-input/
           cp build/dist/beauti.jar jpackage-mac-input/
+
+          # Build a compact jlink runtime shared by all four apps.
+          "$JLINK" \
+            --add-modules java.se \
+            --strip-debug \
+            --no-header-files \
+            --no-man-pages \
+            --compress=2 \
+            --output jpackage-runtime
+
+          # BEAST
           "$JPACKAGE" \
             --type app-image \
             --name "BEAST" \
@@ -537,8 +557,53 @@ jobs:
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
             --java-options "-Xmx8192m" \
-            --add-modules java.se \
-            --icon "release/common/icons/beast.icns" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/beast.icns" \
+            --dest staging-mac
+
+          # BEAUTi
+          "$JPACKAGE" \
+            --type app-image \
+            --name "BEAUti" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.beauti \
+            --input jpackage-mac-input \
+            --main-jar beauti.jar \
+            --main-class dr.app.beauti.BeautiApp \
+            --java-options "-Xmx2048m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/beauti.icns" \
+            --dest staging-mac
+
+          # TreeAnnotator
+          "$JPACKAGE" \
+            --type app-image \
+            --name "TreeAnnotator" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.treeannotator \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.tools.treeannotator.TreeAnnotator \
+            --java-options "-Xmx4096m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/utility.icns" \
+            --dest staging-mac
+
+          # LogCombiner
+          "$JPACKAGE" \
+            --type app-image \
+            --name "LogCombiner" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.logcombiner \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.tools.logcombiner.LogCombiner \
+            --java-options "-Xmx2048m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/utility.icns" \
             --dest staging-mac
 
       # Step 8b: copy BEAGLE dylibs into Contents/app/.
@@ -563,49 +628,50 @@ jobs:
             install_name_tool -add_rpath @loader_path "$dylib" 2>/dev/null || true
           done
 
-      # Step 8c: sign the jpackage .app bundle for Apple notarisation.
+      # Step 8c: sign all four jpackage .app bundles for Apple notarisation.
       #
-      # codesign --deep is NOT used here because it does not reliably apply
+      # codesign --deep is NOT used because it does not reliably apply
       # --options runtime to every Mach-O inside the jpackage JRE image
       # (Contents/runtime/).  Apple's notarisation rejects any bundle that
       # contains a Mach-O binary without the Hardened Runtime flag set.
       #
-      # Instead we sign in three explicit passes so that every binary is
-      # handled before the outer bundle is sealed:
-      #   Pass 1 – all Mach-O files inside Contents/runtime/ (jlink JRE binaries
-      #            and dylibs, including libjvm.dylib, libjli.dylib, java, …)
-      #   Pass 2 – the BEAGLE dylibs we placed in Contents/app/
-      #   Pass 3 – the whole .app bundle last (seals Contents/MacOS/BEAST and
-      #            embeds our hardened-runtime entitlements)
-      - name: Sign jpackage .app bundle (arm64 + BEAGLE)
+      # Each bundle is signed in three explicit passes:
+      #   Pass 1 – all Mach-O files inside Contents/runtime/
+      #   Pass 2 – BEAGLE dylibs in Contents/app/ (no-op for non-BEAST bundles)
+      #   Pass 3 – the whole .app bundle (seals the native launcher + JARs)
+      - name: Sign jpackage .app bundles (arm64 + BEAGLE)
         run: |
-          APP_BUNDLE="staging-mac/BEAST.app"
+          for APP_BUNDLE in \
+              "staging-mac/BEAST.app" \
+              "staging-mac/BEAUti.app" \
+              "staging-mac/TreeAnnotator.app" \
+              "staging-mac/LogCombiner.app"; do
 
-          # Pass 1: sign every Mach-O file in the jlink runtime.
-          # The `file` test skips plain-text scripts and data files that
-          # happen to have execute permission.
-          find "${APP_BUNDLE}/Contents/runtime" -type f \
-            \( -name "*.dylib" -o -name "*.so" -o -perm +0111 \) \
-            | while read -r f; do
-                if file "$f" 2>/dev/null | grep -q "Mach-O"; then
-                  codesign --force --options runtime \
-                    --sign "$APP_SIGNER" "$f"
-                fi
-              done
+            # Pass 1: sign every Mach-O file in the jlink runtime.
+            # The `file` test skips plain-text scripts and data files that
+            # happen to have execute permission.
+            find "${APP_BUNDLE}/Contents/runtime" -type f \
+              \( -name "*.dylib" -o -name "*.so" -o -perm +0111 \) \
+              | while read -r f; do
+                  if file "$f" 2>/dev/null | grep -q "Mach-O"; then
+                    codesign --force --options runtime \
+                      --sign "$APP_SIGNER" "$f"
+                  fi
+                done
 
-          # Pass 2: sign the BEAGLE dylibs we placed in Contents/app/.
-          find "${APP_BUNDLE}/Contents/app" -name "libhmsbeagle*.dylib" \
-            -exec codesign --force --options runtime \
-              --sign "$APP_SIGNER" {} \;
+            # Pass 2: sign BEAGLE dylibs (only present in BEAST.app).
+            find "${APP_BUNDLE}/Contents/app" -name "libhmsbeagle*.dylib" \
+              -exec codesign --force --options runtime \
+                --sign "$APP_SIGNER" {} \;
 
-          # Pass 3: sign the whole bundle (seals the native launcher).
-          # Entitlements are applied only to the top-level bundle here.
-          codesign --force \
-            --options runtime \
-            --entitlements packaging_tools/mac/entitlements.plist \
-            --sign "$APP_SIGNER" \
-            --verbose \
-            "$APP_BUNDLE"
+            # Pass 3: sign the whole bundle.
+            codesign --force \
+              --options runtime \
+              --entitlements packaging_tools/mac/entitlements.plist \
+              --sign "$APP_SIGNER" \
+              --verbose \
+              "$APP_BUNDLE"
+          done
 
       # Step 8d: wrap the signed .app in a DMG.
       - name: Create DMG (jpackage arm64 + BEAGLE)

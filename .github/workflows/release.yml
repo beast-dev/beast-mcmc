@@ -541,22 +541,27 @@ jobs:
             --icon "release/common/icons/beast.icns" \
             --dest staging-mac
 
-      # Step 8b: copy BEAGLE dylibs into Contents/MacOS/ (same directory as the
-      # jpackage native launcher binary) then patch the launcher cfg file to add
-      # java.library.path.  $APPDIR is expanded by the jpackage launcher at
-      # runtime to the absolute path of Contents/app/, so $APPDIR/../MacOS
-      # resolves to Contents/MacOS/ where the dylibs live.
-      - name: Add BEAGLE dylibs and set java.library.path in jpackage app
+      # Step 8b: copy BEAGLE dylibs into Contents/app/.
+      #
+      # jpackage sets java.library.path to include Contents/app/ so the JVM
+      # finds libhmsbeagle-jni.dylib (the JNI bridge Java loads first) there
+      # without any cfg patching.
+      #
+      # The BEAGLE dylibs depend on each other at the dyld level
+      # (libhmsbeagle-jni.dylib → libhmsbeagle.dylib → libhmsbeagle-cpu.dylib …).
+      # We add @loader_path as an RPATH to every dylib so that when any one of
+      # them is loaded from Contents/app/ it resolves its siblings in the same
+      # directory rather than looking for them in the original cmake build path.
+      - name: Add BEAGLE dylibs to jpackage app
         run: |
           APP_BUNDLE="staging-mac/BEAST.app"
-          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
-            -exec cp -P {} "${APP_BUNDLE}/Contents/MacOS/" \;
-          python3 -c "
-          cfg = '${APP_BUNDLE}/Contents/app/BEAST.cfg'
-          txt = open(cfg).read()
-          txt = txt.replace('[JavaOptions]', '[JavaOptions]\n-Djava.library.path=\$APPDIR/../MacOS', 1)
-          open(cfg, 'w').write(txt)
-          "
+          # Copy only real files (not symlinks) so codesign can sign them later.
+          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' -type f \
+            -exec cp {} "${APP_BUNDLE}/Contents/app/" \;
+          # Patch each dylib RPATH so siblings are resolved from the same dir.
+          for dylib in "${APP_BUNDLE}/Contents/app/"libhmsbeagle*.dylib; do
+            install_name_tool -add_rpath @loader_path "$dylib" 2>/dev/null || true
+          done
 
       # Step 8c: sign the jpackage .app bundle for Apple notarisation.
       #
@@ -569,7 +574,7 @@ jobs:
       # handled before the outer bundle is sealed:
       #   Pass 1 – all Mach-O files inside Contents/runtime/ (jlink JRE binaries
       #            and dylibs, including libjvm.dylib, libjli.dylib, java, …)
-      #   Pass 2 – the BEAGLE dylibs we copied into Contents/MacOS/
+      #   Pass 2 – the BEAGLE dylibs we placed in Contents/app/
       #   Pass 3 – the whole .app bundle last (seals Contents/MacOS/BEAST and
       #            embeds our hardened-runtime entitlements)
       - name: Sign jpackage .app bundle (arm64 + BEAGLE)
@@ -588,8 +593,8 @@ jobs:
                 fi
               done
 
-          # Pass 2: sign the BEAGLE dylibs in Contents/MacOS/.
-          find "${APP_BUNDLE}/Contents/MacOS" -name "*.dylib" \
+          # Pass 2: sign the BEAGLE dylibs we placed in Contents/app/.
+          find "${APP_BUNDLE}/Contents/app" -name "libhmsbeagle*.dylib" \
             -exec codesign --force --options runtime \
               --sign "$APP_SIGNER" {} \;
 

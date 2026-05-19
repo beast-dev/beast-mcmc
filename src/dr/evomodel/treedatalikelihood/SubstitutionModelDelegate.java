@@ -172,7 +172,15 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + getEigenIndex(branchIndex);
+        if (getSubstitutionOrder(branchIndex).length > 1) {
+            return getMatrixBufferCount() + getEigenBufferCount() * 2 + branchIndex;
+        }
+        return getMatrixBufferCount() + getEigenIndex(getSubstitutionOrder(branchIndex)[0]);
+    }
+
+    private int[] getSubstitutionOrder(int branchIndex) {
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        return mapping.getOrder();
     }
 
     private int getInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
@@ -181,7 +189,10 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     @Override
     public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
-        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
+        if (getSubstitutionOrder(branchIndex).length > 1) {
+            return getMatrixBufferCount() + getEigenBufferCount() * 2 + tree.getNodeCount() + branchIndex;
+        }
+        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
 
     @Override
@@ -222,6 +233,15 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
         if (settings.branchRateDerivative) {
+            boolean needConvolution = false;
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                if (!tree.isRoot(tree.getNode(i)) && getSubstitutionOrder(i).length > 1) {
+                    needConvolution = true;
+                }
+            }
+            if (needConvolution) {
+                return 2 * (getEigenBufferCount() + tree.getNodeCount());
+            }
             return 2 * getEigenBufferCount();
         } else {
             return 0;

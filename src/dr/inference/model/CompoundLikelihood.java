@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.util.BenchmarkTimer;
 import dr.util.Keywordable;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
@@ -42,6 +43,9 @@ import java.util.concurrent.*;
 public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
+
+    public final static boolean BENCHMARK_TIME = true;
+    public BenchmarkTimer timer = new BenchmarkTimer();
 
     public final static boolean EVALUATION_TIMERS = true;
     public final long[] evaluationTimes;
@@ -191,7 +195,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 //    static int DEBUG = 0;
 
     public double getLogLikelihood() {
-
+        if(BENCHMARK_TIME) {
+            timer.startTimer(getId());
+        }
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
         if( logLikelihood == Double.NEGATIVE_INFINITY ) {
@@ -226,6 +232,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
         if (DEBUG_PARALLEL_EVALUATION) {
             System.err.println("");
+        }
+        if(BENCHMARK_TIME) {
+            timer.stopTimer(getId());
         }
         return logLikelihood;
     }
@@ -445,6 +454,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
     public String getReport(int indent) {
         String message = "\n";
+        if(BENCHMARK_TIME) {
+            message += "Wall-clock time: (CompoundLikelihood)" + timer.toString();
+        }
         if (EVALUATION_TIMERS) {
             boolean first = true;
 

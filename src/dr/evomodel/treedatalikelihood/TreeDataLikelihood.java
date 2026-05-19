@@ -30,6 +30,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
+import dr.util.BenchmarkTimer;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -50,6 +51,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
+
+    public final static boolean BENCHMARK_TIME = true;
+    public BenchmarkTimer timer = new BenchmarkTimer();
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
                               Tree treeModel,
@@ -116,6 +120,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     @SuppressWarnings("Duplicates")
     public final double getLogLikelihood() {
+        if(BENCHMARK_TIME) {
+            timer.startTimer(getId());
+        }
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
 
@@ -137,6 +144,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             likelihoodKnown = true;
         }
 
+        if(BENCHMARK_TIME) {
+            timer.stopTimer(getId());
+        }
         return logLikelihood;
     }
 
@@ -373,6 +383,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (hasInitialized) {
             StringBuilder sb = new StringBuilder();
 
+            if(BENCHMARK_TIME) {
+                sb.append("Wall-clock time (TreeDataLikelihood):");
+
+                sb.append(timer.toString());
+            }
             double loglik = getLogLikelihood();
 
             String delegateString = likelihoodDelegate.getReport();

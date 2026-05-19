@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.SubstitutionModelDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
 /**
@@ -67,6 +68,22 @@ public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradien
                 }
                 double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
                 evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
+            }
+        }
+        if (evolutionaryProcessDelegate instanceof SubstitutionModelDelegate) {
+            SubstitutionModelDelegate substitutionModelDelegate = (SubstitutionModelDelegate) evolutionaryProcessDelegate;
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                if (!tree.isRoot(tree.getNode(i))) {
+                    int[] order = ((SubstitutionModelDelegate) evolutionaryProcessDelegate).getSubstitutionOrder(i);
+                    if (order.length > 1) {
+                        double[] infinitesimalMatrix = new double[stateCount * stateCount];
+                        substitutionModelDelegate.getConvolvedInfinitesimalMatrix(i, infinitesimalMatrix);
+                        double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
+                        evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
+
+                    }
+
+                }
             }
         }
     }

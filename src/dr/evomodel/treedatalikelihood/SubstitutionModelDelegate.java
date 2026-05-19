@@ -28,10 +28,10 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evolution.tree.Tree;
 import dr.util.Timer;
 
 import java.io.Serializable;
@@ -178,7 +178,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         return getMatrixBufferCount() + getEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
 
-    private int[] getSubstitutionOrder(int branchIndex) {
+    public int[] getSubstitutionOrder(int branchIndex) {
         BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
         return mapping.getOrder();
     }
@@ -389,6 +389,16 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     public void flipTransitionMatrices(int[] branchIndices, int updateCount) {
         for (int i = 0; i < updateCount; i++) {
             matrixBufferHelper.flipOffset(branchIndices[i]);
+        }
+    }
+
+    public void getConvolvedInfinitesimalMatrix(int branchIndex, double[] differentialMatrix) {
+        int[] order = getSubstitutionOrder(branchIndex);
+        if (order.length > 1) {
+            if (tree.isRoot(tree.getNode(branchIndex))) {
+                throw new RuntimeException("Root node is not allowed.");
+            }
+            getSubstitutionModel(order[order.length - 1]).getInfinitesimalMatrix(differentialMatrix);
         }
     }
 

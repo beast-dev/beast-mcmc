@@ -345,7 +345,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             }
         }
 
-        NaTrunc = Math.max(2, Math.min(jLamZero, Na));
+        NaTrunc = Math.min(Na, Math.max(10, Math.min(jLamZero, Na))); // Changed floor from 2. I think that breaks the age stencil, 10 is probably unnecessarily high
     }
 
     /*
@@ -554,6 +554,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 if (boundary - t > EPS) {
                     rk4.step(t, boundary - t, L, L, NaTrunc + 1, rhsInterp);
                     clampNonNeg(L);
+                    if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
                     t = boundary;
                     tOnGrid = false;
                 }
@@ -566,23 +567,34 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 boolean stepOnGrid = tOnGrid && nextOnGrid && Math.abs((tNext - t) - dt) < EPS;
                 rk4.step(t, tNext - t, L, L, NaTrunc + 1, stepOnGrid ? rhsGrid : rhsInterp);
                 clampNonNeg(L);
+                if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
                 t = tNext;
                 tOnGrid = nextOnGrid;
             }
         }
+    }
 
-        // Rescale L if necessary
+    /*
+     * Per-step rescale: brings max(L) back to 1 when it strays outside
+     * [SCALE_LO, SCALE_HI], accumulating the factor into logScalePool.
+     * Returns false if L has gone non-finite or all-zero (caller should bail).
+     */
+    private boolean rescaleL(int worker, double[] L) {
         double maxL = 0.0;
         for (int j = 0; j <= NaTrunc; j++) {
-            if (L[j] > maxL) maxL = L[j];
+            double v = L[j];
+            if (!Double.isFinite(v)) return false;
+            if (v > maxL) maxL = v;
         }
-        if (maxL > SCALE_HI || (maxL > 0.0 && maxL < SCALE_LO)) {
+        if (maxL == 0.0) return false;
+        if (maxL > SCALE_HI || maxL < SCALE_LO) {
             double inv = 1.0 / maxL;
             for (int j = 0; j <= NaTrunc; j++) {
                 L[j] *= inv;
             }
             logScalePool[worker] += Math.log(maxL);
         }
+        return true;
     }
 
     /*

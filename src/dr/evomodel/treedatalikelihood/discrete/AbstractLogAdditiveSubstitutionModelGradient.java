@@ -71,6 +71,27 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     public enum ApproximationMode {
 
+        EXACT_SPECTRAL("exactSpectral") {
+            @Override
+            String getInfo() {
+                return null;
+            }
+
+            @Override
+            CorrectionTermCache createCache(SubstitutionModel model, List<Integer> accumulateMap) {
+                return null;
+            }
+
+            @Override
+            void emptyCache(CorrectionTermCache cache) {
+
+            }
+
+            @Override
+            double computeCorrection(int i, int j, double[] crossProducts, int stateCount, CorrectionTermCache correctionTermCache) {
+                return 0;
+            }
+        },
         FIRST_ORDER("firstOrder") {
             @Override
             public String getInfo() {
@@ -188,11 +209,19 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         if (treeDataLikelihood.getTreeTrait(name) == null) {
             ProcessSimulationDelegate gradientDelegate;
             if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
-                gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
-                        treeDataLikelihood.getTree(),
-                        (BeagleDataLikelihoodDelegate) likelihoodDelegate,
-                        treeDataLikelihood.getBranchRateModel(),
-                        substitutionModel.getDataType().getStateCount());
+                if (mode == ApproximationMode.EXACT_SPECTRAL) {
+                    gradientDelegate = new SpectralBeagleCrossProductDelegate(traitName,
+                            treeDataLikelihood.getTree(),
+                            (BeagleDataLikelihoodDelegate) likelihoodDelegate,
+                            treeDataLikelihood.getBranchRateModel(),
+                            substitutionModel.getDataType().getStateCount());
+                } else {
+                    gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
+                            treeDataLikelihood.getTree(),
+                            (BeagleDataLikelihoodDelegate) likelihoodDelegate,
+                            treeDataLikelihood.getBranchRateModel(),
+                            substitutionModel.getDataType().getStateCount());
+                }
             } else if (likelihoodDelegate instanceof DiscreteDataLikelihoodDelegate) {
                 final DiscreteDataLikelihoodDelegate discreteDelegate =
                         (DiscreteDataLikelihoodDelegate) likelihoodDelegate;

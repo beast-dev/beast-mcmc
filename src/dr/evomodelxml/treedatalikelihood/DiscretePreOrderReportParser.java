@@ -3,6 +3,7 @@ package dr.evomodelxml.treedatalikelihood;
 
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.DiscretePreOrderReport;
+import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 import dr.xml.*;
 
 /**
@@ -12,6 +13,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "discretePreOrderReport";
     private static final String TOLERANCE = "tolerance";
+    private static final String EIGEN_BASIS = "eigenBasis";
+    private static final String TYPE = "type";
 
     @Override
     public String getParserName() {
@@ -25,7 +28,11 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Expected a treeDataLikelihood child in " + PARSER_NAME);
         }
         double tolerance = xo.getAttribute(TOLERANCE, 0.0);
-        return new DiscretePreOrderReport(likelihood, tolerance);
+
+        String typeString = xo.getAttribute(TYPE, DiscretePartialsType.TOP.getMeaning());
+        DiscretePartialsType type = DiscretePartialsType.parse(typeString);
+
+        return new DiscretePreOrderReport(likelihood, type, tolerance);
     }
 
     @Override
@@ -42,7 +49,8 @@ public class DiscretePreOrderReportParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(TreeDataLikelihood.class),
-                AttributeRule.newDoubleRule(TOLERANCE, true)
+                AttributeRule.newDoubleRule(TOLERANCE, true),
+                AttributeRule.newStringRule(TYPE, true),
         };
     }
 

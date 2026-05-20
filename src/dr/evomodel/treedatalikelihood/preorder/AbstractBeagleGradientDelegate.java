@@ -238,6 +238,10 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
             return vectorizeNodeOperationsBottom(nodeOperations, operations);
         } else if (preOrderType == DiscretePartialsType.TOP) {
             return vectorizeNodeOperationsTop(nodeOperations, rootNodeNumber, operations);
+        } else if (preOrderType == DiscretePartialsType.BOTTOM_SPECTRAL) {
+            return vectorizeNodeOperationsBottom(nodeOperations, operations);
+        } else if (preOrderType == DiscretePartialsType.TOP_SPECTRAL) {
+            return vectorizeNodeOperationsTop(nodeOperations, rootNodeNumber, operations);
         } else {
             throw new RuntimeException("Not yet implemented");
         }

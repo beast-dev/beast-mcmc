@@ -52,7 +52,13 @@ public class EigenDecomposition implements Serializable {
         return new EigenDecomposition(evec, ievc, eval);
     }
 
+    private static final boolean FUTURE_PROOF = true;
+
     public EigenDecomposition transpose() {
+        if (FUTURE_PROOF) {
+            return transposeViaConjugate();
+        }
+
         // note: exchange e/ivec
         int dim = (int) Math.sqrt(Ievc.length);
         double[] evec = Ievc.clone();
@@ -67,7 +73,32 @@ public class EigenDecomposition implements Serializable {
         return new EigenDecomposition(evec, ievc, eval);
     }
 
-    protected static void rescale(double[] rowVectors, double[] eval, double scalar, int dim) {
+    public EigenDecomposition transposeViaConjugate() {
+        // note: exchange e/ivec
+        int dim = (int) Math.sqrt(Ievc.length);
+        double[] evec = Ievc.clone();
+        transposeInPlace(evec, dim);
+
+        double[] ievc = Evec.clone();
+        transposeInPlace(ievc, dim);
+
+        double[] eval = Eval.clone();
+        conjugate(eval, dim);
+        return new EigenDecomposition(evec, ievc, eval);
+    }
+
+    public static void conjugate(double[] eval, int dim) {
+        if (eval.length != 2 * dim) {
+            return;
+        }
+        for (int i = 0; i < dim; ++i) {
+            if (eval[dim + i] != 0.0) {
+                eval[dim + i] = -eval[dim + i];
+            }
+        }
+    }
+
+    public static void rescale(double[] rowVectors, double[] eval, double scalar, int dim) {
         if (!NEW_TRANSPOSE || eval.length != 2 * dim) {
             return;
         }
@@ -83,7 +114,23 @@ public class EigenDecomposition implements Serializable {
         }
     }
 
-    protected static void transposeInPlace(double[] matrix, int n) {
+    public static void rescale2(double[] rowVectors, double[] eval, double scalar, int dim) {
+        if (!NEW_TRANSPOSE || eval.length != 2 * dim) {
+            return;
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            if (eval[dim + i] != 0.0) {
+                for (int j = 0; j < dim; ++j) {
+                    rowVectors[i * dim + j] = scalar * rowVectors[i * dim + j];
+                    rowVectors[(i + 1) * dim + j] = scalar * rowVectors[(i + 1) * dim + j];
+                }
+                ++i;
+            }
+        }
+    }
+
+    public static void transposeInPlace(double[] matrix, int n) {
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
                 int index1 = i * n + j;

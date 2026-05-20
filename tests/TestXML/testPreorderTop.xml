@@ -30,7 +30,7 @@
         </taxon>
         <taxon id="outgroup">
             <date value="2002.5" direction="forwards" units="years"/>
-            <attr name="host">G</attr>
+            <attr name="host">H</attr>
             <attr name="state">California</attr>
         </taxon>        
     </taxa>
@@ -44,6 +44,7 @@
         <state code="F"/>
         <state code="G"/>
         <state code="H"/>
+        <ambiguity code="-" states="ABCDEFGH"/>
     </generalDataType>
 
     <attributePatterns id="host.pattern" attribute="host">
@@ -85,7 +86,7 @@
             </frequencyModel>
         </rootFrequencies>
         <logRates>
-            <parameter id="host.logRates" dimension="56" value="-3.456536 -3.255278 -3.379363 -3.499922 -3.285188 -3.498754 -3.190026 -3.397031 -3.38825 -3.491649 -3.468161 -3.408565 -3.463033 -3.598224 -3.542831 -3.177722 -3.09128 -3.229845 -3.37488 -3.124096 -3.602779 -3.020614 -3.250227 -3.240071 -3.36432 -3.334986 -3.263655 -3.587467 -3.523418 -3.432392 -3.007411 -3.171982 -3.612372 -3.515814 -3.152871 -0.0794951 -3.58147 -3.14033 -3.273638 -3.241769 -3.165336 -3.100441 -3.455226 -3.349001 -3.319173 -3.580477 -3.58553 -3.286829 -3.338398 -3.612372 -3.275295 -3.395575 -3.367351 -3.298255 -3.238372 -3.544765"/>
+            <parameter id="host.logRates" dimension="56" value="1.456536 -3.255278 -3.379363 -3.499922 -3.285188 -3.498754 -3.190026 -3.397031 -3.38825 -3.491649 -3.468161 -3.408565 -3.463033 -3.598224 -3.542831 -3.177722 -3.09128 -3.229845 -3.37488 -3.124096 -3.602779 -3.020614 -3.250227 -3.240071 -3.36432 -3.334986 -3.263655 -3.587467 -3.523418 -3.432392 -3.007411 -3.171982 -3.612372 -3.515814 -3.152871 -0.0794951 -3.58147 -3.14033 -3.273638 -3.241769 -3.165336 -3.100441 -3.455226 -3.349001 -3.319173 -3.580477 -3.58553 -3.286829 -3.338398 -3.612372 -3.275295 -3.395575 -3.367351 -3.298255 -3.238372 -3.544765"/>
         </logRates>
     </logRateSubstitutionModel>
 
@@ -94,11 +95,20 @@
             <logRateSubstitutionModel idref="host.model"/>
         </substitutionModel>
     </siteModel>
-
+    
     <treeDataLikelihood id="host.treeLikelihood"
                         useAmbiguities="true"
+                        branchInfinitesimalDerivative="true"
                         usePreOrder="true"
+                        phyloGeoFastRepresentation="spectralRotated"
                         phyloGeoFast="true">
+<!-- 
+    <treeDataLikelihood id="host.treeLikelihood"
+                        useAmbiguities="true"
+                        branchInfinitesimalDerivative="true"
+                        usePreOrder="true"
+                        phyloGeoFast="true"> 
+ -->
         <patterns idref="host.pattern"/>
         <siteModel idref="host.siteModel"/>
         <treeModel idref="treeModel"/>
@@ -115,9 +125,18 @@
         </discretePreOrderReport>
     </report>
     
+<!-- 
+    <report>
+	    <exactLogCtmcRateGradient id="spectralExactGradient" traitName="host">
+    	    <treeDataLikelihood idref="host.treeLikelihood"/>
+	        <logRateSubstitutionModel idref="host.model"/>
+	    </exactLogCtmcRateGradient>
+	</report>
+ -->
+    
     
     <treeDataLikelihood id="old.treeLikelihood"
-                        useAmbiguities="true"
+                        useAmbiguities="false"
                         usePreOrder="true"
                         useSpectralRepresentation="true">
         <patterns idref="host.pattern"/>
@@ -131,10 +150,20 @@
     </report>
 
     <report>
-        <discretePreOrderReport>
+        <discretePreOrderReport type="top-spectral">
             <treeDataLikelihood idref="old.treeLikelihood"/>
         </discretePreOrderReport>
-    </report>    
+    </report> 
+    
+<!-- 
+    <report>
+	    <approximateLogCtmcRateGradient id="newSpectralExactGradient" traitName="host"
+	    		mode="exact">
+    	    <treeDataLikelihood idref="old.treeLikelihood"/>
+	        <logRateSubstitutionModel idref="host.model"/>
+	    </approximateLogCtmcRateGradient>
+	</report>  
+ -->     
 
     <!--
     <operators id="operators" optimizationSchedule="log">

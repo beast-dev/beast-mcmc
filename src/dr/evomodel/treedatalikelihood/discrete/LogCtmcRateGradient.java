@@ -64,16 +64,17 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
                                TreeDataLikelihood treeDataLikelihood,
                                GradientDataLikelihoodDelegate likelihoodDelegate,
                                LogRateSubstitutionModel substitutionModel) {
-        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, false);
+        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, ApproximationMode.FIRST_ORDER, false);
     }
 
     public LogCtmcRateGradient(String traitName,
                                TreeDataLikelihood treeDataLikelihood,
                                GradientDataLikelihoodDelegate likelihoodDelegate,
                                LogRateSubstitutionModel substitutionModel,
+                               ApproximationMode mode,
                                boolean forceAllReal) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
-                ApproximationMode.FIRST_ORDER, forceAllReal);
+                mode, forceAllReal);
         this.rateProvider = extractRateProvider(substitutionModel);
         this.mapEffectToIndices = makeAsymmetricMap();
     }

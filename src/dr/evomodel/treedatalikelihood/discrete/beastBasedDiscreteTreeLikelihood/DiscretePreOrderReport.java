@@ -5,6 +5,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
+import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
@@ -25,16 +26,33 @@ public final class DiscretePreOrderReport implements Reportable {
     private final TreeTrait treeTrait;
     private final double roundingTolerance;
     private final int roundingScale;
+    private final DiscretePartialsType displayType;
+    private final DiscretePartialsType beagleType;
 
     public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood) {
-        this(treeDataLikelihood, 0.0);
+        this(treeDataLikelihood, DiscretePartialsType.TOP,0.0);
     }
 
-    public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood, double roundingTolerance) {
+    public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood,
+                                  double roundingTolerance) {
+        this(treeDataLikelihood, DiscretePartialsType.TOP, roundingTolerance);
+    }
+
+    public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood,
+                                  DiscretePartialsType type,
+                                  double roundingTolerance) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.roundingTolerance = roundingTolerance;
         this.roundingScale = roundingTolerance > 0.0 ?
                 Math.max(0, BigDecimal.valueOf(roundingTolerance).stripTrailingZeros().scale()) : -1;
+        this.displayType = type;
+        if (type == DiscretePartialsType.TOP_SPECTRAL) {
+            this.beagleType = DiscretePartialsType.TOP;
+        } else if (type == DiscretePartialsType.BOTTOM_SPECTRAL) {
+            this.beagleType = DiscretePartialsType.BOTTOM;
+        } else {
+            this.beagleType = displayType;
+        }
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (delegate instanceof PreOrderMessageProvider) {
@@ -49,6 +67,12 @@ public final class DiscretePreOrderReport implements Reportable {
 
                 ProcessSimulationDelegate preOrderDelegate = new AbstractBeagleGradientDelegate(
                         "test", treeDataLikelihood.getTree(), likelihoodDelegate) {
+
+                    @Override
+                    protected DiscretePartialsType getPreOrderType() {
+                        return beagleType;
+                    }
+
                     @Override
                     protected int getGradientLength() {
                         return 0;
@@ -57,6 +81,33 @@ public final class DiscretePreOrderReport implements Reportable {
                     @Override
                     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
 
+                    }
+
+                    @Override
+                    public void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out) {
+
+                        if (type == DiscretePartialsType.TOP || displayType == DiscretePartialsType.TOP_SPECTRAL) {
+
+                            final int stateCount = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0)
+                                    .getDataType().getStateCount();
+
+                            assert out.length == stateCount;  // TODO update for multiple columns, rate classes, etc.
+
+                            if (displayType == DiscretePartialsType.TOP_SPECTRAL) {
+                                double[] intermediate = new double[out.length];
+                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, intermediate);
+
+                                EigenDecomposition ed = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0).getEigenDecomposition();
+                                EigenDecomposition edT = ed.transpose();
+
+                                multiplyMatrixVector(edT.getInverseEigenVectors(), intermediate, 0, out, 0, stateCount);
+                            } else {
+                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, out);
+                            }
+
+                        } else {
+                            super.getPreorderPartials(nodeNumber, type, out);
+                        }
                     }
 
                     @Override
@@ -156,6 +207,17 @@ public final class DiscretePreOrderReport implements Reportable {
         }
 
         return sb.toString();
+    }
+
+    private static void multiplyMatrixVector(double[] matrix, double[] vector, int vectorOffset, double[] out, int outOffset, int dim) {
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            final int rowBase = i * dim;
+            for (int j = 0; j < dim; j++) {
+                sum += matrix[rowBase + j] * vector[vectorOffset + j];
+            }
+            out[outOffset + i] = sum;
+        }
     }
 
     private String formatArray(double[] values) {

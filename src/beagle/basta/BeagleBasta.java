@@ -58,4 +58,31 @@ public interface BeagleBasta extends Beagle {
     void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count);
 
     void accumulateBastaPartialsGrad(int[] operations, int operationCount,  final int[] intervalStarts, int intervalCount, final double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
+
+    void allocateCoalescentGradBuffers(int partialsCount);
+
+    void updateBastaPartialsPopSizeGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
+
+    void accumulateBastaPartialsPopSizeGrad(int[] operations, int operationCount, final int[] intervalStarts, int intervalCount, final double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
+
+    void getMatrixAdjoint(int matrixIndex, double[] buffer);
+
+    void getPopulationSizeGradient(double[] buffer);
+
+    void setExpmKernels(double[] kernels);
+
+    void accumulateExpmGradient(double[] out);
+
+    void transformMatrixAdjoints(int matrixCount, double[] out);
+
+    void backTransformEigenBasisGradient(double[] eigenBasisGrad, double[] out);
+
+    void accumulateEigenBasisGradient(double[] eigenValues, double[] branchLengths,
+                                      int matrixCount, boolean hasComplexEigenvalues,
+                                      double[] outRateGradient);
+
+
+    void uploadBastaSlabMetadata(int[] packed, int packedLen);
+
+    int[] getBastaSlabConstants();
 }

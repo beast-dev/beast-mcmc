@@ -1,0 +1,2003 @@
+package dr.evomodel.coalescent.basta;
+
+import beagle.*;
+import beagle.basta.BeagleBasta;
+import beagle.basta.BastaFactory;
+import dr.evolution.tree.Tree;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.treedatalikelihood.BufferIndexHelper;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
+
+public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
+
+    private static final double EIGEN_TOLERANCE = 1.0e-12;
+    private static final double EXACT_EXP_THRESHOLD = 1.0e-10;
+
+    private final Map<Integer, double[]> tipPartials = new LinkedHashMap<>();
+    private final double[] sizes;
+    private final EigenDecomposition[] decompositions;
+    private ForwardWorkspace forwardWorkspace;
+    private ReverseWorkspace reverseWorkspace;
+    private ForwardResult cachedForward;
+
+    private final BeagleBasta beagle;
+    private final BufferIndexHelper eigenBufferHelper;
+    private final BeagleBastaLikelihoodDelegate.OffsetBufferIndexHelper populationSizesBufferHelper;
+    private static final int COALESCENT_PROBABILITY_INDEX = 0;
+    private int currentPartialsCount;
+    private int currentIntervalsCount;
+    private int currentTransitionMatrixBuffer = 0;
+    private boolean beagleGradBuffersAllocated = false;
+    private double cachedBeagleLogL = Double.NaN;
+    private boolean beagleForwardValid = false;
+    private boolean slabForwardValid = false;
+    private double[] beagleGradScratch = null;
+    private int[] cachedGradOperations = null;
+    private int[] cachedGradIntervals = null;
+    private double[] cachedGradLengths = null;
+
+    private long cachedGradDispatchVersion = -1L;
+
+    private int[] cachedFwdOperations = null;
+    private int[] cachedFwdIntervals = null;
+    private double[] cachedFwdLengths = null;
+    private List<TransitionMatrixOperation> cachedFwdMatrixOps = null;
+    private int[] cachedFwdTransitionMatrixIndices = null;
+    private double[] cachedFwdBranchLengthsArr = null;
+    private final double[] beagleLogLScratch = new double[1];
+    private int cachedFwdMaxBuffer = -1;
+
+    private long cachedFwdDispatchVersion = -1L;
+
+    private int[] beagleSlabConstants = null;
+
+    private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
+    private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
+    private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
+    private static final String THREAD_COUNT_PROPERTY = "beagle.basta.thread.count";
+    private static final String THREADING_TYPE = "beagle.threading.type";
+
+    public AdjointGenericBastaLikelihoodDelegate(String name,
+                                                 Tree tree,
+                                                 int stateCount,
+                                                 boolean transpose) {
+        this(name, tree, stateCount, transpose, false);
+    }
+
+    public AdjointGenericBastaLikelihoodDelegate(String name,
+                                                 Tree tree,
+                                                 int stateCount,
+                                                 boolean transpose,
+                                                 boolean useBeagle) {
+        super(name, tree, stateCount, transpose);
+        this.sizes = new double[2 * stateCount];
+        this.decompositions = new EigenDecomposition[1];
+
+        if (useBeagle) {
+            this.beagle = createBeagleInstance(tree, stateCount);
+            this.eigenBufferHelper = new BufferIndexHelper(1, 0);
+            this.populationSizesBufferHelper =
+                    new BeagleBastaLikelihoodDelegate.OffsetBufferIndexHelper(1, 0, 0);
+            if (beagle != null) {
+                beagle.setCategoryRates(new double[]{1.0});
+                try {
+                    this.beagleSlabConstants = beagle.getBastaSlabConstants();
+                } catch (RuntimeException e) {
+                    System.err.println(
+                            "AdjointGenericBastaLikelihoodDelegate: "
+                                    + "beagle.getBastaSlabConstants() failed ("
+                                    + e.getMessage()
+                                    + "); falling back to legacy op-queue path");
+                    this.beagleSlabConstants = null;
+                }
+            }
+        } else {
+            this.beagle = null;
+            this.eigenBufferHelper = null;
+            this.populationSizesBufferHelper = null;
+        }
+    }
+
+
+    public int[] getBeagleSlabConstants() {
+        if (beagleSlabConstants == null) {
+            return null;
+        }
+        return new int[]{beagleSlabConstants[0], beagleSlabConstants[1]};
+    }
+
+    private BeagleBasta createBeagleInstance(Tree tree, int stateCount) {
+        List<Integer> resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+        List<Integer> preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+        List<Integer> requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+
+        this.currentPartialsCount = 3 * tree.getNodeCount();
+        this.currentIntervalsCount = tree.getNodeCount();
+
+        long requirementFlags = BeagleFlag.EIGEN_COMPLEX.getMask();
+        int[] resourceList = null;
+        long preferenceFlags = 0;
+
+        if (resourceOrder.size() > 0) {
+            resourceList = new int[]{resourceOrder.get(0), 0};
+            if (resourceList[0] > 0) {
+                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+            }
+        }
+        if (preferredOrder.size() > 0) {
+            preferenceFlags = preferredOrder.get(0);
+        }
+        if (requiredOrder.size() > 0) {
+            requirementFlags = requiredOrder.get(0);
+        }
+        if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+            preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+        }
+
+        int threadCount = -1;
+        String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+        if (tc != null) {
+            threadCount = Integer.parseInt(tc);
+        }
+
+        String threadingType = System.getProperty(THREADING_TYPE);
+        if (threadingType != null) {
+            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+            switch (threadingType.toLowerCase()) {
+                case "openmp":
+                    preferenceFlags |= BeagleFlag.THREADING_OPENMP.getMask();
+                    break;
+                case "cpp":
+                    preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                    break;
+                default:
+                    preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+                    break;
+            }
+        } else {
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else if (threadCount > 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+        }
+
+        if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                        BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                        BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                || (resourceList != null && resourceList[0] > 0)) {
+            preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
+        }
+
+        final Logger logger = Logger.getLogger("dr.evomodel");
+
+        try {
+            BeagleBasta instance = BastaFactory.loadBastaInstance(
+                    0, 5, maxNumCoalescentIntervals,
+                    2 * currentPartialsCount, 0, stateCount,
+                    1, 2, 2 * currentIntervalsCount, 1,
+                    1, resourceList, preferenceFlags, requirementFlags);
+
+            InstanceDetails details = instance.getDetails();
+            if (details != null) {
+                ResourceDetails resourceDetails = BeagleFactory.getResourceDetails(details.getResourceNumber());
+                if (resourceDetails != null) {
+                    StringBuilder sb = new StringBuilder("  Using BEAGLE BASTA resource ");
+                    sb.append(resourceDetails.getNumber()).append(": ");
+                    sb.append(resourceDetails.getName()).append("\n");
+                    if (resourceDetails.getDescription() != null) {
+                        String[] description = resourceDetails.getDescription().split("\\|");
+                        for (String desc : description) {
+                            if (desc.trim().length() > 0) {
+                                sb.append("    ").append(desc.trim()).append("\n");
+                            }
+                        }
+                    }
+                    sb.append("    with instance flags: ").append(details.toString());
+                    logger.info(sb.toString());
+                }
+            }
+
+            return instance;
+        } catch (Exception e) {
+            logger.warning("Failed to create BEAGLE BASTA instance, falling back to Java: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private long adjLikelihoodCallCount = 0;
+    private long adjLikelihoodTotalNs = 0;
+    private long adjGradientCallCount = 0;
+    private long adjGradientTotalNs = 0;
+    private long adjBackwardPassTotalNs = 0;
+    private long adjEigenBasisTotalNs = 0;
+    private long reverseBackwardPassNs = 0;
+    private static final int ADJ_BENCHMARK_INTERVAL = 1000000;
+    private boolean printTime = false;
+    @Override
+    public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
+                                      List<TransitionMatrixOperation> matrixOperations,
+                                      List<Integer> intervalStarts,
+                                      int rootNodeNumber, BastaLikelihood likelihood, boolean transitionMatricesStored) {
+        long t0 = System.nanoTime();
+
+        double logL;
+        if (beagle != null) {
+            logL = calculateLikelihoodViaBeagle(branchOperations, matrixOperations, intervalStarts, likelihood);
+        } else {
+            ensureSupported(matrixOperations);
+            logL = getOrCreateForward(branchOperations, matrixOperations, intervalStarts).logLikelihood;
+        }
+
+        long t1 = System.nanoTime();
+        adjLikelihoodTotalNs += (t1 - t0);
+        adjLikelihoodCallCount++;
+        if (adjLikelihoodCallCount % ADJ_BENCHMARK_INTERVAL == 0 && printTime) {
+            System.err.printf("[BASTA LIKELIHOOD %s] calls=%d  avg=%.3f ms  total=%.1f ms%n",
+                    getStamp(),
+                    adjLikelihoodCallCount, (adjLikelihoodTotalNs / (double) adjLikelihoodCallCount) / 1e6,
+                    adjLikelihoodTotalNs / 1e6);
+        }
+        return logL;
+    }
+
+    @Override
+    public double[] calculateGradient(List<BranchIntervalOperation> branchOperations,
+                                      List<TransitionMatrixOperation> matrixOperations,
+                                      List<Integer> intervalStarts,
+                                      int rootNodeNumber,
+                                      StructuredCoalescentLikelihoodGradient wrt, BastaLikelihood likelihood) {
+        long t0 = System.nanoTime();
+
+        double[] result;
+        if (beagle != null) {
+            result = calculateGradientWithBeagle(branchOperations, matrixOperations, intervalStarts, wrt, likelihood);
+        } else {
+            result = calculateGradientJava(branchOperations, matrixOperations, intervalStarts, wrt);
+        }
+
+        long t1 = System.nanoTime();
+        adjGradientTotalNs += (t1 - t0);
+        adjGradientCallCount++;
+        if (adjGradientCallCount % ADJ_BENCHMARK_INTERVAL == 0 && printTime) {
+            System.err.printf("[BASTA GRADIENT  %s] calls=%d  avg=%.3f ms  total=%.1f ms%n",
+                    getStamp(),
+                    adjGradientCallCount, (adjGradientTotalNs / (double) adjGradientCallCount) / 1e6,
+                    adjGradientTotalNs / 1e6);
+            System.err.printf("[BASTA GRADIENT  %s]   backward-pass:  avg=%.3f ms  total=%.1f ms%n",
+                    getStamp(),
+                    (adjBackwardPassTotalNs / (double) adjGradientCallCount) / 1e6,
+                    adjBackwardPassTotalNs / 1e6);
+            System.err.printf("[BASTA GRADIENT  %s]   eigen-basis:    avg=%.3f ms  total=%.1f ms%n",
+                    getStamp(),
+                    (adjEigenBasisTotalNs / (double) adjGradientCallCount) / 1e6,
+                    adjEigenBasisTotalNs / 1e6);
+        }
+        return result;
+    }
+
+    private double[] calculateGradientJava(List<BranchIntervalOperation> branchOperations,
+                                           List<TransitionMatrixOperation> matrixOperations,
+                                           List<Integer> intervalStarts,
+                                           StructuredCoalescentLikelihoodGradient wrt) {
+        ensureSupported(matrixOperations);
+
+        ForwardResult forward = getOrCreateForward(branchOperations, matrixOperations, intervalStarts);
+
+        long tBwd0 = System.nanoTime();
+        ReverseResult reverseResult = reverse(branchOperations, matrixOperations, intervalStarts, forward);
+        long tBwd1 = System.nanoTime();
+
+        adjBackwardPassTotalNs += reverseBackwardPassNs;
+        adjEigenBasisTotalNs += (tBwd1 - tBwd0) - reverseBackwardPassNs;
+
+        if (wrt.getType() == StructuredCoalescentLikelihoodGradient.WrtParameter.POPULATION_SIZE) {
+            double[] popSizeGrad = reverseResult.populationSizeGradient;
+            for (int i = 0; i < stateCount; ++i) {
+                popSizeGrad[i] *= -sizes[i] * sizes[i];
+            }
+            return popSizeGrad;
+        }
+
+        double[][] rateGrad = reverseResult.rateGradient;
+        double[] result = new double[stateCount * stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                result[i * stateCount + j] = rateGrad[j][i];
+            }
+        }
+        return result;
+    }
+
+    private double[] calculateGradientWithBeagle(List<BranchIntervalOperation> branchOperations,
+                                                 List<TransitionMatrixOperation> matrixOperations,
+                                                 List<Integer> intervalStarts,
+                                                 StructuredCoalescentLikelihoodGradient wrt,
+                                                 BastaLikelihood likelihood) {
+
+        ensureBeagleGradBuffers();
+        if (!slabForwardValid) {
+            calculateLikelihoodViaBeagle(branchOperations, matrixOperations,
+                                         intervalStarts, likelihood);
+        }
+
+        int opCount = branchOperations.size();
+        int intCount = intervalStarts.size();
+
+        final long currentGradDispatchVersion;
+        {
+            CoalescentIntervalTraversal traversal =
+                    (likelihood != null) ? likelihood.getTraversalDelegate() : null;
+            currentGradDispatchVersion =
+                    (traversal != null) ? traversal.getDispatchVersion() : -2L;
+        }
+        final boolean gradOpsContentUnchanged =
+                cachedGradDispatchVersion != -1L
+                        && cachedGradDispatchVersion == currentGradDispatchVersion
+                        && cachedGradOperations != null
+                        && cachedGradOperations.length == opCount * BASTA_OPERATION_SIZE
+                        && cachedGradIntervals != null
+                        && cachedGradIntervals.length == intCount
+                        && cachedGradLengths != null
+                        && cachedGradLengths.length == intCount - 1;
+        if (!gradOpsContentUnchanged) {
+            if (cachedGradOperations == null
+                    || cachedGradOperations.length != opCount * BASTA_OPERATION_SIZE) {
+                cachedGradOperations = new int[opCount * BASTA_OPERATION_SIZE];
+            }
+            if (cachedGradIntervals == null
+                    || cachedGradIntervals.length != intCount) {
+                cachedGradIntervals = new int[intCount];
+            }
+            if (cachedGradLengths == null
+                    || cachedGradLengths.length != intCount - 1) {
+                cachedGradLengths = new double[intCount - 1];
+            }
+            vectorizeBranchIntervalOperations(intervalStarts, branchOperations,
+                    cachedGradOperations, cachedGradIntervals, cachedGradLengths);
+            cachedGradDispatchVersion = currentGradDispatchVersion;
+        }
+
+        int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
+
+        if (beagleGradScratch == null || beagleGradScratch.length < stateCount * stateCount) {
+            beagleGradScratch = new double[stateCount * stateCount];
+        }
+
+        long tBwd0 = System.nanoTime();
+        beagle.accumulateBastaPartialsGrad(cachedGradOperations, opCount,
+                cachedGradIntervals, intCount, cachedGradLengths,
+                populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
+                beagleGradScratch);
+        long tBwd1 = System.nanoTime();
+        adjBackwardPassTotalNs += (tBwd1 - tBwd0);
+
+        if (wrt.getType() == StructuredCoalescentLikelihoodGradient.WrtParameter.POPULATION_SIZE) {
+            double[] popSizeGrad = new double[stateCount];
+            beagle.getPopulationSizeGradient(popSizeGrad);
+            for (int i = 0; i < stateCount; ++i) {
+                popSizeGrad[i] *= -sizes[i] * sizes[i];
+            }
+            return popSizeGrad;
+        }
+
+        ensureSupported(matrixOperations);
+        int S2 = stateCount * stateCount;
+        int M = matrixOperations.size();
+
+        EigenDecomposition decomposition = decompositions[matrixOperations.get(0).decompositionBuffer];
+        double[] eigenValues = decomposition.getEigenValues();
+        boolean hasComplex = hasComplexEigenvalues(decomposition);
+
+        double[] branchLengthsArray = new double[M];
+        for (int m = 0; m < M; m++) {
+            branchLengthsArray[m] = matrixOperations.get(m).time;
+        }
+
+        long tEig0 = System.nanoTime();
+        double[] result = new double[S2];
+        beagle.accumulateEigenBasisGradient(eigenValues, branchLengthsArray, M, hasComplex, result);
+        long tEig1 = System.nanoTime();
+        adjEigenBasisTotalNs += (tEig1 - tEig0);
+
+        return result;
+    }
+
+    private double calculateLikelihoodViaBeagle(List<BranchIntervalOperation> branchOperations,
+                                               List<TransitionMatrixOperation> matrixOperations,
+                                               List<Integer> intervalStarts,
+                                               BastaLikelihood likelihood) {
+
+        if (beagleForwardValid) {
+            return cachedBeagleLogL;
+        }
+
+        final int opCount = branchOperations.size();
+        final int intCount = intervalStarts.size();
+        final int M = matrixOperations.size();
+
+        final long currentDispatchVersion;
+            CoalescentIntervalTraversal traversalLocal = (likelihood != null) ? likelihood.getTraversalDelegate() : null;
+            currentDispatchVersion = (traversalLocal != null) ? traversalLocal.getDispatchVersion() : -2L;
+        final boolean opsContentUnchanged = cachedFwdDispatchVersion != -1L
+                        && cachedFwdDispatchVersion == currentDispatchVersion
+                        && cachedFwdOperations != null
+                        && cachedFwdOperations.length == opCount * BASTA_OPERATION_SIZE
+                        && cachedFwdIntervals != null
+                        && cachedFwdIntervals.length == intCount
+                        && cachedFwdLengths != null
+                        && cachedFwdLengths.length == intCount - 1;
+
+        final int maxBuffer;
+        if (opsContentUnchanged) {
+            maxBuffer = cachedFwdMaxBuffer;
+        } else {
+            maxBuffer = maxBufferIndex(branchOperations) + 1;
+            cachedFwdMaxBuffer = maxBuffer;
+        }
+        if (resizeBeagleIfNeeded(maxBuffer) && likelihood != null) {
+            likelihood.setTipData();
+        }
+
+        if (cachedFwdTransitionMatrixIndices == null || cachedFwdTransitionMatrixIndices.length != M) {
+            cachedFwdTransitionMatrixIndices = new int[M];
+            cachedFwdBranchLengthsArr = new double[M];
+        }
+
+        cachedFwdMatrixOps = matrixOperations;
+        vectorizeTransitionMatrixOperations(matrixOperations,
+                cachedFwdTransitionMatrixIndices, cachedFwdBranchLengthsArr);
+
+        int eigenIndex = eigenBufferHelper.getOffsetIndex(0);
+
+        beagle.updateTransitionMatrices(eigenIndex, cachedFwdTransitionMatrixIndices, null, null,
+                cachedFwdBranchLengthsArr, M);
+
+        if (!opsContentUnchanged) {
+            if (cachedFwdOperations == null || cachedFwdOperations.length != opCount * BASTA_OPERATION_SIZE) {
+                cachedFwdOperations = new int[opCount * BASTA_OPERATION_SIZE];
+            }
+            if (cachedFwdIntervals == null || cachedFwdIntervals.length != intCount) {
+                cachedFwdIntervals = new int[intCount];
+            }
+            if (cachedFwdLengths == null || cachedFwdLengths.length != intCount - 1) {
+                cachedFwdLengths = new double[intCount - 1];
+            }
+            vectorizeBranchIntervalOperations(intervalStarts, branchOperations,
+                    cachedFwdOperations, cachedFwdIntervals, cachedFwdLengths);
+            cachedFwdDispatchVersion = currentDispatchVersion;
+
+
+            if (likelihood != null && beagleSlabConstants != null) {
+                CoalescentIntervalTraversal traversal = likelihood.getTraversalDelegate();
+                if (traversal != null) {
+                    int[] packed = traversal.buildAndPackSlabMetadata(
+                            traversal.getSlabOpsPerBlock());
+                    int packedLen = traversal.getLastPackedSlabMetadataLength();
+                    beagle.uploadBastaSlabMetadata(packed, packedLen);
+                }
+            }
+        }
+
+        int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
+
+        beagle.updateBastaPartials(cachedFwdOperations, opCount,
+                cachedFwdIntervals, intCount,
+                populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
+
+        beagle.accumulateBastaPartials(cachedFwdOperations, opCount,
+                cachedFwdIntervals, intCount, cachedFwdLengths,
+                populationSizeIndex, COALESCENT_PROBABILITY_INDEX, beagleLogLScratch);
+
+        cachedBeagleLogL = beagleLogLScratch[0];
+        beagleForwardValid = true;
+
+        slabForwardValid = true;
+
+        return cachedBeagleLogL;
+    }
+
+    private boolean resizeBeagleIfNeeded(int maxBufferCount) {
+        int newNumPartials = maxBufferCount + 1;
+        boolean needsResize = false;
+        if (newNumPartials > currentPartialsCount) {
+            currentPartialsCount = newNumPartials;
+            needsResize = true;
+        }
+        if (maxNumCoalescentIntervals > currentIntervalsCount) {
+            currentIntervalsCount = maxNumCoalescentIntervals;
+            needsResize = true;
+        }
+        if (needsResize) {
+            int threadCount = -1;
+            String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+
+            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, 2 * currentPartialsCount, 0, threadCount);
+
+            beagleForwardValid = false;
+            slabForwardValid = false;
+        }
+        return needsResize;
+    }
+
+    private void ensureBeagleGradBuffers() {
+        if (!beagleGradBuffersAllocated) {
+            int threadCount = -1;
+            String tc = System.getProperty(THREAD_COUNT_PROPERTY);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+            beagle.allocateCoalescentBuffers(5, maxNumCoalescentIntervals, 2 * currentPartialsCount, 0, threadCount);
+            beagle.allocateCoalescentGradBuffers(-currentPartialsCount);
+            beagleGradBuffersAllocated = true;
+            slabForwardValid = false;
+
+            beagleForwardValid = false;
+            if (decompositions[0] != null) {
+                EigenDecomposition d = decompositions[0];
+                beagle.setEigenDecomposition(
+                        eigenBufferHelper.getOffsetIndex(0),
+                        d.getEigenVectors(),
+                        d.getInverseEigenVectors(),
+                        d.getEigenValues());
+            }
+            double[] freqs = new double[stateCount];
+            System.arraycopy(sizes, 0, freqs, 0, stateCount);
+            beagle.setStateFrequencies(
+                    populationSizesBufferHelper.getOffsetIndex(0), freqs);
+        }
+    }
+
+    private void vectorizeTransitionMatrixOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                     int[] transitionMatrixIndices,
+                                                     double[] branchLengths) {
+        int k = 0;
+        for (TransitionMatrixOperation op : matrixOperations) {
+            transitionMatrixIndices[k] = op.outputBuffer + currentTransitionMatrixBuffer;
+            branchLengths[k] = op.time;
+            ++k;
+        }
+    }
+
+    private void vectorizeBranchIntervalOperations(List<Integer> intervalStarts,
+                                                   List<BranchIntervalOperation> branchIntervalOperations,
+                                                   int[] operations,
+                                                   int[] intervals,
+                                                   double[] lengths) {
+        int k = 0;
+        int currentTMBuffer = currentTransitionMatrixBuffer;
+        for (BranchIntervalOperation op : branchIntervalOperations) {
+            operations[k] = op.outputBuffer;
+            operations[k + 1] = op.inputBuffer1;
+            operations[k + 2] = op.inputMatrix1 + currentTMBuffer;
+            operations[k + 3] = op.inputBuffer2;
+            operations[k + 4] = op.inputMatrix2 + currentTMBuffer;
+            operations[k + 5] = op.accBuffer1;
+            operations[k + 6] = op.accBuffer2;
+            operations[k + 7] = op.intervalNumber;
+            k += BASTA_OPERATION_SIZE;
+        }
+
+        int i = 0;
+        for (int end = intervalStarts.size() - 1; i < end; ++i) {
+            int start = intervalStarts.get(i);
+            intervals[i] = start;
+            lengths[i] = branchIntervalOperations.get(start).intervalLength;
+        }
+        intervals[i] = intervalStarts.get(i);
+    }
+
+    private ForwardResult getOrCreateForward(List<BranchIntervalOperation> branchOperations,
+                                             List<TransitionMatrixOperation> matrixOperations,
+                                             List<Integer> intervalStarts) {
+        if (cachedForward != null) {
+            return cachedForward;
+        }
+        ForwardResult forward = forward(branchOperations, matrixOperations, intervalStarts);
+        cachedForward = forward;
+        return forward;
+    }
+
+    private void invalidateForwardCache() {
+        cachedForward = null;
+        beagleForwardValid = false;
+        slabForwardValid = false;
+        cachedGradDispatchVersion = -1L;
+    }
+
+    private void ensureSupported(List<TransitionMatrixOperation> matrixOperations) {
+        for (TransitionMatrixOperation operation : matrixOperations) {
+            if (operation.decompositionBuffer != 0) {
+                throw new IllegalArgumentException("Adjoint route currently supports only decompositionBuffer == 0");
+            }
+            EigenDecomposition decomposition = decompositions[operation.decompositionBuffer];
+            if (decomposition == null) {
+                throw new IllegalStateException("Missing eigen decomposition for adjoint route");
+            }
+        }
+    }
+
+    private boolean hasComplexEigenvalues(EigenDecomposition decomposition) {
+        double[] eigenValues = decomposition.getEigenValues();
+        if (eigenValues.length <= stateCount) {
+            return false;
+        }
+        for (int i = 0; i < stateCount; ++i) {
+            if (Math.abs(eigenValues[stateCount + i]) > EIGEN_TOLERANCE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ForwardResult forward(List<BranchIntervalOperation> branchOperations,
+                                  List<TransitionMatrixOperation> matrixOperations,
+                                  List<Integer> intervalStarts) {
+        int bufferCount = maxBufferIndex(branchOperations) + 1;
+        int matrixCount = maxMatrixIndex(matrixOperations) + 1;
+        int intervalCount = intervalStarts.size() - 1;
+        int maxIntervalNumber = maxIntervalNumber(branchOperations);
+        ForwardWorkspace workspace = ensureForwardWorkspace(bufferCount, matrixCount, intervalCount, maxIntervalNumber);
+        workspace.reset(intervalCount, maxIntervalNumber);
+
+        double[][] partials = workspace.partials;
+        for (Map.Entry<Integer, double[]> entry : tipPartials.entrySet()) {
+            copyInto(partials[entry.getKey()], entry.getValue());
+        }
+
+        double[][][] matrices = workspace.matrices;
+        double[][][] spectralKernels = workspace.spectralKernels;
+        ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans = workspace.complexKernelPlans;
+        for (TransitionMatrixOperation operation : matrixOperations) {
+            EigenDecomposition decomposition = decompositions[operation.decompositionBuffer];
+            computeTransitionProbabilitiesInPlace(operation.time, decomposition,
+                    matrices[operation.outputBuffer], workspace.transitionScratch);
+            if (hasComplexEigenvalues(decomposition)) {
+                clearSquare(spectralKernels[operation.outputBuffer]);
+                complexKernelPlans[operation.outputBuffer] =
+                        ComplexBlockKernelUtils.buildPlan(decomposition, operation.time, stateCount);
+            } else {
+                computeLoewnerKernelInPlace(operation.time, decomposition, spectralKernels[operation.outputBuffer]);
+                complexKernelPlans[operation.outputBuffer] = null;
+            }
+        }
+
+        double[] coalescentProb = workspace.coalescentProb;
+        boolean[] hasCoalescentProb = workspace.hasCoalescentProb;
+        CoalescentDetails[] coalescentDetails = workspace.coalescentDetails;
+
+        for (BranchIntervalOperation operation : branchOperations) {
+            double[] left = partials[operation.accBuffer1];
+            matVecInPlace(matrices[operation.inputMatrix1], partials[operation.inputBuffer1], left);
+            if (operation.inputBuffer2 < 0) {
+                copyInto(partials[operation.outputBuffer], left);
+                continue;
+            }
+
+            double[] right = partials[operation.accBuffer2];
+            matVecInPlace(matrices[operation.inputMatrix2], partials[operation.inputBuffer2], right);
+
+            CoalescentDetails details = coalescentDetails[operation.outputBuffer];
+            double[] unnormalized = details.w;
+            double probability = 0.0;
+            for (int i = 0; i < stateCount; ++i) {
+                unnormalized[i] = left[i] * right[i] / sizes[i];
+                probability += unnormalized[i];
+            }
+
+            double[] normalized = partials[operation.outputBuffer];
+            for (int i = 0; i < stateCount; ++i) {
+                normalized[i] = unnormalized[i] / probability;
+            }
+            coalescentProb[operation.intervalNumber] = probability;
+            hasCoalescentProb[operation.intervalNumber] = true;
+            details.leftStart = partials[operation.inputBuffer1];
+            details.rightStart = partials[operation.inputBuffer2];
+            details.leftEnd = left;
+            details.rightEnd = right;
+            details.j = probability;
+        }
+
+        double[][] intervalE = workspace.intervalE;
+        double[][] intervalF = workspace.intervalF;
+        double[][] intervalG = workspace.intervalG;
+        double[][] intervalH = workspace.intervalH;
+        double logLikelihood = 0.0;
+
+        for (int interval = 0; interval < intervalCount; ++interval) {
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+            double[] e = intervalE[interval];
+            double[] f = intervalF[interval];
+            double[] g = intervalG[interval];
+            double[] h = intervalH[interval];
+
+            for (int idx = start; idx < end; ++idx) {
+                BranchIntervalOperation operation = branchOperations.get(idx);
+                accumulateSummary(partials[operation.inputBuffer1], e, f);
+                if (operation.inputBuffer2 >= 0) {
+                    accumulateSummary(partials[operation.inputBuffer2], e, f);
+                }
+                accumulateSummary(partials[operation.accBuffer1], g, h);
+                if (operation.accBuffer2 >= 0) {
+                    accumulateSummary(partials[operation.accBuffer2], g, h);
+                }
+            }
+
+            double hazardSum = 0.0;
+            for (int i = 0; i < stateCount; ++i) {
+                hazardSum += (e[i] * e[i] - f[i] + g[i] * g[i] - h[i]) / sizes[i];
+            }
+
+            BranchIntervalOperation anchor = branchOperations.get(start);
+            logLikelihood += -anchor.intervalLength * hazardSum / 4.0;
+            if (hasCoalescentProb[anchor.intervalNumber]) {
+                logLikelihood += Math.log(coalescentProb[anchor.intervalNumber]);
+            }
+        }
+
+        return new ForwardResult(logLikelihood, partials, matrices, intervalE, intervalF, intervalG, intervalH,
+                coalescentProb, hasCoalescentProb, coalescentDetails, spectralKernels, complexKernelPlans);
+    }
+
+    private ReverseResult reverse(List<BranchIntervalOperation> branchOperations,
+                                  List<TransitionMatrixOperation> matrixOperations,
+                                  List<Integer> intervalStarts,
+                                  ForwardResult forward) {
+        reverseBackwardPassNs = System.nanoTime();
+
+        ReverseWorkspace workspace = ensureReverseWorkspace(forward.partials.length, forward.matrices.length);
+        workspace.reset(matrixOperations, forward.partials);
+
+        double[][] partialAdjoint = workspace.partialAdjoint;
+        double[][][] matrixAdjoint = workspace.matrixAdjoint;
+        double[][] rateGradient = workspace.rateGradient;
+        double[] populationSizeGradient = workspace.populationSizeGradient;
+        double[] adjE = workspace.adjE;
+        double[] adjF = workspace.adjF;
+        double[] adjG = workspace.adjG;
+        double[] adjH = workspace.adjH;
+        double[] zBar = workspace.zBar;
+        double[] adjW = workspace.adjW;
+        double[] leftEndBar = workspace.leftEndBar;
+        double[] rightEndBar = workspace.rightEndBar;
+
+        for (int interval = intervalStarts.size() - 2; interval >= 0; --interval) {
+            double[] e = forward.intervalE[interval];
+            double[] f = forward.intervalF[interval];
+            double[] g = forward.intervalG[interval];
+            double[] h = forward.intervalH[interval];
+
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+            double length = branchOperations.get(start).intervalLength;
+
+            for (int i = 0; i < stateCount; ++i) {
+                double invSize = 1.0 / sizes[i];
+                adjE[i] = -length * e[i] / (2.0 * sizes[i]);
+                adjF[i] = length * invSize / 4.0;
+                adjG[i] = -length * g[i] / (2.0 * sizes[i]);
+                adjH[i] = length * invSize / 4.0;
+                populationSizeGradient[i] += length * (e[i] * e[i] - f[i] + g[i] * g[i] - h[i]) / (4.0 * sizes[i] * sizes[i]);
+            }
+
+            for (int idx = start; idx < end; ++idx) {
+                BranchIntervalOperation operation = branchOperations.get(idx);
+                pushReductionAdjoints(forward.partials, partialAdjoint, operation.accBuffer1, adjG, adjH);
+                pushReductionAdjoints(forward.partials, partialAdjoint, operation.accBuffer2, adjG, adjH);
+                pushReductionAdjoints(forward.partials, partialAdjoint, operation.inputBuffer1, adjE, adjF);
+                pushReductionAdjoints(forward.partials, partialAdjoint, operation.inputBuffer2, adjE, adjF);
+            }
+
+            BranchIntervalOperation coalescentOperation = firstCoalescentInInterval(branchOperations, start, end);
+            if (coalescentOperation != null) {
+                CoalescentDetails details = forward.coalescentDetails[coalescentOperation.outputBuffer];
+                double[] zAdjoint = partialAdjoint[coalescentOperation.outputBuffer];
+                double adjJ = 1.0 / details.j - dot(zAdjoint, details.w) / (details.j * details.j);
+
+                for (int i = 0; i < stateCount; ++i) {
+                    zBar[i] = zAdjoint[i];
+                    adjW[i] = zBar[i] / details.j + adjJ;
+                    leftEndBar[i] = partialAdjoint[coalescentOperation.accBuffer1][i] + adjW[i] * details.rightEnd[i] / sizes[i];
+                    rightEndBar[i] = partialAdjoint[coalescentOperation.accBuffer2][i] + adjW[i] * details.leftEnd[i] / sizes[i];
+                    populationSizeGradient[i] -= adjW[i] * details.leftEnd[i] * details.rightEnd[i] / (sizes[i] * sizes[i]);
+                }
+
+                addMatTVecAndOuterInPlace(partialAdjoint[coalescentOperation.inputBuffer1],
+                        matrixAdjoint[coalescentOperation.inputMatrix1],
+                        forward.matrices[coalescentOperation.inputMatrix1], leftEndBar, details.leftStart);
+                addMatTVecAndOuterInPlace(partialAdjoint[coalescentOperation.inputBuffer2],
+                        matrixAdjoint[coalescentOperation.inputMatrix2],
+                        forward.matrices[coalescentOperation.inputMatrix2], rightEndBar, details.rightStart);
+            }
+
+            for (int idx = end - 1; idx >= start; --idx) {
+                BranchIntervalOperation operation = branchOperations.get(idx);
+                if (operation.inputBuffer2 >= 0) {
+                    continue;
+                }
+                double[] yBar = partialAdjoint[operation.accBuffer1];
+                double[] x = forward.partials[operation.inputBuffer1];
+                addMatTVecAndOuterInPlace(partialAdjoint[operation.inputBuffer1],
+                        matrixAdjoint[operation.inputMatrix1],
+                        forward.matrices[operation.inputMatrix1], yBar, x);
+            }
+        }
+
+        reverseBackwardPassNs = System.nanoTime() - reverseBackwardPassNs;
+
+        for (TransitionMatrixOperation operation : matrixOperations) {
+            EigenDecomposition decomposition = decompositions[operation.decompositionBuffer];
+            if (hasComplexEigenvalues(decomposition)) {
+                transformMatrixAdjointToEigenBasis(decomposition, matrixAdjoint[operation.outputBuffer],
+                        workspace.transformedFlat, workspace);
+                ComplexBlockKernelUtils.applyPlan(forward.complexKernelPlans[operation.outputBuffer],
+                        workspace.transformedFlat,
+                        workspace.eigenBasisGradient[operation.decompositionBuffer],
+                        workspace.complexKernelWorkspace,
+                        stateCount);
+                workspace.decompositionUsed[operation.decompositionBuffer] = true;
+            } else {
+                accumulateSpectralExpmAdjointEigenBasis(decomposition,
+                        forward.spectralKernels[operation.outputBuffer], matrixAdjoint[operation.outputBuffer],
+                        workspace.eigenBasisGradient[operation.decompositionBuffer], workspace);
+                workspace.decompositionUsed[operation.decompositionBuffer] = true;
+            }
+        }
+
+        for (int buffer = 0; buffer < decompositions.length; ++buffer) {
+            if (!workspace.decompositionUsed[buffer] || decompositions[buffer] == null) {
+                continue;
+            }
+            accumulateGeneratorGradientFromEigenBasis(decompositions[buffer], workspace.eigenBasisGradient[buffer], rateGradient, workspace);
+        }
+
+        return new ReverseResult(copyMatrix(rateGradient), populationSizeGradient.clone(), matrixAdjoint);
+    }
+
+    DebugState debugState(List<BranchIntervalOperation> branchOperations,
+                          List<TransitionMatrixOperation> matrixOperations,
+                          List<Integer> intervalStarts) {
+        ensureSupported(matrixOperations);
+        ForwardResult forward = getOrCreateForward(branchOperations, matrixOperations, intervalStarts);
+        ReverseResult reverse = reverse(branchOperations, matrixOperations, intervalStarts, forward);
+        return new DebugState(forward, reverse);
+    }
+
+    double[][] debugMatrixAdjoint(List<BranchIntervalOperation> branchOperations,
+                                  List<TransitionMatrixOperation> matrixOperations,
+                                  List<Integer> intervalStarts,
+                                  int matrixId) {
+        return debugState(branchOperations, matrixOperations, intervalStarts).reverse.matrixAdjoint[matrixId];
+    }
+
+    double[][] debugForwardMatrix(List<BranchIntervalOperation> branchOperations,
+                                  List<TransitionMatrixOperation> matrixOperations,
+                                  List<Integer> intervalStarts,
+                                  int matrixId) {
+        return debugState(branchOperations, matrixOperations, intervalStarts).forward.matrices[matrixId];
+    }
+
+    double debugLikelihoodWithMatrixOverride(List<BranchIntervalOperation> branchOperations,
+                                             List<TransitionMatrixOperation> matrixOperations,
+                                             List<Integer> intervalStarts,
+                                             int matrixId,
+                                             double[][] replacementMatrix) {
+        ensureSupported(matrixOperations);
+
+        int bufferCount = maxBufferIndex(branchOperations) + 1;
+        int matrixCount = maxMatrixIndex(matrixOperations) + 1;
+        int intervalCount = intervalStarts.size() - 1;
+        int maxIntervalNumber = maxIntervalNumber(branchOperations);
+
+        double[][] partials = new double[bufferCount][];
+        for (Map.Entry<Integer, double[]> entry : tipPartials.entrySet()) {
+            partials[entry.getKey()] = entry.getValue().clone();
+        }
+
+        double[][][] matrices = new double[matrixCount][][];
+        for (TransitionMatrixOperation operation : matrixOperations) {
+            if (operation.outputBuffer == matrixId) {
+                matrices[operation.outputBuffer] = replacementMatrix;
+            } else {
+                matrices[operation.outputBuffer] = computeTransitionProbabilities(operation.time, decompositions[operation.decompositionBuffer]);
+            }
+        }
+
+        double[] coalescentProb = new double[maxIntervalNumber + 1];
+        boolean[] hasCoalescentProb = new boolean[maxIntervalNumber + 1];
+        double logLikelihood = 0.0;
+
+        for (BranchIntervalOperation operation : branchOperations) {
+            double[] left = matVec(matrices[operation.inputMatrix1], partials[operation.inputBuffer1]);
+            if (operation.inputBuffer2 < 0) {
+                partials[operation.outputBuffer] = left.clone();
+                partials[operation.accBuffer1] = left.clone();
+                continue;
+            }
+
+            double[] right = matVec(matrices[operation.inputMatrix2], partials[operation.inputBuffer2]);
+            partials[operation.accBuffer1] = left.clone();
+            partials[operation.accBuffer2] = right.clone();
+
+            double[] normalized = new double[stateCount];
+            double probability = 0.0;
+            for (int i = 0; i < stateCount; ++i) {
+                normalized[i] = left[i] * right[i] / sizes[i];
+                probability += normalized[i];
+            }
+            for (int i = 0; i < stateCount; ++i) {
+                normalized[i] /= probability;
+            }
+            partials[operation.outputBuffer] = normalized;
+            coalescentProb[operation.intervalNumber] = probability;
+            hasCoalescentProb[operation.intervalNumber] = true;
+        }
+
+        for (int interval = 0; interval < intervalCount; ++interval) {
+            int start = intervalStarts.get(interval);
+            int end = intervalStarts.get(interval + 1);
+            double[] e = new double[stateCount];
+            double[] f = new double[stateCount];
+            double[] g = new double[stateCount];
+            double[] h = new double[stateCount];
+
+            for (int idx = start; idx < end; ++idx) {
+                BranchIntervalOperation operation = branchOperations.get(idx);
+                accumulateSummary(partials[operation.inputBuffer1], e, f);
+                if (operation.inputBuffer2 >= 0) {
+                    accumulateSummary(partials[operation.inputBuffer2], e, f);
+                }
+                accumulateSummary(partials[operation.accBuffer1], g, h);
+                if (operation.accBuffer2 >= 0) {
+                    accumulateSummary(partials[operation.accBuffer2], g, h);
+                }
+            }
+
+            double hazardSum = 0.0;
+            for (int i = 0; i < stateCount; ++i) {
+                hazardSum += (e[i] * e[i] - f[i] + g[i] * g[i] - h[i]) / sizes[i];
+            }
+
+            BranchIntervalOperation anchor = branchOperations.get(start);
+            logLikelihood += -anchor.intervalLength * hazardSum / 4.0;
+            if (hasCoalescentProb[anchor.intervalNumber]) {
+                logLikelihood += Math.log(coalescentProb[anchor.intervalNumber]);
+            }
+        }
+
+        return logLikelihood;
+    }
+
+    private void pushReductionAdjoints(double[][] partials,
+                                       double[][] partialAdjoint,
+                                       int buffer,
+                                       double[] adjSum,
+                                       double[] adjSq) {
+        if (buffer < 0) {
+            return;
+        }
+        double[] vec = partials[buffer];
+        double[] adj = partialAdjoint[buffer];
+        for (int i = 0; i < stateCount; ++i) {
+            adj[i] += adjSum[i] + 2.0 * vec[i] * adjSq[i];
+        }
+    }
+
+    private BranchIntervalOperation firstCoalescentInInterval(List<BranchIntervalOperation> branchOperations, int start, int end) {
+        for (int idx = start; idx < end; ++idx) {
+            BranchIntervalOperation operation = branchOperations.get(idx);
+            if (operation.inputBuffer2 >= 0) {
+                return operation;
+            }
+        }
+        return null;
+    }
+
+    private void computeTransitionProbabilitiesInPlace(double distance,
+                                                       EigenDecomposition eigen,
+                                                       double[][] target,
+                                                       double[] iexp) {
+        boolean real = eigen.getEigenValues().length == stateCount;
+        double[] evec = eigen.getEigenVectors();
+        double[] eval = eigen.getEigenValues();
+        double[] ievc = eigen.getInverseEigenVectors();
+
+        for (int i = 0; i < stateCount; i++) {
+            if (real || eval[stateCount + i] == 0.0) {
+                double exp = Math.exp(distance * eval[i]);
+                for (int j = 0; j < stateCount; j++) {
+                    iexp[i * stateCount + j] = ievc[i * stateCount + j] * exp;
+                }
+            } else {
+                int i2 = i + 1;
+                double b = eval[stateCount + i];
+                double expat = Math.exp(distance * eval[i]);
+                double expatcosbt = expat * Math.cos(distance * b);
+                double expatsinbt = expat * Math.sin(distance * b);
+                for (int j = 0; j < stateCount; j++) {
+                    iexp[i * stateCount + j] = expatcosbt * ievc[i * stateCount + j] +
+                            expatsinbt * ievc[i2 * stateCount + j];
+                    iexp[i2 * stateCount + j] = expatcosbt * ievc[i2 * stateCount + j] -
+                            expatsinbt * ievc[i * stateCount + j];
+                }
+                i++;
+            }
+        }
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    sum += evec[i * stateCount + k] * iexp[k * stateCount + j];
+                }
+                target[i][j] = sum;
+            }
+        }
+    }
+
+    private void accumulateSpectralExpmAdjointEigenBasis(EigenDecomposition decomposition,
+                                                         double[][] spectralKernel,
+                                                         double[][] matrixAdjoint,
+                                                         double[] eigenBasisGradient,
+                                                         ReverseWorkspace workspace) {
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+        double[] transformed = workspace.transformedFlat;
+        double[] temp = workspace.projectedFlat;
+
+        clearFlat(transformed);
+        clearFlat(temp);
+
+        for (int i = 0; i < stateCount; ++i) {
+            double[] matrixAdjointRow = matrixAdjoint[i];
+            int tempOffset = i * stateCount;
+            for (int j = 0; j < stateCount; ++j) {
+                double value = matrixAdjointRow[j];
+                if (value == 0.0) {
+                    continue;
+                }
+                for (int b = 0; b < stateCount; ++b) {
+                    temp[tempOffset + b] += value * inverseEigenVectors[b * stateCount + j];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            int tempOffset = i * stateCount;
+            int eigRowOffset = i * stateCount;
+            for (int a = 0; a < stateCount; ++a) {
+                double viaLeft = eigenVectors[eigRowOffset + a];
+                if (viaLeft == 0.0) {
+                    continue;
+                }
+                int transformedOffset = a * stateCount;
+                for (int b = 0; b < stateCount; ++b) {
+                    transformed[transformedOffset + b] += viaLeft * temp[tempOffset + b];
+                }
+            }
+        }
+
+        for (int a = 0; a < stateCount; ++a) {
+            int offset = a * stateCount;
+            for (int b = 0; b < stateCount; ++b) {
+                eigenBasisGradient[offset + b] += transformed[offset + b] * spectralKernel[a][b];
+            }
+        }
+    }
+
+    private void accumulateExactExpmAdjointByBasis(EigenDecomposition decomposition,
+                                                   double distance,
+                                                   double[][] matrixAdjoint,
+                                                   double[][] rateGradient,
+                                                   ReverseWorkspace workspace) {
+        double[][] differentialMassMatrix = workspace.exactDifferentialMassMatrix;
+        for (int row = 0; row < stateCount; ++row) {
+            for (int col = 0; col < stateCount; ++col) {
+                clearSquare(differentialMassMatrix);
+                differentialMassMatrix[row][col] = 1.0;
+                exactDifferentialExpmInPlace(distance, differentialMassMatrix, decomposition, workspace);
+                rateGradient[row][col] += frobeniusInnerProduct(matrixAdjoint, differentialMassMatrix);
+            }
+        }
+    }
+
+    private void accumulateComplexExpmAdjointBlockFrechet(EigenDecomposition decomposition,
+                                                          double distance,
+                                                          double[][] matrixAdjoint,
+                                                          double[][] rateGradient,
+                                                          ReverseWorkspace workspace) {
+        double[][] baseQ = workspace.complexBaseGenerator;
+        reconstructGeneratorMatrix(decomposition, baseQ, workspace.projected);
+        AdjointMatrixExponentialUtils.accumulateExpmAdjoint(baseQ, distance, matrixAdjoint, rateGradient,
+                workspace.complexExpmWorkspace);
+    }
+
+    private void transformMatrixAdjointToEigenBasis(EigenDecomposition decomposition,
+                                                    double[][] matrixAdjoint,
+                                                    double[] transformed,
+                                                    ReverseWorkspace workspace) {
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+        double[] temp = workspace.projectedFlat;
+
+        clearFlat(transformed);
+        clearFlat(temp);
+
+        for (int i = 0; i < stateCount; ++i) {
+            double[] matrixAdjointRow = matrixAdjoint[i];
+            int tempOffset = i * stateCount;
+            for (int j = 0; j < stateCount; ++j) {
+                double value = matrixAdjointRow[j];
+                if (value == 0.0) {
+                    continue;
+                }
+                for (int b = 0; b < stateCount; ++b) {
+                    temp[tempOffset + b] += value * inverseEigenVectors[b * stateCount + j];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            int tempOffset = i * stateCount;
+            int eigRowOffset = i * stateCount;
+            for (int a = 0; a < stateCount; ++a) {
+                double viaLeft = eigenVectors[eigRowOffset + a];
+                if (viaLeft == 0.0) {
+                    continue;
+                }
+                int transformedOffset = a * stateCount;
+                for (int b = 0; b < stateCount; ++b) {
+                    transformed[transformedOffset + b] += viaLeft * temp[tempOffset + b];
+                }
+            }
+        }
+    }
+
+    private void exactDifferentialExpmInPlace(double time,
+                                              double[][] differentialMassMatrix,
+                                              EigenDecomposition decomposition,
+                                              ReverseWorkspace workspace) {
+        double[] eigenValues = decomposition.getEigenValues();
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+
+        int numComplexPairs = getComplexEigenValueFirstIndices(eigenValues, workspace.complexIndices);
+        int numRealEigenValues = getRealEigenValueIndices(eigenValues, workspace.realIndices);
+
+        tripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors, workspace.projected);
+        setSmallEntriesToZero(differentialMassMatrix);
+
+        for (int i = 0; i < numRealEigenValues; ++i) {
+            final int iIndex = workspace.realIndices[i];
+            final double eigenValueI = eigenValues[iIndex];
+            for (int j = 0; j < numRealEigenValues; ++j) {
+                final int jIndex = workspace.realIndices[j];
+                final double eigenValueJ = eigenValues[jIndex];
+                if (i == j || Math.abs(eigenValueI - eigenValueJ) < EXACT_EXP_THRESHOLD) {
+                    differentialMassMatrix[iIndex][jIndex] *= time;
+                } else {
+                    double value = differentialMassMatrix[iIndex][jIndex];
+                    differentialMassMatrix[iIndex][jIndex] = value == 0.0 ? 0.0 :
+                            value * (1.0 - Math.exp((eigenValueJ - eigenValueI) * time)) / (eigenValueI - eigenValueJ);
+                }
+            }
+        }
+
+        for (int i = 0; i < numRealEigenValues; ++i) {
+            final int iIndex = workspace.realIndices[i];
+            final double eigenValueI = eigenValues[iIndex];
+            for (int j = 0; j < numComplexPairs; ++j) {
+                final int jIndex = workspace.complexIndices[j];
+                final double realEigenValue = eigenValues[jIndex];
+                final double imagEigenValue = eigenValues[jIndex + stateCount];
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vijp1 = differentialMassMatrix[iIndex][jIndex + 1];
+                final double expSineIntegral = getExpSineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+                final double expCosineIntegral = getExpCosineIntegral(time, realEigenValue - eigenValueI, imagEigenValue);
+
+                differentialMassMatrix[iIndex][jIndex] = Vij * expCosineIntegral - Vijp1 * expSineIntegral;
+                differentialMassMatrix[iIndex][jIndex + 1] = Vij * expSineIntegral + Vijp1 * expCosineIntegral;
+            }
+        }
+
+        for (int i = 0; i < numComplexPairs; ++i) {
+            final int iIndex = workspace.complexIndices[i];
+            final double realEigenValueI = eigenValues[iIndex];
+            final double imagEigenValueI = eigenValues[iIndex + stateCount];
+
+            for (int j = 0; j < numRealEigenValues; ++j) {
+                final int jIndex = workspace.realIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vip1j = differentialMassMatrix[iIndex + 1][jIndex];
+
+                final double expSineIntegral = getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI);
+                final double expCosineIntegral = getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI);
+
+                differentialMassMatrix[iIndex][jIndex] = Vij * expCosineIntegral - Vip1j * expSineIntegral;
+                differentialMassMatrix[iIndex + 1][jIndex] = Vij * expSineIntegral + Vip1j * expCosineIntegral;
+            }
+
+            for (int j = 0; j < numComplexPairs; ++j) {
+                final int jIndex = workspace.complexIndices[j];
+                final double realEigenValueJ = eigenValues[jIndex];
+                final double imagEigenValueJ = eigenValues[jIndex + stateCount];
+
+                final double Vij = differentialMassMatrix[iIndex][jIndex];
+                final double Vijp1 = differentialMassMatrix[iIndex][jIndex + 1];
+                final double Vip1j = differentialMassMatrix[iIndex + 1][jIndex];
+                final double Vip1jp1 = differentialMassMatrix[iIndex + 1][jIndex + 1];
+
+                final boolean specialCase =
+                        Math.abs(realEigenValueI - realEigenValueJ) < EXACT_EXP_THRESHOLD &&
+                        Math.abs(imagEigenValueI - imagEigenValueJ) < EXACT_EXP_THRESHOLD;
+
+                final double expCosineXPlusY2 = specialCase
+                        ? Math.sin(2.0 * imagEigenValueI * time) / (2.0 * imagEigenValueI)
+                        : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
+                final double expCosineXMinusY2 = specialCase
+                        ? time
+                        : getExpCosineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
+                final double expSineXPlusY2 = specialCase
+                        ? (1.0 - Math.cos(2.0 * imagEigenValueI * time)) / (2.0 * imagEigenValueI)
+                        : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI + imagEigenValueJ);
+                final double expSineXMinusY2 = specialCase
+                        ? 0.0
+                        : getExpSineIntegral(time, realEigenValueJ - realEigenValueI, imagEigenValueI - imagEigenValueJ);
+
+                differentialMassMatrix[iIndex][jIndex] =
+                        0.5 * ((Vij - Vip1jp1) * expCosineXPlusY2 + (Vij + Vip1jp1) * expCosineXMinusY2
+                                - (Vip1j + Vijp1) * expSineXPlusY2 + (Vijp1 - Vip1j) * expSineXMinusY2);
+                differentialMassMatrix[iIndex][jIndex + 1] =
+                        0.5 * ((Vijp1 + Vip1j) * expCosineXPlusY2 + (Vijp1 - Vip1j) * expCosineXMinusY2
+                                + (Vij - Vip1jp1) * expSineXPlusY2 - (Vij + Vip1jp1) * expSineXMinusY2);
+                differentialMassMatrix[iIndex + 1][jIndex] =
+                        0.5 * ((Vijp1 + Vip1j) * expCosineXPlusY2 + (Vip1j - Vijp1) * expCosineXMinusY2
+                                + (Vij - Vip1jp1) * expSineXPlusY2 + (Vij + Vip1jp1) * expSineXMinusY2);
+                differentialMassMatrix[iIndex + 1][jIndex + 1] =
+                        0.5 * ((Vip1jp1 - Vij) * expCosineXPlusY2 + (Vij + Vip1jp1) * expCosineXMinusY2
+                                + (Vip1j + Vijp1) * expSineXPlusY2 + (Vijp1 - Vip1j) * expSineXMinusY2);
+            }
+        }
+
+        tripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors, workspace.projected);
+    }
+
+    private double frobeniusInnerProduct(double[][] left, double[][] right) {
+        double sum = 0.0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                sum += left[i][j] * right[i][j];
+            }
+        }
+        return sum;
+    }
+
+    private void computeLoewnerKernelInPlace(double distance, EigenDecomposition decomposition, double[][] target) {
+        double[] eigenValues = decomposition.getEigenValues();
+        for (int a = 0; a < stateCount; ++a) {
+            double lambdaA = distance * eigenValues[a];
+            double expA = Math.exp(lambdaA);
+            for (int b = 0; b < stateCount; ++b) {
+                double lambdaB = distance * eigenValues[b];
+                double kernel = Math.abs(lambdaA - lambdaB) < EIGEN_TOLERANCE
+                        ? expA
+                        : (expA - Math.exp(lambdaB)) / (lambdaA - lambdaB);
+                target[a][b] = distance * kernel;
+            }
+        }
+    }
+
+    private void computeLoewnerKernelFlat(double distance, EigenDecomposition decomposition,
+                                          double[] target, int offset) {
+        double[] eigenValues = decomposition.getEigenValues();
+        for (int a = 0; a < stateCount; ++a) {
+            double lambdaA = distance * eigenValues[a];
+            double expA = Math.exp(lambdaA);
+            for (int b = 0; b < stateCount; ++b) {
+                double lambdaB = distance * eigenValues[b];
+                double kernel = Math.abs(lambdaA - lambdaB) < EIGEN_TOLERANCE
+                        ? expA
+                        : (expA - Math.exp(lambdaB)) / (lambdaA - lambdaB);
+                target[offset + a * stateCount + b] = distance * kernel;
+            }
+        }
+    }
+
+    private void accumulateGeneratorGradientFromEigenBasis(EigenDecomposition decomposition,
+                                                           double[] eigenBasisGradient,
+                                                           double[][] rateGradient,
+                                                           ReverseWorkspace workspace) {
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+        double[] expmAdjoint = workspace.expmAdjointFlat;
+        double[] temp = workspace.projectedFlat;
+
+        clearFlat(expmAdjoint);
+        clearFlat(temp);
+
+        for (int i = 0; i < stateCount; ++i) {
+            int tempOffset = i * stateCount;
+            for (int a = 0; a < stateCount; ++a) {
+                double value = inverseEigenVectors[a * stateCount + i];
+                if (value == 0.0) {
+                    continue;
+                }
+                int gradientOffset = a * stateCount;
+                for (int b = 0; b < stateCount; ++b) {
+                    temp[tempOffset + b] += value * eigenBasisGradient[gradientOffset + b];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            int tempOffset = i * stateCount;
+            int outOffset = i * stateCount;
+            for (int b = 0; b < stateCount; ++b) {
+                double value = temp[tempOffset + b];
+                if (value == 0.0) {
+                    continue;
+                }
+                for (int j = 0; j < stateCount; ++j) {
+                    expmAdjoint[outOffset + j] += value * eigenVectors[j * stateCount + b];
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            int offset = i * stateCount;
+            for (int j = 0; j < stateCount; ++j) {
+                rateGradient[i][j] += expmAdjoint[offset + j];
+            }
+        }
+    }
+
+    private void matVecInPlace(double[][] matrix, double[] vector, double[] out) {
+        for (int i = 0; i < matrix.length; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j < vector.length; ++j) {
+                sum += matrix[i][j] * vector[j];
+            }
+            out[i] = sum;
+        }
+    }
+
+    private double[][] computeTransitionProbabilities(double distance, EigenDecomposition eigen) {
+        double[][] matrix = new double[stateCount][stateCount];
+        double[] iexp = new double[stateCount * stateCount];
+        computeTransitionProbabilitiesInPlace(distance, eigen, matrix, iexp);
+        return matrix;
+    }
+
+    private double[] matVec(double[][] matrix, double[] vector) {
+        double[] out = new double[matrix.length];
+        matVecInPlace(matrix, vector, out);
+        return out;
+    }
+
+    private void addInPlace(double[] target, double[] source) {
+        for (int i = 0; i < target.length; ++i) {
+            target[i] += source[i];
+        }
+    }
+
+    private void addInPlace(double[][] target, double[][] source) {
+        for (int i = 0; i < target.length; ++i) {
+            for (int j = 0; j < target[i].length; ++j) {
+                target[i][j] += source[i][j];
+            }
+        }
+    }
+
+    private void addOuterInPlace(double[][] target, double[] left, double[] right) {
+        for (int i = 0; i < left.length; ++i) {
+            double li = left[i];
+            if (li == 0.0) {
+                continue;
+            }
+            for (int j = 0; j < right.length; ++j) {
+                target[i][j] += li * right[j];
+            }
+        }
+    }
+
+    private void addMatTVecInPlace(double[] target, double[][] matrix, double[] vector) {
+        for (int i = 0; i < matrix.length; ++i) {
+            double value = vector[i];
+            if (value == 0.0) {
+                continue;
+            }
+            double[] row = matrix[i];
+            for (int j = 0; j < row.length; ++j) {
+                target[j] += row[j] * value;
+            }
+        }
+    }
+
+    private void addMatTVecAndOuterInPlace(double[] transposeVecTarget,
+                                           double[][] outerTarget,
+                                           double[][] matrix,
+                                           double[] left,
+                                           double[] right) {
+        for (int i = 0; i < matrix.length; ++i) {
+            double leftValue = left[i];
+            if (leftValue == 0.0) {
+                continue;
+            }
+            double[] matrixRow = matrix[i];
+            double[] outerRow = outerTarget[i];
+            for (int j = 0; j < matrixRow.length; ++j) {
+                transposeVecTarget[j] += matrixRow[j] * leftValue;
+                outerRow[j] += leftValue * right[j];
+            }
+        }
+    }
+
+    private double dot(double[] left, double[] right) {
+        double sum = 0.0;
+        for (int i = 0; i < left.length; ++i) {
+            sum += left[i] * right[i];
+        }
+        return sum;
+    }
+
+    private void accumulateSummary(double[] vec, double[] sum, double[] sqSum) {
+        for (int i = 0; i < vec.length; ++i) {
+            sum[i] += vec[i];
+            sqSum[i] += vec[i] * vec[i];
+        }
+    }
+
+    private void copyInto(double[] target, double[] source) {
+        System.arraycopy(source, 0, target, 0, stateCount);
+    }
+
+    private void clearSquare(double[][] matrix) {
+        for (int i = 0; i < matrix.length; ++i) {
+            Arrays.fill(matrix[i], 0.0);
+        }
+    }
+
+    private void clearFlat(double[] vector) {
+        Arrays.fill(vector, 0.0);
+    }
+
+    private void copyInto(double[][] target, double[][] source) {
+        for (int i = 0; i < target.length; ++i) {
+            System.arraycopy(source[i], 0, target[i], 0, target[i].length);
+        }
+    }
+
+    private void tripleMatrixMultiplication(double[] leftMatrix,
+                                            double[][] middleMatrix,
+                                            double[] rightMatrix,
+                                            double[][] tmpMatrix) {
+        clearSquare(tmpMatrix);
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    total += middleMatrix[i][k] * rightMatrix[k * stateCount + j];
+                }
+                tmpMatrix[i][j] = total;
+            }
+        }
+
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < stateCount; ++k) {
+                    total += leftMatrix[i * stateCount + k] * tmpMatrix[k][j];
+                }
+                middleMatrix[i][j] = total;
+            }
+        }
+    }
+
+    private void setSmallEntriesToZero(double[][] matrix) {
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                if (Math.abs(matrix[i][j]) < EXACT_EXP_THRESHOLD) {
+                    matrix[i][j] = 0.0;
+                }
+            }
+        }
+    }
+
+    private int getComplexEigenValueFirstIndices(double[] eigenValues, int[] indices) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                final double imagEigenValue = eigenValues[i + stateCount];
+                if (imagEigenValue != 0.0) {
+                    indices[currentIndex++] = i;
+                    i++;
+                }
+            }
+            return currentIndex;
+        }
+        return 0;
+    }
+
+    private int getRealEigenValueIndices(double[] eigenValues, int[] indices) {
+        Arrays.fill(indices, -1);
+        if (eigenValues.length == stateCount * 2) {
+            int currentIndex = 0;
+            for (int i = 0; i < stateCount; ++i) {
+                if (eigenValues[i + stateCount] == 0.0) {
+                    indices[currentIndex++] = i;
+                }
+            }
+            return currentIndex;
+        }
+        for (int i = 0; i < stateCount; ++i) {
+            indices[i] = i;
+        }
+        return stateCount;
+    }
+
+    private double getExpCosineIntegral(double time, double expRate, double cosRate) {
+        final double denominator = expRate * expRate + cosRate * cosRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = cosRate * expProduct * Math.sin(cosRate * time) +
+                expRate * expProduct * Math.cos(cosRate * time) - expRate;
+        return numerator / denominator;
+    }
+
+    private void reconstructGeneratorMatrix(EigenDecomposition decomposition,
+                                            double[][] target,
+                                            double[][] tmp) {
+        double[] eigenValues = decomposition.getEigenValues();
+        double[] eigenVectors = decomposition.getEigenVectors();
+        double[] inverseEigenVectors = decomposition.getInverseEigenVectors();
+
+        clearSquare(target);
+        for (int i = 0; i < stateCount; ++i) {
+            target[i][i] = eigenValues[i];
+            if (eigenValues.length > stateCount && Math.abs(eigenValues[stateCount + i]) > EIGEN_TOLERANCE) {
+                target[i][i + 1] = eigenValues[stateCount + i];
+                target[i + 1][i] = -eigenValues[stateCount + i];
+                target[i + 1][i + 1] = eigenValues[i];
+                i++;
+            }
+        }
+        tripleMatrixMultiplication(eigenVectors, target, inverseEigenVectors, tmp);
+    }
+
+    private double getExpSineIntegral(double time, double expRate, double sinRate) {
+        final double denominator = expRate * expRate + sinRate * sinRate;
+        final double expProduct = Math.exp(expRate * time);
+        final double numerator = expRate * expProduct * Math.sin(sinRate * time) -
+                sinRate * expProduct * Math.cos(sinRate * time) + sinRate;
+        return numerator / denominator;
+    }
+
+    private double[][] copyMatrix(double[][] matrix) {
+        double[][] copy = new double[matrix.length][matrix[0].length];
+        for (int i = 0; i < matrix.length; ++i) {
+            System.arraycopy(matrix[i], 0, copy[i], 0, matrix[i].length);
+        }
+        return copy;
+    }
+
+    private int maxBufferIndex(List<BranchIntervalOperation> branchOperations) {
+        int max = -1;
+        for (Map.Entry<Integer, double[]> entry : tipPartials.entrySet()) {
+            max = Math.max(max, entry.getKey());
+        }
+        for (BranchIntervalOperation operation : branchOperations) {
+            max = Math.max(max, operation.outputBuffer);
+            max = Math.max(max, operation.inputBuffer1);
+            max = Math.max(max, operation.inputBuffer2);
+            max = Math.max(max, operation.accBuffer1);
+            max = Math.max(max, operation.accBuffer2);
+        }
+        return max;
+    }
+
+    private int maxMatrixIndex(List<TransitionMatrixOperation> matrixOperations) {
+        int max = -1;
+        for (TransitionMatrixOperation operation : matrixOperations) {
+            max = Math.max(max, operation.outputBuffer);
+            max = Math.max(max, operation.decompositionBuffer);
+        }
+        return max;
+    }
+
+    private int maxIntervalNumber(List<BranchIntervalOperation> branchOperations) {
+        int max = -1;
+        for (BranchIntervalOperation operation : branchOperations) {
+            max = Math.max(max, operation.intervalNumber);
+        }
+        return max;
+    }
+
+    private ForwardWorkspace ensureForwardWorkspace(int bufferCount, int matrixCount, int intervalCount, int maxIntervalNumber) {
+        if (forwardWorkspace == null ||
+                forwardWorkspace.partials.length < bufferCount ||
+                forwardWorkspace.matrices.length < matrixCount ||
+                forwardWorkspace.intervalE.length < intervalCount ||
+                forwardWorkspace.coalescentProb.length <= maxIntervalNumber) {
+            forwardWorkspace = new ForwardWorkspace(bufferCount, matrixCount, intervalCount, maxIntervalNumber);
+        }
+        return forwardWorkspace;
+    }
+
+    private ReverseWorkspace ensureReverseWorkspace(int bufferCount, int matrixCount) {
+        if (reverseWorkspace == null ||
+                reverseWorkspace.partialAdjoint.length < bufferCount ||
+                reverseWorkspace.matrixAdjoint.length < matrixCount) {
+            reverseWorkspace = new ReverseWorkspace(bufferCount, matrixCount, stateCount);
+        }
+        return reverseWorkspace;
+    }
+
+    @Override
+    protected void allocateGradientMemory() { }
+
+    @Override
+    protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
+                                                   List<BranchIntervalOperation> branchIntervalOperations,
+                                                   List<TransitionMatrixOperation> matrixOperations,
+                                                   Mode mode, BastaLikelihood likelihood) {
+        throw new UnsupportedOperationException("AdjointGenericBastaLikelihoodDelegate overrides calculateLikelihood directly");
+    }
+
+    @Override
+    protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                          Mode mode) {
+        throw new UnsupportedOperationException("AdjointGenericBastaLikelihoodDelegate overrides calculateLikelihood directly");
+    }
+
+    @Override
+    protected void computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                      List<BranchIntervalOperation> branchIntervalOperations,
+                                                      double[] out,
+                                                      Mode mode,
+                                                      StructuredCoalescentLikelihoodGradient.WrtParameter wrt) {
+        throw new UnsupportedOperationException("AdjointGenericBastaLikelihoodDelegate overrides calculateLikelihood directly");
+    }
+
+    @Override
+    public void updateStorage(int maxBufferCount, int treeNodeCount, BastaLikelihood likelihood) {
+        if (beagle != null) {
+            if (resizeBeagleIfNeeded(maxBufferCount) && likelihood != null) {
+                likelihood.setTipData();
+            }
+        }
+    }
+
+    @Override
+    public void storeState() {
+        // Intentionally empty.
+    }
+
+    @Override
+    public void restoreState() {
+        // rebuilds from scratch.
+        invalidateForwardCache();
+        cachedFwdOperations = null;
+        cachedFwdIntervals = null;
+        cachedFwdLengths = null;
+        cachedFwdMatrixOps = null;
+        cachedFwdTransitionMatrixIndices = null;
+        cachedFwdBranchLengthsArr = null;
+        cachedFwdMaxBuffer = -1;
+        cachedFwdDispatchVersion = -1L;
+
+        slabForwardValid = false;
+        cachedGradOperations = null;
+        cachedGradIntervals = null;
+        cachedGradLengths = null;
+        cachedGradDispatchVersion = -1L;
+    }
+
+    @Override
+    public void makeDirty() {
+        invalidateForwardCache();
+        cachedFwdOperations = null;
+        cachedFwdIntervals = null;
+        cachedFwdLengths = null;
+        cachedFwdMatrixOps = null;
+        cachedFwdTransitionMatrixIndices = null;
+        cachedFwdBranchLengthsArr = null;
+        cachedFwdMaxBuffer = -1;
+        cachedFwdDispatchVersion = -1L;
+        slabForwardValid = false;
+        cachedGradOperations = null;
+        cachedGradIntervals = null;
+        cachedGradLengths = null;
+        cachedGradDispatchVersion = -1L;
+    }
+
+    @Override
+    public void flipTransitionMatrixBuffer(List<TransitionMatrixOperation> matrixOperations) { }
+
+    @Override
+    String getStamp() {
+        return beagle != null ? "adjoint-beagle" : "adjoint-generic";
+    }
+
+    @Override
+    public void setPartials(int index, double[] partials) {
+        tipPartials.put(index, partials.clone());
+        invalidateForwardCache();
+        if (beagle != null) {
+            beagle.setPartials(index, partials);
+        }
+    }
+
+    @Override
+    public void getPartials(int index, double[] partials) {
+        assert index >= 0;
+        assert partials != null;
+        assert partials.length >= stateCount;
+
+        if (cachedForward != null
+                && index < cachedForward.partials.length
+                && cachedForward.partials[index] != null) {
+            System.arraycopy(cachedForward.partials[index], 0, partials, 0, stateCount);
+            return;
+        }
+
+        if (beagle != null && beagleForwardValid) {
+            beagle.getPartials(index, Beagle.NONE, partials);
+            return;
+        }
+
+        if (tipPartials.containsKey(index)) {
+            System.arraycopy(tipPartials.get(index), 0, partials, 0, stateCount);
+            return;
+        }
+
+        java.util.Arrays.fill(partials, 0, stateCount, 0.0);
+    }
+
+    @Override
+    public void updateEigenDecomposition(int index, EigenDecomposition decomposition, boolean flip) {
+        if (index != 0) {
+            throw new IllegalArgumentException("Adjoint route currently supports only eigen decomposition index 0");
+        }
+        if (transpose) {
+            decomposition = decomposition.transpose();
+        }
+        decompositions[index] = decomposition;
+        invalidateForwardCache();
+        if (beagle != null) {
+            beagle.setEigenDecomposition(
+                    eigenBufferHelper.getOffsetIndex(0),
+                    decomposition.getEigenVectors(),
+                    decomposition.getInverseEigenVectors(),
+                    decomposition.getEigenValues());
+        }
+    }
+
+    @Override
+    public void updatePopulationSizes(int index, double[] sizes, boolean flip) {
+        if (index != 0) {
+            throw new IllegalArgumentException("Adjoint route currently supports only population-size buffer index 0");
+        }
+        if (sizes.length != stateCount) {
+            throw new IllegalArgumentException("Expected exactly " + stateCount + " population sizes, found " + sizes.length);
+        }
+        System.arraycopy(sizes, 0, this.sizes, index * stateCount, stateCount);
+        invalidateForwardCache();
+        if (beagle != null) {
+            beagle.setStateFrequencies(populationSizesBufferHelper.getOffsetIndex(0), sizes);
+        }
+    }
+
+    private static final class ForwardResult {
+        final double logLikelihood;
+        final double[][] partials;
+        final double[][][] matrices;
+        final double[][] intervalE;
+        final double[][] intervalF;
+        final double[][] intervalG;
+        final double[][] intervalH;
+        final double[] coalescentProb;
+        final boolean[] hasCoalescentProb;
+        final CoalescentDetails[] coalescentDetails;
+        final double[][][] spectralKernels;
+        final ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans;
+
+        private ForwardResult(double logLikelihood,
+                              double[][] partials,
+                              double[][][] matrices,
+                              double[][] intervalE,
+                              double[][] intervalF,
+                              double[][] intervalG,
+                              double[][] intervalH,
+                              double[] coalescentProb,
+                              boolean[] hasCoalescentProb,
+                              CoalescentDetails[] coalescentDetails,
+                              double[][][] spectralKernels,
+                              ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans) {
+            this.logLikelihood = logLikelihood;
+            this.partials = partials;
+            this.matrices = matrices;
+            this.intervalE = intervalE;
+            this.intervalF = intervalF;
+            this.intervalG = intervalG;
+            this.intervalH = intervalH;
+            this.coalescentProb = coalescentProb;
+            this.hasCoalescentProb = hasCoalescentProb;
+            this.coalescentDetails = coalescentDetails;
+            this.spectralKernels = spectralKernels;
+            this.complexKernelPlans = complexKernelPlans;
+        }
+    }
+
+    private static final class CoalescentDetails {
+        double[] leftStart;
+        double[] rightStart;
+        double[] leftEnd;
+        double[] rightEnd;
+        final double[] w;
+        double j;
+
+        private CoalescentDetails(double[] w) {
+            this.w = w;
+        }
+    }
+
+    private final class ForwardWorkspace {
+        final double[][] partials;
+        final double[][][] matrices;
+        final double[][][] spectralKernels;
+        final double[][] intervalE;
+        final double[][] intervalF;
+        final double[][] intervalG;
+        final double[][] intervalH;
+        final double[] coalescentProb;
+        final boolean[] hasCoalescentProb;
+        final CoalescentDetails[] coalescentDetails;
+        final double[] transitionScratch;
+        final ComplexBlockKernelUtils.ComplexKernelPlan[] complexKernelPlans;
+
+        private ForwardWorkspace(int bufferCount, int matrixCount, int intervalCount, int maxIntervalNumber) {
+            this.partials = new double[bufferCount][stateCount];
+            this.matrices = new double[matrixCount][stateCount][stateCount];
+            this.spectralKernels = new double[matrixCount][stateCount][stateCount];
+            this.intervalE = new double[intervalCount][stateCount];
+            this.intervalF = new double[intervalCount][stateCount];
+            this.intervalG = new double[intervalCount][stateCount];
+            this.intervalH = new double[intervalCount][stateCount];
+            this.coalescentProb = new double[maxIntervalNumber + 1];
+            this.hasCoalescentProb = new boolean[maxIntervalNumber + 1];
+            this.coalescentDetails = new CoalescentDetails[bufferCount];
+            this.transitionScratch = new double[stateCount * stateCount];
+            this.complexKernelPlans = new ComplexBlockKernelUtils.ComplexKernelPlan[matrixCount];
+            for (int i = 0; i < bufferCount; ++i) {
+                coalescentDetails[i] = new CoalescentDetails(new double[stateCount]);
+            }
+        }
+
+        private void reset(int intervalCount, int maxIntervalNumber) {
+            Arrays.fill(coalescentProb, 0.0);
+            Arrays.fill(hasCoalescentProb, 0, maxIntervalNumber + 1, false);
+            for (int interval = 0; interval < intervalCount; ++interval) {
+                Arrays.fill(intervalE[interval], 0.0);
+                Arrays.fill(intervalF[interval], 0.0);
+                Arrays.fill(intervalG[interval], 0.0);
+                Arrays.fill(intervalH[interval], 0.0);
+            }
+        }
+    }
+
+    private final class ReverseWorkspace {
+        final double[][] partialAdjoint;
+        final double[][][] matrixAdjoint;
+        final double[][] eigenBasisGradient;
+        final boolean[] decompositionUsed;
+        final double[][] rateGradient;
+        final double[] populationSizeGradient;
+        final double[] adjE;
+        final double[] adjF;
+        final double[] adjG;
+        final double[] adjH;
+        final double[] zBar;
+        final double[] adjW;
+        final double[] leftEndBar;
+        final double[] rightEndBar;
+        final double[][] transformed;
+        final double[][] projected;
+        final double[][] expmAdjoint;
+        final double[][] exactDifferentialMassMatrix;
+        final double[][] complexBaseGenerator;
+        final AdjointMatrixExponentialUtils.Workspace complexExpmWorkspace;
+        final ComplexBlockKernelUtils.Workspace complexKernelWorkspace;
+        final int[] complexIndices;
+        final int[] realIndices;
+        final double[] transformedFlat;
+        final double[] projectedFlat;
+        final double[] expmAdjointFlat;
+
+        private ReverseWorkspace(int bufferCount, int matrixCount, int stateCount) {
+            this.partialAdjoint = new double[bufferCount][stateCount];
+            this.matrixAdjoint = new double[matrixCount][stateCount][stateCount];
+            this.eigenBasisGradient = new double[decompositions.length][stateCount * stateCount];
+            this.decompositionUsed = new boolean[decompositions.length];
+            this.rateGradient = new double[stateCount][stateCount];
+            this.populationSizeGradient = new double[stateCount];
+            this.adjE = new double[stateCount];
+            this.adjF = new double[stateCount];
+            this.adjG = new double[stateCount];
+            this.adjH = new double[stateCount];
+            this.zBar = new double[stateCount];
+            this.adjW = new double[stateCount];
+            this.leftEndBar = new double[stateCount];
+            this.rightEndBar = new double[stateCount];
+            this.transformed = new double[stateCount][stateCount];
+            this.projected = new double[stateCount][stateCount];
+            this.expmAdjoint = new double[stateCount][stateCount];
+            this.exactDifferentialMassMatrix = new double[stateCount][stateCount];
+            this.complexBaseGenerator = new double[stateCount][stateCount];
+            this.complexExpmWorkspace = new AdjointMatrixExponentialUtils.Workspace(stateCount);
+            this.complexKernelWorkspace = new ComplexBlockKernelUtils.Workspace();
+            this.complexIndices = new int[stateCount];
+            this.realIndices = new int[stateCount];
+            this.transformedFlat = new double[stateCount * stateCount];
+            this.projectedFlat = new double[stateCount * stateCount];
+            this.expmAdjointFlat = new double[stateCount * stateCount];
+        }
+
+        private void reset(List<TransitionMatrixOperation> matrixOperations, double[][] partials) {
+            for (int i = 0; i < partialAdjoint.length; ++i) {
+                if (partials[i] != null) {
+                    Arrays.fill(partialAdjoint[i], 0.0);
+                }
+            }
+            for (TransitionMatrixOperation operation : matrixOperations) {
+                clearSquare(matrixAdjoint[operation.outputBuffer]);
+                clearFlat(eigenBasisGradient[operation.decompositionBuffer]);
+                decompositionUsed[operation.decompositionBuffer] = false;
+            }
+            clearSquare(rateGradient);
+            Arrays.fill(populationSizeGradient, 0.0);
+        }
+    }
+
+    private static final class ReverseResult {
+        final double[][] rateGradient;
+        final double[] populationSizeGradient;
+        final double[][][] matrixAdjoint;
+
+        private ReverseResult(double[][] rateGradient, double[] populationSizeGradient, double[][][] matrixAdjoint) {
+            this.rateGradient = rateGradient;
+            this.populationSizeGradient = populationSizeGradient;
+            this.matrixAdjoint = matrixAdjoint;
+        }
+    }
+
+    static final class DebugState {
+        final ForwardResult forward;
+        final ReverseResult reverse;
+
+        private DebugState(ForwardResult forward, ReverseResult reverse) {
+            this.forward = forward;
+            this.reverse = reverse;
+        }
+    }
+}

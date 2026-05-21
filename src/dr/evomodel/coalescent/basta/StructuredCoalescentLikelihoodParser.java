@@ -62,6 +62,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     private static final boolean USE_DELEGATE = true;
     private static final boolean USE_BEAGLE = true;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String GRADIENT_IMPLEMENTATION = "gradientImplementation";
     private static final boolean TRANSPOSE = true;
 
     public String getParserName() {
@@ -134,6 +135,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         }
 
         int threads = xo.getAttribute(THREADS, 1);
+        String gradientImplementationName = xo.hasAttribute(GRADIENT_IMPLEMENTATION) ?
+                xo.getStringAttribute(GRADIENT_IMPLEMENTATION) : null;
 
         String name = xo.getId();
 
@@ -145,7 +148,20 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 } else {
                     if (USE_DELEGATE) {
                         final BastaLikelihoodDelegate delegate;
-                        if (USE_BEAGLE) {
+                        boolean useAdjoint = "adjoint".equalsIgnoreCase(gradientImplementationName);
+
+                        if (gradientImplementationName != null &&
+                                !useAdjoint &&
+                                !"legacy".equalsIgnoreCase(gradientImplementationName)) {
+                            throw new XMLParseException("Unknown BASTA gradient implementation: " +
+                                    gradientImplementationName + ". Use 'adjoint' or 'legacy'.");
+                        }
+
+                        if (useAdjoint) {
+                            delegate = new AdjointGenericBastaLikelihoodDelegate(name, treeModel,
+                                    generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE,
+                                    USE_BEAGLE);
+                        } else if (USE_BEAGLE) {
                             delegate = new BeagleBastaLikelihoodDelegate(name, treeModel,
                                     generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
@@ -197,6 +213,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(SUB_INTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
+            AttributeRule.newStringRule(GRADIENT_IMPLEMENTATION, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
 //            AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),
 //            AttributeRule.newBooleanRule(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, true),

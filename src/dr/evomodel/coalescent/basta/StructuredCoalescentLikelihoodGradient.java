@@ -26,8 +26,9 @@
  */
 
 package dr.evomodel.coalescent.basta;
-
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.loggers.LogColumn;
@@ -40,6 +41,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
     private final BastaLikelihood structuredCoalescentLikelihood;
     private final WrtParameter wrtParameter;
+    private final SubstitutionModel substitutionModel;
 
     private final Parameter parameter;
     private final Parameter chainRuleDependent;
@@ -51,6 +53,7 @@ public class StructuredCoalescentLikelihoodGradient implements
                                                   WrtParameter wrtParameter) {
         this.structuredCoalescentLikelihood = BastaLikelihood;
         this.wrtParameter = wrtParameter;
+        this.substitutionModel = substitutionModel;
 
         this.parameter = wrtParameter.getParameter(structuredCoalescentLikelihood, substitutionModel);
         this.chainRuleDependent = wrtParameter.getChainRuleDependent(structuredCoalescentLikelihood, substitutionModel);
@@ -79,7 +82,7 @@ public class StructuredCoalescentLikelihoodGradient implements
     }
 
     double[] chainRule(double[] gradient) {
-        return wrtParameter.chainRule(gradient, chainRuleDependent);
+        return wrtParameter.chainRule(gradient, chainRuleDependent, substitutionModel);
     }
 
     boolean requiresTransitionMatrices() {
@@ -125,28 +128,48 @@ public class StructuredCoalescentLikelihoodGradient implements
         MIGRATION_RATE("migrationRate") {
             @Override
             Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
-                assert(substitutionModel instanceof SVSComplexSubstitutionModel);
-                SVSComplexSubstitutionModel svsComplexSubstitutionModel = (SVSComplexSubstitutionModel) substitutionModel;
-                return svsComplexSubstitutionModel.getRatesParameter();
+                assert(substitutionModel instanceof GeneralSubstitutionModel);
+                GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) substitutionModel;
+                return generalSubstitutionModel.getRatesParameter();
             }
 
             @Override
-            double[] chainRule(double[] gradient, Parameter parameter) {
+            double[] chainRule(double[] gradient, Parameter parameter, SubstitutionModel substitutionModel) {
                 final int dim = parameter.getDimension();
+
+                boolean normalize = (substitutionModel instanceof ComplexSubstitutionModel)
+                        && ((ComplexSubstitutionModel) substitutionModel).getNormalization();
+                double norm = 1.0;
+                double C = 0.0;
+
+                if (normalize) {
+                    norm = ((BaseSubstitutionModel) substitutionModel).setupMatrix();
+                    double[] qNorm = new double[dim * dim];
+                    substitutionModel.getInfinitesimalMatrix(qNorm);
+                    for (int a = 0; a < dim; a++) {
+                        for (int b = 0; b < dim; b++) {
+                            C += gradient[a * dim + b] * qNorm[a * dim + b];
+                        }
+                    }
+                }
 
                 double[] chainedGradient = new double[dim * (dim - 1)];
 
                 int k = 0;
                 for (int i = 0; i < dim; ++i) {
                     for (int j = i + 1; j < dim; ++j) {
-                        chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i]) * parameter.getParameterValue(j) ;
+                        double piJ = parameter.getParameterValue(j);
+                        double piI = parameter.getParameterValue(i);
+                        chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i] - C * piI) * piJ / norm;
                         ++k;
                     }
                 }
 
                 for (int j = 0; j < dim; ++j) {
                     for (int i = j + 1; i < dim; ++i) {
-                        chainedGradient[k] =(gradient[i * dim + j] - gradient[i * dim + i]) * parameter.getParameterValue(j);
+                        double piJ = parameter.getParameterValue(j);
+                        double piI = parameter.getParameterValue(i);
+                        chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i] - C * piI) * piJ / norm;
                         ++k;
                     }
                 }
@@ -178,10 +201,19 @@ public class StructuredCoalescentLikelihoodGradient implements
             }
 
             @Override
-            double[] chainRule(double[] gradient, Parameter parameter) {
-                final int dim = parameter.getDimension();
+            double[] chainRule(double[] gradient, Parameter parameter, SubstitutionModel substitutionModel) {
+                final int paramDim = parameter.getDimension();
 
-                for (int i = 0; i < dim; ++i) {//
+                if (paramDim == 1 && gradient.length > 1) {
+                    // Single shared pop size: sum all per-deme intermediate gradients, then apply chain rule.
+                    // By the chain rule: d logL / d N_shared = sum_i (d logL / d N_i).
+                    double sum = 0.0;
+                    for (double g : gradient) sum += g;
+                    double popSize = parameter.getParameterValue(0);
+                    return new double[]{sum / -(popSize * popSize)};
+                }
+
+                for (int i = 0; i < paramDim; ++i) {
                     double popSize = parameter.getParameterValue(i);
                     gradient[i] /= -(popSize * popSize);
                 }
@@ -212,7 +244,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
         abstract Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel);
 
-        abstract double[] chainRule(double[] gradient, Parameter parameter);
+        abstract double[] chainRule(double[] gradient, Parameter parameter, SubstitutionModel substitutionModel);
 
         abstract int getIntermediateGradientDimension(int stateCount);
 

@@ -86,12 +86,12 @@ public final class DiscretePreOrderReport implements Reportable {
                     @Override
                     public void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out) {
 
+                        final int stateCount = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0)
+                                .getDataType().getStateCount();
+
+                        assert out.length == stateCount;  // TODO update for multiple columns, rate classes, etc.
+
                         if (type == DiscretePartialsType.TOP || displayType == DiscretePartialsType.TOP_SPECTRAL) {
-
-                            final int stateCount = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0)
-                                    .getDataType().getStateCount();
-
-                            assert out.length == stateCount;  // TODO update for multiple columns, rate classes, etc.
 
                             if (displayType == DiscretePartialsType.TOP_SPECTRAL) {
                                 double[] intermediate = new double[out.length];
@@ -105,6 +105,19 @@ public final class DiscretePreOrderReport implements Reportable {
                                 super.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, out);
                             }
 
+                        } else if (type == DiscretePartialsType.BOTTOM || displayType == DiscretePartialsType.BOTTOM_SPECTRAL) {
+
+                            if (displayType == DiscretePartialsType.BOTTOM_SPECTRAL) {
+                                double[] intermediate = new double[out.length];
+                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, intermediate);
+
+                                EigenDecomposition ed = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0).getEigenDecomposition();
+                                EigenDecomposition edT = ed.transpose();
+
+                                multiplyMatrixVector(edT.getEigenVectors(), intermediate, 0, out, 0, stateCount);
+                            } else {
+                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, out);
+                            }
                         } else {
                             super.getPreorderPartials(nodeNumber, type, out);
                         }

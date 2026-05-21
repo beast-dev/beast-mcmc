@@ -27,17 +27,20 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import beagle.Beagle;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -66,6 +69,10 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         this.branchRateModel = branchRateModel;
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModelCount = branchModel.getSubstitutionModels().size();
+
+        this.tmp1 = new double[categoryCount * patternCount * stateCount];
+        this.tmp2 = new double[categoryCount * patternCount * stateCount];
+        this.tmp3 = new double[categoryCount * patternCount * stateCount];
     }
 
     @Override
@@ -157,49 +164,136 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
         final double[] branchLengths = new double[tree.getNodeCount() - 1];
 
+        List<SubstitutionModel> substitutionModels = likelihoodDelegate.getBranchModel().getSubstitutionModels();
+
         if (substitutionModelCount == 1) {
+
+            EigenDecomposition ed = substitutionModels.get(0).getEigenDecomposition();
+            EigenDecomposition ted = ed.transpose();
 
             Arrays.fill(first, 0, first.length, 0.0);
 
             int count = coverWholeTree(postBufferIndices, preBufferIndices, branchLengths);
             calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
-                    new int[] { 0 }, new int[] { 0 },
+                    ed, ted,
                     branchLengths,
                     count,
                     first, null);
         } else {
 
-            double[] buffer = new double[length];
+            throw new RuntimeException("Not yet implemented");
 
-            for (int i = 0; i < substitutionModelCount; ++i) {
-
-                Arrays.fill(buffer, 0, buffer.length, 0.0);
-                int count = coverPartialTree(i, postBufferIndices, preBufferIndices,
-                        branchLengths);
-                beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
-                        new int[] { 0 }, new int[] { 0 },
-                        branchLengths,
-                        count,
-                        buffer, null);
-
-                System.arraycopy(buffer, 0, first, i * length, length);
-            }
+//            double[] buffer = new double[length];
+//
+//            for (int i = 0; i < substitutionModelCount; ++i) {
+//
+//                Arrays.fill(buffer, 0, buffer.length, 0.0);
+//                int count = coverPartialTree(i, postBufferIndices, preBufferIndices,
+//                        branchLengths);
+//                beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
+//                        new int[] { 0 }, new int[] { 0 },
+//                        branchLengths,
+//                        count,
+//                        buffer, null);
+//
+//                System.arraycopy(buffer, 0, first, i * length, length);
+//            }
         }
         // TOOD handle `firstSquared` and `second`
     }
 
     private void calculateCrossProductDifferentials(int[] postBufferIndices,
                                                     int[] preBufferIndices,
-                                                    int[] ints,
-                                                    int[] ints1,
+                                                    EigenDecomposition ed,
+                                                    EigenDecomposition ted,
                                                     double[] branchLengths,
                                                     int count,
                                                     double[] first,
                                                     double[] second) {
-        EigenDecomposition ed = branchModel.getSubstitutionModels().get(0).getEigenDecomposition();
-        EigenDecomposition edT = ed.transpose();
+        for (int i = 0; i < count; ++i) {
+            calculateCrossProductDifferentials(postBufferIndices[i], preBufferIndices[i],
+                    ed, ted, branchLengths[i], first, second);
+        }
+    }
 
+    private final double[] tmp1;
+    private final double[] tmp2;
+    private final double[] tmp3;
 
+    private void calculateCrossProductDifferentials(int postBufferIndex,
+                                                    int preBufferIndex,
+                                                    EigenDecomposition ed,
+                                                    EigenDecomposition ted,
+                                                    double branchLength,
+                                                    double[] first,
+                                                    double[] second) {
+
+        double[] postOrderPartials = tmp1;
+        double[] preOrderPartials = tmp2;
+        double[] intermediate = tmp3;
+
+        getRotatedPartial(postBufferIndex,
+                ed.getInverseEigenVectors(),
+                postOrderPartials, intermediate);
+        getRotatedPartial(preBufferIndex,
+                ted.getInverseEigenVectors(),
+                preOrderPartials, intermediate);
+
+        double likelihood = blockDiagonalWeightedInnerProduct(
+                preOrderPartials, 0,
+                postOrderPartials, 0,
+                ed.getEigenValues(), branchLength,
+                stateCount);
+
+        System.err.println("like = " + Math.log(likelihood));
+
+    }
+
+    private double blockDiagonalWeightedInnerProduct(double[] lhs, final int offsetLhs,
+                                                     double[] rhs, final int offsetRhs,
+                                                     double[] eval,
+                                                     final double t,
+                                                     final int dim) {
+        double sum = 0.0;
+
+        for (int i = 0; i < dim; ++i) {
+            double a = eval[i];
+            double expat = Math.exp(a * t);
+            double b = eval[dim + i];
+            if (b == 0.0) {
+                sum += lhs[offsetLhs + i] * expat * rhs[offsetRhs + i];
+            } else {
+                double expatcosbt = expat * Math.cos(b * t);
+                double expatsinbt = expat * Math.sin(b * t);
+
+                double x0 = expatcosbt * rhs[offsetRhs + i] + expatsinbt * rhs[offsetRhs + i + 1];
+                double x1 = expatcosbt * rhs[offsetRhs + i + 1] - expatsinbt * rhs[offsetRhs + 1];
+                sum += lhs[offsetLhs + i] * x0 + lhs[offsetLhs + i + 1] * x1;
+
+                ++i;
+            }
+        }
+
+        return sum;
+    }
+
+    private void getRotatedPartial(int partialIndex,
+                                   double[] rotation,
+                                   double[] out,
+                                   double[] intermediate) {
+
+        // TODO does not work for STATES
+        beagle.getPartials(partialIndex, Beagle.NONE, intermediate);
+
+        int offset = 0;
+        for (int i = 0; i < categoryCount; ++i) {
+            for (int j = 0; j < patternCount; ++j) {
+
+                multiplyMatrixVector(rotation, intermediate, offset, out, offset, stateCount);
+
+                offset += stateCount;
+            }
+        }
     }
 
     @Override
@@ -230,5 +324,16 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 return getGradient(node);
             }
         });
+    }
+
+    private static void multiplyMatrixVector(double[] matrix, double[] vector, int vectorOffset, double[] out, int outOffset, int dim) {
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            final int rowBase = i * dim;
+            for (int j = 0; j < dim; j++) {
+                sum += matrix[rowBase + j] * vector[vectorOffset + j];
+            }
+            out[outOffset + i] = sum;
+        }
     }
 }

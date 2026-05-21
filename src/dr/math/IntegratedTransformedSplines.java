@@ -23,67 +23,77 @@
  */
 
 package dr.math;
+
 import dr.inference.model.Parameter;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.TrapezoidIntegrator;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Pratyusa Datta
  * @author Marc A. Suchard
  */
-
-// still need to do Marc's TO DO'S
-
 public class IntegratedTransformedSplines {
 
+    public static final String TRANSFORM_EXPONENTIAL = "exponential";
+    public static final String TRANSFORM_SQUARED     = "squared";
+    public static final String TRANSFORM_IDENTITY    = "identity";
 
     private final Parameter coefficient;
-    private final Parameter intercept;
     private final double[] knots;
     private final double lowerBoundary;
     private final double upperBoundary;
     private final double[] expandedKnots;
     private final int degree;
-    private boolean expandedKnotsKnown;
-
+    private final String transform;
+    private final List<BSpline.PPoly> basis;
+    private BSpline.PPoly splineFunction;
+    private BSpline.PPoly splineFunctionSquared;
+    private double[] cachedCoefficientValues;
 
 
     public IntegratedTransformedSplines(Parameter coefficient,
-                                    Parameter intercept,
-                                    double[] knots,
-                                    double lowerBoundary,
-                                    double upperBoundary,
-                                    int degree) {
+                                        double[] knots,
+                                        double lowerBoundary,
+                                        double upperBoundary,
+                                        int degree,
+                                        String transform) {
 
-        if (coefficient.getDimension() != knots.length + degree + 1 && intercept == null) {
-            throw new IllegalArgumentException("Coefficient dimension must be equal to number of knots + degree + 1 if intercept is null");
+        if (coefficient.getDimension() != knots.length + degree + 1) {
+            throw new IllegalArgumentException(
+                    "Coefficient dimension must equal number of knots + degree + 1");
+        }
+        if (!TRANSFORM_EXPONENTIAL.equals(transform) && !TRANSFORM_SQUARED.equals(transform) &&
+                !TRANSFORM_IDENTITY.equals(transform)) {
+            throw new IllegalArgumentException("transform must be \"" + TRANSFORM_EXPONENTIAL +
+                    "\", \"" + TRANSFORM_SQUARED + "\", or \"" + TRANSFORM_IDENTITY + "\"");
         }
 
-        if (coefficient.getDimension() != knots.length + degree && intercept != null) {
-            throw new IllegalArgumentException("Coefficient dimension must be equal to number of knots + degree if intercept is non-null");
-        }
+        this.coefficient    = coefficient;
+        this.knots          = knots;
+        this.lowerBoundary  = lowerBoundary;
+        this.upperBoundary  = upperBoundary;
+        this.expandedKnots  = new double[knots.length + 2 * (degree + 1)];
+        this.degree         = degree;
+        this.transform      = transform;
 
-        this.coefficient = coefficient;
-        this.intercept = intercept;
-        this.knots = knots;
-        this.lowerBoundary = lowerBoundary;
-        this.upperBoundary = upperBoundary;
-        this.expandedKnots = new double[knots.length + 2 * (degree + 1)];
-        this.degree = degree;
-        this.expandedKnotsKnown = false;
+        buildExpandedKnots();
 
+        this.basis = BSpline.bSplineBasis(expandedKnots, degree);
+
+        this.splineFunction = null;
+        this.splineFunctionSquared = null;
+        this.cachedCoefficientValues = null;
     }
 
-    public Parameter getCoefficients() { return coefficient; }
-    public Parameter getIntercept() { return intercept; }
-    public int getCoefficientDim() {
-        return coefficient.getDimension();
-    }
-    public boolean isInterceptNull() {
-        return(intercept == null);
-    }
+
+    public Parameter getCoefficients()  { return coefficient; }
+    public int getCoefficientDim(){ return coefficient.getDimension(); }
+
     public double[] getCoefficientValues() {
         double[] values = new double[getCoefficientDim()];
         for (int i = 0; i < values.length; i++) {
@@ -92,186 +102,200 @@ public class IntegratedTransformedSplines {
         return values;
     }
 
-    public void getExpandedKnots() {
 
-        if (!expandedKnotsKnown) {
-
-            for (int i = 0; i < degree + 1; i++) {
-                expandedKnots[i] = lowerBoundary;
-                expandedKnots[degree + knots.length + i + 1] = upperBoundary;
-            }
-            for (int i = 0; i < knots.length; i++) {
-                expandedKnots[degree + i + 1] = knots[i];
-            }
-            expandedKnotsKnown = true;
+    private void buildExpandedKnots() {
+        for (int i = 0; i < degree + 1; i++) {
+            expandedKnots[i] = lowerBoundary;
+            expandedKnots[degree + knots.length + i + 1] = upperBoundary;
+        }
+        for (int i = 0; i < knots.length; i++) {
+            expandedKnots[degree + i + 1] = knots[i];
         }
     }
 
 
+    private void refreshSplineFunction() {
+        double[] current = getCoefficientValues();
 
-
-    // TODO check
-    public static double evaluatePolynomial(double x, double... coefficients) {
-        int i = coefficients.length - 1;
-        double value = coefficients[i];
-        --i;
-
-        for ( ; i >= 0; --i) {
-            value = value * x + coefficients[i];
+        if (splineFunction != null && Arrays.equals(current, cachedCoefficientValues)) {
+            return;
         }
 
-        return value;
-    }
+        BSpline.PPoly f = BSpline.PPoly.zero(expandedKnots);
+        for (int i = 0; i < basis.size(); i++) {
+            f = BSpline.PPoly.add(f, basis.get(i).scale(current[i]));
+        }
+        splineFunction = f;
 
-    // TODO to integrate, could either
-    // 1. transform coefficients[] --> integratedCoefficients[] and call evaluatePolynamial(), or
-    // 2. fuse transformation and evaluation
-
-    // TODO check
-    public static double evaluatePolynomialIntegralEndPt(double x, double... coefficients) {
-        int i = coefficients.length - 1;
-        double value = coefficients[i] / (i + 1);
-        --i;
-
-        for ( ; i >= 0; --i) {
-            value = value * x + coefficients[i] / (i + 1);
+        if (TRANSFORM_SQUARED.equals(transform)) {
+            splineFunctionSquared = f.square();
         }
 
-        return value * x;
-    }
-
-    public static double evaluatePolynomialIntegral(double start, double end, double... coefficients) {
-        return evaluatePolynomialIntegralEndPt(end, coefficients) -
-                evaluatePolynomialIntegralEndPt(start, coefficients);
+        cachedCoefficientValues = current;
     }
 
 
-    class Polynomial {
-
-        final double[] coefficients;
-        private final int degree;
-
-        Polynomial(int degree) {
-            this(new double[degree + 1], degree);
-        }
-
-        Polynomial(double[] coefficients, int degree) {
-
-            assert coefficients.length >= degree + 1;
-
-            this.coefficients = coefficients;
-            this.degree = degree;
-        }
-    }
-
-    private static final boolean TEST = false;
-
-    public static double[] polynomialProduct1(double[] lhs, double[] rhs) {
-
-        double[] product = new double[lhs.length + rhs.length - 1]; // TODO pass buffer
-
-        for (int i = 0; i < lhs.length; ++i) {
-            for (int j = 0; j < rhs.length; ++j) {
-                product[i + j] += lhs[i] * rhs[j];
-            }
-        }
-
-        return product;
-    }
-
-    public static double[] polynomialProduct2(double[] lhs, double[] rhs) {
-
-        double[] product = new double[lhs.length + rhs.length - 1]; // TODO pass buffer
-
-        for (int i = 0; i < product.length; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j <= i; ++j) {
-                sum += lhs[j] * rhs[i - j];
-            }
-            product[i] = sum;
-        }
-
-        return product;
-    }
-
-    public double getSplineBasis(int i, int d, double x, double[] knots) {
-        if (d == 0) {
-            if (x >= knots[i] && x < knots[i + 1]) {
-                return 1.0;
-            } else {
-                return 0.0;
-            }
-        }
-
-        double denom1 = knots[i + d] - knots[i];
-        double denom2 = knots[i + d + 1] - knots[i + 1];
-
-        double term1 = 0.0;
-        double term2 = 0.0;
-
-        if (denom1 != 0) {
-            term1 = ((x - knots[i]) / denom1) * getSplineBasis(i, d - 1, x, knots);
-        }
-        if (denom2 != 0) {
-            term2 = ((knots[i + d + 1] - x) / denom2) * getSplineBasis(i + 1, d - 1, x, knots);
-        }
-
-        return term1 + term2;
+    public double evaluateSpline(double x) {
+        refreshSplineFunction();
+        return splineFunction.evaluate(x);
     }
 
 
     public double evaluateExpSpline(double x) {
-        double sum = 0.0;
-        getExpandedKnots();
-        if (isInterceptNull()) {
-            for (int i = 0; i < coefficient.getDimension(); i++) {
-                sum += coefficient.getParameterValue(i) * getSplineBasis(i, degree, x, expandedKnots);
-            }
-        } else {
-            for (int i = 0; i < coefficient.getDimension(); i++) {
-                sum += coefficient.getParameterValue(i) * getSplineBasis(i + 1, degree, x, expandedKnots);
-            }
-            sum += intercept.getParameterValue(0);
-        }
-
-
-        return Math.exp(sum);
+        refreshSplineFunction();
+        return Math.exp(splineFunction.evaluate(x));
     }
 
-    public double getExponentialSplinesIntegral(final double a, final double b)
-            throws org.apache.commons.math.FunctionEvaluationException,
-            org.apache.commons.math.MaxIterationsExceededException {
 
-        UnivariateRealFunction f = new UnivariateRealFunction() {
+    public double evaluateSquaredSpline(double x) {
+        refreshSplineFunction();
+        return splineFunctionSquared.evaluate(x);
+    }
+
+
+    public double getExponentialSplinesIntegral(final double a, final double b)
+            throws FunctionEvaluationException, MaxIterationsExceededException {
+
+        refreshSplineFunction();
+
+        final BSpline.PPoly f = splineFunction;
+
+        UnivariateRealFunction integrand = new UnivariateRealFunction() {
             @Override
             public double value(double x) {
-                return evaluateExpSpline(x);
+                return Math.exp(f.evaluate(x));
             }
         };
 
         TrapezoidIntegrator integrator = new TrapezoidIntegrator();
-        return integrator.integrate(f, a, b);
+        return integrator.integrate(integrand, a, b);
     }
 
-    public double getIntegral (double start, double end) throws FunctionEvaluationException, MaxIterationsExceededException {
 
-            double integral = 0;
-            if (end <= upperBoundary) {
-                integral = getExponentialSplinesIntegral(start, end);
-            }
-            if (end > upperBoundary && start < upperBoundary) {
-                integral = evaluateExpSpline(upperBoundary) * (end - upperBoundary) +
-                        getExponentialSplinesIntegral(start, upperBoundary);
-            }
-            if (start >= upperBoundary) {
-                integral = evaluateExpSpline(upperBoundary) * (end - start);
-            }
-            return  integral;
+    public double getSquaredSplinesIntegral(double a, double b) {
+        refreshSplineFunction();
+        return splineFunctionSquared.integral(a, b);
     }
 
+
+    public double getIdentitySplinesIntegral(double a, double b) {
+        refreshSplineFunction();
+        return splineFunction.integral(a, b);
+    }
+
+
+    public double getIntegral(double start, double end)
+            throws FunctionEvaluationException, MaxIterationsExceededException {
+
+        refreshSplineFunction();
+
+        if (TRANSFORM_EXPONENTIAL.equals(transform)) {
+            return getExponentialIntegral(start, end);
+        } else if (TRANSFORM_SQUARED.equals(transform)) {
+            return getSquaredIntegral(start, end);
+        } else {
+            return getIdentityIntegral(start, end);
+        }
+    }
+
+
+    private double getExponentialIntegral(double start, double end)
+            throws FunctionEvaluationException, MaxIterationsExceededException {
+
+        if (end <= upperBoundary) {
+            return getExponentialSplinesIntegral(start, end);
+        } else if (start < upperBoundary) {
+            double boundaryRate = evaluateExpSpline(upperBoundary);
+            return getExponentialSplinesIntegral(start, upperBoundary)
+                    + boundaryRate * (end - upperBoundary);
+        } else {
+            return evaluateExpSpline(upperBoundary) * (end - start);
+        }
+    }
+
+    private double getSquaredIntegral(double start, double end) {
+
+        if (end <= upperBoundary) {
+            return getSquaredSplinesIntegral(start, end);
+        } else if (start < upperBoundary) {
+            double boundaryRate = evaluateSquaredSpline(upperBoundary);
+            return getSquaredSplinesIntegral(start, upperBoundary)
+                    + boundaryRate * (end - upperBoundary);
+        } else {
+            return evaluateSquaredSpline(upperBoundary) * (end - start);
+        }
+    }
+
+    private double getIdentityIntegral(double start, double end) {
+
+        if (end <= upperBoundary) {
+            return getIdentitySplinesIntegral(start, end);
+        } else if (start < upperBoundary) {
+            double boundaryRate = evaluateSpline(upperBoundary);
+            return getIdentitySplinesIntegral(start, upperBoundary)
+                    + boundaryRate * (end - upperBoundary);
+        } else {
+            return evaluateSpline(upperBoundary) * (end - start);
+        }
+    }
+
+
+
+    public static double evaluatePolynomial(double x, double... coefficients) {
+        int i = coefficients.length - 1;
+        double value = coefficients[i];
+        --i;
+        for (; i >= 0; --i) {
+            value = value * x + coefficients[i];
+        }
+        return value;
+    }
+
+    public static double evaluatePolynomialIntegralEndPt(double x, double... coefficients) {
+        int i = coefficients.length - 1;
+        double value = coefficients[i] / (i + 1);
+        --i;
+        for (; i >= 0; --i) {
+            value = value * x + coefficients[i] / (i + 1);
+        }
+        return value * x;
+    }
+
+    public static double evaluatePolynomialIntegral(double start, double end, double... coefficients) {
+        return evaluatePolynomialIntegralEndPt(end, coefficients)
+                - evaluatePolynomialIntegralEndPt(start, coefficients);
+    }
+
+    public static double[] polynomialProduct1(double[] lhs, double[] rhs) {
+        double[] product = new double[lhs.length + rhs.length - 1];
+        for (int i = 0; i < lhs.length; ++i)
+            for (int j = 0; j < rhs.length; ++j)
+                product[i + j] += lhs[i] * rhs[j];
+        return product;
+    }
+
+    public static double[] polynomialProduct2(double[] lhs, double[] rhs) {
+        double[] product = new double[lhs.length + rhs.length - 1];
+        for (int i = 0; i < product.length; ++i) {
+            double sum = 0.0;
+            for (int j = 0; j <= i; ++j)
+                sum += lhs[j] * rhs[i - j];
+            product[i] = sum;
+        }
+        return product;
+    }
+
+
+    class Polynomial {
+        final double[] coefficients;
+        private final int degree;
+
+        Polynomial(int degree) { this(new double[degree + 1], degree); }
+
+        Polynomial(double[] coefficients, int degree) {
+            assert coefficients.length >= degree + 1;
+            this.coefficients = coefficients;
+            this.degree       = degree;
+        }
+    }
 }
-
-
-
-
-

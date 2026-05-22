@@ -190,7 +190,7 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             BeagleBasta instance = BastaFactory.loadBastaInstance(
                     0, 5, maxNumCoalescentIntervals,
                     2 * currentPartialsCount, 0, stateCount,
-                    1, 2, 2 * currentIntervalsCount, 1,
+                    1, 2, 4 * currentIntervalsCount, 1,
                     1, resourceList, preferenceFlags, requirementFlags);
 
             InstanceDetails details = instance.getDetails();
@@ -379,17 +379,20 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
             beagleGradScratch = new double[stateCount * stateCount];
         }
 
+        final int partialAdjointBufferBase = currentPartialsCount;
+        final int matrixAdjointBufferBase  = 2 * currentIntervalsCount;
+        final int eigenIndex = eigenBufferHelper.getOffsetIndex(0);
+
+        double[] popSizeGrad = new double[stateCount];
+
         long tBwd0 = System.nanoTime();
-        beagle.accumulateBastaPartialsGrad(cachedGradOperations, opCount,
-                cachedGradIntervals, intCount, cachedGradLengths,
-                populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
-                beagleGradScratch);
+        beagle.accumulateBastaPartialsGrad(cachedGradOperations, opCount, cachedGradIntervals, intCount, cachedGradLengths,
+                populationSizeIndex, COALESCENT_PROBABILITY_INDEX, eigenIndex, partialAdjointBufferBase,
+                matrixAdjointBufferBase, popSizeGrad, beagleGradScratch);
         long tBwd1 = System.nanoTime();
         adjBackwardPassTotalNs += (tBwd1 - tBwd0);
 
         if (wrt.getType() == StructuredCoalescentLikelihoodGradient.WrtParameter.POPULATION_SIZE) {
-            double[] popSizeGrad = new double[stateCount];
-            beagle.getPopulationSizeGradient(popSizeGrad);
             for (int i = 0; i < stateCount; ++i) {
                 popSizeGrad[i] *= -sizes[i] * sizes[i];
             }
@@ -401,7 +404,6 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
         int M = matrixOperations.size();
 
         EigenDecomposition decomposition = decompositions[matrixOperations.get(0).decompositionBuffer];
-        double[] eigenValues = decomposition.getEigenValues();
         boolean hasComplex = hasComplexEigenvalues(decomposition);
 
         double[] branchLengthsArray = new double[M];
@@ -411,7 +413,8 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
 
         long tEig0 = System.nanoTime();
         double[] result = new double[S2];
-        beagle.accumulateEigenBasisGradient(eigenValues, branchLengthsArray, M, hasComplex, result);
+        beagle.accumulateEigenBasisGradient(eigenIndex, matrixAdjointBufferBase,
+                branchLengthsArray, M, hasComplex, result);
         long tEig1 = System.nanoTime();
         adjEigenBasisTotalNs += (tEig1 - tEig0);
 

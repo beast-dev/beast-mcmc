@@ -91,27 +91,23 @@ public class BastaJNIWrapper {
 
     public native int updateTransitionMatricesGrad(int instance, int[] transitionMatrixIndices, double[] branchLengths, int count);
 
-    public native int accumulateBastaPartialsGrad(int instance, int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
+    public native int accumulateBastaPartialsGrad(int instance,
+                                                  int[] operations, int operationCount,
+                                                  int[] intervalStarts, int intervalCount,
+                                                  double[] intervalLengths,
+                                                  int populationSizeIndex,
+                                                  int coalescentProbabilityIndex,
+                                                  int eigenIndex,
+                                                  int partialAdjointBufferBase,
+                                                  int matrixAdjointBufferBase,
+                                                  double[] popSizeGradOut,
+                                                  double[] result);
 
     public native int allocateCoalescentGradBuffers(int instance, int partialsCount);
 
-    public native int updateBastaPartialsPopSizeGrad(int instance, int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
-
-    public native int accumulateBastaPartialsPopSizeGrad(int instance, int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
-
-    public native int getMatrixAdjoint(int instance, int matrixIndex, double[] buffer);
-
-    public native int getPopulationSizeGradient(int instance, double[] buffer);
-
-    public native int setExpmKernels(int instance, double[] kernels);
-
-    public native int accumulateExpmGradient(int instance, double[] out);
-
-    public native int transformMatrixAdjoints(int instance, int matrixCount, double[] out);
-
-    public native int backTransformEigenBasisGradient(int instance, double[] eigenBasisGrad, double[] out);
-
-    public native int accumulateEigenBasisGradient(int instance, double[] eigenValues,
+    public native int accumulateEigenBasisGradient(int instance,
+                                                    int eigenIndex,
+                                                    int matrixAdjointBufferBase,
                                                     double[] branchLengths, int matrixCount,
                                                     int hasComplexEigenvalues, double[] outRateGradient);
 

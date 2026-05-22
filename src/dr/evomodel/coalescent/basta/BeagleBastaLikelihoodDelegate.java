@@ -154,9 +154,11 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
 
         int partialsAlloc = useAdjointGradient ? 2 * currentPartialsCount : currentPartialsCount;
+        int forwardMatrixCount = 2 * currentIntervalsCount;
+        int matrixAlloc = useAdjointGradient ? 2 * forwardMatrixCount : forwardMatrixCount;
         beagle = BastaFactory.loadBastaInstance(0, coalescentBufferCount, maxNumCoalescentIntervals,
                 partialsAlloc, 0, stateCount,
-                1, 2, 2 * currentIntervalsCount, 1,
+                1, 2, matrixAlloc, 1,
                 1, resourceList, preferenceFlags, requirementFlags);
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
@@ -358,7 +360,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
                     intervals, intervalStarts.size(), lengths,
                     populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
-                    migRateOut);
+                    0, -1, -1, null, migRateOut);
 
             System.arraycopy(migRateOut, 0, out, 0, out.length);
         }
@@ -380,6 +382,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
+                0, -1, -1, null,
                 out);
 
         return out;

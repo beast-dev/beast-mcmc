@@ -93,9 +93,11 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
-    public void accumulateBastaPartialsGrad(int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result) {
-        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartialsGrad(instance,operations, operationCount,
-                intervalStarts, intervalCount, intervalLengths, populationSizeIndex, coalescentProbabilityIndex, result);
+    public void accumulateBastaPartialsGrad(int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, int eigenIndex, int partialAdjointBufferBase,
+                                            int matrixAdjointBufferBase, double[] popSizeGradOut, double[] result) {
+        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartialsGrad(instance, operations, operationCount,
+                intervalStarts, intervalCount, intervalLengths, populationSizeIndex, coalescentProbabilityIndex,
+                eigenIndex, partialAdjointBufferBase, matrixAdjointBufferBase, popSizeGradOut, result);
         if (errCode != 0) {
             throw new BeagleException("accumulateBastaPartialsGrad", errCode);
         }
@@ -106,24 +108,6 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
         int errCode = BastaJNIWrapper.INSTANCE.allocateCoalescentGradBuffers(instance, partialsCount);
         if (errCode != 0) {
             throw new BeagleException("allocateCoalescentGradBuffers", errCode);
-        }
-    }
-
-    @Override
-    public void updateBastaPartialsPopSizeGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex) {
-        int errCode = BastaJNIWrapper.INSTANCE.updateBastaPartialsPopSizeGrad(instance, operations, operationCount,
-                intervals, intervalCount, populationSizeIndex, coalescentProbabilityIndex);
-        if (errCode != 0) {
-            throw new BeagleException("updateBastaPartialsPopSizeGrad", errCode);
-        }
-    }
-
-    @Override
-    public void accumulateBastaPartialsPopSizeGrad(int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result) {
-        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartialsPopSizeGrad(instance, operations, operationCount,
-                intervalStarts, intervalCount, intervalLengths, populationSizeIndex, coalescentProbabilityIndex, result);
-        if (errCode != 0) {
-            throw new BeagleException("accumulateBastaPartialsPopSizeGrad", errCode);
         }
     }
 
@@ -151,59 +135,11 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
-    public void getMatrixAdjoint(int matrixIndex, double[] buffer) {
-        int errCode = BastaJNIWrapper.INSTANCE.getMatrixAdjoint(instance, matrixIndex, buffer);
-        if (errCode != 0) {
-            throw new BeagleException("getMatrixAdjoint", errCode);
-        }
-    }
-
-    @Override
-    public void getPopulationSizeGradient(double[] buffer) {
-        int errCode = BastaJNIWrapper.INSTANCE.getPopulationSizeGradient(instance, buffer);
-        if (errCode != 0) {
-            throw new BeagleException("getPopulationSizeGradient", errCode);
-        }
-    }
-
-    @Override
-    public void setExpmKernels(double[] kernels) {
-        int errCode = BastaJNIWrapper.INSTANCE.setExpmKernels(instance, kernels);
-        if (errCode != 0) {
-            throw new BeagleException("setExpmKernels", errCode);
-        }
-    }
-
-    @Override
-    public void accumulateExpmGradient(double[] out) {
-        int errCode = BastaJNIWrapper.INSTANCE.accumulateExpmGradient(instance, out);
-        if (errCode != 0) {
-            throw new BeagleException("accumulateExpmGradient", errCode);
-        }
-    }
-
-    @Override
-    public void transformMatrixAdjoints(int matrixCount, double[] out) {
-        int errCode = BastaJNIWrapper.INSTANCE.transformMatrixAdjoints(instance, matrixCount, out);
-        if (errCode != 0) {
-            throw new BeagleException("transformMatrixAdjoints", errCode);
-        }
-    }
-
-    @Override
-    public void backTransformEigenBasisGradient(double[] eigenBasisGrad, double[] out) {
-        int errCode = BastaJNIWrapper.INSTANCE.backTransformEigenBasisGradient(instance, eigenBasisGrad, out);
-        if (errCode != 0) {
-            throw new BeagleException("backTransformEigenBasisGradient", errCode);
-        }
-    }
-
-    @Override
-    public void accumulateEigenBasisGradient(double[] eigenValues, double[] branchLengths,
-                                              int matrixCount, boolean hasComplexEigenvalues,
-                                              double[] outRateGradient) {
+    public void accumulateEigenBasisGradient(int eigenIndex, int matrixAdjointBufferBase, double[] branchLengths,
+                                              int matrixCount, boolean hasComplexEigenvalues, double[] outRateGradient) {
         int errCode = BastaJNIWrapper.INSTANCE.accumulateEigenBasisGradient(
-                instance, eigenValues, branchLengths, matrixCount,
+                instance, eigenIndex, matrixAdjointBufferBase,
+                branchLengths, matrixCount,
                 hasComplexEigenvalues ? 1 : 0, outRateGradient);
         if (errCode != 0) {
             throw new BeagleException("accumulateEigenBasisGradient", errCode);

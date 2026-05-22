@@ -41,7 +41,6 @@ import dr.util.Citation;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 
-
 import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
@@ -69,7 +68,8 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
     private Map<IntegralCacheKey, Double> integralCache;
     private Map<IntegralCacheKey, Double> storedIntegralCache;
-    private boolean coefficientsChanged;
+
+    private boolean splineParametersChanged;
 
     public NonParametricBranchRateModel2(String name,
                                          Tree tree,
@@ -83,13 +83,15 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
             addModel((TreeModel) tree);
         }
 
+
+        addVariable(splines.getIntercept());
         addVariable(splines.getCoefficients());
 
         nodeRatesKnown = false;
         nodeRates = new double[tree.getNodeCount() - 1];
         integralCache = new HashMap<>();
         storedIntegralCache = null;
-        coefficientsChanged = false;
+        splineParametersChanged = false;
     }
 
     @Override
@@ -167,7 +169,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
                     return cached;
                 }
 
-                double val = 0;
+                double val;
                 try {
                     val = approximation.getIntegral(start, end);
                 } catch (FunctionEvaluationException e) {
@@ -273,9 +275,9 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         nodeRatesKnown = false;
 
-        if (variable == splines.getCoefficients()) {
+        if (variable == splines.getIntercept() || variable == splines.getCoefficients()) {
             integralCache = new HashMap<>();
-            coefficientsChanged = true;
+            splineParametersChanged = true;
         }
 
         fireModelChanged();
@@ -292,7 +294,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         storedNodeRatesKnown = nodeRatesKnown;
 
         storedIntegralCache = integralCache;
-        coefficientsChanged = false;
+        splineParametersChanged = false;
     }
 
     @Override
@@ -302,16 +304,16 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         storedNodeRates = tmp;
         nodeRatesKnown = storedNodeRatesKnown;
 
-        if (coefficientsChanged) {
+        if (splineParametersChanged) {
             integralCache = storedIntegralCache;
-            coefficientsChanged = false;
+            splineParametersChanged = false;
         }
     }
 
     @Override
     protected void acceptState() {
         storedIntegralCache = null;
-        coefficientsChanged = false;
+        splineParametersChanged = false;
     }
 
     @Override

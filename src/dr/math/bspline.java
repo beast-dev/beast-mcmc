@@ -1,6 +1,5 @@
 package dr.math;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +54,7 @@ class BSpline {
     }
 
 
+
     public static class PPoly {
         public final double[] knots;
         public final double[][] pieces;
@@ -72,6 +72,17 @@ class BSpline {
             }
             return new PPoly(knots, pieces);
         }
+
+        public static PPoly constant(double[] knots, double c) {
+            int nIntervals = knots.length - 1;
+            double[][] pieces = new double[nIntervals][];
+            for (int i = 0; i < nIntervals; i++) {
+                pieces[i] = new double[]{c};
+            }
+            return new PPoly(knots, pieces);
+        }
+
+
 
         public PPoly scale(double s) {
             double[][] newPieces = new double[pieces.length][];
@@ -180,5 +191,4 @@ class BSpline {
         }
         return B_prev;
     }
-
 }

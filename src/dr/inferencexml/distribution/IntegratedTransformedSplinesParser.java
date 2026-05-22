@@ -10,6 +10,7 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
 
     public static final String PARSER_NAME = "IntegratedTransformedSplines";
     private static final String COEFFICIENTS = "coefficients";
+    private static final String INTERCEPT = "intercept";
     private static final String KNOTS = "knots";
     private static final String LOWERBOUNDARY = "lowerBoundary";
     private static final String UPPERBOUNDARY = "upperBoundary";
@@ -20,13 +21,14 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter coefficients = (Parameter) xo.getElementFirstChild(COEFFICIENTS);
+        Parameter intercept = (Parameter) xo.getElementFirstChild(INTERCEPT);
         double[] knots = xo.getDoubleArrayAttribute(KNOTS);
         Double lowerBoundary = xo.getDoubleAttribute(LOWERBOUNDARY);
         Double upperBoundary = xo.getDoubleAttribute(UPPERBOUNDARY);
         int degree = xo.getIntegerAttribute(DEGREE);
         String transform = xo.getStringAttribute(TRANSFORM);
 
-        return new IntegratedTransformedSplines(coefficients, knots, lowerBoundary, upperBoundary, degree, transform);
+        return new IntegratedTransformedSplines(coefficients, intercept, knots, lowerBoundary, upperBoundary, degree, transform);
     }
 
     @Override
@@ -51,6 +53,8 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(COEFFICIENTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(INTERCEPT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newDoubleArrayRule(KNOTS),
             AttributeRule.newDoubleRule(LOWERBOUNDARY),

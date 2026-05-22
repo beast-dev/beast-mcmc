@@ -33,16 +33,20 @@ import org.apache.commons.math.analysis.integration.TrapezoidIntegrator;
 import java.util.Arrays;
 import java.util.List;
 
-/**
+/*
  * @author Pratyusa Datta
  * @author Marc A. Suchard
  */
+
 public class IntegratedTransformedSplines {
+
 
     public static final String TRANSFORM_EXPONENTIAL = "exponential";
     public static final String TRANSFORM_SQUARED     = "squared";
     public static final String TRANSFORM_IDENTITY    = "identity";
 
+
+    private final Parameter intercept;
     private final Parameter coefficient;
     private final double[] knots;
     private final double lowerBoundary;
@@ -50,29 +54,35 @@ public class IntegratedTransformedSplines {
     private final double[] expandedKnots;
     private final int degree;
     private final String transform;
+
     private final List<BSpline.PPoly> basis;
     private BSpline.PPoly splineFunction;
     private BSpline.PPoly splineFunctionSquared;
-    private double[] cachedCoefficientValues;
+    private double[] cachedValues;
 
 
-    public IntegratedTransformedSplines(Parameter coefficient,
-                                        double[] knots,
-                                        double lowerBoundary,
-                                        double upperBoundary,
-                                        int degree,
-                                        String transform) {
 
-        if (coefficient.getDimension() != knots.length + degree + 1) {
-            throw new IllegalArgumentException(
-                    "Coefficient dimension must equal number of knots + degree + 1");
+    public IntegratedTransformedSplines(
+            Parameter coefficient,
+            Parameter intercept,
+            double[] knots,
+            double lowerBoundary,
+            double upperBoundary,
+            int degree,
+            String transform) {
+
+
+        if (coefficient.getDimension() != knots.length + degree) {
+            throw new IllegalArgumentException("Coefficient dimension must equal number of interior knots + degree");
         }
+
         if (!TRANSFORM_EXPONENTIAL.equals(transform) && !TRANSFORM_SQUARED.equals(transform) &&
                 !TRANSFORM_IDENTITY.equals(transform)) {
             throw new IllegalArgumentException("transform must be \"" + TRANSFORM_EXPONENTIAL +
                     "\", \"" + TRANSFORM_SQUARED + "\", or \"" + TRANSFORM_IDENTITY + "\"");
         }
 
+        this.intercept      = intercept;
         this.coefficient    = coefficient;
         this.knots          = knots;
         this.lowerBoundary  = lowerBoundary;
@@ -81,26 +91,21 @@ public class IntegratedTransformedSplines {
         this.degree         = degree;
         this.transform      = transform;
 
+
         buildExpandedKnots();
 
         this.basis = BSpline.bSplineBasis(expandedKnots, degree);
 
         this.splineFunction = null;
         this.splineFunctionSquared = null;
-        this.cachedCoefficientValues = null;
+        this.cachedValues = null;
     }
 
 
-    public Parameter getCoefficients()  { return coefficient; }
-    public int getCoefficientDim(){ return coefficient.getDimension(); }
+    public Parameter getIntercept()   { return intercept; }
+    public Parameter getCoefficients()   { return coefficient; }
+    public int getCoefficientDim() { return coefficient.getDimension(); }
 
-    public double[] getCoefficientValues() {
-        double[] values = new double[getCoefficientDim()];
-        for (int i = 0; i < values.length; i++) {
-            values[i] = coefficient.getParameterValue(i);
-        }
-        return values;
-    }
 
 
     private void buildExpandedKnots() {
@@ -114,15 +119,26 @@ public class IntegratedTransformedSplines {
     }
 
 
-    private void refreshSplineFunction() {
-        double[] current = getCoefficientValues();
+    private double[] getCombinedParameter() {
+        double[] combinedParameter = new double[1 + coefficient.getDimension()];
+        combinedParameter[0] = intercept.getParameterValue(0);
+        for (int i = 0; i < coefficient.getDimension(); i++) {
+            combinedParameter[i + 1] = coefficient.getParameterValue(i);
+        }
+        return combinedParameter;
+    }
 
-        if (splineFunction != null && Arrays.equals(current, cachedCoefficientValues)) {
+
+    private void refreshSplineFunction() {
+        double[] current = getCombinedParameter();
+
+        if (splineFunction != null && Arrays.equals(current, cachedValues)) {
             return;
         }
 
-        BSpline.PPoly f = BSpline.PPoly.zero(expandedKnots);
-        for (int i = 0; i < basis.size(); i++) {
+        double beta0 = current[0];
+        BSpline.PPoly f = BSpline.PPoly.constant(expandedKnots, beta0);
+        for (int i = 1; i < basis.size(); i++) {
             f = BSpline.PPoly.add(f, basis.get(i).scale(current[i]));
         }
         splineFunction = f;
@@ -131,7 +147,7 @@ public class IntegratedTransformedSplines {
             splineFunctionSquared = f.square();
         }
 
-        cachedCoefficientValues = current;
+        cachedValues = current;
     }
 
 
@@ -146,7 +162,6 @@ public class IntegratedTransformedSplines {
         return Math.exp(splineFunction.evaluate(x));
     }
 
-
     public double evaluateSquaredSpline(double x) {
         refreshSplineFunction();
         return splineFunctionSquared.evaluate(x);
@@ -157,7 +172,6 @@ public class IntegratedTransformedSplines {
             throws FunctionEvaluationException, MaxIterationsExceededException {
 
         refreshSplineFunction();
-
         final BSpline.PPoly f = splineFunction;
 
         UnivariateRealFunction integrand = new UnivariateRealFunction() {
@@ -298,4 +312,5 @@ public class IntegratedTransformedSplines {
             this.degree       = degree;
         }
     }
+
 }

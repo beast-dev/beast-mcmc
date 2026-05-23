@@ -10,7 +10,7 @@ import java.util.Arrays;
  *   pre-order  : q_bottom = P(t)^T q_top
  *
  * In this representation, "internal" and "standard" coordinates coincide,
- * so most conversion methods are just copies.
+ * so most conversion methods are direct identity writes.
  */
 /*
  * @author Filippo Monti
@@ -59,29 +59,39 @@ public final class RewardsAwarePartialsRepresentation
 
     @Override
     public void initializeRootPartial(double[] rootFrequencies, double[] outRootPreOrder) {
-        checkLength(rootFrequencies, "rootFrequencies");
-        checkLength(outRootPreOrder, "outRootPreOrder");
+        initializeRootPartial(rootFrequencies, outRootPreOrder, 0);
+    }
 
-        System.arraycopy(rootFrequencies, 0, outRootPreOrder, 0, stateCount);
+    @Override
+    public void initializeRootPartial(double[] rootFrequencies, double[] outRootPreOrder, int outOffset) {
+        checkLength(rootFrequencies, "rootFrequencies");
+        checkLength(outRootPreOrder, outOffset, "outRootPreOrder");
+
+        for (int i = 0; i < stateCount; i++) {
+            outRootPreOrder[outOffset + i] = rootFrequencies[i];
+        }
     }
 
     @Override
     public void combineParentAndSibling(
             double[] parentNodePreOrder,
+            int parentOffset,
             double[] siblingBranchTopPostOrderStandard,
-            double[] outChildBranchTopPreOrder
+            int siblingOffset,
+            double[] outChildBranchTopPreOrder,
+            int outOffset
     ) {
-        checkLength(parentNodePreOrder, "parentNodePreOrder");
-        checkLength(siblingBranchTopPostOrderStandard, "siblingBranchTopPostOrderStandard");
-        checkLength(outChildBranchTopPreOrder, "outChildBranchTopPreOrder");
+        checkLength(parentNodePreOrder, parentOffset, "parentNodePreOrder");
+        checkLength(siblingBranchTopPostOrderStandard, siblingOffset, "siblingBranchTopPostOrderStandard");
+        checkLength(outChildBranchTopPreOrder, outOffset, "outChildBranchTopPreOrder");
 
         for (int i = 0; i < stateCount; i++) {
-            outChildBranchTopPreOrder[i] =
-                    parentNodePreOrder[i] * siblingBranchTopPostOrderStandard[i];
+            outChildBranchTopPreOrder[outOffset + i] =
+                    parentNodePreOrder[parentOffset + i] * siblingBranchTopPostOrderStandard[siblingOffset + i];
         }
         boolean allZero = true;
         for (int i = 0; i < stateCount; i++) {
-            if (outChildBranchTopPreOrder[i] != 0.0) {
+            if (outChildBranchTopPreOrder[outOffset + i] != 0.0) {
                 allZero = false;
                 break;
             }
@@ -101,24 +111,30 @@ public final class RewardsAwarePartialsRepresentation
             int childNodeNumber,
             double branchLength,
             double[] childBranchTopPreOrder,
-            double[] outChildNodePreOrder
+            int childBranchTopOffset,
+            double[] outChildNodePreOrder,
+            int outOffset
     ) {
-        checkLength(childBranchTopPreOrder, "childBranchTopPreOrder");
-        checkLength(outChildNodePreOrder, "outChildNodePreOrder");
+        checkLength(childBranchTopPreOrder, childBranchTopOffset, "childBranchTopPreOrder");
+        checkLength(outChildNodePreOrder, outOffset, "outChildNodePreOrder");
 
-        applyTranspose(
-                childNodeNumber,
-                childBranchTopPreOrder,
-                outChildNodePreOrder
-        );
+        applyTranspose(childNodeNumber, childBranchTopPreOrder, childBranchTopOffset,
+                outChildNodePreOrder, outOffset);
     }
 
     @Override
     public void initializeTipPartial(double[] standardTip, double[] outPartial) {
-        checkLength(standardTip, "standardTip");
-        checkLength(outPartial, "outPartial");
+        initializeTipPartial(standardTip, outPartial, 0);
+    }
 
-        System.arraycopy(standardTip, 0, outPartial, 0, stateCount);
+    @Override
+    public void initializeTipPartial(double[] standardTip, double[] outPartial, int outOffset) {
+        checkLength(standardTip, "standardTip");
+        checkLength(outPartial, outOffset, "outPartial");
+
+        for (int i = 0; i < stateCount; i++) {
+            outPartial[outOffset + i] = standardTip[i];
+        }
     }
 
     @Override
@@ -128,13 +144,23 @@ public final class RewardsAwarePartialsRepresentation
             double[] childPartial,
             double[] outBranchTopPartial
     ) {
-        checkLength(childPartial, "childPartial");
-        checkLength(outBranchTopPartial, "outBranchTopPartial");
+        propagateToBranchTop(nodeNumber, branchLength, childPartial, 0,
+                outBranchTopPartial, 0);
+    }
 
-        apply(nodeNumber,
-                childPartial,
-                outBranchTopPartial
-        );
+    @Override
+    public void propagateToBranchTop(
+            int nodeNumber,
+            double branchLength,
+            double[] childPartial,
+            int childOffset,
+            double[] outBranchTopPartial,
+            int outOffset
+    ) {
+        checkLength(childPartial, childOffset, "childPartial");
+        checkLength(outBranchTopPartial, outOffset, "outBranchTopPartial");
+
+        apply(nodeNumber, childPartial, childOffset, outBranchTopPartial, outOffset);
     }
 
     @Override
@@ -143,21 +169,34 @@ public final class RewardsAwarePartialsRepresentation
             double[] rightBranchTopPartial,
             double[] outParentPartial
     ) {
-        checkLength(leftBranchTopPartial, "leftBranchTopPartial");
-        checkLength(rightBranchTopPartial, "rightBranchTopPartial");
-        checkLength(outParentPartial, "outParentPartial");
+        combineBranchTopPartials(leftBranchTopPartial, 0, rightBranchTopPartial, 0,
+                outParentPartial, 0);
+    }
+
+    @Override
+    public void combineBranchTopPartials(
+            double[] leftBranchTopPartial,
+            int leftOffset,
+            double[] rightBranchTopPartial,
+            int rightOffset,
+            double[] outParentPartial,
+            int outOffset
+    ) {
+        checkLength(leftBranchTopPartial, leftOffset, "leftBranchTopPartial");
+        checkLength(rightBranchTopPartial, rightOffset, "rightBranchTopPartial");
+        checkLength(outParentPartial, outOffset, "outParentPartial");
 
         for (int i = 0; i < stateCount; i++) {
-            outParentPartial[i] =
-                    leftBranchTopPartial[i] * rightBranchTopPartial[i];
+            outParentPartial[outOffset + i] =
+                    leftBranchTopPartial[leftOffset + i] * rightBranchTopPartial[rightOffset + i];
         }
     }
 
-    private void applyAtomic(int nodeNum, double[] input, double[] output) {
-        Arrays.fill(output, 0.0);
+    private void applyAtomic(int nodeNum, double[] input, int inputOffset, double[] output, int outputOffset) {
+        Arrays.fill(output, outputOffset, outputOffset + stateCount, 0.0);
         final int stateIndex = branchModel.getAtomicBranchState(nodeNum);
         final double scale = branchModel.getAtomicBranchScale(nodeNum);
-        output[stateIndex] = scale * input[stateIndex];
+        output[outputOffset + stateIndex] = scale * input[inputOffset + stateIndex];
 //        int nonZeroCount = 0;
 //        int nonZeroIndex = -1;
 //        for (int i = 0; i < output.length; i++) {
@@ -191,51 +230,55 @@ public final class RewardsAwarePartialsRepresentation
     }
 
     public void apply(int nodeNum, double[] input, double[] output) {
+        apply(nodeNum, input, 0, output, 0);
+    }
+
+    public void apply(int nodeNum, double[] input, int inputOffset, double[] output, int outputOffset) {
         // branchLength is intentionally ignored because RewardsAwareBranchModel
         // reads the current branch length directly from the tree when building
         // transitions.
 
         if (branchModel.isAtomicBranch(nodeNum)) {
-            applyAtomic(nodeNum, input, output);
+            applyAtomic(nodeNum, input, inputOffset, output, outputOffset);
             return;
         }
 
         final double[] matrix = branchModel.getTransitionMatrix(nodeNum);
 
-        Arrays.fill(output, 0.0);
+        Arrays.fill(output, outputOffset, outputOffset + stateCount, 0.0);
         int k = 0;
         for (int i = 0; i < stateCount; i++) {
             double sum = 0.0;
             for (int j = 0; j < stateCount; j++) {
-                sum += matrix[k++] * input[j];
+                sum += matrix[k++] * input[inputOffset + j];
             }
-            output[i] = sum;
+            output[outputOffset + i] = sum;
         }
     }
 
-    public void applyTranspose(int nodeNum, double[] input, double[] output) {
+    public void applyTranspose(int nodeNum, double[] input, int inputOffset, double[] output, int outputOffset) {
         // branchLength is intentionally ignored because RewardsAwareBranchModel
         // reads the current branch length directly from the tree when building
         // transitions.
 
         if (branchModel.isAtomicBranch(nodeNum)) {
-            applyAtomic(nodeNum, input, output);
+            applyAtomic(nodeNum, input, inputOffset, output, outputOffset);
             return;
         }
 
         final double[] matrix = branchModel.getTransitionMatrix(nodeNum);
 
-        Arrays.fill(output, 0.0);
+        Arrays.fill(output, outputOffset, outputOffset + stateCount, 0.0);
         for (int i = 0; i < stateCount; i++) {
-            final double in = input[i];
+            final double in = input[inputOffset + i];
             final int rowOffset = i * stateCount;
             for (int j = 0; j < stateCount; j++) {
-                output[j] += matrix[rowOffset + j] * in;
+                output[outputOffset + j] += matrix[rowOffset + j] * in;
             }
         }
         int nonZeroCount = 0;
-        for (int i = 0; i < output.length; i++) {
-            if (output[i] != 0.0) {
+        for (int i = 0; i < stateCount; i++) {
+            if (output[outputOffset + i] != 0.0) {
                 nonZeroCount++;
             }
         }
@@ -250,39 +293,64 @@ public final class RewardsAwarePartialsRepresentation
 
     @Override
     public double rootContribution(double[] rootFrequencies, double[] rootPartial) {
+        return rootContribution(rootFrequencies, rootPartial, 0);
+    }
+
+    @Override
+    public double rootContribution(double[] rootFrequencies, double[] rootPartial, int rootOffset) {
         checkLength(rootFrequencies, "rootFrequencies");
-        checkLength(rootPartial, "rootPartial");
+        checkLength(rootPartial, rootOffset, "rootPartial");
 
         double sum = 0.0;
         for (int i = 0; i < stateCount; i++) {
-            sum += rootFrequencies[i] * rootPartial[i];
+            sum += rootFrequencies[i] * rootPartial[rootOffset + i];
         }
         return sum;
     }
 
     @Override
     public void exportPostOrderPartial(double[] partial, double[] outPartial) {
-        checkLength(partial, "partial");
-        checkLength(outPartial, "outPartial");
+        exportPostOrderPartial(partial, 0, outPartial, 0);
+    }
 
-        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+    @Override
+    public void exportPostOrderPartial(double[] partial, int partialOffset,
+                                       double[] outPartial, int outOffset) {
+        checkLength(partial, partialOffset, "partial");
+        checkLength(outPartial, outOffset, "outPartial");
+
+        for (int i = 0; i < stateCount; i++) {
+            outPartial[outOffset + i] = partial[partialOffset + i];
+        }
     }
 
     @Override
     public void exportPreOrderPartial(double[] partial, double[] outPartial) {
-        checkLength(partial, "partial");
-        checkLength(outPartial, "outPartial");
+        exportPreOrderPartial(partial, 0, outPartial, 0);
+    }
 
-        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+    @Override
+    public void exportPreOrderPartial(double[] partial, int partialOffset,
+                                      double[] outPartial, int outOffset) {
+        checkLength(partial, partialOffset, "partial");
+        checkLength(outPartial, outOffset, "outPartial");
+
+        for (int i = 0; i < stateCount; i++) {
+            outPartial[outOffset + i] = partial[partialOffset + i];
+        }
     }
 
     private void checkLength(double[] x, String name) {
+        checkLength(x, 0, name);
+    }
+
+    private void checkLength(double[] x, int offset, String name) {
         if (x == null) {
             throw new IllegalArgumentException(name + " must be non-null");
         }
-        if (x.length < stateCount) {
+        if (offset < 0 || x.length < offset + stateCount) {
             throw new IllegalArgumentException(
-                    name + " has length " + x.length + " but expected at least " + stateCount
+                    name + " has length " + x.length + " but expected at least " + (offset + stateCount)
             );
         }
     }

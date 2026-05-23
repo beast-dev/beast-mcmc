@@ -32,29 +32,43 @@ public interface PreOrderRepresentation {
      */
     void initializeRootPartial(double[] rootFrequencies, double[] outRootPreOrder);
 
-    /**
-     * Combine the parent-node pre-order message with the sibling branch-top post-order
-     * message to obtain the pre-order message at the TOP of the child's branch.
-     *
-     * The parent input/output are in the internal pre-order representation. The sibling
-     * input is in the paired post-order representation's internal basis.
-     */
-    void combineParentAndSibling(double[] parentNodePreOrder,
-                                 double[] siblingBranchTopPostOrder,
-                                 double[] outChildBranchTopPreOrder);
+    default void initializeRootPartial(double[] rootFrequencies, double[] outRootPreOrder, int outOffset) {
+        final int K = getStateCount();
+        for (int s = 0; s < K; s++) {
+            outRootPreOrder[outOffset + s] = rootFrequencies[s];
+        }
+    }
+
 
     /**
      * Combine parent pre-order with sibling post-order, reading the parent slice
      * from {@code parentNodePreOrder[parentOff..parentOff+K]}.
-     * Default: copies the slice into a temp buffer, then calls the zero-offset variant.
      */
     default void combineParentAndSibling(double[] parentNodePreOrder, int parentOff,
                                          double[] siblingBranchTopPostOrder,
                                          double[] outChildBranchTopPreOrder) {
+        combineParentAndSibling(parentNodePreOrder, parentOff,
+                siblingBranchTopPostOrder, outChildBranchTopPreOrder, 0);
+    }
+
+    default void combineParentAndSibling(double[] parentNodePreOrder, int parentOff,
+                                         double[] siblingBranchTopPostOrder,
+                                         double[] outChildBranchTopPreOrder,
+                                         int outOff) {
+        combineParentAndSibling(parentNodePreOrder, parentOff,
+                siblingBranchTopPostOrder, 0,
+                outChildBranchTopPreOrder, outOff);
+    }
+
+    default void combineParentAndSibling(double[] parentNodePreOrder, int parentOff,
+                                         double[] siblingBranchTopPostOrder, int siblingOff,
+                                         double[] outChildBranchTopPreOrder,
+                                         int outOff) {
         final int K = getStateCount();
-        final double[] tmp = new double[K];
-        System.arraycopy(parentNodePreOrder, parentOff, tmp, 0, K);
-        combineParentAndSibling(tmp, siblingBranchTopPostOrder, outChildBranchTopPreOrder);
+        for (int s = 0; s < K; s++) {
+            outChildBranchTopPreOrder[outOff + s] =
+                    parentNodePreOrder[parentOff + s] * siblingBranchTopPostOrder[siblingOff + s];
+        }
     }
 
     /**
@@ -66,11 +80,11 @@ public interface PreOrderRepresentation {
     }
 
     /**
-     * Convert a standard-basis pre-order partial to this representation's
-     * internal basis.
+     * Whether traversal should cache only branch-top pre-order messages.
+     * Implementations may still compute branch-bottom messages transiently.
      */
-    default void importPreOrderPartialFromStandard(double[] standardPartial, double[] outPreOrderPartial) {
-        System.arraycopy(standardPartial, 0, outPreOrderPartial, 0, standardPartial.length);
+    default boolean cacheOnlyBranchTopPreOrder() {
+        return false;
     }
 
     /**
@@ -80,32 +94,36 @@ public interface PreOrderRepresentation {
     default void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
                                                    double[] rightStandard,
                                                    double[] outPreOrderPartial) {
-        final int K = getStateCount();
-        final double[] tmp = new double[K];
-        for (int s = 0; s < K; s++) {
-            tmp[s] = leftStandard[leftOff + s] * rightStandard[s];
-        }
-        importPreOrderPartialFromStandard(tmp, outPreOrderPartial);
+        importPreOrderProductFromStandard(leftStandard, leftOff, rightStandard, outPreOrderPartial, 0);
     }
 
-    /**
-     * Export one internal pre-order partial slice to the standard data-type basis.
-     */
-    default void exportPreOrderPartialToStandard(double[] preOrderPartial, double[] outStandardPartial) {
-        exportPreOrderPartial(preOrderPartial, outStandardPartial);
+    default void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                   double[] rightStandard,
+                                                   double[] outPreOrderPartial,
+                                                   int outOff) {
+        importPreOrderProductFromStandard(leftStandard, leftOff,
+                rightStandard, 0, outPreOrderPartial, outOff);
+    }
+
+    default void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                   double[] rightStandard, int rightOff,
+                                                   double[] outPreOrderPartial,
+                                                   int outOff) {
+        final int K = getStateCount();
+        for (int s = 0; s < K; s++) {
+            outPreOrderPartial[outOff + s] =
+                    leftStandard[leftOff + s] * rightStandard[rightOff + s];
+        }
     }
 
     /**
      * Offset-aware export: reads src[srcOff..srcOff+K] and writes dst[dstOff..dstOff+K].
-     * Default: copies slices into temp buffers, then calls the zero-offset variant.
      */
     default void exportPreOrderPartialToStandard(double[] src, int srcOff, double[] dst, int dstOff) {
         final int K = getStateCount();
-        final double[] tmpIn  = new double[K];
-        final double[] tmpOut = new double[K];
-        System.arraycopy(src, srcOff, tmpIn, 0, K);
-        exportPreOrderPartialToStandard(tmpIn, tmpOut);
-        System.arraycopy(tmpOut, 0, dst, dstOff, K);
+        for (int s = 0; s < K; s++) {
+            dst[dstOff + s] = src[srcOff + s];
+        }
     }
 
     /**
@@ -145,31 +163,23 @@ public interface PreOrderRepresentation {
         return 0.0;
     }
 
-    /**
-     * Propagate a pre-order message from the TOP of the child's branch to the BOTTOM
-     * of the child's branch (i.e. to the child node).
-     */
+
     void propagateToBranchBottom(int childNodeNumber,
                                  double branchLength,
                                  double[] childBranchTopPreOrder,
-                                 double[] outChildNodePreOrder);
-
-    /**
-     * Offset-aware variant: writes the result to {@code out[outOff..outOff+K]}.
-     * Default: calls the zero-offset variant into a temp buffer, then copies.
-     */
-    default void propagateToBranchBottom(int childNodeNumber,
-                                         double branchLength,
-                                         double[] childBranchTopPreOrder,
-                                         double[] out, int outOff) {
-        final int K = getStateCount();
-        final double[] tmp = new double[K];
-        propagateToBranchBottom(childNodeNumber, branchLength, childBranchTopPreOrder, tmp);
-        System.arraycopy(tmp, 0, out, outOff, K);
-    }
+                                 int childBranchTopOffset,
+                                 double[] out, int outOff);
 
     /**
      * Export one internal pre-order slice to the representation's external/reporting coordinates.
      */
     void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial);
+
+    default void exportPreOrderPartial(double[] preOrderPartial, int preOrderOffset,
+                                       double[] outPartial, int outOffset) {
+        final int K = getStateCount();
+        for (int s = 0; s < K; s++) {
+            outPartial[outOffset + s] = preOrderPartial[preOrderOffset + s];
+        }
+    }
 }

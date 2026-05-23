@@ -27,11 +27,24 @@ public interface PostOrderMessageProvider {
     void getPostOrderBranchTopInto(int childNodeNumber, int category, int pattern, double[] outPartial);
 
     /**
+     * Expose the cached post-order branch-top buffer in internal coordinates.
+     * Callers use their own category/pattern offset into this flattened buffer.
+     */
+    double[] getPostOrderBranchTopBuffer(int childNodeNumber);
+
+    /**
      * Get the post-order message at the TOP of the branch in standard data-type
      * coordinates. Traversals that combine messages in standard basis can use
      * this to avoid repeated internal-to-standard conversion.
      */
     void getPostOrderBranchTopStandardInto(int childNodeNumber, int category, int pattern, double[] outPartial);
+
+    /**
+     * Expose the cached post-order branch-top buffer in standard coordinates.
+     * If the internal representation is already standard, this may be the same
+     * buffer as {@link #getPostOrderBranchTopBuffer(int)}.
+     */
+    double[] getPostOrderBranchTopStandardBuffer(int childNodeNumber);
 
     /**
      * Get the post-order message at the BOTTOM of the branch leading into childNodeNumber,

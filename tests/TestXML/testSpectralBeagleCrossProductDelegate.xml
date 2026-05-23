@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+            <attr name="loc">A</attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="loc">A</attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="loc">B</attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="loc">B</attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="loc">A</attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <attributePatterns id="loc.pattern" attribute="loc">
+        <taxa idref="taxa"/>
+        <generalDataType idref="loc.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((taxon_1:1.0,taxon_2:1.5):2.0,(taxon_3:0.8,(taxon_4:1.2,taxon_5:1.2):0.6):1.5);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="loc.branchRates">
+        <rate>
+            <parameter id="loc.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <!--
+        3-state logRateSubstitutionModel.
+        logRates has dimension K*(K-1) = 6 for K=3 states (A,B,C):
+        ordering: A->B, A->C, B->A, B->C, C->A, C->B.
+        Non-uniform values ensure a non-trivial gradient.
+    -->
+    <logRateSubstitutionModel id="loc.model" normalize="true" scaleRatesByFrequencies="false">
+        <generalDataType idref="loc.dataType"/>
+        <rootFrequencies>
+            <frequencyModel id="loc.frequencyModel" normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter id="loc.frequencies" dimension="3" value="0.333 0.333 0.334"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
+        <logRates>
+            <parameter id="loc.logRates" dimension="6" value="0.5 -0.3 0.1 -0.5 0.2 -0.1"/>
+        </logRates>
+    </logRateSubstitutionModel>
+
+    <siteModel id="loc.siteModel">
+        <substitutionModel>
+            <logRateSubstitutionModel idref="loc.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <!--
+        useSpectralRepresentation="true" routes partials through the spectral CPU BEAGLE
+        plugin (libhmsbeagle-cpu-spectral), keeping delegate as BeagleDataLikelihoodDelegate.
+        usePreOrder="true" enables pre-order partials required by SpectralBeagleCrossProductDelegate.
+    -->
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true"
+                        usePreOrder="true"
+                        useSpectralRepresentation="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="loc.siteModel"/>
+        <strictClockBranchRates idref="loc.branchRates"/>
+    </treeDataLikelihood>
+
+    <!--
+        mode="exact" selects ApproximationMode.EXACT_SPECTRAL, which — when the delegate
+        is a BeagleDataLikelihoodDelegate — instantiates SpectralBeagleCrossProductDelegate.
+    -->
+    <approximateLogCtmcRateGradient id="spectralBeagleGradient" traitName="loc" mode="exact">
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <logRateSubstitutionModel idref="loc.model"/>
+    </approximateLogCtmcRateGradient>
+
+    <report>
+        <approximateLogCtmcRateGradient idref="spectralBeagleGradient"/>
+    </report>
+
+    <!-- Compare analytic gradient (SpectralBeagleCrossProductDelegate) against numeric gradient -->
+    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check SpectralBeagleCrossProductDelegate: analytic gradient matches numeric gradient
+        </message>
+        <actual regex="analytic: (.*?)\n">
+            <approximateLogCtmcRateGradient idref="spectralBeagleGradient"/>
+        </actual>
+        <expected regex="numeric : (.*?)\n">
+            <approximateLogCtmcRateGradient idref="spectralBeagleGradient"/>
+        </expected>
+    </assertEqual>
+
+</beast>

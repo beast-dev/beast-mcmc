@@ -236,7 +236,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     if (PHYLOGEOFAST_REPRESENTATION_ROTATED.equalsIgnoreCase(phyloGeoFastRepresentation)) {
                         postOrderRepresentation = new SpectralRotatedPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
                     } else if (PHYLOGEOFAST_REPRESENTATION_STANDARD.equalsIgnoreCase(phyloGeoFastRepresentation)) {
-                        postOrderRepresentation = new SpectralStandardPartialsRepresentation(substitutionModel);
+                        postOrderRepresentation = new SpectralStandardPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
                     } else {
                         throw new XMLParseException("Unknown " + PHYLOGEOFAST_REPRESENTATION + " value '" +
                                 phyloGeoFastRepresentation + "'. Expected '" +

@@ -37,7 +37,10 @@ import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
+import dr.evomodel.treedatalikelihood.preorder.AdjointMethods;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
+
+import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.ComplexBlockKernelUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,12 +58,37 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private final int substitutionModelCount;
 
     private static final String GRADIENT_TRAIT_NAME = "substitutionModelCrossProductGradient";
+    private static final String USE_COMPLEX_BLOCK_KERNEL_UTILS_PROPERTY =
+            "dr.evomodel.treedatalikelihood.discrete.SpectralBeagleCrossProductDelegate.useComplexBlockKernelUtils";
+    private static final boolean DEFAULT_USE_COMPLEX_BLOCK_KERNEL_UTILS =
+            Boolean.parseBoolean(System.getProperty(USE_COMPLEX_BLOCK_KERNEL_UTILS_PROPERTY, "true"));
+
+    private final double[] postOrderPartials;
+    private final double[] preOrderPartials;
+    private final double[] intermediate;
+    private final double[] eigenBasisAccum;
+    private final double[] midBuffer;
+    private final ComplexBlockKernelUtils.ComplexKernelPlan kernelPlan;
+    private final boolean useComplexBlockKernelUtils;
+    private int[] postBufferIndices;
+    private int[] preBufferIndices;
+    private double[] branchLengths;
 
     public SpectralBeagleCrossProductDelegate(String name,
                                               Tree tree,
                                               BeagleDataLikelihoodDelegate likelihoodDelegate,
                                               BranchRateModel branchRateModel,
                                               int stateCount) {
+
+        this(name, tree, likelihoodDelegate, branchRateModel, stateCount, DEFAULT_USE_COMPLEX_BLOCK_KERNEL_UTILS);
+    }
+
+    public SpectralBeagleCrossProductDelegate(String name,
+                                              Tree tree,
+                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchRateModel branchRateModel,
+                                              int stateCount,
+                                              boolean useComplexBlockKernelUtils) {
 
         super(name, tree, likelihoodDelegate);
         this.name = name;
@@ -69,10 +97,17 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         this.branchRateModel = branchRateModel;
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModelCount = branchModel.getSubstitutionModels().size();
+        this.useComplexBlockKernelUtils = useComplexBlockKernelUtils;
 
-        this.tmp1 = new double[categoryCount * patternCount * stateCount];
-        this.tmp2 = new double[categoryCount * patternCount * stateCount];
-        this.tmp3 = new double[categoryCount * patternCount * stateCount];
+        this.eigenBasisAccum = new double[stateCount * stateCount];
+        this.midBuffer = new double[stateCount * stateCount];
+
+        final int partialLength = categoryCount * patternCount * stateCount;
+        this.postOrderPartials = new double[partialLength];
+        this.preOrderPartials = new double[partialLength];
+        this.intermediate = new double[partialLength];
+        this.kernelPlan = useComplexBlockKernelUtils ?
+                new ComplexBlockKernelUtils.ComplexKernelPlan(stateCount) : null;
     }
 
     @Override
@@ -160,25 +195,32 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             throw new RuntimeException("Not yet implemented");
         }
 
-        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
-        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
-        final double[] branchLengths = new double[tree.getNodeCount() - 1];
+        ensureBranchBuffers(tree.getNodeCount() - 1);
 
         List<SubstitutionModel> substitutionModels = likelihoodDelegate.getBranchModel().getSubstitutionModels();
 
         if (substitutionModelCount == 1) {
 
             EigenDecomposition ed = substitutionModels.get(0).getEigenDecomposition();
+            // ted.getInverseEigenVectors() is R^T for the original eigensystem;
+            // this rotates branch-top pre-order messages into the kernel basis.
             EigenDecomposition ted = ed.transpose();
 
-            Arrays.fill(first, 0, first.length, 0.0);
+            if (useComplexBlockKernelUtils) {
+                ComplexBlockKernelUtils.fillStructure(kernelPlan, ed);
+            }
+            Arrays.fill(eigenBasisAccum, 0, eigenBasisAccum.length, 0.0);
+
+            final double[] patternWeights  = patternList.getPatternWeights();
+            final double[] categoryWeights = siteRateModel.getCategoryProportions();
+            final double[] categoryRates   = siteRateModel.getCategoryRates();
 
             int count = coverWholeTree(postBufferIndices, preBufferIndices, branchLengths);
-            calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
-                    ed, ted,
-                    branchLengths,
-                    count,
-                    first, null);
+            calculateCrossProductDifferentials(0, count,
+                    postBufferIndices, preBufferIndices, ed, ted, branchLengths,
+                    patternWeights, categoryWeights, categoryRates);
+
+            rotateIntoOutput(eigenBasisAccum, ed.getEigenVectors(), ed.getInverseEigenVectors(), first, 0);
         } else {
 
             throw new RuntimeException("Not yet implemented");
@@ -202,35 +244,38 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         // TOOD handle `firstSquared` and `second`
     }
 
-    private void calculateCrossProductDifferentials(int[] postBufferIndices,
+    private void ensureBranchBuffers(int branchCount) {
+        if (postBufferIndices == null || postBufferIndices.length != branchCount) {
+            postBufferIndices = new int[branchCount];
+            preBufferIndices = new int[branchCount];
+            branchLengths = new double[branchCount];
+        }
+    }
+
+    private void calculateCrossProductDifferentials(int start,
+                                                    int end,
+                                                    int[] postBufferIndices,
                                                     int[] preBufferIndices,
                                                     EigenDecomposition ed,
                                                     EigenDecomposition ted,
                                                     double[] branchLengths,
-                                                    int count,
-                                                    double[] first,
-                                                    double[] second) {
-        for (int i = 0; i < count; ++i) {
+                                                    double[] patternWeights,
+                                                    double[] categoryWeights,
+                                                    double[] categoryRates) {
+        for (int i = start; i < end; ++i) {
             calculateCrossProductDifferentials(postBufferIndices[i], preBufferIndices[i],
-                    ed, ted, branchLengths[i], first, second);
+                    ed, ted, branchLengths[i], patternWeights, categoryWeights, categoryRates);
         }
     }
-
-    private final double[] tmp1;
-    private final double[] tmp2;
-    private final double[] tmp3;
 
     private void calculateCrossProductDifferentials(int postBufferIndex,
                                                     int preBufferIndex,
                                                     EigenDecomposition ed,
                                                     EigenDecomposition ted,
                                                     double branchLength,
-                                                    double[] first,
-                                                    double[] second) {
-
-        double[] postOrderPartials = tmp1;
-        double[] preOrderPartials = tmp2;
-        double[] intermediate = tmp3;
+                                                    double[] patternWeights,
+                                                    double[] categoryWeights,
+                                                    double[] categoryRates) {
 
         getRotatedPartial(postBufferIndex,
                 ed.getInverseEigenVectors(),
@@ -239,42 +284,59 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 ted.getInverseEigenVectors(),
                 preOrderPartials, intermediate);
 
-        double likelihood = blockDiagonalWeightedInnerProduct(
-                preOrderPartials, 0,
-                postOrderPartials, 0,
-                ed.getEigenValues(), branchLength,
-                stateCount);
+        final double[] eigenValues = ed.getEigenValues();
+        int offset = 0;
+        for (int i = 0; i < categoryCount; ++i) {
+            final double wc = categoryWeights[i];
+            final double tc = branchLength * (categoryRates == null ? 1.0 : categoryRates[i]);
+            if (useComplexBlockKernelUtils) {
+                ComplexBlockKernelUtils.fillTransitionCoefficients(kernelPlan, ed, tc);
+            }
 
-        System.err.println("like = " + Math.log(likelihood));
+            for (int j = 0; j < patternCount; ++j) {
+                final double wp = patternWeights[j];
+                if (wp == 0.0) {
+                    offset += stateCount;
+                    continue;
+                }
 
-    }
+                final double denom = branchLikelihoodInRotatedBasis(eigenValues, tc, offset);
+                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) {
+                    offset += stateCount;
+                    continue;
+                }
 
-    private double blockDiagonalWeightedInnerProduct(double[] lhs, final int offsetLhs,
-                                                     double[] rhs, final int offsetRhs,
-                                                     double[] eval,
-                                                     final double t,
-                                                     final int dim) {
-        double sum = 0.0;
-
-        for (int i = 0; i < dim; ++i) {
-            double a = eval[i];
-            double expat = Math.exp(a * t);
-            double b = eval[dim + i];
-            if (b == 0.0) {
-                sum += lhs[offsetLhs + i] * expat * rhs[offsetRhs + i];
-            } else {
-                double expatcosbt = expat * Math.cos(b * t);
-                double expatsinbt = expat * Math.sin(b * t);
-
-                double x0 = expatcosbt * rhs[offsetRhs + i] + expatsinbt * rhs[offsetRhs + i + 1];
-                double x1 = expatcosbt * rhs[offsetRhs + i + 1] - expatsinbt * rhs[offsetRhs + 1];
-                sum += lhs[offsetLhs + i] * x0 + lhs[offsetLhs + i + 1] * x1;
-
-                ++i;
+                final double scale = (wp * wc) / denom;
+                accumulateEigenBasisGradient(eigenValues, tc, offset, scale);
+                offset += stateCount;
             }
         }
+    }
 
-        return sum;
+    private double branchLikelihoodInRotatedBasis(double[] eigenValues,
+                                                  double time,
+                                                  int offset) {
+        if (useComplexBlockKernelUtils) {
+            return ComplexBlockKernelUtils.blockDiagonalTransitionInnerProduct(
+                    kernelPlan, preOrderPartials, offset, postOrderPartials, offset);
+        }
+
+        return AdjointMethods.branchLikelihoodInRotatedBasis(
+                eigenValues, time, preOrderPartials, offset, postOrderPartials, offset, stateCount);
+    }
+
+    private void accumulateEigenBasisGradient(double[] eigenValues,
+                                              double time,
+                                              int offset,
+                                              double scale) {
+        if (useComplexBlockKernelUtils) {
+            ComplexBlockKernelUtils.applyTimeDependentCoefficientsToOuterProduct(
+                    kernelPlan, time, preOrderPartials, offset, postOrderPartials, offset, scale, eigenBasisAccum);
+        } else {
+            AdjointMethods.accumulateEigenBasisGradientForOuterProduct(
+                    eigenValues, time, preOrderPartials, offset, postOrderPartials, offset,
+                    scale, eigenBasisAccum, stateCount);
+        }
     }
 
     private void getRotatedPartial(int partialIndex,
@@ -324,6 +386,42 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 return getGradient(node);
             }
         });
+    }
+
+    /**
+     * out[modelOffset .. modelOffset+K*K) = R^{-T} * eigenBasisAccum * R^T
+     *
+     * Step 1: mid = R^{-T} * accum -> mid[i,col] = sum_k ievc[k*K+i] * accum[k*K+col]
+     * Step 2: out = mid * R^T      -> out[row,col] = sum_j mid[row*K+j] * evec[col*K+j]
+     */
+    private void rotateIntoOutput(double[] accum, double[] evec, double[] ievc,
+                                   double[] out, int modelOffset) {
+        final int K = stateCount;
+
+        for (int row = 0; row < K; row++) {
+            final int rowOff = row * K;
+            Arrays.fill(midBuffer, rowOff, rowOff + K, 0.0);
+            for (int k = 0; k < K; k++) {
+                final double a = ievc[k * K + row];
+                final int accumOff = k * K;
+                for (int col = 0; col < K; col++) {
+                    midBuffer[rowOff + col] += a * accum[accumOff + col];
+                }
+            }
+        }
+
+        for (int row = 0; row < K; row++) {
+            final int rowOff = row * K;
+            final int outRowOff = modelOffset + rowOff;
+            for (int col = 0; col < K; col++) {
+                double sum = 0.0;
+                final int colOff = col * K;
+                for (int j = 0; j < K; j++) {
+                    sum += midBuffer[rowOff + j] * evec[colOff + j];
+                }
+                out[outRowOff + col] = sum;
+            }
+        }
     }
 
     private static void multiplyMatrixVector(double[] matrix, double[] vector, int vectorOffset, double[] out, int outOffset, int dim) {

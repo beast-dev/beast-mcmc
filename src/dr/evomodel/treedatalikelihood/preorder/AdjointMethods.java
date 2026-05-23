@@ -10,6 +10,8 @@ import java.util.Arrays;
 
 public class AdjointMethods {
 
+    private static final double EIGEN_TOLERANCE = 1.0e-12;
+
     public static void main(String[] args) {
 
         MathUtils.setSeed(666);
@@ -81,6 +83,99 @@ public class AdjointMethods {
             }
         }
         return mat;
+    }
+
+    public static double branchLikelihoodInRotatedBasis(
+            double[] eigenValues,
+            double time,
+            double[] lhs,
+            int lhsOffset,
+            double[] rhs,
+            int rhsOffset,
+            int stateCount) {
+
+        double sum = 0.0;
+        for (int i = 0; i < stateCount; ++i) {
+            final double real = eigenValues[i];
+            final double imag = imaginaryEigenvalue(eigenValues, i, stateCount);
+            final double expReal = Math.exp(time * real);
+
+            if (Math.abs(imag) <= EIGEN_TOLERANCE) {
+                sum += lhs[lhsOffset + i] * expReal * rhs[rhsOffset + i];
+            } else {
+                final double c = expReal * Math.cos(time * imag);
+                final double s = expReal * Math.sin(time * imag);
+                final double x = rhs[rhsOffset + i];
+                final double y = rhs[rhsOffset + i + 1];
+                sum += lhs[lhsOffset + i] * (c * x + s * y);
+                sum += lhs[lhsOffset + i + 1] * (-s * x + c * y);
+
+                ++i;
+            }
+        }
+        return sum;
+    }
+
+    public static void accumulateEigenBasisGradientForOuterProduct(
+            double[] eigenValues,
+            double time,
+            double[] lhs,
+            int lhsOffset,
+            double[] rhs,
+            int rhsOffset,
+            double scale,
+            double[] eigenBasisGrad,
+            int stateCount) {
+
+        for (int ls = 0; ls < stateCount; ++ls) {
+            final double lv1 = lhs[lhsOffset + ls];
+
+            if (isRealEigenvalue(eigenValues, ls, stateCount)) {
+                for (int rs = 0; rs < stateCount; ++rs) {
+                    final double rv1 = rhs[rhsOffset + rs];
+
+                    if (isRealEigenvalue(eigenValues, rs, stateCount)) {
+
+                        OneOneNew(eigenValues, time, ls, rs, lv1, rv1, scale, eigenBasisGrad, stateCount);
+
+                    } else {
+
+                        final double rv2 = rhs[rhsOffset + rs + 1];
+                        OneTwoNew(eigenValues, time, ls, rs, lv1, rv1, rv2, scale, eigenBasisGrad, stateCount);
+
+                        ++rs;
+                    }
+                }
+            } else {
+                final double lv2 = lhs[lhsOffset + ls + 1];
+
+                for (int rs = 0; rs < stateCount; ++rs) {
+                    final double rv1 = rhs[rhsOffset + rs];
+
+                    if (isRealEigenvalue(eigenValues, rs, stateCount)) {
+
+                        TwoOneNew(eigenValues, time, ls, rs, lv1, lv2, rv1, scale, eigenBasisGrad, stateCount);
+
+                    } else {
+
+                        final double rv2 = rhs[rhsOffset + rs + 1];
+                        TwoTwoNew(eigenValues, time, ls, rs, lv1, lv2, rv1, rv2, scale, eigenBasisGrad, stateCount);
+
+                        ++rs;
+                    }
+                }
+
+                ++ls;
+            }
+        }
+    }
+
+    private static boolean isRealEigenvalue(double[] eigenValues, int index, int stateCount) {
+        return Math.abs(imaginaryEigenvalue(eigenValues, index, stateCount)) <= EIGEN_TOLERANCE;
+    }
+
+    private static double imaginaryEigenvalue(double[] eigenValues, int index, int stateCount) {
+        return eigenValues.length > stateCount ? eigenValues[stateCount + index] : 0.0;
     }
 
     static void OneOne(

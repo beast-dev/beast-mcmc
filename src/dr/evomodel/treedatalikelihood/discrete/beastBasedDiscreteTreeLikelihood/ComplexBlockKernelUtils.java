@@ -17,6 +17,12 @@ public final class ComplexBlockKernelUtils {
     private static final byte ENTRY_TWO_BY_ONE = 3;
     private static final byte ENTRY_TWO_BY_TWO = 4;
 
+    private static final String USE_LEFT_GROUPED_FUSED_KERNEL_PROPERTY =
+            "dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.ComplexBlockKernelUtils.useLeftGroupedFusedKernel";
+
+    private static final boolean USE_LEFT_GROUPED_FUSED_KERNEL =
+            Boolean.parseBoolean(System.getProperty(USE_LEFT_GROUPED_FUSED_KERNEL_PROPERTY, "true"));
+
     private ComplexBlockKernelUtils() { }
 
     // -------------------------------------------------------------------------
@@ -40,6 +46,15 @@ public final class ComplexBlockKernelUtils {
         int oneByTwoCount;
         int twoByOneCount;
         int twoByTwoCount;
+
+        final int[] scalarByLeftStartIndex;
+        final int[] scalarByLeftEndIndex;
+        final int[] oneByTwoByLeftStartIndex;
+        final int[] oneByTwoByLeftEndIndex;
+        final int[] twoByOneByLeftStartIndex;
+        final int[] twoByOneByLeftEndIndex;
+        final int[] twoByTwoByLeftStartIndex;
+        final int[] twoByTwoByLeftEndIndex;
 
         int[] scalarBase;
         int[] scalarLeftStart;
@@ -96,6 +111,14 @@ public final class ComplexBlockKernelUtils {
             this.expR         = new double[stateCount];
             this.cosB         = new double[stateCount];
             this.sinB         = new double[stateCount];
+            this.scalarByLeftStartIndex = new int[stateCount];
+            this.scalarByLeftEndIndex = new int[stateCount];
+            this.oneByTwoByLeftStartIndex = new int[stateCount];
+            this.oneByTwoByLeftEndIndex = new int[stateCount];
+            this.twoByOneByLeftStartIndex = new int[stateCount];
+            this.twoByOneByLeftEndIndex = new int[stateCount];
+            this.twoByTwoByLeftStartIndex = new int[stateCount];
+            this.twoByTwoByLeftEndIndex = new int[stateCount];
         }
     }
 
@@ -245,6 +268,11 @@ public final class ComplexBlockKernelUtils {
         int twoByTwoIndex = 0;
 
         for (int leftBlock = 0; leftBlock < blockCount; ++leftBlock) {
+            plan.scalarByLeftStartIndex[leftBlock] = scalarIndex;
+            plan.oneByTwoByLeftStartIndex[leftBlock] = oneByTwoIndex;
+            plan.twoByOneByLeftStartIndex[leftBlock] = twoByOneIndex;
+            plan.twoByTwoByLeftStartIndex[leftBlock] = twoByTwoIndex;
+
             final int leftStart = plan.blockStarts[leftBlock];
             final int leftDim   = plan.blockDims[leftBlock];
             final double leftReal = eigenValues[leftStart];
@@ -314,6 +342,11 @@ public final class ComplexBlockKernelUtils {
                     twoByTwoIndex++;
                 }
             }
+
+            plan.scalarByLeftEndIndex[leftBlock] = scalarIndex;
+            plan.oneByTwoByLeftEndIndex[leftBlock] = oneByTwoIndex;
+            plan.twoByOneByLeftEndIndex[leftBlock] = twoByOneIndex;
+            plan.twoByTwoByLeftEndIndex[leftBlock] = twoByTwoIndex;
         }
     }
 
@@ -498,6 +531,23 @@ public final class ComplexBlockKernelUtils {
                                                                     int rightOffset,
                                                                     double scale,
                                                                     double[] eigenBasisGradient) {
+        if (USE_LEFT_GROUPED_FUSED_KERNEL) {
+            applyLeftGroupedTimeDependentCoefficientsToOuterProduct(
+                    plan, time, leftVector, leftOffset, rightVector, rightOffset, scale, eigenBasisGradient);
+        } else {
+            applyBlockNestedTimeDependentCoefficientsToOuterProduct(
+                    plan, time, leftVector, leftOffset, rightVector, rightOffset, scale, eigenBasisGradient);
+        }
+    }
+
+    private static void applyBlockNestedTimeDependentCoefficientsToOuterProduct(ComplexKernelPlan plan,
+                                                                                double time,
+                                                                                double[] leftVector,
+                                                                                int leftOffset,
+                                                                                double[] rightVector,
+                                                                                int rightOffset,
+                                                                                double scale,
+                                                                                double[] eigenBasisGradient) {
         final int stateCount = plan.stateCount;
         final int blockCount = plan.blockCount;
 
@@ -642,6 +692,166 @@ public final class ComplexBlockKernelUtils {
                         eigenBasisGradient[base + stateCount]     += (D - C) * 0.5;
                         eigenBasisGradient[base + stateCount + 1] += (A - B) * 0.5;
                     }
+                }
+            }
+        }
+    }
+
+    public static void applyLeftGroupedTimeDependentCoefficientsToOuterProduct(ComplexKernelPlan plan,
+                                                                               double time,
+                                                                               double[] leftVector,
+                                                                               int leftOffset,
+                                                                               double[] rightVector,
+                                                                               int rightOffset,
+                                                                               double scale,
+                                                                               double[] eigenBasisGradient) {
+        final int stateCount = plan.stateCount;
+        final int blockCount = plan.blockCount;
+
+        for (int leftBlock = 0; leftBlock < blockCount; ++leftBlock) {
+            final int leftStart = plan.blockStarts[leftBlock];
+            final double expLeft = plan.expR[leftBlock];
+            final double x0 = scale * leftVector[leftOffset + leftStart];
+
+            if (plan.blockDims[leftBlock] == 1) {
+                for (int e = plan.scalarByLeftStartIndex[leftBlock];
+                     e < plan.scalarByLeftEndIndex[leftBlock]; ++e) {
+                    final double inverseDelta = plan.scalarInvDenom[e];
+                    final double coeff = inverseDelta == 0.0
+                            ? time * expLeft
+                            : (expLeft - plan.expR[plan.scalarRightBlock[e]]) * inverseDelta;
+
+                    eigenBasisGradient[plan.scalarBase[e]] +=
+                            coeff * x0 * rightVector[rightOffset + plan.scalarRightStart[e]];
+                }
+
+                for (int e = plan.oneByTwoByLeftStartIndex[leftBlock];
+                     e < plan.oneByTwoByLeftEndIndex[leftBlock]; ++e) {
+                    final int rightBlock = plan.oneByTwoRightBlock[e];
+                    final double inverseDenom = plan.oneByTwoInvDenom[e];
+                    final double ic, is;
+                    if (inverseDenom == 0.0) {
+                        ic = time;
+                        is = 0.0;
+                    } else {
+                        final double realShift = plan.oneByTwoRealShift[e];
+                        final double rightImag = plan.oneByTwoRightImag[e];
+                        final double expShift = plan.expR[rightBlock] / expLeft;
+                        final double cosRight = plan.cosB[rightBlock];
+                        final double sinRight = plan.sinB[rightBlock];
+                        ic = (expShift * (realShift * cosRight + rightImag * sinRight) - realShift) * inverseDenom;
+                        is = (expShift * (realShift * sinRight - rightImag * cosRight) + rightImag) * inverseDenom;
+                    }
+
+                    final double eic = expLeft * ic;
+                    final double eis = expLeft * is;
+                    final int rightStart = plan.oneByTwoRightStart[e];
+                    final double in0 = x0 * rightVector[rightOffset + rightStart];
+                    final double in1 = x0 * rightVector[rightOffset + rightStart + 1];
+                    final int base = plan.oneByTwoBase[e];
+                    eigenBasisGradient[base]     +=  eic * in0 + eis * in1;
+                    eigenBasisGradient[base + 1] += -eis * in0 + eic * in1;
+                }
+            } else {
+                final double x1 = scale * leftVector[leftOffset + leftStart + 1];
+                final double cosLeft = plan.cosB[leftBlock];
+                final double sinLeft = plan.sinB[leftBlock];
+
+                for (int e = plan.twoByOneByLeftStartIndex[leftBlock];
+                     e < plan.twoByOneByLeftEndIndex[leftBlock]; ++e) {
+                    final int rightBlock = plan.twoByOneRightBlock[e];
+                    final double inverseDenom = plan.twoByOneInvDenom[e];
+                    final double ic, is;
+                    if (inverseDenom == 0.0) {
+                        ic = time;
+                        is = 0.0;
+                    } else {
+                        final double realShift = plan.twoByOneRealShift[e];
+                        final double leftImag = plan.twoByOneLeftImag[e];
+                        final double expShift = plan.expR[rightBlock] / expLeft;
+                        ic = (expShift * (realShift * cosLeft + leftImag * sinLeft) - realShift) * inverseDenom;
+                        is = (expShift * (realShift * sinLeft - leftImag * cosLeft) + leftImag) * inverseDenom;
+                    }
+
+                    final double eic = expLeft * ic;
+                    final double eis = expLeft * is;
+                    final double A = cosLeft * eic + sinLeft * eis;
+                    final double B = cosLeft * eis - sinLeft * eic;
+                    final double y = rightVector[rightOffset + plan.twoByOneRightStart[e]];
+                    final double in0 = x0 * y;
+                    final double in1 = x1 * y;
+                    final int base = plan.twoByOneBase[e];
+                    eigenBasisGradient[base]              +=  A * in0 + B * in1;
+                    eigenBasisGradient[base + stateCount] += -B * in0 + A * in1;
+                }
+
+                for (int e = plan.twoByTwoByLeftStartIndex[leftBlock];
+                     e < plan.twoByTwoByLeftEndIndex[leftBlock]; ++e) {
+                    final int rightBlock = plan.twoByTwoRightBlock[e];
+                    final double expShift = plan.expR[rightBlock] / expLeft;
+                    final double cosRight = plan.cosB[rightBlock];
+                    final double sinRight = plan.sinB[rightBlock];
+                    final double realShift = plan.twoByTwoRealShift[e];
+                    final double plusImagShift = plan.twoByTwoPlusImagShift[e];
+                    final double minusImagShift = plan.twoByTwoMinusImagShift[e];
+
+                    final double cosPlusImag  = cosLeft * cosRight - sinLeft * sinRight;
+                    final double sinPlusImag  = sinLeft * cosRight + cosLeft * sinRight;
+                    final double cosMinusImag = cosRight * cosLeft + sinRight * sinLeft;
+                    final double sinMinusImag = sinRight * cosLeft - cosRight * sinLeft;
+
+                    final double pi0, pi1;
+                    final double inversePlusDenom = plan.twoByTwoInvPlusDenom[e];
+                    if (inversePlusDenom == 0.0) {
+                        pi0 = time;
+                        pi1 = 0.0;
+                    } else {
+                        final double expCosPl = expShift * cosPlusImag;
+                        final double expSinPl = expShift * sinPlusImag;
+                        pi0 = (realShift * (expCosPl - 1.0) + plusImagShift * expSinPl) * inversePlusDenom;
+                        pi1 = (realShift * expSinPl - plusImagShift * (expCosPl - 1.0)) * inversePlusDenom;
+                    }
+
+                    final double mi0, mi1;
+                    final double inverseMinusDenom = plan.twoByTwoInvMinusDenom[e];
+                    if (inverseMinusDenom == 0.0) {
+                        mi0 = time;
+                        mi1 = 0.0;
+                    } else {
+                        final double expCosMi = expShift * cosMinusImag;
+                        final double expSinMi = expShift * sinMinusImag;
+                        mi0 = (realShift * (expCosMi - 1.0) + minusImagShift * expSinMi) * inverseMinusDenom;
+                        mi1 = (realShift * expSinMi - minusImagShift * (expCosMi - 1.0)) * inverseMinusDenom;
+                    }
+
+                    final double enR =  expLeft * cosLeft;
+                    final double enI = -expLeft * sinLeft;
+                    final double epI =  expLeft * sinLeft;
+
+                    final double plR = enR * pi0 - enI * pi1;
+                    final double plI = enR * pi1 + enI * pi0;
+                    final double miR = enR * mi0 - epI * mi1;
+                    final double miI = enR * mi1 + epI * mi0;
+
+                    final int rightStart = plan.twoByTwoRightStart[e];
+                    final double y0 = rightVector[rightOffset + rightStart];
+                    final double y1 = rightVector[rightOffset + rightStart + 1];
+
+                    final double sPlusV  = x0 * y0 + x1 * y1;
+                    final double sMinusV = x0 * y0 - x1 * y1;
+                    final double tPlusV  = x0 * y1 + x1 * y0;
+                    final double tMinusV = x0 * y1 - x1 * y0;
+
+                    final double A = miR * sPlusV  + miI * tMinusV;
+                    final double B = plR * sMinusV + plI * tPlusV;
+                    final double C = miR * tMinusV - miI * sPlusV;
+                    final double D = plR * tPlusV  - plI * sMinusV;
+
+                    final int base = plan.twoByTwoBase[e];
+                    eigenBasisGradient[base]                  += (A + B) * 0.5;
+                    eigenBasisGradient[base + 1]              += (C + D) * 0.5;
+                    eigenBasisGradient[base + stateCount]     += (D - C) * 0.5;
+                    eigenBasisGradient[base + stateCount + 1] += (A - B) * 0.5;
                 }
             }
         }

@@ -319,13 +319,13 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
         boolean normalize = substitutionModel.getNormalization();
 
-        double rateScalar = normalize ? 1 / substitutionModel.setupMatrix() : 0.0;
+        Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?
+                ((LogRateSubstitutionModel) substitutionModel).getTransform() : null;
+
+        double rateScalar = normalize && transform != null ? 1 / substitutionModel.setupMatrix() : 0.0;
 
         double normalizationConstant = preProcessNormalization(crossProducts, generator,
                 substitutionModel.getNormalization());
-
-        Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?
-                ((LogRateSubstitutionModel) substitutionModel).getTransform() : null;
 
         final double[] gradient = new double[getParameter().getDimension()];
         for (int i = 0; i < getParameter().getDimension(); ++i) {

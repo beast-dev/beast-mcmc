@@ -40,7 +40,7 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AdjointMethods;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.ComplexBlockKernelUtils;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.ComplexBlockKernelUtils;
 
 import java.util.Arrays;
 import java.util.List;

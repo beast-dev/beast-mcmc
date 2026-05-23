@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations;
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations;
 
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 

@@ -2,7 +2,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.DiscretePostOrderReport;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.DiscretePostOrderReport;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;

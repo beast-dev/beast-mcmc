@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;

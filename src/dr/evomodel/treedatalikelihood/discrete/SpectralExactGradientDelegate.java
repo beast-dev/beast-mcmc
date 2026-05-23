@@ -7,8 +7,8 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.ComplexBlockKernelUtils;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.RealKernelUtils;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.ComplexBlockKernelUtils;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.RealKernelUtils;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteGradientDelegate;
 
 import java.util.Arrays;

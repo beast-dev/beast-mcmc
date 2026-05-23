@@ -1,6 +1,6 @@
-package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations;
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations;
 
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.DiscretePreOrderDelegate;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.DiscretePreOrderDelegate;
 
 /**
  * Defines the internal algebra of pre-order partials used by

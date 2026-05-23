@@ -8,8 +8,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.*;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.*;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.*;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.*;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
@@ -436,7 +436,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     public boolean isSpectralRepresentation() {
         return bidirectionalRepresentation instanceof
-                dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.SpectralRotatedPartialsRepresentation;
+                dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralRotatedPartialsRepresentation;
     }
 
     public double[] getPatternWeights() {

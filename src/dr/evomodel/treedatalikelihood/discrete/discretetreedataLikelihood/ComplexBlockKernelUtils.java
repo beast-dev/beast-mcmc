@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood;
 
 import dr.evomodel.substmodel.EigenDecomposition;
 import org.apache.commons.math.util.FastMath;

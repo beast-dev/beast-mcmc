@@ -32,7 +32,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.PreOrderMessageProvider;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.PreOrderMessageProvider;
 import dr.inference.model.Model;
 import dr.math.matrixAlgebra.WrappedVector;
 

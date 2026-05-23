@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood;
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood;
 
 /**
  * Narrow interface exposing post-order branch-side messages.

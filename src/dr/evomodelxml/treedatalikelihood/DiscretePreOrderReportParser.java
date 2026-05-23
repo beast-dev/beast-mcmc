@@ -2,7 +2,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.DiscretePreOrderReport;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.DiscretePreOrderReport;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 import dr.xml.*;
 

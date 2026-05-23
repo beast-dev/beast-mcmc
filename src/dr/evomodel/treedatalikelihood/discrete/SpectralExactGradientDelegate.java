@@ -70,6 +70,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
         final double[][] eigenBasisAccum;
         final double[] tmpPreTop;
         final double[] tmpPreBottom;
+        final double[] tmpPostTop;
         final double[] tmpPostBottom;
         final double[] rotatedPre;
         final double[] rotatedPost;
@@ -81,6 +82,7 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             eigenBasisAccum  = new double[substitutionModelCount][K2];
             tmpPreTop        = new double[stateCount];
             tmpPreBottom     = new double[stateCount];
+            tmpPostTop       = new double[stateCount];
             tmpPostBottom    = new double[stateCount];
             rotatedPre       = new double[stateCount];
             rotatedPost      = new double[stateCount];
@@ -370,10 +372,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                 double denom = 0.0;
                 if (useInternalRotatedMessages) {
                     likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
-                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, 0, ws.tmpPostTop);
                     likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
                     for (int s = 0; s < stateCount; s++) {
-                        denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                        denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
                     }
                 } else {
                     likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
@@ -404,10 +406,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     double denom = 0.0;
                     if (useInternalRotatedMessages) {
                         likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
-                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, p, ws.tmpPostTop);
                         likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
                         for (int s = 0; s < stateCount; s++) {
-                            denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                            denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
                         }
                     } else {
                         likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);
@@ -461,10 +463,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                 double denom = 0.0;
                 if (useInternalRotatedMessages) {
                     likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
-                    likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
+                    likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, 0, ws.tmpPostTop);
                     likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
                     for (int s = 0; s < stateCount; s++) {
-                        denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                        denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
                     }
                 } else {
                     likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
@@ -494,10 +496,10 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
                     double denom = 0.0;
                     if (useInternalRotatedMessages) {
                         likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
-                        likelihoodDelegate.getInternalPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
+                        likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, p, ws.tmpPostTop);
                         likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
                         for (int s = 0; s < stateCount; s++) {
-                            denom += ws.tmpPreBottom[s] * ws.rotatedPost[s];
+                            denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
                         }
                     } else {
                         likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);

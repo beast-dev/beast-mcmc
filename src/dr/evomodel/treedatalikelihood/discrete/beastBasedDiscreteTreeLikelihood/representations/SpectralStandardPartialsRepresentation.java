@@ -163,7 +163,14 @@ public final class SpectralStandardPartialsRepresentation
 
     @Override
     public void initializeTipPartial(double[] standardTip, double[] outPartial) {
-        System.arraycopy(standardTip, 0, outPartial, 0, stateCount);
+        initializeTipPartial(standardTip, outPartial, 0);
+    }
+
+    @Override
+    public void initializeTipPartial(double[] standardTip, double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = standardTip[s];
+        }
     }
 
     @Override
@@ -171,34 +178,60 @@ public final class SpectralStandardPartialsRepresentation
                                      double branchLength,
                                      double[] childPartial,
                                      double[] outBranchTopPartial) {
+        propagateToBranchTop(nodeNumber, branchLength, childPartial, 0, outBranchTopPartial, 0);
+    }
+
+    @Override
+    public void propagateToBranchTop(int nodeNumber,
+                                     double branchLength,
+                                     double[] childPartial,
+                                     int childOffset,
+                                     double[] outBranchTopPartial,
+                                     int outOffset) {
 
         ensureEigenSystemCurrent();
         ensureBranchCoefficients(nodeNumber, branchLength);
 
         // tmpA = R^{-1} p
-        multiplyMatrixVector(matrixRInv, childPartial, tmpA, stateCount);
+        multiplyMatrixVectorOffset(matrixRInv, childPartial, childOffset, tmpA, 0, stateCount);
 
         // tmpB = exp(tD) tmpA
         applyForwardCoefficients(nodeNumber, tmpA, tmpB);
 
         // out = R tmpB
-        multiplyMatrixVector(matrixR, tmpB, outBranchTopPartial, stateCount);
+        multiplyMatrixVectorOffset(matrixR, tmpB, 0, outBranchTopPartial, outOffset, stateCount);
     }
 
     @Override
     public void combineBranchTopPartials(double[] leftBranchTopPartial,
                                          double[] rightBranchTopPartial,
                                          double[] outParentPartial) {
+        combineBranchTopPartials(leftBranchTopPartial, 0, rightBranchTopPartial, 0, outParentPartial, 0);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         int leftOffset,
+                                         double[] rightBranchTopPartial,
+                                         int rightOffset,
+                                         double[] outParentPartial,
+                                         int outOffset) {
         for (int i = 0; i < stateCount; i++) {
-            outParentPartial[i] = leftBranchTopPartial[i] * rightBranchTopPartial[i];
+            outParentPartial[outOffset + i] =
+                    leftBranchTopPartial[leftOffset + i] * rightBranchTopPartial[rightOffset + i];
         }
     }
 
     @Override
     public double rootContribution(double[] rootFrequencies, double[] rootPartial) {
+        return rootContribution(rootFrequencies, rootPartial, 0);
+    }
+
+    @Override
+    public double rootContribution(double[] rootFrequencies, double[] rootPartial, int rootOffset) {
         double sum = 0.0;
         for (int i = 0; i < stateCount; i++) {
-            sum += rootFrequencies[i] * rootPartial[i];
+            sum += rootFrequencies[i] * rootPartial[rootOffset + i];
         }
         return sum;
     }
@@ -209,25 +242,23 @@ public final class SpectralStandardPartialsRepresentation
 
     @Override
     public void initializeRootPartial(double[] rootFrequencies, double[] outPartial) {
-        System.arraycopy(rootFrequencies, 0, outPartial, 0, stateCount);
+        initializeRootPartial(rootFrequencies, outPartial, 0);
     }
 
     @Override
-    public void combineParentAndSibling(double[] parentPreOrderStandard,
-                                        double[] siblingPostOrderStandard,
-                                        double[] outChildBranchTopPreOrder) {
-        for (int i = 0; i < stateCount; i++) {
-            outChildBranchTopPreOrder[i] =
-                    parentPreOrderStandard[i] * siblingPostOrderStandard[i];
+    public void initializeRootPartial(double[] rootFrequencies, double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = rootFrequencies[s];
         }
     }
 
     @Override
     public void combineParentAndSibling(double[] parentPreOrderStandard, int parentOff,
                                         double[] siblingPostOrderStandard,
-                                        double[] outChildBranchTopPreOrder) {
+                                        double[] outChildBranchTopPreOrder,
+                                        int outOff) {
         for (int i = 0; i < stateCount; i++) {
-            outChildBranchTopPreOrder[i] =
+            outChildBranchTopPreOrder[outOff + i] =
                     parentPreOrderStandard[parentOff + i] * siblingPostOrderStandard[i];
         }
     }
@@ -236,28 +267,15 @@ public final class SpectralStandardPartialsRepresentation
     public void propagateToBranchBottom(int nodeNumber,
                                         double branchLength,
                                         double[] branchTopPreOrder,
-                                        double[] outBranchBottomPreOrder) {
-
-        ensureEigenSystemCurrent();
-        ensureBranchCoefficients(nodeNumber, branchLength);
-
-        multiplyTransposeMatrixVector(matrixR, branchTopPreOrder, tmpA, stateCount);
-        applyTransposeCoefficients(nodeNumber, tmpA, tmpB);
-        multiplyTransposeMatrixVector(matrixRInv, tmpB, outBranchBottomPreOrder, stateCount);
-    }
-
-    @Override
-    public void propagateToBranchBottom(int nodeNumber,
-                                        double branchLength,
-                                        double[] branchTopPreOrder,
+                                        int branchTopOffset,
                                         double[] out, int outOff) {
 
         ensureEigenSystemCurrent();
         ensureBranchCoefficients(nodeNumber, branchLength);
 
-        multiplyTransposeMatrixVector(matrixR, branchTopPreOrder, tmpA, stateCount);
+        multiplyTransposeMatrixVectorOffset(matrixR, branchTopPreOrder, branchTopOffset, tmpA, 0, stateCount);
         applyTransposeCoefficients(nodeNumber, tmpA, tmpB);
-        multiplyTransposeMatrixVectorOffset(matrixRInv, tmpB, out, outOff, stateCount);
+        multiplyTransposeMatrixVectorOffset(matrixRInv, tmpB, 0, out, outOff, stateCount);
     }
 
     // ------------------------------------------------------------------
@@ -266,12 +284,28 @@ public final class SpectralStandardPartialsRepresentation
 
     @Override
     public void exportPostOrderPartial(double[] partial, double[] outPartial) {
-        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+        exportPostOrderPartial(partial, 0, outPartial, 0);
+    }
+
+    @Override
+    public void exportPostOrderPartial(double[] partial, int partialOffset,
+                                       double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = partial[partialOffset + s];
+        }
     }
 
     @Override
     public void exportPreOrderPartial(double[] partial, double[] outPartial) {
-        System.arraycopy(partial, 0, outPartial, 0, stateCount);
+        exportPreOrderPartial(partial, 0, outPartial, 0);
+    }
+
+    @Override
+    public void exportPreOrderPartial(double[] partial, int partialOffset,
+                                      double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = partial[partialOffset + s];
+        }
     }
 
     // ------------------------------------------------------------------
@@ -369,18 +403,24 @@ public final class SpectralStandardPartialsRepresentation
                             " for stateCount = " + stateCount);
         }
 
-        System.arraycopy(evec, 0, outR, 0, outR.length);
-        System.arraycopy(ievc, 0, outRInv, 0, outRInv.length);
+        for (int i = 0; i < outR.length; i++) {
+            outR[i] = evec[i];
+            outRInv[i] = ievc[i];
+        }
 
         if (eval.length == stateCount) {
-            System.arraycopy(eval, 0, outEigenReal, 0, stateCount);
+            for (int i = 0; i < stateCount; i++) {
+                outEigenReal[i] = eval[i];
+            }
             Arrays.fill(outEigenImag, 0.0);
             return;
         }
 
         if (eval.length == 2 * stateCount) {
-            System.arraycopy(eval, 0, outEigenReal, 0, stateCount);
-            System.arraycopy(eval, stateCount, outEigenImag, 0, stateCount);
+            for (int i = 0; i < stateCount; i++) {
+                outEigenReal[i] = eval[i];
+                outEigenImag[i] = eval[stateCount + i];
+            }
             return;
         }
 
@@ -511,26 +551,6 @@ public final class SpectralStandardPartialsRepresentation
     // ------------------------------------------------------------------
 
     /**
-     * out = matrix * vector
-     *
-     * matrix stored row-major, dimension dim x dim.
-     */
-    private static void multiplyMatrixVector(double[] matrix,
-                                             double[] vector,
-                                             double[] out,
-                                             int dim) {
-        int base = 0;
-        for (int i = 0; i < dim; i++) {
-            double sum = 0.0;
-            for (int j = 0; j < dim; j++) {
-                sum += matrix[base + j] * vector[j];
-            }
-            out[i] = sum;
-            base += dim;
-        }
-    }
-
-    /**
      * out = matrix^T * vector
      *
      * matrix stored row-major, dimension dim x dim.
@@ -551,15 +571,30 @@ public final class SpectralStandardPartialsRepresentation
         }
     }
 
+    private static void multiplyMatrixVectorOffset(double[] matrix,
+                                                   double[] vector, int vectorOff,
+                                                   double[] out, int outOff,
+                                                   int dim) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) {
+                sum += matrix[base + j] * vector[vectorOff + j];
+            }
+            out[outOff + i] = sum;
+            base += dim;
+        }
+    }
+
     private static void multiplyTransposeMatrixVectorOffset(double[] matrix,
-                                                             double[] vector,
-                                                             double[] out, int outOff,
-                                                             int dim) {
+                                                            double[] vector, int vectorOff,
+                                                            double[] out, int outOff,
+                                                            int dim) {
         Arrays.fill(out, outOff, outOff + dim, 0.0);
 
         int base = 0;
         for (int row = 0; row < dim; row++) {
-            final double v = vector[row];
+            final double v = vector[vectorOff + row];
             for (int col = 0; col < dim; col++) {
                 out[outOff + col] += matrix[base + col] * v;
             }

@@ -1,5 +1,5 @@
 /*
- * TimeVaryingBranchRateModel.java
+ * NonParametricBranchRateModel2.java
  *
  * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -38,8 +38,6 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MaxIterationsExceededException;
 
 import java.util.Collections;
 import java.util.List;
@@ -170,13 +168,9 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
                 }
 
                 double val;
-                try {
-                    val = approximation.getIntegral(start, end);
-                } catch (FunctionEvaluationException e) {
-                    throw new RuntimeException(e);
-                } catch (MaxIterationsExceededException e) {
-                    throw new RuntimeException(e);
-                }
+
+                val = approximation.getIntegral(start, end);
+
                 integralCache.put(key, val);
                 return val;
             }

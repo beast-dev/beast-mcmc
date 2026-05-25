@@ -52,7 +52,7 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
                                     Tree tree,
                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
                                     DifferentiableBranchRates branchRates) {
-        super(name, tree, likelihoodDelegate);
+        super(name, tree, likelihoodDelegate, branchRates);
         this.branchRates = branchRates;
     }
 

@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -43,9 +44,13 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
 
     protected AbstractBeagleBranchGradientDelegate(String name,
                                                    Tree tree,
-                                                   BeagleDataLikelihoodDelegate likelihoodDelegate) {
+                                                   BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                   BranchRates branchRateModel) {
         super(name, tree, likelihoodDelegate);
+        this.branchRateModel = branchRateModel;
     }
+
+    protected BranchRates branchRateModel;
 
     abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 

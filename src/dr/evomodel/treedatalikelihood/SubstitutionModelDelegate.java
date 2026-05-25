@@ -28,8 +28,10 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.util.Timer;
@@ -175,7 +177,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         if (getSubstitutionOrder(branchIndex).length > 1) {
             return getMatrixBufferCount() + getEigenBufferCount() * 2 + branchIndex;
         }
-        return getMatrixBufferCount() + getEigenIndex(getSubstitutionOrder(branchIndex)[0]);
+        return getInfinitesimalMatrixBufferIndexByEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
 
     public int[] getSubstitutionOrder(int branchIndex) {
@@ -184,7 +186,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     }
 
     private int getInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
-        return getMatrixBufferCount() + eigenIndex;
+        return getMatrixBufferCount() + getEigenIndex(eigenIndex);
     }
 
     @Override
@@ -192,7 +194,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         if (getSubstitutionOrder(branchIndex).length > 1) {
             return getMatrixBufferCount() + getEigenBufferCount() * 2 + tree.getNodeCount() + branchIndex;
         }
-        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(getSubstitutionOrder(branchIndex)[0]);
+        return getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
 
     @Override
@@ -348,7 +350,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
                     // too few buffers available, process what we have and continue...
                     if (flipBuffers) { throw new UnsupportedOperationException("flipping not implemented for Epoch models"); }
                     computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
-                    convolveMatrices(beagle, convolutionList);
+                    convolveMatrices(beagle, convolutionList, true);
 
                     // reset the counts
                     for (int k = 0; k < eigenCount; k++) {
@@ -381,7 +383,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         }// END: i loop
 
         computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
-        convolveMatrices(beagle, convolutionList);
+        convolveMatrices(beagle, convolutionList, true);
 
     }// END: updateTransitionMatrices
 
@@ -392,13 +394,90 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         }
     }
 
-    public void getConvolvedInfinitesimalMatrix(int branchIndex, double[] differentialMatrix) {
+    public void cacheEpochInfinitesimalMatrix(Beagle beagle, SiteRateModel siteRateModel, BranchRates branchRates) {
+        final int stateCount = getSubstitutionModel(0).getDataType().getStateCount();
+        int updateCount = 0;
+        int[] branchIndices = new int[tree.getNodeCount() - 1];
+        double[] edgelength = new double[tree.getNodeCount() - 1];
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            if (!tree.isRoot(tree.getNode(i))) {
+                int[] order = getSubstitutionOrder(i);
+                if (order.length > 1) {
+                    branchIndices[updateCount] = i;
+                    edgelength[updateCount] = - branchRates.getBranchRate(tree, tree.getNode(i)) *
+                            (tree.getNodeHeight(tree.getParent(tree.getNode(i))) - tree.getNodeHeight(tree.getNode(i)));
+                    updateCount++;
+                }
+            }
+        }
+
+
+        int[][] probabilityIndices = new int[eigenCount][updateCount];
+        double[][] edgeLengths = new double[eigenCount][updateCount];
+
+        int[] counts = new int[eigenCount];
+
+        List<Deque<Integer>> convolutionList = new ArrayList<Deque<Integer>>();
+
+        for (int i = 0; i < updateCount; i++) {
+
+            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
+            int[] order = mapping.getOrder();
+            double[] weights = mapping.getWeights();
+
+            if (order.length == 1) {
+                throw new RuntimeException("This is wrong.");
+            } else {
+                double sum = 0.0;
+                for (double w : weights) {
+                    sum += w;
+                }
+
+                if (getAvailableBufferCount() < order.length) {
+                    // too few buffers available, process what we have and continue...
+                    throw new RuntimeException("Need more extra matrix buffer for gradient calculation.");
+                }
+
+                Deque<Integer> bufferIndices = new ArrayDeque<Integer>();
+                for (int j = order.length - 1; j >= 0; j--) {
+
+                    int buffer = popAvailableBuffer();
+
+                    if (buffer < 0) {
+                        // no buffers available
+                        throw new RuntimeException("Ran out of buffers for transition matrices - computing current list.");
+                    }
+
+                    int k = order[j];
+                    probabilityIndices[k][counts[k]] = buffer;
+                    edgeLengths[k][counts[k]] = weights[j] * edgelength[i] / sum;
+                    counts[k]++;
+
+                    bufferIndices.add(buffer);
+                }
+                bufferIndices.add(getInfinitesimalMatrixBufferIndexByEigenIndex(order[0]));
+                bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
+                bufferIndices.add(getInfinitesimalMatrixBufferIndex(branchIndices[i]));
+
+                convolutionList.add(bufferIndices);
+            }// END: if convolution needed
+
+        }// END: i loop
+
+        computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
+        convolveMatrices(beagle, convolutionList, false);
+    }
+
+    public void getConvolvedInfinitesimalMatrix(int branchIndex, double[] differentialMatrix, BranchRates branchRates) {
         int[] order = getSubstitutionOrder(branchIndex);
         if (order.length > 1) {
             if (tree.isRoot(tree.getNode(branchIndex))) {
                 throw new RuntimeException("Root node is not allowed.");
             }
-            getSubstitutionModel(order[order.length - 1]).getInfinitesimalMatrix(differentialMatrix);
+            double[] lastInfinitesimalMatrix = new double[differentialMatrix.length];
+            getSubstitutionModel(order[order.length - 1]).getInfinitesimalMatrix(lastInfinitesimalMatrix);
+
+
         }
     }
 
@@ -443,7 +522,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     }//END: computeTransitionMatrices
 
-    private void convolveMatrices(Beagle beagle, List<Deque<Integer>> convolutionList) {
+    private void convolveMatrices(Beagle beagle, List<Deque<Integer>> convolutionList, boolean release) {
 
         Timer timer;
         if (MEASURE_RUN_TIME) {
@@ -541,7 +620,11 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
                 System.out.println();
             }
 
-            convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
+            if (release) {
+                convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
+            } else {
+                convolveWithoutRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
+            }
 
             convolutionList.removeAll(empty);
         }
@@ -554,8 +637,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     }// END: convolveTransitionMatrices
 
-    private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
-
+    private void convolveWithoutRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
         if (RUN_IN_SERIES) {
             if (operationsCount > 1) {
                 throw new RuntimeException("Unable to convolve matrices in series");
@@ -567,6 +649,11 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
                 resultConvolutionBuffers, // C
                 operationsCount // count
         );
+    }
+
+    private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
+
+        convolveWithoutRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
 
         for (int i = 0; i < operationsCount; i++) {
             if (firstConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount() && firstConvolutionBuffers[i] != reserveBufferIndex) {

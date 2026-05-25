@@ -27,6 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -43,8 +44,8 @@ public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradien
     static final String GRADIENT_TRAIT_NAME = "BranchRateGradient";
     static final String HESSIAN_TRAIT_NAME = "BranchRateHessian";
 
-    DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
-        super(name, tree, likelihoodDelegate);
+    DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate, BranchRates branchRateModel) {
+        super(name, tree, likelihoodDelegate, branchRateModel);
     }
 
     protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix) {
@@ -71,20 +72,7 @@ public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradien
             }
         }
         if (evolutionaryProcessDelegate instanceof SubstitutionModelDelegate) {
-            SubstitutionModelDelegate substitutionModelDelegate = (SubstitutionModelDelegate) evolutionaryProcessDelegate;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                if (!tree.isRoot(tree.getNode(i))) {
-                    int[] order = ((SubstitutionModelDelegate) evolutionaryProcessDelegate).getSubstitutionOrder(i);
-                    if (order.length > 1) {
-                        double[] infinitesimalMatrix = new double[stateCount * stateCount];
-                        substitutionModelDelegate.getConvolvedInfinitesimalMatrix(i, infinitesimalMatrix);
-                        double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
-                        evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
-
-                    }
-
-                }
-            }
+            ((SubstitutionModelDelegate) evolutionaryProcessDelegate).cacheEpochInfinitesimalMatrix(beagle, siteRateModel, branchRateModel);
         }
     }
 

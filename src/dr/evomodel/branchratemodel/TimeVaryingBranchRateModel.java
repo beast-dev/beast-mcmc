@@ -42,8 +42,6 @@ import dr.math.IntegratedTransformedSplines;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MaxIterationsExceededException;
 
 import java.util.Collections;
 import java.util.List;
@@ -624,13 +622,9 @@ public class TimeVaryingBranchRateModel extends AbstractBranchRateModel
             public void incrementRate(int epochIndex, double startTime, double endTime, double[] times) {
                 System.err.println("die");
                 System.exit(-1);
-                try {
+
                     branchRateNumerator += splines.getIntegral(endTime, startTime);
-                } catch (FunctionEvaluationException e) {
-                    throw new RuntimeException(e);
-                } catch (MaxIterationsExceededException e) {
-                    throw new RuntimeException(e);
-                }
+
             }
 
             @Override

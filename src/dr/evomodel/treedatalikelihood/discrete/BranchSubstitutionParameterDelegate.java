@@ -31,7 +31,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleBranchGradientDelegate;
 
@@ -53,7 +52,7 @@ public class BranchSubstitutionParameterDelegate extends AbstractBeagleBranchGra
                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
                                         BranchRateModel branchRateModel,
                                         BranchDifferentialMassProvider branchDifferentialMassProvider) {
-        super(name, tree, likelihoodDelegate);
+        super(name, tree, likelihoodDelegate, branchRateModel);
         this.name = name;
         this.branchRateModel = branchRateModel;
         this.branchDifferentialMassProvider = branchDifferentialMassProvider;

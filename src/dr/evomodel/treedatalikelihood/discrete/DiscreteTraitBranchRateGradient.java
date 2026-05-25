@@ -113,7 +113,8 @@ public class DiscreteTraitBranchRateGradient
     protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         return new DiscreteTraitBranchRateDelegate(traitName,
                 tree,
-                likelihoodDelegate);
+                likelihoodDelegate,
+                treeDataLikelihood.getBranchRateModel());
     }
 
     @Override

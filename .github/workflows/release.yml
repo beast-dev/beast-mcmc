@@ -440,12 +440,20 @@ jobs:
               "${APP_DIR}/Contents/Info.plist"
             # Copy all BEAGLE libraries into Contents/MacOS/.
             # On macOS, cmake builds the JNI bridge as libhmsbeagle-jni.jnilib
-            # (not .dylib), so we must match both extensions.  -P preserves
-            # symlinks so the unversioned names (e.g. libhmsbeagle.dylib) also
-            # appear in the destination alongside the versioned real files.
+            # (not .dylib), so we must match both extensions.
+            # -L dereferences symlinks so every file in the destination is a
+            # real Mach-O binary (required for install_name_tool and codesign).
+            MACOS_DIR="${APP_DIR}/Contents/MacOS"
             find "$BEAGLE_BUILD_DIR" \
               \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
-              -exec cp -P {} "${APP_DIR}/Contents/MacOS/" \;
+              -exec cp -L {} "$MACOS_DIR/" \;
+            # Patch RPATH so libhmsbeagle-jni.jnilib resolves libhmsbeagle.1.dylib
+            # from the same directory at runtime rather than the CI build path.
+            find "$MACOS_DIR" \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+              | while read -r lib; do
+                  install_name_tool -add_rpath @loader_path "$lib" 2>/dev/null || true
+                done
           done
           # Point BEAST.app's java.library.path at the bundled MacOS directory.
           # IMPORTANT: use the Properties dict, NOT VMOptions, for this path.

@@ -146,6 +146,7 @@ jobs:
 
       # ── Linux packaging ────────────────────────────────────────
       - name: Package Linux (TGZ)
+        if: false
         run: |
           ant -f build_release.xml package-linux \
             -Dversion="$VERSION" \
@@ -282,6 +283,7 @@ jobs:
 
       # Step 1: create the four .app bundles without a bundled JVM
       - name: Create Mac .app bundles (unsigned, no bundled JVM)
+        if: false
         run: |
           ant -f build_release.xml package-mac \
             -Dversion="$VERSION" \
@@ -291,6 +293,7 @@ jobs:
 
       # Step 2a: sign the no-JVM apps
       - name: Sign .app bundles (no bundled JVM)
+        if: false
         run: |
           MAC_DIR="release/Mac/BEAST X v${VERSION}"
           for APP in \
@@ -309,6 +312,7 @@ jobs:
 
       # Step 2b: create the no-JVM DMG
       - name: Create DMG (no bundled JVM)
+        if: false
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
@@ -317,6 +321,7 @@ jobs:
 
       # Step 2c: sign the no-JVM DMG
       - name: Sign DMG (no bundled JVM)
+        if: false
         run: |
           codesign \
             --sign "$APP_SIGNER" \
@@ -329,6 +334,7 @@ jobs:
       # Embedding new files invalidates the codesign signatures; the apps
       # are re-signed in the next step.
       - name: Embed JVM into .app bundles
+        if: false
         run: |
           MAC_DIR="release/Mac/BEAST X v${VERSION}"
           JDK_NAME=$(basename "$JDK_BUNDLE_DIR")
@@ -346,6 +352,7 @@ jobs:
 
       # Step 4a: re-sign with the bundled JDK now included
       - name: Sign .app bundles (bundled JVM)
+        if: false
         run: |
           MAC_DIR="release/Mac/BEAST X v${VERSION}"
           for APP in \
@@ -364,6 +371,7 @@ jobs:
 
       # Step 4b: create the bundled-JVM DMG
       - name: Create DMG (bundled JVM)
+        if: false
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
@@ -372,6 +380,7 @@ jobs:
 
       # Step 4c: sign the bundled-JVM DMG
       - name: Sign DMG (bundled JVM)
+        if: false
         run: |
           codesign \
             --sign "$APP_SIGNER" \
@@ -383,6 +392,7 @@ jobs:
       # Both DMGs are submitted sequentially. xcrun notarytool --wait
       # blocks until Apple's service responds (typically 2-10 minutes).
       - name: Notarise DMGs
+        if: false
         env:
           APPLE_ID:       ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
@@ -396,6 +406,7 @@ jobs:
             --wait --output-format plist
 
       - name: Staple notarisation tickets
+        if: false
         run: |
           xcrun stapler staple   "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
           xcrun stapler validate "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
@@ -542,6 +553,7 @@ jobs:
 
       # Step 8a: build jlink runtime image once, then build all 4 app-images.
       - name: Build Mac arm64 app-images with jpackage (4 apps)
+        if: false
         run: |
           JPACKAGE="$ARM64_JDK_DIR/Contents/Home/bin/jpackage"
           JLINK="$ARM64_JDK_DIR/Contents/Home/bin/jlink"
@@ -640,6 +652,7 @@ jobs:
       # libhmsbeagle-jni.jnilib is loaded from Contents/app/ dyld can resolve
       # libhmsbeagle.dylib (its dependency) in the same directory.
       - name: Add BEAGLE libraries to jpackage app
+        if: false
         run: |
           APP_BUNDLE="staging-mac/BEAST.app"
           DEST="${APP_BUNDLE}/Contents/app"
@@ -668,6 +681,7 @@ jobs:
       #   Pass 2 – BEAGLE dylibs in Contents/app/ (no-op for non-BEAST bundles)
       #   Pass 3 – the whole .app bundle (seals the native launcher + JARs)
       - name: Sign jpackage .app bundles (arm64 + BEAGLE)
+        if: false
         run: |
           for APP_BUNDLE in \
               "staging-mac/BEAST.app" \
@@ -705,6 +719,7 @@ jobs:
 
       # Step 8d: wrap the signed .app in a DMG.
       - name: Create DMG (jpackage arm64 + BEAGLE)
+        if: false
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder staging-mac \
@@ -713,6 +728,7 @@ jobs:
 
       # Step 8e: sign the DMG.
       - name: Sign DMG (jpackage arm64 + BEAGLE)
+        if: false
         run: |
           codesign \
             --sign "$APP_SIGNER" \
@@ -724,6 +740,7 @@ jobs:
       # notarytool exits 0 for "Accepted" and non-zero for "Invalid"/"Rejected",
       # but checking the status field here makes the failure reason explicit.
       - name: Notarise DMG (jpackage arm64 + BEAGLE)
+        if: false
         env:
           APPLE_ID:      ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
@@ -747,6 +764,7 @@ jobs:
       # propagate the ticket after notarytool returns.  Retry up to 5 times
       # with a 30 s pause to handle any propagation delay.
       - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
+        if: false
         run: |
           DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
           n=1
@@ -778,6 +796,7 @@ jobs:
           path: "release/BEAST X v*.dmg"
 
       - name: Upload Linux TGZ
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: beast-linux
@@ -795,6 +814,7 @@ jobs:
   #    include only the modules the application actually uses.
   # ───────────────────────────────────────────────────────────────────────────
   windows-package:
+    if: false
     name: Package (Windows)
     needs: build-jars
     runs-on: windows-latest
@@ -916,6 +936,7 @@ jobs:
   #    containing a hyphen, e.g. v10.5.1-beta4) are flagged as pre-releases.
   # ───────────────────────────────────────────────────────────────────────────
   release:
+    if: false
     name: Create GitHub Release
     needs: [build-jars, package, windows-package]
     runs-on: ubuntu-latest

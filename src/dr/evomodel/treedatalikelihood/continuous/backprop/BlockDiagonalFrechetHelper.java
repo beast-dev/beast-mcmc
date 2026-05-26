@@ -16,6 +16,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class BlockDiagonalFrechetHelper {
 
+    private static final String USE_EQUAL_DIAGONAL_PLAN_PROPERTY =
+            "beast.experimental.useEqualDiagonalFrechetPlan";
+    private static final boolean USE_EQUAL_DIAGONAL_PLAN =
+            Boolean.parseBoolean(System.getProperty(USE_EQUAL_DIAGONAL_PLAN_PROPERTY, "true"));
+
     private static final String QUADRATURE_DEBUG_PROPERTY =
             "beast.experimental.nativeUseQuadratureFrechet";
     private static final String EXACT_PLAN_DIAGNOSTICS_PROPERTY =
@@ -30,6 +35,10 @@ public final class BlockDiagonalFrechetHelper {
     private static final AtomicLong EXACT_PLAN_CACHE_MISSES = new AtomicLong();
     private static final AtomicLong EXACT_PLAN_PARAMETER_MISSES = new AtomicLong();
     private static final AtomicLong EXACT_PLAN_TIME_MISSES = new AtomicLong();
+    private static final AtomicLong EQUAL_DIAGONAL_PLAN_CACHE_HITS = new AtomicLong();
+    private static final AtomicLong EQUAL_DIAGONAL_PLAN_PARAMETER_UPDATES = new AtomicLong();
+    private static final AtomicLong EQUAL_DIAGONAL_PLAN_TIME_EVALUATIONS = new AtomicLong();
+    private static final AtomicLong EQUAL_DIAGONAL_PLAN_APPLICATIONS = new AtomicLong();
     private static long exactPlanDiagnosticsCalls;
     private static long lastReportedParameterUpdates;
     private static long lastReportedTimeEvaluations;
@@ -73,6 +82,13 @@ public final class BlockDiagonalFrechetHelper {
     private long cachedPlanParameterVersion;
     private boolean cachedPlanValid;
 
+    private final boolean equalDiagonalStructureCandidate;
+    private final BlockDiagonalFrechetEqualDiagonalPlan.Plan cachedEqualDiagonalPlan;
+    private double cachedEqualDiagonalPlanT;
+    private int cachedEqualDiagonalPlanParameterHash;
+    private boolean cachedEqualDiagonalPlanValid;
+    private final double[] cachedEqualDiagonalPlanParams;
+
     public BlockDiagonalFrechetHelper(final BlockDiagonalExpSolver.BlockStructure structure) {
         this.structure = structure;
         this.dim = structure.getDim();
@@ -86,6 +102,15 @@ public final class BlockDiagonalFrechetHelper {
         this.cachedPlanParameterHash = 0;
         this.cachedPlanParameterVersion = 0L;
         this.cachedPlanValid = false;
+
+        this.equalDiagonalStructureCandidate = USE_EQUAL_DIAGONAL_PLAN && isLeadingScalarPlusTwoByTwoStructure(structure);
+        this.cachedEqualDiagonalPlan = equalDiagonalStructureCandidate
+                ? BlockDiagonalFrechetEqualDiagonalPlan.createPlan(structure)
+                : null;
+        this.cachedEqualDiagonalPlanT = Double.NaN;
+        this.cachedEqualDiagonalPlanParameterHash = 0;
+        this.cachedEqualDiagonalPlanValid = false;
+        this.cachedEqualDiagonalPlanParams = equalDiagonalStructureCandidate ? new double[3 * dim - 2] : null;
     }
 
     public static void resetExactPlanInstrumentation() {
@@ -94,6 +119,10 @@ public final class BlockDiagonalFrechetHelper {
         EXACT_PLAN_CACHE_MISSES.set(0L);
         EXACT_PLAN_PARAMETER_MISSES.set(0L);
         EXACT_PLAN_TIME_MISSES.set(0L);
+        EQUAL_DIAGONAL_PLAN_CACHE_HITS.set(0L);
+        EQUAL_DIAGONAL_PLAN_PARAMETER_UPDATES.set(0L);
+        EQUAL_DIAGONAL_PLAN_TIME_EVALUATIONS.set(0L);
+        EQUAL_DIAGONAL_PLAN_APPLICATIONS.set(0L);
         resetExactPlanDiagnosticsSnapshot();
     }
 
@@ -185,6 +214,23 @@ public final class BlockDiagonalFrechetHelper {
         return BlockDiagonalFrechetExactPlan.getCoefficientDistinctBothImagEvaluationCount();
     }
 
+    // Equal-diagonal plan counters
+    public static long getEqualDiagonalPlanParameterUpdateCount() {
+        return EQUAL_DIAGONAL_PLAN_PARAMETER_UPDATES.get();
+    }
+
+    public static long getEqualDiagonalPlanTimeEvaluationCount() {
+        return EQUAL_DIAGONAL_PLAN_TIME_EVALUATIONS.get();
+    }
+
+    public static long getEqualDiagonalPlanApplicationCount() {
+        return EQUAL_DIAGONAL_PLAN_APPLICATIONS.get();
+    }
+
+    public static long getEqualDiagonalPlanCacheHitCount() {
+        return EQUAL_DIAGONAL_PLAN_CACHE_HITS.get();
+    }
+
     public static void reportExactPlanDiagnosticsIfEnabled() {
         if (!EXACT_PLAN_DIAGNOSTICS_ENABLED) {
             return;
@@ -223,7 +269,12 @@ public final class BlockDiagonalFrechetHelper {
             computeForwardFrechetInDBasisQuadrature(blockDParams, eD, t, out);
             return;
         }
-        getOrBuildPlan(blockDParams, t).apply(eD, out, workspace);
+        if (equalDiagonalStructureCandidate && hasEqualDiagonalParameters(blockDParams)) {
+            getOrBuildEqualDiagonalPlan(blockDParams, t).apply(eD, out);
+            EQUAL_DIAGONAL_PLAN_APPLICATIONS.incrementAndGet();
+        } else {
+            getOrBuildPlan(blockDParams, t).apply(eD, out, workspace);
+        }
     }
 
     private void buildTransposeParams(final double[] src, final double[] dst) {
@@ -509,6 +560,59 @@ public final class BlockDiagonalFrechetHelper {
         lastReportedCoefficientDistinctLeftRealRightImagEvaluations =
                 coefficientDistinctLeftRealRightImagEvaluations;
         lastReportedCoefficientDistinctBothImagEvaluations = coefficientDistinctBothImagEvaluations;
+    }
+
+    private static boolean isLeadingScalarPlusTwoByTwoStructure(
+            final BlockDiagonalExpSolver.BlockStructure structure) {
+        final int blockCount = structure.getNumBlocks();
+        if (blockCount == 0) return false;
+        int block = 0;
+        if (structure.getBlockSize(0) == 1) {
+            block = 1;
+        }
+        for (; block < blockCount; ++block) {
+            if (structure.getBlockSize(block) != 2) return false;
+        }
+        return true;
+    }
+
+    private boolean hasEqualDiagonalParameters(final double[] blockDParams) {
+        final double tolerance = 1.0e-12;
+        for (int b = 0; b < structure.getNumBlocks(); ++b) {
+            final int start = structure.getBlockStart(b);
+            final int size = structure.getBlockSize(b);
+            if (size == 2) {
+                if (Math.abs(blockDParams[start] - blockDParams[start + 1]) > tolerance) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private BlockDiagonalFrechetEqualDiagonalPlan.Plan getOrBuildEqualDiagonalPlan(
+            final double[] blockDParams, final double t) {
+        final int parameterHash = Arrays.hashCode(blockDParams);
+        final boolean parametersChanged = !cachedEqualDiagonalPlanValid
+                || parameterHash != cachedEqualDiagonalPlanParameterHash
+                || !Arrays.equals(blockDParams, cachedEqualDiagonalPlanParams);
+        final boolean timeChanged = !cachedEqualDiagonalPlanValid
+                || Double.doubleToLongBits(t) != Double.doubleToLongBits(cachedEqualDiagonalPlanT);
+        if (!parametersChanged && !timeChanged) {
+            EQUAL_DIAGONAL_PLAN_CACHE_HITS.incrementAndGet();
+            return cachedEqualDiagonalPlan;
+        }
+        if (parametersChanged) {
+            System.arraycopy(blockDParams, 0, cachedEqualDiagonalPlanParams, 0, blockDParams.length);
+            cachedEqualDiagonalPlanParameterHash = parameterHash;
+            cachedEqualDiagonalPlan.updateParameters(blockDParams);
+            EQUAL_DIAGONAL_PLAN_PARAMETER_UPDATES.incrementAndGet();
+        }
+        cachedEqualDiagonalPlan.evaluate(t);
+        EQUAL_DIAGONAL_PLAN_TIME_EVALUATIONS.incrementAndGet();
+        cachedEqualDiagonalPlanT = t;
+        cachedEqualDiagonalPlanValid = true;
+        return cachedEqualDiagonalPlan;
     }
 
     private static void resetExactPlanDiagnosticsSnapshot() {

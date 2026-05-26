@@ -102,17 +102,15 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         BlockDiagonalFrechetHelper.resetExactPlanInstrumentation();
         computeTransitionGradient(parameterization, stationaryMean, dLogL_dF, dLogL_df, 0.37, false);
 
-        assertTrue("exact plan updates parameters",
-                BlockDiagonalFrechetHelper.getExactPlanParameterUpdateCount() > 0L);
-        assertTrue("exact plan evaluates at branch length",
-                BlockDiagonalFrechetHelper.getExactPlanTimeEvaluationCount() > 0L);
-        assertTrue("orthogonal polar blocks use equal-diagonal kernels",
-                BlockDiagonalFrechetHelper.getExactPlanEqualDiagonalEvaluationCount() > 0L);
-        assertTrue("positive-root polar blocks use real distinct coefficient fast path",
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount() > 0L);
-        assertEquals("all distinct positive-root coefficients use real fast path",
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctEvaluationCount(),
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount());
+        assertTrue("equal-diagonal plan updates parameters",
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanParameterUpdateCount() > 0L);
+        assertTrue("equal-diagonal plan evaluates at branch length",
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanTimeEvaluationCount() > 0L);
+        assertTrue("equal-diagonal plan is applied",
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanApplicationCount() > 0L);
+        assertEquals("exact plan is not used for equal-diagonal inputs",
+                0L,
+                BlockDiagonalFrechetHelper.getExactPlanParameterUpdateCount());
         assertEquals("orthogonal polar blocks avoid generic Sylvester solves",
                 0L,
                 BlockDiagonalFrechetHelper.getExactPlanGenericSolve4x4CallCount());
@@ -142,19 +140,16 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
         assertEquals("same branch time evaluates coefficients once",
                 1L,
-                BlockDiagonalFrechetHelper.getExactPlanTimeEvaluationCount());
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanTimeEvaluationCount());
         assertEquals("second same branch time call hits cache",
                 1L,
-                BlockDiagonalFrechetHelper.getExactPlanCacheHitCount());
-        assertEquals("both inputs still apply the exact plan",
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanCacheHitCount());
+        assertEquals("both inputs still apply the equal-diagonal plan",
                 2L,
-                BlockDiagonalFrechetHelper.getExactPlanApplicationCount());
-        assertEquals("same branch time fills each 2x2 block-pair coefficient once",
-                4L,
-                BlockDiagonalFrechetHelper.getExactPlanKernel2x2EqualDiagonalEvaluationCount());
-        assertEquals("same branch time does not use generic 2x2 kernels",
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanApplicationCount());
+        assertEquals("exact plan is not used for equal-diagonal inputs",
                 0L,
-                BlockDiagonalFrechetHelper.getExactPlanKernel2x2GenericEvaluationCount());
+                BlockDiagonalFrechetHelper.getExactPlanParameterUpdateCount());
     }
 
     public void testExactFrechetPlanRoutesComplexDistinctShapes() {
@@ -175,21 +170,9 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         BlockDiagonalFrechetHelper.resetExactPlanInstrumentation();
         helper.computeForwardFrechetInDBasis(blockDParams, input, 0.37, out);
 
-        assertEquals("one real/real distinct 2x2 block pair",
+        assertEquals("equal-diagonal plan was applied once",
                 1L,
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctRealEvaluationCount());
-        assertEquals("one imaginary/real distinct 2x2 block pair",
-                1L,
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctLeftImagRightRealEvaluationCount());
-        assertEquals("one real/imaginary distinct 2x2 block pair",
-                1L,
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctLeftRealRightImagEvaluationCount());
-        assertEquals("one imaginary/imaginary distinct 2x2 block pair",
-                1L,
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctBothImagEvaluationCount());
-        assertEquals("all block pairs used equal-diagonal distinct coefficients",
-                4L,
-                BlockDiagonalFrechetHelper.getExactPlanCoefficientDistinctEvaluationCount());
+                BlockDiagonalFrechetHelper.getEqualDiagonalPlanApplicationCount());
         for (int i = 0; i < out.data.length; ++i) {
             assertTrue("finite exact Frechet output[" + i + "]", Double.isFinite(out.data[i]));
         }

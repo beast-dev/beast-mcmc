@@ -438,8 +438,13 @@ jobs:
             /usr/libexec/PlistBuddy \
               -c "Add :JavaX:JVMRuntime string ${JDK_NAME}" \
               "${APP_DIR}/Contents/Info.plist"
-            # Copy all BEAGLE dylibs (real files and symlinks) into Contents/MacOS/
-            find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
+            # Copy all BEAGLE libraries into Contents/MacOS/.
+            # On macOS, cmake builds the JNI bridge as libhmsbeagle-jni.jnilib
+            # (not .dylib), so we must match both extensions.  -P preserves
+            # symlinks so the unversioned names (e.g. libhmsbeagle.dylib) also
+            # appear in the destination alongside the versioned real files.
+            find "$BEAGLE_BUILD_DIR" \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
               -exec cp -P {} "${APP_DIR}/Contents/MacOS/" \;
           done
           # Point BEAST.app's java.library.path at the bundled MacOS directory.
@@ -606,32 +611,42 @@ jobs:
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
 
-      # Step 8b: copy BEAGLE dylibs into Contents/app/.
+      # Step 8b: copy BEAGLE libraries into Contents/app/.
       #
       # jpackage sets java.library.path to include Contents/app/ so the JVM
-      # finds libhmsbeagle-jni.dylib (the JNI bridge Java loads first) there
+      # finds libhmsbeagle-jni.jnilib (the JNI bridge Java loads first) there
       # without any cfg patching.
       #
-      # The BEAGLE dylibs depend on each other at the dyld level
-      # (libhmsbeagle-jni.dylib → libhmsbeagle.dylib → libhmsbeagle-cpu.dylib …).
-      # We add @loader_path as an RPATH to every dylib so that when any one of
-      # them is loaded from Contents/app/ it resolves its siblings in the same
-      # directory rather than looking for them in the original cmake build path.
-      - name: Add BEAGLE dylibs to jpackage app
+      # IMPORTANT: on macOS cmake builds the JNI bridge as
+      # libhmsbeagle-jni.jnilib (not .dylib) because BEAGLE's CMakeLists.txt
+      # sets SUFFIX ".jnilib" for Apple targets.  Java's System.loadLibrary
+      # searches for both libname.dylib and libname.jnilib, so this works as
+      # long as the .jnilib file is on java.library.path.
+      #
+      # The other BEAGLE libraries (.dylib and their symlinks) are copied with
+      # -L so that the unversioned symlink names arrive as real files (all
+      # names in Contents/app/ must be real files for codesign + install_name_tool).
+      # The JNI .jnilib has no versioned symlinks so plain cp suffices for it.
+      #
+      # @loader_path RPATH is added to every library so that when
+      # libhmsbeagle-jni.jnilib is loaded from Contents/app/ dyld can resolve
+      # libhmsbeagle.dylib (its dependency) in the same directory.
+      - name: Add BEAGLE libraries to jpackage app
         run: |
           APP_BUNDLE="staging-mac/BEAST.app"
-          # Copy all BEAGLE dylibs — real files AND symlinks — into Contents/app/.
-          # -L dereferences symlinks so that the unversioned name
-          # libhmsbeagle-jni.dylib (which Java resolves via System.loadLibrary)
-          # is present as a real file alongside the versioned variants.
-          # All resulting files are real Mach-O binaries that codesign and
-          # install_name_tool can process without complaint.
+          DEST="${APP_BUNDLE}/Contents/app"
+          # .dylib files (main lib + CPU plugin): dereference symlinks → real files.
           find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
-            -exec cp -L {} "${APP_BUNDLE}/Contents/app/" \;
-          # Patch each dylib RPATH so siblings are resolved from the same dir.
-          for dylib in "${APP_BUNDLE}/Contents/app/"libhmsbeagle*.dylib; do
-            install_name_tool -add_rpath @loader_path "$dylib" 2>/dev/null || true
-          done
+            -exec cp -L {} "$DEST/" \;
+          # .jnilib file (JNI bridge): copy as-is (no versioned symlinks).
+          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.jnilib' \
+            -exec cp    {} "$DEST/" \;
+          # Add @loader_path RPATH to every BEAGLE library so siblings are
+          # resolved from Contents/app/ rather than the CI build path.
+          find "$DEST" \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+            | while read -r lib; do
+                install_name_tool -add_rpath @loader_path "$lib" 2>/dev/null || true
+              done
 
       # Step 8c: sign all four jpackage .app bundles for Apple notarisation.
       #
@@ -664,8 +679,10 @@ jobs:
                   fi
                 done
 
-            # Pass 2: sign BEAGLE dylibs (only present in BEAST.app).
-            find "${APP_BUNDLE}/Contents/app" -name "libhmsbeagle*.dylib" \
+            # Pass 2: sign BEAGLE libraries (only present in BEAST.app;
+            # includes both .dylib and .jnilib files).
+            find "${APP_BUNDLE}/Contents/app" \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
               -exec codesign --force --options runtime \
                 --sign "$APP_SIGNER" {} \;
 

@@ -285,6 +285,12 @@ public final class CanonicalOrthogonalBlockGradientCache {
             final double dt,
             final double[] stationaryMean) {
         if (transitionRepresentation instanceof KernelBackedGaussianTransitionRepresentation) {
+            final CanonicalPreparedBranchHandle cached =
+                    ((KernelBackedGaussianTransitionRepresentation) transitionRepresentation)
+                            .getReusablePreparedCanonicalBranch(dt);
+            if (cached != null) {
+                return cached;
+            }
             final CanonicalPreparedBranchHandle prepared =
                     ((KernelBackedGaussianTransitionRepresentation) transitionRepresentation)
                             .getThreadPreparedCanonicalBranch(dt, stationaryMean);

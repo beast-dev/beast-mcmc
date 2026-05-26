@@ -88,6 +88,19 @@ final class RepeatedDeltaCanonicalTransitionCache {
         }
     }
 
+    void fillTransitionMomentsView(final double dt,
+                                   final TransitionMomentsView out) {
+        final Entry entry = ensureEntry(dt);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, dt);
+            out.set(entry.transitionMatrixFlat,
+                    entry.transitionOffset,
+                    entry.transitionCovarianceFlat,
+                    entry.dimension);
+        }
+    }
+
     void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
         if (canonicalKernel == null) {
             throw new UnsupportedOperationException("Kernel does not support canonical transitions");
@@ -113,6 +126,17 @@ final class RepeatedDeltaCanonicalTransitionCache {
             markClean();
         }
         return prepared.handle;
+    }
+
+    CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final double dt) {
+        if (preparedTransition == null) {
+            return null;
+        }
+        final Entry entry = ensureEntry(dt);
+        synchronized (entry) {
+            ensureMoments(entry, dt);
+            return entry.prepared;
+        }
     }
 
     synchronized RepeatedDeltaCacheStatistics getStatistics() {

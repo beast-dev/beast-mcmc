@@ -15,6 +15,13 @@ public interface CachedGaussianTransitionRepresentation extends GaussianTransiti
                                 TimeGrid timeGrid,
                                 CanonicalGaussianTransition out);
 
+    default boolean getTransitionMomentsView(int fromIndex,
+                                             int toIndex,
+                                             TimeGrid timeGrid,
+                                             TransitionMomentsView out) {
+        return false;
+    }
+
     RepeatedDeltaCacheStatistics getCacheStatistics();
 
     void makeDirty();

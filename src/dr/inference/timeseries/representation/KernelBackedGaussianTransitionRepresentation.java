@@ -85,6 +85,17 @@ public final class KernelBackedGaussianTransitionRepresentation
     }
 
     @Override
+    public boolean getTransitionMomentsView(final int fromIndex,
+                                            final int toIndex,
+                                            final TimeGrid timeGrid,
+                                            final TransitionMomentsView out) {
+        repeatedDeltaCache.fillTransitionMomentsView(
+                validatedDelta(timeGrid, fromIndex, toIndex),
+                out);
+        return true;
+    }
+
+    @Override
     public RepeatedDeltaCacheStatistics getCacheStatistics() {
         return repeatedDeltaCache.getStatistics();
     }
@@ -92,6 +103,10 @@ public final class KernelBackedGaussianTransitionRepresentation
     public CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final double dt,
                                                                           final double[] stationaryMean) {
         return repeatedDeltaCache.getThreadPreparedCanonicalBranch(dt, stationaryMean);
+    }
+
+    public CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final double dt) {
+        return repeatedDeltaCache.getReusablePreparedCanonicalBranch(dt);
     }
 
     @Override

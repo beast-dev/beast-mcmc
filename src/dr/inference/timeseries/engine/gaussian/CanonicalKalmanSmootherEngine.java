@@ -34,9 +34,6 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final int observationDimension;
     private final int maximumMatrixDimension;
 
-    private final CanonicalGaussianState filteredCanonical;
-    private final CanonicalGaussianState predictedCanonical;
-    private final CanonicalGaussianTransition transitionCanonical;
     private final CanonicalGaussianState futureMessage;
     private final CanonicalGaussianState backwardMessage;
     private final ForwardTrajectory trajectory;
@@ -99,10 +96,6 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         this.timeCount = timeGrid.getTimeCount();
         this.observationDimension = observationModel.getObservationDimension();
         this.maximumMatrixDimension = Math.max(stateDimension, observationDimension);
-
-        this.filteredCanonical = new CanonicalGaussianState(stateDimension);
-        this.predictedCanonical = new CanonicalGaussianState(stateDimension);
-        this.transitionCanonical = new CanonicalGaussianTransition(stateDimension);
 
         this.futureMessage = new CanonicalGaussianState(stateDimension);
         this.backwardMessage = new CanonicalGaussianState(stateDimension);
@@ -286,38 +279,40 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         final double noiseLogDet = invertPositiveDefinite(noiseCovariance, noisePrecision, observationDimension);
         buildObservationPrecisionContribution();
 
-        canonicalKernel.fillInitialCanonicalState(filteredCanonical);
-
         double value = 0.0;
+        CanonicalGaussianState previousFiltered = null;
         for (int timeIndex = 0; timeIndex < timeCount; ++timeIndex) {
-            if (timeIndex == 0) {
-                copyState(filteredCanonical, predictedCanonical);
-            } else {
-                fillCanonicalTransition(timeIndex - 1, timeIndex, transitionCanonical);
-                predict(filteredCanonical, transitionCanonical, predictedCanonical);
-                copyTransition(transitionCanonical, canonicalTrajectory.transitions[timeIndex - 1]);
+            final CanonicalGaussianState predictedState =
+                    canonicalTrajectory.predictedStates[timeIndex];
+            final CanonicalGaussianState filteredState =
+                    canonicalTrajectory.filteredStates[timeIndex];
 
+            if (timeIndex == 0) {
+                canonicalKernel.fillInitialCanonicalState(predictedState);
+            } else {
+                final CanonicalGaussianTransition transition =
+                        canonicalTrajectory.transitions[timeIndex - 1];
+                fillCanonicalTransition(timeIndex - 1, timeIndex, transition);
+                predict(previousFiltered, transition, predictedState);
             }
 
-            copyState(predictedCanonical, canonicalTrajectory.predictedStates[timeIndex]);
-
             if (observationModel.isObservationMissing(timeIndex)) {
-                copyState(predictedCanonical, filteredCanonical);
+                copyState(predictedState, filteredState);
             } else {
                 observationModel.fillObservationVector(timeIndex, observationVector);
                 buildObservationInformation(observationVector);
 
-                addMatricesFlatAndRagged(predictedCanonical.precision, observationPrecisionContribution, filteredCanonical.precision, stateDimension);
-                addVectors(predictedCanonical.information, observationInformation, filteredCanonical.information);
-                filteredCanonical.logNormalizer = normalizedLogNormalizerFlat(filteredCanonical.precision,
-                        filteredCanonical.information);
+                addMatricesFlatAndRagged(predictedState.precision, observationPrecisionContribution,
+                        filteredState.precision, stateDimension);
+                addVectors(predictedState.information, observationInformation, filteredState.information);
+                filteredState.logNormalizer = normalizedLogNormalizerFlat(filteredState.precision,
+                        filteredState.information);
 
-                value += filteredCanonical.logNormalizer
-                        - predictedCanonical.logNormalizer
+                value += filteredState.logNormalizer
+                        - predictedState.logNormalizer
                         - observationPotentialLogNormalizer(observationVector, noiseLogDet);
             }
-
-            copyState(filteredCanonical, canonicalTrajectory.filteredStates[timeIndex]);
+            previousFiltered = filteredState;
         }
         return value;
     }
@@ -520,17 +515,6 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {
         System.arraycopy(source.precision, 0, target.precision, 0, source.precision.length);
         GaussianMatrixOps.copyVector(source.information, target.information);
-        target.logNormalizer = source.logNormalizer;
-    }
-
-    private static void copyTransition(final CanonicalGaussianTransition source,
-                                       final CanonicalGaussianTransition target) {
-        System.arraycopy(source.precisionXX, 0, target.precisionXX, 0, source.precisionXX.length);
-        System.arraycopy(source.precisionXY, 0, target.precisionXY, 0, source.precisionXY.length);
-        System.arraycopy(source.precisionYX, 0, target.precisionYX, 0, source.precisionYX.length);
-        System.arraycopy(source.precisionYY, 0, target.precisionYY, 0, source.precisionYY.length);
-        GaussianMatrixOps.copyVector(source.informationX, target.informationX);
-        GaussianMatrixOps.copyVector(source.informationY, target.informationY);
         target.logNormalizer = source.logNormalizer;
     }
 

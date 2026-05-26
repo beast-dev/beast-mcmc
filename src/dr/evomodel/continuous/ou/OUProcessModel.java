@@ -186,7 +186,7 @@ public class OUProcessModel extends AbstractModel
         return covarianceGradientMethod;
     }
 
-    public static boolean usesOrthogonalBlockSelectionChart(
+    public static boolean usesOrthogonalBlockSelectionChart( //TODO MOVE THIS TO THE PARSER
             final MatrixParameterInterface driftMatrix) {
         if (driftMatrix instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter) {
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =

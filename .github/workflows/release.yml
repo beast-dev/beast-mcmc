@@ -440,19 +440,26 @@ jobs:
             /usr/libexec/PlistBuddy \
               -c "Add :JavaX:JVMRuntime string ${JDK_NAME}" \
               "${APP_DIR}/Contents/Info.plist"
-            # Copy all BEAGLE libraries into Contents/MacOS/.
-            # On macOS, cmake builds the JNI bridge as libhmsbeagle-jni.jnilib
-            # (not .dylib), so we must match both extensions.
-            # -L dereferences symlinks so every file in the destination is a
-            # real Mach-O binary (required for install_name_tool and codesign).
+            # Copy all BEAGLE native libraries into Contents/MacOS/.
+            # Three file types (all are Mach-O binaries regardless of extension):
+            #   .dylib  – main library + versioned symlinks
+            #   .jnilib – JNI bridge (cmake sets SUFFIX ".jnilib" for Apple)
+            #   .so     – CPU plugins (BEAGLE sets SUFFIX ".so" for all plugins;
+            #             loader calls dlopen("libhmsbeagle-cpu.41.so") on macOS)
+            # -L dereferences symlinks so every copy is a real Mach-O file.
             MACOS_DIR="${APP_DIR}/Contents/MacOS"
             find "$BEAGLE_BUILD_DIR" \
-              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+                 -o -name 'libhmsbeagle*.so' \) \
               -exec cp -L {} "$MACOS_DIR/" \;
-            # Patch RPATH so libhmsbeagle-jni.jnilib resolves libhmsbeagle.1.dylib
-            # from the same directory at runtime rather than the CI build path.
+            # Patch @loader_path RPATH so:
+            #   libhmsbeagle-jni.jnilib finds libhmsbeagle.1.dylib in same dir
+            #   libhmsbeagle.dylib's runpath is searched when dlopen loads
+            #   libhmsbeagle-cpu.41.so (dlopen with a simple name searches
+            #   the caller library's runpath, per macOS dlopen(3) semantics)
             find "$MACOS_DIR" \
-              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+                 -o -name 'libhmsbeagle*.so' \) \
               | while read -r lib; do
                   install_name_tool -add_rpath @loader_path "$lib" 2>/dev/null || true
                 done
@@ -574,6 +581,7 @@ jobs:
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
             --java-options "-Xmx8192m" \
+            --arguments "-window" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/beast.icns" \
             --dest staging-mac
@@ -623,39 +631,48 @@ jobs:
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
 
+      # Step 8b-diag: list BEAGLE build output for debugging.
+      - name: List BEAGLE build output (diagnostic)
+        run: |
+          echo "=== All native libraries in BEAGLE_BUILD_DIR ==="
+          find "$BEAGLE_BUILD_DIR" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
+            | sort
+          echo "==="
+
       # Step 8b: copy BEAGLE libraries into Contents/app/.
       #
       # jpackage sets java.library.path to include Contents/app/ so the JVM
       # finds libhmsbeagle-jni.jnilib (the JNI bridge Java loads first) there
       # without any cfg patching.
       #
-      # IMPORTANT: on macOS cmake builds the JNI bridge as
-      # libhmsbeagle-jni.jnilib (not .dylib) because BEAGLE's CMakeLists.txt
-      # sets SUFFIX ".jnilib" for Apple targets.  Java's System.loadLibrary
-      # searches for both libname.dylib and libname.jnilib, so this works as
-      # long as the .jnilib file is on java.library.path.
+      # Three file types produced by BEAGLE's cmake on macOS (all Mach-O):
+      #   .dylib  – main library (libhmsbeagle) and versioned copies
+      #   .jnilib – JNI bridge: cmake sets SUFFIX ".jnilib" for Apple targets
+      #   .so     – CPU plugins: cmake sets SUFFIX ".so" for all plugins;
+      #             PLUGIN_VERSION="41" for 4.1.x, so the plugin loader calls
+      #             dlopen("libhmsbeagle-cpu.41.so") at runtime.
       #
-      # The other BEAGLE libraries (.dylib and their symlinks) are copied with
-      # -L so that the unversioned symlink names arrive as real files (all
-      # names in Contents/app/ must be real files for codesign + install_name_tool).
-      # The JNI .jnilib has no versioned symlinks so plain cp suffices for it.
+      # dlopen with a simple filename searches the runpath (LC_RPATH) of the
+      # calling library.  We add @loader_path to every library's RPATH so that
+      # when libhmsbeagle.dylib calls dlopen("libhmsbeagle-cpu.41.so"), dyld
+      # expands @loader_path to Contents/app/ and finds the file there.
       #
-      # @loader_path RPATH is added to every library so that when
-      # libhmsbeagle-jni.jnilib is loaded from Contents/app/ dyld can resolve
-      # libhmsbeagle.dylib (its dependency) in the same directory.
+      # -L dereferences all symlinks so every file in Contents/app/ is a real
+      # Mach-O binary (required for install_name_tool and codesign).
       - name: Add BEAGLE libraries to jpackage app
         run: |
           APP_BUNDLE="staging-mac/BEAST.app"
           DEST="${APP_BUNDLE}/Contents/app"
-          # .dylib files (main lib + CPU plugin): dereference symlinks → real files.
-          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.dylib' \
+          find "$BEAGLE_BUILD_DIR" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
             -exec cp -L {} "$DEST/" \;
-          # .jnilib file (JNI bridge): copy as-is (no versioned symlinks).
-          find "$BEAGLE_BUILD_DIR" -name 'libhmsbeagle*.jnilib' \
-            -exec cp    {} "$DEST/" \;
-          # Add @loader_path RPATH to every BEAGLE library so siblings are
-          # resolved from Contents/app/ rather than the CI build path.
-          find "$DEST" \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+          # Add @loader_path RPATH to every library.
+          find "$DEST" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
             | while read -r lib; do
                 install_name_tool -add_rpath @loader_path "$lib" 2>/dev/null || true
               done
@@ -691,10 +708,12 @@ jobs:
                   fi
                 done
 
-            # Pass 2: sign BEAGLE libraries (only present in BEAST.app;
-            # includes both .dylib and .jnilib files).
+            # Pass 2: sign BEAGLE libraries (only present in BEAST.app).
+            # Covers .dylib (main library), .jnilib (JNI bridge), and
+            # .so (CPU plugins: libhmsbeagle-cpu.41.so etc.).
             find "${APP_BUNDLE}/Contents/app" \
-              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \) \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+                 -o -name 'libhmsbeagle*.so' \) \
               -exec codesign --force --options runtime \
                 --sign "$APP_SIGNER" {} \;
 

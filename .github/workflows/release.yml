@@ -914,11 +914,8 @@ jobs:
         run: |
           PKG_DIR="staging/BEAST X v${VERSION}${EXTRA_TAG}"
           mv "staging/BEAST" "$PKG_DIR"
-          cp -r "release/common/doc"               "$PKG_DIR/doc"
           cp -r examples                           "$PKG_DIR/examples"
           cp -r native                             "$PKG_DIR/native"
-          cp "release/common/VERSION HISTORY.txt"  "$PKG_DIR/"
-          cp "release/common/README.txt"           "$PKG_DIR/"
 
       - name: Create Windows ZIP
         run: |

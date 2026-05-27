@@ -97,7 +97,8 @@ jobs:
         run: |
           ant -f build.xml dist \
             -Dversion="${{ steps.parse-tag.outputs.version }}" \
-            -Dversion_number="${{ steps.parse-tag.outputs.version_number }}"
+            -Dversion_number="${{ steps.parse-tag.outputs.version_number }}" \
+            -Dextra_release_tag="${{ steps.parse-tag.outputs.extra_tag }}"
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4

@@ -87,9 +87,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.categoryClasses = getCategoryClasses(categoryClass);
         checkParameterBounds(parameter);
 
-        long flags = 128;
+        long flags = 128 + 8; // TODO Why is this hard-coded? 1 << 7 & 1 << 3
         long nativeSeed = MathUtils.nextLong();
-        int nThreads = 4;
+        int nThreads = 4; //4; // TODO Why is this hard-coded?
 
         if (nativeOptions.testNativeFindNextBounce || nativeOptions.useNativeFindNextBounce || nativeOptions.useNativeUpdateDynamics) {
 

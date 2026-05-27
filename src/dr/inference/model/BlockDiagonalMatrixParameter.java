@@ -27,184 +27,141 @@
 
 package dr.inference.model;
 
-import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-//import java.util.StringTokenizer;
+import dr.math.distributions.GaussianMarkovRandomField;
 
 /**
- * @author Marc Suchard
+ * @author Marc A. Suchard
+ * @author Philippe Lemey
  */
-public class BlockDiagonalMatrixParameter extends MatrixParameter {
+public class BlockDiagonalMatrixParameter extends CompoundParameter implements MatrixParameterInterface {
 
-    public final static String BLOCK_DIAGONAL_MATRIX_PARAMETER = "blockDiagonalMatrixParameter";
+    // feed with a DiagonalCorrelationMatrix
 
-    private final List<MatrixParameter> parameterList;
+    private final MatrixParameterInterface block;
+    private final GaussianMarkovRandomField field;
 
-    public BlockDiagonalMatrixParameter(String name) {
-        super(name);
-        parameterList = new ArrayList<MatrixParameter>();
-        rowOffset = new ArrayList<Integer>();
-        colOffset = new ArrayList<Integer>();
+    private final int replicates;
+    private final int blockDim;
+    private final int matrixDim;
+
+    public BlockDiagonalMatrixParameter(String name,
+                                        MatrixParameterInterface block,
+                                        GaussianMarkovRandomField field) {
+        this(name, block, field.getDimension() / block.getColumnDimension(), field);
     }
 
-    private final List<Integer> rowOffset;
-    private final List<Integer> colOffset;
+    public BlockDiagonalMatrixParameter(String name,
+                                        MatrixParameterInterface block, int replicates) {
+        this(name, block, replicates, null);
+    }
 
-//    public BlockDiagonalMatrixParameter(String name, Parameter[] parameters) {
-//        super(name, parameters);
-//        dimensionsEstablished = true;
-//    }
+    public BlockDiagonalMatrixParameter(String name,
+                                        MatrixParameterInterface block, int replicates,
+                                        GaussianMarkovRandomField field) {
+        super(name, new Parameter[] { block });
+
+        this.block = block;
+        this.field = field;
+        this.replicates = replicates;
+        this.blockDim = block.getRowDimension();
+        this.matrixDim = replicates * blockDim;
+
+        if (blockDim != block.getColumnDimension()) {
+            throw new IllegalArgumentException("Must specify a square block");
+        }
+
+        if (matrixDim % blockDim != 0) {
+            throw new IllegalArgumentException("Matrix dimension is not divisible by block dimension");
+        }
+    }
 
     public double getParameterValue(int row, int col) {
 
-        return 0; // TODO
-    }
+        int blockRow = row / blockDim;
+        int innerRow = row % blockDim;
 
-//    public double[][] getParameterAsMatrix() {
-//        final int I = getRowDimension();
-//        final int J = getColumnDimension();
-//        double[][] parameterAsMatrix = new double[I][J];
-//        for (int i = 0; i < I; i++) {
-//            for (int j = 0; j < J; j++)
-//                parameterAsMatrix[i][j] = getParameterValue(i, j);
-//        }
-//        return parameterAsMatrix;
-//    }
-//
-//    public void setColumnDimension(int columnDimension) {
-//        if (dimensionsEstablished) {
-//            throw new IllegalArgumentException("Attempt to change dimensions after initialization");
-//        }
-//        this.columnDimension = columnDimension;
-//        setupParameters();
-//    }
-//
-//    public void setRowDimension(int rowDimension) {
-//        if (dimensionsEstablished) {
-//            throw new IllegalArgumentException("Attempt to change dimensions after initialization");
-//        }
-//        this.rowDimension = rowDimension;
-//        setupParameters();
-//    }
-//
-//    private void setupParameters() {
-//        if (columnDimension > 0 && rowDimension > 0) {
-//            dimensionsEstablished = true;
-//
-//            for (int i = 0; i < rowDimension; i++) {
-//                Parameter row = new Parameter.Default(columnDimension, 0.0);
-//                row.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, columnDimension));
-//                addParameter(row);
-//            }
-//        }
-//    }
+        int blockCol = col / blockDim;
+        int innerCol = col % blockDim;
 
-    public int getColumnDimension() {
-        return columnDimension;
-    }
-
-    public int getRowDimension() {
-        return rowDimension;
-    }
-
-//    public String toSymmetricString() {
-//        StringBuilder sb = new StringBuilder("{");
-//        int dim = getRowDimension();
-//        int total = dim * (dim + 1) / 2;
-//        for (int i = 0; i < dim; i++) {
-//            for (int j = i; j < dim; j++) {
-//                sb.append(String.format("%5.4e", getParameterValue(i, j)));
-//                total--;
-//                if (total > 0)
-//                    sb.append(",");
-//            }
-//        }
-//        sb.append("}");
-//        return sb.toString();
-//    }
-
-//    public static BlockDiagonalMatrixParameter parseFromSymmetricString(String string) {
-//        String clip = string.replace("{", "").replace("}", "").trim();
-//        StringTokenizer st = new StringTokenizer(clip, ",");
-//        int count = st.countTokens();
-//        int dim = (-1 + (int) Math.sqrt(1 + 8 * count)) / 2;
-//        Parameter[] parameter = new Parameter[dim];
-//        for (int i = 0; i < dim; i++)
-//            parameter[i] = new Parameter.Default(dim);
-//        for (int i = 0; i < dim; i++) {
-//            for (int j = i; j < dim; j++) {
-//                double datum = new Double(st.nextToken());
-//                parameter[i].setParameterValue(j, datum);
-//                parameter[j].setParameterValue(i, datum);
-//            }
-//        }
-//        return new BlockDiagonalMatrixParameter(null, parameter);
-//    }
-//
-//    public static BlockDiagonalMatrixParameter parseFromSymmetricDoubleArray(Object[] data) {
-//
-//        int dim = (-1 + (int) Math.sqrt(1 + 8 * data.length)) / 2;
-//        Parameter[] parameter = new Parameter[dim];
-//        for (int i = 0; i < dim; i++)
-//            parameter[i] = new Parameter.Default(dim);
-//        int index = 0;
-//        for (int i = 0; i < dim; i++) {
-//            for (int j = i; j < dim; j++) {
-//                double datum = (Double) data[index++];
-//                parameter[i].setParameterValue(j, datum);
-//                parameter[j].setParameterValue(i, datum);
-//            }
-//        }
-//        return new BlockDiagonalMatrixParameter(null, parameter);
-//    }
-
-//    private boolean dimensionsEstablished = false;
-    private int columnDimension = 0;
-    private int rowDimension = 0;
-
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BLOCK_DIAGONAL_MATRIX_PARAMETER;
+        if (blockRow != blockCol) {
+            return 0.0;
+        } else {
+            return block.getParameterValue(innerRow, innerCol);
         }
+    }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    @Override
+    public void setParameterValue(int row, int col, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-            final String name = xo.hasId() ? xo.getId() : null;
+    @Override
+    public void setParameterValueQuietly(int row, int col, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-            BlockDiagonalMatrixParameter matrixParameter
-                 = new BlockDiagonalMatrixParameter(name);
+    @Override
+    public void setParameterValueNotifyChangedAll(int row, int col, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                MatrixParameter parameter = (MatrixParameter) xo.getChild(i);
-                matrixParameter.addParameter(parameter); // TODO Double-check
+    @Override
+    public double[] getColumnValues(int col) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double[][] getParameterAsMatrix() {
+
+        double[][] matrix = new double[getRowDimension()][getColumnDimension()];
+        for (int r = 0; r < replicates; ++r) {
+            int offset = r * blockDim;
+            for (int i = 0; i < blockDim; ++i) {
+                for (int j = 0; j < blockDim; ++j) {
+                    matrix[offset + i][offset + j] = block.getParameterValue(i, j);
+                }
             }
-
-            return matrixParameter;
         }
+        return matrix;
+    }
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+    @Override
+    public int getUniqueParameterCount() {
+        return uniqueParameters.size();
+    }
 
-        public String getParserDescription() {
-            return "A matrix parameter constructed from its component parameters.";
-        }
+    @Override
+    public Parameter getUniqueParameter(int index) {
+        return uniqueParameters.get(index);
+    }
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MatrixParameter.class, 0, Integer.MAX_VALUE),
-        };
+    @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-        public Class getReturnType() {
-            return BlockDiagonalMatrixParameter.class;
-        }
-    };
+    @Override
+    public String toSymmetricString() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public boolean isConstrainedSymmetric() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getRowDimension() {
+        return matrixDim;
+    }
+
+    @Override
+    public int getColumnDimension() {
+        return matrixDim;
+    }
 }

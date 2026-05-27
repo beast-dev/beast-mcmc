@@ -62,6 +62,9 @@ public class DeltaExchangeOperatorParser extends AbstractXMLObjectParser {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
+        if (parameter.getDimension() < 2) {
+            throw new XMLParseException("parameter must be at least two dims");
+        }
 
         int[] parameterWeights;
         if (xo.hasAttribute(PARAMETER_WEIGHTS)) {

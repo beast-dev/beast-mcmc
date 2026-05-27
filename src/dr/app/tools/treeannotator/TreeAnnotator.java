@@ -43,6 +43,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.util.Author;
+import dr.util.Citation;
+import dr.util.CitationLogHandler;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 
@@ -854,8 +857,9 @@ public class TreeAnnotator extends BaseTreeTool {
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treeannotator test.trees out.tree");
-        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -type hipstr -burnin 100 -heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
         progressStream.println();
     }
 
@@ -967,7 +971,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninStates,
                         heightsOption,
                         posteriorLimit,
-                        5,
+                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -996,21 +1000,21 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default), 'mrhipstr', 'mcc' or 'mrc'"),
-                        new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
+                        new Arguments.StringOption("type", "t", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.IntegerOption("limitCount", "the minimum sample count for a node to be annotated (default 5)"),
-                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.StringOption("reference", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
-                        new Arguments.StringOption("metrics", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
-                        new Arguments.IntegerOption("threads", "max number of threads (default automatic)"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
-                        new Arguments.Option("ess", "compute ess for branch parameters")
+                        new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.RealOption("limit", "l", "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.IntegerOption("limitCount", "lc", "the minimum sample count for a node to be annotated (default 5)"),
+                        new Arguments.StringOption("target", "tt", "target_file_name", "specifies a user target tree to be annotated"),
+                        new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
+                        new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
+                        new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
+                        new Arguments.Option("help", "h", "option to print this message"),
+                        new Arguments.Option("forceDiscrete", null,"forces integer traits to be treated as discrete traits."),
+                        new Arguments.StringOption("hpd2D", null,"the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
+                        new Arguments.Option("ess", null,"compute ess for branch parameters")
                 });
 
         try {
@@ -1038,6 +1042,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 heights = HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
+            } else if (value.equalsIgnoreCase("keep")) {
+                heights = HeightsSummary.KEEP_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
                 printUsage(arguments);
@@ -1072,7 +1078,7 @@ public class TreeAnnotator extends BaseTreeTool {
             posteriorLimit = arguments.getRealOption("limitFrequency");
         }
 
-        int countLimit = 5;
+        int countLimit = 0;
         if (arguments.hasOption("limitCount")) {
             countLimit = arguments.getIntegerOption("limitCount");
         }
@@ -1100,6 +1106,12 @@ public class TreeAnnotator extends BaseTreeTool {
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
+        }
+
+        if (target != Target.MAX_CLADE_CREDIBILITY && target != Target.USER_TARGET_TREE && heights == HeightsSummary.KEEP_HEIGHTS) {
+            progressStream.println("Keep original heights is only valid for MCC or user target trees");
+            printUsage(arguments);
+            System.exit(1);
         }
 
         if (arguments.hasOption("reference")) {
@@ -1152,9 +1164,11 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Found Maximum Clade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
-            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION.toString());
         } else if (target == Target.MRHIPSTR) {
-            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION);
         } else if (target == Target.MAJORITY_RULE) {
             progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {

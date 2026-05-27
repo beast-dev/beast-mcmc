@@ -1,8 +1,7 @@
 /*
  * BastaLikelihoodDelegate.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
- * http://beast.community/about
+ * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -22,7 +21,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.evomodel.coalescent.basta;
@@ -33,10 +31,11 @@ import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,13 +58,20 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
     double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                List<TransitionMatrixOperation> matrixOperations,
                                List<Integer> intervalStarts,
-                               int rootNodeNumber);
+                               int rootNodeNumber, BastaLikelihood likelihood, boolean transitionMatricesStored);
 
     default void setPartials(int index, double[] partials) {
         throw new RuntimeException("Not yet implemented");
     }
 
     default void getPartials(int index, double[] partials) {
+        assert index >= 0;
+        assert partials != null;
+
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    default void getTransitionMatrices(int index, double[] partials) {
         assert index >= 0;
         assert partials != null;
 
@@ -80,16 +86,70 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
-    double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
-                                 List<TransitionMatrixOperation> matrixOperation,
-                                 List<Integer> intervalStarts,
-                                 int rootNodeNumber);
+    default void updateGrowthRates(int index, double[] rates, boolean flip) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
-    double[] calculateGradientPopSize(List<BranchIntervalOperation> branchOperations, List<TransitionMatrixOperation> matrixOperations, List<Integer> intervalStarts, int number);
+    default void updateIsExponentialGrowth(boolean isExponentialGrowth) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    double[] calculateGradient(List<BranchIntervalOperation> branchOperations,
+                               List<TransitionMatrixOperation> matrixOperation,
+                               List<Integer> intervalStarts,
+                               int rootNodeNumber,
+                               StructuredCoalescentLikelihoodGradient wrt, BastaLikelihood likelihood);
+
+    void updateStorage(int maxBufferCount,
+                       int treeNodeCount,
+                       BastaLikelihood likelihood);
+
+    int getMaxNumberOfCoalescentIntervals();
+
+    public class Info {
+        private final boolean timingEnabled;
+
+        private final Map<String, Long> timingMap;
+        private final Map<String, Long> countMap;
+
+        public Info(boolean timingEnabled) {
+            this.timingEnabled = timingEnabled;
+            this.timingMap = new HashMap<>();
+            this.countMap = new HashMap<>();
+        }
+
+        public void recordTime(String operation, long elapsedTime) {
+            if (timingEnabled) {
+                timingMap.put(operation, timingMap.getOrDefault(operation, 0L) + elapsedTime);
+                countMap.put(operation, countMap.getOrDefault(operation, 0L) + 1);
+            }
+        }
+
+        public void printTimingTable() {
+            if (timingEnabled) {
+                System.out.println("Operation Timing Table (Average time per call):");
+                for (String operation : timingMap.keySet()) {
+                    long totalTime = timingMap.get(operation);
+                    long count = countMap.get(operation);
+                    long averageTime = (count != 0) ? totalTime / count : 0;
+                    System.out.println(String.format("%-40s : avg = %d ns over %d calls",
+                            operation, averageTime, count));
+                }
+            }
+        }
+
+        public boolean isTimingEnabled() {
+            return timingEnabled;
+        }
+    }
+
+    void flipTransitionMatrixBuffer(List<TransitionMatrixOperation> matrixOperations);
+
 
     abstract class AbstractBastaLikelihoodDelegate extends AbstractModel implements BastaLikelihoodDelegate, Citable {
 
         protected static final boolean PRINT_COMMANDS = false;
+        private static final boolean TIMING_ENABLED = false;
 
         protected final int maxNumCoalescentIntervals;
 
@@ -100,6 +160,8 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         protected final Tree tree;
 
         protected final boolean transpose;
+
+        private final Info timingInfo = new Info(TIMING_ENABLED);
 
         public AbstractBastaLikelihoodDelegate(String name,
                                                Tree tree,
@@ -113,7 +175,11 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             this.parallelizationScheme = ParallelizationScheme.NONE;
         }
 
-        private int getMaxNumberOfCoalescentIntervals(Tree tree) {
+        public int getMaxNumberOfCoalescentIntervals() {
+            return maxNumCoalescentIntervals;
+        }
+
+        public int getMaxNumberOfCoalescentIntervals(Tree tree) {
             BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
@@ -159,103 +225,110 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
             FULL
         }
 
+        enum Mode {
+            LIKELIHOOD {
+                public final int getModeAsInt() { return 0; }
+            },
+            GRADIENT {
+                public final int getModeAsInt() { return 1; }
+            };
+
+            @SuppressWarnings("unused")
+            abstract int getModeAsInt();
+        }
+
+        abstract protected void allocateGradientMemory();
+
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
-                                                                List<BranchIntervalOperation> branchIntervalOperations);
+                                                                List<BranchIntervalOperation> branchIntervalOperations,
+                                                                List<TransitionMatrixOperation> matrixOperations,
+                                                                Mode mode, BastaLikelihood likelihood);
 
-        abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations);
+        abstract protected void computeTransitionProbabilityOperations(List<TransitionMatrixOperation> matrixOperations,
+                                                                       Mode mode);
 
-        abstract protected double computeCoalescentIntervalReduction(List<Integer> intervalStarts,
-                                                                     List<BranchIntervalOperation> branchIntervalOperations);
+        abstract protected void computeCoalescentIntervalReduction(List<Integer> intervalStarts,
+                                                                   List<BranchIntervalOperation> branchIntervalOperations,
+                                                                   double[] out,
+                                                                   Mode mode,
+                                                                   StructuredCoalescentLikelihoodGradient.WrtParameter wrt);
 
         @Override
         public double calculateLikelihood(List<BranchIntervalOperation> branchOperations,
                                           List<TransitionMatrixOperation> matrixOperation,
                                           List<Integer> intervalStarts,
-                                          int rootNodeNumber) {
+                                          int rootNodeNumber, BastaLikelihood likelihood, boolean transitionMatricesStored) {
 
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
             }
+            double[] logL = new double[1];
+            boolean done = false;
 
-            computeTransitionProbabilityOperations(matrixOperation);
-            computeBranchIntervalOperations(intervalStarts, branchOperations);
+            while (!done) {
+                if (timingInfo.isTimingEnabled()) {
+//                    if (!transitionMatricesStored) {
+                        long startTP = System.nanoTime();
+                        computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                        long endTP = System.nanoTime();
+                        timingInfo.recordTime("computeTransitionProbabilityOperations", endTP - startTP);
+//                    }
+                    long startBI = System.nanoTime();
+                    computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
+                    long endBI = System.nanoTime();
+                    timingInfo.recordTime("computeBranchIntervalOperations", endBI - startBI);
 
-            double logL = computeCoalescentIntervalReduction(intervalStarts, branchOperations);
+                    long startCIR = System.nanoTime();
+                    computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
+                            Mode.LIKELIHOOD, null);
+                    long endCIR = System.nanoTime();
+                    timingInfo.recordTime("computeCoalescentIntervalReduction", endCIR - startCIR);
+                } else {
+                    computeTransitionProbabilityOperations(matrixOperation, Mode.LIKELIHOOD);
+                    computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperation, Mode.LIKELIHOOD, likelihood);
+                    computeCoalescentIntervalReduction(intervalStarts, branchOperations, logL,
+                            Mode.LIKELIHOOD, null);
+                }
+                done = true;
+            }
 
             if (PRINT_COMMANDS) {
-                System.err.println("logL = " + logL + " " + getStamp() + "\n");
+                System.err.println("logL = " + logL[0] + " " + getStamp() + "\n");
                 if (printCount > 1000) {
                     System.exit(-1);
                 }
                 ++printCount;
             }
 
-            return logL;
+            timingInfo.printTimingTable();
+
+            return logL[0];
         }
 
-        abstract protected void computeBranchIntervalOperationsGrad(List<Integer> intervalStarts, List<TransitionMatrixOperation> matrixOperations,
-                                                                List<BranchIntervalOperation> branchIntervalOperations);
-
-        abstract protected void computeTransitionProbabilityOperationsGrad(List<TransitionMatrixOperation> matrixOperations);
-
-        abstract protected double[][] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
-                                                                     List<BranchIntervalOperation> branchIntervalOperations);
-
-        abstract protected double[] computeCoalescentIntervalReductionGradPopSize(List<Integer> intervalStarts,
-                                                                             List<BranchIntervalOperation> branchIntervalOperations);
-
-        @Override
-        public double[][] calculateGradient(List<BranchIntervalOperation> branchOperations,
-                                            List<TransitionMatrixOperation> matrixOperation,
-                                            List<Integer> intervalStarts,
-                                            int rootNodeNumber) {
-
+        public double[] calculateGradient(List<BranchIntervalOperation> branchOperations,
+                                          List<TransitionMatrixOperation> matrixOperations,
+                                          List<Integer> intervalStarts,
+                                          int rootNodeNumber,
+                                          StructuredCoalescentLikelihoodGradient wrt, BastaLikelihood likelihood) {
             if (PRINT_COMMANDS) {
                 System.err.println("Tree = " + tree);
             }
 
-            computeTransitionProbabilityOperationsGrad(matrixOperation);
+            allocateGradientMemory();
 
-            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
-
-            double[][] grad = computeCoalescentIntervalReductionGrad(intervalStarts, branchOperations);
-
-//            if (PRINT_COMMANDS) {
-//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
-//                if (printCount > 1000) {
-//                    System.exit(-1);
-//                }
-//                ++printCount;
-//            }
-
-            return grad;
-        }
-
-        @Override
-        public double[]calculateGradientPopSize(List<BranchIntervalOperation> branchOperations,
-                                            List<TransitionMatrixOperation> matrixOperation,
-                                            List<Integer> intervalStarts,
-                                            int rootNodeNumber) {
-
-            if (PRINT_COMMANDS) {
-                System.err.println("Tree = " + tree);
+            if (!transpose && wrt.requiresTransitionMatrices()) {
+                computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 
-            computeBranchIntervalOperationsGrad(intervalStarts, matrixOperation, branchOperations);
+            computeBranchIntervalOperations(intervalStarts, branchOperations, matrixOperations, Mode.GRADIENT, likelihood);
 
-            double[] grad = computeCoalescentIntervalReductionGradPopSize(intervalStarts, branchOperations);
+            double[] gradient = new double[wrt.getIntermediateGradientDimension()];
 
-//            if (PRINT_COMMANDS) {
-//                System.err.println("logL = " + logL + " " + getStamp() + "\n");
-//                if (printCount > 1000) {
-//                    System.exit(-1);
-//                }
-//                ++printCount;
-//            }
+            computeCoalescentIntervalReduction(intervalStarts, branchOperations, gradient,
+                    Mode.GRADIENT, wrt.getType());
 
-            return grad;
+            return gradient;
         }
-
 
         abstract String getStamp();
 

@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitsComponentOptions.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -31,13 +31,17 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.GeneralDataType;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.List;
 import java.util.Set;
 
+import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
+
 /**
  * @author Andrew Rambaut
+ * @author Guy Baele
  */
 public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
@@ -67,28 +71,36 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createParameterNormalPrior(prefix + "coefficients", "a vector of log coefficients for each GLM predictor", PriorScaleType.NONE, 0.0, 0.0, 2.0, 0.0);
                 modelOptions.createParameter(prefix + "coefIndicators", "a vector of bits indicating non-zero coefficients for GLM", 1.0);
 
-                // Operators
+                //BASTA
+                modelOptions.createParameterGammaPrior(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        "a vector of constant population sizes", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.001, 1000.0, false);
+                modelOptions.createCachedGammaPrior(BACKWARD + "." + prefix + "rates", "discrete trait instantaneous transition rates",
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, false);
 
+                // Operators
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
+                modelOptions.createOperator(BACKWARD + "." + prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
-//                modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
+                //modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
 
                 modelOptions.createZeroOneParameterUniformPrior(prefix + "root.frequencies", "discrete state root frequencies", 0.25);
                 modelOptions.createOperator(prefix + "root.frequencies", OperatorType.DELTA_EXCHANGE, 0.75, 1.0);
 
                 //bit Flip on clock.rate in PartitionClockModelSubstModelLink
-//                modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString() + "mu", prefix + "mu",
-//                        "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
+                //modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString() + "mu", prefix + "mu",
+                //"bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
                 modelOptions.createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME,
                         "(indicators, rates)",
                         "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                         prefix + "indicators", prefix + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 7.0);
 
-
                 modelOptions.createOperator(prefix + "coefficients", OperatorType.RANDOM_WALK, 0.75, 5.0);
                 // todo - this should be a special MVN operator.. 
                 modelOptions.createOperator(prefix + "coefIndicators", OperatorType.BITFLIP, -1.0, 5.0);
+
+                modelOptions.createOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                        "Scales BASTA's population size parameter(s)", OperatorType.SCALE, 0.75, 3.0);
             }
         }
     }
@@ -103,13 +115,13 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
                 Set<String> states = substitutionModel.getDiscreteStateSet();
                 int K = states.size();
-                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
+                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
                     nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
                     nonZeroRates.offset = K - 1;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
                     nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     nonZeroRates.offset = 0.0;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                     throw new IllegalArgumentException("GLM substitution type can't be used by rate-level BSSVS");
                 } else {
                     throw new IllegalArgumentException("unknown discrete substitution type");
@@ -118,21 +130,29 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 params.add(nonZeroRates);
             }
 
-            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 params.add(modelOptions.getParameter(prefix + "coefficients"));
                 // Don't show this parameter as the prior is a custom MVN
                 // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
             } else {
                 params.add(modelOptions.getParameter(prefix + "frequencies"));
-                params.add(modelOptions.getParameter(prefix + "rates"));
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    params.add(modelOptions.getParameter(prefix + "rates"));
+                } else if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    params.add(modelOptions.getParameter(BACKWARD + "." + prefix + "rates"));
+                    params.add(modelOptions.getParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
+                            "." + StructuredCoalescentLikelihoodParser.POPSIZES));
+                }
             }
         }
 
         for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             String prefix = partition.getPrefix();
 
-            if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
-                params.add(modelOptions.getParameter(prefix + "root.frequencies"));
+            if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    params.add(modelOptions.getParameter(prefix + "root.frequencies"));
+                }
             }
 
         }
@@ -147,26 +167,32 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = substitutionModel.getName() + ".";
 
-            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 ops.add(modelOptions.getOperator(prefix + "coefficients"));
                 ops.add(modelOptions.getOperator(prefix + "coefIndicators"));
-
             } else {
-//            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
-                ops.add(modelOptions.getOperator(prefix + "rates"));
+                //ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
+                if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    ops.add(modelOptions.getOperator(BACKWARD + "." + prefix + "rates"));
+                    ops.add(modelOptions.getOperator(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." +
+                            StructuredCoalescentLikelihoodParser.POPSIZES));
+                } else {
+                    ops.add(modelOptions.getOperator(prefix + "rates"));
+                }
 
                 if (substitutionModel.isActivateBSSVS()) {
                     ops.add(modelOptions.getOperator(prefix + "indicators"));
                 }
-            }
 
+            }
         }
         for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
-                ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
+            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
+                if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
+                }
             }
         }
     }
-
 
 }

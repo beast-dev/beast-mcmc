@@ -1,7 +1,7 @@
 /*
  * PartitionTreeModelPanel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -33,8 +33,6 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TreeHolder;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreeAsDataType;
-import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
@@ -44,14 +42,9 @@ import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -66,7 +59,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private final String NO_TREE = "no tree loaded";
 
-
     private final ButtonGroup startingTreeGroup = new ButtonGroup();
     private final JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
     private final JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
@@ -76,7 +68,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final JLabel userTreeInfo = new JLabel("<html>" +
             "Use a tree imported using the 'Import Data' menu option.<br>" +
             "Starting trees that are not rooted and strictly bifurcating (binary) will be randomly resolved.</html>");
-
 
     private JComboBox treeAsDataModelCombo = new JComboBox();
 
@@ -106,7 +97,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final BeautiFrame parent;
     private boolean settingOptions = false;
 
-    PartitionTreeModel partitionTreeModel;
+    private PartitionTreeModel partitionTreeModel;
 
     public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel partitionTreeModel, final BeautiOptions options) {
         super(12, (OSType.isMac() ? 6 : 24));

@@ -27,6 +27,7 @@
 
 package dr.evomodel.siteratemodel;
 
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Model;
 
 /**
@@ -72,5 +73,10 @@ public interface SiteRateModel extends Model {
      * @return the proportion.
      */
     double getProportionForCategory(int category);
+
+    // Added this because some classes still had gamma as a substitution model hard-coded. There are probably better
+    // ways
+
+    SubstitutionModel getSubstitutionModel();
 
 }

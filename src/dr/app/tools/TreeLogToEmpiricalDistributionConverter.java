@@ -158,10 +158,10 @@ public class TreeLogToEmpiricalDistributionConverter extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.RealOption("startTime", "The start time for to time summaries [default = 0] "),
-                        new Arguments.RealOption("endTime", "The end time for to time summaries [default = Double.MAX_VALUE] "),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption(BURN_IN, "b","the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.RealOption("startTime","s",  "The start time for to time summaries [default = 0] "),
+                        new Arguments.RealOption("endTime", "e", "The end time for to time summaries [default = Double.MAX_VALUE] "),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         handleHelp(arguments, args, TaxaMarkovJumpHistoryAnalyzer::printUsage);

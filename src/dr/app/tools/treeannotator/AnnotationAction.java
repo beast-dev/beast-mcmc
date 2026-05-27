@@ -47,7 +47,7 @@ public class AnnotationAction implements CladeAction {
     private double posteriorLimit;
     private double countLimit;
     double[] hpd2D = {0.80};
-    Set<String> attributeNames = new HashSet<String>();
+    Set<String> attributeNames = new LinkedHashSet<>();
     private boolean forceIntegerToDiscrete = false;
     private boolean computeESS;
 
@@ -217,7 +217,7 @@ public class AnnotationAction implements CladeAction {
                                         }
                                     }
                                 } else {
-                                    annotateModeAttribute(tree, node, attributeName, hashMap);
+                                        annotateModeAttribute(tree, node, attributeName, hashMap);
                                     annotateFrequencyAttribute(tree, node, attributeName, hashMap);
                                 }
                                 if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {
@@ -226,7 +226,7 @@ public class AnnotationAction implements CladeAction {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
-                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_sign", values);
                                     if (computeESS == true) {
                                         annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }
@@ -283,8 +283,8 @@ public class AnnotationAction implements CladeAction {
                         }
                     }
                 }
-                i++;
             }
+            i++;
         }
     }
 

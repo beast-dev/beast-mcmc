@@ -56,10 +56,10 @@ public class ColtEigenSystem implements EigenSystem {
 
         final int stateCount = matrix.length;
 
-        RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(
+        RobustEigenDecomposition eigenDecomposition = new RobustEigenDecomposition(
                 new DenseDoubleMatrix2D(matrix), maxIterations);
 
-        DoubleMatrix2D eigenV = eigenDecomp.getV();
+        DoubleMatrix2D eigenV = eigenDecomposition.getV();
         DoubleMatrix2D eigenVInv;
 
         if (checkConditioning) {
@@ -75,14 +75,14 @@ public class ColtEigenSystem implements EigenSystem {
         }
 
         try {
-            eigenVInv = alegbra.inverse(eigenV);
+            eigenVInv = algebra.inverse(eigenV);
         } catch (IllegalArgumentException e) {
             return getEmptyDecomposition(stateCount);
         }
 
         double[][] Evec = eigenV.toArray();
         double[][] Ievc = eigenVInv.toArray();
-        double[] Eval = getAllEigenValues(eigenDecomp);
+        double[] Eval = getAllEigenValues(eigenDecomposition);
 
         if (checkConditioning) {
             for (int i = 0; i < Eval.length; i++) {
@@ -207,14 +207,14 @@ public class ColtEigenSystem implements EigenSystem {
         );
     }
 
-    private boolean checkConditioning;
-    private int maxConditionNumber;
-    private int maxIterations;
+    private final boolean checkConditioning;
+    private final int maxConditionNumber;
+    private final int maxIterations;
 
     protected final int stateCount;
 
     private static final double minProb = Property.DEFAULT.tolerance();
-    private static final Algebra alegbra = new Algebra(minProb);
+    private static final Algebra algebra = new Algebra(minProb);
 
     public static final boolean defaultCheckConditioning = true;
     public static final int defaultMaxConditionNumber = 1000000;

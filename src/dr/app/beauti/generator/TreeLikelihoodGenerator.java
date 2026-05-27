@@ -140,7 +140,6 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-
         writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 
     }
@@ -316,7 +315,6 @@ public class TreeLikelihoodGenerator extends Generator {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writeTreeLikelihoodRef(treeLikelihoodTag, TREE_LIKELIHOOD, i, partition, writer);
                 }
-
 
             } else {
                 writeTreeLikelihoodRef(treeLikelihoodTag, TREE_LIKELIHOOD, -1, partition, writer);

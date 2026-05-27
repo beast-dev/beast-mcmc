@@ -254,4 +254,24 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         }
         return message;
     }
+
+    public void setupGradientDelegates(CompoundBirthDeathParameters compoundParams) {
+        TreeTrait rawGradientTrait = getTreeTrait(EfficientSpeciationLikelihoodGradient.GRADIENT_KEY);
+        if (rawGradientTrait == null) {
+            CachedGradientDelegate delegate = new CachedGradientDelegate(this);
+            addModel(delegate);
+            addTrait(delegate);
+            delegate.getTrait(getTreeModel(), null);
+        }
+
+        if (compoundParams != null) {
+            TreeTrait compoundGradientTrait = getTreeTrait(CachedGradientDelegate.COMPOUND_GRADIENT_KEY);
+            if (compoundGradientTrait == null) {
+                CachedGradientDelegate delegate = new CachedGradientDelegate(this, compoundParams, CachedGradientDelegate.COMPOUND_GRADIENT_KEY);
+                addModel(delegate);
+                addTrait(delegate);
+                delegate.getTrait(getTreeModel(), null);
+            }
+        }
+    }
 }

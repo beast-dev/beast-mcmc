@@ -915,7 +915,6 @@ jobs:
           PKG_DIR="staging/BEAST X v${VERSION}${EXTRA_TAG}"
           mv "staging/BEAST" "$PKG_DIR"
           cp -r examples                           "$PKG_DIR/examples"
-          cp -r native                             "$PKG_DIR/native"
 
       - name: Create Windows ZIP
         run: |

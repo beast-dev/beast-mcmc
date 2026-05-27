@@ -109,11 +109,6 @@
         <copy todir="${Linux_package_dir}/examples">
             <fileset dir="examples"/>
         </copy>
-        <copy todir="${Linux_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
-        </copy>
 
         <copy file="${common_dir}/icons/beast.png"   todir="${Linux_package_dir}/images"/>
         <copy file="${common_dir}/icons/beauti.png"  todir="${Linux_package_dir}/images"/>
@@ -166,11 +161,6 @@
 
         <copy todir="${Windows_package_dir}/examples">
             <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Windows_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
         </copy>
         <copy todir="${Windows_package_dir}/bin">
             <fileset dir="${Windows_dir}/scripts"/>
@@ -246,11 +236,6 @@
 
         <copy todir="${Mac_package_dir}/examples">
             <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Mac_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
         </copy>
 
         <!-- beast.jar / beauti.jar from the pre-built dist directory -->

@@ -194,6 +194,10 @@ public final class MatrixOps {
                 final double value = symmetricLeft[iOffset + k];
                 for (int j = 0; j < dim; ++j) {
                     out[iOffset + j] += value * right[kOffset + j];
+//                    out[kOffset + j] += value * right[iOffset + j];
+                }
+                for (int j = 0; j < dim; ++j) {
+//                    out[iOffset + j] += value * right[kOffset + j];
                     out[kOffset + j] += value * right[iOffset + j];
                 }
             }

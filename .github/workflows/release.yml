@@ -9,14 +9,13 @@
 #                                    beauti.jar as a reusable artifact.
 #
 #  package           macos-latest    Download JARs, produce Mac and Linux packages:
-#                                      • Mac   – .app bundles → three traditional DMGs
-#                                              (no JVM / Zulu 21 universal JVM /
-#                                               Temurin 21 arm64 JVM + BEAGLE) → notarised
-#                                              + one experimental jpackage arm64 DMG
+#                                      • Mac   – two notarised DMGs:
+#                                              no-JVM (requires Java on user's Mac)
+#                                              arm64  (Temurin 21 + BEAGLE, jpackage)
 #                                      • Linux – shell scripts + JARs → GNU-tar TGZ
 #
 #  windows-package   windows-latest  jpackage app-image with bundled Temurin 21
-#                                    JRE; BEAST, BEAUTi, TreeAnnotator and
+#                                    JRE; BEAST X, BEAUTi, TreeAnnotator and
 #                                    LogCombiner share one runtime → ZIP
 #
 #  release           ubuntu-latest   Create a (draft) GitHub Release and attach
@@ -154,23 +153,10 @@ jobs:
             -Dextra_release_tag="$EXTRA_TAG" \
             -Ddist.dir=build/dist
 
-      # ── Install Zulu 21 Universal JDK for embedding ───────────
-      #
-      # Azul Zulu's Homebrew cask installs a macOS universal binary
-      # (fat binary containing both aarch64 and x86_64 slices).
-      # macOS loads only the native slice at runtime, so the bundled JDK
-      # is natively fast on both Apple Silicon and Intel with no Rosetta
-      # overhead — and a single DMG covers both architectures.
-      - name: Install Zulu 21 Universal JDK for bundling
-        run: |
-          brew install --cask zulu@21
-          echo "JDK_BUNDLE_DIR=/Library/Java/JavaVirtualMachines/zulu-21.jdk" >> "$GITHUB_ENV"
-
       # ── Install Temurin 21 arm64 and build BEAGLE ─────────────
       #
-      # The arm64-only DMG embeds:
-      #   • Eclipse Temurin 21 (aarch64-only, smaller than the universal Zulu)
-      #   • BEAGLE native library built for Apple Silicon
+      # The arm64 DMG embeds Eclipse Temurin 21 (aarch64) and the BEAGLE
+      # native library built for Apple Silicon.
       # Both are installed / built up-front so they are ready when needed.
       - name: Install Temurin 21 (arm64) for Apple Silicon bundling
         run: |

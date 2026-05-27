@@ -350,7 +350,7 @@ jobs:
           # BEAST
           "$JPACKAGE" \
             --type app-image \
-            --name "BEAST" \
+            --name "BEAST v${VERSION}${EXTRA_TAG}" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --mac-package-identifier org.beastdev.beast \
@@ -366,7 +366,7 @@ jobs:
           # BEAUTi
           "$JPACKAGE" \
             --type app-image \
-            --name "BEAUti" \
+            --name "BEAUti v${VERSION}${EXTRA_TAG}" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --mac-package-identifier org.beastdev.beauti \
@@ -381,7 +381,7 @@ jobs:
           # TreeAnnotator
           "$JPACKAGE" \
             --type app-image \
-            --name "TreeAnnotator" \
+            --name "TreeAnnotator v${VERSION}${EXTRA_TAG}" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --mac-package-identifier org.beastdev.treeannotator \
@@ -396,7 +396,7 @@ jobs:
           # LogCombiner
           "$JPACKAGE" \
             --type app-image \
-            --name "LogCombiner" \
+            --name "LogCombiner v${VERSION}${EXTRA_TAG}" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --mac-package-identifier org.beastdev.logcombiner \
@@ -440,7 +440,7 @@ jobs:
       # Mach-O binary (required for install_name_tool and codesign).
       - name: Add BEAGLE libraries to jpackage app
         run: |
-          APP_BUNDLE="staging-mac/BEAST.app"
+          APP_BUNDLE="staging-mac/BEAST v${VERSION}${EXTRA_TAG}.app"
           DEST="${APP_BUNDLE}/Contents/app"
           find "$BEAGLE_BUILD_DIR" \
             \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
@@ -468,10 +468,10 @@ jobs:
       - name: Sign jpackage .app bundles (arm64 + BEAGLE)
         run: |
           for APP_BUNDLE in \
-              "staging-mac/BEAST.app" \
-              "staging-mac/BEAUti.app" \
-              "staging-mac/TreeAnnotator.app" \
-              "staging-mac/LogCombiner.app"; do
+              "staging-mac/BEAST v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/BEAUti v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/TreeAnnotator v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/LogCombiner v${VERSION}${EXTRA_TAG}.app"; do
 
             # Pass 1: sign every Mach-O file in the jlink runtime.
             # The `file` test skips plain-text scripts and data files that

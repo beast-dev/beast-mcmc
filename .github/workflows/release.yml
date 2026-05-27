@@ -293,7 +293,7 @@ jobs:
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder "release/Mac/BEAST X v${VERSION}" \
-            -volname "BEAST v${VERSION} (no JVM)" \
+            -volname "BEAST v${VERSION}${EXTRA_TAG} (no JVM)" \
             "release/BEAST X v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
 
       # Step 2c: sign the no-JVM DMG
@@ -508,7 +508,7 @@ jobs:
         run: |
           /usr/bin/hdiutil create -ov \
             -srcfolder staging-mac \
-            -volname "BEAST v${VERSION} (arm64+BEAGLE jpackage)" \
+            -volname "BEAST v${VERSION}${EXTRA_TAG} (arm64+BEAGLE jpackage)" \
             "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
 
       # Step 8e: sign the DMG.

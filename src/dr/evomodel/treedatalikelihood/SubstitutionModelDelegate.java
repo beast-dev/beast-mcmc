@@ -466,6 +466,19 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
         computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
         convolveMatrices(beagle, convolutionList, false);
+
+        double[] firstDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+        double[] endDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+        double[] sum = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+        for (int i = 0; i < updateCount; i++) {
+            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), firstDifferentialQ);
+            int[] order = getSubstitutionOrder(i);
+            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(order[order.length - 1]), endDifferentialQ);
+            for (int j = 0; j < firstDifferentialQ.length; j++) {
+                sum[j] = (firstDifferentialQ[j] + endDifferentialQ[j]) / 2;
+            }
+            beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), sum);
+        }
     }
 
     public void getConvolvedInfinitesimalMatrix(int branchIndex, double[] differentialMatrix, BranchRates branchRates) {

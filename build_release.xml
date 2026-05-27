@@ -106,9 +106,6 @@
         <!-- Preserve executable bits on the shell scripts -->
         <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
 
-        <copy todir="${Linux_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
         <copy todir="${Linux_package_dir}/examples">
             <fileset dir="examples"/>
         </copy>
@@ -125,8 +122,7 @@
         <copy file="${dist.dir}/beast.jar"  todir="${Linux_package_dir}/lib"/>
         <copy file="${dist.dir}/beauti.jar" todir="${Linux_package_dir}/lib"/>
 
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
-        <copy file="${common_dir}/README.txt"          todir="${Linux_package_dir}"/>
+
 
         <!--
             ANT's built-in tar task is Java-based and writes a POSIX-compatible
@@ -168,9 +164,6 @@
                  classname="net.sf.launch4j.ant.Launch4jTask"
                  classpath="${launch4j.dir}/launch4j.jar${path.separator}${launch4j.dir}/lib/xstream.jar"/>
 
-        <copy todir="${Windows_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
         <copy todir="${Windows_package_dir}/examples">
             <fileset dir="examples"/>
         </copy>
@@ -184,8 +177,7 @@
         </copy>
         <copy file="${dist.dir}/beast.jar"  todir="${Windows_package_dir}/lib"/>
         <copy file="${dist.dir}/beauti.jar" todir="${Windows_package_dir}/lib"/>
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_package_dir}"/>
-        <copy file="${common_dir}/README.txt"          todir="${Windows_package_dir}"/>
+
 
         <!-- BEAUti -->
         <launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
@@ -252,9 +244,6 @@
         </copy>
         <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
 
-        <copy todir="${Mac_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
         <copy todir="${Mac_package_dir}/examples">
             <fileset dir="examples"/>
         </copy>
@@ -274,8 +263,7 @@
             </fileset>
         </copy>
 
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
-        <copy file="${common_dir}/README.txt"          todir="${Mac_package_dir}"/>
+
 
         <taskdef name="jarbundler"
                  classname="com.ultramixer.jarbundler.JarBundler"

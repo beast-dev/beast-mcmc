@@ -210,7 +210,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
 
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix);
+        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(bufferIndex), differentialMatrix);
     }
 
     @Override

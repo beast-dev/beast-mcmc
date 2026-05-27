@@ -350,7 +350,7 @@ jobs:
           # BEAST
           "$JPACKAGE" \
             --type app-image \
-            --name "BEAST v${VERSION}${EXTRA_TAG}" \
+            --name "BEAST X v${VERSION}${EXTRA_TAG}" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --mac-package-identifier org.beastdev.beast \
@@ -440,7 +440,7 @@ jobs:
       # Mach-O binary (required for install_name_tool and codesign).
       - name: Add BEAGLE libraries to jpackage app
         run: |
-          APP_BUNDLE="staging-mac/BEAST v${VERSION}${EXTRA_TAG}.app"
+          APP_BUNDLE="staging-mac/BEAST X v${VERSION}${EXTRA_TAG}.app"
           DEST="${APP_BUNDLE}/Contents/app"
           find "$BEAGLE_BUILD_DIR" \
             \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
@@ -468,7 +468,7 @@ jobs:
       - name: Sign jpackage .app bundles (arm64 + BEAGLE)
         run: |
           for APP_BUNDLE in \
-              "staging-mac/BEAST v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/BEAST X v${VERSION}${EXTRA_TAG}.app" \
               "staging-mac/BEAUti v${VERSION}${EXTRA_TAG}.app" \
               "staging-mac/TreeAnnotator v${VERSION}${EXTRA_TAG}.app" \
               "staging-mac/LogCombiner v${VERSION}${EXTRA_TAG}.app"; do
@@ -672,7 +672,7 @@ jobs:
           cp build/dist/beauti.jar jpackage-input/
           jpackage \
             --type app-image \
-            --name "BEAST" \
+            --name "BEAST X" \
             --app-version "$VERSION" \
             --vendor "BEAST Dev Team" \
             --input jpackage-input \
@@ -690,7 +690,7 @@ jobs:
       - name: Assemble final package directory
         run: |
           PKG_DIR="staging/BEAST X v${VERSION}${EXTRA_TAG}"
-          mv "staging/BEAST" "$PKG_DIR"
+          mv "staging/BEAST X" "$PKG_DIR"
           cp -r examples                           "$PKG_DIR/examples"
 
       - name: Create Windows ZIP

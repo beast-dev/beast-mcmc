@@ -307,7 +307,6 @@ jobs:
 
       # ── Notarisation (no-JVM DMG) ──────────────────────────────
       - name: Notarise DMG (no-JVM)
-        if: false  # disabled during testing
         env:
           APPLE_ID:       ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
@@ -318,7 +317,6 @@ jobs:
             --wait --output-format plist
 
       - name: Staple notarisation ticket (no-JVM)
-        if: false  # disabled during testing
         run: |
           xcrun stapler staple   "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
           xcrun stapler validate "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
@@ -525,7 +523,6 @@ jobs:
       # notarytool exits 0 for "Accepted" and non-zero for "Invalid"/"Rejected",
       # but checking the status field here makes the failure reason explicit.
       - name: Notarise DMG (jpackage arm64 + BEAGLE)
-        if: false  # disabled during testing
         env:
           APPLE_ID:      ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
           TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
@@ -549,7 +546,6 @@ jobs:
       # propagate the ticket after notarytool returns.  Retry up to 5 times
       # with a 30 s pause to handle any propagation delay.
       - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
-        if: false  # disabled during testing
         run: |
           DMG="release/BEAST_X_v${VERSION}${EXTRA_TAG}-arm64.dmg"
           n=1

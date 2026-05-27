@@ -255,7 +255,7 @@ jobs:
       # Two DMGs are produced:
       #   BEAST X v<ver>-no-jvm.dmg            — no bundled JVM (smaller; requires
       #                                          a Java installation on the user's Mac)
-      #   BEAST X v<ver>-arm64-jp.dmg          — Temurin 21 arm64 JDK + BEAGLE,
+      #   BEAST X v<ver>-arm64.dmg          — Temurin 21 arm64 JDK + BEAGLE,
       #                                          packaged with jpackage
       #
       # Steps 1-2: create .app bundles (no JVM) → sign → create + sign no-JVM DMG
@@ -509,7 +509,7 @@ jobs:
           /usr/bin/hdiutil create -ov \
             -srcfolder staging-mac \
             -volname "BEAST v${VERSION} (arm64+BEAGLE jpackage)" \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
 
       # Step 8e: sign the DMG.
       - name: Sign DMG (jpackage arm64 + BEAGLE)
@@ -517,7 +517,7 @@ jobs:
           codesign \
             --sign "$APP_SIGNER" \
             --verbose \
-            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+            "release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
 
       # Step 8f: notarise the jpackage DMG.
       # Use JSON output so we can extract and verify the status string —
@@ -530,7 +530,7 @@ jobs:
           TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
           NOTARIZE_PASS: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
         run: |
-          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
           OUTPUT=$(xcrun notarytool submit "$DMG" \
             --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
             --wait --output-format json)
@@ -550,7 +550,7 @@ jobs:
       - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
         if: false  # disabled during testing
         run: |
-          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64-jp.dmg"
+          DMG="release/BEAST X v${VERSION}${EXTRA_TAG}-arm64.dmg"
           n=1
           until xcrun stapler staple "$DMG"; do
             if [ $n -ge 5 ]; then

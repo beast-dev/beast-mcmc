@@ -8,9 +8,9 @@ import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovS
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Caller-owned buffers for orthogonal block-diagonal branch gradient pullbacks.
+ * Caller-owned buffers for block-diagonal branch calculations.
  */
-public final class OrthogonalBlockBranchGradientWorkspace implements CanonicalBranchWorkspace {
+public class BlockDiagonalBranchGradientWorkspace implements CanonicalBranchWorkspace {
     final BlockDiagonalFrechetHelper frechetHelper;
     final BlockDiagonalLyapunovSolver lyapunovSolver;
     final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper;
@@ -40,9 +40,9 @@ public final class OrthogonalBlockBranchGradientWorkspace implements CanonicalBr
     final double[] tempVector1;
     final double[] tempVector2;
 
-    public OrthogonalBlockBranchGradientWorkspace(final int dimension,
-                                                  final int[] blockStarts,
-                                                  final int[] blockSizes) {
+    public BlockDiagonalBranchGradientWorkspace(final int dimension,
+                                                final int[] blockStarts,
+                                                final int[] blockSizes) {
         final BlockDiagonalExpSolver.BlockStructure structure =
                 new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes);
         this.frechetHelper = new BlockDiagonalFrechetHelper(structure);

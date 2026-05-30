@@ -18,7 +18,7 @@ final class OrthogonalBlockSelectionAdjoint {
     private final int[] blockSizes;
     private final OrthogonalMatrixProvider orthogonalRotation;
     private final BlockDiagonalFrechetHelper frechetHelper;
-    private final OrthogonalBlockDenseFallbackPolicy denseFallbackPolicy;
+    private final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy;
     private final DenseMatrix64F upstreamF;
     private final DenseMatrix64F upstreamFD;
     private final DenseMatrix64F gradD;
@@ -34,7 +34,7 @@ final class OrthogonalBlockSelectionAdjoint {
     OrthogonalBlockSelectionAdjoint(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                     final OrthogonalMatrixProvider orthogonalRotation,
                                     final BlockDiagonalFrechetHelper frechetHelper,
-                                    final OrthogonalBlockDenseFallbackPolicy denseFallbackPolicy) {
+                                    final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy) {
         this.blockParameter = blockParameter;
         this.blockStarts = blockParameter.getBlockStarts();
         this.blockSizes = blockParameter.getBlockSizes();
@@ -55,7 +55,7 @@ final class OrthogonalBlockSelectionAdjoint {
         this.tempVector2 = new double[d];
     }
 
-    void accumulateCurrentFlat(final OrthogonalBlockBasisCache basis,
+    void accumulateCurrentFlat(final BlockDiagonalTransitionCache basis,
                                final double dt,
                                final double[] stationaryMean,
                                final double[] dLogL_dF,
@@ -65,7 +65,7 @@ final class OrthogonalBlockSelectionAdjoint {
         fillTotalUpstreamOnTransition(stationaryMean, dLogL_dF, dLogL_df, upstreamF);
         accumulateTransitionPullback(
                 basis.rMatrix,
-                basis.rtMatrix,
+                basis.rinvMatrix,
                 basis.expD,
                 basis.blockDParams,
                 dt,
@@ -86,7 +86,7 @@ final class OrthogonalBlockSelectionAdjoint {
     void accumulatePreparedFlat(final OrthogonalBlockPreparedBranchBasis prepared,
                                 final double[] dLogL_dF,
                                 final double[] dLogL_df,
-                                final OrthogonalBlockBranchGradientWorkspace workspace,
+                                final BlockDiagonalBranchGradientWorkspace workspace,
                                 final double[] compressedDAccumulator,
                                 final double[] rotationAccumulator) {
         fillTotalUpstreamOnTransition(prepared.stationaryMean, dLogL_dF, dLogL_df, workspace.upstreamF);
@@ -110,11 +110,11 @@ final class OrthogonalBlockSelectionAdjoint {
                 rotationAccumulator);
     }
 
-    void accumulateMeanGradient(final OrthogonalBlockBasisCache basis,
+    void accumulateMeanGradient(final BlockDiagonalTransitionCache basis,
                                 final double[] dLogL_df,
                                 final double[] gradientAccumulator) {
         orthogonalRotation.applyOrthogonalTranspose(dLogL_df, tempVector1);
-        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+        BlockDiagonalMatrixOps.applyBlockDiagonalTranspose(
                 basis.expD, tempVector1, tempVector2, tempVector1.length, blockStarts, blockSizes);
         orthogonalRotation.applyOrthogonal(tempVector2, tempVector1);
         for (int i = 0; i < tempVector1.length; ++i) {
@@ -122,10 +122,10 @@ final class OrthogonalBlockSelectionAdjoint {
         }
     }
 
-    double accumulateScalarMeanGradient(final OrthogonalBlockBasisCache basis,
+    double accumulateScalarMeanGradient(final BlockDiagonalTransitionCache basis,
                                         final double[] dLogL_df) {
         orthogonalRotation.applyOrthogonalTranspose(dLogL_df, tempVector1);
-        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+        BlockDiagonalMatrixOps.applyBlockDiagonalTranspose(
                 basis.expD, tempVector1, tempVector2, tempVector1.length, blockStarts, blockSizes);
         orthogonalRotation.applyOrthogonal(tempVector2, tempVector1);
         double sum = 0.0;
@@ -138,9 +138,9 @@ final class OrthogonalBlockSelectionAdjoint {
     void accumulateMeanGradientPrepared(final OrthogonalBlockPreparedBranchBasis prepared,
                                         final double[] dLogL_df,
                                         final double[] gradientAccumulator,
-                                        final OrthogonalBlockBranchGradientWorkspace workspace) {
+                                        final BlockDiagonalBranchGradientWorkspace workspace) {
         multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
-        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+        BlockDiagonalMatrixOps.applyBlockDiagonalTranspose(
                 prepared.expD, workspace.tempVector1, workspace.tempVector2,
                 prepared.dimension, blockStarts, blockSizes);
         multiplyRowMajorVector(prepared.rMatrix.data, workspace.tempVector2, workspace.tempVector1, prepared.dimension);
@@ -165,9 +165,9 @@ final class OrthogonalBlockSelectionAdjoint {
     void accumulateMeanGradientPreparedDBasis(final OrthogonalBlockPreparedBranchBasis prepared,
                                              final double[] dLogL_df,
                                              final double[] dBasisGradientAccumulator,
-                                             final OrthogonalBlockBranchGradientWorkspace workspace) {
+                                             final BlockDiagonalBranchGradientWorkspace workspace) {
         multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
-        OrthogonalBlockMatrixOps.applyBlockDiagonalTranspose(
+        BlockDiagonalMatrixOps.applyBlockDiagonalTranspose(
                 prepared.expD, workspace.tempVector1, workspace.tempVector2,
                 prepared.dimension, blockStarts, blockSizes);
         for (int i = 0; i < prepared.dimension; ++i) {
@@ -177,7 +177,7 @@ final class OrthogonalBlockSelectionAdjoint {
 
     void finishMeanGradientFromDBasis(final double[] dBasisGradientAccumulator,
                                       final double[] gradientAccumulator,
-                                      final OrthogonalBlockBranchGradientWorkspace workspace) {
+                                      final BlockDiagonalBranchGradientWorkspace workspace) {
         if (gradientAccumulator.length == 1) {
             orthogonalRotation.applyOrthogonal(dBasisGradientAccumulator, workspace.tempVector1);
             double sum = 0.0;
@@ -362,7 +362,7 @@ final class OrthogonalBlockSelectionAdjoint {
                                                    final DenseMatrix64F out,
                                                    final int[] blockStarts,
                                                    final int[] blockSizes) {
-        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonal(
+        BlockDiagonalMatrixOps.multiplyRightBlockDiagonal(
                 matrix.data, blockDiagonal, matrix.numRows, blockStarts, blockSizes, out.data);
     }
 
@@ -371,7 +371,7 @@ final class OrthogonalBlockSelectionAdjoint {
                                                             final DenseMatrix64F out,
                                                             final int[] blockStarts,
                                                             final int[] blockSizes) {
-        OrthogonalBlockMatrixOps.multiplyRightBlockDiagonalTranspose(
+        BlockDiagonalMatrixOps.multiplyRightBlockDiagonalTranspose(
                 matrix.data, blockDiagonal, out.data, matrix.numRows, blockStarts, blockSizes);
     }
 

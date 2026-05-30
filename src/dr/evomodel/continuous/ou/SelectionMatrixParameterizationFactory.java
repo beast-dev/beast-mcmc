@@ -3,6 +3,7 @@ package dr.evomodel.continuous.ou;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.OrthogonalMatrixProvider;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalSelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 
 /**
@@ -22,6 +23,7 @@ public final class SelectionMatrixParameterizationFactory {
                         blockParameter,
                         (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter());
             }
+            return new BlockDiagonalSelectionMatrixParameterization(blockParameter);
         }
         return new DenseSelectionMatrixParameterization(matrixParameter);
     }

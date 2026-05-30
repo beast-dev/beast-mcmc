@@ -160,6 +160,28 @@ public final class OrthogonalBlockDiagonalPolarStableMatrixParameter
         return nativeCompoundParameter;
     }
 
+    @Override
+    public OrthogonalBlockDiagonalDecomposition createBlockDiagonalDecomposition() {
+        return new OrthogonalBlockDiagonalDecomposition(dim, getBlockStarts(), getBlockSizes());
+    }
+
+    @Override
+    public OrthogonalBlockDiagonalDecomposition getBlockDiagonalDecomposition() {
+        final OrthogonalBlockDiagonalDecomposition decomposition = createBlockDiagonalDecomposition();
+        fillBlockDiagonalDecomposition(decomposition);
+        return decomposition;
+    }
+
+    @Override
+    public void fillBlockDiagonalDecomposition(final BlockDiagonalDecomposition decomposition) {
+        validateCompatibleDecomposition(decomposition);
+        final OrthogonalMatrixProvider rotation =
+                (OrthogonalMatrixProvider) getRotationMatrixParameter();
+        rotation.fillOrthogonalMatrix(decomposition.getR());
+        rotation.fillOrthogonalTranspose(decomposition.getRInverse());
+        fillBlockDiagonalElements(decomposition.getBlockDiagonal());
+    }
+
     public Parameter getRotationAngleParameter() {
         return ((OrthogonalMatrixProvider) getRotationMatrixParameter()).getOrthogonalParameter();
     }

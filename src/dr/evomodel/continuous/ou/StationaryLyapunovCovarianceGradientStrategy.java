@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou;
 
-final class StationaryLyapunovCovarianceGradientStrategy implements OUCovarianceGradientStrategy {
+public final class StationaryLyapunovCovarianceGradientStrategy implements OUCovarianceGradientStrategy {
 
     private final ThreadLocal<OUCovarianceGradientWorkspace> workspaceLocal =
             new ThreadLocal<OUCovarianceGradientWorkspace>() {

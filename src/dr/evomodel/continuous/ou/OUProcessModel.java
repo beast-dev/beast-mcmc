@@ -3,9 +3,11 @@ package dr.evomodel.continuous.ou;
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
+import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -53,7 +55,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranc
  *       stationary-covariance adjoint and the F-inside-V adjoint. This requires a stable
  *       drift matrix; zero-drift and other non-stable cases are rejected.</li>
  * </ul>
- * By default, orthogonal block-diagonal drift parametrizations use
+ * By default, stable block-diagonal drift parametrizations use
  * {@link CovarianceGradientMethod#STATIONARY_LYAPUNOV}, while general dense drift matrices
  * use {@link CovarianceGradientMethod#VAN_LOAN_ADJOINT}. The active strategy is selected
  * at construction time and is immutable unless explicitly overridden.
@@ -82,7 +84,7 @@ public class OUProcessModel extends AbstractModel
     /**
      * Constructs an OUProcessModel using the default covariance-adjoint strategy for the
      * supplied drift parametrization:
-     * orthogonal block-diagonal drift matrices use stationary-Lyapunov adjoints, while
+     * stable block-diagonal drift matrices use stationary-Lyapunov adjoints, while
      * general dense drift matrices use the Van Loan adjoint.
      */
     public OUProcessModel(final String name,
@@ -196,12 +198,23 @@ public class OUProcessModel extends AbstractModel
         return false;
     }
 
+    public static boolean usesBlockDiagonalSelectionChart( //TODO MOVE THIS TO THE PARSER
+            final MatrixParameterInterface driftMatrix) {
+        return driftMatrix instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter;
+    }
+
     public static CovarianceGradientMethod defaultCovarianceGradientMethod(
             final MatrixParameterInterface driftMatrix) {
-        if (usesOrthogonalBlockSelectionChart(driftMatrix)) {
+        if (usesStableBlockDiagonalSelectionChart(driftMatrix)) {
             return CovarianceGradientMethod.STATIONARY_LYAPUNOV;
         }
         return CovarianceGradientMethod.VAN_LOAN_ADJOINT;
+    }
+
+    private static boolean usesStableBlockDiagonalSelectionChart(
+            final MatrixParameterInterface driftMatrix) {
+        return driftMatrix instanceof BlockDiagonalPolarStableMatrixParameter
+                || driftMatrix instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter;
     }
 
     private static OUCovarianceGradientStrategy createCovarianceGradientStrategy(

@@ -6,14 +6,14 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 import java.util.Arrays;
@@ -28,6 +28,11 @@ import java.util.Arrays;
  */
 public final class CanonicalSelectionMatrixGradientFormula implements CanonicalGradientFormula {
 
+    private static final String DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY =
+            "beast.experimental.disableOrthogonalNativeSelectionPath";
+    private static final String DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY =
+            "beast.experimental.disableBlockDiagonalNativeSelectionPath";
+
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
     private final OUProcessModel processModel;
@@ -39,12 +44,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     private final double[][] dLogL_dF;
     private final double[][] dLogL_dV;
     private final double[] nativeCompressedGradientScratch;
-    // Row-major flat rotation gradient (replaces former double[][] field).
+    // Row-major flat rotation gradient for CanonicalSelectionGradientProjector.
     private final double[] nativeRotationGradientFlat;
-    // 2-D scratch for pullBackGradient() calls that still require double[][].
-    private final double[][] nativeRotationGradient2D;
     private final double[] stationaryMeanScratch;
-    private final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache;
+    private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
     public CanonicalSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
                                                    final int stateDimension) {
@@ -60,7 +63,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     public CanonicalSelectionMatrixGradientFormula(final OUProcessModel processModel,
                                                    final Parameter selectionMatrixParameter,
                                                    final int stateDimension,
-                                                   final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache) {
+                                                   final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache) {
         if (selectionMatrixParameter == null) {
             throw new IllegalArgumentException("selectionMatrixParameter must not be null");
         }
@@ -70,7 +73,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.selectionMatrixParameter = selectionMatrixParameter;
         this.stateDimension = stateDimension;
         this.processModel = processModel;
-        this.orthogonalBlockGradientCache = orthogonalBlockGradientCache;
+        this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
         this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
@@ -84,9 +87,6 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 : null;
         this.nativeRotationGradientFlat = hasBlock
                 ? new double[stateDimension * stateDimension]
-                : null;
-        this.nativeRotationGradient2D = hasBlock
-                ? new double[stateDimension][stateDimension]
                 : null;
         this.stationaryMeanScratch = processModel != null ? new double[stateDimension] : null;
     }
@@ -138,14 +138,14 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                                     final CanonicalBranchGradientCache branchGradientCache,
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
-        if (shouldUseOrthogonalNativePath(parameter)) {
-            if (orthogonalBlockGradientCache != null
-                    && orthogonalBlockGradientCache.supportsNativeSelectionParameter(parameter)
+        if (shouldUseBlockDiagonalNativePath(parameter)) {
+            if (blockDiagonalGradientCache != null
+                    && blockDiagonalGradientCache.supportsNativeSelectionParameter(parameter)
                     && branchGradientCache != null) {
-                return orthogonalBlockGradientCache.getNativeSelectionGradient(
+                return blockDiagonalGradientCache.getNativeSelectionGradient(
                         parameter, trajectory, branchGradientCache, repr, timeGrid);
             }
-            return computeOrthogonalNativeGradient(parameter, trajectory, branchGradientCache, timeGrid);
+            return computeBlockDiagonalNativeGradient(parameter, trajectory, branchGradientCache, timeGrid);
         }
 
         final int d = stateDimension;
@@ -169,34 +169,38 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         return gradientAccumulator;
     }
 
-    private boolean shouldUseOrthogonalNativePath(final Parameter requestedParameter) {
+    private boolean shouldUseBlockDiagonalNativePath(final Parameter requestedParameter) {
+        if (Boolean.getBoolean(DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY)
+                || Boolean.getBoolean(DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY)) {
+            return false;
+        }
         if (requestedParameter == selectionMatrixParameter) {
             return false;
         }
-        if (!(selectionMatrixParameter instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter)) {
+        if (!(selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)) {
             return false;
         }
         return processModel != null
                 && processModel.getCovarianceGradientMethod() == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
                 && processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization;
+                instanceof BlockDiagonalNativeCanonicalParameterization;
     }
 
     @Override
     public void makeDirty() {
-        if (orthogonalBlockGradientCache != null) {
-            orthogonalBlockGradientCache.makeDirty();
+        if (blockDiagonalGradientCache != null) {
+            blockDiagonalGradientCache.makeDirty();
         }
     }
 
-    private double[] computeOrthogonalNativeGradient(final Parameter requestedParameter,
-                                                     final CanonicalForwardTrajectory trajectory,
-                                                     final CanonicalBranchGradientCache branchGradientCache,
-                                                     final TimeGrid timeGrid) {
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                (OrthogonalBlockCanonicalParameterization) processModel.getSelectionMatrixParameterization();
-        final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter =
-                (OrthogonalBlockDiagonalPolarStableMatrixParameter) selectionMatrixParameter;
+    private double[] computeBlockDiagonalNativeGradient(final Parameter requestedParameter,
+                                                       final CanonicalForwardTrajectory trajectory,
+                                                       final CanonicalBranchGradientCache branchGradientCache,
+                                                       final TimeGrid timeGrid) {
+        final BlockDiagonalNativeCanonicalParameterization blockParameterization =
+                (BlockDiagonalNativeCanonicalParameterization) processModel.getSelectionMatrixParameterization();
+        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
         final int T = trajectory.timeCount;
         final double[] compressedDGradient = nativeCompressedGradientScratch;
         final double[] rotationGradientFlat = nativeRotationGradientFlat;
@@ -212,7 +216,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
             final double dt = timeGrid.getDelta(t, t + 1);
             final CanonicalBranchMessageContribution contribution =
                     localContribution(t, trajectory, branchGradientCache);
-            orthogonalParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
+            blockParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
                     processModel.getDiffusionMatrix(),
                     stationaryMean,
                     dt,
@@ -222,73 +226,14 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                     rotationGradientFlat);
         }
 
-        // Convert flat rotation gradient to 2D for assembleBlockGradientResult.
-        GaussianMatrixOps.copyFlatToMatrix(rotationGradientFlat, nativeRotationGradient2D, stateDimension);
-
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
-        return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, nativeRotationGradient2D);
-    }
-
-    private double[] assembleBlockGradientResult(final Parameter requestedParameter,
-                                                 final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
-                                                 final double[] nativeGradient,
-                                                 final double[][] gradientR) {
-        final int d = stateDimension;
-        if (requestedParameter == blockParameter.getParameter()) {
-            if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
-                final double[] angleGradient =
-                        ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).pullBackGradient(gradientR);
-                final double[] out = new double[nativeGradient.length + angleGradient.length];
-                System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-                System.arraycopy(angleGradient, 0, out, nativeGradient.length, angleGradient.length);
-                return out;
-            }
-            final double[] out = new double[nativeGradient.length + d * d];
-            System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-            flattenColumnMajor(gradientR, out, nativeGradient.length);
-            return out;
-        }
-        if (requestedParameter == blockParameter.getRotationMatrixParameter()) {
-            return flattenColumnMajor(gradientR);
-        }
-        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
-                && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
-            return ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                    .pullBackGradient(gradientR);
-        }
-        if (requestedParameter == blockParameter.getScalarBlockParameter()) {
-            return new double[]{nativeGradient[0]};
-        }
-
-        final int blockBase = blockParameter.hasLeadingOneByOneBlock() ? 1 : 0;
-        final int blockWidth = blockParameter.getNum2x2Blocks();
-        for (int family = 0; family < blockParameter.getTwoByTwoParameterFamilyCount(); ++family) {
-            if (requestedParameter == blockParameter.getTwoByTwoBlockParameter(family)) {
-                final double[] out = new double[blockWidth];
-                System.arraycopy(nativeGradient, blockBase + family * blockWidth, out, 0, blockWidth);
-                return out;
-            }
-        }
-        throw new IllegalArgumentException("Unsupported block parameter: " + requestedParameter.getId());
-    }
-
-    private static double[] flattenColumnMajor(final double[][] matrix) {
-        final double[] out = new double[matrix.length * matrix.length];
-        flattenColumnMajor(matrix, out, 0);
-        return out;
-    }
-
-    private static void flattenColumnMajor(final double[][] matrix,
-                                           final double[] out,
-                                           final int offset) {
-        final int d = matrix.length;
-        int index = offset;
-        for (int col = 0; col < d; ++col) {
-            for (int row = 0; row < d; ++row) {
-                out[index++] = matrix[row][col];
-            }
-        }
+        return CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
+                stateDimension,
+                requestedParameter,
+                blockParameter,
+                nativeGradient,
+                rotationGradientFlat);
     }
 
     private CanonicalBranchMessageContribution localContribution(final int branchIndex,

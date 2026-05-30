@@ -10,7 +10,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -27,7 +27,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
     private final CanonicalLocalTransitionAdjoints localAdjoints;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final double[][] covarianceAdjointScratch;
-    private final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache;
+    private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
     public CanonicalDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
                                                    final int stateDimension) {
@@ -43,7 +43,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
     public CanonicalDiffusionMatrixGradientFormula(final OUProcessModel processModel,
                                                    final DiffusionMatrixParameterization diffusionParameterization,
                                                    final int stateDimension,
-                                                   final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache) {
+                                                   final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache) {
         if (diffusionParameterization == null) {
             throw new IllegalArgumentException("diffusionParameterization must not be null");
         }
@@ -53,7 +53,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         this.processModel = processModel;
         this.diffusionParameterization = diffusionParameterization;
         this.stateDimension = stateDimension;
-        this.orthogonalBlockGradientCache = orthogonalBlockGradientCache;
+        this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
         this.branchPosterior = new CanonicalBranchPosterior(stateDimension);
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
@@ -83,15 +83,15 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
                                     final TimeGrid timeGrid) {
         final int d = stateDimension;
         final int T = trajectory.timeCount;
-        if (orthogonalBlockGradientCache != null
-                && orthogonalBlockGradientCache.supportsDiffusionParameter(parameter)
+        if (blockDiagonalGradientCache != null
+                && blockDiagonalGradientCache.supportsDiffusionParameter(parameter)
                 && branchGradientCache != null) {
-            return orthogonalBlockGradientCache.getDiffusionGradient(
+            return blockDiagonalGradientCache.getDiffusionGradient(
                     parameter, trajectory, branchGradientCache, repr, timeGrid);
         }
         final double[] gradientAccumulator = new double[d * d];
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                getOrthogonalParameterizationIfAvailable();
+        final BlockDiagonalNativeCanonicalParameterization blockParameterization =
+                getBlockNativeParameterizationIfAvailable();
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
@@ -99,8 +99,8 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         for (int t = 0; t < T - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
                     localAdjoints(t, trajectory, branchGradientCache);
-            if (orthogonalParameterization != null) {
-                orthogonalParameterization.accumulateDiffusionGradientFlat(
+            if (blockParameterization != null) {
+                blockParameterization.accumulateDiffusionGradientFlat(
                         processModel.getDiffusionMatrix(),
                         timeGrid.getDelta(t, t + 1),
                         adjoints.dLogL_dOmega,
@@ -121,8 +121,8 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
 
     @Override
     public void makeDirty() {
-        if (orthogonalBlockGradientCache != null) {
-            orthogonalBlockGradientCache.makeDirty();
+        if (blockDiagonalGradientCache != null) {
+            blockDiagonalGradientCache.makeDirty();
         }
     }
 
@@ -142,13 +142,13 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         return localAdjoints;
     }
 
-    private OrthogonalBlockCanonicalParameterization getOrthogonalParameterizationIfAvailable() {
+    private BlockDiagonalNativeCanonicalParameterization getBlockNativeParameterizationIfAvailable() {
         if (processModel == null) {
             return null;
         }
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization) {
-            return (OrthogonalBlockCanonicalParameterization)
+                instanceof BlockDiagonalNativeCanonicalParameterization) {
+            return (BlockDiagonalNativeCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization();
         }
         return null;

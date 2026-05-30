@@ -3,14 +3,14 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
@@ -19,13 +19,13 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 
 /**
- * Timeseries-only joint accumulator for orthogonal-block canonical OU gradients.
+ * Timeseries-only joint accumulator for block-diagonal canonical OU gradients.
  */
-public final class CanonicalOrthogonalBlockGradientCache {
+public final class CanonicalBlockDiagonalGradientCache {
 
     private final OUProcessModel processModel;
-    private final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter;
-    private final OrthogonalBlockCanonicalParameterization orthogonalParameterization;
+    private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
+    private final BlockDiagonalNativeCanonicalParameterization blockParameterization;
     private final DiffusionMatrixParameterization diffusionParameterization;
     private final Parameter stationaryMeanParameter;
     private final MatrixParameter initialCovarianceParameter;
@@ -52,16 +52,16 @@ public final class CanonicalOrthogonalBlockGradientCache {
     private boolean selectionAndMeanKnown;
     private boolean diffusionKnown;
 
-    public CanonicalOrthogonalBlockGradientCache(final OUProcessModel processModel,
-                                                 final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter,
-                                                 final DiffusionMatrixParameterization diffusionParameterization,
-                                                 final Parameter stationaryMeanParameter,
-                                                 final MatrixParameter initialCovarianceParameter,
-                                                 final int stateDimension) {
+    public CanonicalBlockDiagonalGradientCache(final OUProcessModel processModel,
+                                               final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
+                                               final DiffusionMatrixParameterization diffusionParameterization,
+                                               final Parameter stationaryMeanParameter,
+                                               final MatrixParameter initialCovarianceParameter,
+                                               final int stateDimension) {
         this.processModel = processModel;
         this.blockParameter = blockParameter;
-        this.orthogonalParameterization =
-                (OrthogonalBlockCanonicalParameterization) processModel.getSelectionMatrixParameterization();
+        this.blockParameterization =
+                (BlockDiagonalNativeCanonicalParameterization) processModel.getSelectionMatrixParameterization();
         this.diffusionParameterization = diffusionParameterization;
         this.stationaryMeanParameter = stationaryMeanParameter;
         this.initialCovarianceParameter = initialCovarianceParameter;
@@ -83,8 +83,8 @@ public final class CanonicalOrthogonalBlockGradientCache {
         this.initialGradient = new double[stateDimension];
         this.converterWorkspace = new GaussianFormConverter.Workspace();
         this.converterWorkspace.ensureDim(stateDimension);
-        this.preparedBasis = orthogonalParameterization.createPreparedBranchHandle();
-        this.branchWorkspace = orthogonalParameterization.createBranchWorkspace();
+        this.preparedBasis = blockParameterization.createPreparedBranchHandle();
+        this.branchWorkspace = blockParameterization.createBranchWorkspace();
         this.selectionAndMeanKnown = false;
         this.diffusionKnown = false;
     }
@@ -92,11 +92,11 @@ public final class CanonicalOrthogonalBlockGradientCache {
     public static boolean isAvailable(final OUProcessModel processModel,
                                       final Parameter selectionMatrixParameter) {
         return processModel != null
-                && selectionMatrixParameter instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter
+                && selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
                 && processModel.getCovarianceGradientMethod()
                 == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
                 && processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization;
+                instanceof BlockDiagonalNativeCanonicalParameterization;
     }
 
     public void makeDirty() {
@@ -190,14 +190,14 @@ public final class CanonicalOrthogonalBlockGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            orthogonalParameterization.accumulateNativeGradientFromAdjointsPreparedFlat(
+            blockParameterization.accumulateNativeGradientFromAdjointsPreparedFlat(
                     prepared,
                     diffusionMatrix,
                     adjoints,
                     branchWorkspace,
                     compressedDGradient,
                     rotationGradientFlat);
-            orthogonalParameterization.accumulateMeanGradientPrepared(
+            blockParameterization.accumulateMeanGradientPrepared(
                     prepared,
                     adjoints.dLogL_df,
                     meanGradient,
@@ -215,7 +215,7 @@ public final class CanonicalOrthogonalBlockGradientCache {
             return;
         }
         if (!selectionAndMeanKnown
-                && orthogonalParameterization.supportsDelayedDiffusionGradientRotation()) {
+                && blockParameterization.supportsDelayedDiffusionGradientRotation()) {
             ensureSelectionMeanAndDiffusion(trajectory, branchCache, transitionRepresentation, timeGrid);
             return;
         }
@@ -228,7 +228,7 @@ public final class CanonicalOrthogonalBlockGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            orthogonalParameterization.accumulateDiffusionGradientPreparedFlat(
+            blockParameterization.accumulateDiffusionGradientPreparedFlat(
                     prepared,
                     adjoints.dLogL_dOmega,
                     false,
@@ -256,7 +256,7 @@ public final class CanonicalOrthogonalBlockGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            orthogonalParameterization.accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+            blockParameterization.accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
                     prepared,
                     diffusionMatrix,
                     adjoints,
@@ -265,13 +265,13 @@ public final class CanonicalOrthogonalBlockGradientCache {
                     rotationGradientFlat,
                     true,
                     dBasisDiffusionGradient);
-            orthogonalParameterization.accumulateMeanGradientPrepared(
+            blockParameterization.accumulateMeanGradientPrepared(
                     prepared,
                     adjoints.dLogL_df,
                     meanGradient,
                     branchWorkspace);
         }
-        orthogonalParameterization.finishDiffusionGradientFromDBasisFlat(
+        blockParameterization.finishDiffusionGradientFromDBasisFlat(
                 dBasisDiffusionGradient,
                 diffusionGradient,
                 branchWorkspace);
@@ -298,7 +298,7 @@ public final class CanonicalOrthogonalBlockGradientCache {
                 return prepared;
             }
         }
-        orthogonalParameterization.prepareBranch(dt, stationaryMean, preparedBasis);
+        blockParameterization.prepareBranch(dt, stationaryMean, preparedBasis);
         return preparedBasis;
     }
 
@@ -347,71 +347,17 @@ public final class CanonicalOrthogonalBlockGradientCache {
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
                                                  final double[] nativeGradient,
                                                  final double[] flatGradientR) {
-        final int d = stateDimension;
-        if (requestedParameter == blockParameter.getParameter()) {
-            if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider) {
-                final OrthogonalMatrixProvider provider =
-                        (OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter();
-                final int angleCount = provider.getOrthogonalParameter().getDimension();
-                final double[] out = new double[nativeGradient.length + angleCount];
-                System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-                provider.fillPullBackGradientFlat(flatGradientR, d, out, nativeGradient.length);
-                return out;
-            }
-            final double[] out = new double[nativeGradient.length + d * d];
-            System.arraycopy(nativeGradient, 0, out, 0, nativeGradient.length);
-            flattenColumnMajor(flatGradientR, out, nativeGradient.length, d);
-            return out;
-        }
-        if (requestedParameter == blockParameter.getRotationMatrixParameter()) {
-            return flattenColumnMajor(flatGradientR, d);
-        }
-        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
-                && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                .getOrthogonalParameter()) {
-            final double[] out = new double[requestedParameter.getDimension()];
-            ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                    .fillPullBackGradientFlat(flatGradientR, d, out);
-            return out;
-        }
-        if (requestedParameter == blockParameter.getScalarBlockParameter()) {
-            return new double[]{nativeGradient[0]};
-        }
-
-        final int blockBase = blockParameter.hasLeadingOneByOneBlock() ? 1 : 0;
-        final int blockWidth = blockParameter.getNum2x2Blocks();
-        for (int family = 0; family < blockParameter.getTwoByTwoParameterFamilyCount(); ++family) {
-            if (requestedParameter == blockParameter.getTwoByTwoBlockParameter(family)) {
-                final double[] out = new double[blockWidth];
-                System.arraycopy(nativeGradient, blockBase + family * blockWidth, out, 0, blockWidth);
-                return out;
-            }
-        }
-        throw new IllegalArgumentException("Unsupported block parameter: " + requestedParameter.getId());
+        return CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
+                stateDimension,
+                requestedParameter,
+                blockParameter,
+                nativeGradient,
+                flatGradientR);
     }
 
     private static void zero(final double[] vector) {
         for (int i = 0; i < vector.length; ++i) {
             vector[i] = 0.0;
-        }
-    }
-
-    private static double[] flattenColumnMajor(final double[] rowMajor,
-                                               final int dimension) {
-        final double[] out = new double[dimension * dimension];
-        flattenColumnMajor(rowMajor, out, 0, dimension);
-        return out;
-    }
-
-    private static void flattenColumnMajor(final double[] rowMajor,
-                                           final double[] out,
-                                           final int offset,
-                                           final int dimension) {
-        int index = offset;
-        for (int col = 0; col < dimension; ++col) {
-            for (int row = 0; row < dimension; ++row) {
-                out[index++] = rowMajor[row * dimension + col];
-            }
         }
     }
 }

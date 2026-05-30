@@ -5,13 +5,13 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 
-final class OrthogonalBlockTransitionCovarianceSolver {
+final class BlockDiagonalTransitionCovarianceSolver {
 
-    private OrthogonalBlockTransitionCovarianceSolver() { }
+    private BlockDiagonalTransitionCovarianceSolver() { }
 
     static void fillTransitionCovariance(final MatrixParameterInterface diffusionMatrix,
                                          final DenseMatrix64F rMatrix,
-                                         final DenseMatrix64F rtMatrix,
+                                         final DenseMatrix64F rinvMatrix,
                                          final double[] expD,
                                          final double[] blockDParams,
                                          final BlockDiagonalLyapunovSolver lyapunovSolver,
@@ -21,45 +21,35 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                                          final DenseMatrix64F transitionCovDBasis,
                                          final DenseMatrix64F temp,
                                          final DenseMatrix64F out,
-                                         final boolean symmetrizeTransitionCovDBasis,
                                          final int[] blockStarts,
                                          final int[] blockSizes) {
         fillDenseMatrix(diffusionMatrix, qMatrix);
-        MatrixOps.symmetricSandwichTransposeLeft(rMatrix.data, qMatrix.data, qDBasis.data, temp.data, qMatrix.numRows);
+        MatrixOps.symmetricSandwichTransposeRight(
+                rinvMatrix.data, qMatrix.data, qDBasis.data, temp.data, qMatrix.numRows);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
         BlockDiagonalMatrixOps.multiplyBlockDiagonalLeft(
                 expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);
         BlockDiagonalMatrixOps.multiplyRightBlockDiagonalTranspose(
                 temp.data, expD, transitionCovDBasis.data, transitionCovDBasis.numRows, blockStarts, blockSizes);
         OrthogonalBlockDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
-        if (symmetrizeTransitionCovDBasis) {
-            symmetrize(transitionCovDBasis);
-        }
-        if (symmetrizeTransitionCovDBasis) {
-            MatrixOps.symmetricSandwichTransposeRight(
-                    rMatrix.data,
-                    transitionCovDBasis.data,
-                    out.data,
-                    temp.data,
-                    out.numRows);
-        } else {
-            OrthogonalBlockDenseMatrixOps.mult(rMatrix, transitionCovDBasis, temp);
-            OrthogonalBlockDenseMatrixOps.mult(temp, rtMatrix, out);
-            symmetrize(out);
-        }
+        symmetrize(transitionCovDBasis);
+        MatrixOps.symmetricSandwichTransposeRight(
+                rMatrix.data, transitionCovDBasis.data, out.data, temp.data, out.numRows);
     }
 
-    static void copyPreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
+    static void copyPreparedCovariance(final BlockDiagonalPreparedBranchBasis prepared,
                                        final BlockDiagonalBranchGradientWorkspace workspace) {
         workspace.qMatrix.set(prepared.qMatrix);
+        workspace.qDBasis.set(prepared.qDBasis);
         workspace.stationaryCovDBasis.set(prepared.stationaryCovDBasis);
         workspace.transitionCovDBasis.set(prepared.transitionCovDBasis);
         workspace.transitionCovariance.set(prepared.transitionCovariance);
     }
 
-    static void storePreparedCovariance(final OrthogonalBlockPreparedBranchBasis prepared,
+    static void storePreparedCovariance(final BlockDiagonalPreparedBranchBasis prepared,
                                         final BlockDiagonalBranchGradientWorkspace workspace) {
         prepared.qMatrix.set(workspace.qMatrix);
+        prepared.qDBasis.set(workspace.qDBasis);
         prepared.stationaryCovDBasis.set(workspace.stationaryCovDBasis);
         prepared.transitionCovDBasis.set(workspace.transitionCovDBasis);
         prepared.transitionCovariance.set(workspace.transitionCovariance);
@@ -87,5 +77,4 @@ final class OrthogonalBlockTransitionCovarianceSolver {
             }
         }
     }
-
 }

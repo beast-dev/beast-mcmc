@@ -4,7 +4,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -82,8 +82,8 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         fillCurrentMean(currentMean);
 
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                getOrthogonalParameterizationIfAvailable();
+        final BlockDiagonalCanonicalParameterization blockParameterization =
+                getBlockParameterizationIfAvailable();
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
             final BranchSmootherStats next = smootherStats[t + 1];
@@ -101,8 +101,8 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
             KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
 
-            if (orthogonalParameterization != null) {
-                orthogonalParameterization.accumulateMeanGradient(
+            if (blockParameterization != null) {
+                blockParameterization.accumulateMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         dLogL_df,
                         denseGradient);
@@ -132,8 +132,8 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         double scalarGradient = 0.0;
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                getOrthogonalParameterizationIfAvailable();
+        final BlockDiagonalCanonicalParameterization blockParameterization =
+                getBlockParameterizationIfAvailable();
 
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
@@ -152,8 +152,8 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
             KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
 
-            if (orthogonalParameterization != null) {
-                scalarGradient += orthogonalParameterization.accumulateScalarMeanGradient(
+            if (blockParameterization != null) {
+                scalarGradient += blockParameterization.accumulateScalarMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         dLogL_df);
             } else {
@@ -176,13 +176,13 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         return new double[]{scalarGradient};
     }
 
-    private OrthogonalBlockCanonicalParameterization getOrthogonalParameterizationIfAvailable() {
+    private BlockDiagonalCanonicalParameterization getBlockParameterizationIfAvailable() {
         if (processModel == null) {
             return null;
         }
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization) {
-            return (OrthogonalBlockCanonicalParameterization)
+                instanceof BlockDiagonalCanonicalParameterization) {
+            return (BlockDiagonalCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization();
         }
         return null;

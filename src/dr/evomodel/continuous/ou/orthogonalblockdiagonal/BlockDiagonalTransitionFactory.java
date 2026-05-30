@@ -2,17 +2,17 @@ package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Forward-path transition and canonical-message builder for orthogonal block OU.
+ * Forward-path transition and canonical-message builder for block-diagonal OU.
  */
-final class OrthogonalBlockTransitionFactory {
+final class BlockDiagonalTransitionFactory {
 
     private final BlockDiagonalLyapunovSolver lyapunovSolver;
     private final DenseMatrix64F qMatrix;
@@ -28,8 +28,8 @@ final class OrthogonalBlockTransitionFactory {
     private final double[] lowerInverseScratch;
     private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
 
-    OrthogonalBlockTransitionFactory(final int dimension,
-                                     final BlockDiagonalLyapunovSolver lyapunovSolver) {
+    BlockDiagonalTransitionFactory(final int dimension,
+                                   final BlockDiagonalLyapunovSolver lyapunovSolver) {
         this.lyapunovSolver = lyapunovSolver;
         this.qMatrix = new DenseMatrix64F(dimension, dimension);
         this.qDBasis = new DenseMatrix64F(dimension, dimension);
@@ -46,7 +46,7 @@ final class OrthogonalBlockTransitionFactory {
     }
 
     void fillTransitionCovarianceFlat(final MatrixParameterInterface diffusionMatrix,
-                                      final OrthogonalBlockBasisCache basis,
+                                      final BlockDiagonalTransitionCache basis,
                                       final double[] out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
         MatrixOps.toFlat(transitionCovariance, out, transitionCovariance.numRows);
@@ -54,7 +54,7 @@ final class OrthogonalBlockTransitionFactory {
 
     void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,
                                  final double[] stationaryMean,
-                                 final OrthogonalBlockBasisCache basis,
+                                 final BlockDiagonalTransitionCache basis,
                                  final CanonicalGaussianTransition out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
         OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
@@ -70,7 +70,7 @@ final class OrthogonalBlockTransitionFactory {
 
     void fillCanonicalLocalAdjoints(final MatrixParameterInterface diffusionMatrix,
                                     final double[] stationaryMean,
-                                    final OrthogonalBlockBasisCache basis,
+                                    final BlockDiagonalTransitionCache basis,
                                     final CanonicalBranchMessageContribution contribution,
                                     final CanonicalLocalTransitionAdjoints out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
@@ -93,11 +93,11 @@ final class OrthogonalBlockTransitionFactory {
     }
 
     private void fillTransitionCovarianceMatrix(final MatrixParameterInterface diffusionMatrix,
-                                                final OrthogonalBlockBasisCache basis) {
-        OrthogonalBlockTransitionCovarianceSolver.fillTransitionCovariance(
+                                                final BlockDiagonalTransitionCache basis) {
+        BlockDiagonalTransitionCovarianceSolver.fillTransitionCovariance(
                 diffusionMatrix,
                 basis.rMatrix,
-                basis.rtMatrix,
+                basis.rinvMatrix,
                 basis.expD,
                 basis.blockDParams,
                 lyapunovSolver,
@@ -107,9 +107,7 @@ final class OrthogonalBlockTransitionFactory {
                 transitionCovDBasis,
                 temp,
                 transitionCovariance,
-                false,
                 basis.blockStarts,
                 basis.blockSizes);
     }
-
 }

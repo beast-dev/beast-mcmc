@@ -1,6 +1,7 @@
 package test.dr.inference.model;
 
 import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.OrthogonalBlockDiagonalDecomposition;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import test.dr.math.MathTestCase;
@@ -43,6 +44,38 @@ public class OrthogonalBlockDiagonalPolarStableMatrixParameterTest extends MathT
         final double[] nativeGradient = chainDiagonalGradient(blockParameter);
         assertEquals(3.0, nativeGradient[0], 1e-15);
         assertEquals(10.0, nativeGradient[1], 1e-15);
+    }
+
+    public void testCreatesOrthogonalBlockDiagonalDecomposition() {
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter =
+                makeFourDimensionalBlockParameter(
+                        new double[]{0.50, 0.25},
+                        OrthogonalBlockDiagonalPolarStableMatrixParameter.RhoOrdering.NONE);
+
+        blockParameter.getRotationAngleParameter().setParameterValue(0, 0.10);
+        blockParameter.getRotationAngleParameter().setParameterValue(3, -0.35);
+
+        final OrthogonalBlockDiagonalDecomposition decomposition =
+                blockParameter.getBlockDiagonalDecomposition();
+
+        assertTrue(decomposition.isOrthogonal());
+        assertEquals(blockParameter.getRowDimension(), decomposition.getDimension());
+
+        final double[] r = decomposition.getR();
+        final double[] rt = decomposition.getRInverse();
+        final int dim = decomposition.getDimension();
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                assertEquals(r[j * dim + i], rt[i * dim + j], 1e-15);
+            }
+        }
+
+        final double[] denseD = new double[dim * dim];
+        decomposition.fillBlockDiagonalMatrix(denseD);
+        assertEquals(0.50, denseD[0], 1e-15);
+        assertEquals(0.50, denseD[5], 1e-15);
+        assertEquals(0.25, denseD[10], 1e-15);
+        assertEquals(0.25, denseD[15], 1e-15);
     }
 
     private static OrthogonalBlockDiagonalPolarStableMatrixParameter makeFourDimensionalBlockParameter(

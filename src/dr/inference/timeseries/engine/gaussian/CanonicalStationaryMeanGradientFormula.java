@@ -11,7 +11,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockCanonicalParameterization;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
@@ -35,7 +35,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
     private final double[] stateDiff;
     private final double[][] initialCovInv;
     private final double[][] smoothedInitialCovariance;
-    private final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache;
+    private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
     public CanonicalStationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
                                                   final MatrixParameter initialCovarianceParameter,
@@ -54,7 +54,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                                                   final Parameter stationaryMeanParameter,
                                                   final MatrixParameter initialCovarianceParameter,
                                                   final int stateDimension,
-                                                  final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache) {
+                                                  final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache) {
         if (stationaryMeanParameter == null) {
             throw new IllegalArgumentException("stationaryMeanParameter must not be null");
         }
@@ -68,7 +68,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         this.stationaryMeanParameter = stationaryMeanParameter;
         this.initialCovarianceParameter = initialCovarianceParameter;
         this.stateDimension = stateDimension;
-        this.orthogonalBlockGradientCache = orthogonalBlockGradientCache;
+        this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
         this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
         this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
@@ -102,18 +102,18 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
         if (stationaryMeanParameter.getDimension() == 1) {
-            if (orthogonalBlockGradientCache != null
-                    && orthogonalBlockGradientCache.supportsMeanParameter(parameter)
+            if (blockDiagonalGradientCache != null
+                    && blockDiagonalGradientCache.supportsMeanParameter(parameter)
                     && branchGradientCache != null) {
-                return orthogonalBlockGradientCache.getMeanGradient(
+                return blockDiagonalGradientCache.getMeanGradient(
                         trajectory, branchGradientCache, repr, timeGrid);
             }
             return computeScalarGradient(trajectory, branchGradientCache, timeGrid);
         }
-        if (orthogonalBlockGradientCache != null
-                && orthogonalBlockGradientCache.supportsMeanParameter(parameter)
+        if (blockDiagonalGradientCache != null
+                && blockDiagonalGradientCache.supportsMeanParameter(parameter)
                 && branchGradientCache != null) {
-            return orthogonalBlockGradientCache.getMeanGradient(
+            return blockDiagonalGradientCache.getMeanGradient(
                     trajectory, branchGradientCache, repr, timeGrid);
         }
 
@@ -121,16 +121,16 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         fillCurrentMean(currentMean);
 
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                getOrthogonalParameterizationIfAvailable();
+        final BlockDiagonalCanonicalParameterization blockParameterization =
+                getBlockParameterizationIfAvailable();
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
         for (int t = 0; t < timeCount - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
                     localAdjoints(t, trajectory, branchGradientCache);
-            if (orthogonalParameterization != null) {
-                orthogonalParameterization.accumulateMeanGradient(
+            if (blockParameterization != null) {
+                blockParameterization.accumulateMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         adjoints.dLogL_df,
                         denseGradient);
@@ -170,8 +170,8 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         double scalarGradient = 0.0;
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
-        final OrthogonalBlockCanonicalParameterization orthogonalParameterization =
-                getOrthogonalParameterizationIfAvailable();
+        final BlockDiagonalCanonicalParameterization blockParameterization =
+                getBlockParameterizationIfAvailable();
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
@@ -179,8 +179,8 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         for (int t = 0; t < timeCount - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
                     localAdjoints(t, trajectory, branchGradientCache);
-            if (orthogonalParameterization != null) {
-                scalarGradient += orthogonalParameterization.accumulateScalarMeanGradient(
+            if (blockParameterization != null) {
+                scalarGradient += blockParameterization.accumulateScalarMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         adjoints.dLogL_df);
             } else {
@@ -212,13 +212,13 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         return new double[]{scalarGradient};
     }
 
-    private OrthogonalBlockCanonicalParameterization getOrthogonalParameterizationIfAvailable() {
+    private BlockDiagonalCanonicalParameterization getBlockParameterizationIfAvailable() {
         if (processModel == null) {
             return null;
         }
         if (processModel.getSelectionMatrixParameterization()
-                instanceof OrthogonalBlockCanonicalParameterization) {
-            return (OrthogonalBlockCanonicalParameterization)
+                instanceof BlockDiagonalCanonicalParameterization) {
+            return (BlockDiagonalCanonicalParameterization)
                     processModel.getSelectionMatrixParameterization();
         }
         return null;
@@ -226,8 +226,8 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
 
     @Override
     public void makeDirty() {
-        if (orthogonalBlockGradientCache != null) {
-            orthogonalBlockGradientCache.makeDirty();
+        if (blockDiagonalGradientCache != null) {
+            blockDiagonalGradientCache.makeDirty();
         }
     }
 

@@ -1,10 +1,10 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
 /**
- * System-property backed switches for dense fallback paths in orthogonal block
+ * System-property backed switches for dense fallback paths in block-diagonal
  * adjoint code.
  */
-final class OrthogonalBlockDenseFallbackPolicy {
+final class BlockDiagonalDenseFallbackPolicy {
 
     private static final String NATIVE_FORCE_DENSE_ADJOINT_EXP_PROPERTY =
             "beast.experimental.nativeForceDenseAdjointExp";

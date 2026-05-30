@@ -1,8 +1,10 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-final class OrthogonalBlockMatrixOps {
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
-    private OrthogonalBlockMatrixOps() {
+final class BlockDiagonalMatrixOps {
+
+    private BlockDiagonalMatrixOps() {
         // no instances
     }
 
@@ -166,6 +168,19 @@ final class OrthogonalBlockMatrixOps {
                 block2x2Index++;
             }
         }
+    }
+
+    static void fillTransitionMatrix(final double[] rData,
+                                     final double[] expDData,
+                                     final double[] rinvData,
+                                     final int dimension,
+                                     final int[] blockStarts,
+                                     final int[] blockSizes,
+                                     final double[] workMatrix,
+                                     final double[] transitionData) {
+        multiplyRightBlockDiagonal(
+                rData, expDData, dimension, blockStarts, blockSizes, workMatrix);
+        MatrixOps.matMul(workMatrix, rinvData, transitionData, dimension);
     }
 
     private static int countTwoByTwoBlocks(final int[] blockSizes) {

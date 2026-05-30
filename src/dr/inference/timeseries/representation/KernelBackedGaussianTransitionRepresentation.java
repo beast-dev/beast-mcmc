@@ -13,6 +13,7 @@ public final class KernelBackedGaussianTransitionRepresentation
         implements CachedGaussianTransitionRepresentation {
 
     private final GaussianBranchTransitionKernel kernel;
+    private final OUProcessModel processModel;
     private final RepeatedDeltaCanonicalTransitionCache repeatedDeltaCache;
 
     public KernelBackedGaussianTransitionRepresentation(final GaussianBranchTransitionKernel kernel) {
@@ -29,7 +30,12 @@ public final class KernelBackedGaussianTransitionRepresentation
             throw new IllegalArgumentException("kernel must not be null");
         }
         this.kernel = kernel;
+        this.processModel = processModel;
         this.repeatedDeltaCache = new RepeatedDeltaCanonicalTransitionCache(kernel, processModel);
+    }
+
+    public OUProcessModel getProcessModel() {
+        return processModel;
     }
 
     @Override

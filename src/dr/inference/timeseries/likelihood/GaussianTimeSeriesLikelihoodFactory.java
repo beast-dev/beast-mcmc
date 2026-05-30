@@ -2,7 +2,7 @@ package dr.inference.timeseries.likelihood;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.engine.DisabledGradientEngine;
@@ -14,7 +14,7 @@ import dr.inference.timeseries.engine.gaussian.CanonicalAnalyticalKalmanGradient
 import dr.inference.timeseries.engine.gaussian.CanonicalDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.CanonicalKalmanSmootherEngine;
 import dr.inference.timeseries.engine.gaussian.CanonicalStationaryMeanGradientFormula;
-import dr.inference.timeseries.engine.gaussian.CanonicalOrthogonalBlockGradientCache;
+import dr.inference.timeseries.engine.gaussian.CanonicalBlockDiagonalGradientCache;
 import dr.inference.timeseries.engine.gaussian.DiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.gaussian.GaussianSmootherResults;
 import dr.inference.timeseries.engine.gaussian.GaussianForwardComputationMode;
@@ -210,8 +210,8 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                                                              final int stateDimension) {
         final DiffusionMatrixParameterization diffusionParameterization =
                 DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
-        final CanonicalOrthogonalBlockGradientCache orthogonalBlockGradientCache =
-                createOrthogonalBlockGradientCache(
+        final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache =
+                createBlockDiagonalGradientCache(
                         processModel,
                         driftMatrix,
                         diffusionParameterization,
@@ -222,7 +222,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                 new SelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 processModel != null
                         ? new CanonicalSelectionMatrixGradientFormula(
-                        processModel, driftMatrix, stateDimension, orthogonalBlockGradientCache)
+                        processModel, driftMatrix, stateDimension, blockDiagonalGradientCache)
                         : new CanonicalSelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 new StationaryMeanGradientFormula(
                         processModel,
@@ -234,7 +234,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         stationaryMean,
                         initialCovariance,
                         stateDimension,
-                        orthogonalBlockGradientCache),
+                        blockDiagonalGradientCache),
                 new DiffusionMatrixGradientFormula(
                         diffusionParameterization,
                         stateDimension),
@@ -242,7 +242,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         processModel,
                         diffusionParameterization,
                         stateDimension,
-                        orthogonalBlockGradientCache));
+                        blockDiagonalGradientCache));
         if (smoother instanceof CanonicalKalmanSmootherEngine) {
             return new CanonicalAnalyticalKalmanGradientEngine(
                     (CanonicalKalmanSmootherEngine) smoother,
@@ -280,7 +280,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         }
     }
 
-    private static CanonicalOrthogonalBlockGradientCache createOrthogonalBlockGradientCache(
+    private static CanonicalBlockDiagonalGradientCache createBlockDiagonalGradientCache(
             final OUProcessModel processModel,
             final MatrixParameterInterface driftMatrix,
             final DiffusionMatrixParameterization diffusionParameterization,
@@ -288,13 +288,13 @@ public final class GaussianTimeSeriesLikelihoodFactory {
             final MatrixParameter initialCovariance,
             final int stateDimension) {
         if (processModel == null
-                || !(driftMatrix instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter)
-                || !CanonicalOrthogonalBlockGradientCache.isAvailable(processModel, driftMatrix)) {
+                || !(driftMatrix instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)
+                || !CanonicalBlockDiagonalGradientCache.isAvailable(processModel, driftMatrix)) {
             return null;
         }
-        return new CanonicalOrthogonalBlockGradientCache(
+        return new CanonicalBlockDiagonalGradientCache(
                 processModel,
-                (OrthogonalBlockDiagonalPolarStableMatrixParameter) driftMatrix,
+                (AbstractBlockDiagonalTwoByTwoMatrixParameter) driftMatrix,
                 diffusionParameterization,
                 stationaryMean,
                 initialCovariance,

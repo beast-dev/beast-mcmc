@@ -1,24 +1,16 @@
 package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-
 /**
  * Opaque public handle for an orthogonal block-diagonal prepared branch basis.
  */
-public final class OrthogonalBlockPreparedBranchHandle implements CanonicalPreparedBranchHandle {
-
-    private final OrthogonalBlockPreparedBranchBasis basis;
+public final class OrthogonalBlockPreparedBranchHandle extends BlockDiagonalPreparedBranchHandle {
 
     OrthogonalBlockPreparedBranchHandle(final OrthogonalBlockPreparedBranchBasis basis) {
-        this.basis = basis;
-    }
-
-    public OrthogonalBlockPreparedBranchBasis getBasis() {
-        return basis;
+        super(basis);
     }
 
     @Override
-    public void invalidateCovariance() {
-        basis.invalidateCovariance();
+    public OrthogonalBlockPreparedBranchBasis getBasis() {
+        return (OrthogonalBlockPreparedBranchBasis) super.getBasis();
     }
 }

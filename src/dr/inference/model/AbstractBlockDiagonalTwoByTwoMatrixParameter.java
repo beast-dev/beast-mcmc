@@ -292,6 +292,22 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
         System.arraycopy(rinvData, 0, outRinv, 0, dim * dim);
     }
 
+    public BlockDiagonalDecomposition createBlockDiagonalDecomposition() {
+        return new BlockDiagonalDecomposition(dim, blockStarts, blockSizes);
+    }
+
+    public BlockDiagonalDecomposition getBlockDiagonalDecomposition() {
+        final BlockDiagonalDecomposition decomposition = createBlockDiagonalDecomposition();
+        fillBlockDiagonalDecomposition(decomposition);
+        return decomposition;
+    }
+
+    public void fillBlockDiagonalDecomposition(final BlockDiagonalDecomposition decomposition) {
+        validateCompatibleDecomposition(decomposition);
+        fillRAndRinv(decomposition.getR(), decomposition.getRInverse());
+        fillBlockDiagonalElements(decomposition.getBlockDiagonal());
+    }
+
     /**
      * Fills the block-diagonal entries in the tridiagonal-style representation
      *
@@ -399,6 +415,25 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
 
     public int[] getBlockSizes() {
         return blockSizes;
+    }
+
+    protected final void validateCompatibleDecomposition(final BlockDiagonalDecomposition decomposition) {
+        if (decomposition == null) {
+            throw new IllegalArgumentException("decomposition must not be null");
+        }
+        if (decomposition.getDimension() != dim) {
+            throw new IllegalArgumentException(
+                    "decomposition dimension must be " + dim + " but is " + decomposition.getDimension());
+        }
+        if (decomposition.getBlockDiagonalDimension() != getTridiagonalDDimension()) {
+            throw new IllegalArgumentException(
+                    "decomposition block diagonal dimension must be " + getTridiagonalDDimension()
+                            + " but is " + decomposition.getBlockDiagonalDimension());
+        }
+        if (!Arrays.equals(decomposition.getBlockStarts(), blockStarts)
+                || !Arrays.equals(decomposition.getBlockSizes(), blockSizes)) {
+            throw new IllegalArgumentException("decomposition block structure is not compatible");
+        }
     }
 
     public int getNumBlocks() {

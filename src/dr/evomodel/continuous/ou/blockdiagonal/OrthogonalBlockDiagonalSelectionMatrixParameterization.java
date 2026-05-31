@@ -33,7 +33,7 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
         final BlockDiagonalFrechetHelper frechetHelper =
                 new BlockDiagonalFrechetHelper(expSolver.getStructure());
         final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper =
-                new BlockDiagonalLyapunovAdjointHelper(getDimension(), lyapunovSolver);
+                new BlockDiagonalLyapunovAdjointHelper(getDimension(), lyapunovSolver, expSolver.getStructure());
         final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy =
                 new BlockDiagonalDenseFallbackPolicy();
 

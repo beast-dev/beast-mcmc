@@ -430,6 +430,7 @@
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalGaussianMessagePasserOUGradientTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUFocusedParityAndCacheTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOrthogonalBlockFrechetExactTest.java"/>
+                    <include name="test/dr/evomodel/treedatalikelihood/continuous/backprop/BlockDiagonalLyapunovEqualDiagonalPlanTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUXmlWiringTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalWorkspaceHardeningTest.java"/>
                 </fileset>

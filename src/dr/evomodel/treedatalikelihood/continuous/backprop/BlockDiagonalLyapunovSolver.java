@@ -1,7 +1,3 @@
-//package dr.evomodel.treedatalikelihood.continuous.backprop;
-//
-//import org.ejml.data.DenseMatrix64F;
-//
 package dr.evomodel.treedatalikelihood.continuous.backprop;
 
 import org.ejml.data.DenseMatrix64F;
@@ -117,10 +113,9 @@ public final class BlockDiagonalLyapunovSolver {
         return true;
     }
 
-
-    public void solving(final double[] blockDParams,
-                      final DenseMatrix64F rhs,
-                      final DenseMatrix64F sigmaOut) {
+    public void solveOrThrow(final double[] blockDParams,
+                             final DenseMatrix64F rhs,
+                             final DenseMatrix64F sigmaOut) {
         if (!trySolve(blockDParams, rhs, sigmaOut)) {
             throw new LyapunovNonStationaryException("Singular or non-stationary block Lyapunov system");
         }

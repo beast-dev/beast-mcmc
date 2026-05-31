@@ -47,7 +47,7 @@ public class BlockDiagonalBranchGradientWorkspace implements CanonicalBranchWork
                 new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes);
         this.frechetHelper = new BlockDiagonalFrechetHelper(structure);
         this.lyapunovSolver = new BlockDiagonalLyapunovSolver(dimension, blockStarts, blockSizes);
-        this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(dimension, lyapunovSolver);
+        this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(dimension, lyapunovSolver, structure);
         this.qMatrix = new DenseMatrix64F(dimension, dimension);
         this.qDBasis = new DenseMatrix64F(dimension, dimension);
         this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);

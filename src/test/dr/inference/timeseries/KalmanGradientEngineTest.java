@@ -2,8 +2,6 @@ package test.dr.inference.timeseries;
 
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
@@ -14,7 +12,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.KalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
@@ -50,12 +48,12 @@ public class KalmanGradientEngineTest extends TestCase {
 
     private static class Model1D {
         final OUProcessModel process;
-        final GaussianObservationModel obs;
+        final LinearGaussianObservationModel obs;
         final KalmanLikelihoodEngine likelihoodEngine;
         final KalmanGradientEngine gradientEngine;
 
         Model1D(OUProcessModel process,
-                GaussianObservationModel obs,
+                LinearGaussianObservationModel obs,
                 KalmanLikelihoodEngine likelihoodEngine,
                 KalmanGradientEngine gradientEngine) {
             this.process = process;
@@ -100,7 +98,7 @@ public class KalmanGradientEngineTest extends TestCase {
         double[][] obsData = new double[1][T];
         obsData[0] = yValues;
         MatrixParameter Y = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 1, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);

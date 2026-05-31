@@ -1,7 +1,7 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -33,7 +33,7 @@ public class GaussianObservationModelParser extends AbstractXMLObjectParser {
         final MatrixParameter observations = (MatrixParameter) xo.getElementFirstChild(OBSERVATIONS);
 
         final String id = xo.hasId() ? xo.getId() : PARSER_NAME;
-        return new GaussianObservationModel(id, observationDimension, designMatrix, noiseCovariance, observations);
+        return new LinearGaussianObservationModel(id, observationDimension, designMatrix, noiseCovariance, observations);
     }
 
     @Override
@@ -55,6 +55,6 @@ public class GaussianObservationModelParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return GaussianObservationModel.class;
+        return LinearGaussianObservationModel.class;
     }
 }

@@ -14,7 +14,7 @@ import dr.inference.timeseries.core.IrregularTimeGrid;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -242,7 +242,7 @@ public class SyntheticOUTimeSeriesBenchmarkParser extends AbstractXMLObjectParse
         final TimeGrid grid = GRID_UNIFORM.equalsIgnoreCase(gridType)
                 ? new UniformTimeGrid(timeCount, 0.0, timeStep)
                 : makeIrregularGrid(timeCount, timeStep);
-        final GaussianObservationModel observation =
+        final LinearGaussianObservationModel observation =
                 makeObservation(id + ".obs", stateDimension, timeCount, sigmaObs);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel(
                 id + ".model",
@@ -434,10 +434,10 @@ public class SyntheticOUTimeSeriesBenchmarkParser extends AbstractXMLObjectParse
         return new Parameter.Default(name, data);
     }
 
-    private static GaussianObservationModel makeObservation(final String name,
-                                                           final int dimension,
-                                                           final int timeCount,
-                                                           final double sigmaObs) {
+    private static LinearGaussianObservationModel makeObservation(final String name,
+                                                                  final int dimension,
+                                                                  final int timeCount,
+                                                                  final double sigmaObs) {
         final double[][] hData = new double[dimension][dimension];
         final double[][] rData = new double[dimension][dimension];
         for (int i = 0; i < dimension; ++i) {
@@ -453,7 +453,7 @@ public class SyntheticOUTimeSeriesBenchmarkParser extends AbstractXMLObjectParse
             }
         }
 
-        return new GaussianObservationModel(
+        return new LinearGaussianObservationModel(
                 name,
                 dimension,
                 makeMatrix(name + ".H", hData),

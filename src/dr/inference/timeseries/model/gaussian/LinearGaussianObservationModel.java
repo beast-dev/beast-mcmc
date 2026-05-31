@@ -13,7 +13,7 @@ import dr.inference.timeseries.core.ObservationModel;
  * Observations are stored in a matrix whose columns correspond to time points and whose rows
  * correspond to observed dimensions. Missing values may be encoded with {@link Double#NaN}.
  */
-public class GaussianObservationModel extends AbstractModel implements ObservationModel {
+public class LinearGaussianObservationModel extends AbstractModel implements ObservationModel {
 
     private final int observationDimension;
     private final MatrixParameter designMatrix;
@@ -21,11 +21,11 @@ public class GaussianObservationModel extends AbstractModel implements Observati
     private final MatrixParameter observations;
     private final int timeCount;
 
-    public GaussianObservationModel(final String name,
-                                    final int observationDimension,
-                                    final MatrixParameter designMatrix,
-                                    final MatrixParameter noiseCovariance,
-                                    final MatrixParameter observations) {
+    public LinearGaussianObservationModel(final String name,
+                                          final int observationDimension,
+                                          final MatrixParameter designMatrix,
+                                          final MatrixParameter noiseCovariance,
+                                          final MatrixParameter observations) {
         super(name);
         if (observationDimension < 1) {
             throw new IllegalArgumentException("observationDimension must be at least 1");

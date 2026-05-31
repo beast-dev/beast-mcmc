@@ -1,7 +1,7 @@
 package dr.inference.timeseries.engine.kalman;
 
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -36,7 +36,7 @@ public class KalmanSmootherEngine extends KalmanLikelihoodEngine implements Gaus
     private final double[]   tempD;
 
     public KalmanSmootherEngine(final GaussianTransitionRepresentation transitionRepresentation,
-                                final GaussianObservationModel observationModel,
+                                final LinearGaussianObservationModel observationModel,
                                 final TimeGrid timeGrid) {
         super(transitionRepresentation, observationModel, timeGrid);
         final int d = stateDimension;

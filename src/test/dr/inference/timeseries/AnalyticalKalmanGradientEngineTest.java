@@ -3,13 +3,11 @@ package test.dr.inference.timeseries;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.GivensRotationMatrixParameter;
@@ -38,7 +36,7 @@ import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -85,12 +83,12 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
 
     private static class Model {
         final OUProcessModel process;
-        final GaussianObservationModel obs;
+        final LinearGaussianObservationModel obs;
         final KalmanLikelihoodEngine likelihoodEngine;
         final AnalyticalKalmanGradientEngine analyticalEngine;
 
         Model(OUProcessModel process,
-              GaussianObservationModel obs,
+              LinearGaussianObservationModel obs,
               KalmanLikelihoodEngine likelihoodEngine,
               AnalyticalKalmanGradientEngine analyticalEngine) {
             this.process          = process;
@@ -327,7 +325,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
     }
 
     private static double[] sumCanonicalLocalSelectionGradient(final OUProcessModel process,
-                                                               final GaussianObservationModel obs,
+                                                               final LinearGaussianObservationModel obs,
                                                                final TimeGrid grid) {
         final CanonicalKalmanSmootherEngine smoother = new CanonicalKalmanSmootherEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class),
@@ -369,7 +367,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
     }
 
     private static AnalyticalKalmanGradientEngine makeAnalyticalEngine(OUProcessModel process,
-                                                                       GaussianObservationModel obs,
+                                                                       LinearGaussianObservationModel obs,
                                                                        TimeGrid grid,
                                                                        boolean includeDiffusion) {
         GaussianTransitionRepresentation rep = representation(process,
@@ -390,7 +388,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
 
     private static TimeSeriesLikelihood makeCanonicalAnalyticalLikelihood(String name,
                                                                           OUProcessModel process,
-                                                                          GaussianObservationModel obs,
+                                                                          LinearGaussianObservationModel obs,
                                                                           TimeGrid grid) {
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel(name + ".model", latent(process), obs, grid);
         return GaussianTimeSeriesLikelihoodFactory.create(
@@ -403,7 +401,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
 
     private static TimeSeriesLikelihood makeExpectationAnalyticalLikelihood(String name,
                                                                             OUProcessModel process,
-                                                                            GaussianObservationModel obs,
+                                                                            LinearGaussianObservationModel obs,
                                                                             TimeGrid grid) {
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel(name + ".model", latent(process), obs, grid);
         return GaussianTimeSeriesLikelihoodFactory.create(
@@ -454,7 +452,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.0, 1.0}
         });
         final MatrixParameter R = makeMatrix("R.parallel.orth.2", noise);
-        final GaussianObservationModel obs2 = new GaussianObservationModel(
+        final LinearGaussianObservationModel obs2 = new LinearGaussianObservationModel(
                 "obsParallelOrthCanonical2",
                 2,
                 H,
@@ -502,7 +500,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         double[][] obsData       = new double[1][T];
         obsData[0]               = yValues;
         MatrixParameter Y        = makeMatrix("Y",  obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 1, H, R, Y);
 
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -549,7 +547,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         obsData[0]               = y1;
         obsData[1]               = y2;
         MatrixParameter Y        = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -586,7 +584,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         obsData[0]               = y1;
         obsData[1]               = y2;
         MatrixParameter Y        = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -624,7 +622,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         obsData[1]               = y2;
         obsData[2]               = y3;
         MatrixParameter Y        = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 3, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 3, H, R, Y);
 
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -665,7 +663,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         MatrixParameter H = makeMatrix("H", identity);
         MatrixParameter R = makeMatrix("R", noiseValues);
         MatrixParameter Y = makeMatrix("Y", observationValues);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", d, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", d, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -716,7 +714,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         MatrixParameter H = makeMatrix("H", identity);
         MatrixParameter R = makeMatrix("Robs", noiseValues);
         MatrixParameter Y = makeMatrix("Y", observationValues);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", d, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", d, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -762,7 +760,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         obsData[0] = y1;
         obsData[1] = y2;
         MatrixParameter Y = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
@@ -815,7 +813,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final MatrixParameter H = makeMatrix("H", identity);
         final MatrixParameter R = makeMatrix("Robs", noiseValues);
         final MatrixParameter Y = makeMatrix("Y", observationValues);
-        final GaussianObservationModel obs = new GaussianObservationModel("obs", dimension, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", dimension, H, R, Y);
 
         final TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         final GaussianTransitionRepresentation rep = representation(process,
@@ -1665,7 +1663,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final MatrixParameter H = makeMatrix("H", new double[][]{{1.0}});
         final MatrixParameter R = makeMatrix("R", new double[][]{{0.45}});
         final MatrixParameter Y = makeMatrix("Y", new double[][]{{0.8, -0.3, 1.2, 0.1}});
-        final GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 1, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
         final AnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
@@ -1693,7 +1691,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.7, -0.2, 1.1, 0.4},
                 {-0.5, 0.6, -0.8, 0.9}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.15);
 
         final AnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
@@ -1725,7 +1723,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.2, 0.7, -0.4, 1.0},
                 {-0.6, 0.3, 0.9, -0.1}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
         final AnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
@@ -1776,7 +1774,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.4, -0.3, 1.1, 0.2},
                 {-0.5, 0.8, -0.6, 0.1}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsMean2d", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsMean2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.17);
 
         final KalmanLikelihoodEngine likelihood = new KalmanLikelihoodEngine(
@@ -1806,7 +1804,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.2, -0.1, 0.9, -0.3},
                 {-0.4, 0.7, -0.2, 0.5}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonMean2d", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonMean2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.14);
 
         final KalmanLikelihoodEngine likelihood = new KalmanLikelihoodEngine(
@@ -2020,7 +2018,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.5, Double.NaN, -0.3, 1.1},
                 {-0.2, Double.NaN, 0.8, -0.4}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalExact", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.25);
 
         final KalmanLikelihoodEngine expectationEngine = new KalmanLikelihoodEngine(
@@ -2060,7 +2058,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {-0.1, 0.6, -0.4},
                 {0.2, -0.5, 0.9}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalEuler", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
         final KalmanLikelihoodEngine expectationEngine = new KalmanLikelihoodEngine(
@@ -2100,7 +2098,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.3, -0.7, Double.NaN, 0.4},
                 {0.8, -0.1, Double.NaN, -0.6}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsFactoryExact", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsFactoryExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
         final LikelihoodEngine expectation = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.EXPECTATION);
@@ -2138,7 +2136,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {-0.2, 0.4, 0.1},
                 {0.5, -0.3, 0.7}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsFactoryEuler", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsFactoryEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
         final LikelihoodEngine expectation = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.EXPECTATION);
@@ -2176,7 +2174,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.1, Double.NaN, -0.5, 0.9},
                 {-0.4, Double.NaN, 0.7, -0.2}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsTsFactoryExact", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsTsFactoryExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsFactoryExact", latent(process), obs, grid);
 
@@ -2208,7 +2206,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final MatrixParameter H = makeMatrix("H.ts.factory.grad", new double[][]{{1.0}});
         final MatrixParameter R = makeMatrix("R.ts.factory.grad", new double[][]{{0.5}});
         final MatrixParameter Y = makeMatrix("Y.ts.factory.grad", new double[][]{{0.7, -0.4, 1.3}});
-        final GaussianObservationModel obs = new GaussianObservationModel("obsTsFactoryGrad", 1, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsTsFactoryGrad", 1, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.25);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsFactoryGrad", latent(process), obs, grid);
 
@@ -2263,12 +2261,12 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         });
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final GaussianObservationModel obs1 = new GaussianObservationModel("obsTsParallel1", 2, H, R,
+        final LinearGaussianObservationModel obs1 = new LinearGaussianObservationModel("obsTsParallel1", 2, H, R,
                 makeMatrix("Y.ts.parallel.1", new double[][]{
                         {0.2, -0.1, 0.4, 0.6},
                         {-0.3, 0.5, 0.2, -0.1}
                 }));
-        final GaussianObservationModel obs2 = new GaussianObservationModel("obsTsParallel2", 2, H, R,
+        final LinearGaussianObservationModel obs2 = new LinearGaussianObservationModel("obsTsParallel2", 2, H, R,
                 makeMatrix("Y.ts.parallel.2", new double[][]{
                         {-0.4, Double.NaN, 0.3, 0.8},
                         {0.1, Double.NaN, -0.2, 0.5}
@@ -2459,7 +2457,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.15, Double.NaN, -0.35, 0.9},
                 {-0.25, Double.NaN, 0.55, -0.1}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalSmootherExact", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalSmootherExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
         final KalmanSmootherEngine expectation = new KalmanSmootherEngine(
@@ -2506,7 +2504,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {-0.05, 0.45, -0.2},
                 {0.35, -0.15, 0.6}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalSmootherEuler", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalSmootherEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
         final KalmanSmootherEngine expectation = new KalmanSmootherEngine(
@@ -2721,7 +2719,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 dt,
                 CovarianceGradientMethod.LYAPUNOV_ADJOINT);
 
-        final GaussianObservationModel obs = orthogonalModel.obs;
+        final LinearGaussianObservationModel obs = orthogonalModel.obs;
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, dt);
         final CanonicalKalmanSmootherEngine orthogonalSmoother = new CanonicalKalmanSmootherEngine(
                 representation(orthogonalModel.process, CanonicalGaussianBranchTransitionKernel.class),
@@ -2896,7 +2894,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
         final MatrixParameter H = makeMatrix("H.ts.factory.canonical.grad", new double[][]{{1.0}});
         final MatrixParameter R = makeMatrix("R.ts.factory.canonical.grad", new double[][]{{0.45}});
         final MatrixParameter Y = makeMatrix("Y.ts.factory.canonical.grad", new double[][]{{0.2, -0.6, 1.1, 0.5}});
-        final GaussianObservationModel obs = new GaussianObservationModel("obsTsFactoryCanonicalGrad", 1, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsTsFactoryCanonicalGrad", 1, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsFactoryCanonicalGrad", latent(process), obs, grid);
 
@@ -2954,7 +2952,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.25, -0.5, Double.NaN, 0.8},
                 {-0.35, 0.6, Double.NaN, -0.2}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalNativeSel", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalNativeSel", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsCanonicalNativeSel", latent(process), obs, grid);
 
@@ -3009,7 +3007,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.4, -0.3, Double.NaN, 0.6},
                 {-0.2, 0.7, Double.NaN, -0.1}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalNativeDiff", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalNativeDiff", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsCanonicalNativeDiff", latent(process), obs, grid);
 
@@ -3064,7 +3062,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.35, -0.45, Double.NaN, 0.72},
                 {-0.28, 0.55, Double.NaN, -0.14}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalFdDrift2d", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalFdDrift2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.18);
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
@@ -3107,7 +3105,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.42, -0.31, Double.NaN, 0.63},
                 {-0.19, 0.68, Double.NaN, -0.09}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalFdDiff2d", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalFdDiff2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.17);
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
@@ -3150,7 +3148,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.37, Double.NaN, -0.48},
                 {-0.24, Double.NaN, 0.61}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalBridgeLatent3", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalBridgeLatent3", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.23);
 
         final TimeSeriesLikelihood canonicalLikelihood = makeCanonicalAnalyticalLikelihood(
@@ -3250,7 +3248,7 @@ public class AnalyticalKalmanGradientEngineTest extends TestCase {
                 {0.09, -0.16, 0.21, Double.NaN, 0.28},
                 {-0.05, 0.11, -0.14, Double.NaN, 0.17}
         });
-        final GaussianObservationModel obs = new GaussianObservationModel("obsCanonicalFdWeak", 2, H, R, Y);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalFdWeak", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(5, 0.0, 0.12);
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(

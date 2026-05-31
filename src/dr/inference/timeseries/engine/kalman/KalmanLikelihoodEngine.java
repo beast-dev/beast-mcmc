@@ -4,7 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatri
 
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -28,7 +28,7 @@ public class KalmanLikelihoodEngine implements LikelihoodEngine {
     static final double MIN_DIAGONAL_JITTER = GaussianMatrixOps.MIN_DIAGONAL_JITTER;
 
     private final GaussianTransitionRepresentation transitionRepresentation;
-    private final GaussianObservationModel observationModel;
+    private final LinearGaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
     final int stateDimension;
@@ -62,7 +62,7 @@ public class KalmanLikelihoodEngine implements LikelihoodEngine {
     private double logLikelihood;
 
     public KalmanLikelihoodEngine(final GaussianTransitionRepresentation transitionRepresentation,
-                                  final GaussianObservationModel observationModel,
+                                  final LinearGaussianObservationModel observationModel,
                                   final TimeGrid timeGrid) {
         if (transitionRepresentation == null) {
             throw new IllegalArgumentException("transitionRepresentation must not be null");
@@ -132,7 +132,7 @@ public class KalmanLikelihoodEngine implements LikelihoodEngine {
         return transitionRepresentation;
     }
 
-    public GaussianObservationModel getObservationModel() {
+    public LinearGaussianObservationModel getObservationModel() {
         return observationModel;
     }
 

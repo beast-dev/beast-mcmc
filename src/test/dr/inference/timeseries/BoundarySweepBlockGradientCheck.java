@@ -2,8 +2,6 @@ package test.dr.inference.timeseries;
 
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
@@ -17,7 +15,7 @@ import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
@@ -77,7 +75,7 @@ public class BoundarySweepBlockGradientCheck {
         MatrixParameter H = makeMatrix("H", new double[][]{{1, 0}, {0, 1}});
         MatrixParameter R = makeMatrix("Robs", noise);
         MatrixParameter Y = makeMatrix("Y", new double[][]{y1, y2});
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
         KalmanSmootherEngine smoother = new KalmanSmootherEngine(rep, obs, grid);

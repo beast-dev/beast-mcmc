@@ -14,7 +14,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
 import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
 import dr.inference.timeseries.likelihood.GaussianTimeSeriesLikelihoodFactory;
@@ -204,7 +204,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
                 {0.21, -0.11, 0.14, y23, -0.16},
                 {-0.04, 0.19, -0.09, y33, 0.27}
         });
-        final GaussianObservationModel observation = new GaussianObservationModel(
+        final LinearGaussianObservationModel observation = new LinearGaussianObservationModel(
                 prefix + ".obs",
                 dimension,
                 observationMatrix,
@@ -257,7 +257,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         final BlockDiagonalPolarStableMatrixParameter block;
         final MatrixParameter diffusion;
         final Parameter mean;
-        final GaussianObservationModel observation;
+        final LinearGaussianObservationModel observation;
         final TimeGrid grid;
         final GaussianTransitionRepresentation transitionRepresentation;
         final KalmanLikelihoodEngine likelihoodEngine;
@@ -266,7 +266,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
                                   final BlockDiagonalPolarStableMatrixParameter block,
                                   final MatrixParameter diffusion,
                                   final Parameter mean,
-                                  final GaussianObservationModel observation,
+                                  final LinearGaussianObservationModel observation,
                                   final TimeGrid grid,
                                   final GaussianTransitionRepresentation transitionRepresentation,
                                   final KalmanLikelihoodEngine likelihoodEngine) {

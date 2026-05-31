@@ -12,7 +12,7 @@ import dr.inference.timeseries.core.IrregularTimeGrid;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -200,7 +200,7 @@ public class TimeSeriesRepeatedDeltaCacheBenchmarkTest extends TestCase {
                                                               final GaussianGradientComputationMode gradientMode) {
         final List<TimeSeriesLikelihood> likelihoods = new ArrayList<TimeSeriesLikelihood>(SERIES_COUNT);
         for (int s = 0; s < SERIES_COUNT; ++s) {
-            final GaussianObservationModel obs = makeObservation(prefix + ".obs" + s, s);
+            final LinearGaussianObservationModel obs = makeObservation(prefix + ".obs" + s, s);
             final BasicTimeSeriesModel model = new BasicTimeSeriesModel(
                     prefix + ".model" + s, adapter, obs, grid);
             likelihoods.add(GaussianTimeSeriesLikelihoodFactory.create(
@@ -213,7 +213,7 @@ public class TimeSeriesRepeatedDeltaCacheBenchmarkTest extends TestCase {
         return likelihoods;
     }
 
-    private static GaussianObservationModel makeObservation(final String name, final int seriesIndex) {
+    private static LinearGaussianObservationModel makeObservation(final String name, final int seriesIndex) {
         final MatrixParameter design = makeMatrix(name + ".H", new double[][]{
                 {1.0, 0.0},
                 {0.0, 1.0}
@@ -229,7 +229,7 @@ public class TimeSeriesRepeatedDeltaCacheBenchmarkTest extends TestCase {
             y[1][t] = 0.15 * Math.cos(0.11 * t - 0.07 * seriesIndex)
                     - 0.02 * seriesIndex;
         }
-        return new GaussianObservationModel(name, DIM, design, noise, makeMatrix(name + ".Y", y));
+        return new LinearGaussianObservationModel(name, DIM, design, noise, makeMatrix(name + ".Y", y));
     }
 
     private static TimedValue timedSerial(final List<TimeSeriesLikelihood> likelihoods) {

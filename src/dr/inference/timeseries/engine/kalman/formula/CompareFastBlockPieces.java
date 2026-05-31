@@ -11,7 +11,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalSelectionMatrixParameterization;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -67,7 +67,7 @@ public class CompareFastBlockPieces {
         MatrixParameter H = makeMatrix("H", new double[][]{{1, 0}, {0, 1}});
         MatrixParameter R = makeMatrix("Robs", noise);
         MatrixParameter Y = makeMatrix("Y", new double[][]{y1, y2});
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
         GaussianTransitionRepresentation rep = new OUTimeSeriesProcessAdapter(process)
                 .getRepresentation(GaussianTransitionRepresentation.class);

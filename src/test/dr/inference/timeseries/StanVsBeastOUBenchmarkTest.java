@@ -10,7 +10,7 @@ import dr.inference.timeseries.core.IrregularTimeGrid;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -52,7 +52,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
 
     public void testBenchmarkLogLikelihoodAndGradient() {
         final OUProcessModel process = makeOrthogonalBlockProcess("bench.K" + K);
-        final GaussianObservationModel obs = makeObservation("bench.obs");
+        final LinearGaussianObservationModel obs = makeObservation("bench.obs");
         final Parameter nativeParam =
                 ((OrthogonalBlockDiagonalPolarStableMatrixParameter) process.getDriftMatrix())
                         .getParameter();
@@ -123,7 +123,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
 
     private static BenchmarkResult runBenchmark(final String tag,
                                                 final OUProcessModel process,
-                                                final GaussianObservationModel obs,
+                                                final LinearGaussianObservationModel obs,
                                                 final TimeGrid grid,
                                                 final Parameter nativeParam) {
         final OUTimeSeriesProcessAdapter adapter = new OUTimeSeriesProcessAdapter(process);
@@ -192,7 +192,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
      */
     private static BenchmarkResult runBenchmarkWithParamChange(final String tag,
                                                                final OUProcessModel process,
-                                                               final GaussianObservationModel obs,
+                                                               final LinearGaussianObservationModel obs,
                                                                final TimeGrid grid,
                                                                final Parameter nativeParam) {
         final OUTimeSeriesProcessAdapter adapter = new OUTimeSeriesProcessAdapter(process);
@@ -345,7 +345,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
      * isotropic noise covariance R = sigma_obs^2 * I_K.
      * Observations are a deterministic sinusoidal pattern (K x T_OBS) for reproducibility.
      */
-    private static GaussianObservationModel makeObservation(final String name) {
+    private static LinearGaussianObservationModel makeObservation(final String name) {
         // H = I_K
         final double[][] hData = new double[K][K];
         for (int i = 0; i < K; ++i) {
@@ -367,7 +367,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
             }
         }
 
-        return new GaussianObservationModel(name, K,
+        return new LinearGaussianObservationModel(name, K,
                 makeMatrix(name + ".H", hData),
                 makeMatrix(name + ".R", rData),
                 makeMatrix(name + ".Y", y));

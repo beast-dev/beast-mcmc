@@ -1,13 +1,13 @@
 package test.dr.inference.timeseries;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit tests for {@link GaussianObservationModel}.
+ * Unit tests for {@link LinearGaussianObservationModel}.
  * <p>
  * Observations are stored as a matrix with shape (observationDimension × timeCount):
  * column j holds the observation vector at time step j.
@@ -41,14 +41,14 @@ public class GaussianObservationModelTest extends TestCase {
      * Scalar 1D model: H = [[1]], R = [[r]], y = column vector per time step.
      * observationDimension = 1, timeCount = yValues.length.
      */
-    private static GaussianObservationModel makeScalar1D(double r, double... yValues) {
+    private static LinearGaussianObservationModel makeScalar1D(double r, double... yValues) {
         MatrixParameter design = makeMatrix("H", new double[][]{{1.0}});
         MatrixParameter noise = makeMatrix("R", new double[][]{{r}});
         // observations: 1 row × timeCount cols
         double[][] obsData = new double[1][yValues.length];
         obsData[0] = yValues;
         MatrixParameter observations = makeMatrix("Y", obsData);
-        return new GaussianObservationModel("obs", 1, design, noise, observations);
+        return new LinearGaussianObservationModel("obs", 1, design, noise, observations);
     }
 
     // -------------------------------------------------------------------------
@@ -56,12 +56,12 @@ public class GaussianObservationModelTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testObservationDimension() {
-        GaussianObservationModel model = makeScalar1D(1.0, 0.0, 1.0, 2.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 0.0, 1.0, 2.0);
         assertEquals(1, model.getObservationDimension());
     }
 
     public void testTimeCount() {
-        GaussianObservationModel model = makeScalar1D(1.0, 0.0, 1.0, 2.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 0.0, 1.0, 2.0);
         assertEquals(3, model.getTimeCount());
     }
 
@@ -73,7 +73,7 @@ public class GaussianObservationModelTest extends TestCase {
                 {1, 2, 3, 4},   // row 0 across time
                 {5, 6, 7, 8}    // row 1 across time
         });
-        GaussianObservationModel model = new GaussianObservationModel("obs2d", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs2d", 2, H, R, Y);
         assertEquals(2, model.getObservationDimension());
         assertEquals(4, model.getTimeCount());
     }
@@ -83,7 +83,7 @@ public class GaussianObservationModelTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testFillDesignMatrixIdentity1D() {
-        GaussianObservationModel model = makeScalar1D(1.0, 0.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 0.0);
         double[][] H = new double[1][1];
         model.fillDesignMatrix(H);
         assertEquals(1.0, H[0][0], TOL);
@@ -93,7 +93,7 @@ public class GaussianObservationModelTest extends TestCase {
         MatrixParameter H = makeMatrix("H", new double[][]{{2.0, 3.0}, {0.0, 1.0}});
         MatrixParameter R = makeMatrix("R", new double[][]{{1, 0}, {0, 1}});
         MatrixParameter Y = makeMatrix("Y", new double[][]{{0}, {0}});
-        GaussianObservationModel model = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         double[][] out = new double[2][2];
         model.fillDesignMatrix(out);
@@ -108,7 +108,7 @@ public class GaussianObservationModelTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testFillNoiseCovarianceScalar() {
-        GaussianObservationModel model = makeScalar1D(3.5, 0.0);
+        LinearGaussianObservationModel model = makeScalar1D(3.5, 0.0);
         double[][] R = new double[1][1];
         model.fillNoiseCovariance(R);
         assertEquals(3.5, R[0][0], TOL);
@@ -118,7 +118,7 @@ public class GaussianObservationModelTest extends TestCase {
         MatrixParameter H = makeMatrix("H", new double[][]{{1, 0}, {0, 1}});
         MatrixParameter R = makeMatrix("R", new double[][]{{2.0, 0.5}, {0.5, 3.0}});
         MatrixParameter Y = makeMatrix("Y", new double[][]{{0}, {0}});
-        GaussianObservationModel model = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         double[][] out = new double[2][2];
         model.fillNoiseCovariance(out);
@@ -133,7 +133,7 @@ public class GaussianObservationModelTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testFillObservationVector() {
-        GaussianObservationModel model = makeScalar1D(1.0, 1.5, 2.5, 3.5);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 1.5, 2.5, 3.5);
         double[] obs = new double[1];
 
         model.fillObservationVector(0, obs);
@@ -154,7 +154,7 @@ public class GaussianObservationModelTest extends TestCase {
                 {10.0, 30.0},
                 {20.0, 40.0}
         });
-        GaussianObservationModel model = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         double[] obs = new double[2];
         model.fillObservationVector(0, obs);
@@ -167,7 +167,7 @@ public class GaussianObservationModelTest extends TestCase {
     }
 
     public void testFillObservationVectorOutOfBoundsThrows() {
-        GaussianObservationModel model = makeScalar1D(1.0, 0.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 0.0);
         try {
             model.fillObservationVector(1, new double[1]);
             fail("Expected IllegalArgumentException for out-of-bounds time index");
@@ -181,17 +181,17 @@ public class GaussianObservationModelTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testIsObservationMissingFalse() {
-        GaussianObservationModel model = makeScalar1D(1.0, 5.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 5.0);
         assertFalse(model.isObservationMissing(0));
     }
 
     public void testIsObservationMissingTrue() {
-        GaussianObservationModel model = makeScalar1D(1.0, Double.NaN);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, Double.NaN);
         assertTrue(model.isObservationMissing(0));
     }
 
     public void testMixedMissingAndPresent() {
-        GaussianObservationModel model = makeScalar1D(1.0, 1.0, Double.NaN, 3.0);
+        LinearGaussianObservationModel model = makeScalar1D(1.0, 1.0, Double.NaN, 3.0);
         assertFalse(model.isObservationMissing(0));
         assertTrue(model.isObservationMissing(1));
         assertFalse(model.isObservationMissing(2));
@@ -205,7 +205,7 @@ public class GaussianObservationModelTest extends TestCase {
                 {1.0, Double.NaN},
                 {2.0, Double.NaN}
         });
-        GaussianObservationModel model = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         assertFalse(model.isObservationMissing(0));
         assertTrue(model.isObservationMissing(1));
     }
@@ -218,7 +218,7 @@ public class GaussianObservationModelTest extends TestCase {
                 {1.0},
                 {Double.NaN}  // partial missing — should throw on access
         });
-        GaussianObservationModel model = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         try {
             double[] obs = new double[2];
             model.fillObservationVector(0, obs);
@@ -237,7 +237,7 @@ public class GaussianObservationModelTest extends TestCase {
             MatrixParameter H = makeMatrix("H", new double[][]{{1}});
             MatrixParameter R = makeMatrix("R", new double[][]{{1}});
             MatrixParameter Y = makeMatrix("Y", new double[][]{{0}});
-            new GaussianObservationModel("bad", 0, H, R, Y);
+            new LinearGaussianObservationModel("bad", 0, H, R, Y);
             fail("Expected IllegalArgumentException for observationDimension = 0");
         } catch (IllegalArgumentException e) {
             // expected
@@ -248,7 +248,7 @@ public class GaussianObservationModelTest extends TestCase {
         try {
             MatrixParameter R = makeMatrix("R", new double[][]{{1}});
             MatrixParameter Y = makeMatrix("Y", new double[][]{{0}});
-            new GaussianObservationModel("bad", 1, null, R, Y);
+            new LinearGaussianObservationModel("bad", 1, null, R, Y);
             fail("Expected IllegalArgumentException for null design matrix");
         } catch (IllegalArgumentException e) {
             // expected

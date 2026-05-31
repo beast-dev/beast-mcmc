@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
@@ -26,7 +26,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
     private final GaussianTransitionRepresentation transitionRepresentation;
     private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
-    private final GaussianObservationModel observationModel;
+    private final LinearGaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
     private final int stateDimension;
@@ -71,7 +71,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     public CanonicalKalmanSmootherEngine(final CanonicalGaussianBranchTransitionKernel canonicalKernel,
                                          final GaussianTransitionRepresentation transitionRepresentation,
-                                         final GaussianObservationModel observationModel,
+                                         final LinearGaussianObservationModel observationModel,
                                          final TimeGrid timeGrid) {
         if (canonicalKernel == null) {
             throw new IllegalArgumentException("canonicalKernel must not be null");

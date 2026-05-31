@@ -2,8 +2,6 @@ package test.dr.inference.timeseries;
 
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionCovariance;
@@ -13,7 +11,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import junit.framework.Test;
@@ -87,7 +85,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
         double[][] obsData = new double[1][T];
         obsData[0] = yValues;
         MatrixParameter Y = makeMatrix("Y", obsData);
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 1, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 1, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, timeStep);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
@@ -219,7 +217,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
         MatrixParameter H = makeMatrix("H", new double[][]{{1.0, 0.0}});
         MatrixParameter R = makeMatrix("R", new double[][]{{1.0}});
         MatrixParameter Y = makeMatrix("Y", new double[][]{{0.5, -0.3, 1.2}});
-        GaussianObservationModel obs = new GaussianObservationModel("obs", obsDim, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", obsDim, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 1.0);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
@@ -249,7 +247,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
                 {1.0, -1.0, 0.5, 2.0},
                 {0.0, 1.0, -0.5, -1.0}
         });
-        GaussianObservationModel obs = new GaussianObservationModel("obs", 2, H, R, Y);
+        LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 0.5);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);

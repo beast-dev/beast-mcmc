@@ -23,7 +23,7 @@ import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.formula.StationaryMeanGradientFormula;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
@@ -74,7 +74,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         if (model == null) {
             throw new IllegalArgumentException("model must not be null");
         }
-        if (!(model.getObservationModel() instanceof GaussianObservationModel)) {
+        if (!(model.getObservationModel() instanceof LinearGaussianObservationModel)) {
             throw new IllegalArgumentException(
                     "Observation model must be GaussianObservationModel: " +
                             model.getObservationModel().getClass().getName());
@@ -83,7 +83,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         final LatentProcessModel latentProcess = model.getLatentProcessModel();
         final RepresentableProcess process = representationFor(latentProcess);
         prepareRepeatedDeltaCache(process, model);
-        final GaussianObservationModel observationModel = (GaussianObservationModel) model.getObservationModel();
+        final LinearGaussianObservationModel observationModel = (LinearGaussianObservationModel) model.getObservationModel();
 
         final LikelihoodEngine likelihoodEngine = GaussianLikelihoodEngineFactory.createForwardEngine(
                 process,
@@ -123,7 +123,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
 
     private static GradientEngine createGradientEngine(final LatentProcessModel latentProcess,
                                                        final RepresentableProcess process,
-                                                       final GaussianObservationModel observationModel,
+                                                       final LinearGaussianObservationModel observationModel,
                                                        final TimeSeriesModel model,
                                                        final GaussianSmootherComputationMode smootherMode,
                                                        final GaussianGradientComputationMode gradientMode) {
@@ -145,7 +145,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
 
     private static GradientEngine createAnalyticalGradientEngine(final LatentProcessModel latentProcess,
                                                                  final RepresentableProcess process,
-                                                                 final GaussianObservationModel observationModel,
+                                                                 final LinearGaussianObservationModel observationModel,
                                                                  final TimeSeriesModel model,
                                                                  final GaussianSmootherComputationMode smootherMode) {
         if (latentProcess instanceof OUTimeSeriesProcessAdapter) {
@@ -177,7 +177,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
     }
 
     private static GaussianSmootherResults createSmoother(final RepresentableProcess process,
-                                                          final GaussianObservationModel observationModel,
+                                                          final LinearGaussianObservationModel observationModel,
                                                           final TimeSeriesModel model,
                                                           final GaussianSmootherComputationMode smootherMode) {
         final GaussianTransitionRepresentation transitionRepresentation =

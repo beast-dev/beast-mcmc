@@ -2,7 +2,7 @@ package dr.inference.timeseries.engine.kalman;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.GradientEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 
 /**
@@ -22,7 +22,7 @@ public class KalmanGradientEngine implements GradientEngine {
 
     public KalmanGradientEngine(final KalmanLikelihoodEngine likelihoodEngine,
                                 final OUProcessModel processModel,
-                                final GaussianObservationModel observationModel) {
+                                final LinearGaussianObservationModel observationModel) {
         if (likelihoodEngine == null) {
             throw new IllegalArgumentException("likelihoodEngine must not be null");
         }

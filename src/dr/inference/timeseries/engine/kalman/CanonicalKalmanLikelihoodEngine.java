@@ -7,7 +7,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
@@ -26,7 +26,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
 
     private final CanonicalGaussianBranchTransitionKernel transitionKernel;
     private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
-    private final GaussianObservationModel observationModel;
+    private final LinearGaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
     private final int stateDimension;
@@ -62,14 +62,14 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private double logLikelihood;
 
     public CanonicalKalmanLikelihoodEngine(final CanonicalGaussianBranchTransitionKernel transitionKernel,
-                                           final GaussianObservationModel observationModel,
+                                           final LinearGaussianObservationModel observationModel,
                                            final TimeGrid timeGrid) {
         this(transitionKernel, null, observationModel, timeGrid);
     }
 
     public CanonicalKalmanLikelihoodEngine(final CanonicalGaussianBranchTransitionKernel transitionKernel,
                                            final CachedGaussianTransitionRepresentation cachedTransitionRepresentation,
-                                           final GaussianObservationModel observationModel,
+                                           final LinearGaussianObservationModel observationModel,
                                            final TimeGrid timeGrid) {
         if (transitionKernel == null) {
             throw new IllegalArgumentException("transitionKernel must not be null");

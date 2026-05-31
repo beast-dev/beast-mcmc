@@ -2,7 +2,7 @@ package dr.inference.timeseries.engine.kalman;
 
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -22,7 +22,7 @@ public final class GaussianLikelihoodEngineFactory {
     }
 
     public static LikelihoodEngine createForwardEngine(final RepresentableProcess process,
-                                                       final GaussianObservationModel observationModel,
+                                                       final LinearGaussianObservationModel observationModel,
                                                        final TimeGrid timeGrid,
                                                        final GaussianForwardComputationMode mode) {
         if (process == null) {

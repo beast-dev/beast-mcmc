@@ -16,6 +16,11 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
     public static Test suite() {
         final TestSuite suite = new TestSuite("Canonical time-series behavior");
         addAnalyticalKalmanTests(suite);
+        suite.addTest(new BlockDiagonalNativeTimeSeriesGradientTest(
+                "testCanonicalAnalyticalNativeGeneralBlockGradientsMatchFiniteDifference"));
+        suite.addTest(new BlockDiagonalNativeTimeSeriesGradientTest(
+                "testCanonicalAnalyticalNativeGeneralBlockDiffusionAndMeanGradientsMatchFiniteDifference"));
+        suite.addTest(new OUProcessModelTest("testDenseDiffusionPullBackUsesMatrixParameterColumnMajorOrder"));
         suite.addTest(new OUProcessModelTest("testDefaultCovarianceGradientMethodUsesStationaryLyapunovForOrthogonalBlockDrift"));
         suite.addTest(new OUProcessModelTest("testUsesOrthogonalBlockSelectionChartDetectsExpectedCharts"));
         return suite;

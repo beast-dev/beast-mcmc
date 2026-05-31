@@ -461,7 +461,7 @@ public final class OUActualizationStrategies {
         if (elasticModel.isDiagonal()) {
             return diagonalBundle();
         }
-        if (elasticModel.hasBlockStructure() && elasticModel.hasOrthogonalActualizationBasis()) {
+        if (elasticModel.hasBlockStructure()) {
             return blockBundle();
         }
         return generalBundle();

@@ -6,10 +6,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -27,11 +25,6 @@ import java.util.Arrays;
  * transition-space sensitivities {@code dL/dF}, {@code dL/df}, and {@code dL/dV}.
  */
 public final class CanonicalSelectionMatrixGradientFormula implements CanonicalGradientFormula {
-
-    private static final String DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY =
-            "beast.experimental.disableOrthogonalNativeSelectionPath";
-    private static final String DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY =
-            "beast.experimental.disableBlockDiagonalNativeSelectionPath";
 
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
@@ -93,35 +86,9 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
 
     @Override
     public boolean supportsParameter(final Parameter parameter) {
-        if (parameter == selectionMatrixParameter) {
-            return true;
-        }
-        if (!(selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)) {
-            return false;
-        }
-
-        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
-                (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
-        if (parameter == blockParameter.getParameter()) {
-            return true;
-        }
-        if (parameter == blockParameter.getRotationMatrixParameter()) {
-            return true;
-        }
-        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
-                && parameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
-            return true;
-        }
-        if (parameter == blockParameter.getScalarBlockParameter()
-                && blockParameter.getScalarBlockParameter().getDimension() > 0) {
-            return true;
-        }
-        for (int i = 0; i < blockParameter.getTwoByTwoParameterFamilyCount(); ++i) {
-            if (parameter == blockParameter.getTwoByTwoBlockParameter(i)) {
-                return true;
-            }
-        }
-        return false;
+        return BlockDiagonalFormulaSupport.supportsSelectionParameter(
+                selectionMatrixParameter,
+                parameter);
     }
 
     @Override
@@ -170,20 +137,10 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     }
 
     private boolean shouldUseBlockDiagonalNativePath(final Parameter requestedParameter) {
-        if (Boolean.getBoolean(DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY)
-                || Boolean.getBoolean(DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY)) {
-            return false;
-        }
-        if (requestedParameter == selectionMatrixParameter) {
-            return false;
-        }
-        if (!(selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)) {
-            return false;
-        }
-        return processModel != null
-                && processModel.getCovarianceGradientMethod() == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
-                && processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalNativeCanonicalParameterization;
+        return BlockDiagonalFormulaSupport.shouldUseNativeSelectionPath(
+                selectionMatrixParameter,
+                requestedParameter,
+                processModel);
     }
 
     @Override
@@ -198,7 +155,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                                                        final CanonicalBranchGradientCache branchGradientCache,
                                                        final TimeGrid timeGrid) {
         final BlockDiagonalNativeCanonicalParameterization blockParameterization =
-                (BlockDiagonalNativeCanonicalParameterization) processModel.getSelectionMatrixParameterization();
+                BlockDiagonalFormulaSupport.nativeParameterization(processModel);
         final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
                 (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
         final int T = trajectory.timeCount;
@@ -228,7 +185,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
 
         final double[] nativeGradient = new double[blockParameter.getBlockDiagonalNParameters()];
         blockParameter.chainGradient(compressedDGradient, nativeGradient);
-        return CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
+        return BlockDiagonalFormulaSupport.assembleNativeSelectionGradient(
                 stateDimension,
                 requestedParameter,
                 blockParameter,

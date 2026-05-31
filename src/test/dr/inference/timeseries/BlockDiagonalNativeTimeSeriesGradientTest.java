@@ -56,6 +56,19 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         assertNativeBlockGradientsMatchFiniteDifference("canonical", likelihood, model);
     }
 
+    public void testCanonicalAnalyticalNativeGeneralBlockDiffusionAndMeanGradientsMatchFiniteDifference() {
+        final GeneralBlockModel model = makeGeneralBlockModel("canonical.general.block.qmu", true);
+        final TimeSeriesLikelihood likelihood = makeLikelihood(
+                "ts.canonical.general.block.qmu",
+                model,
+                GaussianForwardComputationMode.CANONICAL,
+                GaussianSmootherComputationMode.CANONICAL,
+                GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
+
+        assertGradientMatchesFiniteDifference("canonical diffusion", likelihood, model, model.diffusion);
+        assertGradientMatchesFiniteDifference("canonical mean", likelihood, model, model.mean);
+    }
+
     private static void assertNativeBlockGradientsMatchFiniteDifference(
             final String label,
             final TimeSeriesLikelihood likelihood,
@@ -205,7 +218,15 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
                 observation,
                 grid);
 
-        return new GeneralBlockModel(process, block, observation, grid, transitionRepresentation, likelihoodEngine);
+        return new GeneralBlockModel(
+                process,
+                block,
+                diffusion,
+                mean,
+                observation,
+                grid,
+                transitionRepresentation,
+                likelihoodEngine);
     }
 
     private static MatrixParameter identity(final String name, final int dimension) {
@@ -234,6 +255,8 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
     private static final class GeneralBlockModel {
         final OUProcessModel process;
         final BlockDiagonalPolarStableMatrixParameter block;
+        final MatrixParameter diffusion;
+        final Parameter mean;
         final GaussianObservationModel observation;
         final TimeGrid grid;
         final GaussianTransitionRepresentation transitionRepresentation;
@@ -241,12 +264,16 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
 
         private GeneralBlockModel(final OUProcessModel process,
                                   final BlockDiagonalPolarStableMatrixParameter block,
+                                  final MatrixParameter diffusion,
+                                  final Parameter mean,
                                   final GaussianObservationModel observation,
                                   final TimeGrid grid,
                                   final GaussianTransitionRepresentation transitionRepresentation,
                                   final KalmanLikelihoodEngine likelihoodEngine) {
             this.process = process;
             this.block = block;
+            this.diffusion = diffusion;
+            this.mean = mean;
             this.observation = observation;
             this.grid = grid;
             this.transitionRepresentation = transitionRepresentation;

@@ -52,11 +52,11 @@ public final class CanonicalOUGradientAdapter {
                                          final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
         if (nativeBlockParameter == null) {
             throw new UnsupportedOperationException(
-                    "Canonical OU XML wiring requires native orthogonal-block selection gradients.");
+                    "Canonical OU XML wiring requires native block-diagonal selection gradients.");
         }
         if (requestedParameter.getDimension() != nativeBlockParameter.getParameter().getDimension()) {
             throw new IllegalArgumentException(
-                    "Requested parameter dimension does not match native orthogonal-block parameter dimension.");
+                    "Requested parameter dimension does not match native block-diagonal parameter dimension.");
         }
 
         final double[] gradient = new double[requestedParameter.getDimension()];

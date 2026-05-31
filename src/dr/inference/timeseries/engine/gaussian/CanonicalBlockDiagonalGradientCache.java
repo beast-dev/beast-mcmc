@@ -1,20 +1,19 @@
 package dr.inference.timeseries.engine.gaussian;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchGradientAccumulator;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 
@@ -38,6 +37,7 @@ public final class CanonicalBlockDiagonalGradientCache {
     private final double[] diffusionGradient;
     private final double[] dBasisDiffusionGradient;
     private final double[] meanGradient;
+    private final double[] dBasisMeanGradient;
     private final double[] smoothedInitialMean;
     private final double[] stateDiff;
     private final double[] flatSmoothedInitialCovariance;
@@ -47,6 +47,7 @@ public final class CanonicalBlockDiagonalGradientCache {
     private final double[] flatInitialLowerInverse;
     private final double[] initialGradient;
     private final GaussianFormConverter.Workspace converterWorkspace;
+    private final CanonicalPreparedBranchGradientAccumulator preparedGradientAccumulator;
     private final CanonicalPreparedBranchHandle preparedBasis;
     private final CanonicalBranchWorkspace branchWorkspace;
     private boolean selectionAndMeanKnown;
@@ -73,6 +74,7 @@ public final class CanonicalBlockDiagonalGradientCache {
         this.diffusionGradient = new double[stateDimension * stateDimension];
         this.dBasisDiffusionGradient = new double[stateDimension * stateDimension];
         this.meanGradient = new double[stateDimension];
+        this.dBasisMeanGradient = new double[stateDimension];
         this.smoothedInitialMean = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
         this.flatSmoothedInitialCovariance = new double[stateDimension * stateDimension];
@@ -83,20 +85,25 @@ public final class CanonicalBlockDiagonalGradientCache {
         this.initialGradient = new double[stateDimension];
         this.converterWorkspace = new GaussianFormConverter.Workspace();
         this.converterWorkspace.ensureDim(stateDimension);
+        this.preparedGradientAccumulator =
+                new CanonicalPreparedBranchGradientAccumulator(blockParameterization, stateDimension);
         this.preparedBasis = blockParameterization.createPreparedBranchHandle();
         this.branchWorkspace = blockParameterization.createBranchWorkspace();
+        this.preparedGradientAccumulator.checkBuffers(
+                compressedDGradient,
+                nativeGradient,
+                rotationGradientFlat,
+                dBasisDiffusionGradient,
+                dBasisMeanGradient);
         this.selectionAndMeanKnown = false;
         this.diffusionKnown = false;
     }
 
     public static boolean isAvailable(final OUProcessModel processModel,
                                       final Parameter selectionMatrixParameter) {
-        return processModel != null
-                && selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
-                && processModel.getCovarianceGradientMethod()
-                == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
-                && processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalNativeCanonicalParameterization;
+        return BlockDiagonalFormulaSupport.isNativeSelectionAvailable(
+                processModel,
+                selectionMatrixParameter);
     }
 
     public void makeDirty() {
@@ -105,25 +112,9 @@ public final class CanonicalBlockDiagonalGradientCache {
     }
 
     public boolean supportsNativeSelectionParameter(final Parameter parameter) {
-        if (parameter == blockParameter) {
-            return false;
-        }
-        if (parameter == blockParameter.getParameter()
-                || parameter == blockParameter.getRotationMatrixParameter()
-                || parameter == blockParameter.getScalarBlockParameter()) {
-            return true;
-        }
-        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
-                && parameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
-                .getOrthogonalParameter()) {
-            return true;
-        }
-        for (int i = 0; i < blockParameter.getTwoByTwoParameterFamilyCount(); ++i) {
-            if (parameter == blockParameter.getTwoByTwoBlockParameter(i)) {
-                return true;
-            }
-        }
-        return false;
+        return BlockDiagonalFormulaSupport.supportsNativeSelectionParameter(
+                blockParameter,
+                parameter);
     }
 
     public boolean supportsDiffusionParameter(final Parameter parameter) {
@@ -150,9 +141,6 @@ public final class CanonicalBlockDiagonalGradientCache {
                                          final GaussianTransitionRepresentation transitionRepresentation,
                                          final TimeGrid timeGrid) {
         ensureDiffusion(trajectory, branchCache, transitionRepresentation, timeGrid);
-        if (parameter == diffusionParameterization.getMatrixParameter()) {
-            return diffusionGradient.clone();
-        }
         return diffusionParameterization.pullBackGradient(parameter, diffusionGradient);
     }
 
@@ -178,9 +166,10 @@ public final class CanonicalBlockDiagonalGradientCache {
         if (selectionAndMeanKnown) {
             return;
         }
-        zero(compressedDGradient);
-        zero(rotationGradientFlat);
-        zero(meanGradient);
+        BlockDiagonalFormulaSupport.zero(compressedDGradient);
+        BlockDiagonalFormulaSupport.zero(rotationGradientFlat);
+        BlockDiagonalFormulaSupport.zero(meanGradient);
+        BlockDiagonalFormulaSupport.zero(dBasisMeanGradient);
         processModel.getInitialMean(stationaryMean);
         branchCache.ensure(trajectory);
 
@@ -190,19 +179,20 @@ public final class CanonicalBlockDiagonalGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            blockParameterization.accumulateNativeGradientFromAdjointsPreparedFlat(
+            preparedGradientAccumulator.accumulateSelectionAndMean(
                     prepared,
                     diffusionMatrix,
                     adjoints,
                     branchWorkspace,
                     compressedDGradient,
-                    rotationGradientFlat);
-            blockParameterization.accumulateMeanGradientPrepared(
-                    prepared,
-                    adjoints.dLogL_df,
+                    rotationGradientFlat,
                     meanGradient,
-                    branchWorkspace);
+                    dBasisMeanGradient);
         }
+        preparedGradientAccumulator.finishDelayedMean(
+                dBasisMeanGradient,
+                meanGradient,
+                branchWorkspace);
         accumulateInitialMeanGradient(trajectory);
         selectionAndMeanKnown = true;
     }
@@ -219,7 +209,8 @@ public final class CanonicalBlockDiagonalGradientCache {
             ensureSelectionMeanAndDiffusion(trajectory, branchCache, transitionRepresentation, timeGrid);
             return;
         }
-        zero(diffusionGradient);
+        BlockDiagonalFormulaSupport.zero(diffusionGradient);
+        BlockDiagonalFormulaSupport.zero(dBasisDiffusionGradient);
         processModel.getInitialMean(stationaryMean);
         branchCache.ensure(trajectory);
 
@@ -228,13 +219,19 @@ public final class CanonicalBlockDiagonalGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            blockParameterization.accumulateDiffusionGradientPreparedFlat(
+            preparedGradientAccumulator.accumulateDiffusion(
                     prepared,
-                    adjoints.dLogL_dOmega,
+                    adjoints,
+                    branchWorkspace,
+                    false,
                     false,
                     diffusionGradient,
-                    branchWorkspace);
+                    dBasisDiffusionGradient);
         }
+        preparedGradientAccumulator.finishDelayedDiffusion(
+                dBasisDiffusionGradient,
+                diffusionGradient,
+                branchWorkspace);
         diffusionKnown = true;
     }
 
@@ -242,11 +239,12 @@ public final class CanonicalBlockDiagonalGradientCache {
                                                  final CanonicalBranchGradientCache branchCache,
                                                  final GaussianTransitionRepresentation transitionRepresentation,
                                                  final TimeGrid timeGrid) {
-        zero(compressedDGradient);
-        zero(rotationGradientFlat);
-        zero(meanGradient);
-        zero(diffusionGradient);
-        zero(dBasisDiffusionGradient);
+        BlockDiagonalFormulaSupport.zero(compressedDGradient);
+        BlockDiagonalFormulaSupport.zero(rotationGradientFlat);
+        BlockDiagonalFormulaSupport.zero(meanGradient);
+        BlockDiagonalFormulaSupport.zero(diffusionGradient);
+        BlockDiagonalFormulaSupport.zero(dBasisDiffusionGradient);
+        BlockDiagonalFormulaSupport.zero(dBasisMeanGradient);
         processModel.getInitialMean(stationaryMean);
         branchCache.ensure(trajectory);
 
@@ -256,24 +254,25 @@ public final class CanonicalBlockDiagonalGradientCache {
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
                     threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
-            blockParameterization.accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+            preparedGradientAccumulator.accumulateSelectionDiffusionAndMean(
                     prepared,
                     diffusionMatrix,
                     adjoints,
                     branchWorkspace,
                     compressedDGradient,
                     rotationGradientFlat,
-                    true,
-                    dBasisDiffusionGradient);
-            blockParameterization.accumulateMeanGradientPrepared(
-                    prepared,
-                    adjoints.dLogL_df,
+                    diffusionGradient,
+                    dBasisDiffusionGradient,
                     meanGradient,
-                    branchWorkspace);
+                    dBasisMeanGradient);
         }
-        blockParameterization.finishDiffusionGradientFromDBasisFlat(
+        preparedGradientAccumulator.finishDelayedDiffusion(
                 dBasisDiffusionGradient,
                 diffusionGradient,
+                branchWorkspace);
+        preparedGradientAccumulator.finishDelayedMean(
+                dBasisMeanGradient,
+                meanGradient,
                 branchWorkspace);
         accumulateInitialMeanGradient(trajectory);
         selectionAndMeanKnown = true;
@@ -347,17 +346,11 @@ public final class CanonicalBlockDiagonalGradientCache {
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
                                                  final double[] nativeGradient,
                                                  final double[] flatGradientR) {
-        return CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
+        return BlockDiagonalFormulaSupport.assembleNativeSelectionGradient(
                 stateDimension,
                 requestedParameter,
                 blockParameter,
                 nativeGradient,
                 flatGradientR);
-    }
-
-    private static void zero(final double[] vector) {
-        for (int i = 0; i < vector.length; ++i) {
-            vector[i] = 0.0;
-        }
     }
 }

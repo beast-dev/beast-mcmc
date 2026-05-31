@@ -1,8 +1,8 @@
 package dr.inference.timeseries.engine.gaussian;
 
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -109,9 +109,6 @@ public final class DiffusionMatrixGradientFormula implements GradientFormula {
             repr.accumulateDiffusionGradient(t, t + 1, timeGrid, dLogL_dV, gradientAccumulator);
         }
 
-        if (parameter == diffusionParameterization.getMatrixParameter()) {
-            return gradientAccumulator;
-        }
         return diffusionParameterization.pullBackGradient(parameter, gradientAccumulator);
     }
 }

@@ -178,6 +178,53 @@ public final class MatrixOps {
         }
     }
 
+    /**
+     * Collapses an adjoint on the full mirrored output of
+     * {@link #symmetricSandwichTransposeRight(double[], double[], double[], double[], int)}
+     * to the upper-triangular entries that are actually computed by that method.
+     */
+    public static void fillSymmetricSandwichTransposeRightOutputAdjoint(final double[] source,
+                                                                        final boolean transposeSource,
+                                                                        final double[] out,
+                                                                        final int dim) {
+        Arrays.fill(out, 0.0);
+        for (int i = 0; i < dim; ++i) {
+            final int iOffset = i * dim;
+            out[iOffset + i] = flatSquareValue(source, i, i, dim, transposeSource);
+            for (int j = i + 1; j < dim; ++j) {
+                out[iOffset + j] =
+                        flatSquareValue(source, i, j, dim, transposeSource)
+                                + flatSquareValue(source, j, i, dim, transposeSource);
+            }
+        }
+    }
+
+    /**
+     * Given the collapsed output adjoint for {@code out = left * middle * left^T},
+     * computes the adjoint for {@code middle}: {@code left^T * outputAdjoint * left}.
+     *
+     * <p>{@code outputAdjoint} and {@code middleAdjoint} may alias. {@code scratch}
+     * must not alias any input or output.</p>
+     */
+    public static void symmetricSandwichTransposeRightMiddleAdjointFromOutputAdjoint(
+            final double[] left,
+            final double[] outputAdjoint,
+            final double[] middleAdjoint,
+            final double[] scratch,
+            final int dim) {
+        for (int i = 0; i < dim; ++i) {
+            final int iOffset = i * dim;
+            for (int j = 0; j < dim; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < dim; ++k) {
+                    sum += left[k * dim + i] * outputAdjoint[k * dim + j];
+                }
+                scratch[iOffset + j] = sum;
+            }
+        }
+        matMul(scratch, left, middleAdjoint, dim);
+    }
+
     public static void multiplySymmetricLeft(final double[] symmetricLeft,
                                              final double[] right,
                                              final double[] out,
@@ -218,6 +265,14 @@ public final class MatrixOps {
                 }
             }
         }
+    }
+
+    private static double flatSquareValue(final double[] source,
+                                          final int row,
+                                          final int col,
+                                          final int dim,
+                                          final boolean transpose) {
+        return transpose ? source[col * dim + row] : source[row * dim + col];
     }
 
 //    public static void multiplySymmetricRight(final double[] left,

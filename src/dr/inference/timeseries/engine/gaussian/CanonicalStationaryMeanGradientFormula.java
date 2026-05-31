@@ -117,12 +117,15 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                     trajectory, branchGradientCache, repr, timeGrid);
         }
 
-        zero(denseGradient);
-        fillCurrentMean(currentMean);
+        BlockDiagonalFormulaSupport.zero(denseGradient);
+        BlockDiagonalFormulaSupport.fillCurrentMean(
+                stationaryMeanParameter,
+                stateDimension,
+                currentMean);
 
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
-                getBlockParameterizationIfAvailable();
+                BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
@@ -135,7 +138,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                         adjoints.dLogL_df,
                         denseGradient);
             } else {
-                accumulateBranchMeanGradient(
+                BlockDiagonalFormulaSupport.accumulateBranchMeanGradientFlat(
                         branchGradientCache == null
                                 ? transitionWorkspace.transitionMatrix
                                 : branchGradientCache.getTransitionMatrix(t),
@@ -161,7 +164,10 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
             denseGradient[i] += initialGradient[i];
         }
 
-        return projectToParameterDimension(denseGradient);
+        return BlockDiagonalFormulaSupport.projectMeanGradient(
+                stationaryMeanParameter,
+                stateDimension,
+                denseGradient);
     }
 
     private double[] computeScalarGradient(final CanonicalForwardTrajectory trajectory,
@@ -171,7 +177,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
-                getBlockParameterizationIfAvailable();
+                BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
@@ -184,7 +190,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                         timeGrid.getDelta(t, t + 1),
                         adjoints.dLogL_df);
             } else {
-                scalarGradient += accumulateScalarBranchMeanGradient(
+                scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradientFlat(
                         branchGradientCache == null
                                 ? transitionWorkspace.transitionMatrix
                                 : branchGradientCache.getTransitionMatrix(t),
@@ -211,82 +217,10 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
 
         return new double[]{scalarGradient};
     }
-
-    private BlockDiagonalCanonicalParameterization getBlockParameterizationIfAvailable() {
-        if (processModel == null) {
-            return null;
-        }
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalCanonicalParameterization) {
-            return (BlockDiagonalCanonicalParameterization)
-                    processModel.getSelectionMatrixParameterization();
-        }
-        return null;
-    }
-
     @Override
     public void makeDirty() {
         if (blockDiagonalGradientCache != null) {
             blockDiagonalGradientCache.makeDirty();
-        }
-    }
-
-    private void fillCurrentMean(final double[] out) {
-        if (stationaryMeanParameter.getDimension() == 1) {
-            final double value = stationaryMeanParameter.getParameterValue(0);
-            for (int i = 0; i < stateDimension; ++i) {
-                out[i] = value;
-            }
-        } else if (stationaryMeanParameter.getDimension() == stateDimension) {
-            for (int i = 0; i < stateDimension; ++i) {
-                out[i] = stationaryMeanParameter.getParameterValue(i);
-            }
-        } else {
-            throw new IllegalStateException("stationaryMean dimension must be 1 or stateDimension");
-        }
-    }
-
-    private double[] projectToParameterDimension(final double[] denseSource) {
-        if (stationaryMeanParameter.getDimension() == stateDimension) {
-            return denseSource.clone();
-        }
-        double sum = 0.0;
-        for (int i = 0; i < stateDimension; ++i) {
-            sum += denseSource[i];
-        }
-        return new double[]{sum};
-    }
-
-    private static void accumulateBranchMeanGradient(final double[] transitionMatrix,
-                                                     final double[] dLogL_df,
-                                                     final double[] accumulator) {
-        final int d = dLogL_df.length;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
-            }
-            accumulator[j] += sum;
-        }
-    }
-
-    private static double accumulateScalarBranchMeanGradient(final double[] transitionMatrix,
-                                                             final double[] dLogL_df) {
-        final int d = dLogL_df.length;
-        double accumulator = 0.0;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
-            }
-            accumulator += sum;
-        }
-        return accumulator;
-    }
-
-    private static void zero(final double[] vector) {
-        for (int i = 0; i < vector.length; ++i) {
-            vector[i] = 0.0;
         }
     }
 

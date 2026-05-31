@@ -22,12 +22,15 @@ import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.hmc.JointGradient;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalSelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -213,6 +216,35 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         assertMatricesClose(blockV, denseV, 1e-9);
     }
 
+    public void testTreeBridgePreservesGeneralBlockSelectionParameterization() {
+        final GeneralBlockTreeSetup setup = buildGeneralBlockTreeSetups();
+        final OUGaussianBranchTransitionProvider blockProvider =
+                (OUGaussianBranchTransitionProvider) setup.block.delegate.getBranchTransitionProvider();
+        final OUGaussianBranchTransitionProvider denseProvider =
+                (OUGaussianBranchTransitionProvider) setup.dense.delegate.getBranchTransitionProvider();
+
+        assertTrue("tree bridge should preserve general block parametrization",
+                blockProvider.getProcessModel().getSelectionMatrixParameterization()
+                        instanceof BlockDiagonalSelectionMatrixParameterization);
+        assertFalse("general block parametrization should not require orthogonality",
+                blockProvider.getProcessModel().getSelectionMatrixParameterization()
+                        instanceof OrthogonalBlockDiagonalSelectionMatrixParameterization);
+
+        final double dt = 0.17;
+        final double[][] blockF = new double[dimTrait][dimTrait];
+        final double[][] denseF = new double[dimTrait][dimTrait];
+        final double[][] blockV = new double[dimTrait][dimTrait];
+        final double[][] denseV = new double[dimTrait][dimTrait];
+
+        blockProvider.fillBranchTransitionMatrix(dt, blockF);
+        denseProvider.fillBranchTransitionMatrix(dt, denseF);
+        blockProvider.fillBranchTransitionCovariance(dt, blockV);
+        denseProvider.fillBranchTransitionCovariance(dt, denseV);
+
+        assertMatricesClose(blockF, denseF, 1e-9);
+        assertMatricesClose(blockV, denseV, 1e-9);
+    }
+
     public void testCanonicalOrthogonalBlockLocalAdjointsMatchDenseTreeBridge() {
         final String previousUse = System.getProperty(USE_BRIDGE_PROPERTY);
         try {
@@ -260,6 +292,34 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                     denseStatistics, node, setup.dense.likelihoodDelegate.getIntegrator());
 
             assertGradientClose("canonical block vs dense tree selection gradient",
+                    blockGradient, denseGradient, 1e-8, 1e-8);
+        } finally {
+            if (previousUse == null) {
+                System.clearProperty(USE_BRIDGE_PROPERTY);
+            } else {
+                System.setProperty(USE_BRIDGE_PROPERTY, previousUse);
+            }
+        }
+    }
+
+    public void testCanonicalGeneralBlockSelectionGradientMatchesDenseTreeBridge() {
+        final String previousUse = System.getProperty(USE_BRIDGE_PROPERTY);
+        try {
+            System.setProperty(USE_BRIDGE_PROPERTY, "true");
+            final GeneralBlockTreeSetup setup = buildGeneralBlockTreeSetups();
+            setup.block.treeDataLikelihood.getLogLikelihood();
+            setup.dense.treeDataLikelihood.getLogLikelihood();
+
+            final NodeRef node = getFirstInternalNonRootNode();
+            final BranchSufficientStatistics blockStatistics = getBranchStatistics(setup.block, node);
+            final BranchSufficientStatistics denseStatistics = getBranchStatistics(setup.dense, node);
+
+            final double[] blockGradient = setup.block.delegate.getCanonicalGradientSelectionForBranch(
+                    blockStatistics, node, setup.block.likelihoodDelegate.getIntegrator());
+            final double[] denseGradient = setup.dense.delegate.getCanonicalGradientSelectionForBranch(
+                    denseStatistics, node, setup.dense.likelihoodDelegate.getIntegrator());
+
+            assertGradientClose("canonical general block vs dense tree selection gradient",
                     blockGradient, denseGradient, 1e-8, 1e-8);
         } finally {
             if (previousUse == null) {
@@ -463,6 +523,39 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
                         blockSelection.getParameterAsMatrix())), dataModel);
 
         return new OrthogonalBlockTreeSetup(
+                new TreeOuSetup(blockSetup.treeDataLikelihood,
+                        blockSetup.likelihoodDelegate,
+                        (OUDiffusionModelDelegate) blockSetup.likelihoodDelegate.getDiffusionProcessDelegate(),
+                        blockSelection),
+                new TreeOuSetup(denseSetup.treeDataLikelihood,
+                        denseSetup.likelihoodDelegate,
+                        (OUDiffusionModelDelegate) denseSetup.likelihoodDelegate.getDiffusionProcessDelegate(),
+                        null));
+    }
+
+    private GeneralBlockTreeSetup buildGeneralBlockTreeSetups() {
+        final MatrixParameter rotation = makeMatrixParameter(
+                "R.general.block.tree",
+                new double[][]{
+                        {1.00, 0.12, -0.05},
+                        {0.03, 1.10, 0.08},
+                        {-0.04, 0.06, 0.95}
+                });
+        final Parameter scalar = new Parameter.Default("scalar.general.block.tree", new double[]{1.15});
+        final Parameter rho = new Parameter.Default("rho.general.block.tree", new double[]{0.82});
+        final Parameter theta = new Parameter.Default("theta.general.block.tree", new double[]{0.31});
+        final Parameter t = new Parameter.Default("t.general.block.tree", new double[]{-0.06});
+        final BlockDiagonalPolarStableMatrixParameter blockSelection =
+                new BlockDiagonalPolarStableMatrixParameter(
+                        "A.general.block.tree", rotation, scalar, rho, theta, t);
+
+        final BranchSpecificSetup blockSetup = buildStrictOptimaOuTreeLikelihood(
+                new MultivariateElasticModel(blockSelection));
+        final BranchSpecificSetup denseSetup = buildStrictOptimaOuTreeLikelihood(
+                new MultivariateElasticModel(makeMatrixParameter("A.dense.general.block.tree",
+                        blockSelection.getParameterAsMatrix())));
+
+        return new GeneralBlockTreeSetup(
                 new TreeOuSetup(blockSetup.treeDataLikelihood,
                         blockSetup.likelihoodDelegate,
                         (OUDiffusionModelDelegate) blockSetup.likelihoodDelegate.getDiffusionProcessDelegate(),
@@ -678,16 +771,27 @@ public class OUDiffusionKernelBridgeValidationTest extends ContinuousTraitTest {
         final TreeDataLikelihood treeDataLikelihood;
         final ContinuousDataLikelihoodDelegate likelihoodDelegate;
         final OUDiffusionModelDelegate delegate;
-        final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter;
+        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
 
         private TreeOuSetup(final TreeDataLikelihood treeDataLikelihood,
                             final ContinuousDataLikelihoodDelegate likelihoodDelegate,
                             final OUDiffusionModelDelegate delegate,
-                            final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter) {
+                            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter) {
             this.treeDataLikelihood = treeDataLikelihood;
             this.likelihoodDelegate = likelihoodDelegate;
             this.delegate = delegate;
             this.blockParameter = blockParameter;
+        }
+    }
+
+    private static final class GeneralBlockTreeSetup {
+        final TreeOuSetup block;
+        final TreeOuSetup dense;
+
+        private GeneralBlockTreeSetup(final TreeOuSetup block,
+                                      final TreeOuSetup dense) {
+            this.block = block;
+            this.dense = dense;
         }
     }
 

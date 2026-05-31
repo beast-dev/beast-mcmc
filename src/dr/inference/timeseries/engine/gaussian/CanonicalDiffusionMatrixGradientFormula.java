@@ -8,7 +8,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTran
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.gaussian.DiffusionMatrixParameterization;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -91,7 +91,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         }
         final double[] gradientAccumulator = new double[d * d];
         final BlockDiagonalNativeCanonicalParameterization blockParameterization =
-                getBlockNativeParameterizationIfAvailable();
+                BlockDiagonalFormulaSupport.nativeParameterization(processModel);
         if (branchGradientCache != null) {
             branchGradientCache.ensure(trajectory);
         }
@@ -113,9 +113,6 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
             }
         }
 
-        if (parameter == diffusionParameterization.getMatrixParameter()) {
-            return gradientAccumulator;
-        }
         return diffusionParameterization.pullBackGradient(parameter, gradientAccumulator);
     }
 
@@ -142,15 +139,4 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         return localAdjoints;
     }
 
-    private BlockDiagonalNativeCanonicalParameterization getBlockNativeParameterizationIfAvailable() {
-        if (processModel == null) {
-            return null;
-        }
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalNativeCanonicalParameterization) {
-            return (BlockDiagonalNativeCanonicalParameterization)
-                    processModel.getSelectionMatrixParameterization();
-        }
-        return null;
-    }
 }

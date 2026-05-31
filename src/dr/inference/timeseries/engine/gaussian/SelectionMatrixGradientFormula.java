@@ -1,14 +1,12 @@
 package dr.inference.timeseries.engine.gaussian;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
-import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 
 import java.util.Arrays;
 
@@ -50,11 +48,6 @@ import java.util.Arrays;
  * formula contributes O(T · d³) additional work on top of that shared pass.
  */
 public class SelectionMatrixGradientFormula implements GradientFormula {
-
-    private static final String DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY =
-            "beast.experimental.disableOrthogonalNativeSelectionPath";
-    private static final String DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY =
-            "beast.experimental.disableBlockDiagonalNativeSelectionPath";
 
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
@@ -116,35 +109,9 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
 
     @Override
     public boolean supportsParameter(final Parameter parameter) {
-        if (parameter == selectionMatrixParameter) {
-            return true;
-        }
-        if (!(selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)) {
-            return false;
-        }
-
-        final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
-                (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
-        if (parameter == blockParameter.getParameter()) {
-            return true;
-        }
-        if (parameter == blockParameter.getRotationMatrixParameter()) {
-            return true;
-        }
-        if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
-                && parameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter()).getOrthogonalParameter()) {
-            return true;
-        }
-        if (parameter == blockParameter.getScalarBlockParameter()
-                && blockParameter.getScalarBlockParameter().getDimension() > 0) {
-            return true;
-        }
-        for (int i = 0; i < blockParameter.getTwoByTwoParameterFamilyCount(); ++i) {
-            if (parameter == blockParameter.getTwoByTwoBlockParameter(i)) {
-                return true;
-            }
-        }
-        return false;
+        return BlockDiagonalFormulaSupport.supportsSelectionParameter(
+                selectionMatrixParameter,
+                parameter);
     }
 
     /**
@@ -289,23 +256,10 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
 
     private boolean shouldUseBlockDiagonalNativePath(final Parameter requestedParameter,
                                                     final GaussianTransitionRepresentation repr) {
-        if (Boolean.getBoolean(DISABLE_BLOCK_DIAGONAL_NATIVE_SELECTION_PATH_PROPERTY)
-                || Boolean.getBoolean(DISABLE_ORTHOGONAL_NATIVE_SELECTION_PATH_PROPERTY)) {
-            return false;
-        }
-        if (requestedParameter == selectionMatrixParameter) {
-            return false;
-        }
-        if (!(selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter)) {
-            return false;
-        }
-        final OUProcessModel processModel = ouProcessModel(repr);
-        if (processModel == null) {
-            return false;
-        }
-        return processModel.getCovarianceGradientMethod() == OUProcessModel.CovarianceGradientMethod.STATIONARY_LYAPUNOV
-                && processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalNativeCanonicalParameterization;
+        return BlockDiagonalFormulaSupport.shouldUseNativeSelectionPath(
+                selectionMatrixParameter,
+                requestedParameter,
+                BlockDiagonalFormulaSupport.ouProcessModel(repr));
     }
 
     private double[] computeBlockDiagonalNativeGradient(final Parameter requestedParameter,
@@ -313,12 +267,12 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                                                        final ForwardTrajectory trajectory,
                                                        final GaussianTransitionRepresentation repr,
                                                        final TimeGrid timeGrid) {
-        final OUProcessModel processModel = ouProcessModel(repr);
+        final OUProcessModel processModel = BlockDiagonalFormulaSupport.ouProcessModel(repr);
         if (processModel == null) {
             throw new IllegalArgumentException("Native block-diagonal gradient requires an OU process model");
         }
         final BlockDiagonalNativeCanonicalParameterization blockParameterization =
-                (BlockDiagonalNativeCanonicalParameterization) processModel.getSelectionMatrixParameterization();
+                BlockDiagonalFormulaSupport.nativeParameterization(processModel);
         final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
                 (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
 
@@ -407,21 +361,11 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         return assembleBlockGradientResult(requestedParameter, blockParameter, nativeGradient, rotationGradientFlat);
     }
 
-    private static OUProcessModel ouProcessModel(final GaussianTransitionRepresentation repr) {
-        if (repr instanceof OUProcessModel) {
-            return (OUProcessModel) repr;
-        }
-        if (repr instanceof KernelBackedGaussianTransitionRepresentation) {
-            return ((KernelBackedGaussianTransitionRepresentation) repr).getProcessModel();
-        }
-        return null;
-    }
-
     private double[] assembleBlockGradientResult(final Parameter requestedParameter,
                                                  final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                                  final double[] nativeGradient,
                                                  final double[] gradientR) {
-        return CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
+        return BlockDiagonalFormulaSupport.assembleNativeSelectionGradient(
                 stateDimension,
                 requestedParameter,
                 blockParameter,
@@ -433,7 +377,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                                            final double[] denseGradient) {
         final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
                 (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
-        return CanonicalSelectionGradientProjector.pullBackDenseGradientToBlock(
+        return BlockDiagonalFormulaSupport.pullBackDenseSelectionGradient(
                 stateDimension,
                 requestedParameter,
                 blockParameter,

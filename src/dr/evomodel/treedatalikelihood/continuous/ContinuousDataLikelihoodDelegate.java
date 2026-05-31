@@ -228,8 +228,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     partialBufferCount,
                                     matrixBufferCount
                             );
-                        } else if (ouDelegate.getElasticModel().hasBlockStructure()
-                                && ouDelegate.getElasticModel().hasOrthogonalActualizationBasis()) {
+                        } else if (ouDelegate.getElasticModel().hasBlockStructure()) {
                             base = new SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,

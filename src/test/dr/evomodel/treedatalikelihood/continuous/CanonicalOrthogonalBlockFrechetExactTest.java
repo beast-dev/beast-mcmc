@@ -1,7 +1,11 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchGradientAccumulator;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -54,6 +58,36 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
 
         assertVectorEquals("compressed covariance gradient", dense.compressed, exact.compressed, TOL);
         assertVectorEquals("rotation covariance gradient", dense.rotation, exact.rotation, TOL);
+    }
+
+    public void testPreparedBranchGradientAccumulatorMatchesDirectOrthogonalPullbacks() {
+        final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization = buildParameterization();
+        final MatrixParameter diffusionMatrix = buildDiffusionMatrix();
+        final double[] stationaryMean = new double[]{0.25, -0.35, 0.55, -0.15};
+        final CanonicalLocalTransitionAdjoints adjoints = new CanonicalLocalTransitionAdjoints(4);
+        System.arraycopy(new double[]{
+                 0.13, -0.22,  0.05,  0.02,
+                -0.04,  0.19, -0.09,  0.03,
+                 0.07, -0.03,  0.16, -0.08,
+                -0.02,  0.06, -0.11,  0.14
+        }, 0, adjoints.dLogL_dF, 0, adjoints.dLogL_dF.length);
+        System.arraycopy(new double[]{0.12, -0.08, 0.04, -0.03},
+                0, adjoints.dLogL_df, 0, adjoints.dLogL_df.length);
+        System.arraycopy(new double[]{
+                 0.31, -0.05,  0.04,  0.02,
+                -0.03,  0.24, -0.06,  0.01,
+                 0.05, -0.02,  0.29, -0.08,
+                 0.03,  0.04, -0.07,  0.27
+        }, 0, adjoints.dLogL_dOmega, 0, adjoints.dLogL_dOmega.length);
+
+        final PreparedGradient direct = computePreparedBranchGradientDirect(
+                parameterization, diffusionMatrix, stationaryMean, adjoints, 0.33);
+        final PreparedGradient shared = computePreparedBranchGradientWithAccumulator(
+                parameterization, diffusionMatrix, stationaryMean, adjoints, 0.33);
+
+        assertVectorEquals("prepared selection gradient", direct.selection, shared.selection, TOL);
+        assertVectorEquals("prepared diffusion gradient", direct.diffusion, shared.diffusion, TOL);
+        assertVectorEquals("prepared mean gradient", direct.mean, shared.mean, TOL);
     }
 
     public void testExactFrechetNearNilpotentTransitionGradientMatchesDenseFallback() {
@@ -223,6 +257,93 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
         }
     }
 
+    private PreparedGradient computePreparedBranchGradientDirect(
+            final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
+            final MatrixParameter diffusionMatrix,
+            final double[] stationaryMean,
+            final CanonicalLocalTransitionAdjoints adjoints,
+            final double dt) {
+        final CanonicalPreparedBranchHandle prepared = parameterization.createPreparedBranchHandle();
+        final CanonicalBranchWorkspace workspace = parameterization.createBranchWorkspace();
+        parameterization.prepareBranch(dt, stationaryMean, prepared);
+
+        final PreparedGradient result = new PreparedGradient(parameterization, 4);
+        parameterization.accumulateNativeSelectionAndDiffusionGradientFromAdjointsPreparedFlat(
+                prepared,
+                diffusionMatrix,
+                adjoints,
+                workspace,
+                result.compressed,
+                result.rotation,
+                true,
+                result.diffusionDBasis);
+        parameterization.accumulateMeanGradientPreparedDBasisFlat(
+                prepared,
+                adjoints.dLogL_df,
+                result.meanDBasis,
+                workspace);
+        parameterization.finishNativeSelectionGradient(
+                result.compressed,
+                result.nativeScratch,
+                result.rotation,
+                result.selection);
+        parameterization.finishDiffusionGradientFromDBasisFlat(
+                result.diffusionDBasis,
+                result.diffusion,
+                workspace);
+        parameterization.finishMeanGradientFromDBasisFlat(
+                result.meanDBasis,
+                result.mean,
+                workspace);
+        return result;
+    }
+
+    private PreparedGradient computePreparedBranchGradientWithAccumulator(
+            final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
+            final MatrixParameter diffusionMatrix,
+            final double[] stationaryMean,
+            final CanonicalLocalTransitionAdjoints adjoints,
+            final double dt) {
+        final CanonicalPreparedBranchHandle prepared = parameterization.createPreparedBranchHandle();
+        final CanonicalBranchWorkspace workspace = parameterization.createBranchWorkspace();
+        parameterization.prepareBranch(dt, stationaryMean, prepared);
+
+        final CanonicalPreparedBranchGradientAccumulator accumulator =
+                new CanonicalPreparedBranchGradientAccumulator(parameterization, 4);
+        final PreparedGradient result = new PreparedGradient(parameterization, 4);
+        accumulator.clearBuffers(
+                result.compressed,
+                result.nativeScratch,
+                result.rotation,
+                result.diffusionDBasis,
+                result.meanDBasis);
+        accumulator.accumulateSelectionDiffusionAndMean(
+                prepared,
+                diffusionMatrix,
+                adjoints,
+                workspace,
+                result.compressed,
+                result.rotation,
+                result.diffusion,
+                result.diffusionDBasis,
+                result.mean,
+                result.meanDBasis);
+        accumulator.finishSelection(
+                result.compressed,
+                result.nativeScratch,
+                result.rotation,
+                result.selection);
+        accumulator.finishDelayedDiffusion(
+                result.diffusionDBasis,
+                result.diffusion,
+                workspace);
+        accumulator.finishDelayedMean(
+                result.meanDBasis,
+                result.mean,
+                workspace);
+        return result;
+    }
+
     private void restoreProperty(final String previous) {
         if (previous == null) {
             System.clearProperty(FORCE_DENSE_PROPERTY);
@@ -310,6 +431,29 @@ public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTes
                        final int matrixDimension) {
             this.compressed = new double[compressedDimension];
             this.rotation = new double[matrixDimension * matrixDimension];
+        }
+    }
+
+    private static final class PreparedGradient {
+        private final double[] compressed;
+        private final double[] nativeScratch;
+        private final double[] rotation;
+        private final double[] selection;
+        private final double[] diffusion;
+        private final double[] diffusionDBasis;
+        private final double[] mean;
+        private final double[] meanDBasis;
+
+        private PreparedGradient(final OrthogonalBlockDiagonalSelectionMatrixParameterization parameterization,
+                                 final int dimension) {
+            this.compressed = new double[parameterization.getCompressedSelectionGradientDimension()];
+            this.nativeScratch = new double[parameterization.getNativeSelectionGradientScratchDimension()];
+            this.rotation = new double[dimension * dimension];
+            this.selection = new double[parameterization.getSelectionGradientDimension()];
+            this.diffusion = new double[dimension * dimension];
+            this.diffusionDBasis = new double[dimension * dimension];
+            this.mean = new double[dimension];
+            this.meanDBasis = new double[dimension];
         }
     }
 }

@@ -8,6 +8,8 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.TimeGrid;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;

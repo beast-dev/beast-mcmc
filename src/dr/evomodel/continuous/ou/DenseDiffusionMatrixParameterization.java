@@ -61,6 +61,13 @@ public final class DenseDiffusionMatrixParameterization implements DiffusionMatr
         if (parameter != matrixParameter) {
             throw new IllegalArgumentException("Unsupported dense diffusion parameter");
         }
-        return denseGradient;
+        final double[] out = new double[parameter.getDimension()];
+        for (int row = 0; row < dimension; ++row) {
+            final int rowOffset = row * dimension;
+            for (int col = 0; col < dimension; ++col) {
+                out[matrixParameter.index(row, col)] = denseGradient[rowOffset + col];
+            }
+        }
+        return out;
     }
 }

@@ -246,6 +246,11 @@ public final class CanonicalMathConversionTest extends TestCase {
         assertSymmetricSandwichTransposeRightMatchesReference(8);
     }
 
+    public void testSymmetricSandwichTransposeRightMiddleAdjointMatchesFiniteDifference() {
+        assertSymmetricSandwichTransposeRightMiddleAdjointMatchesFiniteDifference(4);
+        assertSymmetricSandwichTransposeRightMiddleAdjointMatchesFiniteDifference(6);
+    }
+
     private void assertSymmetricSandwichTransposeLeftMatchesReference(final int dim) {
         final double[] left = fillPattern(dim, 0.09, -0.04);
         final double[] middle = fillSymmetricPattern(dim);
@@ -278,6 +283,47 @@ public final class CanonicalMathConversionTest extends TestCase {
         assertArrayClose("symmetric transpose-right sandwich scratch dim=" + dim,
                 expectedScratch, leftTimesMiddle, TOL);
         assertArrayClose("symmetric transpose-right sandwich dim=" + dim, expected, actual, TOL);
+    }
+
+    private void assertSymmetricSandwichTransposeRightMiddleAdjointMatchesFiniteDifference(final int dim) {
+        final double step = 1.0e-6;
+        final double[] left = fillPattern(dim, -0.06, 0.05);
+        final double[] middle = fillPattern(dim, 0.04, -0.03);
+        final double[] outputAdjoint = fillPattern(dim, 0.07, -0.02);
+        final double[] collapsedOutputAdjoint = new double[dim * dim];
+        final double[] scratch = new double[dim * dim];
+        final double[] middleAdjoint = new double[dim * dim];
+
+        MatrixOps.fillSymmetricSandwichTransposeRightOutputAdjoint(
+                outputAdjoint, false, collapsedOutputAdjoint, dim);
+        MatrixOps.symmetricSandwichTransposeRightMiddleAdjointFromOutputAdjoint(
+                left, collapsedOutputAdjoint, middleAdjoint, scratch, dim);
+
+        for (int i = 0; i < middle.length; ++i) {
+            final double saved = middle[i];
+            middle[i] = saved + step;
+            final double plus = symmetricSandwichTransposeRightObjective(left, middle, outputAdjoint, dim);
+            middle[i] = saved - step;
+            final double minus = symmetricSandwichTransposeRightObjective(left, middle, outputAdjoint, dim);
+            middle[i] = saved;
+            final double numerical = (plus - minus) / (2.0 * step);
+            assertEquals("symmetric transpose-right middle adjoint dim=" + dim + ", idx=" + i,
+                    numerical, middleAdjoint[i], 2.0e-8);
+        }
+    }
+
+    private static double symmetricSandwichTransposeRightObjective(final double[] left,
+                                                                  final double[] middle,
+                                                                  final double[] outputAdjoint,
+                                                                  final int dim) {
+        final double[] leftTimesMiddle = new double[dim * dim];
+        final double[] out = new double[dim * dim];
+        MatrixOps.symmetricSandwichTransposeRight(left, middle, out, leftTimesMiddle, dim);
+        double sum = 0.0;
+        for (int i = 0; i < out.length; ++i) {
+            sum += outputAdjoint[i] * out[i];
+        }
+        return sum;
     }
 
     private static void assertArrayClose(final String label,

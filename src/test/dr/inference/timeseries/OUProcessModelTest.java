@@ -16,6 +16,8 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.gaussian.EulerOUProcessModel;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
+import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -50,6 +52,26 @@ public class OUProcessModelTest extends TestCase {
 
     public OUProcessModelTest(String name) {
         super(name);
+    }
+
+    public void testDenseDiffusionPullBackUsesMatrixParameterColumnMajorOrder() {
+        final MatrixParameter diffusion = makeMatrix(
+                "Q.gradient.order",
+                new double[][]{{1.1, 0.2}, {0.3, 1.4}});
+        final DiffusionMatrixParameterization parameterization =
+                DiffusionMatrixParameterizationFactory.create(diffusion);
+        final double[] rowMajorGradient = new double[]{
+                10.0, 20.0,
+                30.0, 40.0
+        };
+
+        final double[] parameterGradient =
+                parameterization.pullBackGradient(diffusion, rowMajorGradient);
+
+        assertEquals(rowMajorGradient[0], parameterGradient[diffusion.index(0, 0)], TOL);
+        assertEquals(rowMajorGradient[1], parameterGradient[diffusion.index(0, 1)], TOL);
+        assertEquals(rowMajorGradient[2], parameterGradient[diffusion.index(1, 0)], TOL);
+        assertEquals(rowMajorGradient[3], parameterGradient[diffusion.index(1, 1)], TOL);
     }
 
     // ── Factory helpers ──────────────────────────────────────────────────────────

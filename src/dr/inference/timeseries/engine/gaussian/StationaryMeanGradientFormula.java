@@ -78,12 +78,15 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             return computeScalarGradient(smootherStats, trajectory, timeGrid);
         }
 
-        zero(denseGradient);
-        fillCurrentMean(currentMean);
+        BlockDiagonalFormulaSupport.zero(denseGradient);
+        BlockDiagonalFormulaSupport.fillCurrentMean(
+                stationaryMeanParameter,
+                stateDimension,
+                currentMean);
 
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
-                getBlockParameterizationIfAvailable();
+                BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
             final BranchSmootherStats next = smootherStats[t + 1];
@@ -107,7 +110,10 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
                         dLogL_df,
                         denseGradient);
             } else {
-                accumulateBranchMeanGradient(transitionMatrix, dLogL_df, denseGradient);
+                BlockDiagonalFormulaSupport.accumulateBranchMeanGradient(
+                        transitionMatrix,
+                        dLogL_df,
+                        denseGradient);
             }
         }
 
@@ -123,7 +129,10 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             denseGradient[i] += dLogL_df[i];
         }
 
-        return projectToParameterDimension(denseGradient);
+        return BlockDiagonalFormulaSupport.projectMeanGradient(
+                stationaryMeanParameter,
+                stateDimension,
+                denseGradient);
     }
 
     private double[] computeScalarGradient(final BranchSmootherStats[] smootherStats,
@@ -133,7 +142,7 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
-                getBlockParameterizationIfAvailable();
+                BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
 
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
@@ -157,7 +166,9 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
                         timeGrid.getDelta(t, t + 1),
                         dLogL_df);
             } else {
-                scalarGradient += accumulateScalarBranchMeanGradient(transitionMatrix, dLogL_df);
+                scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradient(
+                        transitionMatrix,
+                        dLogL_df);
             }
         }
 
@@ -174,76 +185,5 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         }
 
         return new double[]{scalarGradient};
-    }
-
-    private BlockDiagonalCanonicalParameterization getBlockParameterizationIfAvailable() {
-        if (processModel == null) {
-            return null;
-        }
-        if (processModel.getSelectionMatrixParameterization()
-                instanceof BlockDiagonalCanonicalParameterization) {
-            return (BlockDiagonalCanonicalParameterization)
-                    processModel.getSelectionMatrixParameterization();
-        }
-        return null;
-    }
-
-    private void fillCurrentMean(final double[] out) {
-        if (stationaryMeanParameter.getDimension() == 1) {
-            final double value = stationaryMeanParameter.getParameterValue(0);
-            for (int i = 0; i < stateDimension; ++i) {
-                out[i] = value;
-            }
-        } else if (stationaryMeanParameter.getDimension() == stateDimension) {
-            for (int i = 0; i < stateDimension; ++i) {
-                out[i] = stationaryMeanParameter.getParameterValue(i);
-            }
-        } else {
-            throw new IllegalStateException("stationaryMean dimension must be 1 or stateDimension");
-        }
-    }
-
-    private double[] projectToParameterDimension(final double[] denseSource) {
-        if (stationaryMeanParameter.getDimension() == stateDimension) {
-            return denseSource.clone();
-        }
-        double sum = 0.0;
-        for (int i = 0; i < stateDimension; ++i) {
-            sum += denseSource[i];
-        }
-        return new double[]{sum};
-    }
-
-    private static void accumulateBranchMeanGradient(final double[][] transitionMatrix,
-                                                     final double[] dLogL_df,
-                                                     final double[] accumulator) {
-        final int d = dLogL_df.length;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
-            }
-            accumulator[j] += sum;
-        }
-    }
-
-    private static double accumulateScalarBranchMeanGradient(final double[][] transitionMatrix,
-                                                             final double[] dLogL_df) {
-        final int d = dLogL_df.length;
-        double accumulator = 0.0;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
-            }
-            accumulator += sum;
-        }
-        return accumulator;
-    }
-
-    private static void zero(final double[] vector) {
-        for (int i = 0; i < vector.length; ++i) {
-            vector[i] = 0.0;
-        }
     }
 }

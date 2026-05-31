@@ -632,7 +632,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                            final boolean transposeAdjoint,
                                                            final double[] gradientAccumulator,
                                                            final BlockDiagonalBranchGradientWorkspace workspace) {
-        fillSymmetricDenseMatrixFlat(dLogL_dV, transposeAdjoint, workspace.gV);
+        fillSymmetricSandwichOutputAdjoint(dLogL_dV, transposeAdjoint, workspace.gV);
         fillDiffusionGradientDBasisPrepared(prepared, workspace);
         rotateDBasisDiffusionGradientToOriginalBasis(
                 prepared.rinvMatrix,
@@ -647,7 +647,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                                  final boolean transposeAdjoint,
                                                                  final double[] dBasisGradientAccumulator,
                                                                  final BlockDiagonalBranchGradientWorkspace workspace) {
-        fillSymmetricDenseMatrixFlat(dLogL_dV, transposeAdjoint, workspace.gV);
+        fillSymmetricSandwichOutputAdjoint(dLogL_dV, transposeAdjoint, workspace.gV);
         fillDiffusionGradientDBasisPrepared(prepared, workspace);
         addDenseMatrixToFlatArray(workspace.yAdjoint, dBasisGradientAccumulator);
     }
@@ -758,7 +758,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                 compressedDAccumulator,
                 rotationAccumulator);
 
-        CommonOps.scale(-1.0, workspace.yAdjoint);
+        fillSymmetricSandwichOutputAdjoint(dLogL_dV, false, workspace.gV);
+        fillDiffusionGradientDBasisPrepared(prepared, workspace);
         if (delayDiffusionGradientRotation) {
             addDenseMatrixToFlatArray(workspace.yAdjoint, diffusionGradientAccumulator);
         } else {
@@ -829,7 +830,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                           final boolean transposeAdjoint,
                                                           final double[] gradientAccumulator) {
         final BlockDiagonalBranchGradientWorkspace workspace = currentGradientWorkspace;
-        fillSymmetricDenseMatrixFlat(dLogL_dV, transposeAdjoint, workspace.gV);
+        fillSymmetricSandwichOutputAdjoint(dLogL_dV, transposeAdjoint, workspace.gV);
         fillDiffusionGradientDBasis(
                 basisCache.rMatrix,
                 basisCache.rinvMatrix,
@@ -1263,8 +1264,10 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                               final DenseMatrix64F dBasisGradient,
                                                               final DenseMatrix64F temp,
                                                               final DenseMatrix64F out) {
-        CommonOps.multTransA(rinvMatrix, dBasisGradient, temp);
-        CommonOps.mult(temp, rinvMatrix, out);
+        MatrixOps.fillSymmetricSandwichTransposeRightOutputAdjoint(
+                dBasisGradient.data, false, out.data, dBasisGradient.numRows);
+        MatrixOps.symmetricSandwichTransposeRightMiddleAdjointFromOutputAdjoint(
+                rinvMatrix.data, out.data, out.data, temp.data, rinvMatrix.numRows);
     }
 
     private void accumulateCompressedGradient(final DenseMatrix64F denseGradient,
@@ -1306,6 +1309,13 @@ public class BlockDiagonalSelectionMatrixParameterization
                 data[rowOffset + j] = 0.5 * (ij + ji);
             }
         }
+    }
+
+    private static void fillSymmetricSandwichOutputAdjoint(final double[] source,
+                                                           final boolean transposeSource,
+                                                           final DenseMatrix64F out) {
+        MatrixOps.fillSymmetricSandwichTransposeRightOutputAdjoint(
+                source, transposeSource, out.data, out.numRows);
     }
 
     private static void addDenseMatrixToFlatArray(final DenseMatrix64F src, final double[] dest) {

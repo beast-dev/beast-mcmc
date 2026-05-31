@@ -3,8 +3,8 @@ package test.dr.inference.timeseries;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.gaussian.EulerOUProcessModel;
-import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
+import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
+import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;
 

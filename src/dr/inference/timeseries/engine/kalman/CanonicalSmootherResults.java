@@ -1,0 +1,26 @@
+package dr.inference.timeseries.engine.kalman;
+
+import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
+
+/**
+ * Shared access surface for canonical smoother backends.
+ */
+public interface CanonicalSmootherResults {
+
+    CanonicalForwardTrajectory getCanonicalTrajectory();
+
+    CanonicalBranchGradientCache getCanonicalBranchGradientCache();
+
+    GaussianTransitionRepresentation getTransitionRepresentation();
+
+    TimeGrid getTimeGrid();
+
+    int getTimeCount();
+
+    int getStateDimension();
+
+    void setSharedSchedule(SharedCanonicalTimeSeriesSchedule sharedSchedule);
+
+    void makeDirty();
+}

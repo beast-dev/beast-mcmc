@@ -8,8 +8,8 @@ import dr.inference.model.Variable;
 import dr.inference.timeseries.core.TimeSeriesModel;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.engine.gaussian.CanonicalAnalyticalKalmanGradientEngine;
-import dr.inference.timeseries.engine.gaussian.SharedCanonicalTimeSeriesSchedule;
+import dr.inference.timeseries.engine.kalman.CanonicalAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.SharedCanonicalTimeSeriesSchedule;
 
 import java.util.List;
 

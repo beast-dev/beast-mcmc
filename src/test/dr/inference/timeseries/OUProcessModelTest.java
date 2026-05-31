@@ -15,7 +15,7 @@ import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.gaussian.EulerOUProcessModel;
+import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.OUProcessModel;

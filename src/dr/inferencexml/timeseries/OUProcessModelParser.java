@@ -4,7 +4,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
+import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;

@@ -1,7 +1,7 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;

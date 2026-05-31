@@ -13,11 +13,11 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
-import dr.inference.timeseries.engine.gaussian.KalmanLikelihoodEngine;
-import dr.inference.timeseries.engine.gaussian.KalmanSmootherEngine;
-import dr.inference.timeseries.engine.gaussian.formula.SelectionMatrixGradientFormula;
-import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
+import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 

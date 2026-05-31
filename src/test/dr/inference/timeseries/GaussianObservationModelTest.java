@@ -1,7 +1,7 @@
 package test.dr.inference.timeseries;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.timeseries.gaussian.GaussianObservationModel;
+import dr.inference.timeseries.model.gaussian.GaussianObservationModel;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;

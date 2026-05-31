@@ -5,7 +5,7 @@ import dr.inference.model.GradientProvider;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.timeseries.engine.gaussian.SharedCanonicalTimeSeriesSchedule;
+import dr.inference.timeseries.engine.kalman.SharedCanonicalTimeSeriesSchedule;
 
 import java.util.ArrayList;
 import java.util.Collection;

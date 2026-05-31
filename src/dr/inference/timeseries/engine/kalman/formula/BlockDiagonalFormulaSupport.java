@@ -167,11 +167,18 @@ final class BlockDiagonalFormulaSupport {
     static void accumulateBranchMeanGradientFlat(final double[] transitionMatrix,
                                                  final double[] dLogL_df,
                                                  final double[] accumulator) {
+        accumulateBranchMeanGradientFlat(transitionMatrix, 0, dLogL_df, accumulator);
+    }
+
+    static void accumulateBranchMeanGradientFlat(final double[] transitionMatrix,
+                                                 final int transitionMatrixOffset,
+                                                 final double[] dLogL_df,
+                                                 final double[] accumulator) {
         final int d = dLogL_df.length;
         for (int j = 0; j < d; ++j) {
             double sum = dLogL_df[j];
             for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
+                sum -= transitionMatrix[transitionMatrixOffset + i * d + j] * dLogL_df[i];
             }
             accumulator[j] += sum;
         }
@@ -193,12 +200,18 @@ final class BlockDiagonalFormulaSupport {
 
     static double accumulateScalarBranchMeanGradientFlat(final double[] transitionMatrix,
                                                          final double[] dLogL_df) {
+        return accumulateScalarBranchMeanGradientFlat(transitionMatrix, 0, dLogL_df);
+    }
+
+    static double accumulateScalarBranchMeanGradientFlat(final double[] transitionMatrix,
+                                                         final int transitionMatrixOffset,
+                                                         final double[] dLogL_df) {
         final int d = dLogL_df.length;
         double accumulator = 0.0;
         for (int j = 0; j < d; ++j) {
             double sum = dLogL_df[j];
             for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i * d + j] * dLogL_df[i];
+                sum -= transitionMatrix[transitionMatrixOffset + i * d + j] * dLogL_df[i];
             }
             accumulator += sum;
         }

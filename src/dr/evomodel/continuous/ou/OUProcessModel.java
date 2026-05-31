@@ -337,6 +337,13 @@ public class OUProcessModel extends AbstractModel
     }
 
     @Override
+    public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
+                                                              final double[] dLogL_dV,
+                                                              final double[] gradientAccumulator) {
+        accumulateSelectionGradientFromCovarianceFlat(dt, dLogL_dV, false, gradientAccumulator);
+    }
+
+    @Override
     public void accumulateDiffusionGradient(final double dt,
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
@@ -351,6 +358,13 @@ public class OUProcessModel extends AbstractModel
                                                 final double[] gradientAccumulator) {
         canonicalKernel.accumulateDiffusionGradientFlat(
                 dt, dLogL_dV, transposeAdjoint, gradientAccumulator);
+    }
+
+    @Override
+    public void accumulateDiffusionGradientFlat(final double dt,
+                                                final double[] dLogL_dV,
+                                                final double[] gradientAccumulator) {
+        accumulateDiffusionGradientFlat(dt, dLogL_dV, false, gradientAccumulator);
     }
 
     public double contractBranchLengthGradientFlat(final double dt,
@@ -399,6 +413,7 @@ public class OUProcessModel extends AbstractModel
         canonicalKernel.accumulateSelectionGradientFlat(dt, flat, dLogL_df, gradientAccumulator);
     }
 
+    @Override
     public void accumulateSelectionGradientFlat(final double dt,
                                                 final double[] dLogL_dF,
                                                 final double[] dLogL_df,

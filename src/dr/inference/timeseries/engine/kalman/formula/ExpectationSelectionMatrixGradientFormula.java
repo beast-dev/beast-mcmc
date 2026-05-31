@@ -122,17 +122,22 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
         final double[] gradientAccumulator = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
             branchAdjoints.compute(
                     smootherStats[t],
                     smootherStats[t + 1],
-                    trajectory.transitionMatrices[t],
-                    trajectory.transitionOffsets[t],
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
 
-            repr.accumulateSelectionGradient(t, t + 1, timeGrid,
+            repr.accumulateSelectionGradientFlat(t, t + 1, timeGrid,
                     branchAdjoints.dLogL_dF(), branchAdjoints.dLogL_df(), gradientAccumulator);
 
-            repr.accumulateSelectionGradientFromCovariance(t, t + 1, timeGrid,
+            repr.accumulateSelectionGradientFromCovarianceFlat(t, t + 1, timeGrid,
                     branchAdjoints.dLogL_dV(), gradientAccumulator);
         }
 
@@ -173,13 +178,18 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
 
         for (int t = 0; t < T - 1; ++t) {
             final double dt = timeGrid.getDelta(t, t + 1);
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 
             branchAdjoints.compute(
                     smootherStats[t],
                     smootherStats[t + 1],
-                    trajectory.transitionMatrices[t],
-                    trajectory.transitionOffsets[t],
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
             branchAdjoints.copyDLogLDFToFlat(dLogL_dFFlat);
 
             blockParameterization.accumulateNativeGradientFromTransitionFlat(

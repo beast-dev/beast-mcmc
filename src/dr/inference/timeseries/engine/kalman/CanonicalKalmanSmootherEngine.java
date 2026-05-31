@@ -166,7 +166,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            GaussianMatrixOps.copyMatrix(smootherStats[t].smoothedCovariance, out[t]);
+            MatrixOps.fromFlat(smootherStats[t].smoothedCovariance, out[t], stateDimension);
         }
         return out;
     }
@@ -176,7 +176,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureMomentTrajectory();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            GaussianMatrixOps.copyVector(trajectory.filteredMeans[t], out[t]);
+            trajectory.copyFilteredMeanTo(t, out[t]);
         }
         return out;
     }
@@ -186,7 +186,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            GaussianMatrixOps.copyMatrix(trajectory.filteredCovariances[t], out[t]);
+            trajectory.copyFilteredCovarianceTo(t, out[t]);
         }
         return out;
     }
@@ -196,7 +196,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureMomentTrajectory();
         final double[][] out = new double[timeCount][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            GaussianMatrixOps.copyVector(trajectory.predictedMeans[t], out[t]);
+            trajectory.copyPredictedMeanTo(t, out[t]);
         }
         return out;
     }
@@ -206,7 +206,7 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         ensureMomentTrajectory();
         final double[][][] out = new double[timeCount][stateDimension][stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            GaussianMatrixOps.copyMatrix(trajectory.predictedCovariances[t], out[t]);
+            trajectory.copyPredictedCovarianceTo(t, out[t]);
         }
         return out;
     }
@@ -344,21 +344,28 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         }
         for (int timeIndex = 0; timeIndex < timeCount; ++timeIndex) {
             fillMomentsFromCanonical(canonicalTrajectory.predictedStates[timeIndex],
-                    trajectory.predictedMeans[timeIndex],
-                    trajectory.predictedCovariances[timeIndex]);
+                    trajectory.predictedMeans,
+                    trajectory.stateVectorOffset(timeIndex),
+                    trajectory.predictedCovariances,
+                    trajectory.stateMatrixOffset(timeIndex));
             fillMomentsFromCanonical(canonicalTrajectory.filteredStates[timeIndex],
-                    trajectory.filteredMeans[timeIndex],
-                    trajectory.filteredCovariances[timeIndex]);
+                    trajectory.filteredMeans,
+                    trajectory.stateVectorOffset(timeIndex),
+                    trajectory.filteredCovariances,
+                    trajectory.stateMatrixOffset(timeIndex));
             fillMomentsFromCanonical(canonicalTrajectory.smoothedStates[timeIndex],
                     smootherStats[timeIndex].smoothedMean,
                     smootherStats[timeIndex].smoothedCovariance);
             if (timeIndex < timeCount - 1) {
-                transitionRepresentation.getTransitionMatrix(timeIndex, timeIndex + 1, timeGrid,
-                        trajectory.transitionMatrices[timeIndex]);
+                transitionRepresentation.getTransitionMatrixFlat(timeIndex, timeIndex + 1, timeGrid,
+                        flatMatrixWorkspace);
+                trajectory.copyTransitionMatrixFrom(timeIndex, flatMatrixWorkspace);
                 transitionRepresentation.getTransitionOffset(timeIndex, timeIndex + 1, timeGrid,
-                        trajectory.transitionOffsets[timeIndex]);
-                transitionRepresentation.getTransitionCovariance(timeIndex, timeIndex + 1, timeGrid,
-                        trajectory.stepCovariances[timeIndex]);
+                        stateVectorWorkspace);
+                trajectory.copyTransitionOffsetFrom(timeIndex, stateVectorWorkspace);
+                transitionRepresentation.getTransitionCovarianceFlat(timeIndex, timeIndex + 1, timeGrid,
+                        flatMatrixWorkspace);
+                trajectory.copyStepCovarianceFrom(timeIndex, flatMatrixWorkspace);
             }
         }
         momentTrajectoryKnown = true;
@@ -372,10 +379,19 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     private void fillMomentsFromCanonical(final CanonicalGaussianState canonical,
                                           final double[] meanOut,
-                                          final double[][] covarianceOut) {
-        invertPositiveDefiniteFlatInput(canonical.precision, covarianceOut, stateDimension);
-        GaussianMatrixOps.multiplyMatrixVector(covarianceOut, canonical.information, meanOut,
-                stateDimension, stateDimension);
+                                          final double[] covarianceOut) {
+        fillMomentsFromCanonical(canonical, meanOut, 0, covarianceOut, 0);
+    }
+
+    private void fillMomentsFromCanonical(final CanonicalGaussianState canonical,
+                                          final double[] meanOut,
+                                          final int meanOutOffset,
+                                          final double[] covarianceOut,
+                                          final int covarianceOutOffset) {
+        invertPositiveDefiniteFlatInput(canonical.precision, covarianceOut, covarianceOutOffset, stateDimension);
+        MatrixOps.matVec(covarianceOut, covarianceOutOffset, canonical.information,
+                stateVectorWorkspace, stateDimension);
+        System.arraycopy(stateVectorWorkspace, 0, meanOut, meanOutOffset, stateDimension);
     }
 
     private void buildObservationPrecisionContribution() {
@@ -424,13 +440,14 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     private void invertPositiveDefiniteFlatInput(final double[] matrix,
-                                                  final double[][] inverseOut,
-                                                  final int dimension) {
+                                                final double[] inverseOut,
+                                                final int inverseOutOffset,
+                                                final int dimension) {
         if (!MatrixOps.tryCholesky(matrix, flatCholeskyWorkspace, dimension)) {
             throw new IllegalArgumentException("Matrix is not positive definite");
         }
         MatrixOps.invertFromCholesky(flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, dimension);
-        copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
+        System.arraycopy(flatInverseWorkspace, 0, inverseOut, inverseOutOffset, dimension * dimension);
     }
 
     private void fillCanonicalTransition(final int fromIndex,

@@ -5,7 +5,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
 import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -28,7 +28,10 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
     private final OUProcessModel processModel;
 
     private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
-    private final double[][] initialCovInv;
+    private final double[] initialCovarianceFlat;
+    private final double[] initialCovInv;
+    private final double[] initialCovCholesky;
+    private final double[] initialCovLowerInverse;
     private final double[] initialMeanAdjoint;
     private final double[] currentMean;
     private final double[] stateDiff;
@@ -59,7 +62,11 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
         this.stateDimension = stateDimension;
 
         this.branchAdjoints = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
-        this.initialCovInv = new double[stateDimension][stateDimension];
+        final int matrixSize = stateDimension * stateDimension;
+        this.initialCovarianceFlat = new double[matrixSize];
+        this.initialCovInv = new double[matrixSize];
+        this.initialCovCholesky = new double[matrixSize];
+        this.initialCovLowerInverse = new double[matrixSize];
         this.initialMeanAdjoint = new double[stateDimension];
         this.currentMean = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
@@ -93,15 +100,18 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
             final BranchSmootherStats next = smootherStats[t + 1];
-            final double[][] transitionMatrix = trajectory.transitionMatrices[t];
-            final double[] transitionOffset = trajectory.transitionOffsets[t];
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 
             branchAdjoints.computeMeanAdjoint(
                     curr,
                     next,
-                    transitionMatrix,
-                    transitionOffset,
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
 
             if (blockParameterization != null) {
                 blockParameterization.accumulateMeanGradient(
@@ -109,21 +119,24 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
                         branchAdjoints.dLogL_df(),
                         denseGradient);
             } else {
-                BlockDiagonalFormulaSupport.accumulateBranchMeanGradient(
-                        transitionMatrix,
+                BlockDiagonalFormulaSupport.accumulateBranchMeanGradientFlat(
+                        trajectory.transitionMatrices,
+                        transitionMatrixOffset,
                         branchAdjoints.dLogL_df(),
                         denseGradient);
             }
         }
 
-        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final GaussianMatrixOps.CholeskyFactor initialChol =
-                GaussianMatrixOps.cholesky(initialCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        fillInitialCovarianceFlat();
+        if (!MatrixOps.tryCholesky(initialCovarianceFlat, initialCovCholesky, stateDimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(
+                initialCovCholesky, initialCovLowerInverse, initialCovInv, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - currentMean[i];
         }
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        MatrixOps.matVec(initialCovInv, stateDiff, initialMeanAdjoint, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             denseGradient[i] += initialMeanAdjoint[i];
         }
@@ -146,39 +159,55 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
         for (int t = 0; t < timeCount - 1; ++t) {
             final BranchSmootherStats curr = smootherStats[t];
             final BranchSmootherStats next = smootherStats[t + 1];
-            final double[][] transitionMatrix = trajectory.transitionMatrices[t];
-            final double[] transitionOffset = trajectory.transitionOffsets[t];
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 
             branchAdjoints.computeMeanAdjoint(
                     curr,
                     next,
-                    transitionMatrix,
-                    transitionOffset,
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
 
             if (blockParameterization != null) {
                 scalarGradient += blockParameterization.accumulateScalarMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         branchAdjoints.dLogL_df());
             } else {
-                scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradient(
-                        transitionMatrix,
+                scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradientFlat(
+                        trajectory.transitionMatrices,
+                        transitionMatrixOffset,
                         branchAdjoints.dLogL_df());
             }
         }
 
-        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final GaussianMatrixOps.CholeskyFactor initialChol =
-                GaussianMatrixOps.cholesky(initialCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        fillInitialCovarianceFlat();
+        if (!MatrixOps.tryCholesky(initialCovarianceFlat, initialCovCholesky, stateDimension)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(
+                initialCovCholesky, initialCovLowerInverse, initialCovInv, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - meanValue;
         }
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        MatrixOps.matVec(initialCovInv, stateDiff, initialMeanAdjoint, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             scalarGradient += initialMeanAdjoint[i];
         }
 
         return new double[]{scalarGradient};
+    }
+
+    private void fillInitialCovarianceFlat() {
+        for (int i = 0; i < stateDimension; ++i) {
+            final int rowOffset = i * stateDimension;
+            for (int j = 0; j < stateDimension; ++j) {
+                initialCovarianceFlat[rowOffset + j] =
+                        initialCovarianceParameter.getParameterValue(i, j);
+            }
+        }
     }
 }

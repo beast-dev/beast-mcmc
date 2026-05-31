@@ -89,6 +89,18 @@ public interface GaussianTransitionRepresentation {
                                      double[][] dLogL_dF, double[] dLogL_df,
                                      double[] gradientAccumulator);
 
+    default void accumulateSelectionGradientFlat(final int fromIndex,
+                                                 final int toIndex,
+                                                 final TimeGrid timeGrid,
+                                                 final double[] dLogL_dF,
+                                                 final double[] dLogL_df,
+                                                 final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dF, matrix, dim);
+        accumulateSelectionGradient(fromIndex, toIndex, timeGrid, matrix, dLogL_df, gradientAccumulator);
+    }
+
     /**
      * Accumulates the chain-rule contribution of branch [fromIndex → toIndex] to the
      * gradient ∂logL/∂A coming from the dependence of the step noise covariance V on A.
@@ -121,6 +133,17 @@ public interface GaussianTransitionRepresentation {
         // no-op: V does not depend on A for this parametrisation (e.g., Euler: V = dt·Q)
     }
 
+    default void accumulateSelectionGradientFromCovarianceFlat(final int fromIndex,
+                                                               final int toIndex,
+                                                               final TimeGrid timeGrid,
+                                                               final double[] dLogL_dV,
+                                                               final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
+        accumulateSelectionGradientFromCovariance(fromIndex, toIndex, timeGrid, matrix, gradientAccumulator);
+    }
+
     /**
      * Accumulates the chain-rule contribution of branch [fromIndex → toIndex] to the
      * gradient with respect to the diffusion matrix Q coming from the dependence of the
@@ -132,5 +155,16 @@ public interface GaussianTransitionRepresentation {
                                              double[][] dLogL_dV,
                                              double[] gradientAccumulator) {
         // no-op by default
+    }
+
+    default void accumulateDiffusionGradientFlat(final int fromIndex,
+                                                 final int toIndex,
+                                                 final TimeGrid timeGrid,
+                                                 final double[] dLogL_dV,
+                                                 final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
+        accumulateDiffusionGradient(fromIndex, toIndex, timeGrid, matrix, gradientAccumulator);
     }
 }

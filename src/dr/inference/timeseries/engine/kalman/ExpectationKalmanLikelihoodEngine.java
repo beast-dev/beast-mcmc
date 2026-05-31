@@ -195,15 +195,15 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
                 MatrixOps.symmetrize(predictedCovariance, stateDimension);
 
                 if (trajectoryOut != null) {
-                    MatrixOps.fromFlat(transitionMatrix, trajectoryOut.transitionMatrices[timeIndex - 1], stateDimension);
-                    copyVector(offset,              trajectoryOut.transitionOffsets[timeIndex - 1]);
-                    MatrixOps.fromFlat(transitionCovariance, trajectoryOut.stepCovariances[timeIndex - 1], stateDimension);
+                    trajectoryOut.copyTransitionMatrixFrom(timeIndex - 1, transitionMatrix);
+                    trajectoryOut.copyTransitionOffsetFrom(timeIndex - 1, offset);
+                    trajectoryOut.copyStepCovarianceFrom(timeIndex - 1, transitionCovariance);
                 }
             }
 
             if (trajectoryOut != null) {
-                copyVector(predictedMean,       trajectoryOut.predictedMeans[timeIndex]);
-                MatrixOps.fromFlat(predictedCovariance, trajectoryOut.predictedCovariances[timeIndex], stateDimension);
+                trajectoryOut.copyPredictedMeanFrom(timeIndex, predictedMean);
+                trajectoryOut.copyPredictedCovarianceFrom(timeIndex, predictedCovariance);
             }
 
             // ── Update ──────────────────────────────────────────────────────────
@@ -275,8 +275,8 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
             }
 
             if (trajectoryOut != null) {
-                copyVector(filteredMean,       trajectoryOut.filteredMeans[timeIndex]);
-                MatrixOps.fromFlat(filteredCovariance, trajectoryOut.filteredCovariances[timeIndex], stateDimension);
+                trajectoryOut.copyFilteredMeanFrom(timeIndex, filteredMean);
+                trajectoryOut.copyFilteredCovarianceFrom(timeIndex, filteredCovariance);
             }
         }
 

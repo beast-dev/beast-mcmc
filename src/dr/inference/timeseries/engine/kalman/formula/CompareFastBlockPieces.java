@@ -107,25 +107,30 @@ public class CompareFastBlockPieces {
 
         for (int t = 0; t < T - 1; ++t) {
             final double dt = model.smoother.getTimeGrid().getDelta(t, t + 1);
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 
             branchAdjoints.compute(
                     smootherStats[t],
                     smootherStats[t + 1],
-                    trajectory.transitionMatrices[t],
-                    trajectory.transitionOffsets[t],
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
             branchAdjoints.copyDLogLDFToFlat(dLogL_dFFlat);
 
             parameterization.accumulateNativeGradientFromTransitionFlat(
                     dt, mu, dLogL_dFFlat, branchAdjoints.dLogL_df(), fastTransitionD, fastTransitionR);
-            model.process.accumulateSelectionGradient(
+            model.process.accumulateSelectionGradientFlat(
                     dt, branchAdjoints.dLogL_dF(), branchAdjoints.dLogL_df(), denseTransitionA);
 
             branchAdjoints.copyDLogLDVToFlat(dLogL_dVFlat);
 
             parameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
                     model.process.getDiffusionMatrix(), dt, dLogL_dVFlat, fastCovarianceD, fastCovarianceR);
-            model.process.accumulateSelectionGradientFromCovariance(
+            model.process.accumulateSelectionGradientFromCovarianceFlat(
                     dt, branchAdjoints.dLogL_dV(), denseCovarianceA);
         }
 

@@ -52,15 +52,43 @@ public interface GaussianBranchTransitionKernel {
                                      double[] dLogL_df,
                                      double[] gradientAccumulator);
 
+    default void accumulateSelectionGradientFlat(final double dt,
+                                                 final double[] dLogL_dF,
+                                                 final double[] dLogL_df,
+                                                 final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dF, matrix, dim);
+        accumulateSelectionGradient(dt, matrix, dLogL_df, gradientAccumulator);
+    }
+
     default void accumulateSelectionGradientFromCovariance(double dt,
                                                            double[][] dLogL_dV,
                                                            double[] gradientAccumulator) {
         // no-op by default
     }
 
+    default void accumulateSelectionGradientFromCovarianceFlat(final double dt,
+                                                              final double[] dLogL_dV,
+                                                              final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
+        accumulateSelectionGradientFromCovariance(dt, matrix, gradientAccumulator);
+    }
+
     default void accumulateDiffusionGradient(double dt,
                                              double[][] dLogL_dV,
                                              double[] gradientAccumulator) {
         // no-op by default
+    }
+
+    default void accumulateDiffusionGradientFlat(final double dt,
+                                                 final double[] dLogL_dV,
+                                                 final double[] gradientAccumulator) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
+        accumulateDiffusionGradient(dt, matrix, gradientAccumulator);
     }
 }

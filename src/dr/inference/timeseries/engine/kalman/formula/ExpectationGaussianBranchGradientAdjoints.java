@@ -1,6 +1,6 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
 
 /**
@@ -15,15 +15,17 @@ final class ExpectationGaussianBranchGradientAdjoints {
     private final int stateDimension;
 
     private final double[] meanResidual;
-    private final double[][] crossCov;
-    private final double[][] branchMat;
-    private final double[][] stepCovInv;
-    private final double[][] tempDxD;
-    private final double[][] tempDxD2;
-    private final double[][] residualSecondMoment;
-    private final double[][] dLogL_dF;
+    private final double[] crossCov;
+    private final double[] branchMat;
+    private final double[] stepCovInv;
+    private final double[] stepCovCholesky;
+    private final double[] stepCovLowerInverse;
+    private final double[] tempDxD;
+    private final double[] tempDxD2;
+    private final double[] residualSecondMoment;
+    private final double[] dLogL_dF;
     private final double[] dLogL_df;
-    private final double[][] dLogL_dV;
+    private final double[] dLogL_dV;
 
     ExpectationGaussianBranchGradientAdjoints(final int stateDimension) {
         if (stateDimension < 1) {
@@ -32,102 +34,120 @@ final class ExpectationGaussianBranchGradientAdjoints {
         this.stateDimension = stateDimension;
 
         this.meanResidual = new double[stateDimension];
-        this.crossCov = new double[stateDimension][stateDimension];
-        this.branchMat = new double[stateDimension][stateDimension];
-        this.stepCovInv = new double[stateDimension][stateDimension];
-        this.tempDxD = new double[stateDimension][stateDimension];
-        this.tempDxD2 = new double[stateDimension][stateDimension];
-        this.residualSecondMoment = new double[stateDimension][stateDimension];
-        this.dLogL_dF = new double[stateDimension][stateDimension];
+        final int matrixSize = stateDimension * stateDimension;
+        this.crossCov = new double[matrixSize];
+        this.branchMat = new double[matrixSize];
+        this.stepCovInv = new double[matrixSize];
+        this.stepCovCholesky = new double[matrixSize];
+        this.stepCovLowerInverse = new double[matrixSize];
+        this.tempDxD = new double[matrixSize];
+        this.tempDxD2 = new double[matrixSize];
+        this.residualSecondMoment = new double[matrixSize];
+        this.dLogL_dF = new double[matrixSize];
         this.dLogL_df = new double[stateDimension];
-        this.dLogL_dV = new double[stateDimension][stateDimension];
+        this.dLogL_dV = new double[matrixSize];
     }
 
     void compute(final BranchSmootherStats curr,
                  final BranchSmootherStats next,
-                 final double[][] transitionMatrix,
+                 final double[] transitionMatrix,
+                 final int transitionMatrixOffset,
                  final double[] transitionOffset,
-                 final double[][] stepCovariance) {
+                 final int transitionOffsetOffset,
+                 final double[] stepCovariance,
+                 final int stepCovarianceOffset) {
         final int d = stateDimension;
+        final int matrixSize = d * d;
 
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(
-                next.smoothedCovariance, curr.smootherGain, crossCov);
+        MatrixOps.matMulTransposedRight(
+                next.smoothedCovariance, curr.smootherGain, crossCov, d);
 
-        GaussianMatrixOps.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
+        MatrixOps.matVec(transitionMatrix, transitionMatrixOffset, curr.smoothedMean, meanResidual, d);
         for (int i = 0; i < d; ++i) {
-            meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
+            meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[transitionOffsetOffset + i];
         }
 
-        GaussianMatrixOps.copyMatrix(crossCov, branchMat);
-        GaussianMatrixOps.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
+        System.arraycopy(crossCov, 0, branchMat, 0, matrixSize);
+        MatrixOps.matMul(transitionMatrix, transitionMatrixOffset, curr.smoothedCovariance, 0, tempDxD, d);
         for (int i = 0; i < d; ++i) {
+            final int rowOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                branchMat[i][j] -= tempDxD[i][j];
-                branchMat[i][j] += meanResidual[i] * curr.smoothedMean[j];
+                branchMat[rowOffset + j] -= tempDxD[rowOffset + j];
+                branchMat[rowOffset + j] += meanResidual[i] * curr.smoothedMean[j];
             }
         }
 
-        GaussianMatrixOps.copyMatrix(stepCovariance, stepCovInv);
-        final GaussianMatrixOps.CholeskyFactor stepChol =
-                GaussianMatrixOps.cholesky(stepCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
+        System.arraycopy(stepCovariance, stepCovarianceOffset, stepCovInv, 0, matrixSize);
+        if (!MatrixOps.tryCholesky(stepCovInv, stepCovCholesky, d)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(stepCovCholesky, stepCovLowerInverse, stepCovInv, d);
 
-        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
-        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+        MatrixOps.matMul(stepCovInv, branchMat, dLogL_dF, d);
+        MatrixOps.matVec(stepCovInv, meanResidual, dLogL_df, d);
 
-        GaussianMatrixOps.copyMatrix(next.smoothedCovariance, residualSecondMoment);
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(transitionMatrix, crossCov, tempDxD);
+        System.arraycopy(next.smoothedCovariance, 0, residualSecondMoment, 0, matrixSize);
+        MatrixOps.matMulTransposedRight(transitionMatrix, transitionMatrixOffset, crossCov, 0, tempDxD, d);
         for (int i = 0; i < d; ++i) {
+            final int rowOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                residualSecondMoment[i][j] -= tempDxD[i][j];
+                residualSecondMoment[rowOffset + j] -= tempDxD[rowOffset + j];
             }
         }
 
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(crossCov, transitionMatrix, tempDxD);
+        MatrixOps.matMulTransposedRight(crossCov, 0, transitionMatrix, transitionMatrixOffset, tempDxD, d);
         for (int i = 0; i < d; ++i) {
+            final int rowOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                residualSecondMoment[i][j] -= tempDxD[i][j];
+                residualSecondMoment[rowOffset + j] -= tempDxD[rowOffset + j];
             }
         }
 
-        GaussianMatrixOps.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(tempDxD, transitionMatrix, tempDxD2);
+        MatrixOps.matMul(transitionMatrix, transitionMatrixOffset, curr.smoothedCovariance, 0, tempDxD, d);
+        MatrixOps.matMulTransposedRight(tempDxD, 0, transitionMatrix, transitionMatrixOffset, tempDxD2, d);
         for (int i = 0; i < d; ++i) {
+            final int rowOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                residualSecondMoment[i][j] += tempDxD2[i][j];
-                residualSecondMoment[i][j] += meanResidual[i] * meanResidual[j];
+                residualSecondMoment[rowOffset + j] += tempDxD2[rowOffset + j];
+                residualSecondMoment[rowOffset + j] += meanResidual[i] * meanResidual[j];
             }
         }
 
-        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, tempDxD);
-        GaussianMatrixOps.multiplyMatrixMatrix(tempDxD, stepCovInv, dLogL_dV);
+        MatrixOps.matMul(stepCovInv, residualSecondMoment, tempDxD, d);
+        MatrixOps.matMul(tempDxD, stepCovInv, dLogL_dV, d);
         for (int i = 0; i < d; ++i) {
+            final int rowOffset = i * d;
             for (int j = 0; j < d; ++j) {
-                dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
+                dLogL_dV[rowOffset + j] = 0.5 * (dLogL_dV[rowOffset + j] - stepCovInv[rowOffset + j]);
             }
         }
     }
 
     void computeMeanAdjoint(final BranchSmootherStats curr,
                             final BranchSmootherStats next,
-                            final double[][] transitionMatrix,
+                            final double[] transitionMatrix,
+                            final int transitionMatrixOffset,
                             final double[] transitionOffset,
-                            final double[][] stepCovariance) {
+                            final int transitionOffsetOffset,
+                            final double[] stepCovariance,
+                            final int stepCovarianceOffset) {
         final int d = stateDimension;
+        final int matrixSize = d * d;
 
-        GaussianMatrixOps.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
+        MatrixOps.matVec(transitionMatrix, transitionMatrixOffset, curr.smoothedMean, meanResidual, d);
         for (int i = 0; i < d; ++i) {
-            meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
+            meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[transitionOffsetOffset + i];
         }
 
-        GaussianMatrixOps.copyMatrix(stepCovariance, stepCovInv);
-        final GaussianMatrixOps.CholeskyFactor stepChol =
-                GaussianMatrixOps.cholesky(stepCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+        System.arraycopy(stepCovariance, stepCovarianceOffset, stepCovInv, 0, matrixSize);
+        if (!MatrixOps.tryCholesky(stepCovInv, stepCovCholesky, d)) {
+            throw new IllegalArgumentException("Matrix is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(stepCovCholesky, stepCovLowerInverse, stepCovInv, d);
+        MatrixOps.matVec(stepCovInv, meanResidual, dLogL_df, d);
     }
 
-    double[][] dLogL_dF() {
+    double[] dLogL_dF() {
         return dLogL_dF;
     }
 
@@ -135,22 +155,15 @@ final class ExpectationGaussianBranchGradientAdjoints {
         return dLogL_df;
     }
 
-    double[][] dLogL_dV() {
+    double[] dLogL_dV() {
         return dLogL_dV;
     }
 
     void copyDLogLDFToFlat(final double[] out) {
-        copyMatrixToFlat(dLogL_dF, out);
+        System.arraycopy(dLogL_dF, 0, out, 0, dLogL_dF.length);
     }
 
     void copyDLogLDVToFlat(final double[] out) {
-        copyMatrixToFlat(dLogL_dV, out);
-    }
-
-    private void copyMatrixToFlat(final double[][] source,
-                                  final double[] out) {
-        for (int row = 0; row < stateDimension; ++row) {
-            System.arraycopy(source[row], 0, out, row * stateDimension, stateDimension);
-        }
+        System.arraycopy(dLogL_dV, 0, out, 0, dLogL_dV.length);
     }
 }

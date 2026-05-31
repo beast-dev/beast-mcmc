@@ -156,6 +156,20 @@ public final class KernelBackedGaussianTransitionRepresentation
     }
 
     @Override
+    public void accumulateSelectionGradientFlat(final int fromIndex,
+                                                final int toIndex,
+                                                final TimeGrid timeGrid,
+                                                final double[] dLogL_dF,
+                                                final double[] dLogL_df,
+                                                final double[] gradientAccumulator) {
+        kernel.accumulateSelectionGradientFlat(
+                validatedDelta(timeGrid, fromIndex, toIndex),
+                dLogL_dF,
+                dLogL_df,
+                gradientAccumulator);
+    }
+
+    @Override
     public void accumulateSelectionGradientFromCovariance(final int fromIndex,
                                                           final int toIndex,
                                                           final TimeGrid timeGrid,
@@ -168,12 +182,36 @@ public final class KernelBackedGaussianTransitionRepresentation
     }
 
     @Override
+    public void accumulateSelectionGradientFromCovarianceFlat(final int fromIndex,
+                                                              final int toIndex,
+                                                              final TimeGrid timeGrid,
+                                                              final double[] dLogL_dV,
+                                                              final double[] gradientAccumulator) {
+        kernel.accumulateSelectionGradientFromCovarianceFlat(
+                validatedDelta(timeGrid, fromIndex, toIndex),
+                dLogL_dV,
+                gradientAccumulator);
+    }
+
+    @Override
     public void accumulateDiffusionGradient(final int fromIndex,
                                             final int toIndex,
                                             final TimeGrid timeGrid,
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
         kernel.accumulateDiffusionGradient(
+                validatedDelta(timeGrid, fromIndex, toIndex),
+                dLogL_dV,
+                gradientAccumulator);
+    }
+
+    @Override
+    public void accumulateDiffusionGradientFlat(final int fromIndex,
+                                                final int toIndex,
+                                                final TimeGrid timeGrid,
+                                                final double[] dLogL_dV,
+                                                final double[] gradientAccumulator) {
+        kernel.accumulateDiffusionGradientFlat(
                 validatedDelta(timeGrid, fromIndex, toIndex),
                 dLogL_dV,
                 gradientAccumulator);

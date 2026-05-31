@@ -78,6 +78,16 @@ public final class MatrixOps {
         matVec(A, x, y, dim, dim);
     }
 
+    /** {@code y = A x}, A is {@code dim x dim} square stored in a larger row-major array. */
+    public static void matVec(double[] A, int aOffset, double[] x, double[] y, int dim) {
+        for (int i = 0; i < dim; i++) {
+            double s = 0.0;
+            final int base = aOffset + i * dim;
+            for (int j = 0; j < dim; j++) s += A[base + j] * x[j];
+            y[i] = s;
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Matrix–matrix  (C = A B)
     // -----------------------------------------------------------------------
@@ -108,6 +118,23 @@ public final class MatrixOps {
         matMul(A, B, C, dim, dim, dim);
     }
 
+    /** {@code C = A B}, square matrices where A and B are slices of larger row-major arrays. */
+    public static void matMul(double[] A, int aOffset, double[] B, int bOffset, double[] C, int dim) {
+        record(MAT_MUL_CALLS, dim);
+        for (int i = 0; i < dim; i++) {
+            final int rA = aOffset + i * dim;
+            final int rC = i * dim;
+            Arrays.fill(C, rC, rC + dim, 0.0);
+            for (int l = 0; l < dim; l++) {
+                final double a = A[rA + l];
+                final int rB = bOffset + l * dim;
+                for (int j = 0; j < dim; j++) {
+                    C[rC + j] += a * B[rB + j];
+                }
+            }
+        }
+    }
+
     /** {@code C = A B^T}, all {@code dim×dim} square. */
     public static void matMulTransposedRight(double[] A, double[] B, double[] C, int dim) {
         record(MAT_MUL_TRANSPOSED_RIGHT_CALLS, dim);
@@ -120,6 +147,24 @@ public final class MatrixOps {
                     sum += A[iOff + k] * B[jOff + k];
                 }
                 C[iOff + j] = sum;
+            }
+        }
+    }
+
+    /** {@code C = A B^T}, square matrices where A and B are slices of larger row-major arrays. */
+    public static void matMulTransposedRight(double[] A, int aOffset, double[] B, int bOffset,
+                                             double[] C, int dim) {
+        record(MAT_MUL_TRANSPOSED_RIGHT_CALLS, dim);
+        for (int i = 0; i < dim; i++) {
+            final int iOff = aOffset + i * dim;
+            final int cOff = i * dim;
+            for (int j = 0; j < dim; j++) {
+                double sum = 0.0;
+                final int jOff = bOffset + j * dim;
+                for (int k = 0; k < dim; k++) {
+                    sum += A[iOff + k] * B[jOff + k];
+                }
+                C[cOff + j] = sum;
             }
         }
     }
@@ -760,6 +805,11 @@ public final class MatrixOps {
     /** Copy row-major {@code double[]} into {@code double[][]}. */
     public static void fromFlat(double[] src, double[][] dst, int dim) {
         for (int i = 0; i < dim; i++) System.arraycopy(src, i * dim, dst[i], 0, dim);
+    }
+
+    /** Copy a row-major {@code double[]} slice into {@code double[][]}. */
+    public static void fromFlat(double[] src, int srcOffset, double[][] dst, int dim) {
+        for (int i = 0; i < dim; i++) System.arraycopy(src, srcOffset + i * dim, dst[i], 0, dim);
     }
 
     /** Copy row-major {@code double[]} into EJML row-major matrix storage. */

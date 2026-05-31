@@ -311,6 +311,29 @@ public class EulerOUProcessModel extends AbstractModel
     }
 
     @Override
+    public void accumulateSelectionGradientFlat(final double dt,
+                                                final double[] dLogL_dF,
+                                                final double[] dLogL_df,
+                                                final double[] gradientAccumulator) {
+        final double[] mu = new double[stateDimension];
+        getInitialMean(mu);
+        for (int k = 0; k < stateDimension; ++k) {
+            final int rowOffset = k * stateDimension;
+            for (int l = 0; l < stateDimension; ++l) {
+                gradientAccumulator[rowOffset + l] +=
+                        dt * (-dLogL_dF[rowOffset + l] + dLogL_df[k] * mu[l]);
+            }
+        }
+    }
+
+    @Override
+    public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
+                                                              final double[] dLogL_dV,
+                                                              final double[] gradientAccumulator) {
+        // Euler step covariance V = dt * Q does not depend on the drift matrix A.
+    }
+
+    @Override
     public void accumulateDiffusionGradient(final double dt,
                                             final double[][] dLogL_dV,
                                             final double[] gradientAccumulator) {
@@ -318,6 +341,15 @@ public class EulerOUProcessModel extends AbstractModel
             for (int j = 0; j < stateDimension; ++j) {
                 gradientAccumulator[i * stateDimension + j] += dt * dLogL_dV[i][j];
             }
+        }
+    }
+
+    @Override
+    public void accumulateDiffusionGradientFlat(final double dt,
+                                                final double[] dLogL_dV,
+                                                final double[] gradientAccumulator) {
+        for (int i = 0; i < dLogL_dV.length; ++i) {
+            gradientAccumulator[i] += dt * dLogL_dV[i];
         }
     }
 

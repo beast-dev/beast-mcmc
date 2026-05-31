@@ -46,14 +46,19 @@ public final class ExpectationDiffusionMatrixGradientFormula implements Expectat
         final double[] gradientAccumulator = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
+            final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
             branchAdjoints.compute(
                     smootherStats[t],
                     smootherStats[t + 1],
-                    trajectory.transitionMatrices[t],
-                    trajectory.transitionOffsets[t],
-                    trajectory.stepCovariances[t]);
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    trajectory.transitionOffsets,
+                    transitionOffsetOffset,
+                    trajectory.stepCovariances,
+                    transitionMatrixOffset);
 
-            repr.accumulateDiffusionGradient(t, t + 1, timeGrid,
+            repr.accumulateDiffusionGradientFlat(t, t + 1, timeGrid,
                     branchAdjoints.dLogL_dV(), gradientAccumulator);
         }
 

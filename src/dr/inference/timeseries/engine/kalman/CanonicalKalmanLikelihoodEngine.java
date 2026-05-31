@@ -1,7 +1,5 @@
 package dr.inference.timeseries.engine.kalman;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
@@ -39,22 +37,14 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     private final CanonicalGaussianTransition transition;
     private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
 
-    private final double[][] designMatrix;
-    private final double[][] noiseCovariance;
-    private final double[][] noisePrecision;
-    private final double[][] observationPrecisionContribution;
-    private final double[][] transitionWorkspace;
-    private final double[][] stateWorkspace;
-    private final double[][] stateWorkspace2;
-    private final double[][] stateWorkspace3;
-    private final double[][] obsWorkspace;
+    private final double[] designMatrix;
+    private final double[] noiseCovariance;
+    private final double[] noisePrecision;
+    private final double[] observationPrecisionContribution;
+    private final double[] obsWorkspace;
     private final double[] observationVector;
     private final double[] observationInformation;
-    private final double[] stateVectorWorkspace;
-    private final double[] stateVectorWorkspace2;
     private final double[] observationVectorWorkspace;
-    private final double[] flatMatrixWorkspace;
-    private final double[] flatInverseWorkspace;
     private final double[] flatCholeskyWorkspace;
     private final double[] flatLowerInverseWorkspace;
 
@@ -100,22 +90,14 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.transition = new CanonicalGaussianTransition(stateDimension);
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
 
-        this.designMatrix = new double[observationDimension][stateDimension];
-        this.noiseCovariance = new double[observationDimension][observationDimension];
-        this.noisePrecision = new double[observationDimension][observationDimension];
-        this.observationPrecisionContribution = new double[stateDimension][stateDimension];
-        this.transitionWorkspace = new double[stateDimension][stateDimension];
-        this.stateWorkspace = new double[stateDimension][stateDimension];
-        this.stateWorkspace2 = new double[stateDimension][stateDimension];
-        this.stateWorkspace3 = new double[stateDimension][stateDimension];
-        this.obsWorkspace = new double[observationDimension][stateDimension];
+        this.designMatrix = new double[observationDimension * stateDimension];
+        this.noiseCovariance = new double[observationDimension * observationDimension];
+        this.noisePrecision = new double[observationDimension * observationDimension];
+        this.observationPrecisionContribution = new double[stateDimension * stateDimension];
+        this.obsWorkspace = new double[observationDimension * stateDimension];
         this.observationVector = new double[observationDimension];
         this.observationInformation = new double[stateDimension];
-        this.stateVectorWorkspace = new double[stateDimension];
-        this.stateVectorWorkspace2 = new double[stateDimension];
         this.observationVectorWorkspace = new double[observationDimension];
-        this.flatMatrixWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
-        this.flatInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
         if (cachedTransitionRepresentation != null) {
@@ -138,8 +120,8 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     }
 
     private double computeLogLikelihood() {
-        observationModel.fillDesignMatrix(designMatrix);
-        observationModel.fillNoiseCovariance(noiseCovariance);
+        observationModel.fillDesignMatrixFlat(designMatrix, stateDimension);
+        observationModel.fillNoiseCovarianceFlat(noiseCovariance);
         final double noiseLogDet = invertPositiveDefinite(noiseCovariance, noisePrecision, observationDimension);
         buildObservationPrecisionContribution();
 
@@ -181,66 +163,39 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     }
 
     private void buildObservationPrecisionContribution() {
-        GaussianMatrixOps.multiplyMatrixMatrix(noisePrecision, designMatrix, obsWorkspace,
+        MatrixOps.matMul(noisePrecision, designMatrix, obsWorkspace,
                 observationDimension, observationDimension, stateDimension);
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(
-                designMatrix, obsWorkspace, observationPrecisionContribution);
-        GaussianMatrixOps.symmetrize(observationPrecisionContribution);
+        MatrixOps.matMulTransposedLeft(designMatrix, obsWorkspace, observationPrecisionContribution,
+                observationDimension, stateDimension);
+        MatrixOps.symmetrize(observationPrecisionContribution, stateDimension);
     }
 
     private void buildObservationInformation(final double[] observation) {
-        GaussianMatrixOps.multiplyMatrixVector(noisePrecision, observation, observationVectorWorkspace,
+        MatrixOps.matVec(noisePrecision, observation, observationVectorWorkspace,
                 observationDimension, observationDimension);
         for (int i = 0; i < stateDimension; ++i) {
             double sum = 0.0;
             for (int j = 0; j < observationDimension; ++j) {
-                sum += designMatrix[j][i] * observationVectorWorkspace[j];
+                sum += designMatrix[j * stateDimension + i] * observationVectorWorkspace[j];
             }
             observationInformation[i] = sum;
         }
     }
 
     private double observationPotentialLogNormalizer(final double[] observation, final double logDetNoise) {
-        final double quadratic = GaussianMatrixOps.quadraticForm(noisePrecision, observation);
-        return 0.5 * (observationDimension * GaussianMatrixOps.LOG_TWO_PI + logDetNoise + quadratic);
+        final double quadratic = MatrixOps.quadraticForm(
+                observation, noisePrecision, observationDimension, observationVectorWorkspace);
+        return 0.5 * (observationDimension * MatrixOps.LOG_TWO_PI + logDetNoise + quadratic);
     }
 
-    private double normalizedLogNormalizer(final double[][] precision, final double[] information) {
-        final double[][] precisionInverse = stateWorkspace;
-        final double logDet = invertPositiveDefinite(precision, precisionInverse, stateDimension);
-        GaussianMatrixOps.multiplyMatrixVector(precisionInverse, information, stateVectorWorkspace,
-                stateDimension, stateDimension);
-        final double quadratic = dot(information, stateVectorWorkspace);
-        return 0.5 * (stateDimension * GaussianMatrixOps.LOG_TWO_PI - logDet + quadratic);
-    }
-
-    private double invertPositiveDefinite(final double[][] matrix,
-                                          final double[][] inverseOut,
+    private double invertPositiveDefinite(final double[] matrix,
+                                          final double[] inverseOut,
                                           final int dimension) {
-        copyMatrixToFlat(matrix, flatMatrixWorkspace, dimension);
-        if (!MatrixOps.tryCholesky(flatMatrixWorkspace, flatCholeskyWorkspace, dimension)) {
+        if (!MatrixOps.tryCholesky(matrix, flatCholeskyWorkspace, dimension)) {
             throw new IllegalArgumentException("Matrix is not positive definite");
         }
-        final double logDet = MatrixOps.invertFromCholesky(
-                flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, dimension);
-        copyFlatToMatrix(flatInverseWorkspace, inverseOut, dimension);
-        return logDet;
-    }
-
-    private static void copyMatrixToFlat(final double[][] source,
-                                         final double[] target,
-                                         final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source[i], 0, target, i * dimension, dimension);
-        }
-    }
-
-    private static void copyFlatToMatrix(final double[] source,
-                                         final double[][] target,
-                                         final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source, i * dimension, target[i], 0, dimension);
-        }
+        return MatrixOps.invertFromCholesky(
+                flatCholeskyWorkspace, flatLowerInverseWorkspace, inverseOut, dimension);
     }
 
     private double validatedDelta(final int fromIndex, final int toIndex) {
@@ -262,15 +217,10 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     }
 
     private static void addMatrices(final double[] left,
-                                    final double[][] right,
+                                    final double[] right,
                                     final double[] out) {
-        final int rows = right.length;
-        final int cols = right[0].length;
-        for (int i = 0; i < rows; ++i) {
-            final int rowOffset = i * cols;
-            for (int j = 0; j < cols; ++j) {
-                out[rowOffset + j] = left[rowOffset + j] + right[i][j];
-            }
+        for (int i = 0; i < left.length; ++i) {
+            out[i] = left[i] + right[i];
         }
     }
 
@@ -282,18 +232,10 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         }
     }
 
-    private static double dot(final double[] left, final double[] right) {
-        double sum = 0.0;
-        for (int i = 0; i < left.length; ++i) {
-            sum += left[i] * right[i];
-        }
-        return sum;
-    }
-
     private static void copyState(final CanonicalGaussianState source,
                                   final CanonicalGaussianState target) {
         System.arraycopy(source.precision, 0, target.precision, 0, source.precision.length);
-        GaussianMatrixOps.copyVector(source.information, target.information);
+        System.arraycopy(source.information, 0, target.information, 0, source.information.length);
         target.logNormalizer = source.logNormalizer;
     }
 }

@@ -2032,6 +2032,66 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 1e-9);
     }
 
+    public void testCanonicalKalmanLikelihoodAndSmootherMatchExpectationWithRectangularDesign() {
+        final MatrixParameter drift = makeMatrix("A.canonical.rectangular", new double[][]{
+                {0.34, -0.08},
+                {0.05, 0.76}
+        });
+        final MatrixParameter diffusion = makeMatrix("Q.canonical.rectangular", new double[][]{
+                {0.95, 0.07},
+                {0.07, 0.82}
+        });
+        final Parameter mean = new Parameter.Default(new double[]{0.15, -0.22});
+        final MatrixParameter initCov = makeMatrix("P0.canonical.rectangular", new double[][]{
+                {0.8, 0.04},
+                {0.04, 1.05}
+        });
+        final OUProcessModel process = new OUProcessModel(
+                "ouCanonicalRectangular", 2, drift, diffusion, mean, initCov, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
+
+        final MatrixParameter H = makeMatrix("H.canonical.rectangular", new double[][]{{1.0, -0.35}});
+        final MatrixParameter R = makeMatrix("R.canonical.rectangular", new double[][]{{0.42}});
+        final MatrixParameter Y = makeMatrix("Y.canonical.rectangular", new double[][]{
+                {0.3, Double.NaN, -0.25, 0.8}
+        });
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel(
+                "obsCanonicalRectangular", 1, H, R, Y);
+        final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
+
+        final ExpectationKalmanLikelihoodEngine expectationLikelihood = new ExpectationKalmanLikelihoodEngine(
+                representation(process, GaussianTransitionRepresentation.class), obs, grid);
+        final CanonicalKalmanLikelihoodEngine canonicalLikelihood = new CanonicalKalmanLikelihoodEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class), obs, grid);
+
+        assertEquals("Canonical forward likelihood must match expectation-form Kalman likelihood with rectangular H",
+                expectationLikelihood.getLogLikelihood(),
+                canonicalLikelihood.getLogLikelihood(),
+                1e-9);
+
+        final ExpectationKalmanSmootherEngine expectationSmoother = new ExpectationKalmanSmootherEngine(
+                representation(process, GaussianTransitionRepresentation.class), obs, grid);
+        final CanonicalKalmanSmootherEngine canonicalSmoother = new CanonicalKalmanSmootherEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class),
+                representation(process, GaussianTransitionRepresentation.class),
+                obs,
+                grid);
+
+        assertEquals("Canonical smoother likelihood must match expectation smoother with rectangular H",
+                expectationSmoother.getLogLikelihood(), canonicalSmoother.getLogLikelihood(), 1e-9);
+        assertVectorArrayEquals("Rectangular-H predicted means",
+                expectationSmoother.getPredictedMeans(), canonicalSmoother.getPredictedMeans(), 1e-9);
+        assertMatrixArrayEquals("Rectangular-H predicted covariances",
+                expectationSmoother.getPredictedCovariances(), canonicalSmoother.getPredictedCovariances(), 1e-9);
+        assertVectorArrayEquals("Rectangular-H filtered means",
+                expectationSmoother.getFilteredMeans(), canonicalSmoother.getFilteredMeans(), 1e-9);
+        assertMatrixArrayEquals("Rectangular-H filtered covariances",
+                expectationSmoother.getFilteredCovariances(), canonicalSmoother.getFilteredCovariances(), 1e-9);
+        assertVectorArrayEquals("Rectangular-H smoothed means",
+                expectationSmoother.getSmoothedMeans(), canonicalSmoother.getSmoothedMeans(), 1e-9);
+        assertMatrixArrayEquals("Rectangular-H smoothed covariances",
+                expectationSmoother.getSmoothedCovariances(), canonicalSmoother.getSmoothedCovariances(), 1e-9);
+    }
+
     public void testCanonicalKalmanLikelihoodMatchesExpectationEngine_Euler() {
         final MatrixParameter drift = makeMatrix("A.canonical.filter.euler", new double[][]{
                 {0.18, -0.03},

@@ -169,6 +169,21 @@ public final class MatrixOps {
         }
     }
 
+    /** {@code C = A^T B}, where A and B are {@code rows x cols} row-major matrices. */
+    public static void matMulTransposedLeft(double[] A, double[] B, double[] C, int rows, int cols) {
+        for (int i = 0; i < cols; i++) {
+            final int cRow = i * cols;
+            for (int j = 0; j < cols; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < rows; k++) {
+                    final int row = k * cols;
+                    sum += A[row + i] * B[row + j];
+                }
+                C[cRow + j] = sum;
+            }
+        }
+    }
+
     /**
      * Computes {@code middleTimesLeft = symmetricMiddle * left} and
      * {@code out = left^T * symmetricMiddle * left}. Only the upper triangle of

@@ -25,7 +25,9 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                                          final int[] blockStarts,
                                          final int[] blockSizes) {
         fillDenseMatrix(diffusionMatrix, qMatrix);
-        MatrixOps.symmetricSandwichTransposeLeft(rMatrix.data, qMatrix.data, qDBasis.data, temp.data, qMatrix.numRows);
+        BlockDiagonalDenseMatrixOps.multTransA(rMatrix, qMatrix, temp);
+        BlockDiagonalDenseMatrixOps.mult(temp, rMatrix, qDBasis);
+        symmetrize(qDBasis);
         lyapunovSolver.solve(blockDParams, qDBasis, stationaryCovDBasis);
         BlockDiagonalMatrixOps.multiplyBlockDiagonalLeft(
                 expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);

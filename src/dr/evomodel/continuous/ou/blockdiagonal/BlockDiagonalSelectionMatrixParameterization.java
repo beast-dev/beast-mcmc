@@ -1264,10 +1264,12 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                               final DenseMatrix64F dBasisGradient,
                                                               final DenseMatrix64F temp,
                                                               final DenseMatrix64F out) {
-        MatrixOps.fillSymmetricSandwichTransposeRightOutputAdjoint(
-                dBasisGradient.data, false, out.data, dBasisGradient.numRows);
-        MatrixOps.symmetricSandwichTransposeRightMiddleAdjointFromOutputAdjoint(
-                rinvMatrix.data, out.data, out.data, temp.data, rinvMatrix.numRows);
+        MatrixOps.symmetricSandwichTransposeLeft(
+                rinvMatrix.data,
+                dBasisGradient.data,
+                out.data,
+                temp.data,
+                rinvMatrix.numRows);
     }
 
     private void accumulateCompressedGradient(final DenseMatrix64F denseGradient,

@@ -7,11 +7,11 @@ import org.ejml.data.DenseMatrix64F;
 /**
  * Positive-definite inversion helper used by orthogonal block canonical OU code.
  */
-final class OrthogonalBlockPositiveDefiniteInverter {
+final class BlockDiagonalPositiveDefiniteInverter {
 
     private static final CanonicalNumericsOptions OPTIONS = CanonicalNumericsOptions.ORTHOGONAL_BLOCK;
 
-    private OrthogonalBlockPositiveDefiniteInverter() { }
+    private BlockDiagonalPositiveDefiniteInverter() { }
 
     static double copyAndInvertFlat(final DenseMatrix64F source,
                                     final double[] matrixOut,

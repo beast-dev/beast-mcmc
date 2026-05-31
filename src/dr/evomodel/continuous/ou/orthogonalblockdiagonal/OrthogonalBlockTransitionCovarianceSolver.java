@@ -31,7 +31,7 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                 expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);
         BlockDiagonalMatrixOps.multiplyRightBlockDiagonalTranspose(
                 temp.data, expD, transitionCovDBasis.data, transitionCovDBasis.numRows, blockStarts, blockSizes);
-        OrthogonalBlockDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
+        BlockDiagonalDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         if (symmetrizeTransitionCovDBasis) {
             symmetrize(transitionCovDBasis);
         }
@@ -43,8 +43,8 @@ final class OrthogonalBlockTransitionCovarianceSolver {
                     temp.data,
                     out.numRows);
         } else {
-            OrthogonalBlockDenseMatrixOps.mult(rMatrix, transitionCovDBasis, temp);
-            OrthogonalBlockDenseMatrixOps.mult(temp, rtMatrix, out);
+            BlockDiagonalDenseMatrixOps.mult(rMatrix, transitionCovDBasis, temp);
+            BlockDiagonalDenseMatrixOps.mult(temp, rtMatrix, out);
             symmetrize(out);
         }
     }

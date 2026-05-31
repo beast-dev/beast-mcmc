@@ -57,7 +57,7 @@ final class BlockDiagonalTransitionFactory {
                                  final BlockDiagonalTransitionCache basis,
                                  final CanonicalGaussianTransition out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
-        OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
+        BlockDiagonalCanonicalTransitionAssembler.fillCanonicalTransition(
                 basis.transitionMatrix,
                 transitionCovariance,
                 stationaryMean,
@@ -74,9 +74,9 @@ final class BlockDiagonalTransitionFactory {
                                     final CanonicalBranchMessageContribution contribution,
                                     final CanonicalLocalTransitionAdjoints out) {
         fillTransitionCovarianceMatrix(diffusionMatrix, basis);
-        OrthogonalBlockCanonicalTransitionAssembler.fillTransitionOffset(
+        BlockDiagonalCanonicalTransitionAssembler.fillTransitionOffset(
                 basis.transitionMatrix, stationaryMean, transitionOffsetScratch);
-        OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
+        BlockDiagonalPositiveDefiniteInverter.copyAndInvertFlat(
                 transitionCovariance,
                 transitionCovarianceScratch,
                 precisionScratch,

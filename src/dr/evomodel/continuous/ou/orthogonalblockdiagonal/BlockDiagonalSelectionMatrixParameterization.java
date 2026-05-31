@@ -902,7 +902,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                          final DenseMatrix64F transitionCovariance,
                                                          final BlockDiagonalBranchGradientWorkspace workspace,
                                                          final CanonicalGaussianTransition out) {
-        OrthogonalBlockCanonicalTransitionAssembler.fillCanonicalTransition(
+        BlockDiagonalCanonicalTransitionAssembler.fillCanonicalTransition(
                 prepared.transitionMatrix,
                 transitionCovariance,
                 prepared.stationaryMean,
@@ -978,7 +978,7 @@ public class BlockDiagonalSelectionMatrixParameterization
     protected double copyAndInvertPositiveDefiniteFlat(final DenseMatrix64F source,
                                                        final double[] matrixOut,
                                                        final double[] inverseOut) {
-        return OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
+        return BlockDiagonalPositiveDefiniteInverter.copyAndInvertFlat(
                 source, matrixOut, inverseOut, choleskyScratch, lowerInverseScratch);
     }
 
@@ -1216,7 +1216,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes(),
                 gS.data);
-        OrthogonalBlockDenseMatrixOps.subtract(hDBasis, gS, gS);
+        BlockDiagonalDenseMatrixOps.subtract(hDBasis, gS, gS);
     }
 
     private void fillDiffusionGradientDBasisPrepared(final BlockDiagonalPreparedBranchBasis prepared,

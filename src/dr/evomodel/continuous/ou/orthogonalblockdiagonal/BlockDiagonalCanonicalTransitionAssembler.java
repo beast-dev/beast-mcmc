@@ -3,9 +3,9 @@ package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
 
-final class OrthogonalBlockCanonicalTransitionAssembler {
+final class BlockDiagonalCanonicalTransitionAssembler {
 
-    private OrthogonalBlockCanonicalTransitionAssembler() { }
+    private BlockDiagonalCanonicalTransitionAssembler() { }
 
     static void fillCanonicalTransition(final DenseMatrix64F transitionMatrix,
                                         final DenseMatrix64F transitionCovariance,
@@ -19,7 +19,7 @@ final class OrthogonalBlockCanonicalTransitionAssembler {
         final double[] transitionData = transitionMatrix.data;
         fillTransitionOffset(transitionMatrix, stationaryMean, transitionOffsetScratch);
 
-        final double logDet = OrthogonalBlockPositiveDefiniteInverter.copyAndInvertFlat(
+        final double logDet = BlockDiagonalPositiveDefiniteInverter.copyAndInvertFlat(
                 transitionCovariance,
                 transitionCovarianceScratch,
                 out.precisionYY,

@@ -31,7 +31,7 @@ final class BlockDiagonalTransitionCovarianceSolver {
                 expD, stationaryCovDBasis.data, temp.data, temp.numRows, blockStarts, blockSizes);
         BlockDiagonalMatrixOps.multiplyRightBlockDiagonalTranspose(
                 temp.data, expD, transitionCovDBasis.data, transitionCovDBasis.numRows, blockStarts, blockSizes);
-        OrthogonalBlockDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
+        BlockDiagonalDenseMatrixOps.subtract(stationaryCovDBasis, transitionCovDBasis, transitionCovDBasis);
         symmetrize(transitionCovDBasis);
         MatrixOps.symmetricSandwichTransposeRight(
                 rMatrix.data, transitionCovDBasis.data, out.data, temp.data, out.numRows);

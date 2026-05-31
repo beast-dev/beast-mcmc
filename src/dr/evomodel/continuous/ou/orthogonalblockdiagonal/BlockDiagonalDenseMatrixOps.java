@@ -3,9 +3,9 @@ package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import org.ejml.data.DenseMatrix64F;
 
-final class OrthogonalBlockDenseMatrixOps {
+final class BlockDiagonalDenseMatrixOps {
 
-    private OrthogonalBlockDenseMatrixOps() {
+    private BlockDiagonalDenseMatrixOps() {
         // no instances
     }
 

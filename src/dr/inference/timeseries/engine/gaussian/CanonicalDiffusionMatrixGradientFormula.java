@@ -2,9 +2,7 @@ package dr.inference.timeseries.engine.gaussian;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
@@ -22,10 +20,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final CanonicalBranchPosterior branchPosterior;
-    private final CanonicalBranchMessageContribution localContribution;
-    private final CanonicalLocalTransitionAdjoints localAdjoints;
-    private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
+    private final CanonicalBranchAdjointProvider branchAdjoints;
     private final double[][] covarianceAdjointScratch;
     private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
@@ -55,10 +50,7 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         this.stateDimension = stateDimension;
         this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
-        this.branchPosterior = new CanonicalBranchPosterior(stateDimension);
-        this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
-        this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
-        this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+        this.branchAdjoints = new CanonicalBranchAdjointProvider(stateDimension);
         this.covarianceAdjointScratch = new double[stateDimension][stateDimension];
     }
 
@@ -92,13 +84,11 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         final double[] gradientAccumulator = new double[d * d];
         final BlockDiagonalNativeCanonicalParameterization blockParameterization =
                 BlockDiagonalFormulaSupport.nativeParameterization(processModel);
-        if (branchGradientCache != null) {
-            branchGradientCache.ensure(trajectory);
-        }
+        branchAdjoints.ensure(trajectory, branchGradientCache);
 
         for (int t = 0; t < T - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
-                    localAdjoints(t, trajectory, branchGradientCache);
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
             if (blockParameterization != null) {
                 blockParameterization.accumulateDiffusionGradientFlat(
                         processModel.getDiffusionMatrix(),
@@ -121,22 +111,6 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         if (blockDiagonalGradientCache != null) {
             blockDiagonalGradientCache.makeDirty();
         }
-    }
-
-    private CanonicalLocalTransitionAdjoints localAdjoints(final int branchIndex,
-                                                           final CanonicalForwardTrajectory trajectory,
-                                                           final CanonicalBranchGradientCache branchGradientCache) {
-        if (branchGradientCache != null) {
-            return branchGradientCache.getAdjoints(branchIndex);
-        }
-        branchPosterior.fillFromCanonicalPairState(trajectory.branchPairStates[branchIndex]);
-        branchPosterior.fillLocalMessageContribution(localContribution);
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                trajectory.transitions[branchIndex],
-                localContribution,
-                canonicalAdjointWorkspace,
-                localAdjoints);
-        return localAdjoints;
     }
 
 }

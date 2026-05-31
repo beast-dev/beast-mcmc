@@ -3,9 +3,7 @@ package dr.inference.timeseries.engine.gaussian;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
@@ -30,10 +28,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final CanonicalBranchMessageContribution localContribution;
-    private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
-    private final CanonicalLocalTransitionAdjoints localAdjoints;
-    private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
+    private final CanonicalBranchAdjointProvider branchAdjoints;
     private final double[][] dLogL_dF;
     private final double[][] dLogL_dV;
     private final double[] nativeCompressedGradientScratch;
@@ -68,10 +63,7 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.processModel = processModel;
         this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
-        this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
-        this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
-        this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
-        this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+        this.branchAdjoints = new CanonicalBranchAdjointProvider(stateDimension);
         this.dLogL_dF = new double[stateDimension][stateDimension];
         this.dLogL_dV = new double[stateDimension][stateDimension];
         final boolean hasBlock = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter;
@@ -118,13 +110,11 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         final int d = stateDimension;
         final int T = trajectory.timeCount;
         final double[] gradientAccumulator = new double[d * d];
-        if (branchGradientCache != null) {
-            branchGradientCache.ensure(trajectory);
-        }
+        branchAdjoints.ensure(trajectory, branchGradientCache);
 
         for (int t = 0; t < T - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
-                    localAdjoints(t, trajectory, branchGradientCache);
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
             GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dF, dLogL_dF, d);
             repr.accumulateSelectionGradient(
                     t, t + 1, timeGrid, dLogL_dF, adjoints.dLogL_df, gradientAccumulator);
@@ -165,20 +155,18 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         Arrays.fill(compressedDGradient, 0.0);
         Arrays.fill(rotationGradientFlat, 0.0);
         processModel.getInitialMean(stationaryMean);
-        if (branchGradientCache != null) {
-            branchGradientCache.ensure(trajectory);
-        }
+        branchAdjoints.ensure(trajectory, branchGradientCache);
 
         for (int t = 0; t < T - 1; ++t) {
             final double dt = timeGrid.getDelta(t, t + 1);
             final CanonicalBranchMessageContribution contribution =
-                    localContribution(t, trajectory, branchGradientCache);
+                    branchAdjoints.localContribution(t, trajectory, branchGradientCache);
             blockParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
                     processModel.getDiffusionMatrix(),
                     stationaryMean,
                     dt,
                     contribution,
-                    localAdjoints(t, trajectory, branchGradientCache),
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache),
                     compressedDGradient,
                     rotationGradientFlat);
         }
@@ -191,32 +179,5 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 blockParameter,
                 nativeGradient,
                 rotationGradientFlat);
-    }
-
-    private CanonicalBranchMessageContribution localContribution(final int branchIndex,
-                                                                 final CanonicalForwardTrajectory trajectory,
-                                                                 final CanonicalBranchGradientCache branchGradientCache) {
-        if (branchGradientCache != null) {
-            return branchGradientCache.getContribution(branchIndex);
-        }
-        CanonicalBranchMessageContributionUtils.fillFromPairState(
-                trajectory.branchPairStates[branchIndex],
-                contributionWorkspace,
-                localContribution);
-        return localContribution;
-    }
-
-    private CanonicalLocalTransitionAdjoints localAdjoints(final int branchIndex,
-                                                           final CanonicalForwardTrajectory trajectory,
-                                                           final CanonicalBranchGradientCache branchGradientCache) {
-        if (branchGradientCache != null) {
-            return branchGradientCache.getAdjoints(branchIndex);
-        }
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                trajectory.transitions[branchIndex],
-                localContribution(branchIndex, trajectory, null),
-                canonicalAdjointWorkspace,
-                localAdjoints);
-        return localAdjoints;
     }
 }

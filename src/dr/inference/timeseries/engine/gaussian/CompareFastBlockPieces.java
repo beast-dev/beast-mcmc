@@ -96,89 +96,33 @@ public class CompareFastBlockPieces {
         final double[] denseTransitionA = new double[d * d];
         final double[] denseCovarianceA = new double[d * d];
 
-        final double[] meanResidual = new double[d];
-        final double[][] crossCov = new double[d][d];
-        final double[][] branchMat = new double[d][d];
-        final double[][] stepCovInv = new double[d][d];
-        final double[][] temp = new double[d][d];
-        final double[][] temp2 = new double[d][d];
-        final double[][] dLogL_dF = new double[d][d];
+        final GaussianBranchGradientAdjoints branchAdjoints =
+                new GaussianBranchGradientAdjoints(d);
         final double[] dLogL_dFFlat = new double[d * d];
-        final double[] dLogL_df = new double[d];
-        final double[][] residualSecondMoment = new double[d][d];
-        final double[][] dLogL_dV = new double[d][d];
         final double[] dLogL_dVFlat = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
-            final BranchSmootherStats curr = smootherStats[t];
-            final BranchSmootherStats next = smootherStats[t + 1];
-            final double[][] F_t = trajectory.transitionMatrices[t];
-            final double[] f_t = trajectory.transitionOffsets[t];
             final double dt = model.smoother.getTimeGrid().getDelta(t, t + 1);
 
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(
-                    next.smoothedCovariance, curr.smootherGain, crossCov);
-            KalmanLikelihoodEngine.multiplyMatrixVector(F_t, curr.smoothedMean, meanResidual);
-            for (int i = 0; i < d; ++i) {
-                meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - f_t[i];
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(crossCov, branchMat);
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, temp);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    branchMat[i][j] -= temp[i][j];
-                    branchMat[i][j] += meanResidual[i] * curr.smoothedMean[j];
-                }
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(trajectory.stepCovariances[t], stepCovInv);
-            final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                    KalmanLikelihoodEngine.cholesky(stepCovInv);
-            KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
-            KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
-            copyMatrixToFlat(dLogL_dF, dLogL_dFFlat, d);
+            branchAdjoints.compute(
+                    smootherStats[t],
+                    smootherStats[t + 1],
+                    trajectory.transitionMatrices[t],
+                    trajectory.transitionOffsets[t],
+                    trajectory.stepCovariances[t]);
+            branchAdjoints.copyDLogLDFToFlat(dLogL_dFFlat);
 
             parameterization.accumulateNativeGradientFromTransitionFlat(
-                    dt, mu, dLogL_dFFlat, dLogL_df, fastTransitionD, fastTransitionR);
-            model.process.accumulateSelectionGradient(dt, dLogL_dF, dLogL_df, denseTransitionA);
+                    dt, mu, dLogL_dFFlat, branchAdjoints.dLogL_df(), fastTransitionD, fastTransitionR);
+            model.process.accumulateSelectionGradient(
+                    dt, branchAdjoints.dLogL_dF(), branchAdjoints.dLogL_df(), denseTransitionA);
 
-            KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(F_t, crossCov, temp);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= temp[i][j];
-                }
-            }
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(crossCov, F_t, temp);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= temp[i][j];
-                }
-            }
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, temp);
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(temp, F_t, temp2);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] += temp2[i][j];
-                    residualSecondMoment[i][j] += meanResidual[i] * meanResidual[j];
-                }
-            }
-
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, temp);
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(temp, stepCovInv, dLogL_dV);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
-                }
-            }
-            copyMatrixToFlat(dLogL_dV, dLogL_dVFlat, d);
+            branchAdjoints.copyDLogLDVToFlat(dLogL_dVFlat);
 
             parameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
                     model.process.getDiffusionMatrix(), dt, dLogL_dVFlat, fastCovarianceD, fastCovarianceR);
-            model.process.accumulateSelectionGradientFromCovariance(dt, dLogL_dV, denseCovarianceA);
+            model.process.accumulateSelectionGradientFromCovariance(
+                    dt, branchAdjoints.dLogL_dV(), denseCovarianceA);
         }
 
         final double[] denseTransitionNative = pullBack(blockParam, denseTransitionA);
@@ -232,12 +176,6 @@ public class CompareFastBlockPieces {
         System.out.println(label);
         for (int i = 0; i < fast.length; ++i) {
             System.out.println("  idx=" + i + " fast=" + fast[i] + " dense=" + dense[i] + " diff=" + (fast[i] - dense[i]));
-        }
-    }
-
-    private static void copyMatrixToFlat(final double[][] source, final double[] out, final int d) {
-        for (int row = 0; row < d; ++row) {
-            System.arraycopy(source[row], 0, out, row * d, d);
         }
     }
 

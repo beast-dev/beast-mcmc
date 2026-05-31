@@ -2,10 +2,7 @@ package dr.inference.timeseries.engine.gaussian;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -25,14 +22,12 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final CanonicalBranchMessageContribution localContribution;
-    private final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
-    private final CanonicalLocalTransitionAdjoints localAdjoints;
-    private final CanonicalTransitionAdjointUtils.Workspace transitionWorkspace;
+    private final CanonicalBranchAdjointProvider branchAdjoints;
     private final double[] currentMean;
     private final double[] smoothedInitialMean;
     private final double[] denseGradient;
     private final double[] stateDiff;
+    private final double[] initialMeanAdjoint;
     private final double[][] initialCovInv;
     private final double[][] smoothedInitialCovariance;
     private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
@@ -70,14 +65,12 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         this.stateDimension = stateDimension;
         this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
-        this.localContribution = new CanonicalBranchMessageContribution(stateDimension);
-        this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
-        this.localAdjoints = new CanonicalLocalTransitionAdjoints(stateDimension);
-        this.transitionWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
+        this.branchAdjoints = new CanonicalBranchAdjointProvider(stateDimension);
         this.currentMean = new double[stateDimension];
         this.smoothedInitialMean = new double[stateDimension];
         this.denseGradient = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
+        this.initialMeanAdjoint = new double[stateDimension];
         this.initialCovInv = new double[stateDimension][stateDimension];
         this.smoothedInitialCovariance = new double[stateDimension][stateDimension];
     }
@@ -126,12 +119,10 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
                 BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
-        if (branchGradientCache != null) {
-            branchGradientCache.ensure(trajectory);
-        }
+        branchAdjoints.ensure(trajectory, branchGradientCache);
         for (int t = 0; t < timeCount - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
-                    localAdjoints(t, trajectory, branchGradientCache);
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
             if (blockParameterization != null) {
                 blockParameterization.accumulateMeanGradient(
                         timeGrid.getDelta(t, t + 1),
@@ -139,9 +130,7 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                         denseGradient);
             } else {
                 BlockDiagonalFormulaSupport.accumulateBranchMeanGradientFlat(
-                        branchGradientCache == null
-                                ? transitionWorkspace.transitionMatrix
-                                : branchGradientCache.getTransitionMatrix(t),
+                        branchAdjoints.transitionMatrix(t, branchGradientCache),
                         adjoints.dLogL_df,
                         denseGradient);
             }
@@ -158,10 +147,9 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - currentMean[i];
         }
-        final double[] initialGradient = localAdjoints.dLogL_df;
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
-            denseGradient[i] += initialGradient[i];
+            denseGradient[i] += initialMeanAdjoint[i];
         }
 
         return BlockDiagonalFormulaSupport.projectMeanGradient(
@@ -178,22 +166,18 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         final int timeCount = trajectory.timeCount;
         final BlockDiagonalCanonicalParameterization blockParameterization =
                 BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
-        if (branchGradientCache != null) {
-            branchGradientCache.ensure(trajectory);
-        }
+        branchAdjoints.ensure(trajectory, branchGradientCache);
 
         for (int t = 0; t < timeCount - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
-                    localAdjoints(t, trajectory, branchGradientCache);
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
             if (blockParameterization != null) {
                 scalarGradient += blockParameterization.accumulateScalarMeanGradient(
                         timeGrid.getDelta(t, t + 1),
                         adjoints.dLogL_df);
             } else {
                 scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradientFlat(
-                        branchGradientCache == null
-                                ? transitionWorkspace.transitionMatrix
-                                : branchGradientCache.getTransitionMatrix(t),
+                        branchAdjoints.transitionMatrix(t, branchGradientCache),
                         adjoints.dLogL_df);
             }
         }
@@ -209,10 +193,9 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - meanValue;
         }
-        final double[] initialGradient = localAdjoints.dLogL_df;
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialGradient);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
-            scalarGradient += initialGradient[i];
+            scalarGradient += initialMeanAdjoint[i];
         }
 
         return new double[]{scalarGradient};
@@ -222,23 +205,5 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         if (blockDiagonalGradientCache != null) {
             blockDiagonalGradientCache.makeDirty();
         }
-    }
-
-    private CanonicalLocalTransitionAdjoints localAdjoints(final int branchIndex,
-                                                           final CanonicalForwardTrajectory trajectory,
-                                                           final CanonicalBranchGradientCache branchGradientCache) {
-        if (branchGradientCache != null) {
-            return branchGradientCache.getAdjoints(branchIndex);
-        }
-        CanonicalBranchMessageContributionUtils.fillFromPairState(
-                trajectory.branchPairStates[branchIndex],
-                contributionWorkspace,
-                localContribution);
-        CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
-                trajectory.transitions[branchIndex],
-                localContribution,
-                transitionWorkspace,
-                localAdjoints);
-        return localAdjoints;
     }
 }

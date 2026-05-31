@@ -53,18 +53,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
     private final int stateDimension;
     private final CanonicalSelectionGradientProjector.Workspace blockProjectorWorkspace;
 
-    // Pre-allocated working arrays — reused across computeGradient calls.
-    private final double[]   meanResidual;          // r̄_t
-    private final double[][] crossCov;              // V_{t+1,t} = P_{t+1|T} · G_t^T
-    private final double[][] branchMat;             // B_t = V_{t+1,t} − F_t P_{t|T} + r̄_t m_t^T
-    private final double[][] stepCovInv;            // V_t^{-1}  (copied per step, then inverted)
-    private final double[][] tempDxD;               // scratch [d × d]
-    private final double[][] tempDxD2;              // scratch [d × d]
-    private final double[]   tempD;                 // scratch [d]
-    private final double[][] dLogL_dF;              // ∂logL/∂F_t
-    private final double[]   dLogL_df;              // ∂logL/∂f_t
-    private final double[][] residualSecondMoment;  // S_t = E[δ_t δ_t^T | Y]
-    private final double[][] dLogL_dV;              // ∂logL/∂V_t = ½(V^{-1} S V^{-1} − V^{-1})
+    private final GaussianBranchGradientAdjoints branchAdjoints;
     private final double[]   dLogL_dFFlat;
     private final double[]   dLogL_dVFlat;
     private final double[]   rotationGradientFlat;
@@ -91,17 +80,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                         (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter)
                 : null;
 
-        meanResidual         = new double[stateDimension];
-        crossCov             = new double[stateDimension][stateDimension];
-        branchMat            = new double[stateDimension][stateDimension];
-        stepCovInv           = new double[stateDimension][stateDimension];
-        tempDxD              = new double[stateDimension][stateDimension];
-        tempDxD2             = new double[stateDimension][stateDimension];
-        tempD                = new double[stateDimension];
-        dLogL_dF             = new double[stateDimension][stateDimension];
-        dLogL_df             = new double[stateDimension];
-        residualSecondMoment = new double[stateDimension][stateDimension];
-        dLogL_dV             = new double[stateDimension][stateDimension];
+        branchAdjoints       = new GaussianBranchGradientAdjoints(stateDimension);
         dLogL_dFFlat         = new double[stateDimension * stateDimension];
         dLogL_dVFlat         = new double[stateDimension * stateDimension];
         rotationGradientFlat = new double[stateDimension * stateDimension];
@@ -141,111 +120,18 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         final double[] gradientAccumulator = new double[d * d];
 
         for (int t = 0; t < T - 1; ++t) {
-            final BranchSmootherStats curr = smootherStats[t];
-            final BranchSmootherStats next = smootherStats[t + 1];
-            final double[][] F_t = trajectory.transitionMatrices[t];
-            final double[] f_t   = trajectory.transitionOffsets[t];
+            branchAdjoints.compute(
+                    smootherStats[t],
+                    smootherStats[t + 1],
+                    trajectory.transitionMatrices[t],
+                    trajectory.transitionOffsets[t],
+                    trajectory.stepCovariances[t]);
 
-            // ── V_{t+1,t} = P_{t+1|T} · G_t^T ──────────────────────────────────
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(
-                    next.smoothedCovariance, curr.smootherGain, crossCov);
-
-            // ── r̄_t = m_{t+1|T} − F_t · m_{t|T} − f_t ─────────────────────────
-            KalmanLikelihoodEngine.multiplyMatrixVector(F_t, curr.smoothedMean, meanResidual);
-            for (int i = 0; i < d; ++i) {
-                meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - f_t[i];
-            }
-
-            // ── B_t = V_{t+1,t} − F_t · P_{t|T} + r̄_t · m_{t|T}^T ─────────────
-            // Start from cross-covariance
-            KalmanLikelihoodEngine.copyMatrix(crossCov, branchMat);
-
-            // Subtract F_t · P_{t|T}
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    branchMat[i][j] -= tempDxD[i][j];
-                }
-            }
-
-            // Add outer product r̄_t · m_{t|T}^T
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    branchMat[i][j] += meanResidual[i] * curr.smoothedMean[j];
-                }
-            }
-
-            // ── Q_step_t^{-1} ────────────────────────────────────────────────────
-            KalmanLikelihoodEngine.copyMatrix(trajectory.stepCovariances[t], stepCovInv);
-            final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                    KalmanLikelihoodEngine.cholesky(stepCovInv);
-            KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-
-            // ── ∂logL/∂F_t = Q_step_t^{-1} · B_t ───────────────────────────────
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
-
-            // ── ∂logL/∂f_t = Q_step_t^{-1} · r̄_t ──────────────────────────────
-            KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
-
-            // ── Chain rule (F/f-path) → accumulate ∂logL/∂A ────────────────────
             repr.accumulateSelectionGradient(t, t + 1, timeGrid,
-                    dLogL_dF, dLogL_df, gradientAccumulator);
+                    branchAdjoints.dLogL_dF(), branchAdjoints.dLogL_df(), gradientAccumulator);
 
-            // ── V-path: ∂logL/∂V_t = ½(V_t^{-1} S_t V_t^{-1} − V_t^{-1}) ─────
-            //
-            // S_t = E[(x_{t+1} − F_t x_t − f_t)(x_{t+1} − F_t x_t − f_t)^T | Y]
-            //     = P_{t+1|T}  −  F_t V_{t+1,t}^T  −  V_{t+1,t} F_t^T
-            //                  +  F_t P_{t|T} F_t^T  +  r̄_t r̄_t^T
-
-            // Start from P_{t+1|T}
-            KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
-
-            // Subtract F_t × V_{t+1,t}^T  (= F_t × crossCov^T)
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(F_t, crossCov, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= tempDxD[i][j];
-                }
-            }
-
-            // Subtract V_{t+1,t} × F_t^T  (= crossCov × F_t^T)
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(crossCov, F_t, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= tempDxD[i][j];
-                }
-            }
-
-            // Add F_t P_{t|T} F_t^T
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, tempDxD);
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(tempDxD, F_t, tempDxD2);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] += tempDxD2[i][j];
-                }
-            }
-
-            // Add r̄_t r̄_t^T
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] += meanResidual[i] * meanResidual[j];
-                }
-            }
-
-            // dLogL_dV = ½ (V_t^{-1} S_t V_t^{-1} − V_t^{-1})
-            //          = ½ V_t^{-1} (S_t − V_t) V_t^{-1}
-            // stepCovInv already holds V_t^{-1} from the F/f-path computation above.
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, tempDxD);
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(tempDxD, stepCovInv, dLogL_dV);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
-                }
-            }
-
-            // ── Chain rule (V-path) → accumulate ∂logL/∂A ──────────────────────
             repr.accumulateSelectionGradientFromCovariance(t, t + 1, timeGrid,
-                    dLogL_dV, gradientAccumulator);
+                    branchAdjoints.dLogL_dV(), gradientAccumulator);
         }
 
         if (parameter == selectionMatrixParameter) {
@@ -284,72 +170,21 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
         processModel.getInitialMean(stationaryMean);
 
         for (int t = 0; t < T - 1; ++t) {
-            final BranchSmootherStats curr = smootherStats[t];
-            final BranchSmootherStats next = smootherStats[t + 1];
-            final double[][] F_t = trajectory.transitionMatrices[t];
-            final double[] f_t   = trajectory.transitionOffsets[t];
             final double dt = timeGrid.getDelta(t, t + 1);
 
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(
-                    next.smoothedCovariance, curr.smootherGain, crossCov);
-
-            KalmanLikelihoodEngine.multiplyMatrixVector(F_t, curr.smoothedMean, meanResidual);
-            for (int i = 0; i < d; ++i) {
-                meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - f_t[i];
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(crossCov, branchMat);
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    branchMat[i][j] -= tempDxD[i][j];
-                    branchMat[i][j] += meanResidual[i] * curr.smoothedMean[j];
-                }
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(trajectory.stepCovariances[t], stepCovInv);
-            final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                    KalmanLikelihoodEngine.cholesky(stepCovInv);
-            KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
-            KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
-            copyMatrixToFlat(dLogL_dF, dLogL_dFFlat, d);
+            branchAdjoints.compute(
+                    smootherStats[t],
+                    smootherStats[t + 1],
+                    trajectory.transitionMatrices[t],
+                    trajectory.transitionOffsets[t],
+                    trajectory.stepCovariances[t]);
+            branchAdjoints.copyDLogLDFToFlat(dLogL_dFFlat);
 
             blockParameterization.accumulateNativeGradientFromTransitionFlat(
-                    dt, stationaryMean, dLogL_dFFlat, dLogL_df,
+                    dt, stationaryMean, dLogL_dFFlat, branchAdjoints.dLogL_df(),
                     compressedDGradient, rotationGradientFlat);
 
-            KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(F_t, crossCov, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= tempDxD[i][j];
-                }
-            }
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(crossCov, F_t, tempDxD);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] -= tempDxD[i][j];
-                }
-            }
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(F_t, curr.smoothedCovariance, tempDxD);
-            KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(tempDxD, F_t, tempDxD2);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    residualSecondMoment[i][j] += tempDxD2[i][j];
-                    residualSecondMoment[i][j] += meanResidual[i] * meanResidual[j];
-                }
-            }
-
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, tempDxD);
-            KalmanLikelihoodEngine.multiplyMatrixMatrix(tempDxD, stepCovInv, dLogL_dV);
-            for (int i = 0; i < d; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
-                }
-            }
-            copyMatrixToFlat(dLogL_dV, dLogL_dVFlat, d);
+            branchAdjoints.copyDLogLDVToFlat(dLogL_dVFlat);
 
             blockParameterization.accumulateNativeGradientFromCovarianceStationaryFlat(
                     processModel.getDiffusionMatrix(), dt, dLogL_dVFlat,
@@ -383,14 +218,6 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                 blockParameter,
                 denseGradient,
                 blockProjectorWorkspace);
-    }
-
-    private static void copyMatrixToFlat(final double[][] source,
-                                         final double[] out,
-                                         final int d) {
-        for (int row = 0; row < d; ++row) {
-            System.arraycopy(source[row], 0, out, row * d, d);
-        }
     }
 
 }

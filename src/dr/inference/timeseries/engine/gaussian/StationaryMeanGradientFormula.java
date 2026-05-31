@@ -24,9 +24,9 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final double[] meanResidual;
-    private final double[][] stepCovInv;
-    private final double[] dLogL_df;
+    private final GaussianBranchGradientAdjoints branchAdjoints;
+    private final double[][] initialCovInv;
+    private final double[] initialMeanAdjoint;
     private final double[] currentMean;
     private final double[] stateDiff;
     private final double[] denseGradient;
@@ -55,9 +55,9 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         this.initialCovarianceParameter = initialCovarianceParameter;
         this.stateDimension = stateDimension;
 
-        this.meanResidual = new double[stateDimension];
-        this.stepCovInv = new double[stateDimension][stateDimension];
-        this.dLogL_df = new double[stateDimension];
+        this.branchAdjoints = new GaussianBranchGradientAdjoints(stateDimension);
+        this.initialCovInv = new double[stateDimension][stateDimension];
+        this.initialMeanAdjoint = new double[stateDimension];
         this.currentMean = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
         this.denseGradient = new double[stateDimension];
@@ -93,40 +93,36 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             final double[][] transitionMatrix = trajectory.transitionMatrices[t];
             final double[] transitionOffset = trajectory.transitionOffsets[t];
 
-            KalmanLikelihoodEngine.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
-            for (int i = 0; i < stateDimension; ++i) {
-                meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(trajectory.stepCovariances[t], stepCovInv);
-            final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                    KalmanLikelihoodEngine.cholesky(stepCovInv);
-            KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-            KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+            branchAdjoints.computeMeanAdjoint(
+                    curr,
+                    next,
+                    transitionMatrix,
+                    transitionOffset,
+                    trajectory.stepCovariances[t]);
 
             if (blockParameterization != null) {
                 blockParameterization.accumulateMeanGradient(
                         timeGrid.getDelta(t, t + 1),
-                        dLogL_df,
+                        branchAdjoints.dLogL_df(),
                         denseGradient);
             } else {
                 BlockDiagonalFormulaSupport.accumulateBranchMeanGradient(
                         transitionMatrix,
-                        dLogL_df,
+                        branchAdjoints.dLogL_df(),
                         denseGradient);
             }
         }
 
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), stepCovInv);
+        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
         final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(stepCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, initialChol);
+                KalmanLikelihoodEngine.cholesky(initialCovInv);
+        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - currentMean[i];
         }
-        KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, stateDiff, dLogL_df);
+        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
-            denseGradient[i] += dLogL_df[i];
+            denseGradient[i] += initialMeanAdjoint[i];
         }
 
         return BlockDiagonalFormulaSupport.projectMeanGradient(
@@ -150,38 +146,34 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             final double[][] transitionMatrix = trajectory.transitionMatrices[t];
             final double[] transitionOffset = trajectory.transitionOffsets[t];
 
-            KalmanLikelihoodEngine.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
-            for (int i = 0; i < stateDimension; ++i) {
-                meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
-            }
-
-            KalmanLikelihoodEngine.copyMatrix(trajectory.stepCovariances[t], stepCovInv);
-            final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                    KalmanLikelihoodEngine.cholesky(stepCovInv);
-            KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-            KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+            branchAdjoints.computeMeanAdjoint(
+                    curr,
+                    next,
+                    transitionMatrix,
+                    transitionOffset,
+                    trajectory.stepCovariances[t]);
 
             if (blockParameterization != null) {
                 scalarGradient += blockParameterization.accumulateScalarMeanGradient(
                         timeGrid.getDelta(t, t + 1),
-                        dLogL_df);
+                        branchAdjoints.dLogL_df());
             } else {
                 scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradient(
                         transitionMatrix,
-                        dLogL_df);
+                        branchAdjoints.dLogL_df());
             }
         }
 
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), stepCovInv);
+        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
         final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(stepCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, initialChol);
+                KalmanLikelihoodEngine.cholesky(initialCovInv);
+        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - meanValue;
         }
-        KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, stateDiff, dLogL_df);
+        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
-            scalarGradient += dLogL_df[i];
+            scalarGradient += initialMeanAdjoint[i];
         }
 
         return new double[]{scalarGradient};

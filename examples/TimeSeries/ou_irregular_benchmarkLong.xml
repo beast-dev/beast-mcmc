@@ -1,0 +1,41 @@
+<?xml version="1.0" standalone="yes"?>
+<beast version="1.10">
+
+    <!--
+        Synthetic OU time-series benchmark matching StanVsBeastOUBenchmarkTest.
+
+        Both cases use a fully irregular grid: T=300 observations gives 299 distinct
+        adjacent intervals. perturbEachIteration="true" alternates a tiny change to
+        the first rho parameter before every timed evaluation, matching the MCMC
+        scenario where A changes and transition caches must be rebuilt.
+
+        Edit warmup and timedIterations here without rebuilding BEAST.
+    -->
+
+    <!-- <ouTimeSeriesBenchmark id="ou.irregular.logL"
+                           mode="logLikelihood"
+                           stateDimension="10"
+                           timeCount="300"
+                           timeStep="0.05"
+                           sigmaObs="0.10"
+                           grid="irregular"
+                           warmup="20"
+                           timedIterations="100"
+                           perturbEachIteration="true"
+                           perturbation="1e-9"
+                           perturbIndex="0"/> -->
+
+    <ouTimeSeriesBenchmark id="ou.irregular.gradient"
+                           mode="gradient"
+                           stateDimension="30"
+                           timeCount="300"
+                           timeStep="0.05"
+                           sigmaObs="0.10"
+                           grid="irregular"
+                           warmup="20"
+                           timedIterations="100"
+                           perturbEachIteration="true"
+                           perturbation="1e-9"
+                           perturbIndex="0"/>
+
+</beast>

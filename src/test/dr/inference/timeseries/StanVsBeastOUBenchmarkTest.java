@@ -91,7 +91,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
         System.out.println("Scenario A – fixed A (transition cache pre-built, A does not change):");
         System.out.printf("  %-32s  %12s  %12s  %10s%n",
                 "Operation", "Uniform grid", "Irregular grid", "Slowdown");
-        System.out.println("  " + "-".repeat(70));
+        System.out.println("  " + repeat('-', 70));
         printRow("  log_prob (median ms)",
                 uniformFixed.logLikNanos, irregularFixed.logLikNanos);
         printRow("  fwd+grad (median ms)",
@@ -101,7 +101,7 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
         System.out.println("Scenario B – A changes every call (MCMC: transition cache busted each step):");
         System.out.printf("  %-32s  %12s  %12s  %10s%n",
                 "Operation", "Uniform grid", "Irregular grid", "Slowdown");
-        System.out.println("  " + "-".repeat(70));
+        System.out.println("  " + repeat('-', 70));
         printRow("  log_prob (median ms)",
                 uniformMcmc.logLikNanos, irregularMcmc.logLikNanos);
         printRow("  fwd+grad (median ms)",
@@ -437,5 +437,11 @@ public class StanVsBeastOUBenchmarkTest extends TestCase {
         long max = Long.MIN_VALUE;
         for (final long v : nanos) if (v > max) max = v;
         return max / 1.0e6;
+    }
+
+    private static String repeat(final char value, final int count) {
+        final char[] chars = new char[count];
+        Arrays.fill(chars, value);
+        return new String(chars);
     }
 }

@@ -1,8 +1,10 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
+import dr.inference.timeseries.engine.gaussian.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

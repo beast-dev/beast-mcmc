@@ -1,4 +1,4 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;

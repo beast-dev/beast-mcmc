@@ -2,6 +2,7 @@ package dr.inference.timeseries.engine.gaussian;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.GradientEngine;
+import dr.inference.timeseries.engine.gaussian.formula.GradientFormula;
 
 /**
  * Analytical gradient engine for the linear-Gaussian Kalman path.

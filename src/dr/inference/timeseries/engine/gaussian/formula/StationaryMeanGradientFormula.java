@@ -1,10 +1,13 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
+import dr.inference.timeseries.engine.gaussian.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -113,14 +116,14 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             }
         }
 
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(initialCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
+        final GaussianMatrixOps.CholeskyFactor initialChol =
+                GaussianMatrixOps.cholesky(initialCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - currentMean[i];
         }
-        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
             denseGradient[i] += initialMeanAdjoint[i];
         }
@@ -164,14 +167,14 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
             }
         }
 
-        KalmanLikelihoodEngine.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor initialChol =
-                KalmanLikelihoodEngine.cholesky(initialCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
+        final GaussianMatrixOps.CholeskyFactor initialChol =
+                GaussianMatrixOps.cholesky(initialCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smootherStats[0].smoothedMean[i] - meanValue;
         }
-        KalmanLikelihoodEngine.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
         for (int i = 0; i < stateDimension; ++i) {
             scalarGradient += initialMeanAdjoint[i];
         }

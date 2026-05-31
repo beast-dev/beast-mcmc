@@ -2,6 +2,7 @@ package dr.inference.timeseries.engine.gaussian;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.GradientEngine;
+import dr.inference.timeseries.engine.gaussian.formula.CanonicalGradientFormula;
 
 /**
  * Analytical gradient engine driven by the canonical-form smoother backend.
@@ -21,7 +22,7 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
             throw new IllegalArgumentException("smootherEngine must not be null");
         }
         if (formulas == null || formulas.length == 0) {
-            throw new IllegalArgumentException("at least one GradientFormula must be provided");
+            throw new IllegalArgumentException("at least one CanonicalGradientFormula must be provided");
         }
         this.smootherEngine = smootherEngine;
         this.formulas = formulas.clone();
@@ -54,7 +55,7 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
     public double[] getGradientWrt(final Parameter parameter) {
         if (!supportsGradientWrt(parameter)) {
             throw new IllegalArgumentException(
-                    "No registered GradientFormula supports parameter: " +
+                    "No registered CanonicalGradientFormula supports parameter: " +
                             (parameter == null ? "null" : parameter.getId()));
         }
 

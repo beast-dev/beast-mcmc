@@ -1,4 +1,4 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
@@ -6,6 +6,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSel
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
+import dr.inference.timeseries.engine.gaussian.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 import java.util.Arrays;

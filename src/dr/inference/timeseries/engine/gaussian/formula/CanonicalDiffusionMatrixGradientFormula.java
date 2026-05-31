@@ -1,4 +1,4 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
@@ -9,6 +9,8 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.inference.timeseries.engine.gaussian.CanonicalBranchGradientCache;
+import dr.inference.timeseries.engine.gaussian.CanonicalForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

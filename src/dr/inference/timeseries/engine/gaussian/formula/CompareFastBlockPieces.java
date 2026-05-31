@@ -1,5 +1,9 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
+import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
+import dr.inference.timeseries.engine.gaussian.ForwardTrajectory;
+import dr.inference.timeseries.engine.gaussian.KalmanSmootherEngine;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;

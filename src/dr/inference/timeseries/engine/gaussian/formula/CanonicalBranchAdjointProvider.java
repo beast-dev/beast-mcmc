@@ -1,9 +1,11 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.inference.timeseries.engine.gaussian.CanonicalBranchGradientCache;
+import dr.inference.timeseries.engine.gaussian.CanonicalForwardTrajectory;
 
 /**
  * Branch-local canonical adjoint access with an optional shared cache.

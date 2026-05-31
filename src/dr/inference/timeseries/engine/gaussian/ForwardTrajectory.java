@@ -1,7 +1,7 @@
 package dr.inference.timeseries.engine.gaussian;
 
 /**
- * Package-private snapshot of all quantities produced by the Kalman filter forward pass.
+ * Snapshot of all quantities produced by the moment-form Kalman filter forward pass.
  *
  * <p>Transition arrays ({@code transitionMatrices}, {@code transitionOffsets},
  * {@code stepCovariances}) are indexed by the <em>from</em> step: index {@code t} holds
@@ -10,46 +10,46 @@ package dr.inference.timeseries.engine.gaussian;
  *
  * <p>Predicted and filtered arrays are indexed by absolute time step 0 … T−1.
  */
-final class ForwardTrajectory {
+public final class ForwardTrajectory {
 
-    final int timeCount;
-    final int stateDimension;
+    public final int timeCount;
+    public final int stateDimension;
 
     /** m_{t|t}: filtered posterior mean at each step. */
-    final double[][] filteredMeans;
+    public final double[][] filteredMeans;
 
     /** P_{t|t}: filtered posterior covariance at each step. */
-    final double[][][] filteredCovariances;
+    public final double[][][] filteredCovariances;
 
     /**
      * m_{t|t−1}: one-step-ahead predicted mean at each step.
      * At t = 0 this equals the process initial mean.
      */
-    final double[][] predictedMeans;
+    public final double[][] predictedMeans;
 
     /**
      * P_{t|t−1}: one-step-ahead predicted covariance at each step.
      * At t = 0 this equals the process initial covariance.
      */
-    final double[][][] predictedCovariances;
+    public final double[][][] predictedCovariances;
 
     /**
      * F_t: transition matrix for the step from t to t+1.
      * Length: timeCount − 1.
      */
-    final double[][][] transitionMatrices;
+    public final double[][][] transitionMatrices;
 
     /**
      * f_t: affine transition offset for the step from t to t+1.
      * Length: timeCount − 1.
      */
-    final double[][] transitionOffsets;
+    public final double[][] transitionOffsets;
 
     /**
      * Q_step_t = dt · Q: step noise covariance for the step from t to t+1.
      * Length: timeCount − 1.
      */
-    final double[][][] stepCovariances;
+    public final double[][][] stepCovariances;
 
     ForwardTrajectory(final int timeCount, final int stateDimension) {
         this.timeCount      = timeCount;

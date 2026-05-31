@@ -16,7 +16,7 @@ import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.gaussian.KalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.gaussian.KalmanSmootherEngine;
-import dr.inference.timeseries.engine.gaussian.SelectionMatrixGradientFormula;
+import dr.inference.timeseries.engine.gaussian.formula.SelectionMatrixGradientFormula;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

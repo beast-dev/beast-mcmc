@@ -1,7 +1,10 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
+import dr.inference.timeseries.engine.gaussian.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

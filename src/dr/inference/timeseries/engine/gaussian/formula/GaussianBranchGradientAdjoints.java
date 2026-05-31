@@ -1,4 +1,7 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
+
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
+import dr.inference.timeseries.engine.gaussian.BranchSmootherStats;
 
 /**
  * Reusable branch-local adjoint workspace for expectation-path OU gradients.
@@ -47,16 +50,16 @@ final class GaussianBranchGradientAdjoints {
                  final double[][] stepCovariance) {
         final int d = stateDimension;
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(
+        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(
                 next.smoothedCovariance, curr.smootherGain, crossCov);
 
-        KalmanLikelihoodEngine.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
+        GaussianMatrixOps.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
         for (int i = 0; i < d; ++i) {
             meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
         }
 
-        KalmanLikelihoodEngine.copyMatrix(crossCov, branchMat);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
+        GaussianMatrixOps.copyMatrix(crossCov, branchMat);
+        GaussianMatrixOps.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 branchMat[i][j] -= tempDxD[i][j];
@@ -64,31 +67,31 @@ final class GaussianBranchGradientAdjoints {
             }
         }
 
-        KalmanLikelihoodEngine.copyMatrix(stepCovariance, stepCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                KalmanLikelihoodEngine.cholesky(stepCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
+        GaussianMatrixOps.copyMatrix(stepCovariance, stepCovInv);
+        final GaussianMatrixOps.CholeskyFactor stepChol =
+                GaussianMatrixOps.cholesky(stepCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
-        KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, branchMat, dLogL_dF);
+        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
 
-        KalmanLikelihoodEngine.copyMatrix(next.smoothedCovariance, residualSecondMoment);
-        KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(transitionMatrix, crossCov, tempDxD);
+        GaussianMatrixOps.copyMatrix(next.smoothedCovariance, residualSecondMoment);
+        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(transitionMatrix, crossCov, tempDxD);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 residualSecondMoment[i][j] -= tempDxD[i][j];
             }
         }
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(crossCov, transitionMatrix, tempDxD);
+        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(crossCov, transitionMatrix, tempDxD);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 residualSecondMoment[i][j] -= tempDxD[i][j];
             }
         }
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
-        KalmanLikelihoodEngine.multiplyMatrixMatrixTransposedRight(tempDxD, transitionMatrix, tempDxD2);
+        GaussianMatrixOps.multiplyMatrixMatrix(transitionMatrix, curr.smoothedCovariance, tempDxD);
+        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(tempDxD, transitionMatrix, tempDxD2);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 residualSecondMoment[i][j] += tempDxD2[i][j];
@@ -96,8 +99,8 @@ final class GaussianBranchGradientAdjoints {
             }
         }
 
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, tempDxD);
-        KalmanLikelihoodEngine.multiplyMatrixMatrix(tempDxD, stepCovInv, dLogL_dV);
+        GaussianMatrixOps.multiplyMatrixMatrix(stepCovInv, residualSecondMoment, tempDxD);
+        GaussianMatrixOps.multiplyMatrixMatrix(tempDxD, stepCovInv, dLogL_dV);
         for (int i = 0; i < d; ++i) {
             for (int j = 0; j < d; ++j) {
                 dLogL_dV[i][j] = 0.5 * (dLogL_dV[i][j] - stepCovInv[i][j]);
@@ -112,16 +115,16 @@ final class GaussianBranchGradientAdjoints {
                             final double[][] stepCovariance) {
         final int d = stateDimension;
 
-        KalmanLikelihoodEngine.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
+        GaussianMatrixOps.multiplyMatrixVector(transitionMatrix, curr.smoothedMean, meanResidual);
         for (int i = 0; i < d; ++i) {
             meanResidual[i] = next.smoothedMean[i] - meanResidual[i] - transitionOffset[i];
         }
 
-        KalmanLikelihoodEngine.copyMatrix(stepCovariance, stepCovInv);
-        final KalmanLikelihoodEngine.CholeskyFactor stepChol =
-                KalmanLikelihoodEngine.cholesky(stepCovInv);
-        KalmanLikelihoodEngine.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
-        KalmanLikelihoodEngine.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
+        GaussianMatrixOps.copyMatrix(stepCovariance, stepCovInv);
+        final GaussianMatrixOps.CholeskyFactor stepChol =
+                GaussianMatrixOps.cholesky(stepCovInv);
+        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(stepCovInv, stepChol);
+        GaussianMatrixOps.multiplyMatrixVector(stepCovInv, meanResidual, dLogL_df);
     }
 
     double[][] dLogL_dF() {

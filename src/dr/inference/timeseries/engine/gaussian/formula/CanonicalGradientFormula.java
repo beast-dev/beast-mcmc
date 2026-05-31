@@ -1,7 +1,9 @@
-package dr.inference.timeseries.engine.gaussian;
+package dr.inference.timeseries.engine.gaussian.formula;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.engine.gaussian.CanonicalBranchGradientCache;
+import dr.inference.timeseries.engine.gaussian.CanonicalForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

@@ -151,19 +151,6 @@ final class BlockDiagonalFormulaSupport {
         return new double[]{sum};
     }
 
-    static void accumulateBranchMeanGradient(final double[][] transitionMatrix,
-                                             final double[] dLogL_df,
-                                             final double[] accumulator) {
-        final int d = dLogL_df.length;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
-            }
-            accumulator[j] += sum;
-        }
-    }
-
     static void accumulateBranchMeanGradientFlat(final double[] transitionMatrix,
                                                  final double[] dLogL_df,
                                                  final double[] accumulator) {
@@ -182,20 +169,6 @@ final class BlockDiagonalFormulaSupport {
             }
             accumulator[j] += sum;
         }
-    }
-
-    static double accumulateScalarBranchMeanGradient(final double[][] transitionMatrix,
-                                                     final double[] dLogL_df) {
-        final int d = dLogL_df.length;
-        double accumulator = 0.0;
-        for (int j = 0; j < d; ++j) {
-            double sum = dLogL_df[j];
-            for (int i = 0; i < d; ++i) {
-                sum -= transitionMatrix[i][j] * dLogL_df[i];
-            }
-            accumulator += sum;
-        }
-        return accumulator;
     }
 
     static double accumulateScalarBranchMeanGradientFlat(final double[] transitionMatrix,

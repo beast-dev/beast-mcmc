@@ -61,10 +61,17 @@ final class CanonicalBranchAdjointProvider {
         return localAdjoints;
     }
 
-    double[] transitionMatrix(final int branchIndex,
-                              final CanonicalBranchGradientCache branchGradientCache) {
+    double[] transitionMatrixData(final int branchIndex,
+                                  final CanonicalBranchGradientCache branchGradientCache) {
         return branchGradientCache == null
                 ? transitionWorkspace.transitionMatrix
-                : branchGradientCache.getTransitionMatrix(branchIndex);
+                : branchGradientCache.getTransitionMatrixData();
+    }
+
+    int transitionMatrixOffset(final int branchIndex,
+                               final CanonicalBranchGradientCache branchGradientCache) {
+        return branchGradientCache == null
+                ? 0
+                : branchGradientCache.getTransitionMatrixOffset(branchIndex);
     }
 }

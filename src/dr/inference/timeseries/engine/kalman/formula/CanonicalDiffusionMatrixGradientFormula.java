@@ -1,7 +1,5 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 
 import dr.inference.model.Parameter;
@@ -23,7 +21,6 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
     private final OUProcessModel processModel;
 
     private final CanonicalBranchAdjointProvider branchAdjoints;
-    private final double[][] covarianceAdjointScratch;
     private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
     public CanonicalDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
@@ -53,7 +50,6 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
         this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
         this.branchAdjoints = new CanonicalBranchAdjointProvider(stateDimension);
-        this.covarianceAdjointScratch = new double[stateDimension][stateDimension];
     }
 
     @Override
@@ -99,9 +95,8 @@ public final class CanonicalDiffusionMatrixGradientFormula implements CanonicalG
                         false,
                         gradientAccumulator);
             } else {
-                GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dOmega, covarianceAdjointScratch, d);
-                repr.accumulateDiffusionGradient(
-                        t, t + 1, timeGrid, covarianceAdjointScratch, gradientAccumulator);
+                repr.accumulateDiffusionGradientFlat(
+                        t, t + 1, timeGrid, adjoints.dLogL_dOmega, gradientAccumulator);
             }
         }
 

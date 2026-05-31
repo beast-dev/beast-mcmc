@@ -1,7 +1,5 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 
 import dr.inference.model.MatrixParameter;
@@ -10,6 +8,7 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.engine.kalman.CanonicalBranchGradientCache;
 import dr.inference.timeseries.engine.kalman.CanonicalForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -30,8 +29,11 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
     private final double[] denseGradient;
     private final double[] stateDiff;
     private final double[] initialMeanAdjoint;
-    private final double[][] initialCovInv;
-    private final double[][] smoothedInitialCovariance;
+    private final double[] initialCovInv;
+    private final double[] smoothedInitialCovariance;
+    private final double[] initialCovCholesky;
+    private final double[] initialCovLowerInverse;
+    private final GaussianFormConverter.Workspace momentWorkspace;
     private final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache;
 
     public CanonicalStationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
@@ -73,8 +75,12 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         this.denseGradient = new double[stateDimension];
         this.stateDiff = new double[stateDimension];
         this.initialMeanAdjoint = new double[stateDimension];
-        this.initialCovInv = new double[stateDimension][stateDimension];
-        this.smoothedInitialCovariance = new double[stateDimension][stateDimension];
+        this.initialCovInv = new double[stateDimension * stateDimension];
+        this.smoothedInitialCovariance = new double[stateDimension * stateDimension];
+        this.initialCovCholesky = new double[stateDimension * stateDimension];
+        this.initialCovLowerInverse = new double[stateDimension * stateDimension];
+        this.momentWorkspace = new GaussianFormConverter.Workspace();
+        this.momentWorkspace.ensureDim(stateDimension);
     }
 
     @Override
@@ -132,7 +138,8 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                         denseGradient);
             } else {
                 BlockDiagonalFormulaSupport.accumulateBranchMeanGradientFlat(
-                        branchAdjoints.transitionMatrix(t, branchGradientCache),
+                        branchAdjoints.transitionMatrixData(t, branchGradientCache),
+                        branchAdjoints.transitionMatrixOffset(t, branchGradientCache),
                         adjoints.dLogL_df,
                         denseGradient);
             }
@@ -141,15 +148,14 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         GaussianFormConverter.fillMomentsFromState(
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
-                smoothedInitialCovariance);
-        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final GaussianMatrixOps.CholeskyFactor initialChol =
-                GaussianMatrixOps.cholesky(initialCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+                smoothedInitialCovariance,
+                stateDimension,
+                momentWorkspace);
+        fillInitialCovarianceInverse();
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - currentMean[i];
         }
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        MatrixOps.matVec(initialCovInv, stateDiff, initialMeanAdjoint, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             denseGradient[i] += initialMeanAdjoint[i];
         }
@@ -179,7 +185,8 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
                         adjoints.dLogL_df);
             } else {
                 scalarGradient += BlockDiagonalFormulaSupport.accumulateScalarBranchMeanGradientFlat(
-                        branchAdjoints.transitionMatrix(t, branchGradientCache),
+                        branchAdjoints.transitionMatrixData(t, branchGradientCache),
+                        branchAdjoints.transitionMatrixOffset(t, branchGradientCache),
                         adjoints.dLogL_df);
             }
         }
@@ -187,21 +194,38 @@ public final class CanonicalStationaryMeanGradientFormula implements CanonicalGr
         GaussianFormConverter.fillMomentsFromState(
                 trajectory.smoothedStates[0],
                 smoothedInitialMean,
-                smoothedInitialCovariance);
-        GaussianMatrixOps.copyMatrix(initialCovarianceParameter.getParameterAsMatrix(), initialCovInv);
-        final GaussianMatrixOps.CholeskyFactor initialChol =
-                GaussianMatrixOps.cholesky(initialCovInv);
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(initialCovInv, initialChol);
+                smoothedInitialCovariance,
+                stateDimension,
+                momentWorkspace);
+        fillInitialCovarianceInverse();
         for (int i = 0; i < stateDimension; ++i) {
             stateDiff[i] = smoothedInitialMean[i] - meanValue;
         }
-        GaussianMatrixOps.multiplyMatrixVector(initialCovInv, stateDiff, initialMeanAdjoint);
+        MatrixOps.matVec(initialCovInv, stateDiff, initialMeanAdjoint, stateDimension);
         for (int i = 0; i < stateDimension; ++i) {
             scalarGradient += initialMeanAdjoint[i];
         }
 
         return new double[]{scalarGradient};
     }
+
+    private void fillInitialCovarianceInverse() {
+        for (int i = 0; i < stateDimension; ++i) {
+            final int rowOffset = i * stateDimension;
+            for (int j = 0; j < stateDimension; ++j) {
+                initialCovInv[rowOffset + j] = initialCovarianceParameter.getParameterValue(i, j);
+            }
+        }
+        if (!MatrixOps.tryCholesky(initialCovInv, initialCovCholesky, stateDimension)) {
+            throw new IllegalArgumentException("Initial covariance is not positive definite");
+        }
+        MatrixOps.invertFromCholesky(
+                initialCovCholesky,
+                initialCovLowerInverse,
+                initialCovInv,
+                stateDimension);
+    }
+
     @Override
     public void makeDirty() {
         if (blockDiagonalGradientCache != null) {

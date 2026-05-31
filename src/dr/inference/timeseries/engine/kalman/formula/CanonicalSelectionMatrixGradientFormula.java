@@ -1,7 +1,5 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
-
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 
@@ -31,8 +29,6 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
     private final OUProcessModel processModel;
 
     private final CanonicalBranchAdjointProvider branchAdjoints;
-    private final double[][] dLogL_dF;
-    private final double[][] dLogL_dV;
     private final double[] nativeCompressedGradientScratch;
     // Row-major flat rotation gradient for CanonicalSelectionGradientProjector.
     private final double[] nativeRotationGradientFlat;
@@ -66,8 +62,6 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         this.blockDiagonalGradientCache = blockDiagonalGradientCache;
 
         this.branchAdjoints = new CanonicalBranchAdjointProvider(stateDimension);
-        this.dLogL_dF = new double[stateDimension][stateDimension];
-        this.dLogL_dV = new double[stateDimension][stateDimension];
         final boolean hasBlock = selectionMatrixParameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter;
         this.nativeCompressedGradientScratch = hasBlock
                 ? new double[((AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter).getCompressedDDimension()]
@@ -117,12 +111,11 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
         for (int t = 0; t < T - 1; ++t) {
             final CanonicalLocalTransitionAdjoints adjoints =
                     branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
-            GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dF, dLogL_dF, d);
-            repr.accumulateSelectionGradient(
-                    t, t + 1, timeGrid, dLogL_dF, adjoints.dLogL_df, gradientAccumulator);
+            repr.accumulateSelectionGradientFlat(
+                    t, t + 1, timeGrid, adjoints.dLogL_dF, adjoints.dLogL_df, gradientAccumulator);
 
-            GaussianMatrixOps.copyFlatToMatrix(adjoints.dLogL_dOmega, dLogL_dV, d);
-            repr.accumulateSelectionGradientFromCovariance(t, t + 1, timeGrid, dLogL_dV, gradientAccumulator);
+            repr.accumulateSelectionGradientFromCovarianceFlat(
+                    t, t + 1, timeGrid, adjoints.dLogL_dOmega, gradientAccumulator);
         }
 
         return gradientAccumulator;

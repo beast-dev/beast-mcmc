@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+
 /**
  * Branch-length API for linear Gaussian transitions.
  *
@@ -16,11 +18,34 @@ public interface GaussianBranchTransitionKernel {
 
     void getInitialCovariance(double[][] out);
 
+    default void getInitialCovarianceFlat(final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        getInitialCovariance(matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
+
     void fillTransitionMatrix(double dt, double[][] out);
+
+    default void fillTransitionMatrixFlat(final double dt,
+                                          final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        fillTransitionMatrix(dt, matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
 
     void fillTransitionOffset(double dt, double[] out);
 
     void fillTransitionCovariance(double dt, double[][] out);
+
+    default void fillTransitionCovarianceFlat(final double dt,
+                                              final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        fillTransitionCovariance(dt, matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
 
     void accumulateSelectionGradient(double dt,
                                      double[][] dLogL_dF,

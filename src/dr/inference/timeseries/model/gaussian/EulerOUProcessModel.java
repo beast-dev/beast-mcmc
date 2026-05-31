@@ -226,6 +226,12 @@ public class EulerOUProcessModel extends AbstractModel
         copyMatrixParameter(initialCovariance, out);
     }
 
+    @Override
+    public void getInitialCovarianceFlat(final double[] out) {
+        checkFlatSquareMatrix(out, stateDimension, "initial covariance");
+        copyMatrixParameterFlat(initialCovariance, out);
+    }
+
     /** F = I − dt·A */
     @Override
     public void fillTransitionMatrix(final double dt, final double[][] out) {
@@ -234,6 +240,18 @@ public class EulerOUProcessModel extends AbstractModel
         for (int i = 0; i < stateDimension; ++i) {
             for (int j = 0; j < stateDimension; ++j) {
                 out[i][j] -= dt * driftMatrix.getParameterValue(i, j);
+            }
+        }
+    }
+
+    @Override
+    public void fillTransitionMatrixFlat(final double dt, final double[] out) {
+        checkFlatSquareMatrix(out, stateDimension, "transition matrix");
+        setIdentityFlat(out, stateDimension);
+        for (int i = 0; i < stateDimension; ++i) {
+            final int rowOffset = i * stateDimension;
+            for (int j = 0; j < stateDimension; ++j) {
+                out[rowOffset + j] -= dt * driftMatrix.getParameterValue(i, j);
             }
         }
     }
@@ -262,6 +280,15 @@ public class EulerOUProcessModel extends AbstractModel
             for (int j = 0; j < stateDimension; ++j) {
                 out[i][j] *= dt;
             }
+        }
+    }
+
+    @Override
+    public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
+        checkFlatSquareMatrix(out, stateDimension, "transition covariance");
+        diffusionMatrixParameterization.fillDiffusionMatrixFlat(out);
+        for (int i = 0; i < out.length; ++i) {
+            out[i] *= dt;
         }
     }
 
@@ -375,11 +402,39 @@ public class EulerOUProcessModel extends AbstractModel
         }
     }
 
+    private static void setIdentityFlat(final double[] matrix, final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                matrix[rowOffset + j] = (i == j) ? 1.0 : 0.0;
+            }
+        }
+    }
+
     private static void copyMatrixParameter(final MatrixParameterInterface parameter, final double[][] out) {
         for (int i = 0; i < out.length; ++i) {
             for (int j = 0; j < out[i].length; ++j) {
                 out[i][j] = parameter.getParameterValue(i, j);
             }
+        }
+    }
+
+    private static void copyMatrixParameterFlat(final MatrixParameterInterface parameter, final double[] out) {
+        final int dimension = parameter.getRowDimension();
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[rowOffset + j] = parameter.getParameterValue(i, j);
+            }
+        }
+    }
+
+    private static void checkFlatSquareMatrix(final double[] matrix,
+                                              final int expectedSize,
+                                              final String label) {
+        if (matrix == null || matrix.length != expectedSize * expectedSize) {
+            throw new IllegalArgumentException(
+                    label + " matrix must have length " + (expectedSize * expectedSize));
         }
     }
 }

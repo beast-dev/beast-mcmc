@@ -60,6 +60,15 @@ final class RepeatedDeltaCanonicalTransitionCache {
         }
     }
 
+    void fillTransitionMatrixFlat(final double dt, final double[] out) {
+        final Entry entry = ensureEntry(dt);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, dt);
+            System.arraycopy(entry.transitionMatrixFlat, 0, out, 0, entry.dimension * entry.dimension);
+        }
+    }
+
     void fillTransitionOffset(final double dt, final double[] out) {
         final Entry entry = ensureEntry(dt);
         synchronized (entry) {
@@ -75,6 +84,15 @@ final class RepeatedDeltaCanonicalTransitionCache {
             ++momentRequests;
             ensureMoments(entry, dt);
             GaussianMatrixOps.copyFlatToMatrix(entry.transitionCovarianceFlat, out, entry.dimension);
+        }
+    }
+
+    void fillTransitionCovarianceFlat(final double dt, final double[] out) {
+        final Entry entry = ensureEntry(dt);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, dt);
+            System.arraycopy(entry.transitionCovarianceFlat, 0, out, 0, entry.dimension * entry.dimension);
         }
     }
 
@@ -207,11 +225,9 @@ final class RepeatedDeltaCanonicalTransitionCache {
                     entry.transitionCovarianceFlat);
         }
         if (!filledPrepared) {
-            kernel.fillTransitionMatrix(dt, entry.transitionMatrix);
+            kernel.fillTransitionMatrixFlat(dt, entry.transitionMatrixFlat);
             kernel.fillTransitionOffset(dt, entry.transitionOffset);
-            kernel.fillTransitionCovariance(dt, entry.transitionCovariance);
-            GaussianMatrixOps.copyMatrixToFlat(entry.transitionMatrix, entry.transitionMatrixFlat, entry.dimension);
-            GaussianMatrixOps.copyMatrixToFlat(entry.transitionCovariance, entry.transitionCovarianceFlat, entry.dimension);
+            kernel.fillTransitionCovarianceFlat(dt, entry.transitionCovarianceFlat);
         }
         entry.momentsValid = true;
         markClean();
@@ -246,8 +262,6 @@ final class RepeatedDeltaCanonicalTransitionCache {
         final double[] transitionMatrixFlat;
         final double[] transitionOffset;
         final double[] transitionCovarianceFlat;
-        final double[][] transitionMatrix;
-        final double[][] transitionCovariance;
         final CanonicalPreparedBranchHandle prepared;
         final ThreadLocal<ThreadPreparedBranch> threadPrepared;
         boolean canonicalValid;
@@ -264,8 +278,6 @@ final class RepeatedDeltaCanonicalTransitionCache {
             this.transitionMatrixFlat = new double[dimension * dimension];
             this.transitionOffset = new double[dimension];
             this.transitionCovarianceFlat = new double[dimension * dimension];
-            this.transitionMatrix = preparedTransition == null ? new double[dimension][dimension] : null;
-            this.transitionCovariance = preparedTransition == null ? new double[dimension][dimension] : null;
             this.prepared = preparedTransition == null ? null : preparedTransition.createPreparedBranchHandle();
             this.threadPrepared = preparedTransition == null
                     ? null

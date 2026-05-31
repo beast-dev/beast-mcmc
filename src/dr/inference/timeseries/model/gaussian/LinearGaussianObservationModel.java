@@ -80,11 +80,32 @@ public class LinearGaussianObservationModel extends AbstractModel implements Obs
         }
     }
 
+    public void fillDesignMatrixFlat(final double[] out,
+                                     final int stateDimension) {
+        checkFlatMatrix(out, observationDimension, stateDimension, "designMatrix output");
+        for (int i = 0; i < observationDimension; ++i) {
+            final int rowOffset = i * stateDimension;
+            for (int j = 0; j < stateDimension; ++j) {
+                out[rowOffset + j] = designMatrix.getParameterValue(i, j);
+            }
+        }
+    }
+
     public void fillNoiseCovariance(final double[][] out) {
         checkRectangularMatrix(out, observationDimension, observationDimension, "noise covariance output");
         for (int i = 0; i < observationDimension; ++i) {
             for (int j = 0; j < observationDimension; ++j) {
                 out[i][j] = noiseCovariance.getParameterValue(i, j);
+            }
+        }
+    }
+
+    public void fillNoiseCovarianceFlat(final double[] out) {
+        checkFlatMatrix(out, observationDimension, observationDimension, "noise covariance output");
+        for (int i = 0; i < observationDimension; ++i) {
+            final int rowOffset = i * observationDimension;
+            for (int j = 0; j < observationDimension; ++j) {
+                out[rowOffset + j] = noiseCovariance.getParameterValue(i, j);
             }
         }
     }
@@ -175,6 +196,16 @@ public class LinearGaussianObservationModel extends AbstractModel implements Obs
             if (row == null || row.length != expectedCols) {
                 throw new IllegalArgumentException(label + " must have " + expectedCols + " columns");
             }
+        }
+    }
+
+    private static void checkFlatMatrix(final double[] matrix,
+                                        final int expectedRows,
+                                        final int expectedCols,
+                                        final String label) {
+        if (matrix == null || matrix.length != expectedRows * expectedCols) {
+            throw new IllegalArgumentException(
+                    label + " must have length " + (expectedRows * expectedCols));
         }
     }
 }

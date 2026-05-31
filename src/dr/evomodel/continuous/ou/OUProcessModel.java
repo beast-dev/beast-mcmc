@@ -262,12 +262,19 @@ public class OUProcessModel extends AbstractModel
     }
 
     @Override
+    public void getInitialCovarianceFlat(final double[] out) {
+        checkFlatSquareMatrix(out, stateDimension, "initial covariance");
+        copyMatrixParameterFlat(initialCovariance, out);
+    }
+
+    @Override
     public void fillTransitionMatrix(final double dt, final double[][] out) {
         final double[] flat = new double[stateDimension * stateDimension];
         canonicalKernel.fillTransitionMatrixFlat(dt, flat);
         copyFlatToMatrix(flat, out, stateDimension);
     }
 
+    @Override
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
         canonicalKernel.fillTransitionMatrixFlat(dt, out);
     }
@@ -295,6 +302,7 @@ public class OUProcessModel extends AbstractModel
         copyFlatToMatrix(flat, out, stateDimension);
     }
 
+    @Override
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
         canonicalKernel.fillTransitionCovarianceFlat(dt, out);
     }
@@ -517,6 +525,13 @@ public class OUProcessModel extends AbstractModel
             if (row == null || row.length != expectedSize) {
                 throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
             }
+        }
+    }
+
+    private static void checkFlatSquareMatrix(final double[] matrix, final int expectedSize, final String label) {
+        if (matrix == null || matrix.length != expectedSize * expectedSize) {
+            throw new IllegalArgumentException(
+                    label + " must have length " + (expectedSize * expectedSize));
         }
     }
 }

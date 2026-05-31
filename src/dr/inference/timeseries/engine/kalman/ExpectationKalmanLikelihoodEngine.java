@@ -1,5 +1,6 @@
 package dr.inference.timeseries.engine.kalman;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
 import dr.inference.timeseries.core.TimeGrid;
@@ -39,24 +40,25 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
     private final double[] predictedMean;
     private final double[] offset;
     private final double[] innovation;
-    private final double[] kalmanGainColumn;
     private final double[] workingVector;
     private final double[] observationVector;
+    private final double[] observationWorkingVector;
 
-    private final double[][] filteredCovariance;
-    private final double[][] predictedCovariance;
-    private final double[][] transitionMatrix;
-    private final double[][] transitionCovariance;
-    private final double[][] initialCovariance;
-    private final double[][] designMatrix;
-    private final double[][] noiseCovariance;
-    private final double[][] innovationCovariance;
-    private final double[][] innovationCovarianceInverse;
-    private final double[][] gainMatrix;
-    private final double[][] tempStateState;
-    private final double[][] tempStateObs;
-    private final double[][] tempObsState;
-    private final double[][] tempObsObs;
+    private final double[] filteredCovariance;
+    private final double[] predictedCovariance;
+    private final double[] transitionMatrix;
+    private final double[] transitionCovariance;
+    private final double[] initialCovariance;
+    private final double[] designMatrix;
+    private final double[] noiseCovariance;
+    private final double[] innovationCovariance;
+    private final double[] innovationCovarianceInverse;
+    private final double[] innovationCholeskyLower;
+    private final double[] innovationLowerInverse;
+    private final double[] gainMatrix;
+    private final double[] tempStateState;
+    private final double[] tempStateObs;
+    private final double[] tempObsState;
 
     private boolean likelihoodKnown;
     private double logLikelihood;
@@ -90,24 +92,25 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
         predictedMean             = new double[stateDimension];
         offset                    = new double[stateDimension];
         innovation                = new double[observationDimension];
-        kalmanGainColumn          = new double[stateDimension];
         workingVector             = new double[stateDimension];
         observationVector         = new double[observationDimension];
+        observationWorkingVector  = new double[observationDimension];
 
-        filteredCovariance        = new double[stateDimension][stateDimension];
-        predictedCovariance       = new double[stateDimension][stateDimension];
-        transitionMatrix          = new double[stateDimension][stateDimension];
-        transitionCovariance      = new double[stateDimension][stateDimension];
-        initialCovariance         = new double[stateDimension][stateDimension];
-        designMatrix              = new double[observationDimension][stateDimension];
-        noiseCovariance           = new double[observationDimension][observationDimension];
-        innovationCovariance      = new double[observationDimension][observationDimension];
-        innovationCovarianceInverse = new double[observationDimension][observationDimension];
-        gainMatrix                = new double[stateDimension][observationDimension];
-        tempStateState            = new double[stateDimension][stateDimension];
-        tempStateObs              = new double[stateDimension][observationDimension];
-        tempObsState              = new double[observationDimension][stateDimension];
-        tempObsObs                = new double[observationDimension][observationDimension];
+        filteredCovariance        = new double[stateDimension * stateDimension];
+        predictedCovariance       = new double[stateDimension * stateDimension];
+        transitionMatrix          = new double[stateDimension * stateDimension];
+        transitionCovariance      = new double[stateDimension * stateDimension];
+        initialCovariance         = new double[stateDimension * stateDimension];
+        designMatrix              = new double[observationDimension * stateDimension];
+        noiseCovariance           = new double[observationDimension * observationDimension];
+        innovationCovariance      = new double[observationDimension * observationDimension];
+        innovationCovarianceInverse = new double[observationDimension * observationDimension];
+        innovationCholeskyLower   = new double[observationDimension * observationDimension];
+        innovationLowerInverse    = new double[observationDimension * observationDimension];
+        gainMatrix                = new double[stateDimension * observationDimension];
+        tempStateState            = new double[stateDimension * stateDimension];
+        tempStateObs              = new double[stateDimension * observationDimension];
+        tempObsState              = new double[observationDimension * stateDimension];
     }
 
     // ─── LikelihoodEngine ───────────────────────────────────────────────────────
@@ -161,11 +164,11 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
      * @return log p(Y | θ) accumulated over all observed steps
      */
     protected double runForwardPass(final ForwardTrajectory trajectoryOut) {
-        observationModel.fillDesignMatrix(designMatrix);
-        observationModel.fillNoiseCovariance(noiseCovariance);
+        observationModel.fillDesignMatrixFlat(designMatrix, stateDimension);
+        observationModel.fillNoiseCovarianceFlat(noiseCovariance);
         transitionRepresentation.getInitialMean(filteredMean);
-        transitionRepresentation.getInitialCovariance(initialCovariance);
-        copyMatrix(initialCovariance, filteredCovariance);
+        transitionRepresentation.getInitialCovarianceFlat(initialCovariance);
+        copyFlatMatrix(initialCovariance, filteredCovariance, stateDimension);
 
         double value = 0.0;
 
@@ -174,67 +177,79 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
             // ── Prediction ──────────────────────────────────────────────────────
             if (timeIndex == 0) {
                 copyVector(filteredMean, predictedMean);
-                copyMatrix(filteredCovariance, predictedCovariance);
+                copyFlatMatrix(filteredCovariance, predictedCovariance, stateDimension);
             } else {
-                transitionRepresentation.getTransitionMatrix(
+                transitionRepresentation.getTransitionMatrixFlat(
                         timeIndex - 1, timeIndex, timeGrid, transitionMatrix);
                 transitionRepresentation.getTransitionOffset(
                         timeIndex - 1, timeIndex, timeGrid, offset);
-                transitionRepresentation.getTransitionCovariance(
+                transitionRepresentation.getTransitionCovarianceFlat(
                         timeIndex - 1, timeIndex, timeGrid, transitionCovariance);
 
-                multiplyMatrixVector(transitionMatrix, filteredMean, predictedMean);
+                MatrixOps.matVec(transitionMatrix, filteredMean, predictedMean, stateDimension);
                 addInPlace(predictedMean, offset);
 
-                multiplyMatrixMatrix(transitionMatrix, filteredCovariance, tempStateState);
-                multiplyMatrixMatrixTransposedRight(tempStateState, transitionMatrix, predictedCovariance);
-                addMatrixInPlace(predictedCovariance, transitionCovariance);
-                symmetrize(predictedCovariance);
+                MatrixOps.matMul(transitionMatrix, filteredCovariance, tempStateState, stateDimension);
+                MatrixOps.matMulTransposedRight(tempStateState, transitionMatrix, predictedCovariance, stateDimension);
+                MatrixOps.addInPlace(predictedCovariance, transitionCovariance, stateDimension * stateDimension);
+                MatrixOps.symmetrize(predictedCovariance, stateDimension);
 
                 if (trajectoryOut != null) {
-                    copyMatrix(transitionMatrix,    trajectoryOut.transitionMatrices[timeIndex - 1]);
+                    MatrixOps.fromFlat(transitionMatrix, trajectoryOut.transitionMatrices[timeIndex - 1], stateDimension);
                     copyVector(offset,              trajectoryOut.transitionOffsets[timeIndex - 1]);
-                    copyMatrix(transitionCovariance, trajectoryOut.stepCovariances[timeIndex - 1]);
+                    MatrixOps.fromFlat(transitionCovariance, trajectoryOut.stepCovariances[timeIndex - 1], stateDimension);
                 }
             }
 
             if (trajectoryOut != null) {
                 copyVector(predictedMean,       trajectoryOut.predictedMeans[timeIndex]);
-                copyMatrix(predictedCovariance, trajectoryOut.predictedCovariances[timeIndex]);
+                MatrixOps.fromFlat(predictedCovariance, trajectoryOut.predictedCovariances[timeIndex], stateDimension);
             }
 
             // ── Update ──────────────────────────────────────────────────────────
             if (observationModel.isObservationMissing(timeIndex)) {
                 copyVector(predictedMean,       filteredMean);
-                copyMatrix(predictedCovariance, filteredCovariance);
+                copyFlatMatrix(predictedCovariance, filteredCovariance, stateDimension);
             } else {
                 observationModel.fillObservationVector(timeIndex, observationVector);
 
-                multiplyMatrixVector(designMatrix, predictedMean, innovation);
+                MatrixOps.matVec(designMatrix, predictedMean, innovation, observationDimension, stateDimension);
                 for (int i = 0; i < observationDimension; ++i) {
                     innovation[i] = observationVector[i] - innovation[i];
                 }
 
-                multiplyMatrixMatrix(designMatrix, predictedCovariance, tempObsState);
-                multiplyMatrixMatrixTransposedRight(tempObsState, designMatrix, innovationCovariance);
-                addMatrixInPlace(innovationCovariance, noiseCovariance);
-                symmetrize(innovationCovariance);
-                addJitterToDiagonal(innovationCovariance, MIN_DIAGONAL_JITTER);
+                MatrixOps.matMul(designMatrix, predictedCovariance, tempObsState,
+                        observationDimension, stateDimension, stateDimension);
+                multiplyFlatTransposedRight(
+                        tempObsState, designMatrix, innovationCovariance,
+                        observationDimension, stateDimension, observationDimension);
+                MatrixOps.addInPlace(innovationCovariance, noiseCovariance,
+                        observationDimension * observationDimension);
+                MatrixOps.symmetrize(innovationCovariance, observationDimension);
+                addJitterToDiagonalFlat(innovationCovariance, observationDimension, MIN_DIAGONAL_JITTER);
 
-                final CholeskyFactor innovationCholesky = cholesky(innovationCovariance);
-                final double logDetInnovation = innovationCholesky.logDeterminant();
-                copyMatrix(innovationCovariance, innovationCovarianceInverse);
-                invertPositiveDefiniteFromCholesky(innovationCovarianceInverse, innovationCholesky);
+                if (!MatrixOps.tryCholesky(
+                        innovationCovariance, innovationCholeskyLower, observationDimension)) {
+                    throw new IllegalArgumentException("Matrix is not positive definite");
+                }
+                final double logDetInnovation = MatrixOps.invertFromCholesky(
+                        innovationCholeskyLower,
+                        innovationLowerInverse,
+                        innovationCovarianceInverse,
+                        observationDimension);
 
                 value += -0.5 * (observationDimension * LOG_TWO_PI
                         + logDetInnovation
-                        + quadraticForm(innovationCovarianceInverse, innovation));
+                        + MatrixOps.quadraticForm(
+                        innovation, innovationCovarianceInverse, observationDimension, observationWorkingVector));
 
-                multiplyMatrixMatrixTransposedRight(predictedCovariance, designMatrix, tempStateObs);
-                multiplyMatrixMatrix(tempStateObs, innovationCovarianceInverse, gainMatrix,
+                multiplyFlatTransposedRight(
+                        predictedCovariance, designMatrix, tempStateObs,
+                        stateDimension, stateDimension, observationDimension);
+                MatrixOps.matMul(tempStateObs, innovationCovarianceInverse, gainMatrix,
                         stateDimension, observationDimension, observationDimension);
 
-                multiplyMatrixVector(gainMatrix, innovation, workingVector, stateDimension, observationDimension);
+                MatrixOps.matVec(gainMatrix, innovation, workingVector, stateDimension, observationDimension);
                 for (int i = 0; i < stateDimension; ++i) {
                     filteredMean[i] = predictedMean[i] + workingVector[i];
                 }
@@ -242,29 +257,81 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
                 // Joseph-stabilised covariance update: P = (I−KH) P (I−KH)^T + K R K^T
                 //
                 // predictedCovariance is no longer needed after the gain computation above,
-                // so it is reused as a [d×d] scratch buffer. This avoids the shape mismatch
-                // that would arise from using tempObsObs ([p×p]) for a [d×d] intermediate.
-                multiplyMatrixMatrix(gainMatrix, designMatrix, tempStateState,
+                // so it is reused as a [d x d] scratch buffer.
+                MatrixOps.matMul(gainMatrix, designMatrix, tempStateState,
                         stateDimension, observationDimension, stateDimension);
-                identityMinus(tempStateState);
-                multiplyMatrixMatrix(tempStateState, predictedCovariance, filteredCovariance,
+                identityMinusFlat(tempStateState, stateDimension);
+                MatrixOps.matMul(tempStateState, predictedCovariance, filteredCovariance,
                         stateDimension, stateDimension, stateDimension);
-                multiplyMatrixMatrixTransposedRight(filteredCovariance, tempStateState, predictedCovariance);
-                copyMatrix(predictedCovariance, filteredCovariance);
-                multiplyMatrixMatrix(gainMatrix, noiseCovariance, tempStateObs,
+                MatrixOps.matMulTransposedRight(filteredCovariance, tempStateState, predictedCovariance, stateDimension);
+                copyFlatMatrix(predictedCovariance, filteredCovariance, stateDimension);
+                MatrixOps.matMul(gainMatrix, noiseCovariance, tempStateObs,
                         stateDimension, observationDimension, observationDimension);
-                multiplyMatrixMatrixTransposedRight(tempStateObs, gainMatrix, tempStateState);
-                addMatrixInPlace(filteredCovariance, tempStateState);
-                symmetrize(filteredCovariance);
+                multiplyFlatTransposedRight(
+                        tempStateObs, gainMatrix, tempStateState,
+                        stateDimension, observationDimension, stateDimension);
+                MatrixOps.addInPlace(filteredCovariance, tempStateState, stateDimension * stateDimension);
+                MatrixOps.symmetrize(filteredCovariance, stateDimension);
             }
 
             if (trajectoryOut != null) {
                 copyVector(filteredMean,       trajectoryOut.filteredMeans[timeIndex]);
-                copyMatrix(filteredCovariance, trajectoryOut.filteredCovariances[timeIndex]);
+                MatrixOps.fromFlat(filteredCovariance, trajectoryOut.filteredCovariances[timeIndex], stateDimension);
             }
         }
 
         return value;
+    }
+
+    private static void copyFlatMatrix(final double[] source,
+                                       final double[] target,
+                                       final int dimension) {
+        System.arraycopy(source, 0, target, 0, dimension * dimension);
+    }
+
+    /**
+     * Computes {@code out = left * right^T} for row-major rectangular matrices.
+     * left is rows x inner, right is cols x inner, and out is rows x cols.
+     */
+    private static void multiplyFlatTransposedRight(final double[] left,
+                                                   final double[] right,
+                                                   final double[] out,
+                                                   final int rows,
+                                                   final int inner,
+                                                   final int cols) {
+        for (int i = 0; i < rows; ++i) {
+            final int leftRowOffset = i * inner;
+            final int outRowOffset = i * cols;
+            for (int j = 0; j < cols; ++j) {
+                final int rightRowOffset = j * inner;
+                double sum = 0.0;
+                for (int k = 0; k < inner; ++k) {
+                    sum += left[leftRowOffset + k] * right[rightRowOffset + k];
+                }
+                out[outRowOffset + j] = sum;
+            }
+        }
+    }
+
+    private static void identityMinusFlat(final double[] matrix,
+                                          final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                matrix[rowOffset + j] = (i == j ? 1.0 : 0.0) - matrix[rowOffset + j];
+            }
+        }
+    }
+
+    private static void addJitterToDiagonalFlat(final double[] matrix,
+                                                final int dimension,
+                                                final double minimumJitter) {
+        for (int i = 0; i < dimension; ++i) {
+            final int index = i * dimension + i;
+            if (matrix[index] < minimumJitter) {
+                matrix[index] = minimumJitter;
+            }
+        }
     }
 
     // ─── Package-private linear-algebra compatibility wrappers ───────────────────

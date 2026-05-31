@@ -54,11 +54,24 @@ public final class KernelBackedGaussianTransitionRepresentation
     }
 
     @Override
+    public void getInitialCovarianceFlat(final double[] out) {
+        kernel.getInitialCovarianceFlat(out);
+    }
+
+    @Override
     public void getTransitionMatrix(final int fromIndex,
                                     final int toIndex,
                                     final TimeGrid timeGrid,
                                     final double[][] out) {
         repeatedDeltaCache.fillTransitionMatrix(validatedDelta(timeGrid, fromIndex, toIndex), out);
+    }
+
+    @Override
+    public void getTransitionMatrixFlat(final int fromIndex,
+                                        final int toIndex,
+                                        final TimeGrid timeGrid,
+                                        final double[] out) {
+        repeatedDeltaCache.fillTransitionMatrixFlat(validatedDelta(timeGrid, fromIndex, toIndex), out);
     }
 
     @Override
@@ -75,6 +88,14 @@ public final class KernelBackedGaussianTransitionRepresentation
                                         final TimeGrid timeGrid,
                                         final double[][] out) {
         repeatedDeltaCache.fillTransitionCovariance(validatedDelta(timeGrid, fromIndex, toIndex), out);
+    }
+
+    @Override
+    public void getTransitionCovarianceFlat(final int fromIndex,
+                                            final int toIndex,
+                                            final TimeGrid timeGrid,
+                                            final double[] out) {
+        repeatedDeltaCache.fillTransitionCovarianceFlat(validatedDelta(timeGrid, fromIndex, toIndex), out);
     }
 
     @Override

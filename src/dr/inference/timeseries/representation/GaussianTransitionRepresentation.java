@@ -1,5 +1,6 @@
 package dr.inference.timeseries.representation;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 
 /**
@@ -27,11 +28,38 @@ public interface GaussianTransitionRepresentation {
 
     void getInitialCovariance(double[][] out);
 
+    default void getInitialCovarianceFlat(final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        getInitialCovariance(matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
+
     void getTransitionMatrix(int fromIndex, int toIndex, TimeGrid timeGrid, double[][] out);
+
+    default void getTransitionMatrixFlat(final int fromIndex,
+                                         final int toIndex,
+                                         final TimeGrid timeGrid,
+                                         final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        getTransitionMatrix(fromIndex, toIndex, timeGrid, matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
 
     void getTransitionOffset(int fromIndex, int toIndex, TimeGrid timeGrid, double[] out);
 
     void getTransitionCovariance(int fromIndex, int toIndex, TimeGrid timeGrid, double[][] out);
+
+    default void getTransitionCovarianceFlat(final int fromIndex,
+                                             final int toIndex,
+                                             final TimeGrid timeGrid,
+                                             final double[] out) {
+        final int dim = getStateDimension();
+        final double[][] matrix = new double[dim][dim];
+        getTransitionCovariance(fromIndex, toIndex, timeGrid, matrix);
+        MatrixOps.toFlat(matrix, out, dim);
+    }
 
     /**
      * Accumulates the chain-rule contribution of branch [fromIndex → toIndex] to the

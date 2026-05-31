@@ -10,7 +10,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit tests for {@link KalmanLikelihoodEngine}.
+ * Unit tests for {@link ExpectationKalmanLikelihoodEngine}.
  * <p>
  * The engine marginalizes over the latent state and computes the log-marginal likelihood of the
  * observations via a Kalman filter forward pass.
@@ -27,7 +27,7 @@ import junit.framework.TestSuite;
  * Analytical reference values are derived for the scalar (1D state, 1D observation) case with
  * zero drift (random walk), identity design matrix, and zero-mean process.
  */
-public class KalmanLikelihoodEngineTest extends TestCase {
+public class ExpectationKalmanLikelihoodEngineTest extends TestCase {
 
     /** Tolerance for exact analytic comparisons. */
     private static final double TOL_EXACT = 1e-10;
@@ -35,7 +35,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
     /** Tolerance for non-exact sanity checks. */
     private static final double TOL_LOOSE = 1e-6;
 
-    public KalmanLikelihoodEngineTest(String name) {
+    public ExpectationKalmanLikelihoodEngineTest(String name) {
         super(name);
     }
 
@@ -66,7 +66,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
      * @param yValues   observations (one per time step; NaN = missing)
      * @param timeStep  uniform time step size
      */
-    private static KalmanLikelihoodEngine makeScalar1DEngine(double drift,
+    private static ExpectationKalmanLikelihoodEngine makeScalar1DEngine(double drift,
                                                               double diffusion,
                                                               double mu0,
                                                               double p0,
@@ -89,7 +89,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, timeStep);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
-        return new KalmanLikelihoodEngine(rep, obs, grid);
+        return new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
     }
 
     // -------------------------------------------------------------------------
@@ -158,14 +158,14 @@ public class KalmanLikelihoodEngineTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public void testCachingReturnsSameValue() {
-        KalmanLikelihoodEngine engine = makeScalar1DEngine(0, 1, 0, 1, 1, new double[]{2.0, -1.0, 0.5}, 1.0);
+        ExpectationKalmanLikelihoodEngine engine = makeScalar1DEngine(0, 1, 0, 1, 1, new double[]{2.0, -1.0, 0.5}, 1.0);
         double first = engine.getLogLikelihood();
         double second = engine.getLogLikelihood();
         assertEquals("Cached call must return identical value", first, second, 0.0);
     }
 
     public void testMakeDirtyForceRecompute() {
-        KalmanLikelihoodEngine engine = makeScalar1DEngine(0, 1, 0, 1, 1, new double[]{0.0}, 1.0);
+        ExpectationKalmanLikelihoodEngine engine = makeScalar1DEngine(0, 1, 0, 1, 1, new double[]{0.0}, 1.0);
         double before = engine.getLogLikelihood();
         engine.makeDirty();
         double after = engine.getLogLikelihood();
@@ -221,7 +221,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 1.0);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
-        KalmanLikelihoodEngine engine = new KalmanLikelihoodEngine(rep, obs, grid);
+        ExpectationKalmanLikelihoodEngine engine = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
 
         double ll = engine.getLogLikelihood();
         assertTrue("2D state LL must be finite", Double.isFinite(ll));
@@ -251,7 +251,7 @@ public class KalmanLikelihoodEngineTest extends TestCase {
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, 0.5);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
-        KalmanLikelihoodEngine engine = new KalmanLikelihoodEngine(rep, obs, grid);
+        ExpectationKalmanLikelihoodEngine engine = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
 
         double ll = engine.getLogLikelihood();
         assertTrue("Full 2D LL must be finite", Double.isFinite(ll));
@@ -275,6 +275,6 @@ public class KalmanLikelihoodEngineTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public static Test suite() {
-        return new TestSuite(KalmanLikelihoodEngineTest.class);
+        return new TestSuite(ExpectationKalmanLikelihoodEngineTest.class);
     }
 }

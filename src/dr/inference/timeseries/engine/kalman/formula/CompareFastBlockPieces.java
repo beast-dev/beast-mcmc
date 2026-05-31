@@ -1,9 +1,9 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
 import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
-import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanSmootherEngine;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
@@ -30,12 +30,12 @@ public class CompareFastBlockPieces {
 
     private static final class Model {
         final OUProcessModel process;
-        final AnalyticalKalmanGradientEngine analytical;
-        final KalmanSmootherEngine smoother;
+        final ExpectationAnalyticalKalmanGradientEngine analytical;
+        final ExpectationKalmanSmootherEngine smoother;
 
         private Model(OUProcessModel process,
-                      AnalyticalKalmanGradientEngine analytical,
-                      KalmanSmootherEngine smoother) {
+                      ExpectationAnalyticalKalmanGradientEngine analytical,
+                      ExpectationKalmanSmootherEngine smoother) {
             this.process = process;
             this.analytical = analytical;
             this.smoother = smoother;
@@ -71,9 +71,9 @@ public class CompareFastBlockPieces {
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
         GaussianTransitionRepresentation rep = new OUTimeSeriesProcessAdapter(process)
                 .getRepresentation(GaussianTransitionRepresentation.class);
-        KalmanSmootherEngine smoother = new KalmanSmootherEngine(rep, obs, grid);
-        AnalyticalKalmanGradientEngine analytical = new AnalyticalKalmanGradientEngine(
-                smoother, new SelectionMatrixGradientFormula(process.getDriftMatrix(), 2));
+        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
+        ExpectationAnalyticalKalmanGradientEngine analytical = new ExpectationAnalyticalKalmanGradientEngine(
+                smoother, new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 2));
         return new Model(process, analytical, smoother);
     }
 
@@ -100,8 +100,8 @@ public class CompareFastBlockPieces {
         final double[] denseTransitionA = new double[d * d];
         final double[] denseCovarianceA = new double[d * d];
 
-        final GaussianBranchGradientAdjoints branchAdjoints =
-                new GaussianBranchGradientAdjoints(d);
+        final ExpectationGaussianBranchGradientAdjoints branchAdjoints =
+                new ExpectationGaussianBranchGradientAdjoints(d);
         final double[] dLogL_dFFlat = new double[d * d];
         final double[] dLogL_dVFlat = new double[d * d];
 

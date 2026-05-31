@@ -14,7 +14,7 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * are supported by encoding an entire observation column as {@link Double#NaN}.
  *
  * <p>The forward pass is factored into {@link #runForwardPass(ForwardTrajectory)} so
- * that subclasses (e.g. {@link KalmanSmootherEngine}) can store the full trajectory
+ * that subclasses (e.g. {@link ExpectationKalmanSmootherEngine}) can store the full trajectory
  * for a subsequent RTS backward pass without duplicating the filter logic. When
  * {@code trajectoryOut} is {@code null} the trajectory is computed but not stored,
  * keeping the base-class path allocation-free.
@@ -22,7 +22,7 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * <p>All static linear-algebra helpers are package-private so that other classes in
  * this package (smoother, gradient formulas) can reuse them without duplication.
  */
-public class KalmanLikelihoodEngine implements LikelihoodEngine {
+public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
 
     static final double LOG_TWO_PI = GaussianMatrixOps.LOG_TWO_PI;
     static final double MIN_DIAGONAL_JITTER = GaussianMatrixOps.MIN_DIAGONAL_JITTER;
@@ -61,7 +61,7 @@ public class KalmanLikelihoodEngine implements LikelihoodEngine {
     private boolean likelihoodKnown;
     private double logLikelihood;
 
-    public KalmanLikelihoodEngine(final GaussianTransitionRepresentation transitionRepresentation,
+    public ExpectationKalmanLikelihoodEngine(final GaussianTransitionRepresentation transitionRepresentation,
                                   final LinearGaussianObservationModel observationModel,
                                   final TimeGrid timeGrid) {
         if (transitionRepresentation == null) {

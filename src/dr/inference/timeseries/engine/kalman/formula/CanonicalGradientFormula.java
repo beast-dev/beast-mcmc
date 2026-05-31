@@ -7,7 +7,7 @@ import dr.inference.timeseries.engine.kalman.CanonicalForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
- * Canonical-path analogue of {@link GradientFormula}.
+ * Canonical-path analogue of {@link ExpectationGradientFormula}.
  */
 public interface CanonicalGradientFormula {
 

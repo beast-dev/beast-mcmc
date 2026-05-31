@@ -61,7 +61,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testOrthogonalBlockCanonicalLocalAdjointsMatchDense_4D"
         };
         for (final String testName : testNames) {
-            suite.addTest(new AnalyticalKalmanGradientEngineTest(testName));
+            suite.addTest(new ExpectationAnalyticalKalmanGradientEngineTest(testName));
         }
     }
 }

@@ -40,7 +40,7 @@ public final class GaussianLikelihoodEngineFactory {
 
         switch (mode) {
             case EXPECTATION:
-                return new KalmanLikelihoodEngine(
+                return new ExpectationKalmanLikelihoodEngine(
                         process.getRepresentation(GaussianTransitionRepresentation.class),
                         observationModel,
                         timeGrid);

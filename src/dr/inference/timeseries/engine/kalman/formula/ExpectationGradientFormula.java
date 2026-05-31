@@ -2,7 +2,7 @@ package dr.inference.timeseries.engine.kalman.formula;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
 import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -27,9 +27,9 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  *
  * <p>Adding gradient support for a new parameter (e.g. diffusion matrix Q or
  * stationary mean μ) requires only a new implementation of this interface; the smoother
- * infrastructure and the {@link AnalyticalKalmanGradientEngine} loop remain unchanged.
+ * infrastructure and the {@link ExpectationAnalyticalKalmanGradientEngine} loop remain unchanged.
  */
-public interface GradientFormula {
+public interface ExpectationGradientFormula {
 
     /**
      * Returns {@code true} if this formula can compute the gradient with respect to

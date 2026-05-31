@@ -8,20 +8,20 @@ import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.engine.DisabledGradientEngine;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalSelectionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.CanonicalAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.CanonicalKalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalStationaryMeanGradientFormula;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalBlockDiagonalGradientCache;
-import dr.inference.timeseries.engine.kalman.formula.DiffusionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.formula.ExpectationDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.GaussianSmootherResults;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
 import dr.inference.timeseries.engine.kalman.GaussianLikelihoodEngineFactory;
-import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
-import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
-import dr.inference.timeseries.engine.kalman.formula.StationaryMeanGradientFormula;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.formula.ExpectationSelectionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.formula.ExpectationStationaryMeanGradientFormula;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
@@ -184,7 +184,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                 process.getRepresentation(GaussianTransitionRepresentation.class);
         switch (smootherMode) {
             case EXPECTATION:
-                return new KalmanSmootherEngine(transitionRepresentation, observationModel, model.getTimeGrid());
+                return new ExpectationKalmanSmootherEngine(transitionRepresentation, observationModel, model.getTimeGrid());
             case CANONICAL:
                 if (!process.supportsRepresentation(CanonicalGaussianBranchTransitionKernel.class)) {
                     throw new IllegalArgumentException(
@@ -219,12 +219,12 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         initialCovariance,
                         stateDimension);
         final GradientFormulaBundle formulas = new GradientFormulaBundle(
-                new SelectionMatrixGradientFormula(driftMatrix, stateDimension),
+                new ExpectationSelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 processModel != null
                         ? new CanonicalSelectionMatrixGradientFormula(
                         processModel, driftMatrix, stateDimension, blockDiagonalGradientCache)
                         : new CanonicalSelectionMatrixGradientFormula(driftMatrix, stateDimension),
-                new StationaryMeanGradientFormula(
+                new ExpectationStationaryMeanGradientFormula(
                         processModel,
                         stationaryMean,
                         initialCovariance,
@@ -235,7 +235,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         initialCovariance,
                         stateDimension,
                         blockDiagonalGradientCache),
-                new DiffusionMatrixGradientFormula(
+                new ExpectationDiffusionMatrixGradientFormula(
                         diffusionParameterization,
                         stateDimension),
                 new CanonicalDiffusionMatrixGradientFormula(
@@ -250,7 +250,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                     formulas.canonicalMean,
                     formulas.canonicalDiffusion);
         }
-        return new AnalyticalKalmanGradientEngine(
+        return new ExpectationAnalyticalKalmanGradientEngine(
                 smoother,
                 formulas.selection,
                 formulas.mean,
@@ -258,18 +258,18 @@ public final class GaussianTimeSeriesLikelihoodFactory {
     }
 
     private static final class GradientFormulaBundle {
-        final SelectionMatrixGradientFormula selection;
+        final ExpectationSelectionMatrixGradientFormula selection;
         final CanonicalSelectionMatrixGradientFormula canonicalSelection;
-        final StationaryMeanGradientFormula mean;
+        final ExpectationStationaryMeanGradientFormula mean;
         final CanonicalStationaryMeanGradientFormula canonicalMean;
-        final DiffusionMatrixGradientFormula diffusion;
+        final ExpectationDiffusionMatrixGradientFormula diffusion;
         final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion;
 
-        GradientFormulaBundle(final SelectionMatrixGradientFormula selection,
+        GradientFormulaBundle(final ExpectationSelectionMatrixGradientFormula selection,
                               final CanonicalSelectionMatrixGradientFormula canonicalSelection,
-                              final StationaryMeanGradientFormula mean,
+                              final ExpectationStationaryMeanGradientFormula mean,
                               final CanonicalStationaryMeanGradientFormula canonicalMean,
-                              final DiffusionMatrixGradientFormula diffusion,
+                              final ExpectationDiffusionMatrixGradientFormula diffusion,
                               final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion) {
             this.selection = selection;
             this.canonicalSelection = canonicalSelection;

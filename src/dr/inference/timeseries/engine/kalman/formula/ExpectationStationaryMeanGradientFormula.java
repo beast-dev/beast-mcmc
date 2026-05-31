@@ -20,27 +20,27 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * </ul>
  * so the total gradient is the sum of branch contributions and the initial-state term.
  */
-public final class StationaryMeanGradientFormula implements GradientFormula {
+public final class ExpectationStationaryMeanGradientFormula implements ExpectationGradientFormula {
 
     private final Parameter stationaryMeanParameter;
     private final MatrixParameter initialCovarianceParameter;
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final GaussianBranchGradientAdjoints branchAdjoints;
+    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
     private final double[][] initialCovInv;
     private final double[] initialMeanAdjoint;
     private final double[] currentMean;
     private final double[] stateDiff;
     private final double[] denseGradient;
 
-    public StationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
+    public ExpectationStationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
                                          final MatrixParameter initialCovarianceParameter,
                                          final int stateDimension) {
         this(null, stationaryMeanParameter, initialCovarianceParameter, stateDimension);
     }
 
-    public StationaryMeanGradientFormula(final OUProcessModel processModel,
+    public ExpectationStationaryMeanGradientFormula(final OUProcessModel processModel,
                                          final Parameter stationaryMeanParameter,
                                          final MatrixParameter initialCovarianceParameter,
                                          final int stateDimension) {
@@ -58,7 +58,7 @@ public final class StationaryMeanGradientFormula implements GradientFormula {
         this.initialCovarianceParameter = initialCovarianceParameter;
         this.stateDimension = stateDimension;
 
-        this.branchAdjoints = new GaussianBranchGradientAdjoints(stateDimension);
+        this.branchAdjoints = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
         this.initialCovInv = new double[stateDimension][stateDimension];
         this.initialMeanAdjoint = new double[stateDimension];
         this.currentMean = new double[stateDimension];

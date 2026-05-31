@@ -11,10 +11,10 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.engine.kalman.AnalyticalKalmanGradientEngine;
-import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
-import dr.inference.timeseries.engine.kalman.KalmanSmootherEngine;
-import dr.inference.timeseries.engine.kalman.formula.SelectionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.formula.ExpectationSelectionMatrixGradientFormula;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -36,12 +36,12 @@ public class BoundarySweepBlockGradientCheck {
 
     private static final class Model {
         final BlockDiagonalPolarStableMatrixParameter drift;
-        final KalmanLikelihoodEngine likelihood;
-        final AnalyticalKalmanGradientEngine analytical;
+        final ExpectationKalmanLikelihoodEngine likelihood;
+        final ExpectationAnalyticalKalmanGradientEngine analytical;
 
         private Model(BlockDiagonalPolarStableMatrixParameter drift,
-                      KalmanLikelihoodEngine likelihood,
-                      AnalyticalKalmanGradientEngine analytical) {
+                      ExpectationKalmanLikelihoodEngine likelihood,
+                      ExpectationAnalyticalKalmanGradientEngine analytical) {
             this.drift = drift;
             this.likelihood = likelihood;
             this.analytical = analytical;
@@ -78,14 +78,14 @@ public class BoundarySweepBlockGradientCheck {
         LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         TimeGrid grid = new UniformTimeGrid(y1.length, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
-        KalmanSmootherEngine smoother = new KalmanSmootherEngine(rep, obs, grid);
-        AnalyticalKalmanGradientEngine analytical = new AnalyticalKalmanGradientEngine(
-                smoother, new SelectionMatrixGradientFormula(process.getDriftMatrix(), 2));
-        KalmanLikelihoodEngine likelihood = new KalmanLikelihoodEngine(rep, obs, grid);
+        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
+        ExpectationAnalyticalKalmanGradientEngine analytical = new ExpectationAnalyticalKalmanGradientEngine(
+                smoother, new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 2));
+        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
         return new Model(drift, likelihood, analytical);
     }
 
-    private static double numericalGradient(KalmanLikelihoodEngine engine,
+    private static double numericalGradient(ExpectationKalmanLikelihoodEngine engine,
                                             Parameter parameter,
                                             int index) {
         double orig = parameter.getParameterValue(index);

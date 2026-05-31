@@ -49,13 +49,13 @@ import java.util.Arrays;
  * One forward + backward smoother pass suffices for all parameter gradients.  This
  * formula contributes O(T · d³) additional work on top of that shared pass.
  */
-public class SelectionMatrixGradientFormula implements GradientFormula {
+public class ExpectationSelectionMatrixGradientFormula implements ExpectationGradientFormula {
 
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
     private final CanonicalSelectionGradientProjector.Workspace blockProjectorWorkspace;
 
-    private final GaussianBranchGradientAdjoints branchAdjoints;
+    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
     private final double[]   dLogL_dFFlat;
     private final double[]   dLogL_dVFlat;
     private final double[]   rotationGradientFlat;
@@ -66,7 +66,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
      *                                 {@link #supportsParameter}
      * @param stateDimension           state-space dimension d
      */
-    public SelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
+    public ExpectationSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
                                           final int stateDimension) {
         if (selectionMatrixParameter == null) {
             throw new IllegalArgumentException("selectionMatrixParameter must not be null");
@@ -82,7 +82,7 @@ public class SelectionMatrixGradientFormula implements GradientFormula {
                         (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter)
                 : null;
 
-        branchAdjoints       = new GaussianBranchGradientAdjoints(stateDimension);
+        branchAdjoints       = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
         dLogL_dFFlat         = new double[stateDimension * stateDimension];
         dLogL_dVFlat         = new double[stateDimension * stateDimension];
         rotationGradientFlat = new double[stateDimension * stateDimension];

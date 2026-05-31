@@ -10,8 +10,8 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.engine.kalman.KalmanGradientEngine;
-import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -20,7 +20,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit tests for {@link KalmanGradientEngine}.
+ * Unit tests for {@link ExpectationKalmanGradientEngine}.
  * <p>
  * The engine uses central-difference numerical differentiation.  Tests verify:
  * <ul>
@@ -30,7 +30,7 @@ import junit.framework.TestSuite;
  *   <li>Analytic gradient values for the simplest 1D scalar case.</li>
  * </ul>
  */
-public class KalmanGradientEngineTest extends TestCase {
+public class ExpectationKalmanGradientEngineTest extends TestCase {
 
     /** Tolerance for comparing with externally-computed finite-difference gradients. */
     private static final double TOL_FD = 1e-5;
@@ -38,7 +38,7 @@ public class KalmanGradientEngineTest extends TestCase {
     /** Tolerance for analytic gradient comparisons. */
     private static final double TOL_ANALYTIC = 1e-6;
 
-    public KalmanGradientEngineTest(String name) {
+    public ExpectationKalmanGradientEngineTest(String name) {
         super(name);
     }
 
@@ -49,13 +49,13 @@ public class KalmanGradientEngineTest extends TestCase {
     private static class Model1D {
         final OUProcessModel process;
         final LinearGaussianObservationModel obs;
-        final KalmanLikelihoodEngine likelihoodEngine;
-        final KalmanGradientEngine gradientEngine;
+        final ExpectationKalmanLikelihoodEngine likelihoodEngine;
+        final ExpectationKalmanGradientEngine gradientEngine;
 
         Model1D(OUProcessModel process,
                 LinearGaussianObservationModel obs,
-                KalmanLikelihoodEngine likelihoodEngine,
-                KalmanGradientEngine gradientEngine) {
+                ExpectationKalmanLikelihoodEngine likelihoodEngine,
+                ExpectationKalmanGradientEngine gradientEngine) {
             this.process = process;
             this.obs = obs;
             this.likelihoodEngine = likelihoodEngine;
@@ -102,8 +102,8 @@ public class KalmanGradientEngineTest extends TestCase {
 
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process, GaussianTransitionRepresentation.class);
-        KalmanLikelihoodEngine likelihoodEngine = new KalmanLikelihoodEngine(rep, obs, grid);
-        KalmanGradientEngine gradientEngine = new KalmanGradientEngine(likelihoodEngine, process, obs);
+        ExpectationKalmanLikelihoodEngine likelihoodEngine = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        ExpectationKalmanGradientEngine gradientEngine = new ExpectationKalmanGradientEngine(likelihoodEngine, process, obs);
 
         return new Model1D(process, obs, likelihoodEngine, gradientEngine);
     }
@@ -313,6 +313,6 @@ public class KalmanGradientEngineTest extends TestCase {
     // -------------------------------------------------------------------------
 
     public static Test suite() {
-        return new TestSuite(KalmanGradientEngineTest.class);
+        return new TestSuite(ExpectationKalmanGradientEngineTest.class);
     }
 }

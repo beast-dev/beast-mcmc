@@ -11,13 +11,13 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * Analytical gradient of the Kalman log-likelihood with respect to the diffusion
  * matrix Q (or native parameters that determine Q).
  */
-public final class DiffusionMatrixGradientFormula implements GradientFormula {
+public final class ExpectationDiffusionMatrixGradientFormula implements ExpectationGradientFormula {
 
     private final DiffusionMatrixParameterization diffusionParameterization;
     private final int stateDimension;
-    private final GaussianBranchGradientAdjoints branchAdjoints;
+    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
 
-    public DiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
+    public ExpectationDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
                                           final int stateDimension) {
         if (diffusionParameterization == null) {
             throw new IllegalArgumentException("diffusionParameterization must not be null");
@@ -27,7 +27,7 @@ public final class DiffusionMatrixGradientFormula implements GradientFormula {
         }
         this.diffusionParameterization = diffusionParameterization;
         this.stateDimension = stateDimension;
-        this.branchAdjoints = new GaussianBranchGradientAdjoints(stateDimension);
+        this.branchAdjoints = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
     }
 
     @Override

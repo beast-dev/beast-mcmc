@@ -10,7 +10,7 @@ import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
  * Gaussian transition derivatives. This helper owns that algebra once and lets
  * the callers decide how to push the adjoints back to model parameters.</p>
  */
-final class GaussianBranchGradientAdjoints {
+final class ExpectationGaussianBranchGradientAdjoints {
 
     private final int stateDimension;
 
@@ -25,7 +25,7 @@ final class GaussianBranchGradientAdjoints {
     private final double[] dLogL_df;
     private final double[][] dLogL_dV;
 
-    GaussianBranchGradientAdjoints(final int stateDimension) {
+    ExpectationGaussianBranchGradientAdjoints(final int stateDimension) {
         if (stateDimension < 1) {
             throw new IllegalArgumentException("stateDimension must be at least 1");
         }

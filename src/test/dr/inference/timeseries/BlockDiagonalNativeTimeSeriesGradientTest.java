@@ -13,7 +13,7 @@ import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
-import dr.inference.timeseries.engine.kalman.KalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -213,7 +213,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(observations.getColumnDimension(), 0.0, dt);
         final GaussianTransitionRepresentation transitionRepresentation =
                 representation(process, GaussianTransitionRepresentation.class);
-        final KalmanLikelihoodEngine likelihoodEngine = new KalmanLikelihoodEngine(
+        final ExpectationKalmanLikelihoodEngine likelihoodEngine = new ExpectationKalmanLikelihoodEngine(
                 transitionRepresentation,
                 observation,
                 grid);
@@ -260,7 +260,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         final LinearGaussianObservationModel observation;
         final TimeGrid grid;
         final GaussianTransitionRepresentation transitionRepresentation;
-        final KalmanLikelihoodEngine likelihoodEngine;
+        final ExpectationKalmanLikelihoodEngine likelihoodEngine;
 
         private GeneralBlockModel(final OUProcessModel process,
                                   final BlockDiagonalPolarStableMatrixParameter block,
@@ -269,7 +269,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
                                   final LinearGaussianObservationModel observation,
                                   final TimeGrid grid,
                                   final GaussianTransitionRepresentation transitionRepresentation,
-                                  final KalmanLikelihoodEngine likelihoodEngine) {
+                                  final ExpectationKalmanLikelihoodEngine likelihoodEngine) {
             this.process = process;
             this.block = block;
             this.diffusion = diffusion;

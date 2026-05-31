@@ -94,6 +94,9 @@ public class AdjointMethods {
             int rhsOffset,
             int stateCount) {
 
+//        System.err.println("time = " + time);
+//        System.err.println("eval all: " + new WrappedVector.Raw(eigenValues));
+
         double sum = 0.0;
         for (int i = 0; i < stateCount; ++i) {
             final double real = eigenValues[i];
@@ -101,6 +104,7 @@ public class AdjointMethods {
             final double expReal = Math.exp(time * real);
 
             if (Math.abs(imag) <= EIGEN_TOLERANCE) {
+//            if (imag == 0.0) {
                 sum += lhs[lhsOffset + i] * expReal * rhs[rhsOffset + i];
             } else {
                 final double c = expReal * Math.cos(time * imag);
@@ -703,7 +707,7 @@ public class AdjointMethods {
         final int M  = matrixCount;
 
         double[] eigenBasisGrad = outRateGradient;
-        Arrays.fill(eigenBasisGrad, 0, S2, 0.0);
+//        Arrays.fill(eigenBasisGrad, 0, S2, 0.0);
 
         for (int m = 0; m < M; m++) {
             final double t = branchLengths[m];

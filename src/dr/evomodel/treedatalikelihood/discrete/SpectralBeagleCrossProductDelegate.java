@@ -41,6 +41,7 @@ import dr.evomodel.treedatalikelihood.preorder.AdjointMethods;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.ComplexBlockKernelUtils;
+import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +73,10 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private final boolean useComplexBlockKernelUtils;
     private int[] postBufferIndices;
     private int[] preBufferIndices;
+    private int[] matrixBufferIndices;
     private double[] branchLengths;
+
+    private static final boolean BEAGLE_OVERRIDE = true;
 
     public SpectralBeagleCrossProductDelegate(String name,
                                               Tree tree,
@@ -135,6 +139,7 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
 
     private int coverWholeTree(int[] postBufferIndices,
                                int[] preBufferIndices,
+                               int[] matrixBufferIndices,
                                double[] branchLengths) {
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
@@ -142,6 +147,7 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
+                matrixBufferIndices[u] = likelihoodDelegate.getEvolutionaryProcessDelegate().getMatrixIndex(nodeNum);
                 branchLengths[u] = getBranchLength(node);
                 u++;
             }
@@ -215,12 +221,22 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             final double[] categoryWeights = siteRateModel.getCategoryProportions();
             final double[] categoryRates   = siteRateModel.getCategoryRates();
 
-            int count = coverWholeTree(postBufferIndices, preBufferIndices, branchLengths);
-            calculateCrossProductDifferentials(0, count,
-                    postBufferIndices, preBufferIndices, ed, ted, branchLengths,
-                    patternWeights, categoryWeights, categoryRates);
+            double[] buffer = new double[first.length];
 
-            rotateIntoOutput(eigenBasisAccum, ed.getEigenVectors(), ed.getInverseEigenVectors(), first, 0);
+            int count = coverWholeTree(postBufferIndices, preBufferIndices, matrixBufferIndices, branchLengths);
+            calculateCrossProductDifferentials(0, count,
+                    postBufferIndices, preBufferIndices, matrixBufferIndices, ed, ted, branchLengths,
+                    patternWeights, categoryWeights, categoryRates, buffer);
+
+//            System.err.println("beagle-output : " + new WrappedVector.Raw(buffer));
+//            System.err.println("java-output   : " + new WrappedVector.Raw(eigenBasisAccum));
+//            System.exit(-1);
+
+            if (BEAGLE_OVERRIDE) {
+                rotateIntoOutput(buffer, ed.getEigenVectors(), ed.getInverseEigenVectors(), first, 0);
+            } else {
+                rotateIntoOutput(eigenBasisAccum, ed.getEigenVectors(), ed.getInverseEigenVectors(), first, 0);
+            }
         } else {
 
             throw new RuntimeException("Not yet implemented");
@@ -248,6 +264,7 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         if (postBufferIndices == null || postBufferIndices.length != branchCount) {
             postBufferIndices = new int[branchCount];
             preBufferIndices = new int[branchCount];
+            matrixBufferIndices = new int[branchCount];
             branchLengths = new double[branchCount];
         }
     }
@@ -256,15 +273,27 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                                                     int end,
                                                     int[] postBufferIndices,
                                                     int[] preBufferIndices,
+                                                    int[] matrixBufferIndices,
                                                     EigenDecomposition ed,
                                                     EigenDecomposition ted,
                                                     double[] branchLengths,
                                                     double[] patternWeights,
                                                     double[] categoryWeights,
-                                                    double[] categoryRates) {
-        for (int i = start; i < end; ++i) {
-            calculateCrossProductDifferentials(postBufferIndices[i], preBufferIndices[i],
-                    ed, ted, branchLengths[i], patternWeights, categoryWeights, categoryRates);
+                                                    double[] categoryRates,
+                                                    double[] first) {
+
+        if (BEAGLE_OVERRIDE) {
+            beagle.calculateAdjointCrossProductDifferentials(
+                    postBufferIndices, preBufferIndices,
+                    matrixBufferIndices,
+                    new int[]{0}, new int[]{0},
+                    branchLengths, branchLengths.length, first, null);
+
+        } else {
+            for (int i = start; i < end; ++i) {
+                calculateCrossProductDifferentials(postBufferIndices[i], preBufferIndices[i],
+                        ed, ted, branchLengths[i], patternWeights, categoryWeights, categoryRates);
+            }
         }
     }
 
@@ -283,6 +312,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         getRotatedPartial(preBufferIndex,
                 ted.getInverseEigenVectors(),
                 preOrderPartials, intermediate);
+
+        // TODO off load this to BEAGLE (after profiling)
 
         final double[] eigenValues = ed.getEigenValues();
         int offset = 0;
@@ -307,10 +338,18 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 }
 
                 final double scale = (wp * wc) / denom;
+
+//                System.err.println("java likelihood - " + denom + " with scale " + scale);
+//                System.err.println("branchLength: " + branchLength);
+
                 accumulateEigenBasisGradient(eigenValues, tc, offset, scale);
                 offset += stateCount;
             }
         }
+
+//        System.err.println("post-order-rotated: " + new WrappedVector.Raw(postOrderPartials));
+//        System.err.println("pre-order-rotated : " + new WrappedVector.Raw(preOrderPartials));
+//        System.err.println("eigen-basis-accum : " + new WrappedVector.Raw(eigenBasisAccum));
     }
 
     private double branchLikelihoodInRotatedBasis(double[] eigenValues,

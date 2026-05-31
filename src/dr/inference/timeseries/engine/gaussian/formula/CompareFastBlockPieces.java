@@ -10,7 +10,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.gaussian.BlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalSelectionMatrixParameterization;
 import dr.inference.timeseries.gaussian.GaussianObservationModel;
 import dr.inference.timeseries.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.OUProcessModel;

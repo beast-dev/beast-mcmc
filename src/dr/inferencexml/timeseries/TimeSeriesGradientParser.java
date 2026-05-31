@@ -1,7 +1,7 @@
 package dr.inferencexml.timeseries;
 
 import dr.inference.model.Parameter;
-import dr.inference.timeseries.beast.TimeSeriesGradient;
+import dr.inference.timeseries.runtime.TimeSeriesGradient;
 import dr.inference.timeseries.likelihood.TimeSeriesGradientSource;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;

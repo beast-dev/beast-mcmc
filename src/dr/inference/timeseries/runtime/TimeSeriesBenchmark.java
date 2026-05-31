@@ -1,4 +1,4 @@
-package dr.inference.timeseries.beast;
+package dr.inference.timeseries.runtime;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;

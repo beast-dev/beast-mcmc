@@ -22,7 +22,7 @@ import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvi
 import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
-import dr.inference.timeseries.beast.TimeSeriesGradient;
+import dr.inference.timeseries.runtime.TimeSeriesGradient;
 import dr.inference.timeseries.engine.gaussian.AnalyticalKalmanGradientEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;

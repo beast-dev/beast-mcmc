@@ -39,7 +39,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionPreloader;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -121,17 +121,11 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 initialCovariance);
         addModel(processModel);
 
-        final CanonicalPreparedTransitionCapability preparedTransition =
-                processModel.getSelectionMatrixParameterization()
-                        instanceof CanonicalPreparedTransitionCapability
-                        ? (CanonicalPreparedTransitionCapability)
-                        processModel.getSelectionMatrixParameterization()
-                        : null;
         this.transitionCache = new CanonicalTransitionCache(
                 dimension,
                 tree.getNodeCount(),
                 processModel,
-                preparedTransition,
+                CanonicalPreparedTransitionSupport.create(processModel),
                 this::getEffectiveBranchLength,
                 CanonicalTransitionCacheOptions.fromSystemProperties());
 

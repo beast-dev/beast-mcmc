@@ -9,8 +9,8 @@ import java.io.IOException;
 
 public final class CanonicalPackageBoundaryTest extends TestCase {
 
-    private static final String ORTHOGONAL_BACKEND_PACKAGE =
-            "dr.evomodel.continuous.ou.orthogonalblockdiagonal";
+    private static final String BLOCK_DIAGONAL_BACKEND_PACKAGE =
+            "dr.evomodel.continuous.ou.blockdiagonal";
     private static final String LEGACY_GAUSSIAN_MATRIX_OPS =
             "dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps";
     private static final String WILDCARD_IMPORT = "wildcard import";
@@ -35,7 +35,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 note.contains("ContinuousTraitGradientForBranch"));
     }
 
-    public void testCanonicalArchitectureNoteLocksOrthogonalBlockPullbackContract() throws IOException {
+    public void testCanonicalArchitectureNoteLocksBlockDiagonalPullbackContract() throws IOException {
         final String note = readFile(new File("docs/canonical-architecture.md"));
         assertTrue("Architecture note must identify the specialized selection pullback path",
                 note.contains("SpecializedCanonicalSelectionGradientPullback"));
@@ -47,13 +47,13 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 note.contains("Do not introduce `double[][]` into canonical gradient internals"));
     }
 
-    public void testCanonicalTreeLayerDoesNotImportOrthogonalBackend() throws IOException {
+    public void testCanonicalTreeLayerDoesNotImportBlockDiagonalBackend() throws IOException {
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
-                ORTHOGONAL_BACKEND_PACKAGE);
+                BLOCK_DIAGONAL_BACKEND_PACKAGE);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
-                ORTHOGONAL_BACKEND_PACKAGE,
+                BLOCK_DIAGONAL_BACKEND_PACKAGE,
                 "OUCanonical");
     }
 
@@ -65,7 +65,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 SYSTEM_PRINT);
         assertNoSourceMatch(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 SYSTEM_PRINT);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
@@ -96,7 +96,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 WILDCARD_IMPORT);
         assertNoSourceMatch(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 WILDCARD_IMPORT);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/hmc"),
@@ -113,7 +113,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
         assertNoImportContaining(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/traversal"),
-                "dr.evomodel.continuous.ou.orthogonalblockdiagonal");
+                BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/message"),
@@ -130,7 +130,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
         assertNoImportContaining(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
-                "dr.evomodel.continuous.ou.orthogonalblockdiagonal");
+                BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
@@ -140,16 +140,16 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 "dr.evomodel.treedatalikelihood.continuous.canonical.traversal");
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
-                "dr.evomodel.continuous.ou.orthogonalblockdiagonal");
+                BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
         assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "dr.evomodel.treedatalikelihood.continuous.canonical.traversal");
         assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "dr.evomodel.treedatalikelihood.continuous.canonical.gradient");
     }
 
@@ -173,7 +173,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 LEGACY_GAUSSIAN_MATRIX_OPS);
         assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 LEGACY_GAUSSIAN_MATRIX_OPS);
     }
 
@@ -201,18 +201,18 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 "double[][]");
     }
 
-    public void testOrthogonalBlockHotPathUsesFillPullbacks() throws IOException {
+    public void testBlockDiagonalHotPathUsesFillPullbacks() throws IOException {
         assertNoSourceMatch(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"),
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "pullBackGradientFlat(");
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/SpecializedCanonicalSelectionGradientPullback.java"),
                 "projectDenseGradient(");
     }
 
-    public void testOrthogonalBlockBackendAllocatesDoubleBuffersOnlyDuringConstruction() throws IOException {
+    public void testBlockDiagonalBackendAllocatesDoubleBuffersOnlyDuringConstruction() throws IOException {
         assertNoMethodLocalDoubleArrayAllocation(
-                new File("src/dr/evomodel/continuous/ou/orthogonalblockdiagonal"));
+                new File("src/dr/evomodel/continuous/ou/blockdiagonal"));
     }
 
     private static void assertNoSourceMatch(final File root,

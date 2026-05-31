@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;

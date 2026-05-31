@@ -4,7 +4,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalCanonicalParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**

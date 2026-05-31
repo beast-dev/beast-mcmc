@@ -5,7 +5,7 @@ import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchGradientAccumulator;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;

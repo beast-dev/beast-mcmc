@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;

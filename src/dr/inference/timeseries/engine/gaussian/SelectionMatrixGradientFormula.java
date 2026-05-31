@@ -5,7 +5,7 @@ import dr.inference.model.Parameter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 import java.util.Arrays;

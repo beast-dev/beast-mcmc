@@ -37,8 +37,8 @@ import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipOb
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchBasis;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockPreparedBranchHandle;
+import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchBasis;
+import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchHandle;
 
 /**
  * Validates canonical OU tree-passer gradients against numerical finite differences.

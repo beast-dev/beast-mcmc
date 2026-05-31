@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;

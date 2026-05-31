@@ -1,8 +1,8 @@
 package dr.inference.timeseries.engine.gaussian;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalCanonicalParameterization;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.BlockDiagonalNativeCanonicalParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.OrthogonalMatrixProvider;

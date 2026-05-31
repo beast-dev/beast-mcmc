@@ -10,7 +10,7 @@ import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
-import dr.evomodel.continuous.ou.orthogonalblockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockDiagonalSelectionMatrixParameterization;
 import org.ejml.data.DenseMatrix64F;
 
 public class CanonicalOrthogonalBlockFrechetExactTest extends ContinuousTraitTest {

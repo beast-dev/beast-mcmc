@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 /**
  * Canonical OU capability exposed by orthogonal block-diagonal selection parametrizations.

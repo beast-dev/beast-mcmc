@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 /**
  * System-property backed switches for dense fallback paths in block-diagonal

@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 /**
  * Opaque public handle for an orthogonal block-diagonal prepared branch basis.

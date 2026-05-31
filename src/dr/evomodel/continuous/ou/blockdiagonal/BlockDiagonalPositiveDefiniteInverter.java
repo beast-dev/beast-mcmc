@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;

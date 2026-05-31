@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.inference.model.BlockDiagonalDecomposition;
 import org.ejml.data.DenseMatrix64F;

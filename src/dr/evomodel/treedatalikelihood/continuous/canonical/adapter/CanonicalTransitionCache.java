@@ -27,10 +27,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
 
-import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
@@ -51,8 +50,7 @@ final class CanonicalTransitionCache {
     private final CanonicalOUKernel kernel;
     private final BranchLengthProvider branchLengthProvider;
     private final CanonicalTransitionCacheEntry[] entries;
-    private final CanonicalPreparedTransitionCapability preparedTransition;
-    private final ThreadLocal<CanonicalBranchWorkspace> specializedWorkspace;
+    private final CanonicalPreparedTransitionSupport preparedTransition;
     private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
     private final CanonicalTransitionCacheEpoch epoch;
@@ -61,7 +59,7 @@ final class CanonicalTransitionCache {
     CanonicalTransitionCache(final int dimension,
                              final int nodeCount,
                              final OUProcessModel processModel,
-                             final CanonicalPreparedTransitionCapability preparedTransition,
+                             final CanonicalPreparedTransitionSupport preparedTransition,
                              final BranchLengthProvider branchLengthProvider,
                              final CanonicalTransitionCacheOptions options) {
         this.dimension = dimension;
@@ -73,10 +71,6 @@ final class CanonicalTransitionCache {
             this.entries[i] = new CanonicalTransitionCacheEntry();
         }
         this.preparedTransition = preparedTransition;
-        this.specializedWorkspace =
-                preparedTransition == null
-                        ? null
-                        : ThreadLocal.withInitial(preparedTransition::createBranchWorkspace);
         this.stationaryMeanScratch = preparedTransition == null ? null : new double[dimension];
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
         this.epoch = new CanonicalTransitionCacheEpoch();
@@ -233,11 +227,7 @@ final class CanonicalTransitionCache {
             preparedTransition.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
             entry.markPreparedBasisCurrent(epoch);
         }
-        preparedTransition.fillCanonicalTransitionPrepared(
-                prepared,
-                processModel.getDiffusionMatrix(),
-                specializedWorkspace.get(),
-                entry.transition);
+        preparedTransition.fillCanonicalTransitionPrepared(prepared, entry.transition);
         return prepared;
     }
 

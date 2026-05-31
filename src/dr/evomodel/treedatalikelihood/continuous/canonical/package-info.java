@@ -29,7 +29,7 @@
  *
  * <p>Tree-layer code in this package must talk to specialized OU backends only
  * through {@code dr.evomodel.continuous.ou.canonical} capability interfaces.
- * Backend implementation packages such as {@code orthogonalblockdiagonal}
+ * Backend implementation packages such as {@code blockdiagonal}
  * remain behind those capabilities.</p>
  */
 package dr.evomodel.treedatalikelihood.continuous.canonical;

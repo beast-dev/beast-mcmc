@@ -23,8 +23,8 @@ would cost more clarity or performance than it saves.
 - `dr.evomodel.continuous.ou.canonical`
   owns the OU kernel contracts and optional backend capability interfaces. It is
   the narrow model/kernel surface consumed by canonical tree code.
-- `dr.evomodel.continuous.ou.orthogonalblockdiagonal`
-  owns the private specialized orthogonal-block backend: basis caching, prepared
+- `dr.evomodel.continuous.ou.blockdiagonal`
+  owns the private specialized block-diagonal backend: basis caching, prepared
   branch data, transition/covariance assembly, and native gradient pullbacks.
 
 Boundary tests in `CanonicalPackageBoundaryTest` enforce the most important
@@ -58,21 +58,23 @@ Parallel canonical branch-gradient preparation and pullback use caller-owned
 workspace. Shared transition/basis data is owned by the transition cache; worker
 loops should only write to worker-local scratch or to child-indexed staging slots.
 
-## Orthogonal-Block Pullbacks
+## Block-Diagonal Pullbacks
 
-The orthogonal-block backend is the only implementation package allowed to know
-about the specialized block structure. Canonical tree gradients interact with it
-through model capability interfaces and caller-owned workspaces. The hot path is:
+The block-diagonal backend is the only implementation package allowed to know
+about the specialized block structure. Orthogonal charts live there as a
+special case of the general `A = R D R^{-1}` pathway. Canonical tree gradients
+interact with the backend through model capability interfaces and caller-owned
+workspaces. The hot path is:
 
 - `CanonicalSelectionGradientPullback` prepares tree-level branch adjoints.
 - `SpecializedCanonicalSelectionGradientPullback` accumulates into reusable
   `SpecializedGradientWorkspace` buffers.
 - `SpecializedCanonicalSelectionParameterization` and
   `CanonicalGradientPackingCapability` expose fill/accumulate APIs only.
-- `orthogonalblockdiagonal` owns prepared branch/basis caches and any private
+- `blockdiagonal` owns prepared branch/basis caches and any private
   EJML or block-specialized scratch.
 
-Orthogonal-block pullbacks should be allocation-free after construction:
+Block-diagonal pullbacks should be allocation-free after construction:
 rotation, compressed-block, native-block, diffusion, and mean gradients all use
 flat row-major `double[]` buffers supplied by the caller or by an explicit
 workspace. Do not introduce `double[][]` into canonical gradient internals, and

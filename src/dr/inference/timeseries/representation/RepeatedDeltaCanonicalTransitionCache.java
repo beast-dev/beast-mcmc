@@ -1,9 +1,8 @@
 package dr.inference.timeseries.representation;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
+import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
@@ -17,9 +16,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
 
     private final GaussianBranchTransitionKernel kernel;
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
-    private final OUProcessModel processModel;
-    private final CanonicalPreparedTransitionCapability preparedTransition;
-    private final ThreadLocal<CanonicalBranchWorkspace> branchWorkspace;
+    private final CanonicalPreparedTransitionSupport preparedTransition;
     private final ThreadLocal<double[]> stationaryMeanScratch;
     private Entry[] entries;
     private int entryCount;
@@ -38,14 +35,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
         this.canonicalKernel = kernel instanceof CanonicalGaussianBranchTransitionKernel
                 ? (CanonicalGaussianBranchTransitionKernel) kernel
                 : null;
-        this.processModel = processModel;
-        this.preparedTransition = processModel != null
-                && processModel.getSelectionMatrixParameterization() instanceof CanonicalPreparedTransitionCapability
-                ? (CanonicalPreparedTransitionCapability) processModel.getSelectionMatrixParameterization()
-                : null;
-        this.branchWorkspace = preparedTransition == null
-                ? null
-                : ThreadLocal.withInitial(preparedTransition::createBranchWorkspace);
+        this.preparedTransition = CanonicalPreparedTransitionSupport.create(processModel);
         this.stationaryMeanScratch = preparedTransition == null
                 ? null
                 : ThreadLocal.withInitial(() -> new double[kernel.getStateDimension()]);
@@ -196,11 +186,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
             canonicalKernel.fillCanonicalTransition(dt, entry.canonicalTransition);
         } else {
             ensurePrepared(entry, dt);
-            preparedTransition.fillCanonicalTransitionPrepared(
-                    entry.prepared,
-                    processModel.getDiffusionMatrix(),
-                    branchWorkspace.get(),
-                    entry.canonicalTransition);
+            preparedTransition.fillCanonicalTransitionPrepared(entry.prepared, entry.canonicalTransition);
         }
         entry.canonicalValid = true;
         markClean();
@@ -216,8 +202,6 @@ final class RepeatedDeltaCanonicalTransitionCache {
             ensurePrepared(entry, dt);
             filledPrepared = preparedTransition.fillTransitionMomentsPreparedFlat(
                     entry.prepared,
-                    processModel.getDiffusionMatrix(),
-                    branchWorkspace.get(),
                     entry.transitionMatrixFlat,
                     entry.transitionOffset,
                     entry.transitionCovarianceFlat);
@@ -273,7 +257,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
 
         Entry(final long dtBits,
               final int dimension,
-              final CanonicalPreparedTransitionCapability preparedTransition) {
+              final CanonicalPreparedTransitionSupport preparedTransition) {
             this.dtBits = dtBits;
             this.dimension = dimension;
             this.canonicalTransition = new CanonicalGaussianTransition(dimension);

@@ -11,4 +11,4 @@
  * capability interfaces exposed by the OU layer. Public callers should not
  * depend on this package as an architectural boundary.</p>
  */
-package dr.evomodel.continuous.ou.orthogonalblockdiagonal;
+package dr.evomodel.continuous.ou.blockdiagonal;

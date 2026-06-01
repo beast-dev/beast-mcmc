@@ -126,12 +126,6 @@ public class BlockDiagonalSelectionMatrixParameterization
     }
 
     @Override
-    public void fillTransitionMatrix(final double dt, final double[][] out) {
-        refreshBasisCaches(dt);
-        copyDenseMatrixToArray(basisCache.transitionMatrix, out);
-    }
-
-    @Override
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
         if (out == null || out.length != getDimension() * getDimension()) {
             throw new IllegalArgumentException(
@@ -139,20 +133,6 @@ public class BlockDiagonalSelectionMatrixParameterization
         }
         refreshBasisCaches(dt);
         MatrixOps.toFlat(basisCache.transitionMatrix, out, getDimension());
-    }
-
-    @Override
-    public void accumulateGradientFromTransition(final double dt,
-                                                 final double[] stationaryMean,
-                                                 final double[][] dLogL_dF,
-                                                 final double[] dLogL_df,
-                                                 final double[] gradientAccumulator) {
-        final int dimension = getDimension();
-        for (int row = 0; row < dimension; ++row) {
-            System.arraycopy(dLogL_dF[row], 0, denseAdjointScratch, row * dimension, dimension);
-        }
-        accumulateGradientFromTransitionFlat(
-                dt, stationaryMean, denseAdjointScratch, dLogL_df, gradientAccumulator);
     }
 
     @Override
@@ -1433,18 +1413,4 @@ public class BlockDiagonalSelectionMatrixParameterization
         return true;
     }
 
-    private void copyDenseMatrixToArray(final DenseMatrix64F matrix, final double[][] out) {
-        final int dimension = getDimension();
-        if (out == null || out.length != dimension) {
-            throw new IllegalArgumentException("transition matrix must have " + dimension + " rows");
-        }
-        final double[] data = matrix.data;
-        for (int i = 0; i < dimension; ++i) {
-            if (out[i] == null || out[i].length != dimension) {
-                throw new IllegalArgumentException("transition matrix row " + i
-                        + " must have length " + dimension);
-            }
-            System.arraycopy(data, i * dimension, out[i], 0, dimension);
-        }
-    }
 }

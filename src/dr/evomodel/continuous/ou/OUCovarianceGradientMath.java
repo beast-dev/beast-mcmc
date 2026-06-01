@@ -1,5 +1,7 @@
 package dr.evomodel.continuous.ou;
 
+import java.util.Arrays;
+
 public final class OUCovarianceGradientMath {
 
     public static final double[] GL5_NODES = {
@@ -16,23 +18,15 @@ public final class OUCovarianceGradientMath {
 
     private OUCovarianceGradientMath() { }
 
-    static void fillSymmetricFromMatrix(final double[][] source,
-                                        final int dim,
-                                        final double[][] out) {
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                out[i][j] = 0.5 * (source[i][j] + source[j][i]);
-            }
-        }
-    }
-
     static void fillSymmetricFromFlat(final double[] source,
                                       final boolean transpose,
                                       final int dim,
-                                      final double[][] out) {
+                                      final double[] out,
+                                      final int outOffset) {
         for (int i = 0; i < dim; ++i) {
+            final int rowOffset = outOffset + i * dim;
             for (int j = 0; j < dim; ++j) {
-                out[i][j] = 0.5 * (
+                out[rowOffset + j] = 0.5 * (
                         flatSquareValue(source, i, j, dim, transpose)
                                 + flatSquareValue(source, j, i, dim, transpose));
             }
@@ -47,70 +41,75 @@ public final class OUCovarianceGradientMath {
         return transpose ? source[col * dim + row] : source[row * dim + col];
     }
 
-    static void clearSquare(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < matrix[i].length; ++j) {
-                matrix[i][j] = 0.0;
-            }
-        }
+    static void clearMatrix(final double[] matrix,
+                            final int offset,
+                            final int length) {
+        Arrays.fill(matrix, offset, offset + length, 0.0);
     }
 
     /** Computes out = expm(-A * t). */
     public static void buildExpmMinusAs(final double t,
-                                        final double[][] a,
+                                        final double[] a,
+                                        final int aOffset,
                                         final int dim,
-                                        final double[][] out,
-                                        final double[][] scaledMinusA) {
+                                        final double[] out,
+                                        final int outOffset,
+                                        final double[] scaledMinusA,
+                                        final int scaledMinusAOffset) {
         for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
             for (int j = 0; j < dim; ++j) {
-                scaledMinusA[i][j] = -t * a[i][j];
+                scaledMinusA[scaledMinusAOffset + rowOffset + j] =
+                        -t * a[aOffset + rowOffset + j];
             }
         }
-        MatrixExponentialUtils.expm(scaledMinusA, out);
+        MatrixExponentialUtils.expmFlat(scaledMinusA, scaledMinusAOffset, out, outOffset, dim);
     }
 
     static void buildVanLoanCovariance(final double t,
-                                       final double[][] a,
-                                       final double[][] q,
+                                       final double[] a,
+                                       final int aOffset,
+                                       final double[] q,
+                                       final int qOffset,
                                        final int dim,
-                                       final double[][] out,
-                                       final double[][] vanLoan,
-                                       final double[][] exp) {
+                                       final double[] out,
+                                       final int outOffset,
+                                       final double[] vanLoan,
+                                       final int vanLoanOffset,
+                                       final double[] exp,
+                                       final int expOffset) {
+        final int twoDim = 2 * dim;
         for (int i = 0; i < dim; ++i) {
+            final int rowOffset = i * dim;
+            final int topRow = vanLoanOffset + i * twoDim;
+            final int bottomRow = vanLoanOffset + (i + dim) * twoDim;
             for (int j = 0; j < dim; ++j) {
-                vanLoan[i][j] = -t * a[i][j];
-                vanLoan[i][j + dim] = t * q[i][j];
-                vanLoan[i + dim][j] = 0.0;
-                vanLoan[i + dim][j + dim] = t * a[j][i];
+                vanLoan[topRow + j] = -t * a[aOffset + rowOffset + j];
+                vanLoan[topRow + j + dim] = t * q[qOffset + rowOffset + j];
+                vanLoan[bottomRow + j] = 0.0;
+                vanLoan[bottomRow + j + dim] = t * a[aOffset + j * dim + i];
             }
         }
-        MatrixExponentialUtils.expm(vanLoan, exp);
+        MatrixExponentialUtils.expmFlat(vanLoan, vanLoanOffset, exp, expOffset, twoDim);
         for (int i = 0; i < dim; ++i) {
+            final int outRow = outOffset + i * dim;
             for (int j = 0; j < dim; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dim; ++k) {
-                    sum += exp[i][k + dim] * exp[j][k];
+                    sum += exp[expOffset + i * twoDim + k + dim]
+                            * exp[expOffset + j * twoDim + k];
                 }
-                out[i][j] = sum;
+                out[outRow + j] = sum;
             }
         }
     }
 
-    static double[][][] allocateMatrixStack(final int count,
-                                            final int rows,
-                                            final int cols) {
-        final double[][][] stack = new double[count][][];
-        for (int i = 0; i < count; ++i) {
-            stack[i] = allocateMatrix(rows, cols);
-        }
-        return stack;
+    static double[] allocateMatrixStack(final int count,
+                                        final int matrixLength) {
+        return new double[count * matrixLength];
     }
 
-    static double[][] allocateMatrix(final int rows, final int cols) {
-        final double[][] matrix = new double[rows][];
-        for (int i = 0; i < rows; ++i) {
-            matrix[i] = new double[cols];
-        }
-        return matrix;
+    static double[] allocateMatrix(final int rows, final int cols) {
+        return new double[rows * cols];
     }
 }

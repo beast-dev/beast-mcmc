@@ -11,8 +11,6 @@ import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.engine.kalman.CanonicalAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.SharedCanonicalTimeSeriesSchedule;
 
-import java.util.List;
-
 /**
  * Top-level BEAST likelihood wrapper for time-series models.
  */
@@ -65,14 +63,6 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
 
     double[] getGradientArrayWrt(final Parameter parameter) {
         return gradientEngine.getGradientWrt(parameter);
-    }
-
-    double[][] getGradientArraysWrt(final List<Parameter> parameters) {
-        final double[][] gradients = new double[parameters.size()][];
-        for (int i = 0; i < parameters.size(); ++i) {
-            gradients[i] = getGradientArrayWrt(parameters.get(i));
-        }
-        return gradients;
     }
 
     SharedCanonicalTimeSeriesSchedule createSharedCanonicalSchedule() {

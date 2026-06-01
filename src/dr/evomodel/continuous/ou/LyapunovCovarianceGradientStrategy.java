@@ -11,63 +11,88 @@ final class LyapunovCovarianceGradientStrategy implements OUCovarianceGradientSt
             };
 
     @Override
-    public void accumulate(final double dt,
-                           final int dimension,
-                           final double[][] selection,
-                           final double[][] diffusion,
-                           final double[][] covarianceAdjoint,
-                           final double[] gradientAccumulator) {
-        final OUCovarianceGradientWorkspace workspace = workspace(dimension);
-        final double[][] gSym = workspace.squareMatrices[0];
-        OUCovarianceGradientMath.fillSymmetricFromMatrix(covarianceAdjoint, dimension, gSym);
-        accumulateSymmetric(dt, dimension, selection, diffusion, gSym, workspace, gradientAccumulator);
-    }
-
-    @Override
     public void accumulateFlat(final double dt,
                                final int dimension,
-                               final double[][] selection,
-                               final double[][] diffusion,
+                               final double[] selection,
+                               final double[] diffusion,
                                final double[] covarianceAdjoint,
                                final boolean transposeAdjoint,
                                final double[] gradientAccumulator) {
         final OUCovarianceGradientWorkspace workspace = workspace(dimension);
-        final double[][] gSym = workspace.squareMatrices[0];
-        OUCovarianceGradientMath.fillSymmetricFromFlat(covarianceAdjoint, transposeAdjoint, dimension, gSym);
-        accumulateSymmetric(dt, dimension, selection, diffusion, gSym, workspace, gradientAccumulator);
+        final double[] square = workspace.squareMatrices;
+        final int gSym = workspace.squareOffset(0);
+        OUCovarianceGradientMath.fillSymmetricFromFlat(
+                covarianceAdjoint, transposeAdjoint, dimension, square, gSym);
+        accumulateSymmetric(
+                dt,
+                dimension,
+                selection,
+                0,
+                diffusion,
+                0,
+                square,
+                gSym,
+                workspace,
+                gradientAccumulator);
     }
 
     private void accumulateSymmetric(final double dt,
                                      final int dimension,
-                                     final double[][] selection,
-                                     final double[][] diffusion,
-                                     final double[][] gSym,
+                                     final double[] selection,
+                                     final int selectionOffset,
+                                     final double[] diffusion,
+                                     final int diffusionOffset,
+                                     final double[] gSym,
+                                     final int gSymOffset,
                                      final OUCovarianceGradientWorkspace workspace,
                                      final double[] gradientAccumulator) {
-        final double[][] fRemaining = workspace.squareMatrices[1];
-        final double[][] fRemainingT = workspace.squareMatrices[2];
-        final double[][] psi = workspace.squareMatrices[3];
-        final double[][] tempDxD = workspace.squareMatrices[4];
-        final double[][] vS = workspace.squareMatrices[5];
-        final double[][] expScratch = workspace.squareMatrices[6];
+        final double[] square = workspace.squareMatrices;
+        final double[] block = workspace.blockMatrices;
+        final int fRemaining = workspace.squareOffset(1);
+        final int fRemainingT = workspace.squareOffset(2);
+        final int psi = workspace.squareOffset(3);
+        final int tempDxD = workspace.squareOffset(4);
+        final int vS = workspace.squareOffset(5);
+        final int expScratch = workspace.squareOffset(6);
+        final int vanLoan = workspace.blockOffset(0);
+        final int vanLoanExp = workspace.blockOffset(1);
 
         for (int idx = 0; idx < OUCovarianceGradientMath.GL5_NODES.length; ++idx) {
             final double s = 0.5 * dt * (OUCovarianceGradientMath.GL5_NODES[idx] + 1.0);
             final double scaledWeight = 0.5 * dt * OUCovarianceGradientMath.GL5_WEIGHTS[idx];
 
             OUCovarianceGradientMath.buildExpmMinusAs(
-                    dt - s, selection, dimension, fRemaining, expScratch);
-            MatrixExponentialUtils.transpose(fRemaining, fRemainingT);
-            MatrixExponentialUtils.multiply(fRemainingT, gSym, tempDxD);
-            MatrixExponentialUtils.multiply(tempDxD, fRemaining, psi);
+                    dt - s,
+                    selection,
+                    selectionOffset,
+                    dimension,
+                    square,
+                    fRemaining,
+                    square,
+                    expScratch);
+            MatrixExponentialUtils.transposeFlat(square, fRemaining, square, fRemainingT, dimension);
+            MatrixExponentialUtils.multiplyFlat(square, fRemainingT, gSym, gSymOffset, square, tempDxD, dimension);
+            MatrixExponentialUtils.multiplyFlat(square, tempDxD, square, fRemaining, square, psi, dimension);
             OUCovarianceGradientMath.buildVanLoanCovariance(
-                    s, selection, diffusion, dimension, vS,
-                    workspace.blockMatrices[0], workspace.blockMatrices[1]);
+                    s,
+                    selection,
+                    selectionOffset,
+                    diffusion,
+                    diffusionOffset,
+                    dimension,
+                    square,
+                    vS,
+                    block,
+                    vanLoan,
+                    block,
+                    vanLoanExp);
 
-            MatrixExponentialUtils.multiply(vS, psi, tempDxD);
+            MatrixExponentialUtils.multiplyFlat(square, vS, square, psi, square, tempDxD, dimension);
             for (int i = 0; i < dimension; ++i) {
+                final int rowOffset = i * dimension;
                 for (int j = 0; j < dimension; ++j) {
-                    gradientAccumulator[i * dimension + j] += -2.0 * scaledWeight * tempDxD[i][j];
+                    gradientAccumulator[rowOffset + j] +=
+                            -2.0 * scaledWeight * square[tempDxD + rowOffset + j];
                 }
             }
         }

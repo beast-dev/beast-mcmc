@@ -1,7 +1,6 @@
 package dr.inference.timeseries.engine.kalman;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
@@ -14,8 +13,8 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * <p>This engine marginalizes over the latent state trajectory. Missing observations
  * are supported by encoding an entire observation column as {@link Double#NaN}.
  *
- * <p>The forward pass is factored into {@link #runForwardPass(ForwardTrajectory)} so
- * that subclasses (e.g. {@link ExpectationKalmanSmootherEngine}) can store the full trajectory
+ * <p>The forward pass is factored into {@link #runForwardPass(MomentForwardTrajectory)} so
+ * that subclasses (e.g. {@link MomentKalmanSmootherEngine}) can store the full trajectory
  * for a subsequent RTS backward pass without duplicating the filter logic. When
  * {@code trajectoryOut} is {@code null} the trajectory is computed but not stored,
  * keeping the base-class path allocation-free.
@@ -23,10 +22,10 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * <p>All static linear-algebra helpers are package-private so that other classes in
  * this package (smoother, gradient formulas) can reuse them without duplication.
  */
-public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
+public class MomentKalmanLikelihoodEngine implements LikelihoodEngine {
 
-    static final double LOG_TWO_PI = GaussianMatrixOps.LOG_TWO_PI;
-    static final double MIN_DIAGONAL_JITTER = GaussianMatrixOps.MIN_DIAGONAL_JITTER;
+    static final double LOG_TWO_PI = MatrixOps.LOG_TWO_PI;
+    static final double MIN_DIAGONAL_JITTER = MatrixOps.MIN_DIAGONAL_JITTER;
 
     private final GaussianTransitionRepresentation transitionRepresentation;
     private final LinearGaussianObservationModel observationModel;
@@ -63,7 +62,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
     private boolean likelihoodKnown;
     private double logLikelihood;
 
-    public ExpectationKalmanLikelihoodEngine(final GaussianTransitionRepresentation transitionRepresentation,
+    public MomentKalmanLikelihoodEngine(final GaussianTransitionRepresentation transitionRepresentation,
                                   final LinearGaussianObservationModel observationModel,
                                   final TimeGrid timeGrid) {
         if (transitionRepresentation == null) {
@@ -146,7 +145,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
     // ─── Forward pass ───────────────────────────────────────────────────────────
 
     /**
-     * Hook for subclasses: by default delegates to {@link #runForwardPass(ForwardTrajectory)}
+     * Hook for subclasses: by default delegates to {@link #runForwardPass(MomentForwardTrajectory)}
      * with a null trajectory (no storage overhead).
      */
     protected double computeLogLikelihood() {
@@ -163,7 +162,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
      * @param trajectoryOut destination for the full trajectory, or {@code null} to skip storage
      * @return log p(Y | θ) accumulated over all observed steps
      */
-    protected double runForwardPass(final ForwardTrajectory trajectoryOut) {
+    protected double runForwardPass(final MomentForwardTrajectory trajectoryOut) {
         observationModel.fillDesignMatrixFlat(designMatrix, stateDimension);
         observationModel.fillNoiseCovarianceFlat(noiseCovariance);
         transitionRepresentation.getInitialMean(filteredMean);
@@ -176,7 +175,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
 
             // ── Prediction ──────────────────────────────────────────────────────
             if (timeIndex == 0) {
-                copyVector(filteredMean, predictedMean);
+                MatrixOps.copyVector(filteredMean, predictedMean);
                 copyFlatMatrix(filteredCovariance, predictedCovariance, stateDimension);
             } else {
                 transitionRepresentation.getTransitionMatrixFlat(
@@ -187,7 +186,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
                         timeIndex - 1, timeIndex, timeGrid, transitionCovariance);
 
                 MatrixOps.matVec(transitionMatrix, filteredMean, predictedMean, stateDimension);
-                addInPlace(predictedMean, offset);
+                MatrixOps.addInPlace(predictedMean, offset, stateDimension);
 
                 MatrixOps.matMul(transitionMatrix, filteredCovariance, tempStateState, stateDimension);
                 MatrixOps.matMulTransposedRight(tempStateState, transitionMatrix, predictedCovariance, stateDimension);
@@ -208,7 +207,7 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
 
             // ── Update ──────────────────────────────────────────────────────────
             if (observationModel.isObservationMissing(timeIndex)) {
-                copyVector(predictedMean,       filteredMean);
+                MatrixOps.copyVector(predictedMean, filteredMean);
                 copyFlatMatrix(predictedCovariance, filteredCovariance, stateDimension);
             } else {
                 observationModel.fillObservationVector(timeIndex, observationVector);
@@ -334,109 +333,4 @@ public class ExpectationKalmanLikelihoodEngine implements LikelihoodEngine {
         }
     }
 
-    // ─── Package-private linear-algebra compatibility wrappers ───────────────────
-    // These stay here so existing expectation-form code in this package can keep
-    // compiling while the actual implementations live in GaussianMatrixOps.
-
-    static void multiplyMatrixVector(final double[][] matrix,
-                                     final double[] vector,
-                                     final double[] out) {
-        GaussianMatrixOps.multiplyMatrixVector(matrix, vector, out);
-    }
-
-    static void multiplyMatrixVector(final double[][] matrix,
-                                     final double[] vector,
-                                     final double[] out,
-                                     final int rows,
-                                     final int cols) {
-        GaussianMatrixOps.multiplyMatrixVector(matrix, vector, out, rows, cols);
-    }
-
-    static void multiplyMatrixMatrix(final double[][] left,
-                                     final double[][] right,
-                                     final double[][] out) {
-        GaussianMatrixOps.multiplyMatrixMatrix(left, right, out);
-    }
-
-    static void multiplyMatrixMatrix(final double[][] left,
-                                     final double[][] right,
-                                     final double[][] out,
-                                     final int rows,
-                                     final int inner,
-                                     final int cols) {
-        GaussianMatrixOps.multiplyMatrixMatrix(left, right, out, rows, inner, cols);
-    }
-
-    /** Computes {@code out = left · right^T}. */
-    static void multiplyMatrixMatrixTransposedRight(final double[][] left,
-                                                    final double[][] right,
-                                                    final double[][] out) {
-        GaussianMatrixOps.multiplyMatrixMatrixTransposedRight(left, right, out);
-    }
-
-    static void addMatrixInPlace(final double[][] accumulator, final double[][] increment) {
-        GaussianMatrixOps.addMatrixInPlace(accumulator, increment);
-    }
-
-    static void addInPlace(final double[] accumulator, final double[] increment) {
-        GaussianMatrixOps.addInPlace(accumulator, increment);
-    }
-
-    static void identityMinus(final double[][] matrix) {
-        GaussianMatrixOps.identityMinus(matrix);
-    }
-
-    static void copyVector(final double[] source, final double[] target) {
-        GaussianMatrixOps.copyVector(source, target);
-    }
-
-    static void copyMatrix(final double[][] source, final double[][] target) {
-        GaussianMatrixOps.copyMatrix(source, target);
-    }
-
-    static void copyMatrix(final double[][] source,
-                           final double[][] target,
-                           final int rows,
-                           final int cols) {
-        GaussianMatrixOps.copyMatrix(source, target, rows, cols);
-    }
-
-    static void symmetrize(final double[][] matrix) {
-        GaussianMatrixOps.symmetrize(matrix);
-    }
-
-    static void addJitterToDiagonal(final double[][] matrix, final double minimumJitter) {
-        GaussianMatrixOps.addJitterToDiagonal(matrix, minimumJitter);
-    }
-
-    static double quadraticForm(final double[][] matrix, final double[] vector) {
-        return GaussianMatrixOps.quadraticForm(matrix, vector);
-    }
-
-    static CholeskyFactor cholesky(final double[][] matrix) {
-        return new CholeskyFactor(GaussianMatrixOps.cholesky(matrix));
-    }
-
-    static void invertPositiveDefiniteFromCholesky(final double[][] out,
-                                                   final CholeskyFactor factor) {
-        GaussianMatrixOps.invertPositiveDefiniteFromCholesky(out, factor.delegate);
-    }
-
-    // ─── Cholesky factor ────────────────────────────────────────────────────────
-
-    static final class CholeskyFactor {
-        private final GaussianMatrixOps.CholeskyFactor delegate;
-
-        CholeskyFactor(final GaussianMatrixOps.CholeskyFactor delegate) {
-            this.delegate = delegate;
-        }
-
-        double logDeterminant() {
-            return delegate.logDeterminant();
-        }
-
-        void solveSymmetricSystem(final double[] rhs, final double[] out) {
-            delegate.solveSymmetricSystem(rhs, out);
-        }
-    }
 }

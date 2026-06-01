@@ -12,15 +12,15 @@ import dr.evomodel.continuous.ou.OUProcessModel;
  * It is numerically expensive, but it lets the module run end-to-end immediately while keeping
  * the public architecture stable. It can later be replaced by an analytic backward pass.
  */
-public class ExpectationKalmanGradientEngine implements GradientEngine {
+public class MomentKalmanGradientEngine implements GradientEngine {
 
     private static final double DEFAULT_STEP_SCALE = 1E-6;
     private static final double MINIMUM_STEP = 1E-8;
 
-    private final ExpectationKalmanLikelihoodEngine likelihoodEngine;
+    private final MomentKalmanLikelihoodEngine likelihoodEngine;
     private final Parameter[] supportedParameters;
 
-    public ExpectationKalmanGradientEngine(final ExpectationKalmanLikelihoodEngine likelihoodEngine,
+    public MomentKalmanGradientEngine(final MomentKalmanLikelihoodEngine likelihoodEngine,
                                 final OUProcessModel processModel,
                                 final LinearGaussianObservationModel observationModel) {
         if (likelihoodEngine == null) {
@@ -60,7 +60,7 @@ public class ExpectationKalmanGradientEngine implements GradientEngine {
     @Override
     public double[] getGradientWrt(final Parameter parameter) {
         if (!supportsGradientWrt(parameter)) {
-            throw new IllegalArgumentException("Unsupported parameter for ExpectationKalmanGradientEngine");
+            throw new IllegalArgumentException("Unsupported parameter for MomentKalmanGradientEngine");
         }
 
         final int dimension = parameter.getDimension();

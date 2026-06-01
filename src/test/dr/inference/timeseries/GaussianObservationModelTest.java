@@ -84,9 +84,9 @@ public class GaussianObservationModelTest extends TestCase {
 
     public void testFillDesignMatrixIdentity1D() {
         LinearGaussianObservationModel model = makeScalar1D(1.0, 0.0);
-        double[][] H = new double[1][1];
-        model.fillDesignMatrix(H);
-        assertEquals(1.0, H[0][0], TOL);
+        double[] H = new double[1];
+        model.fillDesignMatrixFlat(H, 1);
+        assertEquals(1.0, H[0], TOL);
     }
 
     public void testFillDesignMatrix2D() {
@@ -95,12 +95,12 @@ public class GaussianObservationModelTest extends TestCase {
         MatrixParameter Y = makeMatrix("Y", new double[][]{{0}, {0}});
         LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
-        double[][] out = new double[2][2];
-        model.fillDesignMatrix(out);
-        assertEquals(2.0, out[0][0], TOL);
-        assertEquals(3.0, out[0][1], TOL);
-        assertEquals(0.0, out[1][0], TOL);
-        assertEquals(1.0, out[1][1], TOL);
+        double[] out = new double[4];
+        model.fillDesignMatrixFlat(out, 2);
+        assertEquals(2.0, out[0], TOL);
+        assertEquals(3.0, out[1], TOL);
+        assertEquals(0.0, out[2], TOL);
+        assertEquals(1.0, out[3], TOL);
     }
 
     // -------------------------------------------------------------------------
@@ -109,9 +109,9 @@ public class GaussianObservationModelTest extends TestCase {
 
     public void testFillNoiseCovarianceScalar() {
         LinearGaussianObservationModel model = makeScalar1D(3.5, 0.0);
-        double[][] R = new double[1][1];
-        model.fillNoiseCovariance(R);
-        assertEquals(3.5, R[0][0], TOL);
+        double[] R = new double[1];
+        model.fillNoiseCovarianceFlat(R);
+        assertEquals(3.5, R[0], TOL);
     }
 
     public void testFillNoiseCovariance2D() {
@@ -120,12 +120,12 @@ public class GaussianObservationModelTest extends TestCase {
         MatrixParameter Y = makeMatrix("Y", new double[][]{{0}, {0}});
         LinearGaussianObservationModel model = new LinearGaussianObservationModel("obs", 2, H, R, Y);
 
-        double[][] out = new double[2][2];
-        model.fillNoiseCovariance(out);
-        assertEquals(2.0, out[0][0], TOL);
-        assertEquals(0.5, out[0][1], TOL);
-        assertEquals(0.5, out[1][0], TOL);
-        assertEquals(3.0, out[1][1], TOL);
+        double[] out = new double[4];
+        model.fillNoiseCovarianceFlat(out);
+        assertEquals(2.0, out[0], TOL);
+        assertEquals(0.5, out[1], TOL);
+        assertEquals(0.5, out[2], TOL);
+        assertEquals(3.0, out[3], TOL);
     }
 
     // -------------------------------------------------------------------------

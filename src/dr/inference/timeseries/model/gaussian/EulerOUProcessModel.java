@@ -53,7 +53,7 @@ public class EulerOUProcessModel extends AbstractModel
                                final Parameter stationaryMean,
                                final MatrixParameter initialCovariance) {
         this(name, stateDimension, driftMatrix, diffusionMatrix,
-                stationaryMean, initialCovariance, GaussianComputationMode.EXPECTATION);
+                stationaryMean, initialCovariance, GaussianComputationMode.MOMENT);
     }
 
     public EulerOUProcessModel(final String name,
@@ -145,15 +145,11 @@ public class EulerOUProcessModel extends AbstractModel
         return (T) this;
     }
 
-    /**
-     * Backward-compatible transition accessor that delegates to the current
-     * representation API.
-     */
-    public void getTransitionMatrix(final int fromIndex,
-                                    final int toIndex,
-                                    final TimeGrid timeGrid,
-                                    final double[][] out) {
-        transitionRepresentation.getTransitionMatrix(fromIndex, toIndex, timeGrid, out);
+    public void getTransitionMatrixFlat(final int fromIndex,
+                                        final int toIndex,
+                                        final TimeGrid timeGrid,
+                                        final double[] out) {
+        transitionRepresentation.getTransitionMatrixFlat(fromIndex, toIndex, timeGrid, out);
     }
 
     /**
@@ -167,38 +163,40 @@ public class EulerOUProcessModel extends AbstractModel
         transitionRepresentation.getTransitionOffset(fromIndex, toIndex, timeGrid, out);
     }
 
-    /**
-     * Backward-compatible transition accessor that delegates to the current
-     * representation API.
-     */
-    public void getTransitionCovariance(final int fromIndex,
-                                        final int toIndex,
-                                        final TimeGrid timeGrid,
-                                        final double[][] out) {
-        transitionRepresentation.getTransitionCovariance(fromIndex, toIndex, timeGrid, out);
+    public void getTransitionCovarianceFlat(final int fromIndex,
+                                            final int toIndex,
+                                            final TimeGrid timeGrid,
+                                            final double[] out) {
+        transitionRepresentation.getTransitionCovarianceFlat(fromIndex, toIndex, timeGrid, out);
     }
 
     @Override
     public void fillInitialCanonicalState(final CanonicalGaussianState out) {
         final double[] mean = new double[stateDimension];
-        final double[][] covariance = new double[stateDimension][stateDimension];
+        final double[] covariance = new double[stateDimension * stateDimension];
+        final GaussianFormConverter.Workspace workspace = new GaussianFormConverter.Workspace();
+        workspace.ensureDim(stateDimension);
         getInitialMean(mean);
-        getInitialCovariance(covariance);
-        GaussianFormConverter.fillStateFromMoments(mean, covariance, out);
+        getInitialCovarianceFlat(covariance);
+        GaussianFormConverter.fillStateFromMoments(mean, covariance, stateDimension, workspace, out);
     }
 
     @Override
     public void fillCanonicalTransition(final double dt, final CanonicalGaussianTransition out) {
-        final double[][] transitionMatrix = new double[stateDimension][stateDimension];
+        final double[] transitionMatrix = new double[stateDimension * stateDimension];
         final double[] transitionOffset = new double[stateDimension];
-        final double[][] transitionCovariance = new double[stateDimension][stateDimension];
-        fillTransitionMatrix(dt, transitionMatrix);
+        final double[] transitionCovariance = new double[stateDimension * stateDimension];
+        final GaussianFormConverter.Workspace workspace = new GaussianFormConverter.Workspace();
+        workspace.ensureDim(stateDimension);
+        fillTransitionMatrixFlat(dt, transitionMatrix);
         fillTransitionOffset(dt, transitionOffset);
-        fillTransitionCovariance(dt, transitionCovariance);
+        fillTransitionCovarianceFlat(dt, transitionCovariance);
         GaussianFormConverter.fillTransitionFromMoments(
                 transitionMatrix,
                 transitionOffset,
                 transitionCovariance,
+                stateDimension,
+                workspace,
                 out);
     }
 
@@ -221,29 +219,12 @@ public class EulerOUProcessModel extends AbstractModel
     }
 
     @Override
-    public void getInitialCovariance(final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "initial covariance");
-        copyMatrixParameter(initialCovariance, out);
-    }
-
-    @Override
     public void getInitialCovarianceFlat(final double[] out) {
         checkFlatSquareMatrix(out, stateDimension, "initial covariance");
         copyMatrixParameterFlat(initialCovariance, out);
     }
 
     /** F = I − dt·A */
-    @Override
-    public void fillTransitionMatrix(final double dt, final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "transition matrix");
-        setIdentity(out);
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                out[i][j] -= dt * driftMatrix.getParameterValue(i, j);
-            }
-        }
-    }
-
     @Override
     public void fillTransitionMatrixFlat(final double dt, final double[] out) {
         checkFlatSquareMatrix(out, stateDimension, "transition matrix");
@@ -273,17 +254,6 @@ public class EulerOUProcessModel extends AbstractModel
 
     /** V = dt·Q */
     @Override
-    public void fillTransitionCovariance(final double dt, final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "transition covariance");
-        diffusionMatrixParameterization.fillDiffusionMatrix(out);
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                out[i][j] *= dt;
-            }
-        }
-    }
-
-    @Override
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
         checkFlatSquareMatrix(out, stateDimension, "transition covariance");
         diffusionMatrixParameterization.fillDiffusionMatrixFlat(out);
@@ -295,21 +265,6 @@ public class EulerOUProcessModel extends AbstractModel
     /**
      * Euler chain rule: ∂logL/∂A_{kl} += dt·(−(∂logL/∂F)_{kl} + (∂logL/∂f)_k·μ_l).
      */
-    @Override
-    public void accumulateSelectionGradient(final double dt,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        final double[] mu = new double[stateDimension];
-        getInitialMean(mu);
-        for (int k = 0; k < stateDimension; ++k) {
-            for (int l = 0; l < stateDimension; ++l) {
-                gradientAccumulator[k * stateDimension + l] +=
-                        dt * (-dLogL_dF[k][l] + dLogL_df[k] * mu[l]);
-            }
-        }
-    }
-
     @Override
     public void accumulateSelectionGradientFlat(final double dt,
                                                 final double[] dLogL_dF,
@@ -331,17 +286,6 @@ public class EulerOUProcessModel extends AbstractModel
                                                               final double[] dLogL_dV,
                                                               final double[] gradientAccumulator) {
         // Euler step covariance V = dt * Q does not depend on the drift matrix A.
-    }
-
-    @Override
-    public void accumulateDiffusionGradient(final double dt,
-                                            final double[][] dLogL_dV,
-                                            final double[] gradientAccumulator) {
-        for (int i = 0; i < stateDimension; ++i) {
-            for (int j = 0; j < stateDimension; ++j) {
-                gradientAccumulator[i * stateDimension + j] += dt * dLogL_dV[i][j];
-            }
-        }
     }
 
     @Override
@@ -411,42 +355,11 @@ public class EulerOUProcessModel extends AbstractModel
         }
     }
 
-    private static void checkSquareMatrix(final double[][] matrix,
-                                          final int expectedSize,
-                                          final String label) {
-        if (matrix == null || matrix.length != expectedSize) {
-            throw new IllegalArgumentException(
-                    label + " matrix must have size " + expectedSize + "x" + expectedSize);
-        }
-        for (double[] row : matrix) {
-            if (row == null || row.length != expectedSize) {
-                throw new IllegalArgumentException(
-                        label + " matrix must have size " + expectedSize + "x" + expectedSize);
-            }
-        }
-    }
-
-    private static void setIdentity(final double[][] matrix) {
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < matrix[i].length; ++j) {
-                matrix[i][j] = (i == j) ? 1.0 : 0.0;
-            }
-        }
-    }
-
     private static void setIdentityFlat(final double[] matrix, final int dimension) {
         for (int i = 0; i < dimension; ++i) {
             final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 matrix[rowOffset + j] = (i == j) ? 1.0 : 0.0;
-            }
-        }
-    }
-
-    private static void copyMatrixParameter(final MatrixParameterInterface parameter, final double[][] out) {
-        for (int i = 0; i < out.length; ++i) {
-            for (int j = 0; j < out[i].length; ++j) {
-                out[i][j] = parameter.getParameterValue(i, j);
             }
         }
     }

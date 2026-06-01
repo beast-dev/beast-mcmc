@@ -22,10 +22,10 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * flag inherited from the base class. Calling {@link #makeDirty()} invalidates both the
  * likelihood and the smoother statistics atomically.
  */
-public class ExpectationKalmanSmootherEngine extends ExpectationKalmanLikelihoodEngine implements GaussianSmootherResults {
+public class MomentKalmanSmootherEngine extends MomentKalmanLikelihoodEngine implements MomentSmootherResults {
 
-    private final ForwardTrajectory trajectory;
-    private final BranchSmootherStats[] smootherStats;
+    private final MomentForwardTrajectory trajectory;
+    private final MomentBranchSmootherStats[] smootherStats;
 
     // Pre-allocated working arrays for the backward pass — reused across calls.
     private final double[] backwardGain;
@@ -38,17 +38,17 @@ public class ExpectationKalmanSmootherEngine extends ExpectationKalmanLikelihood
     private final double[] tempDxD2;
     private final double[]   tempD;
 
-    public ExpectationKalmanSmootherEngine(final GaussianTransitionRepresentation transitionRepresentation,
+    public MomentKalmanSmootherEngine(final GaussianTransitionRepresentation transitionRepresentation,
                                 final LinearGaussianObservationModel observationModel,
                                 final TimeGrid timeGrid) {
         super(transitionRepresentation, observationModel, timeGrid);
         final int d = stateDimension;
         final int T = timeCount;
 
-        trajectory    = new ForwardTrajectory(T, d);
-        smootherStats = new BranchSmootherStats[T];
+        trajectory    = new MomentForwardTrajectory(T, d);
+        smootherStats = new MomentBranchSmootherStats[T];
         for (int t = 0; t < T; ++t) {
-            smootherStats[t] = new BranchSmootherStats(t, d, t < T - 1);
+            smootherStats[t] = new MomentBranchSmootherStats(t, d, t < T - 1);
         }
 
         backwardGain      = new double[d * d];
@@ -68,7 +68,7 @@ public class ExpectationKalmanSmootherEngine extends ExpectationKalmanLikelihood
      * Returns the per-step smoother statistics, triggering a forward + backward pass
      * if the cache is stale. The returned array is owned by this engine — do not modify.
      */
-    public BranchSmootherStats[] getSmootherStats() {
+    public MomentBranchSmootherStats[] getSmootherStats() {
         getLogLikelihood();   // triggers computeLogLikelihood() if dirty
         return smootherStats;
     }
@@ -77,63 +77,50 @@ public class ExpectationKalmanSmootherEngine extends ExpectationKalmanLikelihood
      * Returns the forward-pass trajectory snapshot, triggering a pass if stale.
      * The returned object is owned by this engine — do not modify.
      */
-    public ForwardTrajectory getTrajectory() {
+    public MomentForwardTrajectory getTrajectory() {
         getLogLikelihood();
         return trajectory;
     }
 
-    public double[][] getSmoothedMeans() {
+    public double[] getSmoothedMeansFlat() {
         getLogLikelihood();
-        final double[][] out = new double[timeCount][stateDimension];
+        final double[] out = new double[timeCount * stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            ExpectationKalmanLikelihoodEngine.copyVector(smootherStats[t].smoothedMean, out[t]);
+            System.arraycopy(smootherStats[t].smoothedMean, 0,
+                    out, t * stateDimension, stateDimension);
         }
         return out;
     }
 
-    public double[][][] getSmoothedCovariances() {
+    public double[] getSmoothedCovariancesFlat() {
         getLogLikelihood();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
+        final double[] out = new double[timeCount * stateDimension * stateDimension];
+        final int matrixSize = stateDimension * stateDimension;
         for (int t = 0; t < timeCount; ++t) {
-            MatrixOps.fromFlat(smootherStats[t].smoothedCovariance, out[t], stateDimension);
+            System.arraycopy(smootherStats[t].smoothedCovariance, 0,
+                    out, t * matrixSize, matrixSize);
         }
         return out;
     }
 
-    public double[][] getFilteredMeans() {
+    public double[] getFilteredMeansFlat() {
         getLogLikelihood();
-        final double[][] out = new double[timeCount][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyFilteredMeanTo(t, out[t]);
-        }
-        return out;
+        return trajectory.filteredMeans.clone();
     }
 
-    public double[][][] getFilteredCovariances() {
+    public double[] getFilteredCovariancesFlat() {
         getLogLikelihood();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyFilteredCovarianceTo(t, out[t]);
-        }
-        return out;
+        return trajectory.filteredCovariances.clone();
     }
 
-    public double[][] getPredictedMeans() {
+    public double[] getPredictedMeansFlat() {
         getLogLikelihood();
-        final double[][] out = new double[timeCount][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyPredictedMeanTo(t, out[t]);
-        }
-        return out;
+        return trajectory.predictedMeans.clone();
     }
 
-    public double[][][] getPredictedCovariances() {
+    public double[] getPredictedCovariancesFlat() {
         getLogLikelihood();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyPredictedCovarianceTo(t, out[t]);
-        }
-        return out;
+        return trajectory.predictedCovariances.clone();
     }
 
     // ─── Override: run forward then backward ────────────────────────────────────

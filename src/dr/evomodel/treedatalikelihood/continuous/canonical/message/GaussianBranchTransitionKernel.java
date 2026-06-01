@@ -9,6 +9,9 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
  * transition without introducing time-index or time-grid concepts. It is therefore
  * suitable for both regularly sampled time series and tree likelihoods, where the
  * primitive quantity is simply a branch length {@code dt}.
+ *
+ * <p>The primary methods use row-major flattened matrices. The {@code double[][]}
+ * methods are boundary adapters for older tree-side callers.
  */
 public interface GaussianBranchTransitionKernel {
 
@@ -16,79 +19,49 @@ public interface GaussianBranchTransitionKernel {
 
     void getInitialMean(double[] out);
 
-    void getInitialCovariance(double[][] out);
+    void getInitialCovarianceFlat(double[] out);
 
-    default void getInitialCovarianceFlat(final double[] out) {
+    default void getInitialCovariance(final double[][] out) {
         final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        getInitialCovariance(matrix);
-        MatrixOps.toFlat(matrix, out, dim);
+        final double[] flat = new double[dim * dim];
+        getInitialCovarianceFlat(flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
-    void fillTransitionMatrix(double dt, double[][] out);
+    void fillTransitionMatrixFlat(double dt, double[] out);
 
-    default void fillTransitionMatrixFlat(final double dt,
-                                          final double[] out) {
+    default void fillTransitionMatrix(final double dt, final double[][] out) {
         final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        fillTransitionMatrix(dt, matrix);
-        MatrixOps.toFlat(matrix, out, dim);
+        final double[] flat = new double[dim * dim];
+        fillTransitionMatrixFlat(dt, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
     void fillTransitionOffset(double dt, double[] out);
 
-    void fillTransitionCovariance(double dt, double[][] out);
+    void fillTransitionCovarianceFlat(double dt, double[] out);
 
-    default void fillTransitionCovarianceFlat(final double dt,
-                                              final double[] out) {
+    default void fillTransitionCovariance(final double dt, final double[][] out) {
         final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        fillTransitionCovariance(dt, matrix);
-        MatrixOps.toFlat(matrix, out, dim);
+        final double[] flat = new double[dim * dim];
+        fillTransitionCovarianceFlat(dt, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
-    void accumulateSelectionGradient(double dt,
-                                     double[][] dLogL_dF,
-                                     double[] dLogL_df,
-                                     double[] gradientAccumulator);
-
-    default void accumulateSelectionGradientFlat(final double dt,
-                                                 final double[] dLogL_dF,
-                                                 final double[] dLogL_df,
-                                                 final double[] gradientAccumulator) {
-        final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        MatrixOps.fromFlat(dLogL_dF, matrix, dim);
-        accumulateSelectionGradient(dt, matrix, dLogL_df, gradientAccumulator);
-    }
-
-    default void accumulateSelectionGradientFromCovariance(double dt,
-                                                           double[][] dLogL_dV,
-                                                           double[] gradientAccumulator) {
-        // no-op by default
-    }
+    void accumulateSelectionGradientFlat(double dt,
+                                         double[] dLogL_dF,
+                                         double[] dLogL_df,
+                                         double[] gradientAccumulator);
 
     default void accumulateSelectionGradientFromCovarianceFlat(final double dt,
                                                               final double[] dLogL_dV,
                                                               final double[] gradientAccumulator) {
-        final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
-        accumulateSelectionGradientFromCovariance(dt, matrix, gradientAccumulator);
-    }
-
-    default void accumulateDiffusionGradient(double dt,
-                                             double[][] dLogL_dV,
-                                             double[] gradientAccumulator) {
         // no-op by default
     }
 
     default void accumulateDiffusionGradientFlat(final double dt,
                                                  final double[] dLogL_dV,
                                                  final double[] gradientAccumulator) {
-        final int dim = getStateDimension();
-        final double[][] matrix = new double[dim][dim];
-        MatrixOps.fromFlat(dLogL_dV, matrix, dim);
-        accumulateDiffusionGradient(dt, matrix, gradientAccumulator);
+        // no-op by default
     }
 }

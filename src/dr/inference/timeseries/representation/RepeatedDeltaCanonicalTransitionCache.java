@@ -6,7 +6,6 @@ import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 
 /**
@@ -51,15 +50,6 @@ final class RepeatedDeltaCanonicalTransitionCache {
         }
     }
 
-    void fillTransitionMatrix(final double dt, final double[][] out) {
-        final Entry entry = ensureEntry(dt);
-        synchronized (entry) {
-            ++momentRequests;
-            ensureMoments(entry, dt);
-            GaussianMatrixOps.copyFlatToMatrix(entry.transitionMatrixFlat, out, entry.dimension);
-        }
-    }
-
     void fillTransitionMatrixFlat(final double dt, final double[] out) {
         final Entry entry = ensureEntry(dt);
         synchronized (entry) {
@@ -75,15 +65,6 @@ final class RepeatedDeltaCanonicalTransitionCache {
             ++momentRequests;
             ensureMoments(entry, dt);
             System.arraycopy(entry.transitionOffset, 0, out, 0, entry.dimension);
-        }
-    }
-
-    void fillTransitionCovariance(final double dt, final double[][] out) {
-        final Entry entry = ensureEntry(dt);
-        synchronized (entry) {
-            ++momentRequests;
-            ensureMoments(entry, dt);
-            GaussianMatrixOps.copyFlatToMatrix(entry.transitionCovarianceFlat, out, entry.dimension);
         }
     }
 

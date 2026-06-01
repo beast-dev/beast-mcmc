@@ -6,8 +6,8 @@ import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
-import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
+import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
+import dr.inference.timeseries.engine.kalman.MomentForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -20,14 +20,14 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * </ul>
  * so the total gradient is the sum of branch contributions and the initial-state term.
  */
-public final class ExpectationStationaryMeanGradientFormula implements ExpectationGradientFormula {
+public final class MomentStationaryMeanGradientFormula implements MomentGradientFormula {
 
     private final Parameter stationaryMeanParameter;
     private final MatrixParameter initialCovarianceParameter;
     private final int stateDimension;
     private final OUProcessModel processModel;
 
-    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
+    private final MomentBranchGradientAdjoints branchAdjoints;
     private final double[] initialCovarianceFlat;
     private final double[] initialCovInv;
     private final double[] initialCovCholesky;
@@ -37,13 +37,13 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
     private final double[] stateDiff;
     private final double[] denseGradient;
 
-    public ExpectationStationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
+    public MomentStationaryMeanGradientFormula(final Parameter stationaryMeanParameter,
                                          final MatrixParameter initialCovarianceParameter,
                                          final int stateDimension) {
         this(null, stationaryMeanParameter, initialCovarianceParameter, stateDimension);
     }
 
-    public ExpectationStationaryMeanGradientFormula(final OUProcessModel processModel,
+    public MomentStationaryMeanGradientFormula(final OUProcessModel processModel,
                                          final Parameter stationaryMeanParameter,
                                          final MatrixParameter initialCovarianceParameter,
                                          final int stateDimension) {
@@ -61,7 +61,7 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
         this.initialCovarianceParameter = initialCovarianceParameter;
         this.stateDimension = stateDimension;
 
-        this.branchAdjoints = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
+        this.branchAdjoints = new MomentBranchGradientAdjoints(stateDimension);
         final int matrixSize = stateDimension * stateDimension;
         this.initialCovarianceFlat = new double[matrixSize];
         this.initialCovInv = new double[matrixSize];
@@ -80,8 +80,8 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
 
     @Override
     public double[] computeGradient(final Parameter parameter,
-                                    final BranchSmootherStats[] smootherStats,
-                                    final ForwardTrajectory trajectory,
+                                    final MomentBranchSmootherStats[] smootherStats,
+                                    final MomentForwardTrajectory trajectory,
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
         if (stationaryMeanParameter.getDimension() == 1) {
@@ -98,8 +98,8 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
         final BlockDiagonalCanonicalParameterization blockParameterization =
                 BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
         for (int t = 0; t < timeCount - 1; ++t) {
-            final BranchSmootherStats curr = smootherStats[t];
-            final BranchSmootherStats next = smootherStats[t + 1];
+            final MomentBranchSmootherStats curr = smootherStats[t];
+            final MomentBranchSmootherStats next = smootherStats[t + 1];
             final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
             final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 
@@ -147,8 +147,8 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
                 denseGradient);
     }
 
-    private double[] computeScalarGradient(final BranchSmootherStats[] smootherStats,
-                                           final ForwardTrajectory trajectory,
+    private double[] computeScalarGradient(final MomentBranchSmootherStats[] smootherStats,
+                                           final MomentForwardTrajectory trajectory,
                                            final TimeGrid timeGrid) {
         double scalarGradient = 0.0;
         final double meanValue = stationaryMeanParameter.getParameterValue(0);
@@ -157,8 +157,8 @@ public final class ExpectationStationaryMeanGradientFormula implements Expectati
                 BlockDiagonalFormulaSupport.canonicalParameterization(processModel);
 
         for (int t = 0; t < timeCount - 1; ++t) {
-            final BranchSmootherStats curr = smootherStats[t];
-            final BranchSmootherStats next = smootherStats[t + 1];
+            final MomentBranchSmootherStats curr = smootherStats[t];
+            final MomentBranchSmootherStats next = smootherStats[t + 1];
             final int transitionMatrixOffset = trajectory.branchMatrixOffset(t);
             final int transitionOffsetOffset = trajectory.branchVectorOffset(t);
 

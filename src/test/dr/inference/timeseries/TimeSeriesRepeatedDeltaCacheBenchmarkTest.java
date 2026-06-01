@@ -166,30 +166,30 @@ public class TimeSeriesRepeatedDeltaCacheBenchmarkTest extends TestCase {
         assertEquals("Repeated canonical grid should build one transition", 1L, canonicalStats.canonicalBuilds);
         assertTrue("Repeated canonical grid should hit cache", canonicalStats.canonicalHits() > 0L);
 
-        final OUTimeSeriesProcessAdapter expectationAdapter = new OUTimeSeriesProcessAdapter(process);
-        final List<TimeSeriesLikelihood> expectationLikelihoods = makeLikelihoods(
-                label + ".expectation", expectationAdapter, grid,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
-        final TimedValue serialExpectation = timedSerial(expectationLikelihoods);
-        assertEquals(serialExpectation.value, serialCanonical.value, 1e-7);
+        final OUTimeSeriesProcessAdapter momentAdapter = new OUTimeSeriesProcessAdapter(process);
+        final List<TimeSeriesLikelihood> momentLikelihoods = makeLikelihoods(
+                label + ".moment", momentAdapter, grid,
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
+        final TimedValue serialMoment = timedSerial(momentLikelihoods);
+        assertEquals(serialMoment.value, serialCanonical.value, 1e-7);
 
-        final RepeatedDeltaCacheStatistics expectationStats =
-                ((CachedGaussianTransitionRepresentation) expectationAdapter
+        final RepeatedDeltaCacheStatistics momentStats =
+                ((CachedGaussianTransitionRepresentation) momentAdapter
                         .getRepresentation(GaussianTransitionRepresentation.class)).getCacheStatistics();
-        assertEquals("Repeated expectation grid should have one dt entry", 1, expectationStats.entryCount);
-        assertEquals("Repeated expectation grid should build one moment triple", 1L, expectationStats.momentBuilds);
-        assertTrue("Repeated expectation grid should hit cache", expectationStats.momentHits() > 0L);
+        assertEquals("Repeated moment grid should have one dt entry", 1, momentStats.entryCount);
+        assertEquals("Repeated moment grid should build one moment triple", 1L, momentStats.momentBuilds);
+        assertTrue("Repeated moment grid should hit cache", momentStats.momentHits() > 0L);
 
         System.out.println("timeseries repeated-dt benchmark [" + label + "] serialCanonicalNs="
                 + serialCanonical.elapsedNanos
                 + " parallelCanonicalNs=" + parallelCanonicalValue.elapsedNanos
-                + " serialExpectationNs=" + serialExpectation.elapsedNanos
+                + " serialMomentNs=" + serialMoment.elapsedNanos
                 + " canonicalRequests=" + canonicalStats.canonicalRequests
                 + " canonicalBuilds=" + canonicalStats.canonicalBuilds
-                + " momentRequests=" + expectationStats.momentRequests
-                + " momentBuilds=" + expectationStats.momentBuilds);
+                + " momentRequests=" + momentStats.momentRequests
+                + " momentBuilds=" + momentStats.momentBuilds);
     }
 
     private static List<TimeSeriesLikelihood> makeLikelihoods(final String prefix,

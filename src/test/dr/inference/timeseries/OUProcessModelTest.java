@@ -161,15 +161,15 @@ public class OUProcessModelTest extends TestCase {
         final KernelBackedGaussianTransitionRepresentation representation =
                 new KernelBackedGaussianTransitionRepresentation(kernel);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.5);
-        final double[][] first = new double[1][1];
-        final double[][] second = new double[1][1];
+        final double[] first = new double[1];
+        final double[] second = new double[1];
 
         representation.prepareTimeGrid(grid);
-        representation.getTransitionMatrix(0, 1, grid, first);
-        representation.getTransitionMatrix(1, 2, grid, second);
+        representation.getTransitionMatrixFlat(0, 1, grid, first);
+        representation.getTransitionMatrixFlat(1, 2, grid, second);
 
         assertEquals(1, kernel.transitionMatrixCalls);
-        assertEquals(first[0][0], second[0][0], TOL);
+        assertEquals(first[0], second[0], TOL);
     }
 
     public void testDefaultCovarianceGradientMethodUsesVanLoanForDenseDrift() {
@@ -473,14 +473,14 @@ public class OUProcessModelTest extends TestCase {
         }
 
         @Override
-        public void getInitialCovariance(final double[][] out) {
-            out[0][0] = 1.0;
+        public void getInitialCovarianceFlat(final double[] out) {
+            out[0] = 1.0;
         }
 
         @Override
-        public void fillTransitionMatrix(final double dt, final double[][] out) {
+        public void fillTransitionMatrixFlat(final double dt, final double[] out) {
             ++transitionMatrixCalls;
-            out[0][0] = Math.exp(-dt);
+            out[0] = Math.exp(-dt);
         }
 
         @Override
@@ -489,16 +489,16 @@ public class OUProcessModelTest extends TestCase {
         }
 
         @Override
-        public void fillTransitionCovariance(final double dt, final double[][] out) {
-            out[0][0] = dt;
+        public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
+            out[0] = dt;
         }
 
         @Override
-        public void accumulateSelectionGradient(final double dt,
-                                                final double[][] dLogL_dF,
-                                                final double[] dLogL_df,
-                                                final double[] gradientAccumulator) {
-            gradientAccumulator[0] += dLogL_dF[0][0] * dt;
+        public void accumulateSelectionGradientFlat(final double dt,
+                                                    final double[] dLogL_dF,
+                                                    final double[] dLogL_df,
+                                                    final double[] gradientAccumulator) {
+            gradientAccumulator[0] += dLogL_dF[0] * dt;
         }
     }
 }

@@ -18,9 +18,9 @@ public class AllTimeSeriesTests {
         suite.addTest(UniformTimeGridTest.suite());
         suite.addTest(OUProcessModelTest.suite());
         suite.addTest(GaussianObservationModelTest.suite());
-        suite.addTest(ExpectationKalmanLikelihoodEngineTest.suite());
-        suite.addTest(ExpectationKalmanGradientEngineTest.suite());
-        suite.addTest(ExpectationAnalyticalKalmanGradientEngineTest.suite());
+        suite.addTest(MomentKalmanLikelihoodEngineTest.suite());
+        suite.addTest(MomentKalmanGradientEngineTest.suite());
+        suite.addTest(MomentAnalyticalKalmanGradientEngineTest.suite());
         return suite;
     }
 

@@ -71,15 +71,6 @@ public class LinearGaussianObservationModel extends AbstractModel implements Obs
         return observations;
     }
 
-    public void fillDesignMatrix(final double[][] out) {
-        checkRectangularMatrix(out, observationDimension, out[0].length, "designMatrix output");
-        for (int i = 0; i < out.length; ++i) {
-            for (int j = 0; j < out[i].length; ++j) {
-                out[i][j] = designMatrix.getParameterValue(i, j);
-            }
-        }
-    }
-
     public void fillDesignMatrixFlat(final double[] out,
                                      final int stateDimension) {
         checkFlatMatrix(out, observationDimension, stateDimension, "designMatrix output");
@@ -87,15 +78,6 @@ public class LinearGaussianObservationModel extends AbstractModel implements Obs
             final int rowOffset = i * stateDimension;
             for (int j = 0; j < stateDimension; ++j) {
                 out[rowOffset + j] = designMatrix.getParameterValue(i, j);
-            }
-        }
-    }
-
-    public void fillNoiseCovariance(final double[][] out) {
-        checkRectangularMatrix(out, observationDimension, observationDimension, "noise covariance output");
-        for (int i = 0; i < observationDimension; ++i) {
-            for (int j = 0; j < observationDimension; ++j) {
-                out[i][j] = noiseCovariance.getParameterValue(i, j);
             }
         }
     }
@@ -183,20 +165,6 @@ public class LinearGaussianObservationModel extends AbstractModel implements Obs
                     ") must be divisible by observationDimension (" + observationDimension + ")");
         }
         return totalDimension / observationDimension;
-    }
-
-    private static void checkRectangularMatrix(final double[][] matrix,
-                                               final int expectedRows,
-                                               final int expectedCols,
-                                               final String label) {
-        if (matrix == null || matrix.length != expectedRows) {
-            throw new IllegalArgumentException(label + " must have " + expectedRows + " rows");
-        }
-        for (double[] row : matrix) {
-            if (row == null || row.length != expectedCols) {
-                throw new IllegalArgumentException(label + " must have " + expectedCols + " columns");
-            }
-        }
     }
 
     private static void checkFlatMatrix(final double[] matrix,

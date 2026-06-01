@@ -33,16 +33,16 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
     private static void addAnalyticalKalmanTests(final TestSuite suite) {
         final String[] testNames = {
                 "testCanonicalStationaryMeanGradientMatchesFD_2D",
-                "testExactOuCanonicalStateAndTransitionMatchExpectationForm",
-                "testEulerCanonicalTransitionMatchesExpectationForm",
-                "testCanonicalKalmanLikelihoodMatchesExpectationEngine_ExactOu",
-                "testCanonicalKalmanLikelihoodAndSmootherMatchExpectationWithRectangularDesign",
-                "testCanonicalKalmanLikelihoodMatchesExpectationEngine_Euler",
+                "testExactOuCanonicalStateAndTransitionMatchMomentForm",
+                "testEulerCanonicalTransitionMatchesMomentForm",
+                "testCanonicalKalmanLikelihoodMatchesMomentEngine_ExactOu",
+                "testCanonicalKalmanLikelihoodAndSmootherMatchMomentWithRectangularDesign",
+                "testCanonicalKalmanLikelihoodMatchesMomentEngine_Euler",
                 "testForwardLikelihoodFactorySelectsEquivalentExactOuBackends",
                 "testForwardLikelihoodFactorySelectsEquivalentEulerBackends",
                 "testTimeSeriesLikelihoodFactorySupportsCanonicalForwardMode",
-                "testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu",
-                "testCanonicalKalmanSmootherMatchesExpectationSmoother_Euler",
+                "testCanonicalKalmanSmootherMatchesMomentSmoother_ExactOu",
+                "testCanonicalKalmanSmootherMatchesMomentSmoother_Euler",
                 "testTimeSeriesLikelihoodFactorySupportsCanonicalAnalyticalGradients",
                 "testParallelTimeSeriesLikelihoodSumsIndependentCanonicalOuSeries",
                 "testParallelCanonicalOrthogonalBlockFullEvaluationAfterParameterMoves",
@@ -62,7 +62,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testOrthogonalBlockCanonicalLocalAdjointsMatchDense_4D"
         };
         for (final String testName : testNames) {
-            suite.addTest(new ExpectationAnalyticalKalmanGradientEngineTest(testName));
+            suite.addTest(new MomentAnalyticalKalmanGradientEngineTest(testName));
         }
     }
 }

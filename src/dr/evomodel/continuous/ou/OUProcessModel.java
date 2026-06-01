@@ -256,22 +256,9 @@ public class OUProcessModel extends AbstractModel
     }
 
     @Override
-    public void getInitialCovariance(final double[][] out) {
-        checkSquareMatrix(out, stateDimension, "initial covariance");
-        copyMatrixParameter(initialCovariance, out);
-    }
-
-    @Override
     public void getInitialCovarianceFlat(final double[] out) {
         checkFlatSquareMatrix(out, stateDimension, "initial covariance");
         copyMatrixParameterFlat(initialCovariance, out);
-    }
-
-    @Override
-    public void fillTransitionMatrix(final double dt, final double[][] out) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        canonicalKernel.fillTransitionMatrixFlat(dt, flat);
-        copyFlatToMatrix(flat, out, stateDimension);
     }
 
     @Override
@@ -296,13 +283,6 @@ public class OUProcessModel extends AbstractModel
     }
 
     @Override
-    public void fillTransitionCovariance(final double dt, final double[][] out) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        canonicalKernel.fillTransitionCovarianceFlat(dt, flat);
-        copyFlatToMatrix(flat, out, stateDimension);
-    }
-
-    @Override
     public void fillTransitionCovarianceFlat(final double dt, final double[] out) {
         canonicalKernel.fillTransitionCovarianceFlat(dt, out);
     }
@@ -319,15 +299,6 @@ public class OUProcessModel extends AbstractModel
      *       Lyapunov adjoint for stable drift matrices.</li>
      * </ul>
      */
-    @Override
-    public void accumulateSelectionGradientFromCovariance(final double dt,
-                                                          final double[][] dLogL_dV,
-                                                          final double[] gradientAccumulator) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        copyMatrixToFlat(dLogL_dV, flat, stateDimension);
-        canonicalKernel.accumulateSelectionGradientFromCovarianceFlat(dt, flat, false, gradientAccumulator);
-    }
-
     public void accumulateSelectionGradientFromCovarianceFlat(final double dt,
                                                               final double[] dLogL_dV,
                                                               final boolean transposeAdjoint,
@@ -341,15 +312,6 @@ public class OUProcessModel extends AbstractModel
                                                               final double[] dLogL_dV,
                                                               final double[] gradientAccumulator) {
         accumulateSelectionGradientFromCovarianceFlat(dt, dLogL_dV, false, gradientAccumulator);
-    }
-
-    @Override
-    public void accumulateDiffusionGradient(final double dt,
-                                            final double[][] dLogL_dV,
-                                            final double[] gradientAccumulator) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        copyMatrixToFlat(dLogL_dV, flat, stateDimension);
-        canonicalKernel.accumulateDiffusionGradientFlat(dt, flat, false, gradientAccumulator);
     }
 
     public void accumulateDiffusionGradientFlat(final double dt,
@@ -404,31 +366,11 @@ public class OUProcessModel extends AbstractModel
      * single matrix adjoint and accumulates it directly into the flattened A-gradient.
      */
     @Override
-    public void accumulateSelectionGradient(final double dt,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        copyMatrixToFlat(dLogL_dF, flat, stateDimension);
-        canonicalKernel.accumulateSelectionGradientFlat(dt, flat, dLogL_df, gradientAccumulator);
-    }
-
-    @Override
     public void accumulateSelectionGradientFlat(final double dt,
                                                 final double[] dLogL_dF,
                                                 final double[] dLogL_df,
                                                 final double[] gradientAccumulator) {
         canonicalKernel.accumulateSelectionGradientFlat(dt, dLogL_dF, dLogL_df, gradientAccumulator);
-    }
-
-    public void accumulateSelectionGradient(final double dt,
-                                            final double[] mean,
-                                            final double[][] dLogL_dF,
-                                            final double[] dLogL_df,
-                                            final double[] gradientAccumulator) {
-        final double[] flat = new double[stateDimension * stateDimension];
-        copyMatrixToFlat(dLogL_dF, flat, stateDimension);
-        canonicalKernel.accumulateSelectionGradientFlat(dt, mean, flat, dLogL_df, gradientAccumulator);
     }
 
     public void accumulateSelectionGradientFlat(final double dt,
@@ -496,14 +438,6 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private static void copyMatrixParameter(final MatrixParameterInterface parameter, final double[][] out) {
-        for (int i = 0; i < out.length; ++i) {
-            for (int j = 0; j < out[i].length; ++j) {
-                out[i][j] = parameter.getParameterValue(i, j);
-            }
-        }
-    }
-
     private static void copyMatrixParameterFlat(final MatrixParameterInterface parameter, final double[] out) {
         final int dimension = parameter.getRowDimension();
         for (int i = 0; i < dimension; ++i) {
@@ -514,32 +448,9 @@ public class OUProcessModel extends AbstractModel
         }
     }
 
-    private static void copyMatrixToFlat(final double[][] source, final double[] out, final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source[i], 0, out, i * dimension, dimension);
-        }
-    }
-
-    private static void copyFlatToMatrix(final double[] source, final double[][] out, final int dimension) {
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(source, i * dimension, out[i], 0, dimension);
-        }
-    }
-
     private static void checkVectorLength(final double[] vector, final int expectedLength, final String label) {
         if (vector == null || vector.length != expectedLength) {
             throw new IllegalArgumentException(label + " must have length " + expectedLength);
-        }
-    }
-
-    private static void checkSquareMatrix(final double[][] matrix, final int expectedSize, final String label) {
-        if (matrix == null || matrix.length != expectedSize) {
-            throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
-        }
-        for (double[] row : matrix) {
-            if (row == null || row.length != expectedSize) {
-                throw new IllegalArgumentException(label + " must be a " + expectedSize + "x" + expectedSize + " matrix");
-            }
         }
     }
 

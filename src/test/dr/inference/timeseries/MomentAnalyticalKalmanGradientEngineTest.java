@@ -13,6 +13,7 @@ import dr.inference.model.CompoundSymmetricMatrix;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.hmc.BatchGradient;
 import dr.inference.hmc.CompoundGradient;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
@@ -21,7 +22,7 @@ import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.runtime.TimeSeriesGradient;
-import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.MomentAnalyticalKalmanGradientEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.inference.timeseries.engine.kalman.CanonicalForwardTrajectory;
@@ -29,12 +30,12 @@ import dr.inference.timeseries.engine.kalman.CanonicalKalmanLikelihoodEngine;
 import dr.inference.timeseries.engine.kalman.CanonicalKalmanSmootherEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationDiffusionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.formula.MomentDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
 import dr.inference.timeseries.engine.kalman.GaussianLikelihoodEngineFactory;
-import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
-import dr.inference.timeseries.engine.kalman.ExpectationKalmanSmootherEngine;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationSelectionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.MomentKalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.MomentKalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.formula.MomentSelectionMatrixGradientFormula;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
@@ -58,7 +59,7 @@ import junit.framework.TestSuite;
 import java.util.Arrays;
 
 /**
- * Tests for {@link ExpectationAnalyticalKalmanGradientEngine} using the exact OU process model.
+ * Tests for {@link MomentAnalyticalKalmanGradientEngine} using the exact OU process model.
  *
  * <p>All gradients are verified against numerical central-difference approximations.
  * The analytical gradient w.r.t. the selection matrix A has two contributions:
@@ -70,12 +71,12 @@ import java.util.Arrays;
  * Both contributions are tested here; in particular, tests are structured so that
  * omitting the V-path would cause a measurable discrepancy with numerical FD.
  */
-public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
+public class MomentAnalyticalKalmanGradientEngineTest extends TestCase {
 
     /** Tolerance for central-difference gradient comparison (h = 1e-6). */
     private static final double TOL_FD = 1e-5;
 
-    public ExpectationAnalyticalKalmanGradientEngineTest(String name) {
+    public MomentAnalyticalKalmanGradientEngineTest(String name) {
         super(name);
     }
 
@@ -84,13 +85,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
     private static class Model {
         final OUProcessModel process;
         final LinearGaussianObservationModel obs;
-        final ExpectationKalmanLikelihoodEngine likelihoodEngine;
-        final ExpectationAnalyticalKalmanGradientEngine analyticalEngine;
+        final MomentKalmanLikelihoodEngine likelihoodEngine;
+        final MomentAnalyticalKalmanGradientEngine analyticalEngine;
 
         Model(OUProcessModel process,
               LinearGaussianObservationModel obs,
-              ExpectationKalmanLikelihoodEngine likelihoodEngine,
-              ExpectationAnalyticalKalmanGradientEngine analyticalEngine) {
+              MomentKalmanLikelihoodEngine likelihoodEngine,
+              MomentAnalyticalKalmanGradientEngine analyticalEngine) {
             this.process          = process;
             this.obs              = obs;
             this.likelihoodEngine = likelihoodEngine;
@@ -309,17 +310,30 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         }
     }
 
+    private static void assertFlatArrayEquals(String label,
+                                              double[] expected,
+                                              double[] observed,
+                                              double tolerance) {
+        assertEquals(label + " length", expected.length, observed.length);
+        for (int i = 0; i < expected.length; ++i) {
+            assertEquals(label + " mismatch at index " + i,
+                    expected[i], observed[i], tolerance);
+        }
+    }
+
     private static void assertGradientBatchEquals(String label,
                                                   double[][] expected,
-                                                  double[][] observed,
+                                                  BatchGradient observed,
                                                   double tolerance) {
-        assertEquals(label + " parameter count", expected.length, observed.length);
+        assertEquals(label + " parameter count", expected.length, observed.size());
         for (int p = 0; p < expected.length; ++p) {
             assertEquals(label + " dimension for parameter " + p,
-                    expected[p].length, observed[p].length);
+                    expected[p].length, observed.dimension(p));
+            final double[] observedGradient = new double[observed.dimension(p)];
+            observed.copyGradientTo(p, observedGradient, 0);
             for (int i = 0; i < expected[p].length; ++i) {
                 assertEquals(label + " parameter " + p + " entry " + i,
-                        expected[p][i], observed[p][i], tolerance);
+                        expected[p][i], observedGradient[i], tolerance);
             }
         }
     }
@@ -352,36 +366,36 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
             CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
                     trajectory.transitions[timeIndex], contribution, workspace, adjoints);
             final double dt = grid.getDelta(timeIndex, timeIndex + 1);
-            process.accumulateSelectionGradient(
+            process.accumulateSelectionGradientFlat(
                     dt,
                     mean,
-                    toMatrix(adjoints.dLogL_dF, dimension),
+                    adjoints.dLogL_dF,
                     adjoints.dLogL_df,
                     gradient);
-            process.accumulateSelectionGradientFromCovariance(
+            process.accumulateSelectionGradientFromCovarianceFlat(
                     dt,
-                    toMatrix(adjoints.dLogL_dOmega, dimension),
+                    adjoints.dLogL_dOmega,
                     gradient);
         }
         return gradient;
     }
 
-    private static ExpectationAnalyticalKalmanGradientEngine makeAnalyticalEngine(OUProcessModel process,
+    private static MomentAnalyticalKalmanGradientEngine makeAnalyticalEngine(OUProcessModel process,
                                                                        LinearGaussianObservationModel obs,
                                                                        TimeGrid grid,
                                                                        boolean includeDiffusion) {
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), process.getStateDimension());
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), process.getStateDimension());
         if (!includeDiffusion) {
-            return new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+            return new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
         }
-        return new ExpectationAnalyticalKalmanGradientEngine(
+        return new MomentAnalyticalKalmanGradientEngine(
                 smoother,
                 selGrad,
-                new ExpectationDiffusionMatrixGradientFormula(
+                new MomentDiffusionMatrixGradientFormula(
                         DiffusionMatrixParameterizationFactory.create(process.getDiffusionMatrix()),
                         process.getStateDimension()));
     }
@@ -399,7 +413,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
     }
 
-    private static TimeSeriesLikelihood makeExpectationAnalyticalLikelihood(String name,
+    private static TimeSeriesLikelihood makeMomentAnalyticalLikelihood(String name,
                                                                             OUProcessModel process,
                                                                             LinearGaussianObservationModel obs,
                                                                             TimeGrid grid) {
@@ -407,9 +421,9 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         return GaussianTimeSeriesLikelihoodFactory.create(
                 name,
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
     }
 
     private static ParallelOrthogonalBlockModel makeParallelOrthogonalBlockCanonicalModel() {
@@ -477,7 +491,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
     }
 
     /**
-     * Builds a 1D exact-OU model backed by an {@link ExpectationAnalyticalKalmanGradientEngine}.
+     * Builds a 1D exact-OU model backed by an {@link MomentAnalyticalKalmanGradientEngine}.
      */
     private static Model makeScalar1D(double a, double q, double mu0, double p0,
                                       double r, double[] yValues, double dt) {
@@ -505,14 +519,14 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 1);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), 1);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
         // Separate likelihood engine for numerical FD (same parameters, independent run)
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -552,13 +566,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -589,13 +603,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -627,13 +641,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid            = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 3);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), 3);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -668,13 +682,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), d);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), d);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -719,13 +733,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), d);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), d);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -765,13 +779,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
-        ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
+        MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), 2);
+        MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
 
-        ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
@@ -818,18 +832,18 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(T, 0.0, dt);
         final GaussianTransitionRepresentation rep = representation(process,
                 GaussianTransitionRepresentation.class);
-        final ExpectationKalmanSmootherEngine smoother = new ExpectationKalmanSmootherEngine(rep, obs, grid);
-        final ExpectationSelectionMatrixGradientFormula selGrad =
-                new ExpectationSelectionMatrixGradientFormula(process.getDriftMatrix(), dimension);
-        final ExpectationAnalyticalKalmanGradientEngine analytical =
-                new ExpectationAnalyticalKalmanGradientEngine(smoother, selGrad);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(rep, obs, grid);
+        final MomentKalmanSmootherEngine smoother = new MomentKalmanSmootherEngine(rep, obs, grid);
+        final MomentSelectionMatrixGradientFormula selGrad =
+                new MomentSelectionMatrixGradientFormula(process.getDriftMatrix(), dimension);
+        final MomentAnalyticalKalmanGradientEngine analytical =
+                new MomentAnalyticalKalmanGradientEngine(smoother, selGrad);
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(rep, obs, grid);
 
         return new Model(process, obs, likelihood, analytical);
     }
 
     /** Central-difference numerical gradient w.r.t. parameter element [index]. */
-    private static double numericalGradient(ExpectationKalmanLikelihoodEngine engine,
+    private static double numericalGradient(MomentKalmanLikelihoodEngine engine,
                                              Parameter param, int index, double h) {
         double orig = param.getParameterValue(index);
 
@@ -1666,8 +1680,8 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 1, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final ExpectationAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] analytic = analytical.getGradientWrt(process.getDiffusionMatrix());
@@ -1694,8 +1708,8 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.15);
 
-        final ExpectationAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] analytic = analytical.getGradientWrt(process.getDiffusionMatrix());
@@ -1726,8 +1740,8 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obs", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final ExpectationAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentAnalyticalKalmanGradientEngine analytical = makeAnalyticalEngine(process, obs, grid, true);
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] analyticDiag = analytical.getGradientWrt(diagonal);
@@ -1751,10 +1765,10 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final double dt = 0.18;
 
         final Model m = makeScalar1DWithMethod(a, q, mu, p0, r, y, dt, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
-        final TimeSeriesLikelihood expectation = makeExpectationAnalyticalLikelihood(
-                "ouMean1dExpectation", m.process, m.obs, new UniformTimeGrid(y.length, 0.0, dt));
+        final TimeSeriesLikelihood moment = makeMomentAnalyticalLikelihood(
+                "ouMean1dMoment", m.process, m.obs, new UniformTimeGrid(y.length, 0.0, dt));
 
-        final double[] analytic = expectation.getGradientWrt(m.process.getStationaryMeanParameter()).getGradientLogDensity(null);
+        final double[] analytic = moment.getGradientWrt(m.process.getStationaryMeanParameter()).getGradientLogDensity(null);
         assertEquals("Analytical 1D stationary mean gradient must match FD",
                 numericalGradient(m.likelihoodEngine, m.process.getStationaryMeanParameter(), 0, 1e-6),
                 analytic[0], TOL_FD);
@@ -1777,12 +1791,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsMean2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.17);
 
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
-        final TimeSeriesLikelihood expectation = makeExpectationAnalyticalLikelihood(
-                "ouMean2dExpectation", process, obs, grid);
+        final TimeSeriesLikelihood moment = makeMomentAnalyticalLikelihood(
+                "ouMean2dMoment", process, obs, grid);
 
-        final double[] analytic = expectation.getGradientWrt(process.getStationaryMeanParameter()).getGradientLogDensity(null);
+        final double[] analytic = moment.getGradientWrt(process.getStationaryMeanParameter()).getGradientLogDensity(null);
         for (int idx = 0; idx < 2; ++idx) {
             assertEquals("Analytical 2D stationary mean gradient must match FD, idx=" + idx,
                     numericalGradient(likelihood, process.getStationaryMeanParameter(), idx, 1e-6),
@@ -1807,7 +1821,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonMean2d", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.14);
 
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
                 "ouMean2dCanonical", process, obs, grid);
@@ -1846,12 +1860,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 CovarianceGradientMethod.STATIONARY_LYAPUNOV,
                 dt);
 
-        final TimeSeriesLikelihood expectation = makeExpectationAnalyticalLikelihood(
-                "ou2dorthMeanExpectation",
+        final TimeSeriesLikelihood moment = makeMomentAnalyticalLikelihood(
+                "ou2dorthMeanMoment",
                 orthogonalModel.process,
                 orthogonalModel.obs,
                 new UniformTimeGrid(observations[0].length, 0.0, dt));
-        final double[] analytic = expectation.getGradientWrt(
+        final double[] analytic = moment.getGradientWrt(
                 orthogonalModel.process.getStationaryMeanParameter()).getGradientLogDensity(null);
         assertEquals("Orthogonal-block stationary mean gradient must match FD",
                 numericalGradient(orthogonalModel.likelihoodEngine,
@@ -1898,7 +1912,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 analytic[0], TOL_FD);
     }
 
-    public void testExactOuCanonicalStateAndTransitionMatchExpectationForm() {
+    public void testExactOuCanonicalStateAndTransitionMatchMomentForm() {
         final MatrixParameter drift = makeMatrix("A.canonical.exact", new double[][]{
                 {0.65, -0.08},
                 {0.11, 1.10}
@@ -1915,7 +1929,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final OUProcessModel process = new OUProcessModel(
                 "ouCanonicalExact", 2, drift, diffusion, mean, initCov, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
 
-        final dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel expectationKernel =
+        final dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel momentKernel =
                 representation(process, dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel.class);
         final CanonicalGaussianBranchTransitionKernel canonicalKernel =
                 representation(process, CanonicalGaussianBranchTransitionKernel.class);
@@ -1925,8 +1939,8 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final double[] stateValue = {0.25, -0.4};
         final double[] initialMean = new double[2];
         final double[][] initialCovariance = new double[2][2];
-        expectationKernel.getInitialMean(initialMean);
-        expectationKernel.getInitialCovariance(initialCovariance);
+        momentKernel.getInitialMean(initialMean);
+        momentKernel.getInitialCovariance(initialCovariance);
         assertEquals("Canonical initial state must match moment-form density",
                 logDensityFromMoments(initialMean, initialCovariance, stateValue),
                 logDensityFromCanonicalState(canonicalState, stateValue),
@@ -1936,9 +1950,9 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final double[][] transitionMatrix = new double[2][2];
         final double[] transitionOffset = new double[2];
         final double[][] transitionCovariance = new double[2][2];
-        expectationKernel.fillTransitionMatrix(dt, transitionMatrix);
-        expectationKernel.fillTransitionOffset(dt, transitionOffset);
-        expectationKernel.fillTransitionCovariance(dt, transitionCovariance);
+        momentKernel.fillTransitionMatrix(dt, transitionMatrix);
+        momentKernel.fillTransitionOffset(dt, transitionOffset);
+        momentKernel.fillTransitionCovariance(dt, transitionCovariance);
 
         final CanonicalGaussianTransition canonicalTransition = new CanonicalGaussianTransition(2);
         canonicalKernel.fillCanonicalTransition(dt, canonicalTransition);
@@ -1951,7 +1965,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 1e-10);
     }
 
-    public void testEulerCanonicalTransitionMatchesExpectationForm() {
+    public void testEulerCanonicalTransitionMatchesMomentForm() {
         final MatrixParameter drift = makeMatrix("A.canonical.euler", new double[][]{
                 {0.25, -0.04},
                 {0.02, 0.55}
@@ -1968,7 +1982,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final EulerOUProcessModel process = new EulerOUProcessModel(
                 "ouCanonicalEuler", 2, drift, diffusion, mean, initCov);
 
-        final dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel expectationKernel =
+        final dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel momentKernel =
                 representation(process, dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel.class);
         final CanonicalGaussianBranchTransitionKernel canonicalKernel =
                 representation(process, CanonicalGaussianBranchTransitionKernel.class);
@@ -1977,9 +1991,9 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final double[][] transitionMatrix = new double[2][2];
         final double[] transitionOffset = new double[2];
         final double[][] transitionCovariance = new double[2][2];
-        expectationKernel.fillTransitionMatrix(dt, transitionMatrix);
-        expectationKernel.fillTransitionOffset(dt, transitionOffset);
-        expectationKernel.fillTransitionCovariance(dt, transitionCovariance);
+        momentKernel.fillTransitionMatrix(dt, transitionMatrix);
+        momentKernel.fillTransitionOffset(dt, transitionOffset);
+        momentKernel.fillTransitionCovariance(dt, transitionCovariance);
 
         final CanonicalGaussianTransition canonicalTransition = new CanonicalGaussianTransition(2);
         canonicalKernel.fillCanonicalTransition(dt, canonicalTransition);
@@ -1992,7 +2006,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 1e-10);
     }
 
-    public void testCanonicalKalmanLikelihoodMatchesExpectationEngine_ExactOu() {
+    public void testCanonicalKalmanLikelihoodMatchesMomentEngine_ExactOu() {
         final MatrixParameter drift = makeMatrix("A.canonical.filter.exact", new double[][]{
                 {0.45, -0.07},
                 {0.10, 0.95}
@@ -2021,18 +2035,18 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.25);
 
-        final ExpectationKalmanLikelihoodEngine expectationEngine = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine momentEngine = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanLikelihoodEngine canonicalEngine = new CanonicalKalmanLikelihoodEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class), obs, grid);
 
-        assertEquals("Canonical forward likelihood must match expectation-form Kalman likelihood (exact OU)",
-                expectationEngine.getLogLikelihood(),
+        assertEquals("Canonical forward likelihood must match moment-form Kalman likelihood (exact OU)",
+                momentEngine.getLogLikelihood(),
                 canonicalEngine.getLogLikelihood(),
                 1e-9);
     }
 
-    public void testCanonicalKalmanLikelihoodAndSmootherMatchExpectationWithRectangularDesign() {
+    public void testCanonicalKalmanLikelihoodAndSmootherMatchMomentWithRectangularDesign() {
         final MatrixParameter drift = makeMatrix("A.canonical.rectangular", new double[][]{
                 {0.34, -0.08},
                 {0.05, 0.76}
@@ -2058,17 +2072,17 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 "obsCanonicalRectangular", 1, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final ExpectationKalmanLikelihoodEngine expectationLikelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine momentLikelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanLikelihoodEngine canonicalLikelihood = new CanonicalKalmanLikelihoodEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class), obs, grid);
 
-        assertEquals("Canonical forward likelihood must match expectation-form Kalman likelihood with rectangular H",
-                expectationLikelihood.getLogLikelihood(),
+        assertEquals("Canonical forward likelihood must match moment-form Kalman likelihood with rectangular H",
+                momentLikelihood.getLogLikelihood(),
                 canonicalLikelihood.getLogLikelihood(),
                 1e-9);
 
-        final ExpectationKalmanSmootherEngine expectationSmoother = new ExpectationKalmanSmootherEngine(
+        final MomentKalmanSmootherEngine momentSmoother = new MomentKalmanSmootherEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanSmootherEngine canonicalSmoother = new CanonicalKalmanSmootherEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class),
@@ -2076,23 +2090,23 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 obs,
                 grid);
 
-        assertEquals("Canonical smoother likelihood must match expectation smoother with rectangular H",
-                expectationSmoother.getLogLikelihood(), canonicalSmoother.getLogLikelihood(), 1e-9);
-        assertVectorArrayEquals("Rectangular-H predicted means",
-                expectationSmoother.getPredictedMeans(), canonicalSmoother.getPredictedMeans(), 1e-9);
-        assertMatrixArrayEquals("Rectangular-H predicted covariances",
-                expectationSmoother.getPredictedCovariances(), canonicalSmoother.getPredictedCovariances(), 1e-9);
-        assertVectorArrayEquals("Rectangular-H filtered means",
-                expectationSmoother.getFilteredMeans(), canonicalSmoother.getFilteredMeans(), 1e-9);
-        assertMatrixArrayEquals("Rectangular-H filtered covariances",
-                expectationSmoother.getFilteredCovariances(), canonicalSmoother.getFilteredCovariances(), 1e-9);
-        assertVectorArrayEquals("Rectangular-H smoothed means",
-                expectationSmoother.getSmoothedMeans(), canonicalSmoother.getSmoothedMeans(), 1e-9);
-        assertMatrixArrayEquals("Rectangular-H smoothed covariances",
-                expectationSmoother.getSmoothedCovariances(), canonicalSmoother.getSmoothedCovariances(), 1e-9);
+        assertEquals("Canonical smoother likelihood must match moment smoother with rectangular H",
+                momentSmoother.getLogLikelihood(), canonicalSmoother.getLogLikelihood(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H predicted means",
+                momentSmoother.getPredictedMeansFlat(), canonicalSmoother.getPredictedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H predicted covariances",
+                momentSmoother.getPredictedCovariancesFlat(), canonicalSmoother.getPredictedCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H filtered means",
+                momentSmoother.getFilteredMeansFlat(), canonicalSmoother.getFilteredMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H filtered covariances",
+                momentSmoother.getFilteredCovariancesFlat(), canonicalSmoother.getFilteredCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H smoothed means",
+                momentSmoother.getSmoothedMeansFlat(), canonicalSmoother.getSmoothedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Rectangular-H smoothed covariances",
+                momentSmoother.getSmoothedCovariancesFlat(), canonicalSmoother.getSmoothedCovariancesFlat(), 1e-9);
     }
 
-    public void testCanonicalKalmanLikelihoodMatchesExpectationEngine_Euler() {
+    public void testCanonicalKalmanLikelihoodMatchesMomentEngine_Euler() {
         final MatrixParameter drift = makeMatrix("A.canonical.filter.euler", new double[][]{
                 {0.18, -0.03},
                 {0.05, 0.42}
@@ -2121,13 +2135,13 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
-        final ExpectationKalmanLikelihoodEngine expectationEngine = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine momentEngine = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanLikelihoodEngine canonicalEngine = new CanonicalKalmanLikelihoodEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class), obs, grid);
 
-        assertEquals("Canonical forward likelihood must match expectation-form Kalman likelihood (Euler)",
-                expectationEngine.getLogLikelihood(),
+        assertEquals("Canonical forward likelihood must match moment-form Kalman likelihood (Euler)",
+                momentEngine.getLogLikelihood(),
                 canonicalEngine.getLogLikelihood(),
                 1e-9);
     }
@@ -2161,11 +2175,11 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsFactoryExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final LikelihoodEngine expectation = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.EXPECTATION);
+        final LikelihoodEngine moment = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.MOMENT);
         final LikelihoodEngine canonical = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.CANONICAL);
 
         assertEquals("Factory-selected exact OU forward backends must agree",
-                expectation.getLogLikelihood(),
+                moment.getLogLikelihood(),
                 canonical.getLogLikelihood(),
                 1e-9);
     }
@@ -2199,11 +2213,11 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsFactoryEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
-        final LikelihoodEngine expectation = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.EXPECTATION);
+        final LikelihoodEngine moment = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.MOMENT);
         final LikelihoodEngine canonical = GaussianLikelihoodEngineFactory.createForwardEngine(representable(process), obs, grid, GaussianForwardComputationMode.CANONICAL);
 
         assertEquals("Factory-selected Euler forward backends must agree",
-                expectation.getLogLikelihood(),
+                moment.getLogLikelihood(),
                 canonical.getLogLikelihood(),
                 1e-9);
     }
@@ -2238,10 +2252,10 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsFactoryExact", latent(process), obs, grid);
 
-        final TimeSeriesLikelihood expectationLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
-                "tsLikeExpectation",
+        final TimeSeriesLikelihood momentLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsLikeMoment",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
+                GaussianForwardComputationMode.MOMENT,
                 GaussianGradientComputationMode.DISABLED);
         final TimeSeriesLikelihood canonicalLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
                 "tsLikeCanonical",
@@ -2250,12 +2264,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianGradientComputationMode.DISABLED);
 
         assertEquals("Top-level time-series likelihood factory must support canonical forward mode",
-                expectationLikelihood.getLogLikelihood(),
+                momentLikelihood.getLogLikelihood(),
                 canonicalLikelihood.getLogLikelihood(),
                 1e-9);
     }
 
-    public void testTimeSeriesLikelihoodFactorySupportsCanonicalForwardWithExpectationGradients() {
+    public void testTimeSeriesLikelihoodFactorySupportsCanonicalForwardWithMomentGradients() {
         final MatrixParameter drift = makeMatrix("A.ts.factory.grad", new double[][]{{0.3}});
         final MatrixParameter diffusion = makeMatrix("Q.ts.factory.grad", new double[][]{{1.2}});
         final Parameter mean = new Parameter.Default(0.4);
@@ -2274,25 +2288,25 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 "tsLikeCanonicalWithGrad",
                 model,
                 GaussianForwardComputationMode.CANONICAL,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
-        final TimeSeriesLikelihood expectationLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
-                "tsLikeExpectationWithGrad",
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
+        final TimeSeriesLikelihood momentLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsLikeMomentWithGrad",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
 
-        assertEquals("Canonical-forward and expectation-forward top-level likelihoods must agree",
-                expectationLikelihood.getLogLikelihood(),
+        assertEquals("Canonical-forward and moment-forward top-level likelihoods must agree",
+                momentLikelihood.getLogLikelihood(),
                 canonicalForwardLikelihood.getLogLikelihood(),
                 1e-9);
 
-        final double[] expectationGradient = expectationLikelihood.getGradientWrt(process.getDriftMatrix())
+        final double[] momentGradient = momentLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
         final double[] canonicalGradient = canonicalForwardLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
 
-        assertEquals("Expectation analytical gradient must still be available under canonical forward mode",
-                expectationGradient[0],
+        assertEquals("Moment analytical gradient must still be available under canonical forward mode",
+                momentGradient[0],
                 canonicalGradient[0],
                 1e-9);
     }
@@ -2470,7 +2484,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
             expected[i] = likelihood.getGradientWrt(parameters[i]).getGradientLogDensity(null);
         }
         likelihood.makeDirty();
-        final double[][] batched = likelihood.computeGradients(Arrays.asList(parameters));
+        final BatchGradient batched = likelihood.computeGradients(Arrays.asList(parameters));
         assertGradientBatchEquals("parallel batch gradients", expected, batched, 1e-10);
 
         likelihood.makeDirty();
@@ -2491,7 +2505,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         assertEquals("compound batch gradient length", offset, compoundGradient.length);
     }
 
-    public void testCanonicalKalmanSmootherMatchesExpectationSmoother_ExactOu() {
+    public void testCanonicalKalmanSmootherMatchesMomentSmoother_ExactOu() {
         final MatrixParameter drift = makeMatrix("A.canonical.smoother.exact", new double[][]{
                 {0.38, -0.04},
                 {0.06, 0.91}
@@ -2520,7 +2534,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalSmootherExact", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
 
-        final ExpectationKalmanSmootherEngine expectation = new ExpectationKalmanSmootherEngine(
+        final MomentKalmanSmootherEngine moment = new MomentKalmanSmootherEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanSmootherEngine canonical = new CanonicalKalmanSmootherEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class),
@@ -2528,17 +2542,17 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 obs,
                 grid);
 
-        assertEquals("Canonical smoother likelihood must match expectation smoother (exact OU)",
-                expectation.getLogLikelihood(), canonical.getLogLikelihood(), 1e-9);
-        assertVectorArrayEquals("Predicted means", expectation.getPredictedMeans(), canonical.getPredictedMeans(), 1e-9);
-        assertMatrixArrayEquals("Predicted covariances", expectation.getPredictedCovariances(), canonical.getPredictedCovariances(), 1e-9);
-        assertVectorArrayEquals("Filtered means", expectation.getFilteredMeans(), canonical.getFilteredMeans(), 1e-9);
-        assertMatrixArrayEquals("Filtered covariances", expectation.getFilteredCovariances(), canonical.getFilteredCovariances(), 1e-9);
-        assertVectorArrayEquals("Smoothed means", expectation.getSmoothedMeans(), canonical.getSmoothedMeans(), 1e-9);
-        assertMatrixArrayEquals("Smoothed covariances", expectation.getSmoothedCovariances(), canonical.getSmoothedCovariances(), 1e-9);
+        assertEquals("Canonical smoother likelihood must match moment smoother (exact OU)",
+                moment.getLogLikelihood(), canonical.getLogLikelihood(), 1e-9);
+        assertFlatArrayEquals("Predicted means", moment.getPredictedMeansFlat(), canonical.getPredictedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Predicted covariances", moment.getPredictedCovariancesFlat(), canonical.getPredictedCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Filtered means", moment.getFilteredMeansFlat(), canonical.getFilteredMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Filtered covariances", moment.getFilteredCovariancesFlat(), canonical.getFilteredCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Smoothed means", moment.getSmoothedMeansFlat(), canonical.getSmoothedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Smoothed covariances", moment.getSmoothedCovariancesFlat(), canonical.getSmoothedCovariancesFlat(), 1e-9);
     }
 
-    public void testCanonicalKalmanSmootherMatchesExpectationSmoother_Euler() {
+    public void testCanonicalKalmanSmootherMatchesMomentSmoother_Euler() {
         final MatrixParameter drift = makeMatrix("A.canonical.smoother.euler", new double[][]{
                 {0.14, -0.01},
                 {0.04, 0.31}
@@ -2567,7 +2581,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final LinearGaussianObservationModel obs = new LinearGaussianObservationModel("obsCanonicalSmootherEuler", 2, H, R, Y);
         final TimeGrid grid = new UniformTimeGrid(3, 0.0, 0.1);
 
-        final ExpectationKalmanSmootherEngine expectation = new ExpectationKalmanSmootherEngine(
+        final MomentKalmanSmootherEngine moment = new MomentKalmanSmootherEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
         final CanonicalKalmanSmootherEngine canonical = new CanonicalKalmanSmootherEngine(
                 representation(process, CanonicalGaussianBranchTransitionKernel.class),
@@ -2575,14 +2589,14 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 obs,
                 grid);
 
-        assertEquals("Canonical smoother likelihood must match expectation smoother (Euler)",
-                expectation.getLogLikelihood(), canonical.getLogLikelihood(), 1e-9);
-        assertVectorArrayEquals("Predicted means", expectation.getPredictedMeans(), canonical.getPredictedMeans(), 1e-9);
-        assertMatrixArrayEquals("Predicted covariances", expectation.getPredictedCovariances(), canonical.getPredictedCovariances(), 1e-9);
-        assertVectorArrayEquals("Filtered means", expectation.getFilteredMeans(), canonical.getFilteredMeans(), 1e-9);
-        assertMatrixArrayEquals("Filtered covariances", expectation.getFilteredCovariances(), canonical.getFilteredCovariances(), 1e-9);
-        assertVectorArrayEquals("Smoothed means", expectation.getSmoothedMeans(), canonical.getSmoothedMeans(), 1e-9);
-        assertMatrixArrayEquals("Smoothed covariances", expectation.getSmoothedCovariances(), canonical.getSmoothedCovariances(), 1e-9);
+        assertEquals("Canonical smoother likelihood must match moment smoother (Euler)",
+                moment.getLogLikelihood(), canonical.getLogLikelihood(), 1e-9);
+        assertFlatArrayEquals("Predicted means", moment.getPredictedMeansFlat(), canonical.getPredictedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Predicted covariances", moment.getPredictedCovariancesFlat(), canonical.getPredictedCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Filtered means", moment.getFilteredMeansFlat(), canonical.getFilteredMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Filtered covariances", moment.getFilteredCovariancesFlat(), canonical.getFilteredCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Smoothed means", moment.getSmoothedMeansFlat(), canonical.getSmoothedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Smoothed covariances", moment.getSmoothedCovariancesFlat(), canonical.getSmoothedCovariancesFlat(), 1e-9);
     }
 
     public void testOrthogonalBlockCanonicalTransitionMatchesDense_2D() {
@@ -2958,12 +2972,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsFactoryCanonicalGrad", latent(process), obs, grid);
 
-        final TimeSeriesLikelihood expectationLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
-                "tsLikeExpectationAnalytical",
+        final TimeSeriesLikelihood momentLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsLikeMomentAnalytical",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
         final TimeSeriesLikelihood canonicalLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
                 "tsLikeCanonicalAnalytical",
                 model,
@@ -2971,22 +2985,22 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianSmootherComputationMode.CANONICAL,
                 GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
 
-        assertEquals("Canonical analytical builder path must match expectation likelihood",
-                expectationLikelihood.getLogLikelihood(),
+        assertEquals("Canonical analytical builder path must match moment likelihood",
+                momentLikelihood.getLogLikelihood(),
                 canonicalLikelihood.getLogLikelihood(),
                 1e-9);
 
-        final double[] expectationGradient = expectationLikelihood.getGradientWrt(process.getDriftMatrix())
+        final double[] momentGradient = momentLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
         final double[] canonicalGradient = canonicalLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
-        assertEquals("Canonical analytical gradient must match expectation analytical gradient",
-                expectationGradient[0],
+        assertEquals("Canonical analytical gradient must match moment analytical gradient",
+                momentGradient[0],
                 canonicalGradient[0],
                 1e-9);
     }
 
-    public void testCanonicalSelectionGradientFormulaMatchesExpectationAnalyticalGradient_2D() {
+    public void testCanonicalSelectionGradientFormulaMatchesMomentAnalyticalGradient_2D() {
         final MatrixParameter drift = makeMatrix("A.canonical.native.sel", new double[][]{
                 {0.47, -0.09},
                 {0.05, 0.99}
@@ -3016,12 +3030,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsCanonicalNativeSel", latent(process), obs, grid);
 
-        final TimeSeriesLikelihood expectationLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
-                "tsLikeExpectationNativeSel",
+        final TimeSeriesLikelihood momentLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsLikeMomentNativeSel",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
         final TimeSeriesLikelihood canonicalLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
                 "tsLikeCanonicalNativeSel",
                 model,
@@ -3029,19 +3043,19 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianSmootherComputationMode.CANONICAL,
                 GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
 
-        final double[] expectationGradient = expectationLikelihood.getGradientWrt(process.getDriftMatrix())
+        final double[] momentGradient = momentLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
         final double[] canonicalGradient = canonicalLikelihood.getGradientWrt(process.getDriftMatrix())
                 .getGradientLogDensity(null);
 
-        assertEquals("Canonical selection gradient dimension", expectationGradient.length, canonicalGradient.length);
-        for (int i = 0; i < expectationGradient.length; ++i) {
-            assertEquals("Canonical selection gradient must match expectation analytical gradient, idx=" + i,
-                    expectationGradient[i], canonicalGradient[i], 1e-9);
+        assertEquals("Canonical selection gradient dimension", momentGradient.length, canonicalGradient.length);
+        for (int i = 0; i < momentGradient.length; ++i) {
+            assertEquals("Canonical selection gradient must match moment analytical gradient, idx=" + i,
+                    momentGradient[i], canonicalGradient[i], 1e-9);
         }
     }
 
-    public void testCanonicalDiffusionGradientFormulaMatchesExpectationAnalyticalGradient_2D() {
+    public void testCanonicalDiffusionGradientFormulaMatchesMomentAnalyticalGradient_2D() {
         final MatrixParameter drift = makeMatrix("A.canonical.native.diff", new double[][]{
                 {0.44, -0.06},
                 {0.07, 0.92}
@@ -3071,12 +3085,12 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.2);
         final BasicTimeSeriesModel model = new BasicTimeSeriesModel("tsCanonicalNativeDiff", latent(process), obs, grid);
 
-        final TimeSeriesLikelihood expectationLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
-                "tsLikeExpectationNativeDiff",
+        final TimeSeriesLikelihood momentLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsLikeMomentNativeDiff",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
         final TimeSeriesLikelihood canonicalLikelihood = GaussianTimeSeriesLikelihoodFactory.create(
                 "tsLikeCanonicalNativeDiff",
                 model,
@@ -3084,15 +3098,15 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
                 GaussianSmootherComputationMode.CANONICAL,
                 GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
 
-        final double[] expectationGradient = expectationLikelihood.getGradientWrt(process.getDiffusionMatrix())
+        final double[] momentGradient = momentLikelihood.getGradientWrt(process.getDiffusionMatrix())
                 .getGradientLogDensity(null);
         final double[] canonicalGradient = canonicalLikelihood.getGradientWrt(process.getDiffusionMatrix())
                 .getGradientLogDensity(null);
 
-        assertEquals("Canonical diffusion gradient dimension", expectationGradient.length, canonicalGradient.length);
-        for (int i = 0; i < expectationGradient.length; ++i) {
-            assertEquals("Canonical diffusion gradient must match expectation analytical gradient, idx=" + i,
-                    expectationGradient[i], canonicalGradient[i], 1e-9);
+        assertEquals("Canonical diffusion gradient dimension", momentGradient.length, canonicalGradient.length);
+        for (int i = 0; i < momentGradient.length; ++i) {
+            assertEquals("Canonical diffusion gradient must match moment analytical gradient, idx=" + i,
+                    momentGradient[i], canonicalGradient[i], 1e-9);
         }
     }
 
@@ -3127,7 +3141,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
                 "tsLikeCanonicalFdDrift2d", process, obs, grid);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] canonicalGradient = canonical.getGradientWrt(process.getDriftMatrix()).getGradientLogDensity(null);
@@ -3170,7 +3184,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
                 "tsLikeCanonicalFdDiff2d", process, obs, grid);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] canonicalGradient = canonical.getGradientWrt(process.getDiffusionMatrix()).getGradientLogDensity(null);
@@ -3313,7 +3327,7 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
 
         final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
                 "tsLikeCanonicalFdWeak", process, obs, grid);
-        final ExpectationKalmanLikelihoodEngine likelihood = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihood = new MomentKalmanLikelihoodEngine(
                 representation(process, GaussianTransitionRepresentation.class), obs, grid);
 
         final double[] canonicalDrift = canonical.getGradientWrt(process.getDriftMatrix()).getGradientLogDensity(null);
@@ -3526,6 +3540,6 @@ public class ExpectationAnalyticalKalmanGradientEngineTest extends TestCase {
     // ── JUnit 3 boilerplate ───────────────────────────────────────────────────────
 
     public static Test suite() {
-        return new TestSuite(ExpectationAnalyticalKalmanGradientEngineTest.class);
+        return new TestSuite(MomentAnalyticalKalmanGradientEngineTest.class);
     }
 }

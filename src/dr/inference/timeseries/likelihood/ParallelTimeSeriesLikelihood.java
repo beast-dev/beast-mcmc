@@ -1,5 +1,6 @@
 package dr.inference.timeseries.likelihood;
 
+import dr.inference.hmc.BatchGradient;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Model;
@@ -191,33 +192,22 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         return parallelEvaluator.evaluateGradient(parameter, dimension);
     }
 
-    public double[][] computeGradients(final List<Parameter> parameters) {
+    public BatchGradient computeGradients(final List<Parameter> parameters) {
         if (parameters == null || parameters.isEmpty()) {
             throw new IllegalArgumentException("parameters must contain at least one parameter");
         }
-        final int count = parameters.size();
-        final int[] dimensions = new int[count];
-        for (int i = 0; i < count; ++i) {
-            final Parameter parameter = parameters.get(i);
-            if (parameter == null) {
-                throw new IllegalArgumentException("parameters must not contain null entries");
-            }
-            dimensions[i] = parameter.getDimension();
-        }
+        final int[] dimensions = buildDimensions(parameters);
+        final BatchGradient gradients = new BatchGradient(dimensions);
         if (parallelEvaluator == null) {
-            final double[][] gradients = new double[count][];
-            for (int p = 0; p < count; ++p) {
-                gradients[p] = new double[dimensions[p]];
-            }
             for (int i = 0; i < likelihoods.size(); ++i) {
                 likelihoods.get(i).prepareGradient();
             }
             for (int i = 0; i < likelihoods.size(); ++i) {
-                addGradients(gradients, gradientsFor(i, parameters), dimensions);
+                gradients.addBatch(gradientBatchFor(i, parameters, dimensions));
             }
             return gradients;
         }
-        return parallelEvaluator.evaluateGradients(parameters, dimensions);
+        return parallelEvaluator.evaluateGradients(parameters, dimensions, gradients);
     }
 
     private static SharedCanonicalTimeSeriesSchedule installSharedCanonicalSchedule(
@@ -245,12 +235,27 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         return provider.getGradientLogDensity(null);
     }
 
-    private double[][] gradientsFor(final int likelihoodIndex, final List<Parameter> parameters) {
-        final double[][] gradients = new double[parameters.size()][];
+    private BatchGradient gradientBatchFor(final int likelihoodIndex,
+                                           final List<Parameter> parameters,
+                                           final int[] dimensions) {
+        final BatchGradient gradients = new BatchGradient(dimensions);
         for (int i = 0; i < parameters.size(); ++i) {
-            gradients[i] = gradientFor(likelihoodIndex, parameters.get(i));
+            gradients.setGradient(i, gradientFor(likelihoodIndex, parameters.get(i)));
         }
         return gradients;
+    }
+
+    private static int[] buildDimensions(final List<Parameter> parameters) {
+        final int count = parameters.size();
+        final int[] dimensions = new int[count];
+        for (int i = 0; i < count; ++i) {
+            final Parameter parameter = parameters.get(i);
+            if (parameter == null) {
+                throw new IllegalArgumentException("parameters must not contain null entries");
+            }
+            dimensions[i] = parameter.getDimension();
+        }
+        return dimensions;
     }
 
     private GradientProvider gradientProviderFor(final int likelihoodIndex,
@@ -279,17 +284,6 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         }
     }
 
-    private static void addGradients(final double[][] accumulators,
-                                     final double[][] increments,
-                                     final int[] dimensions) {
-        if (increments == null || increments.length != accumulators.length) {
-            throw new IllegalArgumentException("Gradient batch size mismatch");
-        }
-        for (int i = 0; i < accumulators.length; ++i) {
-            addGradient(accumulators[i], increments[i], dimensions[i]);
-        }
-    }
-
     private final class ParallelEvaluator {
 
         private static final int MODE_IDLE = 0;
@@ -308,7 +302,7 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         private double logLikelihoodAccumulator;
         private double[] gradientAccumulator;
         private Parameter gradientParameter;
-        private double[][] gradientBatchAccumulator;
+        private BatchGradient gradientBatchAccumulator;
         private List<Parameter> gradientBatchParameters;
         private int[] gradientBatchDimensions;
         private RuntimeException failure;
@@ -347,11 +341,9 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
             }
         }
 
-        private double[][] evaluateGradients(final List<Parameter> parameters, final int[] dimensions) {
-            final double[][] gradients = new double[parameters.size()][];
-            for (int i = 0; i < gradients.length; ++i) {
-                gradients[i] = new double[dimensions[i]];
-            }
+        private BatchGradient evaluateGradients(final List<Parameter> parameters,
+                                                final int[] dimensions,
+                                                final BatchGradient gradients) {
             synchronized (monitor) {
                 startBatchEvaluation(MODE_PREPARE_GRADIENT, parameters, dimensions, gradients);
                 waitForCompletion("Interrupted while preparing parallel time-series gradients");
@@ -384,7 +376,7 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
         private void startBatchEvaluation(final int evaluationMode,
                                           final List<Parameter> parameters,
                                           final int[] dimensions,
-                                          final double[][] gradients) {
+                                          final BatchGradient gradients) {
             mode = evaluationMode;
             nextIndex = 0;
             completed = 0;
@@ -480,10 +472,11 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
                                 }
                             }
                         } else if (activeMode == MODE_BATCH_GRADIENT) {
-                            final double[][] gradients = gradientsFor(index, gradientBatchParameters);
+                            final BatchGradient gradients =
+                                    gradientBatchFor(index, gradientBatchParameters, gradientBatchDimensions);
                             synchronized (monitor) {
                                 if (activeGeneration == generation && failure == null) {
-                                    addGradients(gradientBatchAccumulator, gradients, gradientBatchDimensions);
+                                    gradientBatchAccumulator.addBatch(gradients);
                                     completeOne();
                                 }
                             }

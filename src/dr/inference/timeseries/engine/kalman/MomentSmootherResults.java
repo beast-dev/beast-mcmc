@@ -7,11 +7,11 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  * Shared access surface for smoother backends that expose moment-form trajectories
  * and RTS statistics to analytical gradient formulas.
  */
-public interface GaussianSmootherResults {
+public interface MomentSmootherResults {
 
-    BranchSmootherStats[] getSmootherStats();
+    MomentBranchSmootherStats[] getSmootherStats();
 
-    ForwardTrajectory getTrajectory();
+    MomentForwardTrajectory getTrajectory();
 
     GaussianTransitionRepresentation getTransitionRepresentation();
 

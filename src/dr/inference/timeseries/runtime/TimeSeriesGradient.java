@@ -1,5 +1,6 @@
 package dr.inference.timeseries.runtime;
 
+import dr.inference.hmc.BatchGradient;
 import dr.inference.hmc.BatchGradientWrtParameterProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.GradientProvider;
@@ -75,11 +76,15 @@ public class TimeSeriesGradient implements BatchGradientWrtParameterProvider, Re
     }
 
     @Override
-    public double[][] getGradientLogDensityBatch(final List<BatchGradientWrtParameterProvider> providers) {
+    public BatchGradient getGradientLogDensityBatch(final List<BatchGradientWrtParameterProvider> providers) {
         if (!(gradientSource instanceof ParallelTimeSeriesLikelihood)) {
-            final double[][] gradients = new double[providers.size()][];
+            final int[] dimensions = new int[providers.size()];
             for (int i = 0; i < providers.size(); ++i) {
-                gradients[i] = providers.get(i).getGradientLogDensity();
+                dimensions[i] = providers.get(i).getDimension();
+            }
+            final BatchGradient gradients = new BatchGradient(dimensions);
+            for (int i = 0; i < providers.size(); ++i) {
+                gradients.setGradient(i, providers.get(i).getGradientLogDensity());
             }
             return gradients;
         }

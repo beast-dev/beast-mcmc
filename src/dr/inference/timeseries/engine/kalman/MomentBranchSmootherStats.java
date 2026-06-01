@@ -1,7 +1,5 @@
 package dr.inference.timeseries.engine.kalman;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-
 /**
  * Container for the per-step sufficient statistics produced by the
  * Rauch-Tung-Striebel (RTS) backward pass.
@@ -15,7 +13,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
  * {@code smoothedCovariance} of the <em>next</em> step's stats. This avoids an extra
  * d × d allocation per step while keeping gradient accumulation O(1) extra memory.
  */
-public final class BranchSmootherStats {
+public final class MomentBranchSmootherStats {
 
     /** Time index of this step. */
     public final int timeIndex;
@@ -34,21 +32,10 @@ public final class BranchSmootherStats {
      */
     public final double[] smootherGain;
 
-    BranchSmootherStats(final int timeIndex, final int stateDimension, final boolean hasForwardStep) {
+    MomentBranchSmootherStats(final int timeIndex, final int stateDimension, final boolean hasForwardStep) {
         this.timeIndex      = timeIndex;
         smoothedMean        = new double[stateDimension];
         smoothedCovariance  = new double[stateDimension * stateDimension];
         smootherGain        = hasForwardStep ? new double[stateDimension * stateDimension] : null;
-    }
-
-    public void copySmoothedCovarianceTo(final double[][] out) {
-        MatrixOps.fromFlat(smoothedCovariance, out, out.length);
-    }
-
-    public void copySmootherGainTo(final double[][] out) {
-        if (smootherGain == null) {
-            throw new IllegalStateException("Final time step does not have a smoother gain");
-        }
-        MatrixOps.fromFlat(smootherGain, out, out.length);
     }
 }

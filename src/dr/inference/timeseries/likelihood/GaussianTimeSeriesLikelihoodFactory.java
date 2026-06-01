@@ -8,20 +8,20 @@ import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.engine.DisabledGradientEngine;
 import dr.inference.timeseries.engine.GradientEngine;
 import dr.inference.timeseries.engine.LikelihoodEngine;
-import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.MomentAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalSelectionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.CanonicalAnalyticalKalmanGradientEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.CanonicalKalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalStationaryMeanGradientFormula;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalBlockDiagonalGradientCache;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationDiffusionMatrixGradientFormula;
-import dr.inference.timeseries.engine.kalman.GaussianSmootherResults;
+import dr.inference.timeseries.engine.kalman.formula.MomentDiffusionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.MomentSmootherResults;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
 import dr.inference.timeseries.engine.kalman.GaussianLikelihoodEngineFactory;
-import dr.inference.timeseries.engine.kalman.ExpectationKalmanSmootherEngine;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationSelectionMatrixGradientFormula;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationStationaryMeanGradientFormula;
+import dr.inference.timeseries.engine.kalman.MomentKalmanSmootherEngine;
+import dr.inference.timeseries.engine.kalman.formula.MomentSelectionMatrixGradientFormula;
+import dr.inference.timeseries.engine.kalman.formula.MomentStationaryMeanGradientFormula;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
@@ -39,7 +39,7 @@ import dr.inference.timeseries.representation.RepresentableProcess;
  * <p>This centralizes the current policy:
  * <ul>
  *   <li>canonical forward, smoothing, and analytical gradients are the production path</li>
- *   <li>expectation-form engines remain available for explicit debugging and parity checks</li>
+ *   <li>moment-form engines remain available for explicit debugging and parity checks</li>
  * </ul>
  */
 public final class GaussianTimeSeriesLikelihoodFactory {
@@ -108,7 +108,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
             final GaussianGradientComputationMode gradientMode) {
         return gradientMode == GaussianGradientComputationMode.CANONICAL_ANALYTICAL
                 ? GaussianSmootherComputationMode.CANONICAL
-                : GaussianSmootherComputationMode.EXPECTATION;
+                : GaussianSmootherComputationMode.MOMENT;
     }
 
     private static void prepareRepeatedDeltaCache(final RepresentableProcess process,
@@ -133,9 +133,9 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         switch (gradientMode) {
             case DISABLED:
                 return new DisabledGradientEngine();
-            case EXPECTATION_ANALYTICAL:
+            case MOMENT_ANALYTICAL:
                 return createAnalyticalGradientEngine(latentProcess, process, observationModel, model,
-                        GaussianSmootherComputationMode.EXPECTATION);
+                        GaussianSmootherComputationMode.MOMENT);
             case CANONICAL_ANALYTICAL:
                 return createAnalyticalGradientEngine(latentProcess, process, observationModel, model, smootherMode);
             default:
@@ -172,19 +172,19 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         }
 
         throw new IllegalArgumentException(
-                "Expectation-form analytical gradients are not configured for process type: "
+                "Moment-form analytical gradients are not configured for process type: "
                         + process.getClass().getName());
     }
 
-    private static GaussianSmootherResults createSmoother(final RepresentableProcess process,
+    private static MomentSmootherResults createSmoother(final RepresentableProcess process,
                                                           final LinearGaussianObservationModel observationModel,
                                                           final TimeSeriesModel model,
                                                           final GaussianSmootherComputationMode smootherMode) {
         final GaussianTransitionRepresentation transitionRepresentation =
                 process.getRepresentation(GaussianTransitionRepresentation.class);
         switch (smootherMode) {
-            case EXPECTATION:
-                return new ExpectationKalmanSmootherEngine(transitionRepresentation, observationModel, model.getTimeGrid());
+            case MOMENT:
+                return new MomentKalmanSmootherEngine(transitionRepresentation, observationModel, model.getTimeGrid());
             case CANONICAL:
                 if (!process.supportsRepresentation(CanonicalGaussianBranchTransitionKernel.class)) {
                     throw new IllegalArgumentException(
@@ -202,7 +202,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
     }
 
     private static GradientEngine buildAnalyticalEngineForOu(final OUProcessModel processModel,
-                                                             final GaussianSmootherResults smoother,
+                                                             final MomentSmootherResults smoother,
                                                              final MatrixParameterInterface driftMatrix,
                                                              final dr.inference.model.MatrixParameterInterface diffusionMatrix,
                                                              final dr.inference.model.Parameter stationaryMean,
@@ -219,12 +219,12 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         initialCovariance,
                         stateDimension);
         final GradientFormulaBundle formulas = new GradientFormulaBundle(
-                new ExpectationSelectionMatrixGradientFormula(driftMatrix, stateDimension),
+                new MomentSelectionMatrixGradientFormula(driftMatrix, stateDimension),
                 processModel != null
                         ? new CanonicalSelectionMatrixGradientFormula(
                         processModel, driftMatrix, stateDimension, blockDiagonalGradientCache)
                         : new CanonicalSelectionMatrixGradientFormula(driftMatrix, stateDimension),
-                new ExpectationStationaryMeanGradientFormula(
+                new MomentStationaryMeanGradientFormula(
                         processModel,
                         stationaryMean,
                         initialCovariance,
@@ -235,7 +235,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         initialCovariance,
                         stateDimension,
                         blockDiagonalGradientCache),
-                new ExpectationDiffusionMatrixGradientFormula(
+                new MomentDiffusionMatrixGradientFormula(
                         diffusionParameterization,
                         stateDimension),
                 new CanonicalDiffusionMatrixGradientFormula(
@@ -250,7 +250,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                     formulas.canonicalMean,
                     formulas.canonicalDiffusion);
         }
-        return new ExpectationAnalyticalKalmanGradientEngine(
+        return new MomentAnalyticalKalmanGradientEngine(
                 smoother,
                 formulas.selection,
                 formulas.mean,
@@ -258,18 +258,18 @@ public final class GaussianTimeSeriesLikelihoodFactory {
     }
 
     private static final class GradientFormulaBundle {
-        final ExpectationSelectionMatrixGradientFormula selection;
+        final MomentSelectionMatrixGradientFormula selection;
         final CanonicalSelectionMatrixGradientFormula canonicalSelection;
-        final ExpectationStationaryMeanGradientFormula mean;
+        final MomentStationaryMeanGradientFormula mean;
         final CanonicalStationaryMeanGradientFormula canonicalMean;
-        final ExpectationDiffusionMatrixGradientFormula diffusion;
+        final MomentDiffusionMatrixGradientFormula diffusion;
         final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion;
 
-        GradientFormulaBundle(final ExpectationSelectionMatrixGradientFormula selection,
+        GradientFormulaBundle(final MomentSelectionMatrixGradientFormula selection,
                               final CanonicalSelectionMatrixGradientFormula canonicalSelection,
-                              final ExpectationStationaryMeanGradientFormula mean,
+                              final MomentStationaryMeanGradientFormula mean,
                               final CanonicalStationaryMeanGradientFormula canonicalMean,
-                              final ExpectationDiffusionMatrixGradientFormula diffusion,
+                              final MomentDiffusionMatrixGradientFormula diffusion,
                               final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion) {
             this.selection = selection;
             this.canonicalSelection = canonicalSelection;

@@ -32,15 +32,6 @@ public final class CompoundSymmetricDiffusionMatrixParameterization implements D
     }
 
     @Override
-    public void fillDiffusionMatrix(final double[][] out) {
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                out[i][j] = matrixParameter.getParameterValue(i, j);
-            }
-        }
-    }
-
-    @Override
     public void fillDiffusionMatrixFlat(final double[] out) {
         for (int i = 0; i < dimension; ++i) {
             final int rowOffset = i * dimension;

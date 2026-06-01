@@ -5,6 +5,6 @@ package dr.inference.timeseries.likelihood;
  */
 public enum GaussianGradientComputationMode {
     DISABLED,
-    EXPECTATION_ANALYTICAL,
+    MOMENT_ANALYTICAL,
     CANONICAL_ANALYTICAL
 }

@@ -16,10 +16,10 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  *
  * <p>The forward pass is performed in canonical form. At each step the predicted and
  * filtered canonical states are converted to means/covariances and stored in the same
- * trajectory structure used by the expectation-form smoother. The backward pass then
+ * trajectory structure used by the moment-form smoother. The backward pass then
  * applies the standard RTS recursions to those moments.
  */
-public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResults, CanonicalSmootherResults {
+public final class CanonicalKalmanSmootherEngine implements MomentSmootherResults, CanonicalSmootherResults {
 
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
     private final GaussianTransitionRepresentation transitionRepresentation;
@@ -34,10 +34,10 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
     private final CanonicalGaussianState futureMessage;
     private final CanonicalGaussianState backwardMessage;
-    private final ForwardTrajectory trajectory;
+    private final MomentForwardTrajectory trajectory;
     private final CanonicalForwardTrajectory canonicalTrajectory;
     private final CanonicalBranchGradientCache branchGradientCache;
-    private final BranchSmootherStats[] smootherStats;
+    private final MomentBranchSmootherStats[] smootherStats;
     private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
 
     private final double[] designMatrix;
@@ -89,14 +89,14 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
 
         this.futureMessage = new CanonicalGaussianState(stateDimension);
         this.backwardMessage = new CanonicalGaussianState(stateDimension);
-        this.trajectory = new ForwardTrajectory(timeCount, stateDimension);
+        this.trajectory = new MomentForwardTrajectory(timeCount, stateDimension);
         this.canonicalTrajectory = new CanonicalForwardTrajectory(timeCount, stateDimension);
         this.branchGradientCache = new CanonicalBranchGradientCache(
                 timeCount, stateDimension, transitionRepresentation, timeGrid);
-        this.smootherStats = new BranchSmootherStats[timeCount];
+        this.smootherStats = new MomentBranchSmootherStats[timeCount];
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
         for (int t = 0; t < timeCount; ++t) {
-            smootherStats[t] = new BranchSmootherStats(t, stateDimension, t < timeCount - 1);
+            smootherStats[t] = new MomentBranchSmootherStats(t, stateDimension, t < timeCount - 1);
         }
 
         this.designMatrix = new double[observationDimension * stateDimension];
@@ -133,64 +133,51 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
         }
     }
 
-    public double[][] getSmoothedMeans() {
+    public double[] getSmoothedMeansFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][] out = new double[timeCount][stateDimension];
+        final double[] out = new double[timeCount * stateDimension];
         for (int t = 0; t < timeCount; ++t) {
-            System.arraycopy(smootherStats[t].smoothedMean, 0, out[t], 0, stateDimension);
+            System.arraycopy(smootherStats[t].smoothedMean, 0,
+                    out, t * stateDimension, stateDimension);
         }
         return out;
     }
 
-    public double[][][] getSmoothedCovariances() {
+    public double[] getSmoothedCovariancesFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
+        final double[] out = new double[timeCount * stateDimension * stateDimension];
+        final int matrixSize = stateDimension * stateDimension;
         for (int t = 0; t < timeCount; ++t) {
-            MatrixOps.fromFlat(smootherStats[t].smoothedCovariance, out[t], stateDimension);
+            System.arraycopy(smootherStats[t].smoothedCovariance, 0,
+                    out, t * matrixSize, matrixSize);
         }
         return out;
     }
 
-    public double[][] getFilteredMeans() {
+    public double[] getFilteredMeansFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][] out = new double[timeCount][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyFilteredMeanTo(t, out[t]);
-        }
-        return out;
+        return trajectory.filteredMeans.clone();
     }
 
-    public double[][][] getFilteredCovariances() {
+    public double[] getFilteredCovariancesFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyFilteredCovarianceTo(t, out[t]);
-        }
-        return out;
+        return trajectory.filteredCovariances.clone();
     }
 
-    public double[][] getPredictedMeans() {
+    public double[] getPredictedMeansFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][] out = new double[timeCount][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyPredictedMeanTo(t, out[t]);
-        }
-        return out;
+        return trajectory.predictedMeans.clone();
     }
 
-    public double[][][] getPredictedCovariances() {
+    public double[] getPredictedCovariancesFlat() {
         ensureResults();
         ensureMomentTrajectory();
-        final double[][][] out = new double[timeCount][stateDimension][stateDimension];
-        for (int t = 0; t < timeCount; ++t) {
-            trajectory.copyPredictedCovarianceTo(t, out[t]);
-        }
-        return out;
+        return trajectory.predictedCovariances.clone();
     }
 
     private void ensureResults() {
@@ -203,14 +190,14 @@ public final class CanonicalKalmanSmootherEngine implements GaussianSmootherResu
     }
 
     @Override
-    public BranchSmootherStats[] getSmootherStats() {
+    public MomentBranchSmootherStats[] getSmootherStats() {
         ensureResults();
         ensureMomentTrajectory();
         return smootherStats;
     }
 
     @Override
-    public ForwardTrajectory getTrajectory() {
+    public MomentForwardTrajectory getTrajectory() {
         ensureResults();
         ensureMomentTrajectory();
         return trajectory;

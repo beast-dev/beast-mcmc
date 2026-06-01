@@ -187,7 +187,7 @@ public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitio
         final Workspace workspace = workspace();
         selectionMatrixParameterization.fillSelectionMatrixFlat(workspace.matrix0);
         diffusionMatrixParameterization.fillDiffusionMatrixFlat(workspace.matrix1);
-        covarianceGradientStrategy.accumulateFlatMatrices(
+        covarianceGradientStrategy.accumulateFlat(
                 dt,
                 stateDimension,
                 workspace.matrix0,

@@ -11,117 +11,107 @@ final class VanLoanCovarianceGradientStrategy implements OUCovarianceGradientStr
             };
 
     @Override
-    public void accumulate(final double dt,
-                           final int dimension,
-                           final double[][] selection,
-                           final double[][] diffusion,
-                           final double[][] covarianceAdjoint,
-                           final double[] gradientAccumulator) {
-        final OUCovarianceGradientWorkspace workspace = workspace(dimension);
-
-        final double[][] vanLoanMatrix = workspace.blockMatrices[0];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                vanLoanMatrix[i][j] = -dt * selection[i][j];
-                vanLoanMatrix[i][j + dimension] = dt * diffusion[i][j];
-                vanLoanMatrix[i + dimension][j] = 0.0;
-                vanLoanMatrix[i + dimension][j + dimension] = dt * selection[j][i];
-            }
-        }
-
-        final double[][] vanLoanExp = workspace.blockMatrices[1];
-        MatrixExponentialUtils.expm(vanLoanMatrix, vanLoanExp);
-
-        final double[][] gvF = workspace.squareMatrices[0];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                double sum = 0.0;
-                for (int k = 0; k < dimension; ++k) {
-                    sum += covarianceAdjoint[i][k] * vanLoanExp[k][j];
-                }
-                gvF[i][j] = sum;
-            }
-        }
-
-        accumulateFromVanLoanBlocks(dt, dimension, vanLoanMatrix, vanLoanExp, gvF, workspace, gradientAccumulator);
-    }
-
-    @Override
     public void accumulateFlat(final double dt,
                                final int dimension,
-                               final double[][] selection,
-                               final double[][] diffusion,
+                               final double[] selection,
+                               final double[] diffusion,
                                final double[] covarianceAdjoint,
                                final boolean transposeAdjoint,
                                final double[] gradientAccumulator) {
         final OUCovarianceGradientWorkspace workspace = workspace(dimension);
+        final double[] block = workspace.blockMatrices;
+        final double[] square = workspace.squareMatrices;
+        final int twoDim = 2 * dimension;
+        final int vanLoanMatrix = workspace.blockOffset(0);
+        final int vanLoanExp = workspace.blockOffset(1);
 
-        final double[][] vanLoanMatrix = workspace.blockMatrices[0];
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            final int topRow = vanLoanMatrix + i * twoDim;
+            final int bottomRow = vanLoanMatrix + (i + dimension) * twoDim;
             for (int j = 0; j < dimension; ++j) {
-                vanLoanMatrix[i][j] = -dt * selection[i][j];
-                vanLoanMatrix[i][j + dimension] = dt * diffusion[i][j];
-                vanLoanMatrix[i + dimension][j] = 0.0;
-                vanLoanMatrix[i + dimension][j + dimension] = dt * selection[j][i];
+                block[topRow + j] = -dt * selection[rowOffset + j];
+                block[topRow + j + dimension] = dt * diffusion[rowOffset + j];
+                block[bottomRow + j] = 0.0;
+                block[bottomRow + j + dimension] = dt * selection[j * dimension + i];
             }
         }
 
-        final double[][] vanLoanExp = workspace.blockMatrices[1];
-        MatrixExponentialUtils.expm(vanLoanMatrix, vanLoanExp);
+        MatrixExponentialUtils.expmFlat(block, vanLoanMatrix, block, vanLoanExp, twoDim);
 
-        final double[][] gvF = workspace.squareMatrices[0];
+        final int gvF = workspace.squareOffset(0);
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dimension; ++k) {
                     sum += OUCovarianceGradientMath.flatSquareValue(
-                            covarianceAdjoint, i, k, dimension, transposeAdjoint) * vanLoanExp[k][j];
+                            covarianceAdjoint, i, k, dimension, transposeAdjoint)
+                            * block[vanLoanExp + k * twoDim + j];
                 }
-                gvF[i][j] = sum;
+                square[gvF + rowOffset + j] = sum;
             }
         }
 
-        accumulateFromVanLoanBlocks(dt, dimension, vanLoanMatrix, vanLoanExp, gvF, workspace, gradientAccumulator);
+        accumulateFromVanLoanBlocks(
+                dt,
+                dimension,
+                workspace,
+                vanLoanMatrix,
+                vanLoanExp,
+                gvF,
+                gradientAccumulator);
     }
 
     private void accumulateFromVanLoanBlocks(final double dt,
                                              final int dimension,
-                                             final double[][] vanLoanMatrix,
-                                             final double[][] vanLoanExp,
-                                             final double[][] gvF,
                                              final OUCovarianceGradientWorkspace workspace,
+                                             final int vanLoanMatrix,
+                                             final int vanLoanExp,
+                                             final int gvF,
                                              final double[] gradientAccumulator) {
-        final double[][] v = workspace.squareMatrices[1];
+        final double[] square = workspace.squareMatrices;
+        final double[] block = workspace.blockMatrices;
+        final int twoDim = 2 * dimension;
+        final int v = workspace.squareOffset(1);
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
                 double sum = 0.0;
                 for (int k = 0; k < dimension; ++k) {
-                    sum += vanLoanExp[i][k + dimension] * vanLoanExp[j][k];
+                    sum += block[vanLoanExp + i * twoDim + k + dimension]
+                            * block[vanLoanExp + j * twoDim + k];
                 }
-                v[i][j] = sum;
+                square[v + rowOffset + j] = sum;
             }
         }
 
-        final double[][] upstreamBlock = workspace.blockMatrices[2];
-        OUCovarianceGradientMath.clearSquare(upstreamBlock);
+        final int upstreamBlock = workspace.blockOffset(2);
+        OUCovarianceGradientMath.clearMatrix(block, upstreamBlock, workspace.blockStride);
         for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            final int topRow = upstreamBlock + i * twoDim;
+            final int bottomRow = upstreamBlock + (i + dimension) * twoDim;
             for (int j = 0; j < dimension; ++j) {
-                upstreamBlock[i][j + dimension] = gvF[i][j];
+                block[topRow + j + dimension] = square[gvF + rowOffset + j];
                 double vgvf = 0.0;
                 for (int k = 0; k < dimension; ++k) {
-                    vgvf += v[i][k] * gvF[k][j];
+                    vgvf += square[v + rowOffset + k] * square[gvF + k * dimension + j];
                 }
-                upstreamBlock[i + dimension][j + dimension] = -vgvf;
+                block[bottomRow + j + dimension] = -vgvf;
             }
         }
 
-        final double[][] gradM = workspace.blockMatrices[3];
-        MatrixExponentialUtils.adjointExp(vanLoanMatrix, upstreamBlock, gradM);
+        final int gradM = workspace.blockOffset(3);
+        MatrixExponentialUtils.adjointExpFlat(
+                block, vanLoanMatrix, block, upstreamBlock, block, gradM, twoDim);
 
         for (int k = 0; k < dimension; ++k) {
+            final int rowOffset = k * dimension;
             for (int l = 0; l < dimension; ++l) {
-                gradientAccumulator[k * dimension + l] +=
-                        -dt * gradM[k][l] + dt * gradM[dimension + l][dimension + k];
+                gradientAccumulator[rowOffset + l] +=
+                        -dt * block[gradM + k * twoDim + l]
+                                + dt * block[gradM + (dimension + l) * twoDim + dimension + k];
             }
         }
     }

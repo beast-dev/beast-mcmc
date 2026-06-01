@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 /**
  * Canonical-form snapshot of the forward and backward Gaussian trajectory.
  *
- * <p>This structure intentionally omits the expectation-form filtered/predicted
+ * <p>This structure intentionally omits the moment-form filtered/predicted
  * means and covariances used by the legacy Kalman pathway. It is the native
  * trajectory surface for canonical smoothing and canonical analytical gradients.
  */

@@ -20,6 +20,7 @@ public final class CanonicalBranchGradientCache {
     private final boolean[] contributionKnown;
     private final CanonicalLocalTransitionAdjoints[] adjoints;
     private final double[] transitionMatrices;
+    private final MatrixSlice[] transitionMatrixViews;
     private final GaussianTransitionRepresentation transitionRepresentation;
     private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
     private final TimeGrid timeGrid;
@@ -45,6 +46,7 @@ public final class CanonicalBranchGradientCache {
         this.contributionKnown = new boolean[branchCount];
         this.adjoints = new CanonicalLocalTransitionAdjoints[branchCount];
         this.transitionMatrices = new double[branchCount * matrixLength];
+        this.transitionMatrixViews = new MatrixSlice[branchCount];
         this.transitionRepresentation = transitionRepresentation;
         this.cachedTransitionRepresentation =
                 transitionRepresentation instanceof CachedGaussianTransitionRepresentation
@@ -57,6 +59,7 @@ public final class CanonicalBranchGradientCache {
         this.workingContribution = new CanonicalBranchMessageContribution(stateDimension);
         for (int i = 0; i < branchCount; ++i) {
             adjoints[i] = new CanonicalLocalTransitionAdjoints(stateDimension);
+            transitionMatrixViews[i] = new MatrixSlice();
         }
         this.contributionWorkspace = new CanonicalBranchMessageContributionUtils.Workspace(stateDimension);
         this.adjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(stateDimension);
@@ -95,14 +98,14 @@ public final class CanonicalBranchGradientCache {
                         adjoints[t]);
                 System.arraycopy(adjointWorkspace.transitionMatrix, 0,
                         transitionMatrices, transitionMatrixOffset, matrixLength);
+                setOwnedTransitionMatrix(t, transitionMatrixOffset);
             } else if (cachedTransitionRepresentation != null
                     && cachedTransitionRepresentation.getTransitionMomentsView(
                     t,
                     t + 1,
                     timeGrid,
                     transitionMomentsView)) {
-                System.arraycopy(transitionMomentsView.getTransitionMatrix(), 0,
-                        transitionMatrices, transitionMatrixOffset, matrixLength);
+                transitionMatrixViews[t].set(transitionMomentsView.getTransitionMatrix(), 0);
                 CanonicalTransitionAdjointUtils.fillFromMoments(
                         trajectory.transitions[t].precisionYY,
                         transitionMomentsView.getTransitionCovariance(),
@@ -116,6 +119,7 @@ public final class CanonicalBranchGradientCache {
                         t, t + 1, timeGrid, adjointWorkspace.transitionMatrix);
                 System.arraycopy(adjointWorkspace.transitionMatrix, 0,
                         transitionMatrices, transitionMatrixOffset, matrixLength);
+                setOwnedTransitionMatrix(t, transitionMatrixOffset);
                 transitionRepresentation.getTransitionOffset(t, t + 1, timeGrid, transitionOffsetWorkspace);
                 transitionRepresentation.getTransitionCovarianceFlat(
                         t, t + 1, timeGrid, transitionCovarianceFlatWorkspace);
@@ -151,12 +155,12 @@ public final class CanonicalBranchGradientCache {
         return adjoints[branchIndex];
     }
 
-    public double[] getTransitionMatrixData() {
-        return transitionMatrices;
+    public double[] getTransitionMatrixData(final int branchIndex) {
+        return transitionMatrixViews[branchIndex].data;
     }
 
     public int getTransitionMatrixOffset(final int branchIndex) {
-        return transitionMatrixOffset(branchIndex);
+        return transitionMatrixViews[branchIndex].offset;
     }
 
     public long getBuildCount() {
@@ -181,5 +185,21 @@ public final class CanonicalBranchGradientCache {
 
     private int transitionMatrixOffset(final int branchIndex) {
         return branchIndex * matrixLength;
+    }
+
+    private void setOwnedTransitionMatrix(final int branchIndex,
+                                          final int transitionMatrixOffset) {
+        transitionMatrixViews[branchIndex].set(transitionMatrices, transitionMatrixOffset);
+    }
+
+    private static final class MatrixSlice {
+        private double[] data;
+        private int offset;
+
+        private void set(final double[] data,
+                         final int offset) {
+            this.data = data;
+            this.offset = offset;
+        }
     }
 }

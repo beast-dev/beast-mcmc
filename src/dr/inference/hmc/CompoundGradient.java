@@ -115,7 +115,6 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         } else {
             parallelExecutor = null;
         }
-
     }
 
     @Override
@@ -201,20 +200,19 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
             batch.add(batchProvider);
         }
 
-        final double[][] gradients = batch.get(0).getGradientLogDensityBatch(batch);
-        if (gradients == null || gradients.length != batch.size()) {
+        final BatchGradient gradients = batch.get(0).getGradientLogDensityBatch(batch);
+        if (gradients == null || gradients.size() != batch.size()) {
             throw new IllegalStateException("Batched gradient result size mismatch.");
         }
         final double[] result = new double[dimension];
         int offset = 0;
         for (int i = 0; i < batch.size(); ++i) {
-            final double[] gradient = gradients[i];
             final int providerDimension = batch.get(i).getDimension();
-            if (gradient == null || gradient.length != providerDimension) {
+            if (gradients.dimension(i) != providerDimension) {
                 throw new IllegalStateException("Batched gradient dimension mismatch for "
                         + batch.get(i).getParameter().getParameterName());
             }
-            System.arraycopy(gradient, 0, result, offset, providerDimension);
+            gradients.copyGradientTo(i, result, offset);
             offset += providerDimension;
         }
         return result;

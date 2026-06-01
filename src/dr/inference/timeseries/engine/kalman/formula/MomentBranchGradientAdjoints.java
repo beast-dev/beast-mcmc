@@ -1,16 +1,16 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
+import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
 
 /**
- * Reusable branch-local adjoint workspace for expectation-path OU gradients.
+ * Reusable branch-local adjoint workspace for moment-path OU gradients.
  *
  * <p>The selection, diffusion, and stationary-mean formulas all need the same
  * Gaussian transition derivatives. This helper owns that algebra once and lets
  * the callers decide how to push the adjoints back to model parameters.</p>
  */
-final class ExpectationGaussianBranchGradientAdjoints {
+final class MomentBranchGradientAdjoints {
 
     private final int stateDimension;
 
@@ -27,7 +27,7 @@ final class ExpectationGaussianBranchGradientAdjoints {
     private final double[] dLogL_df;
     private final double[] dLogL_dV;
 
-    ExpectationGaussianBranchGradientAdjoints(final int stateDimension) {
+    MomentBranchGradientAdjoints(final int stateDimension) {
         if (stateDimension < 1) {
             throw new IllegalArgumentException("stateDimension must be at least 1");
         }
@@ -48,8 +48,8 @@ final class ExpectationGaussianBranchGradientAdjoints {
         this.dLogL_dV = new double[matrixSize];
     }
 
-    void compute(final BranchSmootherStats curr,
-                 final BranchSmootherStats next,
+    void compute(final MomentBranchSmootherStats curr,
+                 final MomentBranchSmootherStats next,
                  final double[] transitionMatrix,
                  final int transitionMatrixOffset,
                  final double[] transitionOffset,
@@ -123,8 +123,8 @@ final class ExpectationGaussianBranchGradientAdjoints {
         }
     }
 
-    void computeMeanAdjoint(final BranchSmootherStats curr,
-                            final BranchSmootherStats next,
+    void computeMeanAdjoint(final MomentBranchSmootherStats curr,
+                            final MomentBranchSmootherStats next,
                             final double[] transitionMatrix,
                             final int transitionMatrixOffset,
                             final double[] transitionOffset,

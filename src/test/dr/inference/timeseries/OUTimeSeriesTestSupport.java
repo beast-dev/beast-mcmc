@@ -1,6 +1,7 @@
 package test.dr.inference.timeseries;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
@@ -51,7 +52,10 @@ public final class OUTimeSeriesTestSupport {
                                     final int toIndex,
                                     final TimeGrid timeGrid,
                                     final double[][] out) {
-        transitionRepresentation(process).getTransitionMatrix(fromIndex, toIndex, timeGrid, out);
+        final int dim = out.length;
+        final double[] flat = new double[dim * dim];
+        transitionRepresentation(process).getTransitionMatrixFlat(fromIndex, toIndex, timeGrid, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
     public static void getTransitionMatrix(final EulerOUProcessModel process,
@@ -59,7 +63,10 @@ public final class OUTimeSeriesTestSupport {
                                            final int toIndex,
                                            final TimeGrid timeGrid,
                                            final double[][] out) {
-        process.getTransitionMatrix(fromIndex, toIndex, timeGrid, out);
+        final int dim = out.length;
+        final double[] flat = new double[dim * dim];
+        process.getTransitionMatrixFlat(fromIndex, toIndex, timeGrid, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
     public static void getTransitionOffset(final OUProcessModel process,
@@ -83,7 +90,10 @@ public final class OUTimeSeriesTestSupport {
                                         final int toIndex,
                                         final TimeGrid timeGrid,
                                         final double[][] out) {
-        transitionRepresentation(process).getTransitionCovariance(fromIndex, toIndex, timeGrid, out);
+        final int dim = out.length;
+        final double[] flat = new double[dim * dim];
+        transitionRepresentation(process).getTransitionCovarianceFlat(fromIndex, toIndex, timeGrid, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 
     public static void getTransitionCovariance(final EulerOUProcessModel process,
@@ -91,6 +101,9 @@ public final class OUTimeSeriesTestSupport {
                                                final int toIndex,
                                                final TimeGrid timeGrid,
                                                final double[][] out) {
-        process.getTransitionCovariance(fromIndex, toIndex, timeGrid, out);
+        final int dim = out.length;
+        final double[] flat = new double[dim * dim];
+        process.getTransitionCovarianceFlat(fromIndex, toIndex, timeGrid, flat);
+        MatrixOps.fromFlat(flat, out, dim);
     }
 }

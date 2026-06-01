@@ -14,10 +14,10 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 /**
  * Forward-only Gaussian likelihood engine that propagates canonical-form states.
  *
- * <p>This engine is intentionally parallel to {@link ExpectationKalmanLikelihoodEngine}: it
+ * <p>This engine is intentionally parallel to {@link MomentKalmanLikelihoodEngine}: it
  * computes the same marginal likelihood, but uses precision/information algebra
  * throughout the latent-state propagation. It is the first step toward a selectable
- * canonical backend without disturbing the working expectation-form smoother and
+ * canonical backend without disturbing the working moment-form smoother and
  * gradient code.
  */
 public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {

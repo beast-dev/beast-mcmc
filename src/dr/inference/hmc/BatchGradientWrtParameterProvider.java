@@ -10,5 +10,5 @@ public interface BatchGradientWrtParameterProvider extends GradientWrtParameterP
 
     Object getBatchGradientKey();
 
-    double[][] getGradientLogDensityBatch(List<BatchGradientWrtParameterProvider> providers);
+    BatchGradient getGradientLogDensityBatch(List<BatchGradientWrtParameterProvider> providers);
 }

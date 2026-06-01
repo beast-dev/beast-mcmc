@@ -13,16 +13,7 @@ public interface DiffusionMatrixParameterization {
 
     int getDimension();
 
-    void fillDiffusionMatrix(double[][] out);
-
-    default void fillDiffusionMatrixFlat(final double[] out) {
-        final int dimension = getDimension();
-        final double[][] dense = new double[dimension][dimension];
-        fillDiffusionMatrix(dense);
-        for (int i = 0; i < dimension; ++i) {
-            System.arraycopy(dense[i], 0, out, i * dimension, dimension);
-        }
-    }
+    void fillDiffusionMatrixFlat(double[] out);
 
     boolean supportsParameter(Parameter parameter);
 

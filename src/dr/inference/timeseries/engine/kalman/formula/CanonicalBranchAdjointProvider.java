@@ -65,7 +65,7 @@ final class CanonicalBranchAdjointProvider {
                                   final CanonicalBranchGradientCache branchGradientCache) {
         return branchGradientCache == null
                 ? transitionWorkspace.transitionMatrix
-                : branchGradientCache.getTransitionMatrixData();
+                : branchGradientCache.getTransitionMatrixData(branchIndex);
     }
 
     int transitionMatrixOffset(final int branchIndex,

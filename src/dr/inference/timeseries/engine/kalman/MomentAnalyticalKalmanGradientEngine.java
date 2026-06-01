@@ -2,20 +2,20 @@ package dr.inference.timeseries.engine.kalman;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.engine.GradientEngine;
-import dr.inference.timeseries.engine.kalman.formula.ExpectationGradientFormula;
+import dr.inference.timeseries.engine.kalman.formula.MomentGradientFormula;
 
 /**
  * Analytical gradient engine for the linear-Gaussian Kalman path.
  *
  * <p>Gradients are computed by combining an RTS smoother pass (via
- * {@link ExpectationKalmanSmootherEngine}) with one or more {@link ExpectationGradientFormula} implementations
+ * {@link MomentKalmanSmootherEngine}) with one or more {@link MomentGradientFormula} implementations
  * that accumulate per-branch contributions. The smoother result is shared across all
  * formulas registered at construction time, so the O(T·d³) forward + backward pass is
  * paid only once per parameter update regardless of how many gradient parameters are
  * queried.
  *
  * <h3>Adding support for a new parameter</h3>
- * Implement {@link ExpectationGradientFormula} and pass an instance to the constructor. No other
+ * Implement {@link MomentGradientFormula} and pass an instance to the constructor. No other
  * changes are required.
  *
  * <h3>Caching</h3>
@@ -23,28 +23,28 @@ import dr.inference.timeseries.engine.kalman.formula.ExpectationGradientFormula;
  * {@link #makeDirty()} invalidates both the likelihood and the smoother statistics so
  * that the next gradient query triggers a fresh pass.
  */
-public class ExpectationAnalyticalKalmanGradientEngine implements GradientEngine {
+public class MomentAnalyticalKalmanGradientEngine implements GradientEngine {
 
-    private final GaussianSmootherResults smootherEngine;
-    private final ExpectationGradientFormula[]    formulas;
+    private final MomentSmootherResults smootherEngine;
+    private final MomentGradientFormula[]    formulas;
 
     /**
      * @param smootherEngine the smoother engine providing shared forward + backward statistics
      * @param formulas       one or more gradient formulas to register; queried in order for
      *                       {@link #supportsGradientWrt}
      */
-    public ExpectationAnalyticalKalmanGradientEngine(final ExpectationKalmanSmootherEngine smootherEngine,
-                                          final ExpectationGradientFormula... formulas) {
-        this((GaussianSmootherResults) smootherEngine, formulas);
+    public MomentAnalyticalKalmanGradientEngine(final MomentKalmanSmootherEngine smootherEngine,
+                                          final MomentGradientFormula... formulas) {
+        this((MomentSmootherResults) smootherEngine, formulas);
     }
 
-    public ExpectationAnalyticalKalmanGradientEngine(final GaussianSmootherResults smootherEngine,
-                                          final ExpectationGradientFormula... formulas) {
+    public MomentAnalyticalKalmanGradientEngine(final MomentSmootherResults smootherEngine,
+                                          final MomentGradientFormula... formulas) {
         if (smootherEngine == null) {
             throw new IllegalArgumentException("smootherEngine must not be null");
         }
         if (formulas == null || formulas.length == 0) {
-            throw new IllegalArgumentException("at least one ExpectationGradientFormula must be provided");
+            throw new IllegalArgumentException("at least one MomentGradientFormula must be provided");
         }
         this.smootherEngine = smootherEngine;
         this.formulas       = formulas.clone();
@@ -55,7 +55,7 @@ public class ExpectationAnalyticalKalmanGradientEngine implements GradientEngine
         if (parameter == null) {
             return false;
         }
-        for (final ExpectationGradientFormula formula : formulas) {
+        for (final MomentGradientFormula formula : formulas) {
             if (formula.supportsParameter(parameter)) {
                 return true;
             }
@@ -67,7 +67,7 @@ public class ExpectationAnalyticalKalmanGradientEngine implements GradientEngine
      * Computes the gradient of the log-likelihood with respect to {@code parameter}.
      *
      * <p>The smoother statistics are computed (or retrieved from cache) first; then the
-     * matching {@link ExpectationGradientFormula} runs its branch-sum loop over the stored
+     * matching {@link MomentGradientFormula} runs its branch-sum loop over the stored
      * trajectory and smoother stats.
      *
      * @throws IllegalArgumentException if no registered formula supports {@code parameter}
@@ -76,15 +76,15 @@ public class ExpectationAnalyticalKalmanGradientEngine implements GradientEngine
     public double[] getGradientWrt(final Parameter parameter) {
         if (!supportsGradientWrt(parameter)) {
             throw new IllegalArgumentException(
-                    "No registered ExpectationGradientFormula supports parameter: " +
+                    "No registered MomentGradientFormula supports parameter: " +
                     (parameter == null ? "null" : parameter.getId()));
         }
 
         // One call ensures both forward trajectory and smoother stats are up to date.
-        final BranchSmootherStats[] stats       = smootherEngine.getSmootherStats();
-        final ForwardTrajectory     trajectory  = smootherEngine.getTrajectory();
+        final MomentBranchSmootherStats[] stats       = smootherEngine.getSmootherStats();
+        final MomentForwardTrajectory     trajectory  = smootherEngine.getTrajectory();
 
-        for (final ExpectationGradientFormula formula : formulas) {
+        for (final MomentGradientFormula formula : formulas) {
             if (formula.supportsParameter(parameter)) {
                 return formula.computeGradient(
                         parameter,

@@ -34,7 +34,7 @@ public final class OUTimeSeriesProcessAdapter extends AbstractModel
     private final GaussianTransitionRepresentation transitionRepresentation;
 
     public OUTimeSeriesProcessAdapter(final OUProcessModel processModel) {
-        this(processModel, GaussianComputationMode.EXPECTATION);
+        this(processModel, GaussianComputationMode.MOMENT);
     }
 
     public OUTimeSeriesProcessAdapter(final OUProcessModel processModel,

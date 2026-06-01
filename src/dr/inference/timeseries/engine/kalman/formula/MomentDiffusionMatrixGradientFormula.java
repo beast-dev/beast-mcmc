@@ -3,21 +3,21 @@ package dr.inference.timeseries.engine.kalman.formula;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
-import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
+import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
+import dr.inference.timeseries.engine.kalman.MomentForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
  * Analytical gradient of the Kalman log-likelihood with respect to the diffusion
  * matrix Q (or native parameters that determine Q).
  */
-public final class ExpectationDiffusionMatrixGradientFormula implements ExpectationGradientFormula {
+public final class MomentDiffusionMatrixGradientFormula implements MomentGradientFormula {
 
     private final DiffusionMatrixParameterization diffusionParameterization;
     private final int stateDimension;
-    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
+    private final MomentBranchGradientAdjoints branchAdjoints;
 
-    public ExpectationDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
+    public MomentDiffusionMatrixGradientFormula(final DiffusionMatrixParameterization diffusionParameterization,
                                           final int stateDimension) {
         if (diffusionParameterization == null) {
             throw new IllegalArgumentException("diffusionParameterization must not be null");
@@ -27,7 +27,7 @@ public final class ExpectationDiffusionMatrixGradientFormula implements Expectat
         }
         this.diffusionParameterization = diffusionParameterization;
         this.stateDimension = stateDimension;
-        this.branchAdjoints = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
+        this.branchAdjoints = new MomentBranchGradientAdjoints(stateDimension);
     }
 
     @Override
@@ -37,8 +37,8 @@ public final class ExpectationDiffusionMatrixGradientFormula implements Expectat
 
     @Override
     public double[] computeGradient(final Parameter parameter,
-                                    final BranchSmootherStats[] smootherStats,
-                                    final ForwardTrajectory trajectory,
+                                    final MomentBranchSmootherStats[] smootherStats,
+                                    final MomentForwardTrajectory trajectory,
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
         final int T = trajectory.timeCount;

@@ -64,13 +64,13 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[] {
             AttributeRule.newStringRule(FORWARD_MODE, true,
-                    "Timeseries forward mode. Defaults to canonical; expectation is debug-only."),
+                    "Timeseries forward mode. Defaults to canonical; moment is debug-only."),
             AttributeRule.newStringRule(SMOOTHER_MODE, true,
-                    "Timeseries smoother mode. Defaults to canonical; expectation is debug-only."),
+                    "Timeseries smoother mode. Defaults to canonical; moment is debug-only."),
             AttributeRule.newStringRule(GRADIENT_MODE, true,
                     "Timeseries gradient mode. Defaults to canonicalAnalytical; other values are debug-only."),
             AttributeRule.newBooleanRule(DEBUG_MODES, true,
-                    "Must be true to use expectation or disabled debug modes."),
+                    "Must be true to use moment or disabled debug modes."),
             new ElementRule(MODEL, new XMLSyntaxRule[] { new ElementRule(TimeSeriesModel.class) })
     };
 
@@ -90,8 +90,9 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
         if ("canonical".equalsIgnoreCase(value)) {
             return GaussianForwardComputationMode.CANONICAL;
         }
-        if ("expectation".equalsIgnoreCase(value)) {
-            return GaussianForwardComputationMode.EXPECTATION;
+        if ("moment".equalsIgnoreCase(value)
+                || "expectation".equalsIgnoreCase(value)) {
+            return GaussianForwardComputationMode.MOMENT;
         }
         throw new XMLParseException("Unknown " + FORWARD_MODE + ": " + value);
     }
@@ -102,8 +103,9 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
         if ("canonical".equalsIgnoreCase(value)) {
             return GaussianSmootherComputationMode.CANONICAL;
         }
-        if ("expectation".equalsIgnoreCase(value)) {
-            return GaussianSmootherComputationMode.EXPECTATION;
+        if ("moment".equalsIgnoreCase(value)
+                || "expectation".equalsIgnoreCase(value)) {
+            return GaussianSmootherComputationMode.MOMENT;
         }
         throw new XMLParseException("Unknown " + SMOOTHER_MODE + ": " + value);
     }
@@ -115,9 +117,11 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
                 || "canonical".equalsIgnoreCase(value)) {
             return GaussianGradientComputationMode.CANONICAL_ANALYTICAL;
         }
-        if ("expectationAnalytical".equalsIgnoreCase(value)
+        if ("momentAnalytical".equalsIgnoreCase(value)
+                || "moment".equalsIgnoreCase(value)
+                || "expectationAnalytical".equalsIgnoreCase(value)
                 || "expectation".equalsIgnoreCase(value)) {
-            return GaussianGradientComputationMode.EXPECTATION_ANALYTICAL;
+            return GaussianGradientComputationMode.MOMENT_ANALYTICAL;
         }
         if ("disabled".equalsIgnoreCase(value)
                 || "none".equalsIgnoreCase(value)) {
@@ -139,6 +143,6 @@ public class TimeSeriesLikelihoodParser extends AbstractXMLObjectParser {
             return;
         }
         throw new XMLParseException("Timeseries likelihood uses canonical mode by default. "
-                + "Set " + DEBUG_MODES + "=\"true\" to use expectation or disabled debug modes.");
+                + "Set " + DEBUG_MODES + "=\"true\" to use moment or disabled debug modes.");
     }
 }

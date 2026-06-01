@@ -11,8 +11,6 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
 
     private static final String BLOCK_DIAGONAL_BACKEND_PACKAGE =
             "dr.evomodel.continuous.ou.blockdiagonal";
-    private static final String LEGACY_GAUSSIAN_MATRIX_OPS =
-            "dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianMatrixOps";
     private static final String WILDCARD_IMPORT = "wildcard import";
     private static final String SYSTEM_PRINT = "system print";
 
@@ -154,27 +152,12 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
     }
 
     public void testCanonicalTreeHotPathsUseFlatMatrixOps() throws IOException {
-        assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/contribution"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/traversal"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/workspace"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/canonical"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
-        assertNoImportContaining(
-                new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
-                LEGACY_GAUSSIAN_MATRIX_OPS);
+        assertFalse(
+                "Legacy dense matrix compatibility wrapper should not exist",
+                new File(
+                        "src/dr/evomodel/treedatalikelihood/continuous/canonical/message",
+                        "Gaussian" + "MatrixOps.java")
+                        .exists());
     }
 
     public void testCanonicalGradientBackendDoesNotDependOnLegacyBranchGradientPath() throws IOException {

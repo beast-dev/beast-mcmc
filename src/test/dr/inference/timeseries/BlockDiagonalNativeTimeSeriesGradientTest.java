@@ -13,7 +13,7 @@ import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.core.UniformTimeGrid;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
-import dr.inference.timeseries.engine.kalman.ExpectationKalmanLikelihoodEngine;
+import dr.inference.timeseries.engine.kalman.MomentKalmanLikelihoodEngine;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.likelihood.GaussianGradientComputationMode;
 import dr.inference.timeseries.likelihood.GaussianSmootherComputationMode;
@@ -32,16 +32,16 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         super(name);
     }
 
-    public void testExpectationAnalyticalNativeGeneralBlockGradientsMatchFiniteDifference() {
-        final GeneralBlockModel model = makeGeneralBlockModel("expectation.general.block", false);
+    public void testMomentAnalyticalNativeGeneralBlockGradientsMatchFiniteDifference() {
+        final GeneralBlockModel model = makeGeneralBlockModel("moment.general.block", false);
         final TimeSeriesLikelihood likelihood = makeLikelihood(
-                "ts.expectation.general.block",
+                "ts.moment.general.block",
                 model,
-                GaussianForwardComputationMode.EXPECTATION,
-                GaussianSmootherComputationMode.EXPECTATION,
-                GaussianGradientComputationMode.EXPECTATION_ANALYTICAL);
+                GaussianForwardComputationMode.MOMENT,
+                GaussianSmootherComputationMode.MOMENT,
+                GaussianGradientComputationMode.MOMENT_ANALYTICAL);
 
-        assertNativeBlockGradientsMatchFiniteDifference("expectation", likelihood, model);
+        assertNativeBlockGradientsMatchFiniteDifference("moment", likelihood, model);
     }
 
     public void testCanonicalAnalyticalNativeGeneralBlockGradientsMatchFiniteDifference() {
@@ -213,7 +213,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         final TimeGrid grid = new UniformTimeGrid(observations.getColumnDimension(), 0.0, dt);
         final GaussianTransitionRepresentation transitionRepresentation =
                 representation(process, GaussianTransitionRepresentation.class);
-        final ExpectationKalmanLikelihoodEngine likelihoodEngine = new ExpectationKalmanLikelihoodEngine(
+        final MomentKalmanLikelihoodEngine likelihoodEngine = new MomentKalmanLikelihoodEngine(
                 transitionRepresentation,
                 observation,
                 grid);
@@ -260,7 +260,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         final LinearGaussianObservationModel observation;
         final TimeGrid grid;
         final GaussianTransitionRepresentation transitionRepresentation;
-        final ExpectationKalmanLikelihoodEngine likelihoodEngine;
+        final MomentKalmanLikelihoodEngine likelihoodEngine;
 
         private GeneralBlockModel(final OUProcessModel process,
                                   final BlockDiagonalPolarStableMatrixParameter block,
@@ -269,7 +269,7 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
                                   final LinearGaussianObservationModel observation,
                                   final TimeGrid grid,
                                   final GaussianTransitionRepresentation transitionRepresentation,
-                                  final ExpectationKalmanLikelihoodEngine likelihoodEngine) {
+                                  final MomentKalmanLikelihoodEngine likelihoodEngine) {
             this.process = process;
             this.block = block;
             this.diffusion = diffusion;

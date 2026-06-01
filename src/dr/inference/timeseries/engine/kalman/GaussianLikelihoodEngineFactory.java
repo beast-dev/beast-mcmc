@@ -11,9 +11,9 @@ import dr.inference.timeseries.representation.RepresentableProcess;
 /**
  * Factory for forward Gaussian likelihood engines.
  *
- * <p>This centralizes the choice between expectation-form and canonical-form
+ * <p>This centralizes the choice between moment-form and canonical-form
  * forward inference while leaving smoothing and analytical gradients on the
- * established expectation-form path for now.
+ * established moment-form path for now.
  */
 public final class GaussianLikelihoodEngineFactory {
 
@@ -39,8 +39,8 @@ public final class GaussianLikelihoodEngineFactory {
         }
 
         switch (mode) {
-            case EXPECTATION:
-                return new ExpectationKalmanLikelihoodEngine(
+            case MOMENT:
+                return new MomentKalmanLikelihoodEngine(
                         process.getRepresentation(GaussianTransitionRepresentation.class),
                         observationModel,
                         timeGrid);

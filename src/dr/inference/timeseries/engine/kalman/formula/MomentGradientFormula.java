@@ -2,9 +2,9 @@ package dr.inference.timeseries.engine.kalman.formula;
 
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
-import dr.inference.timeseries.engine.kalman.ExpectationAnalyticalKalmanGradientEngine;
-import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
-import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
+import dr.inference.timeseries.engine.kalman.MomentAnalyticalKalmanGradientEngine;
+import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
+import dr.inference.timeseries.engine.kalman.MomentForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 /**
@@ -13,7 +13,7 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  *
  * <h3>Separation of concerns</h3>
  * <ol>
- *   <li><b>Smoother statistics</b> ({@link BranchSmootherStats}): smoothed means,
+ *   <li><b>Smoother statistics</b> ({@link MomentBranchSmootherStats}): smoothed means,
  *       covariances, and smoother gains — produced once by the RTS backward pass,
  *       independent of any particular parameter.</li>
  *   <li><b>Transition-space sensitivity</b>: ∂logL/∂F_t and ∂logL/∂f_t — derived
@@ -27,9 +27,9 @@ import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
  *
  * <p>Adding gradient support for a new parameter (e.g. diffusion matrix Q or
  * stationary mean μ) requires only a new implementation of this interface; the smoother
- * infrastructure and the {@link ExpectationAnalyticalKalmanGradientEngine} loop remain unchanged.
+ * infrastructure and the {@link MomentAnalyticalKalmanGradientEngine} loop remain unchanged.
  */
-public interface ExpectationGradientFormula {
+public interface MomentGradientFormula {
 
     /**
      * Returns {@code true} if this formula can compute the gradient with respect to
@@ -52,8 +52,8 @@ public interface ExpectationGradientFormula {
      * @return gradient array of length equal to the supported parameter's dimension
      */
     double[] computeGradient(Parameter parameter,
-                             BranchSmootherStats[] smootherStats,
-                             ForwardTrajectory trajectory,
+                             MomentBranchSmootherStats[] smootherStats,
+                             MomentForwardTrajectory trajectory,
                              GaussianTransitionRepresentation repr,
                              TimeGrid timeGrid);
 }

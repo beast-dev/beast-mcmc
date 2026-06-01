@@ -6,8 +6,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSel
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
-import dr.inference.timeseries.engine.kalman.BranchSmootherStats;
-import dr.inference.timeseries.engine.kalman.ForwardTrajectory;
+import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
+import dr.inference.timeseries.engine.kalman.MomentForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 
 import java.util.Arrays;
@@ -49,13 +49,13 @@ import java.util.Arrays;
  * One forward + backward smoother pass suffices for all parameter gradients.  This
  * formula contributes O(T · d³) additional work on top of that shared pass.
  */
-public class ExpectationSelectionMatrixGradientFormula implements ExpectationGradientFormula {
+public class MomentSelectionMatrixGradientFormula implements MomentGradientFormula {
 
     private final Parameter selectionMatrixParameter;
     private final int stateDimension;
     private final CanonicalSelectionGradientProjector.Workspace blockProjectorWorkspace;
 
-    private final ExpectationGaussianBranchGradientAdjoints branchAdjoints;
+    private final MomentBranchGradientAdjoints branchAdjoints;
     private final double[]   dLogL_dFFlat;
     private final double[]   dLogL_dVFlat;
     private final double[]   rotationGradientFlat;
@@ -66,7 +66,7 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
      *                                 {@link #supportsParameter}
      * @param stateDimension           state-space dimension d
      */
-    public ExpectationSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
+    public MomentSelectionMatrixGradientFormula(final Parameter selectionMatrixParameter,
                                           final int stateDimension) {
         if (selectionMatrixParameter == null) {
             throw new IllegalArgumentException("selectionMatrixParameter must not be null");
@@ -82,7 +82,7 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
                         (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter)
                 : null;
 
-        branchAdjoints       = new ExpectationGaussianBranchGradientAdjoints(stateDimension);
+        branchAdjoints       = new MomentBranchGradientAdjoints(stateDimension);
         dLogL_dFFlat         = new double[stateDimension * stateDimension];
         dLogL_dVFlat         = new double[stateDimension * stateDimension];
         rotationGradientFlat = new double[stateDimension * stateDimension];
@@ -109,8 +109,8 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
      */
     @Override
     public double[] computeGradient(final Parameter parameter,
-                                    final BranchSmootherStats[] smootherStats,
-                                    final ForwardTrajectory trajectory,
+                                    final MomentBranchSmootherStats[] smootherStats,
+                                    final MomentForwardTrajectory trajectory,
                                     final GaussianTransitionRepresentation repr,
                                     final TimeGrid timeGrid) {
         if (shouldUseBlockDiagonalNativePath(parameter, repr)) {
@@ -156,8 +156,8 @@ public class ExpectationSelectionMatrixGradientFormula implements ExpectationGra
     }
 
     private double[] computeBlockDiagonalNativeGradient(final Parameter requestedParameter,
-                                                       final BranchSmootherStats[] smootherStats,
-                                                       final ForwardTrajectory trajectory,
+                                                       final MomentBranchSmootherStats[] smootherStats,
+                                                       final MomentForwardTrajectory trajectory,
                                                        final GaussianTransitionRepresentation repr,
                                                        final TimeGrid timeGrid) {
         final OUProcessModel processModel = BlockDiagonalFormulaSupport.ouProcessModel(repr);

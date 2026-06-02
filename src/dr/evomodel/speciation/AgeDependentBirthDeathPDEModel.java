@@ -977,9 +977,26 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     }
 
 
-    // Invalidate a node, its children, and all ancestors up to the root
+    /*
+     * Invalidate a node's branchTopL cache and everything whose cache could
+     * legitimately depend on it:
+     *   - the node itself (its branch was integrated against its parent height),
+     *   - all its immediate children (their branchTopL is integrated up to this
+     *     node's height; if the node moved or was rewired, those L curves
+     *     belong to a different time interval now),
+     *   - the full ancestor chain up to the root (each ancestor's branchTopL
+     *     consumes the child L we just invalidated),
+     *   - and each ancestor's other child along the chain, as a defense against
+     *     topology operators that may not fire an event for every site.
+     *
+     * Wilson-Balding, SubtreeSlide, and exchange operators fire one
+     * TreeChangedEvent per addChild call, so detach and reattach sites each
+     * push their own event and the union of these per-event invalidations
+     * covers the full set of dirty branches.
+     */
     private void invalidateNode(NodeRef node) {
-        for (int i = 0; i < tree.getChildCount(node); i++) {
+        int nChildren = tree.getChildCount(node);
+        for (int i = 0; i < nChildren; i++) {
             nodeValid[tree.getChild(node, i).getNumber()] = false;
         }
 
@@ -987,7 +1004,15 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         while (current != null) {
             nodeValid[current.getNumber()] = false;
             if (tree.isRoot(current)) break;
-            current = tree.getParent(current);
+            NodeRef parent = tree.getParent(current);
+            int siblingCount = tree.getChildCount(parent);
+            for (int i = 0; i < siblingCount; i++) {
+                NodeRef sibling = tree.getChild(parent, i);
+                if (sibling.getNumber() != current.getNumber()) {
+                    nodeValid[sibling.getNumber()] = false;
+                }
+            }
+            current = parent;
         }
     }
 

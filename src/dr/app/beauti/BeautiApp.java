@@ -1,7 +1,8 @@
 /*
  * BeautiApp.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,36 +22,37 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti;
 
+import dr.app.beast.BeastMain;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
-import java.security.AccessControlException;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
     public final static Version VERSION = new BeastVersion();
 
+    public final static String backgroundColor =  "#35484F";
+    public final static String foregroundColor = "#CBB944";
+
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
-        super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
+        super(new BeautiMenuBarFactory(), nameString, nameString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, websiteURLString, helpURLString);
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -177,58 +179,6 @@ public class BeautiApp extends MultiDocApplication {
             System.setProperty("apple.awt.draggableWindowBackground", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
 
-//            int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
-//
-//            System.out.println("Java version: " + javaVersion);
-//
-//
-//            if (javaVersion < 10) {
-//                try {
-//                    // set the Quaqua Look and Feel in the UIManager
-//                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-//                        public void run() {
-//                            try {
-//                                System.setProperty(
-//                                        "Quaqua.design", "Sierra"
-//                                );
-//
-//                                try {
-//                                    // We need to do this using dynamic class loading to avoid other platforms
-//                                    // having to link to this class. If the Quaqua library is not on the classpath
-//                                    // it simply won't be used.
-//                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-//
-////                                Method method = qm.getMethod("setIncludedUIs", Set.class);
-////                                Set<String> includes = new HashSet<String>();
-//////                                includes.add("ColorChooser");
-//////                                includes.add("FileChooser");
-////                                includes.add("Button");
-////                                includes.add("SplitPane");
-////                                includes.add("Table");
-////                                includes.add("Panel");
-////                                method.invoke(null, includes);
-//
-//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
-//                                    Set<String> excludes = new HashSet<String>();
-//                                    excludes.add("RootPane");
-////                                excludes.add("Table");
-//                                    excludes.add("TextField");
-//                                    method.invoke(null, excludes);
-//
-//                                } catch (Throwable e) {
-//                                }
-//
-//                                //set the Quaqua Look and Feel in the UIManager
-//                                UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-//                                lafLoaded = true;
-//                            } catch (Exception e) {
-//                            }
-//                        }
-//                    });
-//                } catch (Exception e) {
-//                }
-//            }
-
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
             UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
         }
@@ -252,22 +202,19 @@ public class BeautiApp extends MultiDocApplication {
                 }
             }
 
-            java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
-            Icon icon = null;
-
-            if (url != null) {
-                icon = new ImageIcon(url);
-            }
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeautiApp.class, "images/beauti.png"), 128, 128);
 
             final String nameString = "BEAUti";
             final String versionString = VERSION.getVersionString();
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
+                    "font-weight: 100;" +
+                    "background-color: " + backgroundColor + "; color: " + foregroundColor + ";" +
+                    "\">" +
                     "<center>" +
                     "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                     "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +
-                    "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
                     "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
                     VERSION.getHTMLCredits() +
                     "</div></center></div></html>";

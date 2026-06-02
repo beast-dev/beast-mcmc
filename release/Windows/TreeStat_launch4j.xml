@@ -6,13 +6,13 @@
   	<cp>./lib/beast.jar</cp>
   </classPath>
   <jre>
-    <minVersion>1.6.0</minVersion>
+    <minVersion>1.8.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
     <maxHeapSize>1024</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>TreeStat</fileDescription>
-        <copyright>2002-2018</copyright>
+        <copyright>2002-2024</copyright>
     <productName>TreeStat</productName>
     <internalName>TreeStat</internalName>
     <originalFilename>TreeStat.exe</originalFilename>

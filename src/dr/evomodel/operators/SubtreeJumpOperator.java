@@ -1,7 +1,8 @@
 /*
- * FixedHeightSubtreePruneRegraftOperator.java
+ * SubtreeJumpOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -28,6 +30,7 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.bigfasttree.thorney.ConstrainableTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -43,9 +46,8 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho
- * @version $Id$
  */
-public class SubtreeJumpOperator extends AbstractTreeOperator {
+public class SubtreeJumpOperator extends AbstractTreeOperator implements ConstrainableTreeOperator {
 
     private double size = 1.0;
     private double accP = 0.234;
@@ -71,12 +73,14 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
         this.mode = mode;
 
     }
+
+
     /**
      * Do a subtree jump move.
      *
      * @return the log-transformed hastings ratio
      */
-    public double doOperation() {
+    public double doOperation(TreeModel tree) {
         double logq;
 
         final NodeRef root = tree.getRoot();
@@ -163,6 +167,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
         return logq;
     }
 
+    public double doOperation(){
+        return doOperation(tree);
+    }
     /**
      * Gets a list of edges that subtend the given height
      * @param tree
@@ -281,6 +288,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator {
     public AdaptationMode getMode() {
         return mode;
     }
+
+
 
     public String getOperatorName() {
         return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";

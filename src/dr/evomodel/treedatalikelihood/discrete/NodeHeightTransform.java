@@ -1,7 +1,8 @@
 /*
  * NodeHeightTransform.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
@@ -61,7 +63,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     @Deprecated
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
-                               OldGMRFSkyrideLikelihood skyrideLikelihood) {
+                               GMRFSkyrideLikelihood skyrideLikelihood) {
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);

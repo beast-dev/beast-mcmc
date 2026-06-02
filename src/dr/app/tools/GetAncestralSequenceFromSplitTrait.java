@@ -1,7 +1,8 @@
 /*
  * GetAncestralSequenceFromSplitTrait.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -144,7 +146,7 @@ public class GetAncestralSequenceFromSplitTrait {
                 State[] statesArray = states.values().toArray(new State[states.size()]);
                 Arrays.sort(statesArray);
                 /* Set the default length to the number of characters that it would need */
-                StringBuffer sb = new StringBuffer(statesArray.length * statesArray[0].getState().length());
+                StringBuilder sb = new StringBuilder(statesArray.length * statesArray[0].getState().length());
                 for(State s : statesArray) {
                     sb.append(s.getState());
                 }

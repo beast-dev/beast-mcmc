@@ -1,7 +1,8 @@
 /*
  * DataModelImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beastgen;
@@ -47,6 +49,7 @@ import dr.evolution.util.Units;
 import dr.util.DataTable;
 import org.jdom.JDOMException;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -55,7 +58,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class DataModelImporter {
 
@@ -220,8 +222,7 @@ public class DataModelImporter {
 //                            throw new MissingBlockException("TREES block already defined");
 //                        }
 
-                        Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        trees.addAll(Arrays.asList(treeArray));
+                        trees.addAll(importer.parseTreesBlock(taxa));
 
                         if (taxa == null && trees.size() > 0) {
                             taxa = trees.get(0);
@@ -522,7 +523,11 @@ public class DataModelImporter {
         }
 
         if (guesser != null) {
-            guesser.guessDates(taxonList);
+           try {
+               guesser.guessDates(taxonList);
+           } catch (GuessDatesException gde) {
+               throw new ImportException("Error parsing dates: " + gde.getMessage());
+           }
         } else {
             // make sure they all have dates...
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {

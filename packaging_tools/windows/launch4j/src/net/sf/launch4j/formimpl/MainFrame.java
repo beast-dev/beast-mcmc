@@ -45,20 +45,18 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
-import com.jgoodies.looks.Options;
-import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
-import com.jgoodies.looks.windows.WindowsLookAndFeel;
+import com.formdev.flatlaf.FlatLightLaf;
 
-import foxtrot.Task;
-import foxtrot.Worker;
 import net.sf.launch4j.Builder;
 import net.sf.launch4j.BuilderException;
 import net.sf.launch4j.ExecException;
@@ -73,7 +71,7 @@ import net.sf.launch4j.config.ConfigPersister;
 import net.sf.launch4j.config.ConfigPersisterException;
 
 /**
- * @author Copyright (C) 2005 Grzegorz Kowal
+ * @author Copyright (C) 2022 Grzegorz Kowal
  */
 public class MainFrame extends JFrame {
 	private static MainFrame _instance;
@@ -87,17 +85,7 @@ public class MainFrame extends JFrame {
 
 	public static void createInstance() {
 		try {
-			Toolkit.getDefaultToolkit().setDynamicLayout(true);
-			System.setProperty("sun.awt.noerasebackground","true");
-	
-			// JGoodies
-			Options.setDefaultIconSize(new Dimension(16, 16));		// menu icons
-			Options.setUseNarrowButtons(false);
-			Options.setPopupDropShadowEnabled(true);
-
-			UIManager.setLookAndFeel(System.getProperty("os.name").toLowerCase().startsWith("windows")
-					? new WindowsLookAndFeel() : new PlasticXPLookAndFeel());
-
+			FlatLightLaf.install();
 			_instance = new MainFrame();
 		} catch (Exception e) {
 			System.err.println(e);
@@ -115,26 +103,26 @@ public class MainFrame extends JFrame {
 		setGlassPane(new GlassPane(this));
 		_fileChooser.setFileFilter(new FileChooserFilter(
 				Messages.getString("MainFrame.config.files"),
-				new String[] {".xml", ".cfg"}));
+				new String[] { ".xml" }));
 
 		_toolBar = new JToolBar();
 		_toolBar.setFloatable(false);
 		_toolBar.setRollover(true);
-		addButton("images/new.png",	Messages.getString("MainFrame.new.config"),
+		addButton(UIManager.getIcon("Tree.leafIcon"), Messages.getString("MainFrame.new.config"),
 				new NewActionListener());
-		addButton("images/open.png", Messages.getString("MainFrame.open.config"),
+		addButton(UIManager.getIcon("Tree.openIcon"), Messages.getString("MainFrame.open.config"),
 				new OpenActionListener());
-		addButton("images/save.png", Messages.getString("MainFrame.save.config"),
+		addButton(UIManager.getIcon("FileView.floppyDriveIcon"), Messages.getString("MainFrame.save.config"),
 				new SaveActionListener());
 		_toolBar.addSeparator();
-		addButton("images/build.png", Messages.getString("MainFrame.build.wrapper"),
+		addButton(getLocalIcon("images/build.png"), Messages.getString("MainFrame.build.wrapper"),
 				new BuildActionListener());
-		_runButton = addButton("images/run.png",
+		_runButton = addButton(getLocalIcon("images/run.png"),
 				Messages.getString("MainFrame.test.wrapper"),
 				new RunActionListener());
 		setRunEnabled(false);
 		_toolBar.addSeparator();
-		addButton("images/info.png", Messages.getString("MainFrame.about.launch4j"),
+		addButton(UIManager.getIcon("HelpButton.icon"), Messages.getString("MainFrame.about.launch4j"),
 				new AboutActionListener());
 
 		_configForm = new ConfigFormImpl();
@@ -144,16 +132,18 @@ public class MainFrame extends JFrame {
 		pack();
 		Dimension scr = Toolkit.getDefaultToolkit().getScreenSize();
 		Dimension fr = getSize();
-		fr.width += 25;
+		fr.width = 900;
 		fr.height += 100;
 		setBounds((scr.width - fr.width) / 2, (scr.height - fr.height) / 2,
 				fr.width, fr.height);
 		setVisible(true);
 	}
+	
+	private ImageIcon getLocalIcon(String iconPath) {
+		return  new ImageIcon(MainFrame.class.getClassLoader().getResource(iconPath));
+	}
 
-	private JButton addButton(String iconPath, String tooltip, ActionListener l) {
-		ImageIcon icon = new ImageIcon(MainFrame.class.getClassLoader()
-				.getResource(iconPath));
+	private JButton addButton(Icon icon, String tooltip, ActionListener l) {
 		JButton b = new JButton(icon);
 		b.setToolTipText(tooltip);
 		b.addActionListener(l);
@@ -270,14 +260,9 @@ public class MainFrame extends JFrame {
 			try {
 				if (canDiscardChanges() && _fileChooser.showOpenDialog(MainFrame.this)
 									== JOptionPane.YES_OPTION) {
-					final File f = _fileChooser.getSelectedFile(); 
-					if (f.getPath().endsWith(".xml")) {
-						ConfigPersister.getInstance().load(f);	
-						_saved = true;
-					} else {
-						ConfigPersister.getInstance().loadVersion1(f);
-						_saved = false;
-					}
+					final File f = _fileChooser.getSelectedFile();
+					ConfigPersister.getInstance().load(f);	
+					_saved = true;
 					_configForm.put(ConfigPersister.getInstance().getConfig());
 					showConfigName(f);
 					setRunEnabled(false);
@@ -327,9 +312,11 @@ public class MainFrame extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			try {
 				getGlassPane().setVisible(true);
-				Worker.post(new Task() {
-					public Object run() throws ExecException {
-						Log log = Log.getSwingLog(_configForm.getLogTextArea());
+				new SwingWorker<Boolean, Boolean>() {
+		            @Override
+		            protected Boolean doInBackground() throws ExecException
+		            {
+		            	Log log = Log.getSwingLog(_configForm.getLogTextArea());
 						log.clear();
 						String path = _outfile.getPath();
 						if (Util.WINDOWS_OS) {
@@ -340,9 +327,9 @@ public class MainFrame extends JFrame {
 									+ path);
 							Util.exec(new String[] { "java", "-jar", path }, log);
 						}
-						return null;
-					}
-				});
+		            	return true;
+		            }
+				}.execute();
 			} catch (Exception ex) {
 				// XXX errors logged by exec
 			} finally {

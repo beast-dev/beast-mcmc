@@ -1,7 +1,8 @@
 /*
- * MTVER.java
+ * MTMAM.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.aminoacid;
@@ -334,6 +336,6 @@ public class MTMAM extends EmpiricalRateMatrix.AbstractAminoAcid {
 					new Author("M", "Hasegawa")
 			},
 			"Models of amino acid substitution and applications to mitochondrial protein evolution",
-			1998, "Mol Biol Evol", 15, 1600, 1611
+			1998, "Molecular Biology and Evolution", 15, 1600, 1611
 	);
 }

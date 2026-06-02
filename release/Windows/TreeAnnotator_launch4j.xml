@@ -2,17 +2,17 @@
   <headerType>gui</headerType>
   <icon>../common/icons/utility.ico</icon>
   <classPath>
-  	<mainClass>dr.app.tools.TreeAnnotator</mainClass>
+  	<mainClass>dr.app.tools.treeannotator.TreeAnnotator</mainClass>
   	<cp>./lib/beast.jar</cp>
   </classPath>
   <jre>
-    <minVersion>1.6.0</minVersion>
+    <minVersion>1.8.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
     <maxHeapSize>4096</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>TreeAnnotator</fileDescription>    
-        <copyright>2002-2018</copyright>
+        <copyright>2002-2024</copyright>
     <productName>TreeAnnotator</productName>
     <internalName>TreeAnnotator</internalName>
     <originalFilename>TreeAnnotator.exe</originalFilename>    

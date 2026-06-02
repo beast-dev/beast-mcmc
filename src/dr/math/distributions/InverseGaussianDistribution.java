@@ -1,7 +1,8 @@
 /*
  * InverseGaussianDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -34,7 +36,6 @@ import dr.math.iterations.NewtonZeroFinder;
  * normal distribution (pdf, cdf, quantile)
  *
  * @author Wai Lok Sibon Li
- * @version $Id: InverseGaussianDistribution.java,v 1.7 2008/04/24 20:26:01 rambaut Exp $
  *
  * Reading: Chhikara, R. S., and Folks, J. Leroy, (1989). The
  * inverse Gaussian distribution: Theory, methodology, and applications. Marcel Dekker, New York.

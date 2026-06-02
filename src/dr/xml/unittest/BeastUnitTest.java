@@ -1,7 +1,39 @@
+/*
+ * BeastUnitTest.java
+ *
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.xml.unittest;
 
 import dr.xml.*;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -157,6 +189,7 @@ public class BeastUnitTest implements Reportable {
     private static final String CHECK = "assertEqual";
     private static final String MESSAGE = "message";
     private static final String EXPECTED = "expected";
+    private static final String CHECKPOINT_FILENAME = "checkpointFileName";
     private static final String ACTUAL = "actual";
     private static final String REGEX = "regex";
     private static final String TOLERANCE_STRING = "tolerance";
@@ -177,11 +210,36 @@ public class BeastUnitTest implements Reportable {
                 message = xo.getChild(MESSAGE).getStringChild(0);
             }
 
-            String[] expectedArray = parseValues(xo.getChild(EXPECTED));
-            if (expectedArray.length != 1) {
-                throw new XMLParseException("There should only be one '" + EXPECTED + "' value.");
+            //first check if there is an attribute for EXPECTED
+            String fileName = null;
+            if (xo.getChild(EXPECTED).hasAttribute(CHECKPOINT_FILENAME)) {
+                fileName = xo.getChild(EXPECTED).getStringAttribute(CHECKPOINT_FILENAME);
             }
-            String expected = expectedArray[0];
+            String expected = null;
+            if (fileName != null) {
+                //if there is an attribute, go look for the checkpointed log joint density
+                try (FileReader fr = new FileReader(fileName); BufferedReader br = new BufferedReader(fr)) {
+                    br.readLine();
+                    br.readLine();
+                    String line = br.readLine();
+                    StringTokenizer st = new StringTokenizer(line);
+                    if (st.countTokens() != 2) {
+                        throw new XMLParseException("Line with checkpointed log joint density should only have two tokens.");
+                    }
+                    st.nextToken();
+                    expected = st.nextToken();
+                } catch (FileNotFoundException fnf) {
+                    throw new XMLParseException("File not found: " + fnf.getMessage());
+                } catch (IOException io) {
+                    throw new XMLParseException("I/O exception: " + io.getMessage());
+                }
+            } else {
+                String[] expectedArray = parseValues(xo.getChild(EXPECTED));
+                if (expectedArray.length != 1) {
+                    throw new XMLParseException("There should only be one '" + EXPECTED + "' value.");
+                }
+                expected = expectedArray[0];
+            }
 
             String[] actual = parseValues(xo.getChild(ACTUAL));
             String stripChars = xo.getAttribute(STRIP_CHARACTERS, ",");
@@ -276,9 +334,10 @@ public class BeastUnitTest implements Reportable {
             new ElementRule(EXPECTED, new XMLSyntaxRule[]{
                     new XORRule(
                             new ElementRule(Reportable.class),
-                            new ElementRule(String.class)
+                            new ElementRule(String.class), true
                     ),
                     AttributeRule.newStringRule(REGEX, true),
+                    AttributeRule.newStringRule(CHECKPOINT_FILENAME, true)
             }),
             new ElementRule(ACTUAL, new XMLSyntaxRule[]{
                     new XORRule(
@@ -289,7 +348,6 @@ public class BeastUnitTest implements Reportable {
             }),
             new ElementRule(MESSAGE, new XMLSyntaxRule[]{
                     new ElementRule(String.class),
-
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
             AttributeRule.newBooleanRule(VERBOSE, true),

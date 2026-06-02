@@ -1,7 +1,8 @@
 /*
  * SubtreeLeapOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -55,7 +57,6 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho
  * @author Mathieu Fourment
- * @version $Id$
  */
 public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
@@ -95,7 +96,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     private final DistanceKernelType distanceKernel;
     private final boolean slideOnly;
 
-    private final List<NodeRef> tips;
+    private final List<Integer> tips;
 
     /**
      * Constructor
@@ -150,14 +151,14 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         this.size = size;
         this.distanceKernel = distanceKernel;
         this.slideOnly = false;
-        this.tips = new ArrayList<NodeRef>();
+        this.tips = new ArrayList<Integer>();
 
         for (Taxon taxon : taxa) {
             boolean found = false;
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 NodeRef tip = tree.getExternalNode(i);
                 if (tree.getNodeTaxon(tip).equals(taxon)) {
-                    tips.add(tip);
+                    tips.add(tip.getNumber());
                     found = true;
                     break;
                 }
@@ -193,7 +194,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             } while (node == root);
         } else {
             // Pick a tip from the specified set of tips.
-            node = tips.get(MathUtils.nextInt(tips.size()));
+            node = tree.getNode(tips.get(MathUtils.nextInt(tips.size())));
         }
 
         // get its parent - this is the node we will prune/graft
@@ -378,6 +379,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     }
 
     public void setSize(double size) {
+        assert Double.isFinite(size);
         this.size = size;
     }
 

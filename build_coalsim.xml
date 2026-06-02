@@ -9,6 +9,8 @@
     <property name="lib" location="lib"/>
     <property name="dist" location="dist"/>
 
+    <property name="JDK_VERSION" value="1.8" />
+
     <property environment="env"/>
 
     <target name="init">
@@ -34,7 +36,7 @@
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}"
                classpathref="classpath">
             <include name="dr/app/coalgen/**"/>
             <include name="dr/app/util/**"/>

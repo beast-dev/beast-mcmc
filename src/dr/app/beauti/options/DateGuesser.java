@@ -1,7 +1,8 @@
 /*
  * DateGuesser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -64,9 +66,11 @@ public class DateGuesser implements Serializable {
     public boolean parseCalendarDatesAndPrecision = false;
     public String calendarDateFormat = "yyyy-MM-dd";
 
+    public boolean ignoreParseErrors = false;
+
     private DateFormat dateFormat;
 
-    public void guessDates(TaxonList taxonList) {
+    public void guessDates(TaxonList taxonList) throws GuessDatesException {
         // To avoid duplicating code, add all the taxa into a list and
         // pass it to guessDates(List<Taxon> taxonList)
         List<Taxon> taxa = new ArrayList<Taxon>();
@@ -77,7 +81,7 @@ public class DateGuesser implements Serializable {
         guessDates(taxa);
     }
 
-    public void guessDates(TaxonList taxonList, Map<Taxon, String> taxonDateMap) {
+    public void guessDates(TaxonList taxonList, Map<Taxon, String> taxonDateMap) throws GuessDatesException {
         // To avoid duplicating code, add all the taxa into a list and
         // pass it to guessDates(List<Taxon> taxonList)
         List<Taxon> taxa = new ArrayList<Taxon>();
@@ -88,11 +92,11 @@ public class DateGuesser implements Serializable {
         guessDates(taxa, taxonDateMap);
     }
 
-    public void guessDates(List<Taxon> taxonList) {
+    public void guessDates(List<Taxon> taxonList) throws GuessDatesException {
         guessDates(taxonList, null);
     }
 
-    public void guessDates(List<Taxon> taxonList, Map<Taxon, String> taxonDateMap) {
+    public void guessDates(List<Taxon> taxonList, Map<Taxon, String> taxonDateMap) throws GuessDatesException {
 
         dateFormat = new SimpleDateFormat(calendarDateFormat);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -133,7 +137,9 @@ public class DateGuesser implements Serializable {
                 }
 
             } catch (GuessDatesException gfe) {
-                // @todo catch errors and give to user
+                if (!ignoreParseErrors) {
+                    throw gfe;
+                }
             }
 
             double d = values[0];
@@ -338,16 +344,25 @@ public class DateGuesser implements Serializable {
         if (dateFormat1 == null) {
             // set the timezones to GMT so they match the origin date...
             dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+            dateFormat1.setLenient(false);
             dateFormat1.setTimeZone(TimeZone.getTimeZone("GMT"));
             dateFormat2 = new SimpleDateFormat("yyyy-MM");
+            dateFormat2.setLenient(false);
             dateFormat2.setTimeZone(TimeZone.getTimeZone("GMT"));
             dateFormat3 = new SimpleDateFormat("yyyy");
+            dateFormat3.setLenient(false);
             dateFormat3.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
+
 
         if (parseCalendarDatesAndPrecision) {
             try {
                 Date date = new Date(dateFormat1.parse(value));
+
+                if (!value.matches("\\d\\d\\d\\d-\\d\\d-\\d\\d")) {
+                    // check the format explicitly as parse() seems to allow '2019-02-2019'
+                    throw new GuessDatesException("Badly formatted date for taxon, " + label);
+                }
 
                 d = date.getTimeValue();
                 p = 0.0;
@@ -356,12 +371,23 @@ public class DateGuesser implements Serializable {
                 try {
                     Date date = new Date(dateFormat2.parse(value));
 
+                    if (!value.matches("\\d\\d\\d\\d-\\d\\d")) {
+                        // check the format explicitly
+                        throw new GuessDatesException("Badly formatted date for taxon, " + label);
+                    }
+
+
                     d = date.getTimeValue();
                     p = 1.0 / 12.0;
 
                 } catch (ParseException pe2) {
                     try {
                         Date date = new Date(dateFormat3.parse(value));
+
+                        if (!value.matches("\\d\\d\\d\\d")) {
+                            // check the format explicitly
+                            throw new GuessDatesException("Badly formatted date for taxon, " + label);
+                        }
 
                         d = date.getTimeValue();
                         p = 1.0;

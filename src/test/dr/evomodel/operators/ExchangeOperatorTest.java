@@ -1,3 +1,30 @@
+/*
+ * ExchangeOperatorTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.operators;
 
 import java.io.IOException;
@@ -57,9 +84,12 @@ public class ExchangeOperatorTest extends OperatorAssert {
         int count = 0;
         int reps = 1000000;
 
-        for (int i = 0; i < reps; i++) {
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
 
-            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
+        for (int i = 0; i < reps; i++) {
+            treeModel.beginTreeEdit();
+            treeModel.adoptTreeStructure(tree5);
+            treeModel.endTreeEdit();
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 
@@ -114,9 +144,12 @@ public class ExchangeOperatorTest extends OperatorAssert {
 
         count = 0;
 
+        treeModel = new DefaultTreeModel("treeModel", tree5_2);
         for (int i = 0; i < reps; i++) {
+            treeModel.beginTreeEdit();
+            treeModel.adoptTreeStructure(tree5_2);
+            treeModel.endTreeEdit();
 
-            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5_2);
             ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.WIDE, treeModel, 1.0);
             operator.doOperation();
 

@@ -1,7 +1,8 @@
 /*
  * Nucleotides.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
@@ -28,7 +30,6 @@ package dr.evolution.datatype;
 /**
  * implements DataType for nucleotides with ambiguous characters
  *
- * @version $Id: Nucleotides.java,v 1.10 2006/08/31 14:57:24 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -62,7 +63,7 @@ public class Nucleotides extends DataType {
 	 * A table to translate state numbers (0-17) into character codes
 	 */
 	public static final char[] NUCLEOTIDE_CHARS = 
-		{ 'A','C','G','T','U','K','M','R','S','W','Y','B','D','H','V','N', UNKNOWN_CHARACTER,GAP_CHARACTER};
+		{ 'A','C','G','T','U','R','Y','M','W','S','K','B','D','H','V','N', UNKNOWN_CHARACTER,GAP_CHARACTER};
 
 	/** 
 	 * This table maps nucleotide characters into state codes (0-17)

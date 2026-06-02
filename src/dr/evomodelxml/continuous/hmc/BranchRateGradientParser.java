@@ -1,7 +1,8 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivativeParser.java
+ * BranchRateGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
@@ -51,9 +53,9 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "branchRateGradient";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    public static final String NAME = "branchRateGradient";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {
@@ -122,6 +124,9 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
+                if (!beagleData.isUsePreOrder()) {
+                    throw new XMLParseException("To use gradients TreeDataLikelihood must have attribute usePreOrder=\"true\"");
+                }
                 return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
 
             } else {

@@ -1,7 +1,8 @@
 /*
  * CoalescentLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -105,7 +107,9 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			lnL = calculateLogLikelihood(demographicModel);
 		}
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() + " is " + Double.toString(lnL));
+			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() +
+					" is " + Double.toString(lnL) + " (likely to be extreme model parameter values - " +
+					"if the messages don't stop, try using stronger priors on these)");
 		}
 
 		return lnL;
@@ -162,11 +166,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 					//                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
 					logL -= Math.log(demographicAtCoalPoint);
 				} else {
-					// remove this at some stage
-					//  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
 					return Double.NEGATIVE_INFINITY;
 				}
-
 			}
 
 			startTime = finishTime;
@@ -189,8 +190,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		double absoluteStartTime = intervals.getStartTime();
 		demographicModel.setTimeOffset(absoluteStartTime);
-
-		DemographicFunction demographicFunction = demographicModel.getDemographicFunction();
 
 		double startTime = 0;
 
@@ -254,6 +253,10 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			}
 		}
 		return coalescentEventStatisticValues[i];
+	}
+
+	public PopulationSizeModel getPopulationSizeModel() {
+		return populationSizeModel;
 	}
 
 	// **************************************************************

@@ -1,7 +1,8 @@
 /*
  * JointGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.hmc;
@@ -40,7 +42,7 @@ import java.util.List;
 public class JointGradientParser extends AbstractXMLObjectParser {
 
     private final static String SUM_DERIVATIVE = "sumDerivative";
-    public final static String SUM_DERIVATIVE2 = "jointGradient";
+    public final static String JOINT_GRADIENT = "jointGradient";
     private static final String THREADS = "threads";
 
     @Override
@@ -50,7 +52,7 @@ public class JointGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
+        return new String[] { SUM_DERIVATIVE, JOINT_GRADIENT };
     }
 
     @Override

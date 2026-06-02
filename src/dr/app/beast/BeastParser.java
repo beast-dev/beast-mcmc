@@ -1,7 +1,8 @@
 /*
  * BeastParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
 
 import dr.util.Citation;
+import dr.util.CitationLogHandler;
 import dr.util.Pair;
 import dr.util.Version;
 import dr.xml.PropertyParser;
@@ -45,7 +48,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id: BeastParser.java,v 1.76 2006/08/30 16:01:59 rambaut Exp $
  */
 public class BeastParser extends XMLParser {
 
@@ -57,7 +59,10 @@ public class BeastParser extends XMLParser {
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML, Version version) {
         super(verbose, parserWarnings, strictXML, version);
 
+        //add BEAST citation
         addCitable(BeastVersion.INSTANCE);
+        //add BEAGLE citation
+        addCitable(BeagleVersion.INSTANCE);
 
         setup(args);
 
@@ -205,31 +210,29 @@ public class BeastParser extends XMLParser {
 
     @Override
     protected void executingRunnable() {
-        Logger.getLogger("dr.apps.beast").info("\nCitations for this analysis: ");
+        Logger logger = Logger.getLogger("dr.util.citations");
+
+        logger.info("\nCitations for this analysis: ");
 
         Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 
         // force the Framework category to be first...
-        categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
+        categoryMap.put("Framework", new LinkedHashSet<>());
 
         for (Pair<String, String> keyPair : getCitationStore().keySet()) {
-            Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
-            if (pairSet == null) {
-                pairSet = new LinkedHashSet<Pair<String, String>>();
-                categoryMap.put(keyPair.fst, pairSet);
-            }
+            Set<Pair<String, String>> pairSet = categoryMap.computeIfAbsent(keyPair.first, k -> new LinkedHashSet<>());
             pairSet.add(keyPair);
         }
 
         for (String category : categoryMap.keySet()) {
-            Logger.getLogger("dr.apps.beast").info("\n"+category.toUpperCase());
+            logger.info("\n"+category.toUpperCase());
             Set<Pair<String, String>> pairSet = categoryMap.get(category);
 
             for (Pair<String, String>keyPair : pairSet) {
-                Logger.getLogger("dr.apps.beast").info(keyPair.snd + ":");
+                logger.info(keyPair.second + ":");
 
                 for (Citation citation : getCitationStore().get(keyPair)) {
-                    Logger.getLogger("dr.apps.beast").info("\t" + citation.toString());
+                    logger.info("\t" + citation.toString());
                 }
             }
         }
@@ -237,8 +240,10 @@ public class BeastParser extends XMLParser {
         // clear the citation store so all the same citations don't get cited again
         getCitationStore().clear();
 
-        Logger.getLogger("dr.apps.beast").info("\n");
+        logger.info("\n");
 
+        //close citationHandler
+        CitationLogHandler.closeHandler();
     }
 
     private void setup(String[] args) {

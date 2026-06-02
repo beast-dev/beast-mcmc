@@ -1,7 +1,8 @@
 /*
  * OperatorType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.types;
 
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.operators.ScaleOperatorParser;
 
@@ -43,7 +44,6 @@ public enum OperatorType {
     RANDOM_WALK_LOGIT("randomWalkLogit"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
-    MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     DELTA_EXCHANGE("deltaExchange"),
@@ -64,11 +64,16 @@ public enum OperatorType {
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
-    GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
-    SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
+    EMPIRICAL_TREE_SWAP("empiricalSwap"),
+    GMRF_BLOCKUPDATE_OPERATOR("gmrfBlockUpdateOperator"),
+    SKY_GRID_BLOCKUPDATE_OPERATOR("gmrfBlockUpdateOperator"),
     SKY_GRID_HMC_OPERATOR("gmrfHMCOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
-    WILSON_BALDING("wilsonBalding");
+    WILSON_BALDING("wilsonBalding"),
+    RELAXED_CLOCK_HMC_RATE_OPERATOR("relaxedClockHMCRateOperator"),
+    RELAXED_CLOCK_HMC_SCALE_OPERATOR("relaxedClockHMCScaleOperator"),
+    SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

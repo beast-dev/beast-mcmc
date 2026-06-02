@@ -1,7 +1,8 @@
 /*
  * SubtreeJumpOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
@@ -77,6 +81,9 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
 
+        if(treeModel instanceof ConstrainedTreeModel){
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, operator,xo);
+        }
         return operator;
     }
 

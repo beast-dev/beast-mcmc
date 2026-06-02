@@ -1,7 +1,8 @@
 /*
  * BeagleSequenceSimulatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beagle.tools.parsers;
@@ -31,6 +33,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evoxml.AttributePatternsParser;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -38,7 +41,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
@@ -46,6 +48,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
     public static final String PARALLEL = "parallel";
     public static final String OUTPUT_ANCESTRAL_SEQUENCES = "outputAncestralSequences";
     public static final String OUTPUT = "output";
+    public static final String ATTRIBUTE = AttributePatternsParser.ATTRIBUTE;
 
     public String getParserName() {
         return BEAGLE_SEQUENCE_SIMULATOR;
@@ -72,7 +75,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
                         
                 		SimpleAlignment.OutputType.values(), //TODO: this should ignore upper/lower cas
                         false),
-                        
+                AttributeRule.newStringRule(ATTRIBUTE, true),
                 new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
         };
     }// END: getSyntaxRules
@@ -97,6 +100,8 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             output = SimpleAlignment.OutputType.parseFromString(
                     xo.getStringAttribute(OUTPUT));
         }
+
+        String attributeName = xo.hasAttribute(ATTRIBUTE) ? xo.getStringAttribute(ATTRIBUTE) : null;
 
         int siteCount = 0;
         int to = 0;
@@ -162,7 +167,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.app.beagle.tools").info("\nUsing Beagle Sequence Simulator: " + msg + "\n");
         }
 
-        BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
+        BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList, attributeName);
         SimpleAlignment alignment = s.simulate(parallel, outputAncestralSequences);
 
         alignment.setOutputType(output);

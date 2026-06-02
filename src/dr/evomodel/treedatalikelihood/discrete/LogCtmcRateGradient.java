@@ -1,7 +1,8 @@
 /*
  * LogCtmcRateGradient.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -53,15 +57,26 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
                                GlmSubstitutionModel substitutionModel) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
                 ApproximationMode.FIRST_ORDER);
+        this.rateProvider = extractRateProvider(substitutionModel);
+        this.mapEffectToIndices = makeAsymmetricMap();
+    }
 
-        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented)
-            this.rateProvider = (LogAdditiveCtmcRateProvider.DataAugmented)
-                    substitutionModel.getRateProvider();
-        else {
+    public LogCtmcRateGradient(String traitName,
+                               TreeDataLikelihood treeDataLikelihood,
+                               BeagleDataLikelihoodDelegate likelihoodDelegate,
+                               LogRateSubstitutionModel substitutionModel) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
+                ApproximationMode.FIRST_ORDER);
+        this.rateProvider = extractRateProvider(substitutionModel);
+        this.mapEffectToIndices = makeAsymmetricMap();
+    }
+
+    private LogAdditiveCtmcRateProvider.DataAugmented extractRateProvider(ComplexSubstitutionModel substitutionModel) {
+        if (substitutionModel.getRateProvider() instanceof LogAdditiveCtmcRateProvider.DataAugmented) {
+            return (LogAdditiveCtmcRateProvider.DataAugmented) substitutionModel.getRateProvider();
+        } else {
             throw new IllegalArgumentException("Invalid substitution model");
         }
-        
-        this.mapEffectToIndices = makeAsymmetricMap();
     }
 
      @Override

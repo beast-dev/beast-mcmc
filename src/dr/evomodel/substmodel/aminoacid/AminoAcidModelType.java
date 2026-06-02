@@ -1,7 +1,8 @@
 /*
  * AminoAcidModelType.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.aminoacid;
@@ -46,7 +48,8 @@ public enum AminoAcidModelType {
     MTMET("mtMet", dr.evomodel.substmodel.aminoacid.MTMET.INSTANCE),
     MTINV("mtInv", dr.evomodel.substmodel.aminoacid.MTINV.INSTANCE),
     MTDEU("mtDeu", dr.evomodel.substmodel.aminoacid.MTDEU.INSTANCE),
-    MTMAM("mtMam", dr.evomodel.substmodel.aminoacid.MTMAM.INSTANCE);
+    MTMAM("mtMam", dr.evomodel.substmodel.aminoacid.MTMAM.INSTANCE),
+    ThreeDi("ThreeDi", dr.evomodel.substmodel.aminoacid.ThreeDi.INSTANCE);
 
     AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix) {
         this(displayName, displayName, matrix);

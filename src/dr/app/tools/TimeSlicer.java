@@ -1,7 +1,8 @@
 /*
  * TimeSlicer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -52,6 +54,8 @@ import java.awt.geom.Point2D;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static dr.evolution.util.TimeScale.DAYS_PER_YEAR;
 
 /**
  * @author Marc A. Suchard
@@ -244,7 +248,7 @@ public class TimeSlicer {
     private Element contourFolderElement;
     private Element pointsFolderElement;
     private Element nodeFolderElement;
-    private StringBuffer tabOutput = new StringBuffer();
+    private final StringBuilder tabOutput = new StringBuilder();
 
     public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, boolean contours, boolean points, OutputFormat outputFormat, double[] hpdValues, String sdrFile, String snrFile) {
 
@@ -991,7 +995,7 @@ public class TimeSlicer {
                     TraceDistribution trace = new TraceDistribution(x, TraceType.REAL);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     sb.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(traits[traitIndex] + "\t");
@@ -1072,7 +1076,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
@@ -1287,7 +1291,7 @@ public class TimeSlicer {
 
             if (!ancient) {
                 calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                 begin.addContent(dateFormat.format(calendar.getTime()));
             } else {
@@ -1366,7 +1370,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
@@ -1435,7 +1439,7 @@ public class TimeSlicer {
         return data;
     }
     private void outputHeader(String[] traits) {
-        StringBuffer sb = new StringBuffer("slice");
+        StringBuilder sb = new StringBuilder("slice");
         for (int i = 0; i < traits.length; i++) {
             // Load first value to check dimensionality
             Trait trait = values.get(0).get(i).get(0);
@@ -1605,7 +1609,7 @@ public class TimeSlicer {
         public String toString() {
             if (!isMultivariate)
                 return obj.toString();
-            StringBuffer sb = new StringBuffer(array[0].toString());
+            StringBuilder sb = new StringBuilder(array[0].toString());
             for (int i = 1; i < array.length; i++)
                 sb.append(sep).append(array[i]);
             return sb.toString();
@@ -1623,7 +1627,7 @@ public class TimeSlicer {
         int traitCount = thisSlice.size();
         int valueCount = thisSlice.get(0).size();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int v = 0; v < valueCount; v++) {
             if (Double.isNaN(sliceValue))

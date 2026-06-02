@@ -1,7 +1,8 @@
 /*
  * PatternListGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -30,16 +32,12 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionPattern;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
-import dr.evolution.datatype.Nucleotides;
 import dr.evoxml.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -140,7 +138,8 @@ public class PatternListGenerator extends Generator {
         from += offset;
 
         // this object is created solely to calculate the number of patterns in the alignment
-        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip, unique);
+        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip,
+                unique ? SitePatterns.CompressionType.UNIQUE_ONLY : SitePatterns.CompressionType.UNCOMPRESSED);
 
         writer.writeComment("The " + (unique ? "unique " : "") + "patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),
                 "npatterns=" + patterns.getPatternCount());
@@ -171,78 +170,6 @@ public class PatternListGenerator extends Generator {
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
-    }
-
-    /**
-     * Micro-sat
-     * @param partition
-     * @param microsatList
-     * @param writer
-     */
-    public void writePatternList(PartitionPattern partition, List<Microsatellite> microsatList, XMLWriter writer) throws GeneratorException {
-
-        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-
-        if (model.getDataType().getType() == DataType.MICRO_SAT) {
-            Patterns patterns = partition.getPatterns();
-
-            writer.writeComment("The patterns for microsatellite");
-            writer.writeOpenTag(MicrosatellitePatternParser.MICROSATPATTERN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, partition.getName()),
-                    });
-
-            if (options.hasIdenticalTaxa() && !patterns.hasMask()) {
-                writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
-            } else {
-                writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);
-            }
-
-            Microsatellite m = model.getMicrosatellite();
-            if (m == null) throw new GeneratorException("Microsatellite is null in partition:\n" + partition.getName());
-
-            if (!microsatList.contains(m)) {
-                microsatList.add(m);
-                writer.writeTag(MicrosatelliteParser.MICROSAT,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, m.getName()),
-                                new Attribute.Default<Integer>(MicrosatelliteParser.MAX, m.getMax()),
-                                new Attribute.Default<Integer>(MicrosatelliteParser.MIN, m.getMin()),
-                                new Attribute.Default<Integer>(MicrosatelliteParser.UNIT_LENGTH, m.getUnitLength()),
-                        }, true);
-
-            } else {
-                writer.writeTag(MicrosatelliteParser.MICROSAT,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.IDREF, m.getName()),
-                        }, true);
-            }
-
-            writer.writeOpenTag(MicrosatellitePatternParser.MICROSAT_SEQ);
-
-            String seq = "";
-            int c = 0;
-            for (int i = 0; i < patterns.getTaxonCount(); i++) {
-                if (!patterns.isMasked(i)) {
-                    if (c > 0) seq += ",";
-                    int state = patterns.getPatternState(i, 0);
-                    if (state == Microsatellite.UNKNOWN_STATE_LENGTH) {
-                        seq += Microsatellite.UNKNOWN_CHARACTER;
-                    } else {
-                        seq += Integer.toString(state);
-                    }
-                    c++;
-                }
-            }
-            writer.writeText(seq);
-
-            writer.writeCloseTag(MicrosatellitePatternParser.MICROSAT_SEQ);
-
-            writer.writeCloseTag(MicrosatellitePatternParser.MICROSATPATTERN);
-
-        } else {
-
-        }
     }
 
 }

@@ -1,7 +1,8 @@
 /*
  * AbstractCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -35,7 +37,6 @@ import dr.inference.model.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
 public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units, CoalescentIntervalProvider {
 
@@ -76,6 +77,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
+        // Currently GMRF likelihoods have parameters but they override this method. In the future the GMRF bit may
+        // be extracted out and then such classes would not have to override this method. -JT
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -131,12 +134,16 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
 
     public IntervalList getIntervalList() {
-            return intervalList;
+        return intervalList;
     }
 
     public String toString() {
         return Double.toString(logLikelihood);
     }
+
+
+
+
 
     // ****************************************************************
     // Inner classes
@@ -163,7 +170,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // Private and protected stuff
     // ****************************************************************
 
-    private IntervalList intervalList = null;
+    protected IntervalList intervalList = null;
 
     protected double logLikelihood;
     protected double storedLogLikelihood;

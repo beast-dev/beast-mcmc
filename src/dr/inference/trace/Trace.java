@@ -1,7 +1,8 @@
 /*
  * Trace.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
@@ -35,7 +37,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
 public class Trace {
     public enum OrderType {
@@ -186,12 +187,12 @@ public class Trace {
             }
             Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
                 public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
-                    return value1.fst.compareTo(value2.fst);
+                    return value1.first.compareTo(value2.first);
                 }
             });
             order = new ArrayList<Integer>();
             for (Pair<Comparable, Integer> value : values) {
-                order.add(value.snd);
+                order.add(value.second);
             }
         } else {
             order = new ArrayList<Integer>(getFrequencyCounter().getUniqueValues());

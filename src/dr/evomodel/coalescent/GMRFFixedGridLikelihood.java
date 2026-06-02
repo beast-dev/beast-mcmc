@@ -1,7 +1,8 @@
 /*
  * GMRFFixedGridLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -74,7 +77,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		System.out.println(like.getLogLikelihood());*/
 	}
 	
-	public GMRFFixedGridLikelihood(IntervalList intervalList, Parameter data, Parameter times, int tips){
+	public GMRFFixedGridLikelihood(TreeIntervalList intervalList, Parameter data, Parameter times, int tips){
 		super(intervalList, new Parameter.Default(tips), null, new Parameter.Default(5.0),
 				new Parameter.Default(1.0), null, null,false, true);
 				
@@ -93,7 +96,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		
 	}
 
-	public GMRFFixedGridLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter,
+	public GMRFFixedGridLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
 	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                                      Parameter data, Parameter times) {
 		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);

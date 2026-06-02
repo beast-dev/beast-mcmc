@@ -1,7 +1,8 @@
 /*
  * ParameterPriorGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -31,11 +33,16 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
@@ -51,14 +58,48 @@ import java.util.Map;
  */
 public class ParameterPriorGenerator extends Generator {
 
-    //map parameters to prior IDs, for use with HMC
-    private HashMap<String, String> mapParameterToPrior;
+    //map parameters to prior IDs, for use with HMC or other approaches that define their prior befor the <mcmc> XML block
+    private final HashMap<String, String> mapParameterToPrior;
 
     public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
         mapParameterToPrior = new HashMap<String, String>();
-        mapParameterToPrior.put("skygrid.precision", "skygrid.precision.prior");
+    }
+
+    /**
+     * Add all possibly previously defined priors to a HashMap
+     * Cannot be done in constructor as the models have not been defined by the user at that point
+     */
+    public void addParametersToPrior() {
+        int totalModels = options.getPartitionClockModels().size();
+        List<PartitionClockModel> partitionClockModels = options.getPartitionClockModels();
+        //HMC skygrid
+        mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
+        //HMC relaxed clock
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+        }
+        //mixed effects clock
+        //always write distribution likelihoods for rate, scale and intercept
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            mapParameterToPrior.put(ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            mapParameterToPrior.put(BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+            //check for coefficients
+            String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+            int number = 1;
+            String concat = coeff + number;
+            while (partitionClockModels.get(i).hasParameter(concat)) {
+                mapParameterToPrior.put(concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                number++;
+                concat = coeff + number;
+            }
+        }
     }
 
     /**
@@ -67,6 +108,10 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer       the writer
      */
     public void writeParameterPriors(XMLWriter writer) {
+
+        //first make sure that all possibly previously defined priors are part of the HashMap
+        addParametersToPrior();
+
         boolean first = true;
 
         for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
@@ -335,6 +380,7 @@ public class ParameterPriorGenerator extends Generator {
                 break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:
@@ -379,8 +425,16 @@ public class ParameterPriorGenerator extends Generator {
             case INVERSE_GAMMA_PRIOR:
                 writer.writeIDref(PriorParsers.INVGAMMA_PRIOR_CORRECT, priorID);
                 break;
+            case CTMC_RATE_REFERENCE_PRIOR:
+                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, priorID);
+                break;
+            case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
+            case NORMAL_HPM_PRIOR:
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, priorID);
+                break;
             default:
-                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName());
+                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName() + ": " + parameter.priorType);
         }
     }
 

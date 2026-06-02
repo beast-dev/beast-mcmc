@@ -1,7 +1,8 @@
 /*
  * MultiPartitionDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -57,10 +59,9 @@ import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Guy Baele
- * @version $Id$
  */
 
-public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -280,6 +281,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
             this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+            this.useAmbiguities = useAmbiguities;
 
             int[] resourceList = null;
             long preferenceFlags = 0;
@@ -1135,11 +1137,14 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                         if (rescalingMessageCount > 0) {
                             Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
                         } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            if (getId() != null) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            }
                         }
                     }
                     rescalingMessageCount += 1;
-
                 }
 
                 for (int i = 0; i < updatedPartitionCount; i++) {
@@ -1210,6 +1215,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /*private void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }*/
+
+    public int getPartitionCat(){
+        // not meaningfull for now, need to update
+        return 0;
+    };
+
+    public double[] getSiteLogLikelihoods(){
+        double[] patternLogLikelihoods = new double[totalPatternCount];
+        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+        return patternLogLikelihoods;
+    }
 
     @Override
     public void makeDirty() {
@@ -1311,6 +1327,26 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     protected void acceptState() {
     }
 
+    @Override
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    public boolean getUseAmbiguities() {
+        return useAmbiguities;
+    }
+
+    public PartialsRescalingScheme getRescalingScheme() {
+        return rescalingScheme;
+    }
+
+    public boolean getDelayRescalingUntilUnderflow() {
+        return delayRescalingUntilUnderflow;
+    }
     // **************************************************************
     // INSTANCE PROFILEABLE
     // **************************************************************
@@ -1319,25 +1355,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     public long getTotalCalculationCount() {
         // Can only return one count at the moment so return the number of partials updated
         return totalPartialsUpdateCount;
-    }
-
-    // **************************************************************
-    // INSTANCE CITABLE
-    // **************************************************************
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "BEAGLE likelihood calculation library";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************
@@ -1367,6 +1384,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
 
+    private boolean useAmbiguities;
     private int threadCount = -1;
 
     //allow per partition rescaling

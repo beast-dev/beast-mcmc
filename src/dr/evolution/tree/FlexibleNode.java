@@ -1,7 +1,8 @@
 /*
  * FlexibleNode.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -38,7 +40,6 @@ import java.util.Iterator;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: FlexibleNode.java,v 1.9 2005/06/20 16:06:02 rambaut Exp $
  */
 public class FlexibleNode implements NodeRef, Attributable {
 
@@ -228,14 +229,18 @@ public class FlexibleNode implements NodeRef, Attributable {
 
 	/**
 	 * Get the rate at this node.
+	 * @deprecated this method should not be used and will be removed at some point
 	 */
+	@Deprecated
 	public final double getRate() {
 		return rate;
 	}
 
 	/**
 	 * Set the rate at this node.
+	 * @deprecated this method should not be used and will be removed at some point
 	 */
+	@Deprecated
 	public final void setRate(double value) {
 		rate = value;
 	}

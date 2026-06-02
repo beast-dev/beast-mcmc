@@ -1,7 +1,8 @@
 /*
  * CoordinateTransform.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.tree;
@@ -33,7 +35,6 @@ import dr.evolution.tree.Tree;
  * Date: Dec 3, 2004
  * Time: 9:59:49 AM
  *
- * @version $Id: CoordinateTransform.java,v 1.1 2005/11/29 12:59:36 rambaut Exp $
  */
 public interface CoordinateTransform {
 

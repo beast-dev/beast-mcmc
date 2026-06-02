@@ -1,7 +1,8 @@
 /*
  * TreeTraitParserUtilities.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
@@ -95,7 +97,7 @@ public class TreeTraitParserUtilities {
                 AttributeRule.newDoubleArrayRule(WINDOW),
                 AttributeRule.newBooleanRule(DUPLICATES, true),
                 new ElementRule(Parameter.class),
-                new ElementRule(TaxonList.class, true),
+
         }, optional);
     }
 
@@ -212,31 +214,6 @@ public class TreeTraitParserUtilities {
                     update[traitArray[i - 1].getIndex()] = true;
                     update[traitArray[i].getIndex()] = true;
                 }
-            }
-        }
-        if (taxonList != null) {
-
-            if (!(trait instanceof CompoundParameter)) {
-                throw new IllegalArgumentException("Currently unable to match taxon names with a FastMatrixParameter");
-            }
-
-            Set<String> includedTaxonNames = new HashSet<>();
-            for (int i = 0; i < taxonList.getTaxonCount(); ++i) {
-                includedTaxonNames.add(taxonList.getTaxonId(i));
-            }
-
-            CompoundParameter cParameter = (CompoundParameter) trait;
-            int offset = 0;
-            for (int i = 0; i < cParameter.getParameterCount(); ++i) {
-                String name = cParameter.getParameter(i).getParameterName();
-                if (!includedTaxonNames.contains(name)) {
-                    update[offset] = false;
-                    if (verbose) {
-                        Logger.getLogger("dr.evomodel.continuous").info(
-                                "  Excluding taxon '" + name + "' from jitter.");
-                    }
-                }
-                ++offset;
             }
         }
         for (int i = 0; i < numTraits; i++) {

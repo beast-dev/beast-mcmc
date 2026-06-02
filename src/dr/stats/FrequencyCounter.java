@@ -1,7 +1,8 @@
 /*
  * FrequencyCounter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.stats;
@@ -100,12 +102,12 @@ public final class FrequencyCounter<T extends Comparable> {
         }
         Collections.sort(values, new Comparator<Pair<T, Integer>>() {
             public int compare(Pair<T, Integer> value1, Pair<T, Integer> value2) {
-                return getFrequency(value2.fst) - getFrequency(value1.fst);
+                return getFrequency(value2.first) - getFrequency(value1.first);
             }
         });
         List<Integer> order = new ArrayList<Integer>();
         for (Pair<T, Integer> value : values) {
-            order.add(value.snd);
+            order.add(value.second);
         }
         return order;
     }

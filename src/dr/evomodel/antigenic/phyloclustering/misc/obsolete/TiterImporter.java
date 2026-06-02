@@ -1,8 +1,8 @@
-package dr.evomodel.antigenic.phyloclustering.misc.obsolete;
 /*
- * NewickImporter.java
+ * TiterImporter.java
  *
- * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -13,17 +13,19 @@ package dr.evomodel.antigenic.phyloclustering.misc.obsolete;
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
+package dr.evomodel.antigenic.phyloclustering.misc.obsolete;
 //package dr.evolution.io;
 
 import dr.evolution.io.Importer;
@@ -44,7 +46,6 @@ import java.util.ArrayList;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class TiterImporter extends Importer  {
     public static final String COMMENT = "comment";

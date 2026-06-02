@@ -1,7 +1,8 @@
 /*
  * BeagleSequenceSimulator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beagle.tools;
@@ -45,8 +47,7 @@ import dr.evolution.util.Taxon;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
- * 
+ *
  */
 public class BeagleSequenceSimulator {
 
@@ -61,10 +62,17 @@ public class BeagleSequenceSimulator {
 	private boolean fieldsSet = false;
 	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap;
 //	private boolean outputAncestralSequences = true;
-	
+
+	private final String attributeName;
+
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
+		this(partitions, null);
+	}
+
+	public BeagleSequenceSimulator(ArrayList<Partition> partitions, String attributeName) {
 
 		this.partitions = partitions;
+		this.attributeName = attributeName;
 		this.alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(false);
 
@@ -238,7 +246,8 @@ public class BeagleSequenceSimulator {
 			Sequence sequence = Utils.intArray2Sequence(taxon, //
 					intSequence, //
 					gapFlag, //
-					dataType
+					dataType,
+					attributeName
 			);
 			
 //			sequence.setDataType(dataType);

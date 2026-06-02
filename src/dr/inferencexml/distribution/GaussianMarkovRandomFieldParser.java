@@ -1,7 +1,8 @@
 /*
  * GaussianMarkovRandomFieldParser.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
@@ -60,7 +62,9 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
         Parameter lambda = xo.hasChildNamed(LAMBDA) ?
                 (Parameter) xo.getElementFirstChild(LAMBDA) : null;
 
-        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
+//        RandomField.WeightProvider weights = parseWeightProvider(xo, dim);
+
+        RandomField.WeightProvider weights = (RandomField.WeightProvider) xo.getChild(RandomField.WeightProvider.class);
 
         boolean matchPseudoDeterminant = xo.getAttribute(MATCH_PSEUDO_DETERMINANT, false);
 
@@ -73,6 +77,7 @@ public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
+            new ElementRule(RandomField.WeightProvider.class, true),
             new ElementRule(PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(MEAN,

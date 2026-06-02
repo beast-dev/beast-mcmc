@@ -1,7 +1,8 @@
 /*
  * NewickParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -38,7 +40,6 @@ import java.io.IOException;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: NewickParser.java,v 1.7 2006/04/25 14:41:08 rambaut Exp $
  */
 public class NewickParser extends AbstractXMLObjectParser {
 
@@ -121,6 +122,13 @@ public class NewickParser extends AbstractXMLObjectParser {
         }
 
         tree.setUnits(units);
+
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if  (tree.getBranchLength(node) < 0.0) {
+                throw new XMLParseException("Starting tree has one or more negative branch lengths");
+            }
+        }
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {
 

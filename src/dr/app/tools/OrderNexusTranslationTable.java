@@ -1,7 +1,8 @@
 /*
  * OrderNexusTranslationTable.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -34,6 +36,7 @@ import java.io.FileReader;
 import java.io.PrintStream;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
+import java.util.List;
 
 /**
  * A simple routine to alphabetically order the taxa translation table
@@ -47,8 +50,8 @@ public class OrderNexusTranslationTable {
 
         NexusImporter importer = new NexusImporter(new FileReader(args[0]));
 
-        Tree[] trees = importer.importTrees(null);
-        System.out.println("Read " + trees.length + " trees from " + args[0]);
+        List<Tree> trees = importer.importTrees(null);
+        System.out.println("Read " + trees.size() + " trees from " + args[0]);
 
         String newFileName = args[0] + ".new";
 
@@ -66,7 +69,7 @@ public class OrderNexusTranslationTable {
 
         ps.flush();
         ps.close();
-        System.out.println("Wrote " + trees.length + " trees to " + newFileName);
+        System.out.println("Wrote " + trees.size() + " trees to " + newFileName);
     }
 
 }

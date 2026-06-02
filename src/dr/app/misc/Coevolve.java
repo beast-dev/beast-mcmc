@@ -1,7 +1,8 @@
 /*
  * Coevolve.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.misc;
@@ -47,12 +49,12 @@ import dr.oldevomodel.substmodel.GeneralSubstitutionModel;
 import dr.oldevomodel.substmodel.SubstitutionModel;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: Coevolve.java,v 1.3 2006/01/09 15:12:17 rambaut Exp $
  */
 public class Coevolve {
 
@@ -318,7 +320,7 @@ public class Coevolve {
     private Tree readTreeFile(String fileName) throws java.io.IOException {
 
         Alignment alignment = null;
-        Tree[] trees = null;
+        List<Tree> trees = null;
         TaxonList taxonList = null;
 
         try {
@@ -370,7 +372,7 @@ public class Coevolve {
             System.err.println("Error reading alignment: " + ime);
         }
 
-        return trees[0];
+        return trees.get(0);
     }
 
     // Main entry point

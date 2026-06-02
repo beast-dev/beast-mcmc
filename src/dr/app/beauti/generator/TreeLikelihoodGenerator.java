@@ -1,7 +1,8 @@
 /*
  * TreeLikelihoodGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,31 +22,24 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
 
+import dr.app.beauti.types.ClockType;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
-import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
-import dr.oldevomodel.substmodel.LinearBiasModel;
-import dr.oldevomodel.substmodel.TwoPhaseModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.oldevomodelxml.treelikelihood.MicrosatelliteSamplerTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.SitePatternsParser;
@@ -60,8 +54,6 @@ import java.util.List;
  * @author Walter Xie
  */
 public class TreeLikelihoodGenerator extends Generator {
-
-    private static final boolean GENERATE_TREE_LIKELIHOOD = false;
 
     public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -79,11 +71,11 @@ public class TreeLikelihoodGenerator extends Generator {
                 if (partition instanceof PartitionData) {
                     writeTreeLikelihood((PartitionData) partition, writer);
                     writer.writeText("");
-                } else if (partition instanceof PartitionPattern) { // microsat
-                    writeTreeLikelihood((PartitionPattern) partition, writer);
-                    writer.writeText("");
-                } else {
-                    throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
+
+                    // if the partition isn't an instanceof PartitionData then it doesn't
+                    // need a TreeLikelihood (it is probably a Tree Partition)
+//                } else {
+//                    throw new GeneratorException("Unrecognized partition:\n" + partition.getName());
                 }
             }
         }
@@ -100,7 +92,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER,
+                        clockModel.getClockType() == ClockType.HMC_CLOCK ||
+                                clockModel.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK)
         };
 
         writer.writeComment("Likelihood for tree given sequence data");
@@ -294,6 +289,10 @@ public class TreeLikelihoodGenerator extends Generator {
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
+            if (model == null) {
+                return; // some partitions don't have evolutionary models (i.e., empirical trees)
+            }
+
             if (model.isDolloModel()) {
                 return; // DolloComponent will add tree likelihood
             }
@@ -340,55 +339,6 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     /**
-     * Write Microsatellite Sampler tree likelihood XML block.
-     *
-     * @param partition the partition  to write likelihood block for
-     * @param writer    the writer
-     */
-    public void writeTreeLikelihood(PartitionPattern partition, XMLWriter writer) {
-        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-//        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
-        PartitionClockModel clockModel = partition.getPartitionClockModel();
-
-        writer.writeComment("Microsatellite Sampler Tree Likelihood");
-
-        writer.writeOpenTag(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID,
-                        partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD)});
-
-        writeMicrosatSubstModelRef(substModel, writer);
-
-        writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                partition.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
-
-        switch (clockModel.getClockType()) {
-            case STRICT_CLOCK:
-                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case UNCORRELATED:
-            case RANDOM_LOCAL_CLOCK:
-            case AUTOCORRELATED:
-                throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
-
-        writer.writeCloseTag(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
-    }
-
-    public void writeMicrosatSubstModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
-        if (model.getPhase() != MicroSatModelType.Phase.ONE_PHASE) {
-            writer.writeIDref(TwoPhaseModel.TWO_PHASE_MODEL, model.getPrefix() + TwoPhaseModel.TWO_PHASE_MODEL);
-        } else if (model.getMutationBias() != MicroSatModelType.MutationalBias.UNBIASED) {
-            writer.writeIDref(LinearBiasModel.LINEAR_BIAS_MODEL, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL);
-        } else {
-            writer.writeIDref(AsymmetricQuadraticModel.ASYMQUAD_MODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL);
-        }
-    }
-
-    /**
      * Is the data partition suitable for using the MultipartitionTreeDataLikelihoodDelegate.
      *
      * @param partition the partition  to write likelihood block for
@@ -400,7 +350,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.isDolloModel()) {
+        if (model == null || model.isDolloModel()) {
             return false;
         }
 

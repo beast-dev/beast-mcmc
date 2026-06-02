@@ -1,7 +1,8 @@
 /*
  * EmpiricalTreeDistributionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.tree;
@@ -34,6 +36,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 
 import java.io.*;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -71,7 +74,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 
         final File file = FileHelpers.getFile(fileName);
 
-        Tree[] trees = null;
+        List<Tree> trees = null;
         NexusImporter importer = null;
         try {
             FileReader reader = new FileReader(file);
@@ -93,7 +96,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
             Logger.getLogger("dr.evomodel").info("    Iterate over each tree from file, " + fileName);
             return new EmpiricalTreeDistributionModel(importer, startingTree);
         } else {
-            Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.length + " trees from file, " + fileName);
+            Logger.getLogger("dr.evomodel").info("    Randomly jump between " + trees.size() + " trees from file, " + fileName);
             return new EmpiricalTreeDistributionModel(trees, startingTree);
         }
     }

@@ -1,7 +1,8 @@
 /*
  * ExponentialSkythingLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -39,7 +41,6 @@ import java.util.Date;
  * A likelihood function for a sky**** function where exponential growth or decay parameters are what are piecewise
  * constant
  *
- * @version $Id: BayesianSkylineLikelihood.java,v 1.5 2006/03/06 11:26:49 rambaut Exp $
  *
  * @author Alexei Drummond
  */

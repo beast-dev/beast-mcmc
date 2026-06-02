@@ -1,7 +1,8 @@
 /*
  * DnDsLoggerParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
@@ -42,11 +44,16 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
     public static final String USE_DNMINUSDS = "dn-ds";
     public static final String COUNTS = "counts";
     public static final String SYNONYMOUS = "synonymous";
+    public static final String PREFIX = "prefix";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String[] names = DnDsLogger.traitNames;
+        // read prefix first
+        String prefix = xo.hasAttribute(PREFIX) ? xo.getStringAttribute(PREFIX) : null;
+
+        // now build names with the prefix
+        String[] names = DnDsLogger.buildTraitNames(prefix);
         TreeTrait[] foundTraits = new TreeTrait[names.length];
 
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -71,13 +78,13 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
 
         // Use AttributeRules for options here
-
         boolean useSmoothing = xo.getAttribute(USE_SMOOTHING, true);
         boolean useDnMinusDs = xo.getAttribute(USE_DNMINUSDS, false);
         boolean conditionalCounts = xo.getAttribute(COUNTS, false);
         boolean synonymous = xo.getAttribute(SYNONYMOUS, false);
 
-        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing, useDnMinusDs, conditionalCounts, synonymous);
+        return new DnDsLogger(xo.getId(), tree, foundTraits,
+                useSmoothing, useDnMinusDs, conditionalCounts, synonymous, prefix);
     }
 
     @Override
@@ -92,6 +99,7 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(COUNTS, true),
             AttributeRule.newBooleanRule(SYNONYMOUS, true),
             AttributeRule.newBooleanRule(USE_DNMINUSDS, true),
+            AttributeRule.newStringRule(PREFIX, true),
     };
 
     @Override

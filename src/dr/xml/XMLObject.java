@@ -1,7 +1,8 @@
 /*
  * XMLObject.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
@@ -38,7 +40,6 @@ import java.util.Vector;
  * This class wraps a DOM Element for the purposes of parsing.
  *
  * @author Alexei Drummond
- * @version $Id: XMLObject.java,v 1.30 2005/07/11 14:06:25 rambaut Exp $
  */
 public class XMLObject {
 
@@ -343,7 +344,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the named attribute as a int[].
+     * @return the named attribute as an int[].
      */
     public int[] getIntegerArrayAttribute(String name) throws XMLParseException {
         return getIntegerArray(getAndTest(name));
@@ -351,7 +352,7 @@ public class XMLObject {
 
     /**
      * @param i the index of the child to return
-     * @return the ith child as a int[].
+     * @return the ith child as an int[].
      * @throws XMLParseException if getChild(i) would
      */
     public int[] getIntegerArrayChild(int i) throws XMLParseException {
@@ -560,7 +561,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double if possible
+     * @return the object as a double if possible
      */
     private double getDouble(Object obj) throws XMLParseException {
         try {
@@ -577,7 +578,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private double[] getDoubleArray(Object obj) throws XMLParseException {
 
@@ -599,7 +600,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private int[] getIntegerArray(Object obj) throws XMLParseException {
 
@@ -654,7 +655,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private String[] getStringArray(Object obj) throws XMLParseException {
 
@@ -694,7 +695,6 @@ public class XMLObject {
         return defaultValue;
     }
 
-
     public XMLObject getParent() {
         return parent;
     }
@@ -710,5 +710,5 @@ public class XMLObject {
     private Object nativeObject;
 
     // The objectStore representing the local scope of this element.
-//	private ObjectStore store;
+    // private ObjectStore store;
 }

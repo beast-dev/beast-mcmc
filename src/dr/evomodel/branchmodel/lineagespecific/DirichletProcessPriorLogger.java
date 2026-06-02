@@ -1,7 +1,8 @@
 /*
  * DirichletProcessPriorLogger.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchmodel.lineagespecific;
@@ -28,13 +30,12 @@ package dr.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.bss.Utils;
-import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 
 public class DirichletProcessPriorLogger implements Loggable {
@@ -110,7 +111,7 @@ public class DirichletProcessPriorLogger implements Loggable {
 
 		this.categoryProbabilities = getCategoryProbs();
 
-		this.newCategoryIndex = Utils.sample(categoryProbabilities);
+		this.newCategoryIndex = MathUtils.randomChoicePDF(categoryProbabilities);
 		this.meanForCategory = uniquelyRealizedParameters
 				.getParameterValue(newCategoryIndex);
 

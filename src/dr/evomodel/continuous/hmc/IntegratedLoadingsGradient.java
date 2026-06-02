@@ -1,3 +1,30 @@
+/*
+ * IntegratedLoadingsGradient.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
@@ -23,8 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
-import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
@@ -173,8 +199,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         MissingOps.add(p1, p2, wP12);
         safeInvert2(p12, v12, false);
 
-        weightedAverage(m1, p1, m2, p2, m12, wV12, dim);
-
+        safeWeightedAverage(m1, MissingOps.copy(p1), m2, MissingOps.copy(p2), m12, v12, dim);
         return new WrappedNormalSufficientStatistics(m12, wP12, wV12);
     }
 

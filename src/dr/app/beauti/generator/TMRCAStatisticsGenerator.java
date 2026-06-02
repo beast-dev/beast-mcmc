@@ -1,7 +1,8 @@
 /*
  * TMRCAStatisticsGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -97,14 +99,14 @@ public class TMRCAStatisticsGenerator extends Generator {
         for (Taxa taxa : taxonSets) {
             PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
             String id = "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")";
-            writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa));
+            writeTMRCAStatistic(writer, id, taxa, treeModel, false, options.taxonSetsIncludeStem.get(taxa) != null);
 
             if (treeModel.hasTipCalibrations()) {
                 id = "age(" + treeModel.getPrefix() + taxa.getId() + ")";
-                writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa));
+                writeTMRCAStatistic(writer, id, taxa, treeModel, true, options.taxonSetsIncludeStem.get(taxa) != null);
             }
 
-            if (taxonSetsMono.get(taxa)) {
+            if (taxonSetsMono.get(taxa) != null) {
 //                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
 //                    && options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 1) {
                 writer.writeOpenTag(

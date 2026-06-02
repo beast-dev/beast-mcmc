@@ -1,7 +1,8 @@
 /*
  * HamiltonianMonteCarloOperatorParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators.hmc;
@@ -47,19 +49,21 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
     public final static String N_STEPS = "nSteps";
     public final static String STEP_SIZE = "stepSize";
-    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     public final static String PRECONDITIONING = "preconditioning";
-    private final static String PRECONDITIONER = "preconditioner";
     public final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    public final static String DRAW_VARIANCE = "drawVariance";
+    public final static String MODE = "mode";
+    public final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    public final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+
+    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
+    private final static String PRECONDITIONER = "preconditioner";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
-    //these are in the Skygrid+HMC XML files but were not (yet) defined here
-    public final static String MODE = "mode";
-    public final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
 
     @Override
     public String getParserName() {

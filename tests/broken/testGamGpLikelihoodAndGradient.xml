@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+            <attr name="loc">
+            	A
+            </attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="loc">
+            	A
+            </attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="loc">
+            	A
+            </attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_6">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_7">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_8">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_9">
+            <attr name="loc">
+            	B
+            </attr>
+        </taxon>
+        <taxon id="taxon_10">
+            <attr name="loc">
+            	A
+            </attr>
+        </taxon>
+    </taxa>
+
+	<generalDataType id="loc.dataType">
+		<state code="A"/>
+		<state code="B"/>
+		<state code="C"/>
+<!--
+		<state code="D"/>
+-->
+	</generalDataType>
+
+	<attributePatterns id="loc.pattern" attribute="loc">
+		<taxa idref="taxa"/>
+		<generalDataType idref="loc.dataType"/>
+	</attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+<!--
+        (taxon_6:0.6599920953,((((taxon_8:0.08050441416,taxon_4:0.1993587138):0.06120663346,taxon_7:0.4556825075):0.1431224649,taxon_10:0.5471037512):0.8189234324,((taxon_1:0.739103453,(taxon_2:0.3068418624,taxon_5:0.7002265998):0.6723836821):0.4476448677,(taxon_9:0.16993984,taxon_3:0.2669664454):0.9823498076):0.9481884362):0.3653106997);;
+ -->
+      (taxon_6:1,((((taxon_8:1,taxon_4:1):1,taxon_7:1):1,taxon_10:1):1,((taxon_1:1,(taxon_2:1,taxon_5:1):1):1,(taxon_9:1,taxon_3:1):1):1):1);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+	<strictClockBranchRates id="loc.branchRates">
+		<rate>
+			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
+		</rate>
+	</strictClockBranchRates>
+
+    <randomField id="test.field">
+        <data>
+            <parameter id="loc.coefficients0" value="1 0 -1 0 0 0"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp" dim="6">
+                <orderVariance>
+                    <parameter id="orderVariance" value="1.0"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise" value="1"/>
+                </gaussianNoise>
+                <basis>
+                    <designMatrix id="loc.designMatrix0">
+                        <parameter value="1 0 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+                <basis>
+                    <designMatrix id="loc.designMatrix1">
+                        <parameter value="0 1 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+<!--                <basis>-->
+<!--                    <designMatrix id="loc.designMatrix2">-->
+<!--                        <parameter value="0 0 1 0 0 0"/>-->
+<!--                    </designMatrix>-->
+<!--                    <kernel type="dotProduct"/>-->
+<!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix3">-->
+                <!--                        <parameter value="0 0 0 1 0 0"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix4">-->
+                <!--                        <parameter value="0 0 0 0 1 0"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>-->
+                <!--                <basis>-->
+                <!--                    <designMatrix id="loc.designMatrix5">-->
+                <!--                        <parameter value="0 0 0 0 0 1"/>-->
+                <!--                    </designMatrix>-->
+                <!--                    <kernel type="dotProduct"/>-->
+                <!--                </basis>	                -->
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
+	<randomFieldGradient id="test.gradient">
+		<randomField idref="test.field"/>
+		<parameter idref="loc.coefficients0"/>
+	</randomFieldGradient>
+
+    <gaussianProcessPrediction id="test.prediction">
+        <parameter idref="loc.coefficients0"/>
+        <additiveGaussianProcessDistribution idref="test.gp"/>
+        <bases>
+            <designMatrix id="loc.designMatrixPred0">
+                <parameter value="1 2"/> <!-- The dimension of this vector determines the dimension of the output-->
+            </designMatrix>
+            <designMatrix id="loc.designMatrixPred1">
+                <parameter value="2 1"/>
+            </designMatrix>
+        </bases>
+    </gaussianProcessPrediction>
+
+	<report>
+		<randomField idref="test.field"/>
+		<randomFieldGradient idref="test.gradient"/>
+        <gaussianProcessPrediction idref="test.prediction"/>
+	</report>
+
+
+	<glmSubstitutionModel id="loc.model" normalize="true">
+		<generalDataType idref="loc.dataType"/>
+		<rootFrequencies>
+			<frequencyModel id="loc.frequencyModel" normalize="true">
+				<generalDataType idref="loc.dataType"/>
+				<frequencies>
+					<parameter id="loc.frequencies" dimension="3"/>
+				</frequencies>
+			</frequencyModel>
+		</rootFrequencies>
+		<logRates>
+			<parameter idref="loc.coefficients0"/>
+		</logRates>
+	</glmSubstitutionModel>
+
+	<siteModel id="loc.siteModel">
+		<substitutionModel>
+			<glmSubstitutionModel idref="loc.model"/>
+		</substitutionModel>
+	</siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true"
+    		branchInfinitesimalDerivative="true"
+    		scalingScheme="never" delayScaling="false">
+        <patterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="loc.siteModel"/>
+        <strictClockBranchRates idref="loc.branchRates"/>
+    </treeDataLikelihood>
+
+<!--    <report>-->
+<!--    	<gamGpModel idref="gamGpModel"/>-->
+<!--    	<treeDataLikelihood idref="treeLikelihood"/>-->
+<!--    </report>-->
+
+    <approximateLogCtmcRateGradient id="gradient1" traitName="loc">
+    	<treeDataLikelihood idref="treeLikelihood"/>
+    	<glmSubstitutionModel idref="loc.model"/>
+    </approximateLogCtmcRateGradient>
+
+<!--    <report>-->
+<!--    	<approximateLogCtmcRateGradient idref="gradient1"/>-->
+<!--    </report>-->
+
+    <jointGradient id="joint.gradient">
+    	 <approximateLogCtmcRateGradient idref="gradient1"/>
+    	 <randomFieldGradient idref="test.gradient"/>		
+    </jointGradient>
+    
+<!--    <report>-->
+<!--    	Joint gradient -->
+<!--    	<jointGradient idref="joint.gradient"/>-->
+<!--    </report>-->
+
+    <operators id="operators" optimizationSchedule="log">
+        <randomWalkOperator windowSize="0.1" weight="1">
+            <parameter idref="loc.coefficients0"/>
+        </randomWalkOperator>
+<!--        <scaleOperator scaleFactor="0.75" weight="1">-->
+<!--            <parameter idref="loc.kernel"/>-->
+<!--        </scaleOperator>-->
+    </operators>
+    <!-- scale operator random walk positive CHECK! -->
+
+    <!--    check values predictive mean -->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: mean
+        </message>
+        <actual regex="mean: (.*?)\n">
+            <gaussianProcessPrediction idref="test.prediction"/>
+        </actual>
+        <expected>
+            0.5 1
+        </expected>
+    </assertEqual>
+
+    <!--    check values predictive variance -->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check GP prediction: variance
+        </message>
+        <actual regex="variance: (.*?)\n">
+            <gaussianProcessPrediction idref="test.prediction"/>
+        </actual>
+        <expected>
+            2.5 2 2 2.5
+        </expected>
+    </assertEqual>
+
+    <!-- check values Gradients-->
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check values for gradient
+        </message>
+        <actual regex="analytic:(.*?)\n">
+            <randomFieldGradient idref="test.gradient"/>
+        </actual>
+        <expected>
+            -0.5 0 1 0 0 0
+        </expected>
+    </assertEqual>
+
+    <report id = "report.prediction">
+        <gaussianProcessPrediction idref="test.prediction"/>
+    </report>
+
+<!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->
+<!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check GP prior values (for an MCMC chain of length 0)-->
+<!--        </message>-->
+<!--        <actual regex="likelihood:(.*?)\n">-->
+<!--            <prior idref="prior"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -6.956778-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
+
+</beast>

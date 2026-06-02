@@ -1,7 +1,8 @@
 /*
  * Citation.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -96,14 +98,14 @@ public class Citation {
         this(authors, title, year, journal, -1, location, null);
     }
 
-    public Citation(Author[] authors, String title, int year, String journal, int volumn, String location,
+    public Citation(Author[] authors, String title, int year, String journal, int volume, String location,
                     String DOI) {
         this.authors = authors;
         this.title = title;
         this.year = year;
         this.journal = journal;
         this.location = location;
-        this.volume = volumn;
+        this.volume = volume;
         this.startpage = -1;
         this.endpage = -1;
         this.DOI = DOI;
@@ -243,6 +245,8 @@ public class Citation {
 
     public enum Category {
         FRAMEWORK("Framework"),
+        COMPUTATIONAL_LIBRARY("High-Performance Computing"),
+        ADVANCED_ESTIMATION_METHODS("Advanced Estimation Methods"),
         SUBSTITUTION_MODELS("Substitution Models"),
         PRIOR_MODELS("Prior Models"),
         TRAIT_MODELS("Trait Models"),

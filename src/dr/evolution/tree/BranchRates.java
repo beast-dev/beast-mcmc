@@ -1,7 +1,8 @@
 /*
  * BranchRates.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -30,7 +32,6 @@ package dr.evolution.tree;
  * Time: 1:59:24 PM
  *
  * @author Andrew Rambaut
- * @version $Id: BranchRates.java,v 1.2 2005/03/22 21:51:51 rambaut Exp $
  */
 public interface BranchRates {
 

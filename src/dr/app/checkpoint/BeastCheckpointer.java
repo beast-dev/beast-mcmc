@@ -1,7 +1,8 @@
 /*
  * BeastCheckpointer.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.checkpoint;
@@ -109,10 +111,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
         } else {
 
-            loadStateFileName = null;
+            loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
             saveStateFileName = checkpointFileName;
 
-            stemFileName = null;
+            stemFileName = System.getProperty(SAVE_STEM, null);
 
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointFinal,false));
             listeners.add(new StateSaverChainListener(BeastCheckpointer.this, checkpointEvery,true));
@@ -179,8 +181,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
     @Override
     public boolean saveState(MarkovChain markovChain, long state, double lnL) {
         String fileName = "";
-        if (stemFileName != null) {
+        if (stemFileName != null && this.saveStateFileName == null) {
             fileName = stemFileName + "_" + state;
+        } else if (stemFileName != null) {
+            fileName = stemFileName + "_" + this.saveStateFileName;
         } else {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
             fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
@@ -238,7 +242,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                     //currently use the general BEAST -threshold argument
                     //TODO Evaluate whether a checkpoint-specific threshold option is required or useful
-                    double threshold = 0.0;
+                    double threshold = 1E-10;
                     if (System.getProperty("mcmc.evaluation.threshold") != null) {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }

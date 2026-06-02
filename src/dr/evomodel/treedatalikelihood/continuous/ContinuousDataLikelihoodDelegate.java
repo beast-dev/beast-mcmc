@@ -1,7 +1,8 @@
 /*
  * ContinuousDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -33,7 +35,6 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Philippe Lemey
- * @version $Id$
  */
 
 import dr.evolution.tree.MutableTreeModel;
@@ -47,6 +48,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -845,6 +847,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return logL;
     }
 
+    public int getPartitionCat(){
+        // not meaningful right now, need to update
+        return 0;
+    };
+
+    public double[] getSiteLogLikelihoods(){
+        throw new RuntimeException("getSiteLogLikelihoods() not implemented");
+    }
     public final int getActiveNodeIndex(final int index) {
         return partialBufferHelper.getOffsetIndex(index);
     }
@@ -933,6 +943,26 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     protected void acceptState() {
     }
 
+    public PreOrderSettings getPreOrderSettings() {
+        return null;
+    }
+
+    @Override
+    public boolean getPreferGPU() {
+        return true;
+    }
+
+    public boolean getUseAmbiguities() {
+        return true;
+    }
+
+    public PartialsRescalingScheme getRescalingScheme() {
+        return null;
+    }
+
+    public boolean getDelayRescalingUntilUnderflow() {
+        return true;
+    }
     // **************************************************************
     // INSTANCE PROFILEABLE
     // **************************************************************

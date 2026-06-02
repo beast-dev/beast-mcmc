@@ -1,7 +1,8 @@
 /*
  * TraitData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -146,7 +148,7 @@ public class TraitData implements Serializable {
 
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
-            String attr = (String) taxon.getAttribute(traitName);
+            String attr = taxon.getAttribute(traitName).toString();
 
             // ? is used to denote missing data so is not a state...
             if (attr != null && !attr.equals("?")) {

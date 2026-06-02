@@ -1,7 +1,8 @@
 /*
  * MarkovJumpsBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
@@ -46,6 +48,7 @@ import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
@@ -62,7 +65,7 @@ import java.util.*;
  *         Journal of Mathematical Biology, 56, 391-412.
  */
 public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
-        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
+        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider, Citable {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                            BranchModel branchModel,
@@ -673,14 +676,17 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     }
 
     @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
+    }
+
+    @Override
     public String getDescription() {
-        return super.getDescription() + " (first citation) with MarkovJumps inference techniques (second citation)";
+        return "MarkovJumps inference techniques";
     }
 
     public List<Citation> getCitations() {
-        List<Citation> citationList = new ArrayList<Citation>(super.getCitations());
-        citationList.add(CommonCitations.MININ_2008_COUNTING);
-        return citationList;
+        return Collections.singletonList(CommonCitations.MININ_2008_COUNTING);
     }
 
     public static final String ALL_HISTORY = "history_all";

@@ -1,7 +1,8 @@
 /*
  * HKY.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.oldevomodel.substmodel;
@@ -41,7 +43,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: HKY.java,v 1.42 2005/09/23 13:17:59 rambaut Exp $
  */
 public class HKY extends AbstractNucleotideModel implements Citable {
 
@@ -406,7 +407,7 @@ public class HKY extends AbstractNucleotideModel implements Citable {
             },
             "Dating the human-ape splitting by a molecular clock of mitochondrial DNA",
             1985,
-            "J. Mol. Evol.",
+            "Journal of Molecular Evolution",
             22,
             160, 174,
             Citation.Status.PUBLISHED

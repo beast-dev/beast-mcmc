@@ -1,7 +1,8 @@
 /*
- * SubtreeLeapOperator.java
+ * ScaleNodeHeightOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -41,7 +43,6 @@ import dr.util.Transform;
  * reasons such as BigFastTreeModel.
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class ScaleNodeHeightOperator extends AbstractAdaptableTreeOperator {
 
@@ -109,10 +110,11 @@ public class ScaleNodeHeightOperator extends AbstractAdaptableTreeOperator {
             }
         }
 
-        if (!tree.isTreeValid()) {
-            // node heights are no long valid (i.e. may be below tips) so force a move reject
-            return Double.NEGATIVE_INFINITY;
-        }
+        assert tree.isTreeValid();
+//        if (!tree.isTreeValid()) {
+//            // node heights are no long valid (i.e. may be below tips) so force a move reject
+//            return Double.NEGATIVE_INFINITY;
+//        }
 
         tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
 

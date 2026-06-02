@@ -1,7 +1,8 @@
 /*
  * FileDrop.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui;
@@ -69,7 +71,6 @@ import java.io.Reader;
  *
  * @author  Robert Harder
  * @author  rharder@users.sf.net
- * @version 1.0.1
  */
 public class FileDrop
 {
@@ -669,8 +670,7 @@ public class FileDrop
      *
      * @author  Robert Harder
      * @author  rob@iharder.net
-     * @version 1.2
-     */
+         */
     public static class Event extends java.util.EventObject {
 
         private java.io.File[] files;
@@ -747,8 +747,7 @@ public class FileDrop
      *
      * @author  Robert Harder
      * @author  rob@iharder.net
-     * @version 1.2
-     */
+         */
     public static class TransferableObject implements java.awt.datatransfer.Transferable
     {
         /**
@@ -938,8 +937,7 @@ public class FileDrop
          *
          * @author Robert Harder
          * @copyright 2001
-         * @version 1.1
-         * @since 1.1
+                 * @since 1.1
          */
         public static interface Fetcher
         {

@@ -1,7 +1,8 @@
 /*
  * Sequence.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.sequence;
@@ -37,7 +39,6 @@ import java.util.Iterator;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Sequence.java,v 1.35 2005/05/25 09:35:28 rambaut Exp $
  */
 public class Sequence implements Identifiable, Attributable {
 
@@ -78,6 +79,13 @@ public class Sequence implements Identifiable, Attributable {
         sequenceString = new StringBuffer();
         setTaxon(taxon);
         setSequenceString(sequence);
+    }
+
+    public Sequence(Taxon taxon, DataType dataType, int[] states) {
+        sequenceString = new StringBuffer();
+        setTaxon(taxon);
+        this.dataType = dataType;
+        setSequenceStates(states);
     }
 
     /**
@@ -180,6 +188,13 @@ public class Sequence implements Identifiable, Attributable {
      */
     public void insertSequenceString(int offset, String sequence) {
         sequenceString.insert(offset, sequence);
+    }
+
+    public void setSequenceStates(int[] states) {
+        sequenceString.setLength(0);
+        for (int state : states) {
+            sequenceString.append(dataType.getChar(state));
+        }
     }
 
     /**

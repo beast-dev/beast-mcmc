@@ -1,7 +1,8 @@
 /*
  * TreesPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.treespanel;
@@ -28,9 +30,7 @@ package dr.app.beauti.treespanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
-import dr.evolution.datatype.Microsatellite;
 import jam.framework.Exportable;
 import jam.table.TableRenderer;
 
@@ -53,7 +53,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id:$
  */
 public class TreesPanel extends BeautiPanel implements Exportable {
 
@@ -61,21 +60,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
-//    private JComboBox userTreeCombo = new JComboBox();
-//    private JButton button;
-
-//    private CreateTreeAction createTreeAction = new CreateTreeAction();
-//    private TreeDisplayPanel treeDisplayPanel;
-
     private BeautiFrame frame = null;
     public BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
-    //    private GenerateTreeDialog generateTreeDialog = null;
     private boolean settingOptions = false;
-//    boolean hasAlignment = false;
 
     public JCheckBox linkTreePriorCheck = new JCheckBox("Link tree prior for all trees");
 
@@ -156,7 +147,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         JPanel panel4 = new JPanel(new BorderLayout());
         panel4.setOpaque(false);
         panel4.add(treePriorPanelParent, BorderLayout.NORTH);
-        panel4.add(scrollPane2, BorderLayout.CENTER);
+        JPanel panel5 = new JPanel(new BorderLayout());
+        panel5.setOpaque(false);
+        panel5.add(new JLabel(" "), BorderLayout.NORTH);
+        panel5.add(scrollPane2, BorderLayout.CENTER);
+        panel4.add(panel5, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel4);
         splitPane.setDividerLocation(180);
@@ -270,9 +265,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void updateLinkTreePriorEnablility() {
-        boolean selected = !(options.getPartitionTreeModels().size() < 2
-                || options.contains(Microsatellite.INSTANCE));
-
+        boolean selected = options.getPartitionTreeModels().size() > 1;
         linkTreePriorCheck.setEnabled(selected);
     }
 
@@ -293,14 +286,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
             if (ptpp != null) {
-                ptpp.setTreePriorChoices(options.getPartitionTreeModels().size() > 1,
-                        options.useTipDates);
+                ptpp.setTreePriorChoices(options.useTipDates);
                 // setTreePriorChoices should be always before setOptions
                 ptpp.setOptions();
-//                    if (options.contains(Microsatellite.INSTANCE)) {
-//                        ptpp.setMicrosatelliteTreePrior();
-//                    } else
-
                 ptpp.repaint();
             }
         }

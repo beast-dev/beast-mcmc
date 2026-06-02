@@ -1,7 +1,8 @@
 /*
  * TwoStateSericolaSeriesMarkovReward.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.markovjumps;
@@ -42,6 +44,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
     // Following Bladt, Meini, Neuts and Sericola (2002).
     // Assuming each state has a distinct reward, i.e. \phi + 1 = stateCount,
     // and states are sorted in increasing reward order
+    
 
     private static final boolean DEBUG = true;
     private static final boolean DEBUG2 = false;

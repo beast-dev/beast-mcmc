@@ -1,7 +1,8 @@
 /*
  * TraceDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,22 +22,25 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
 
+import dr.math.MachineAccuracy;
 import dr.stats.DiscreteStatistics;
 import dr.stats.FrequencyCounter;
 import dr.util.HeapSort;
 
 import java.util.*;
 
+import static jebl.math.MachineAccuracy.EPSILON;
+
 /**
  * A class that stores the distribution statistics for a trace
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class TraceDistribution {
     private TraceType traceType;
@@ -189,9 +193,7 @@ public class TraceDistribution {
                 if (value > maximum) maximum = value;
             }
 
-            if (maximum == minimum) {
-                isConstant = true;
-            }
+            isConstant = MachineAccuracy.isSame(maximum, minimum);
         }
 
         if (isConstant) {

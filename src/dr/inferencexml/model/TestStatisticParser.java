@@ -1,7 +1,8 @@
 /*
  * TestStatisticParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -34,7 +36,8 @@ import dr.xml.*;
  */
 public class TestStatisticParser extends AbstractXMLObjectParser {
 
-    public static String TEST_STATISTIC = "test";
+    public static String TEST_STATISTIC = "testStatistic";
+    public static String TEST = "test";
 
     private static final String SEQUALS = "equals";
     private static final String SGREATER_THAN = "greaterThan";
@@ -98,6 +101,11 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
 
     public Class getReturnType() {
         return TestStatistic.class;
+    }
+
+    @Override
+    public String[] getParserNames() {
+        return new String[]{getParserName(), TEST};
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

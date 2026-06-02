@@ -1,7 +1,8 @@
 /*
  * TransmissionSimulator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.transmission;
@@ -40,7 +42,6 @@ import dr.xml.*;
  * hosts with known history of transmission. The viruses tree should have tip
  * attributes specifying which host they are from (host="").
  *
- * @version $Id: TransmissionSimulator.java,v 1.5 2005/06/15 17:20:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

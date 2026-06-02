@@ -1,7 +1,8 @@
 /*
- * StructuredCoalescentParser.java
+ * StructuredCoalescentLikelihoodParser.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.basta;
@@ -34,6 +36,7 @@ import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -50,10 +53,15 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
+    private static final String THREADS = "threads";
+    public static final String USE_AMBIGUITIES = "useAmbiguities";
 
     public static final String MAP_RECONSTRUCTION = "useMAP";
 
     public static final Boolean USE_OLD_CODE = false;
+    private static final boolean USE_DELEGATE = true;
+    private static final boolean USE_BEAGLE = true;
+    private static final boolean TRANSPOSE = true;
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -76,13 +84,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
-        int subIntervals = 2;
-        if (xo.hasAttribute(SUBINTERVALS)) {
-            subIntervals = xo.getIntegerAttribute(SUBINTERVALS);
-            if (subIntervals != 2) {
-                throw new XMLParseException("The number of subintervals currently has to be set to 2.");
-            }
+        int subIntervals = xo.getAttribute(SUBINTERVALS, 1);
+
+        if (subIntervals != 1) {
+            throw new XMLParseException("The number of sub-intervals currently has to be set to 1.");
         }
+
+        boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
 
@@ -101,12 +109,33 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        int threads = xo.getAttribute(THREADS, 1);
+
         if (treeModel != null) {
             try {
                 if (USE_OLD_CODE) {
-                    return new OldStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                    return new OldStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
+                            generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
                 } else {
-                    return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees, useMAP);
+                    if (USE_DELEGATE) {
+                        final BastaLikelihoodDelegate delegate;
+                        if (USE_BEAGLE) {
+                            delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
+                                    generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                        } else {
+                            delegate = (threads != 1) ?
+                                    new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount(), threads, TRANSPOSE) :
+                                    new GenericBastaLikelihoodDelegate("name", treeModel,
+                                            generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
+                        }
+                        return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+                                popSizes, branchRateModel, delegate, dataType, tag, useMAP, subIntervals, useAmbiguities);
+                    } else {
+                        return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
+                                dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,
+                                useMAP);
+                    }
                 }
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
@@ -134,7 +163,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
+            AttributeRule.newStringRule(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newIntegerRule(SUBINTERVALS, true),
+            AttributeRule.newIntegerRule(THREADS, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),

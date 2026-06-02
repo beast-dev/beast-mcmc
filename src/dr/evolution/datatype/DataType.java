@@ -1,7 +1,8 @@
 /*
  * DataType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
@@ -28,12 +30,13 @@ package dr.evolution.datatype;
 import java.io.Serializable;
 import java.util.*;
 
+import dr.inference.model.Bounds.Int;
+
 /**
  * Base class for sequence data types.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: DataType.java,v 1.13 2005/05/24 20:25:56 rambaut Exp $
  */
 public abstract class DataType implements Serializable {
     public static final String DATA_TYPE = "dataType";
@@ -49,8 +52,10 @@ public abstract class DataType implements Serializable {
 
     public static final int P2PTYPE = 7;
     public static final int CONTINUOUS = 8;
+    public static final int INTEGER = 9;
+    public static final int TREE = 10;
 
-    public static final int DUMMY = 9;
+    public static final int DUMMY = 99;
 
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
@@ -110,6 +115,7 @@ public abstract class DataType implements Serializable {
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
             registerDataType(ContinuousDataType.DESCRIPTION, ContinuousDataType.INSTANCE);
+            registerDataType(IntegerDataType.DESCRIPTION, IntegerDataType.INSTANCE);
         }
     }
 
@@ -361,6 +367,25 @@ public abstract class DataType implements Serializable {
         return (1.0 - (sumMatch / (sum1 * sum2)));
     }
 
+    /**
+     * returns whether two states are definitely different given the ambiguity in either
+     */
+    public boolean areUnambiguouslyDifferent(int state1, int state2) {
+        boolean[] stateSet1 = getStateSet(state1);
+        boolean[] stateSet2 = getStateSet(state2);
+        for (int i = 0; i < stateSet1.length; i++) {
+            if (stateSet1[i] && stateSet2[i]) {
+                // at least one state is present in both sets
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isDelimited() { return false; }
+
+    public String getDelimiter() { return null; }
+
     public String toString() {
         return getDescription();
     }
@@ -439,6 +464,8 @@ public abstract class DataType implements Serializable {
                 return "Continuous Traits";
             case DataType.MICRO_SAT:
                 return "Microsatellite";
+            case DataType.TREE:
+                return "Tree";
             case DataType.DUMMY:
                 return "Dummy";
             default:

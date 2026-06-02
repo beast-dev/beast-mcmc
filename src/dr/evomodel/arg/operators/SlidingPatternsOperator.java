@@ -1,7 +1,8 @@
 /*
  * SlidingPatternsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.arg.operators;
@@ -42,6 +44,7 @@ import java.util.List;
  * Time: 8:01:56 PM
  * To change this template use File | Settings | File Templates.
  */
+@Deprecated
 public class SlidingPatternsOperator extends AbstractAdaptableOperator {
 //
 //		SimpleMCMCOperator implements AdaptableMCMCOperator {
@@ -96,19 +99,23 @@ public class SlidingPatternsOperator extends AbstractAdaptableOperator {
         int cBreakPt = (int) breakPoints.getParameterValue(whichBoundary);
         SitePatterns left = partitions.get(whichBoundary);
         SitePatterns right = partitions.get(whichBoundary + 1);
-        int min = left.getFrom();
-        int max = right.getTo();
-
-        int pBreakPt = min;
-        while (pBreakPt <= min || pBreakPt >= max) {        // cBreakPt + [windowSize-1, windowSize+1] (and not 0)
-            if (MathUtils.nextBoolean())
-                pBreakPt = cBreakPt + MathUtils.nextInt(windowSize) + 1;
-            else
-                pBreakPt = cBreakPt - MathUtils.nextInt(windowSize) - 1;
-        }
 
 
-        return 0;
+        // this is no longer compatible with SitePatterns. It should implement its own instance
+        throw new UnsupportedOperationException("this function is no longer functioning");
+
+//        int min = left.getFrom();
+//        int max = right.getTo();
+//
+//        int pBreakPt = min;
+//        while (pBreakPt <= min || pBreakPt >= max) {        // cBreakPt + [windowSize-1, windowSize+1] (and not 0)
+//            if (MathUtils.nextBoolean())
+//                pBreakPt = cBreakPt + MathUtils.nextInt(windowSize) + 1;
+//            else
+//                pBreakPt = cBreakPt - MathUtils.nextInt(windowSize) - 1;
+//        }
+//
+//        return 0;
     }
 
     @Override
@@ -133,26 +140,29 @@ public class SlidingPatternsOperator extends AbstractAdaptableOperator {
 //	}
 
     public static boolean arePartitionsContiguous(List<SitePatterns> list) {
-        int current = -1;
-        int index = 0;
-        for (SitePatterns patterns : list) {
-            int start = patterns.getFrom();
-            int end = patterns.getTo();
-            /* System.err.println(start+" -> "+end+" : "+patterns.getSiteCount()+" "+patterns.getPatternCount());
-                           int[] data = patterns.getSitePattern(0);
-                           System.err.print("Data 0:");
-                           for (int i : data)
-                               System.err.print(" "+i);
-                           System.err.println("");*/
-//            if (current == -1)
-//                current = end;
-            if (current != -1 && start != (current + 1))
-//                throw new NonContiguousPartitionsException("Partition #"+0+" does not start contiguously");
-                return false;
-            current = end;
-        }
+        // this is no longer compatible with SitePatterns. It should implement its own instance
+        throw new UnsupportedOperationException("this function is no longer functioning");
 
-        return true;
+//        int current = -1;
+//        int index = 0;
+//        for (SitePatterns patterns : list) {
+//            int start = patterns.getFrom();
+//            int end = patterns.getTo();
+//            /* System.err.println(start+" -> "+end+" : "+patterns.getSiteCount()+" "+patterns.getPatternCount());
+//                           int[] data = patterns.getSitePattern(0);
+//                           System.err.print("Data 0:");
+//                           for (int i : data)
+//                               System.err.print(" "+i);
+//                           System.err.println("");*/
+////            if (current == -1)
+////                current = end;
+//            if (current != -1 && start != (current + 1))
+////                throw new NonContiguousPartitionsException("Partition #"+0+" does not start contiguously");
+//                return false;
+//            current = end;
+//        }
+//
+//        return true;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -197,14 +207,17 @@ public class SlidingPatternsOperator extends AbstractAdaptableOperator {
 
             ParameterParser.replaceParameter(cxo, breakPoints);
 
-            breakPoints.setDimension(dim);
-            for (int index = 0; index < dim; index++)
-                breakPoints.setParameterValueQuietly(index,
-                        list.get(index + 1).getFrom());
+            // this is no longer compatible with SitePatterns. It should implement its own instance
+            throw new UnsupportedOperationException("this function is no longer functioning");
 
-//            Parameter parameter = (Parameter)xo.getChild(Parameter.class);
-
-            return new SlidingPatternsOperator(list, breakPoints, windowSize, weight, mode);
+//            breakPoints.setDimension(dim);
+//            for (int index = 0; index < dim; index++)
+//                breakPoints.setParameterValueQuietly(index,
+//                        list.get(index + 1).getFrom());
+//
+////            Parameter parameter = (Parameter)xo.getChild(Parameter.class);
+//
+//            return new SlidingPatternsOperator(list, breakPoints, windowSize, weight, mode);
         }
 
         //************************************************************************

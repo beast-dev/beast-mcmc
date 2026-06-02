@@ -1,7 +1,8 @@
 /*
  * NodeHeightToRatiosTransformDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -54,7 +56,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     private boolean ratiosKnown = false;
     protected boolean epochKnown = false;
-    protected boolean heightsKnown = true;
+//    protected boolean heightsKnown = true;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -82,8 +84,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     public void modelRestored(Model model) {
-        epochKnown = false;
-        ratiosKnown = false;
+        epochKnown = true;
+        ratiosKnown = true;
     }
 
 
@@ -98,7 +100,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void constructEpochs() {
-        assert(heightsKnown);
+//        assert(heightsKnown);
         nodeEpochMap.clear();
         epochs.clear();
 
@@ -202,7 +204,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
-        heightsKnown = true;
+//        heightsKnown = true;
         ratiosKnown = false;
     }
 
@@ -215,7 +217,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void updateRatios() {
-        assert(heightsKnown);
+//        assert(heightsKnown);
         if (!ratiosKnown) {
             if (!epochKnown) {
                 constructEpochs();
@@ -266,11 +268,12 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 //                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
 //            }
 //        }
-        if (!heightsKnown) {
-            preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
-            tree.pushTreeChangedEvent(TreeChangedEvent.create());
-            heightsKnown = true;
-        }
+//        if (!heightsKnown) {
+        preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
+        tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
+        ratiosKnown = true;
+//            heightsKnown = true;
+//        }
     }
 
     private void preOrderUpdateNodeHeights(final Tree tree, final NodeRef node, final NodeRef parent) {
@@ -315,9 +318,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == ratios) {
-            heightsKnown = false;
-        } else if (variable == nodeHeights) {
+        if (variable == nodeHeights) {
             ratiosKnown = false;
         }
     }
@@ -332,7 +333,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     double[] inverse(double[] values) {
         setRatios(values);
-        heightsKnown = false;
+//        heightsKnown = false;
         updateNodeHeights();
         return getNodeHeights().getParameterValues();
     }

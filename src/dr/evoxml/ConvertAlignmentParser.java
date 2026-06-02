@@ -1,7 +1,8 @@
 /*
  * ConvertAlignmentParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -37,7 +39,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: ConvertAlignmentParser.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
 public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
@@ -49,17 +50,19 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
         Alignment alignment = (Alignment)xo.getChild(Alignment.class);
 
-	    // Old parser always returned UNIVERSAL type for codon conversion
-	    DataType dataType = DataTypeUtils.getDataType(xo);
+        DataType dataType = (DataType)xo.getChild(DataType.class);
+        if (dataType == null) {
+            dataType = DataTypeUtils.getDataType(xo);
+        }
 
-	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
-	    if (dataType instanceof Codons) {
-		    geneticCode = ((Codons)dataType).getGeneticCode();
-	    }
+        GeneticCode geneticCode = GeneticCode.UNIVERSAL;
+        if (dataType instanceof Codons) {
+            geneticCode = ((Codons)dataType).getGeneticCode();
+        }
 
         ConvertAlignment convert = new ConvertAlignment(dataType, geneticCode, alignment);
-	    Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
-	            alignment.getDataType().getDescription() + " to " + dataType.getDescription());
+        Logger.getLogger("dr.evoxml").info("Converted alignment, '" + xo.getId() + "', from " +
+                alignment.getDataType().getDescription() + " to " + dataType.getDescription());
 
 
         return convert;
@@ -74,11 +77,14 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-        new ElementRule(Alignment.class),
-        new StringAttributeRule(DataType.DATA_TYPE,
-            "The type of sequence data",
-            new String[] {Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
-		            HiddenCodons.DESCRIPTION+"2",HiddenCodons.DESCRIPTION+"3",HiddenCodons.DESCRIPTION+"4",HiddenCodons.DESCRIPTION+"5"},
-            false )
+            new ElementRule(Alignment.class),
+            new XORRule(new XMLSyntaxRule[]{
+                    new ElementRule(DataType.class),
+                    new StringAttributeRule(DataType.DATA_TYPE,
+                            "The type of sequence data",
+                            new String[]{Nucleotides.DESCRIPTION, AminoAcids.DESCRIPTION, Codons.DESCRIPTION, TwoStates.DESCRIPTION,
+                                    HiddenCodons.DESCRIPTION + "2", HiddenCodons.DESCRIPTION + "3", HiddenCodons.DESCRIPTION + "4",
+                                    HiddenCodons.DESCRIPTION + "5"}, false)
+            })
     };
 }

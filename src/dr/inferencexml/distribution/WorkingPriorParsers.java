@@ -1,7 +1,8 @@
 /*
  * WorkingPriorParsers.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
@@ -303,20 +305,34 @@ public class WorkingPriorParsers {
 
                     //dimension > 1
                     TransformedNormalKDEDistribution[] arrayKDE = new TransformedNormalKDEDistribution[dimension];
+                    String[] newParameterName = new String[dimension];
+
+                    if (xo.hasAttribute(PARAMETER_NAMES)) {
+                        String temp = (String) xo.getAttribute(PARAMETER_NAMES);
+                        StringTokenizer token = new StringTokenizer(temp);
+                        for (int i = 0; i < dimension; i++) {
+                            newParameterName[i] = token.nextToken();
+                        }
+                    } else {
+                        for (int i = 0; i < dimension; i++) {
+                            newParameterName[i] = parameterName + (i + 1);
+                        }
+                    }
 
                     for (int i = 0; i < dimension; i++) {
+
                         //look for parameterName1, parameterName2, ... if necessary
-                        String newParameterName = parameterName + (i + 1);
+                        //String newParameterName = parameterName + (i+1);
                         int traceIndexParameter = -1;
                         for (int j = 0; j < traces.getTraceCount(); j++) {
                             String traceName = traces.getTraceName(j);
-                            if (traceName.trim().equals(newParameterName)) {
+                            if (traceName.trim().equals(newParameterName[i])) {
                                 traceIndexParameter = j;
                             }
                         }
 
                         if (traceIndexParameter == -1) {
-                            throw new XMLParseException("LogTransformedNormalKDEDistribution: Column '" + newParameterName + "' can not be found for " + getParserName() + " element.");
+                            throw new XMLParseException("LogTransformedNormalKDEDistribution: Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
                         }
 
                         Double[] parameterSamples = new Double[traces.getStateCount()];

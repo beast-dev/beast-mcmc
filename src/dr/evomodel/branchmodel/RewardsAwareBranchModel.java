@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * TransitionMatrixProviderBranchModel that uses SericolaSeriesMarkovRewardFastModelRho
+ * TransitionMatrixProviderBranchModel that uses SericolaSeriesMarkovRewardFastModel
  * to compute reward-conditioned transition matrices on each branch.
  *
  * Design goals:
@@ -65,7 +65,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final SubstitutionModel underlyingSubstitutionModel;
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
-    private final Parameter indicator;                  // 0/1, same indexing as rho
+    private final Parameter indicator;                  // 0/1, same indexing as rewardProportion
 
     private final int nstates;
     private final int dim2;
@@ -128,7 +128,7 @@ public class RewardsAwareBranchModel extends AbstractModel
 
         final int dim = branchRateModel.getRateParameter().getDimension();
         if (indicator.getDimension() != dim) {
-            throw new IllegalArgumentException("indicator dimension must equal rho dimension (branchRateModel rate parameter).");
+            throw new IllegalArgumentException("indicator dimension must equal rewardProportion dimension (branchRateModel rate parameter).");
         }
 
         this.nstates = underlyingSubstitutionModel.getDataType().getStateCount();

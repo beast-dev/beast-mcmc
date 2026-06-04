@@ -102,7 +102,7 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         );
         SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
 
-        double rho = 0.45;
+        double rewardProportion = 0.45;
         double time = 0.9;
         double h = 1.0e-6;
 
@@ -110,9 +110,9 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         double[] minus = new double[4];
         double[] differential = new double[4];
 
-        sericola.computePdfInto(rho + h, time, plus);
-        sericola.computePdfInto(rho - h, time, minus);
-        sericola.computePdfDerivativeWrtRhoInto(rho, time, differential, false);
+        sericola.computePdfInto(rewardProportion + h, time, plus);
+        sericola.computePdfInto(rewardProportion - h, time, minus);
+        sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportion, time, differential, false);
 
         for (int i = 0; i < differential.length; i++) {
             double finiteDifference = (plus[i] - minus[i]) / (2.0 * h);
@@ -121,14 +121,14 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
-    private static Fixture createFixture(double[] rhoValues, double[] indicatorValues, double[] atomValues) {
+    private static Fixture createFixture(double[] rewardProportionValues, double[] indicatorValues, double[] atomValues) {
         TreeModel tree = createTwoTipTree();
         SubstitutionModel substitutionModel = createTwoStateSubstitutionModel();
 
-        Parameter rho = new Parameter.Default("rho", rhoValues);
+        Parameter rewardProportion = new Parameter.Default("rewardProportion", rewardProportionValues);
         ArbitraryBranchRates branchRates = new ArbitraryBranchRates(
                 tree,
-                rho,
+                rewardProportion,
                 new ArbitraryBranchRates.BranchRateTransform.None(),
                 false
         );

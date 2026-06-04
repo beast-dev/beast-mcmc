@@ -151,7 +151,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     private void computeDifferentialForBranch(NodeRef node, double[] differential) {
         final double branchLength = tree.getBranchLength(node);
         final double totalReward = totalRewardsBranchRates.getBranchRate(tree, node);
-        sericola.computePdfDerivativeWrtRhoInto(totalReward, branchLength, differential, false);
+        sericola.computePdfDerivativeWrtRewardProportionInto(totalReward, branchLength, differential, false);
     }
 
     static double bilinearFormStable(double[] pre, double[] D, double[] post, int n) {

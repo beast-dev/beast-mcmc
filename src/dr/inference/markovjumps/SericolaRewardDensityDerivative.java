@@ -1,7 +1,7 @@
 /*
  * SericolaRewardDensityDerivative.java
  *
- * Allocation-free kernel for the reward-density derivative with respect to rho.
+ * Allocation-free kernel for the reward-density derivative with respect to rewardProportion.
  */
 
 package dr.inference.markovjumps;
@@ -22,7 +22,7 @@ final class SericolaRewardDensityDerivative {
         this.outColBySorted = outColBySorted;
     }
 
-    void computeWrtRhoInto(
+    void computeWrtRewardProportionInto(
             int h,
             int N,
             double branchLength,

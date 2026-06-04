@@ -175,7 +175,9 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
         if (getSubstitutionOrder(branchIndex).length > 1) {
-            return getMatrixBufferCount() + getEigenBufferCount() * 2 + branchIndex;
+            int[] order = getSubstitutionOrder(branchIndex);
+            return getInfinitesimalMatrixBufferIndexByEigenIndex(order[order.length - 1]);
+//            return getMatrixBufferCount() + getEigenBufferCount() * 2 + branchIndex;
         }
         return getInfinitesimalMatrixBufferIndexByEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
@@ -395,103 +397,90 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     }
 
     public void cacheEpochInfinitesimalMatrix(Beagle beagle, SiteRateModel siteRateModel, BranchRates branchRates) {
-        final int stateCount = getSubstitutionModel(0).getDataType().getStateCount();
-        int updateCount = 0;
-        int[] branchIndices = new int[tree.getNodeCount() - 1];
-        double[] edgelength = new double[tree.getNodeCount() - 1];
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            if (!tree.isRoot(tree.getNode(i))) {
-                int[] order = getSubstitutionOrder(i);
-                if (order.length > 1) {
-                    branchIndices[updateCount] = i;
-                    edgelength[updateCount] = - branchRates.getBranchRate(tree, tree.getNode(i)) *
-                            (tree.getNodeHeight(tree.getParent(tree.getNode(i))) - tree.getNodeHeight(tree.getNode(i)));
-                    updateCount++;
-                }
-            }
-        }
+//        final int stateCount = getSubstitutionModel(0).getDataType().getStateCount();
+//        int updateCount = 0;
+//        int[] branchIndices = new int[tree.getNodeCount() - 1];
+//        double[] edgelength = new double[tree.getNodeCount() - 1];
+//        for (int i = 0; i < tree.getNodeCount(); i++) {
+//            if (!tree.isRoot(tree.getNode(i))) {
+//                int[] order = getSubstitutionOrder(i);
+//                if (order.length > 1) {
+//                    branchIndices[updateCount] = i;
+//                    edgelength[updateCount] = - branchRates.getBranchRate(tree, tree.getNode(i)) *
+//                            (tree.getNodeHeight(tree.getParent(tree.getNode(i))) - tree.getNodeHeight(tree.getNode(i)));
+//                    updateCount++;
+//                }
+//            }
+//        }
+//
+//
+//        int[][] probabilityIndices = new int[eigenCount][updateCount];
+//        double[][] edgeLengths = new double[eigenCount][updateCount];
+//
+//        int[] counts = new int[eigenCount];
+//
+//        List<Deque<Integer>> convolutionList = new ArrayList<Deque<Integer>>();
+//
+//        for (int i = 0; i < updateCount; i++) {
+//
+//            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
+//            int[] order = mapping.getOrder();
+//            double[] weights = mapping.getWeights();
+//
+//            if (order.length == 1) {
+//                throw new RuntimeException("This is wrong.");
+//            } else {
+//                double sum = 0.0;
+//                for (double w : weights) {
+//                    sum += w;
+//                }
+//
+//                if (getAvailableBufferCount() < order.length) {
+//                    // too few buffers available, process what we have and continue...
+//                    throw new RuntimeException("Need more extra matrix buffer for gradient calculation.");
+//                }
+//
+//                Deque<Integer> bufferIndices = new ArrayDeque<Integer>();
+//                for (int j = order.length - 1; j >= 0; j--) {
+//
+//                    int buffer = popAvailableBuffer();
+//
+//                    if (buffer < 0) {
+//                        // no buffers available
+//                        throw new RuntimeException("Ran out of buffers for transition matrices - computing current list.");
+//                    }
+//
+//                    int k = order[j];
+//                    probabilityIndices[k][counts[k]] = buffer;
+//                    edgeLengths[k][counts[k]] = weights[j] * edgelength[i] / sum;
+//                    counts[k]++;
+//
+//                    bufferIndices.add(buffer);
+//                }
+//                bufferIndices.add(getInfinitesimalMatrixBufferIndexByEigenIndex(order[0]));
+//                bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
+//                bufferIndices.add(getInfinitesimalMatrixBufferIndex(branchIndices[i]));
+//
+//                convolutionList.add(bufferIndices);
+//            }// END: if convolution needed
+//
+//        }// END: i loop
+//
+//        computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
+//        convolveMatrices(beagle, convolutionList, false);
 
-
-        int[][] probabilityIndices = new int[eigenCount][updateCount];
-        double[][] edgeLengths = new double[eigenCount][updateCount];
-
-        int[] counts = new int[eigenCount];
-
-        List<Deque<Integer>> convolutionList = new ArrayList<Deque<Integer>>();
-
-        for (int i = 0; i < updateCount; i++) {
-
-            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
-            int[] order = mapping.getOrder();
-            double[] weights = mapping.getWeights();
-
-            if (order.length == 1) {
-                throw new RuntimeException("This is wrong.");
-            } else {
-                double sum = 0.0;
-                for (double w : weights) {
-                    sum += w;
-                }
-
-                if (getAvailableBufferCount() < order.length) {
-                    // too few buffers available, process what we have and continue...
-                    throw new RuntimeException("Need more extra matrix buffer for gradient calculation.");
-                }
-
-                Deque<Integer> bufferIndices = new ArrayDeque<Integer>();
-                for (int j = order.length - 1; j >= 0; j--) {
-
-                    int buffer = popAvailableBuffer();
-
-                    if (buffer < 0) {
-                        // no buffers available
-                        throw new RuntimeException("Ran out of buffers for transition matrices - computing current list.");
-                    }
-
-                    int k = order[j];
-                    probabilityIndices[k][counts[k]] = buffer;
-                    edgeLengths[k][counts[k]] = weights[j] * edgelength[i] / sum;
-                    counts[k]++;
-
-                    bufferIndices.add(buffer);
-                }
-                bufferIndices.add(getInfinitesimalMatrixBufferIndexByEigenIndex(order[0]));
-                bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
-                bufferIndices.add(getInfinitesimalMatrixBufferIndex(branchIndices[i]));
-
-                convolutionList.add(bufferIndices);
-            }// END: if convolution needed
-
-        }// END: i loop
-
-        computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
-        convolveMatrices(beagle, convolutionList, false);
-
-        double[] firstDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
-        double[] endDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
-        double[] sum = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
-        for (int i = 0; i < updateCount; i++) {
-            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), firstDifferentialQ);
-            int[] order = getSubstitutionOrder(i);
-            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(order[order.length - 1]), endDifferentialQ);
-            for (int j = 0; j < firstDifferentialQ.length; j++) {
-                sum[j] = (firstDifferentialQ[j] + endDifferentialQ[j]) / 2;
-            }
-            beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), sum);
-        }
-    }
-
-    public void getConvolvedInfinitesimalMatrix(int branchIndex, double[] differentialMatrix, BranchRates branchRates) {
-        int[] order = getSubstitutionOrder(branchIndex);
-        if (order.length > 1) {
-            if (tree.isRoot(tree.getNode(branchIndex))) {
-                throw new RuntimeException("Root node is not allowed.");
-            }
-            double[] lastInfinitesimalMatrix = new double[differentialMatrix.length];
-            getSubstitutionModel(order[order.length - 1]).getInfinitesimalMatrix(lastInfinitesimalMatrix);
-
-
-        }
+//        double[] firstDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+//        double[] endDifferentialQ = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+//        double[] sum = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+//        for (int i = 0; i < updateCount; i++) {
+//            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), firstDifferentialQ);
+//            int[] order = getSubstitutionOrder(i);
+//            beagle.getTransitionMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(order[order.length - 1]), endDifferentialQ);
+//            for (int j = 0; j < firstDifferentialQ.length; j++) {
+//                sum[j] = (firstDifferentialQ[j] + endDifferentialQ[j]) / 2;
+//            }
+//            beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(branchIndices[i]), sum);
+//        }
     }
 
     private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, double[][] edgeLengths, int[] counts) {

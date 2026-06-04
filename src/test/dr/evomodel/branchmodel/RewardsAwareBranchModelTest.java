@@ -121,6 +121,30 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
+    public void testRewardProportionOutsideSupportThrowsDiagnosticException() {
+        Fixture fixture = createFixture(
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        assertIllegalRewardProportion(sericola, -0.1, "< min(alpha)");
+        assertIllegalRewardProportion(sericola, 1.1, "> max(alpha)");
+    }
+
+    public void testSericolaDerivativeRejectsBoundaryRewardProportion() {
+        Fixture fixture = createFixture(
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        assertBoundaryDerivativeRejected(sericola, 0.0);
+        assertBoundaryDerivativeRejected(sericola, 1.0);
+    }
+
     private static Fixture createFixture(double[] rewardProportionValues, double[] indicatorValues, double[] atomValues) {
         TreeModel tree = createTwoTipTree();
         SubstitutionModel substitutionModel = createTwoStateSubstitutionModel();
@@ -152,6 +176,35 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         );
 
         return new Fixture(tree, branchModel);
+    }
+
+    private static void assertIllegalRewardProportion(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double rewardProportion,
+            String expectedMessageFragment) {
+
+        try {
+            sericola.computePdfInto(rewardProportion, 0.9, new double[4]);
+            fail("Expected IllegalArgumentException for rewardProportion=" + rewardProportion);
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("rewardProportion=" + rewardProportion));
+            assertTrue(e.getMessage().contains(expectedMessageFragment));
+            assertTrue(e.getMessage().contains("snapping to boundary is not supported"));
+        }
+    }
+
+    private static void assertBoundaryDerivativeRejected(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double rewardProportion) {
+
+        try {
+            sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportion, 0.9, new double[4], false);
+            fail("Expected UnsupportedOperationException for boundary rewardProportion=" + rewardProportion);
+        } catch (UnsupportedOperationException e) {
+            assertTrue(e.getMessage().contains("Boundary Values for rewardProportion touched"));
+            assertTrue(e.getMessage().contains("one-sided interior derivative is implemented but disabled"));
+            assertTrue(e.getMessage().contains("rewardProportion=" + rewardProportion));
+        }
     }
 
     private static TreeModel createTwoTipTree() {

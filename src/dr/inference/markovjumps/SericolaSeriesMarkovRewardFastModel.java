@@ -700,12 +700,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         final double hi = sortedAlpha[phi];
 
         if (rewardProportion < lo) {
-            System.out.println("rewardProportion=" + rewardProportion + " < min(alpha)=" + lo + "; snapping to boundary");
-            throw new IllegalArgumentException("rewardProportion must be >= min(alpha)");
+            throw new IllegalArgumentException(
+                    "rewardProportion=" + rewardProportion + " < min(alpha)=" + lo +
+                            "; snapping to boundary is not supported; rewardProportion must be >= min(alpha)");
         }
         if (rewardProportion > hi) {
-            System.out.println("rewardProportion=" + rewardProportion + " > max(alpha)=" + hi + "; snapping to boundary");
-            throw new IllegalArgumentException("rewardProportion must be <= max(alpha)");
+            throw new IllegalArgumentException(
+                    "rewardProportion=" + rewardProportion + " > max(alpha)=" + hi +
+                            "; snapping to boundary is not supported; rewardProportion must be <= max(alpha)");
         }
 
         int idx = Arrays.binarySearch(sortedAlpha, 0, phi + 1, rewardProportion);
@@ -836,13 +838,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     //
     // Computes: d/drewardProportion f^*_{ij}(rewardProportion | t)
     //
-    // Convention for boundary snapping (xh==0 or 1):
-    //   returns 0 derivative (consistent with your "snap-to-boundary" semantics).
+    // One-sided interior derivative code exists in SericolaRewardDensityDerivative,
+    // but exact support-boundary derivative calls are rejected until that convention
+    // is made explicit for the full reward-aware gradient.
 
     public void computePdfDerivativeWrtRewardProportionInto(double rewardProportion, double branchLength, double[] out, boolean shiftback) {
-        if (rewardProportion < 0) {
-            System.out.println("rewardProportion <0");
-        }
         if (out == null || out.length != dim2) {
             throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
         }
@@ -856,8 +856,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         ensureScratchCapacity(s, 1);
         fillXhPrecomp(s, 0, rewardProportion, h);
         if (s.isZero[0] || s.isOne[0]) {
-//            return;
-            System.out.println("Boundary Values for rewardProportion touched");
+            throw new UnsupportedOperationException(
+                    "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
+                            "until the boundary convention is explicit. rewardProportion=" + rewardProportion +
+                            ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
+                            ", xh=" + s.xh[0]);
         }
 
         final boolean xIsZero = s.isZero[0];

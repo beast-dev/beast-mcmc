@@ -79,6 +79,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     // invAlphaDiff[h] = 1/(sortedAlpha[h]-sortedAlpha[h-1]) for h=1..phi
     private final double[] invAlphaDiff;
     private final SericolaCumulantMatrices cumulantMatrices;
+    private final SericolaRewardDensityDerivative rewardDensityDerivative;
 
     // Exponential for conditional probabilities (optional)
     private final EigenSystem eigenSystem;
@@ -172,6 +173,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         this.P = new double[dim2];
         this.invAlphaDiff = new double[dim];
         this.cumulantMatrices = new SericolaCumulantMatrices(dim);
+        this.rewardDensityDerivative =
+                new SericolaRewardDensityDerivative(dim, outRowBaseBySorted, outColBySorted);
 
         this.eigenSystem = new DefaultEigenSystem(dim);
         this.out = new double[dim2];
@@ -837,7 +840,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     //   returns 0 derivative (consistent with your "snap-to-boundary" semantics).
 
     public void computePdfDerivativeWrtRhoInto(double rho, double branchLength, double[] out, boolean shiftback) {
-        if (rho<0){
+        if (rho < 0) {
             System.out.println("rho <0");
         }
         if (out == null || out.length != dim2) {
@@ -861,120 +864,20 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         final boolean xIsOne  = s.isOne[0];
 
         ensureCForTime(branchLength, /*extraN=*/1);
-        cumulantMatrices.ensureSecondDifferenceCapacity();
         final int N = cumulantMatrices.computedN() - 1;
-        final double dxh_drho = invAlphaDiff[h];
-        final double lt = lambda * branchLength;
-        double premult = Math.exp(-lt); // n=0 premult
-        final double[] incSorted = s.inc;
-        final double[] C = cumulantMatrices.values();
-        final double xh = s.xh[0];
-        final double oneMinus = 1.0 - xh;
-//        final double ratio = xh / oneMinus;
-        final double ratio = (!xIsZero && !xIsOne) ? (xh / oneMinus) : 0.0;
 
-        double w0m = 1.0;
-
-        for (int n = 0; n <= N; ++n) {
-            if (n >= 1) {
-                // f^*(rho,t) has prefactor (lambda * invDiff[h]) * premult * t, with t = branchLength
-                // d/drho introduces dxh/drho and a factor n with second differences in k:
-                // scale = t * lambda * premult * n * (invDiff[h]^2)
-                final double scale = branchLength * lambda * premult * n * (invAlphaDiff[h] * dxh_drho);
-                Arrays.fill(incSorted, 0.0);
-                if (xIsZero) {
-                    // x=0 => only k=0 weight survives, w=1
-                    final int k = 0;
-                    final int c0 = cOffset(h, n + 1, k);
-                    final int c1 = cOffset(h, n + 1, k + 1);
-                    final int c2 = cOffset(h, n + 1, k + 2);
-                    for (int uv = 0; uv < dim2; ++uv) {
-                        incSorted[uv] += (C[c2 + uv] - 2.0 * C[c1 + uv] + C[c0 + uv]);
-                    }
-
-                } else if (xIsOne) {
-                    // x=1 => only k=n-1 weight survives, w=1
-                    final int k = n - 1;
-                    final int c0 = cOffset(h, n + 1, k);
-                    final int c1 = cOffset(h, n + 1, k + 1);
-                    final int c2 = cOffset(h, n + 1, k + 2);
-                    for (int uv = 0; uv < dim2; ++uv) {
-                        incSorted[uv] += (C[c2 + uv] - 2.0 * C[c1 + uv] + C[c0 + uv]);
-                    }
-                } else {
-                    cumulantMatrices.prepareSecondDifferenceRow(h, n);
-                    final int d2Base = cumulantMatrices.secondDifferenceOffset(h, n, 0);
-                    final double[] d2 = cumulantMatrices.secondDifferences();
-                    final double[] inc = incSorted;
-
-                    double w = w0m;
-                    for (int k = 0; k <= n - 1; ++k) {
-                        final int off = d2Base + k * dim2;
-                        final double wk = w;
-
-                        int uv = 0;
-                        for (; uv <= dim2 - 4; uv += 4) {
-                            inc[uv    ] += wk * d2[off + uv    ];
-                            inc[uv + 1] += wk * d2[off + uv + 1];
-                            inc[uv + 2] += wk * d2[off + uv + 2];
-                            inc[uv + 3] += wk * d2[off + uv + 3];
-                        }
-                        for (; uv < dim2; ++uv) {
-                            inc[uv] += wk * d2[off + uv];
-                        }
-
-                        if (k < n - 1) {
-                            w *= ((double) (n - 1 - k) / (double) (k + 1)) * ratio;
-                        }
-                    }
-                }
-
-                for (int uS = 0; uS < dim; ++uS) {
-                    final int outRowBase = outRowBaseBySorted[uS];
-                    final int inRowBase = uS * dim;
-                    for (int vS = 0; vS < dim; ++vS) {
-                        out[outRowBase + outColBySorted[vS]] += scale * incSorted[inRowBase + vS];
-                    }
-                }
-            }
-            premult *= lt / (n + 1.0);
-            if (n >= 1) {
-                w0m *= oneMinus;
-            }
-        }
+        rewardDensityDerivative.computeWrtRhoInto(
+                h,
+                N,
+                branchLength,
+                lambda,
+                invAlphaDiff[h],
+                s.xh[0],
+                xIsZero,
+                xIsOne,
+                cumulantMatrices,
+                s.inc,
+                out);
     }
 
-    /**
-     * Compute the "PDF inner increment" in SORTED uv space:
-     *
-     *   incSorted[uv] = Σ_{k=0}^n B_{n,k}(x_h) * ( C(h,n+1,k+1,uv) - C(h,n+1,k,uv) )
-     *
-     * using the same Bernstein recurrence as loopCyclePdfAddToOriginalOrderFast,
-     * but WITHOUT applying any prefactor and WITHOUT writing to ORIGINAL order.
-     */
-    private void computePdfInnerIncSorted_Rho(
-            int h, int n,
-            double ratio,
-            double w0,            // (1-xh)^n
-            double[] incSorted) {
-        Arrays.fill(incSorted, 0.0);
-        final double[] C = cumulantMatrices.values();
-        {
-            final int aOff = cOffset(h, n + 1, 1);
-            final int bOff = cOffset(h, n + 1, 0);
-            for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w0 * (C[aOff + uv] - C[bOff + uv]);
-            }
-        }
-        double w = w0;
-        for (int k = 0; k < n; ++k) {
-            w *= ((double) (n - k) / (double) (k + 1)) * ratio;
-            final int kp1 = k + 1;
-            final int aOff = cOffset(h, n + 1, kp1 + 1);
-            final int bOff = cOffset(h, n + 1, kp1);
-            for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w * (C[aOff + uv] - C[bOff + uv]);
-            }
-        }
-    }
 }

@@ -78,32 +78,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final double[] P;              // dim2, P = I + sortedQ/lambda
     // invAlphaDiff[h] = 1/(sortedAlpha[h]-sortedAlpha[h-1]) for h=1..phi
     private final double[] invAlphaDiff;
+    private final SericolaCumulantMatrices cumulantMatrices;
 
     // Exponential for conditional probabilities (optional)
     private final EigenSystem eigenSystem;
     private EigenDecomposition eigenDecomposition;
 
-    // Scratch for computeChnk Pn multiplication
-    private final double[] PnScratch;      // dim2
-    private final double[] matMulScratch;  // dim2
-
-    // ------------------------------------------------------------
-    // Storage for C(h,n,k,uv) flattened into a single array
-    //
-    // Indexing:
-    //   cOffset(h,n,k) = (((h * N1 + n) * N1 + k) * dim2)
-    //   then add uv (in SORTED uv space)
-    //
-    // where N1 = capacityN + 1
-    // ------------------------------------------------------------
-    private double[] Cflat;
-
-    private int allocatedN = -1;
-    private int allocatedN1 = 0;   // allocatedN + 1
-
-    private int computedN = -1;    // -1 means nothing computed / invalid
-    private double maxTime = 0.0;  // max time covered by current computed cache
-    private final int[] idx;   // length dim, allocated in constructor
     private final double[] out;
 
     private final boolean conditionalOnZ0;
@@ -134,6 +114,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final Parameter rewardRatesValuesInternal;
     private final Parameter rewardRatesMapping;  // state i -> index into rewardRatesValues
     private final double[] alphaVals;
+    private final int[] idx;
 
     public SericolaSeriesMarkovRewardFastModel(
             SubstitutionModel underlyingSubstitutionModel,
@@ -190,10 +171,9 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
         this.P = new double[dim2];
         this.invAlphaDiff = new double[dim];
+        this.cumulantMatrices = new SericolaCumulantMatrices(dim);
 
         this.eigenSystem = new DefaultEigenSystem(dim);
-        this.PnScratch = new double[dim2];
-        this.matMulScratch = new double[dim2];
         this.out = new double[dim2];
         this.conditionalOnZ0 = conditionalOnZ0; // TODO add this to the signature
 
@@ -206,7 +186,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         this.qDirty = true;
         this.cachesDirty = true;
         this.idx = new int[dim];
-        for (int i = 0; i < dim; i++) idx[i] = i;   // do this ONCE
+        for (int i = 0; i < dim; i++) idx[i] = i;
 
     }
 
@@ -252,7 +232,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
         // Ensure C is available up to required N (pdf uses n+1)
         ensureCForTime(maxT, /*extraN=*/1);
-        final int N = computedN - 1;
+        final int N = cumulantMatrices.computedN() - 1;
 
         accumulatePdfOverN(W, s, T, N);
 
@@ -433,6 +413,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
             double[] incSorted) {
 
         final double temp = (lambda * invAlphaDiff[h]) * premult * time;
+        final double[] C = cumulantMatrices.values();
 
         Arrays.fill(incSorted, 0.0);
 
@@ -441,7 +422,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
             final int aOff = cOffset(h, n + 1, 1);
             final int bOff = cOffset(h, n + 1, 0);
             for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w0 * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+                incSorted[uv] += w0 * (C[aOff + uv] - C[bOff + uv]);
             }
         }
 
@@ -455,7 +436,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
             final int bOff = cOffset(h, n + 1, kp1);
 
             for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+                incSorted[uv] += w * (C[aOff + uv] - C[bOff + uv]);
             }
         }
 
@@ -470,180 +451,21 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     }
 
     private void addDiffBlockToOriginalOrder(double[] WtOriginal, double temp, int aOff, int bOff) {
+        final double[] C = cumulantMatrices.values();
         for (int uS = 0; uS < dim; ++uS) {
             final int outRowBase = outRowBaseBySorted[uS];
             final int inRowBase = uS * dim;
             for (int vS = 0; vS < dim; ++vS) {
                 final int uvS = inRowBase + vS;
                 final int outIdx = outRowBase + outColBySorted[vS];
-                WtOriginal[outIdx] += temp * (Cflat[aOff + uvS] - Cflat[bOff + uvS]);
+                WtOriginal[outIdx] += temp * (C[aOff + uvS] - C[bOff + uvS]);
             }
         }
     }
-
-    // ============================================================
-    // C cache growth + computation (same recursions; now uses alpha)
-    // ============================================================
 
     private void ensureCForTime(double time, int extraN) {
-        if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
-
         final int requiredN = determineNumberOfSteps(time) + extraN;
-
-        ensureCapacityN(requiredN);
-
-        if (time > maxTime) maxTime = time;
-
-        if (computedN < requiredN) {
-            computeChnk(requiredN);
-            computedN = requiredN;
-        }
-    }
-
-    private void ensureCapacityN(int requiredN) {
-        int newAlloc = (allocatedN < 0) ? requiredN : allocatedN;
-        while (newAlloc < requiredN) {
-            newAlloc = Math.max(requiredN, (int) (newAlloc * 1.5) + 1);
-        }
-
-        if (newAlloc <= allocatedN && Cflat != null) return;
-
-        final int newN1 = newAlloc + 1;
-        final long totalDoubles = (long) (phi + 1) * (long) newN1 * (long) newN1 * (long) dim2;
-
-        if (totalDoubles > Integer.MAX_VALUE) {
-            throw new IllegalStateException("C array too large: " + totalDoubles + " doubles");
-        }
-
-        Cflat = new double[(int) totalDoubles];
-        allocatedN = newAlloc;
-        allocatedN1 = newN1;
-
-        computedN = -1;
-        maxTime = 0.0;
-        invalidateDerivativeCache();
-    }
-
-    private void computeChnk(int N) {
-        if (Cflat == null || allocatedN < 0) {
-            throw new IllegalStateException("C storage not initialized");
-        }
-        clearCflatUpToN(N);
-
-        Arrays.fill(PnScratch, 0.0);
-        for (int u = 0; u < dim; ++u) {
-            PnScratch[idx(u, u)] = 1.0;
-        }
-
-        for (int h = 1; h <= phi; ++h) {
-            final int off = cOffset(h, 0, 0);
-            for (int u = 0; u <= h - 1; ++u) {
-                Cflat[off + idx(u, u)] = 1.0;
-            }
-        }
-
-        for (int n = 1; n <= N; ++n) {
-
-            // Forward sweep
-            for (int h = 1; h <= phi; ++h) {
-                for (int k = 1; k <= n; ++k) {
-
-                    for (int u = h; u <= phi; ++u) {
-                        final int uvRow = u * dim;
-
-                        final double cScalar = (sortedAlpha[u] - sortedAlpha[h]) / (sortedAlpha[u] - sortedAlpha[h - 1]);
-                        final double dScalar = (sortedAlpha[h] - sortedAlpha[h - 1]) / (sortedAlpha[u] - sortedAlpha[h - 1]);
-
-                        final int curOff = cOffset(h, n, k);
-                        final int curOffKm1 = cOffset(h, n, k - 1);
-                        final int prevOff = cOffset(h, n - 1, k - 1);
-
-                        for (int v = 0; v <= phi; ++v) {
-                            double cVal = cScalar * Cflat[curOffKm1 + (uvRow + v)];
-
-                            double dVal = 0.0;
-                            final int pRow = uvRow;
-                            for (int w = 0; w <= phi; ++w) {
-                                dVal += P[pRow + w] * Cflat[prevOff + (w * dim + v)];
-                            }
-                            dVal *= dScalar;
-
-                            Cflat[curOff + (uvRow + v)] = cVal + dVal;
-                        }
-                    }
-                }
-
-                if (h < phi) {
-                    final int srcOff = cOffset(h, n, n);
-                    final int dstOff = cOffset(h + 1, n, 0);
-                    for (int u = h + 1; u <= phi; ++u) {
-                        System.arraycopy(Cflat, srcOff + u * dim, Cflat, dstOff + u * dim, dim);
-                    }
-                }
-            }
-
-            rightMultiply(PnScratch, P, matMulScratch);
-            System.arraycopy(matMulScratch, 0, PnScratch, 0, dim2);
-
-            {
-                final int off = cOffset(phi, n, n);
-                for (int u = 0; u <= phi - 1; ++u) {
-                    System.arraycopy(PnScratch, u * dim, Cflat, off + u * dim, dim);
-                }
-            }
-
-            // Backward sweep
-            for (int h = phi; h >= 1; --h) {
-                for (int k = n - 1; k >= 0; --k) {
-
-                    for (int u = 0; u <= h - 1; u++) {
-                        final int uvRow = u * dim;
-
-                        final double cScalar = (sortedAlpha[h - 1] - sortedAlpha[u]) / (sortedAlpha[h] - sortedAlpha[u]);
-                        final double dScalar = (sortedAlpha[h] - sortedAlpha[h - 1]) / (sortedAlpha[h] - sortedAlpha[u]);
-
-                        final int curOff = cOffset(h, n, k);
-                        final int curOffKp1 = cOffset(h, n, k + 1);
-                        final int prevOff = cOffset(h, n - 1, k);
-
-                        for (int v = 0; v <= phi; ++v) {
-                            double cVal = cScalar * Cflat[curOffKp1 + (uvRow + v)];
-
-                            double dVal = 0.0;
-                            final int pRow = uvRow;
-                            for (int w = 0; w <= phi; ++w) {
-                                dVal += P[pRow + w] * Cflat[prevOff + (w * dim + v)];
-                            }
-                            dVal *= dScalar;
-
-                            Cflat[curOff + (uvRow + v)] = cVal + dVal;
-                        }
-                    }
-
-                    if (h >= 2) {
-                        final int srcOff = cOffset(h, n, 0);
-                        final int dstOff = cOffset(h - 1, n, n);
-                        for (int u = 0; u <= h - 2; ++u) {
-                            System.arraycopy(Cflat, srcOff + u * dim, Cflat, dstOff + u * dim, dim);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void rightMultiply(double[] A, double[] B, double[] out) {
-        Arrays.fill(out, 0.0);
-        for (int i = 0; i < dim; ++i) {
-            final int ioff = i * dim;
-            for (int k = 0; k < dim; ++k) {
-                final double aik = A[ioff + k];
-                final int koff = k * dim;
-                for (int j = 0; j < dim; ++j) {
-                    out[ioff + j] += aik * B[koff + j];
-                }
-            }
-        }
+        cumulantMatrices.ensureForTime(time, requiredN, P, sortedAlpha);
     }
 
     // ============================================================
@@ -834,17 +656,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         if (s.inc == null || s.inc.length != dim2) s.inc = new double[dim2];
     }
 
-    private int idx(int i, int j) {
-        return i * dim + j;
-    }
-
     private int cOffset(int h, int n, int k) {
-        return (((h * allocatedN1 + n) * allocatedN1 + k) * dim2);
-    }
-
-    private void clearCflatUpToN(int N) {
-        final int end = cOffset(phi, N, N) + dim2;
-        Arrays.fill(Cflat, 0, end, 0.0);
+        return cumulantMatrices.offset(h, n, k);
     }
 
     private double determineLambda(double[] QrowMajor) {
@@ -857,9 +670,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     }
 
     private void invalidateCComputedExtent() {
-        computedN = -1;
-        maxTime = 0.0;
-        invalidateDerivativeCache();
+        cumulantMatrices.invalidateComputedExtent();
     }
 
     private void fillP(double[] Qsorted, double lambda, double[] Pout) {
@@ -1005,7 +816,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         sb.append("sortedQ: ").append(new Vector(sortedQ)).append("\n");
         sb.append("sortedAlpha: ").append(new Vector(sortedAlpha)).append("\n");
         sb.append("lambda: ").append(lambda).append("\n");
-        sb.append("allocatedN: ").append(allocatedN).append("\n");
+        sb.append("allocatedN: ").append(cumulantMatrices.allocatedN()).append("\n");
+        final double maxTime = cumulantMatrices.maxTime();
         sb.append("maxTime: ").append(maxTime).append("\n");
         sb.append("cprob at maxTime: ").append(new Vector(computeConditionalProbabilities(maxTime))).append("\n");
         return sb.toString();
@@ -1049,12 +861,13 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         final boolean xIsOne  = s.isOne[0];
 
         ensureCForTime(branchLength, /*extraN=*/1);
-        ensureDerivativeCacheCapacity();
-        final int N = computedN - 1;
+        cumulantMatrices.ensureSecondDifferenceCapacity();
+        final int N = cumulantMatrices.computedN() - 1;
         final double dxh_drho = invAlphaDiff[h];
         final double lt = lambda * branchLength;
         double premult = Math.exp(-lt); // n=0 premult
         final double[] incSorted = s.inc;
+        final double[] C = cumulantMatrices.values();
         final double xh = s.xh[0];
         final double oneMinus = 1.0 - xh;
 //        final double ratio = xh / oneMinus;
@@ -1076,7 +889,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                     final int c1 = cOffset(h, n + 1, k + 1);
                     final int c2 = cOffset(h, n + 1, k + 2);
                     for (int uv = 0; uv < dim2; ++uv) {
-                        incSorted[uv] += (Cflat[c2 + uv] - 2.0 * Cflat[c1 + uv] + Cflat[c0 + uv]);
+                        incSorted[uv] += (C[c2 + uv] - 2.0 * C[c1 + uv] + C[c0 + uv]);
                     }
 
                 } else if (xIsOne) {
@@ -1086,12 +899,12 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                     final int c1 = cOffset(h, n + 1, k + 1);
                     final int c2 = cOffset(h, n + 1, k + 2);
                     for (int uv = 0; uv < dim2; ++uv) {
-                        incSorted[uv] += (Cflat[c2 + uv] - 2.0 * Cflat[c1 + uv] + Cflat[c0 + uv]);
+                        incSorted[uv] += (C[c2 + uv] - 2.0 * C[c1 + uv] + C[c0 + uv]);
                     }
                 } else {
-                    prepareD2Row(h, n);
-                    final int d2Base = d2Offset(h, n, 0);
-                    final double[] d2 = D2flat;
+                    cumulantMatrices.prepareSecondDifferenceRow(h, n);
+                    final int d2Base = cumulantMatrices.secondDifferenceOffset(h, n, 0);
+                    final double[] d2 = cumulantMatrices.secondDifferences();
                     final double[] inc = incSorted;
 
                     double w = w0m;
@@ -1131,151 +944,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         }
     }
 
-    // Derivative-only lazy cache for second differences in k
-    private double[] D2flat;     // stores blocks of length dim2
-    private int[] d2Stamp;
-    private int d2Epoch = 1;
-    private int d2AllocatedN = -1;
-
-    private int d2BlockIndex(int h, int n, int k) {
-        return ((h * allocatedN1 + n) * allocatedN1 + k);
-    }
-
-    private int d2Offset(int h, int n, int k) {
-        return d2BlockIndex(h, n, k) * dim2;
-    }
-//    private void invalidateDerivativeCache() {
-//        D2flat = null;
-//        d2Ready = null;
-//        d2AllocatedN = -1;
-//    }
-private void invalidateDerivativeCache() {
-    if (d2Stamp == null) {
-        return;
-    }
-    d2Epoch++;
-    if (d2Epoch == Integer.MAX_VALUE) {
-        Arrays.fill(d2Stamp, 0);
-        d2Epoch = 1;
-    }
-}
-//    private void ensureDerivativeCacheCapacity() {
-//        if (allocatedN < 0) {
-//            throw new IllegalStateException("C cache must be allocated first");
-//        }
-//
-//        if (D2flat != null && d2AllocatedN == allocatedN) {
-//            return;
-//        }
-//
-//        final long nBlocks = (long) (phi + 1) * (long) allocatedN1 * (long) allocatedN1;
-//        final long totalDoubles = nBlocks * (long) dim2;
-//
-//        if (totalDoubles > Integer.MAX_VALUE) {
-//            throw new IllegalStateException("D2 array too large: " + totalDoubles + " doubles");
-//        }
-//
-//        D2flat = new double[(int) totalDoubles];
-//        d2Ready = new byte[(int) nBlocks];
-//        d2AllocatedN = allocatedN;
-//    }
-
-    private void ensureDerivativeCacheCapacity() {
-
-        if (allocatedN < 0) {
-            throw new IllegalStateException("C cache must be allocated first");
-        }
-
-        if (D2flat != null && d2AllocatedN == allocatedN) {
-            return;
-        }
-
-        final long nBlocks = (long) (phi + 1) * (long) allocatedN1 * (long) allocatedN1;
-        final long totalDoubles = nBlocks * (long) dim2;
-
-        System.out.println("ALLOC D2: allocatedN=" + allocatedN
-                + " allocatedN1=" + allocatedN1
-                + " nBlocks=" + nBlocks
-                + " totalDoubles=" + totalDoubles
-                + " MB=" + (8.0 * totalDoubles) / (1024.0 * 1024.0));
-
-        if (totalDoubles > Integer.MAX_VALUE) {
-            throw new IllegalStateException("D2 array too large: " + totalDoubles + " doubles");
-        }
-        if (nBlocks > Integer.MAX_VALUE) {
-            throw new IllegalStateException("d2Stamp array too large: " + nBlocks + " blocks");
-        }
-
-        D2flat = new double[(int) totalDoubles];
-        d2Stamp = new int[(int) nBlocks];
-        d2AllocatedN = allocatedN;
-        d2Epoch = 1;
-    }
-
-
-    private void prepareD2Row(int h, int n) {
-        final int n1 = n + 1;
-        final int baseBlock = d2BlockIndex(h, n, 0);
-        final int baseD2Off = baseBlock * dim2;
-
-        for (int k = 0; k <= n - 1; ++k) {
-            final int block = baseBlock + k;
-            if (d2Stamp[block] != d2Epoch) {
-                final int d2Off = baseD2Off + k * dim2;
-                final int c0 = cOffset(h, n1, k);
-                final int c1 = cOffset(h, n1, k + 1);
-                final int c2 = cOffset(h, n1, k + 2);
-
-                final double[] C = Cflat;
-                final double[] D2 = D2flat;
-
-                for (int uv = 0; uv < dim2; ++uv) {
-                    D2[d2Off + uv] =
-                            C[c2 + uv]
-                                    - 2.0 * C[c1 + uv]
-                                    + C[c0 + uv];
-                }
-//                int uv = 0;
-//                for (; uv <= dim2 - 4; uv += 4) {
-//                    D2[d2Off + uv]     = C[c2 + uv]     - 2.0*C[c1 + uv]     + C[c0 + uv];
-//                    D2[d2Off + uv + 1] = C[c2 + uv + 1] - 2.0*C[c1 + uv + 1] + C[c0 + uv + 1];
-//                    D2[d2Off + uv + 2] = C[c2 + uv + 2] - 2.0*C[c1 + uv + 2] + C[c0 + uv + 2];
-//                    D2[d2Off + uv + 3] = C[c2 + uv + 3] - 2.0*C[c1 + uv + 3] + C[c0 + uv + 3];
-//                }
-//                for (; uv < dim2; ++uv) {
-//                    D2[d2Off + uv] = C[c2 + uv] - 2.0*C[c1 + uv] + C[c0 + uv];
-//                }
-                d2Stamp[block] = d2Epoch;
-            }
-        }
-    }
-
-
-    private int ensureD2Block(int h, int n, int k) {
-//        ensureDerivativeCacheCapacity();
-
-        final int block = d2BlockIndex(h, n, k);
-        final int d2Off = block * dim2;
-
-        if (d2Stamp[block] != d2Epoch) {
-            final int c0 = cOffset(h, n + 1, k);
-            final int c1 = cOffset(h, n + 1, k + 1);
-            final int c2 = cOffset(h, n + 1, k + 2);
-
-            for (int uv = 0; uv < dim2; ++uv) {
-                D2flat[d2Off + uv] =
-                        Cflat[c2 + uv]
-                                - 2.0 * Cflat[c1 + uv]
-                                + Cflat[c0 + uv];
-            }
-            d2Stamp[block] = d2Epoch;
-        }
-
-        return d2Off;
-    }
-
-
-
     /**
      * Compute the "PDF inner increment" in SORTED uv space:
      *
@@ -1290,11 +958,12 @@ private void invalidateDerivativeCache() {
             double w0,            // (1-xh)^n
             double[] incSorted) {
         Arrays.fill(incSorted, 0.0);
+        final double[] C = cumulantMatrices.values();
         {
             final int aOff = cOffset(h, n + 1, 1);
             final int bOff = cOffset(h, n + 1, 0);
             for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w0 * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+                incSorted[uv] += w0 * (C[aOff + uv] - C[bOff + uv]);
             }
         }
         double w = w0;
@@ -1304,7 +973,7 @@ private void invalidateDerivativeCache() {
             final int aOff = cOffset(h, n + 1, kp1 + 1);
             final int bOff = cOffset(h, n + 1, kp1);
             for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w * (Cflat[aOff + uv] - Cflat[bOff + uv]);
+                incSorted[uv] += w * (C[aOff + uv] - C[bOff + uv]);
             }
         }
     }

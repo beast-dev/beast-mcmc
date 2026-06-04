@@ -79,6 +79,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     // invAlphaDiff[h] = 1/(sortedAlpha[h]-sortedAlpha[h-1]) for h=1..phi
     private final double[] invAlphaDiff;
     private final SericolaCumulantMatrices cumulantMatrices;
+    private final SericolaRewardDensityPdf rewardDensityPdf;
     private final SericolaRewardDensityDerivative rewardDensityDerivative;
 
     // Exponential for conditional probabilities (optional)
@@ -173,6 +174,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         this.P = new double[dim2];
         this.invAlphaDiff = new double[dim];
         this.cumulantMatrices = new SericolaCumulantMatrices(dim);
+        this.rewardDensityPdf =
+                new SericolaRewardDensityPdf(dim, outRowBaseBySorted, outColBySorted);
         this.rewardDensityDerivative =
                 new SericolaRewardDensityDerivative(dim, outRowBaseBySorted, outColBySorted);
 
@@ -237,7 +240,23 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         ensureCForTime(maxT, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;
 
-        accumulatePdfOverN(W, s, T, N);
+        rewardDensityPdf.accumulateInto(
+                W,
+                T,
+                N,
+                lambda,
+                invAlphaDiff,
+                cumulantMatrices,
+                s.H,
+                s.NN,
+                s.lt,
+                s.premult,
+                s.ratio,
+                s.w0,
+                s.oneMinus,
+                s.isZero,
+                s.isOne,
+                s.inc);
 
         if (conditionalOnZ0) {
             if (times.length == 1) {
@@ -356,114 +375,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         s.oneMinus[t] = om;
         s.ratio[t] = xh / om;
         s.w0[t] = 1.0;
-    }
-
-    private void accumulatePdfOverN(double[][] W, Scratch s, int T, int N) {
-        for (int n = 0; n <= N; ++n) {
-
-            for (int t = 0; t < T; ++t) {
-                if (s.NN[t] < n) continue;
-
-                final int h = s.H[t];
-
-                // f^*(rewardProportion,t): prefactor is (lambda * time) / (alpha_h - alpha_{h-1}) * p_n(t)
-                final double time = s.lt[t] / lambda;
-                final double base = (lambda * invAlphaDiff[h]) * s.premult[t] * time;
-
-                if (s.isZero[t]) {
-                    addDiffBlockToOriginalOrder(W[t], base,
-                            cOffset(h, n + 1, 1),
-                            cOffset(h, n + 1, 0));
-                } else if (s.isOne[t]) {
-                    addDiffBlockToOriginalOrder(W[t], base,
-                            cOffset(h, n + 1, n + 1),
-                            cOffset(h, n + 1, n));
-                } else {
-                    loopCyclePdfAddToOriginalOrderFast(
-                            h, n,
-                            s.ratio[t],
-                            s.w0[t],
-                            s.premult[t],
-                            time,
-                            W[t],
-                            s.inc
-                    );
-                }
-            }
-
-            // premult_{n+1}(t) = premult_n(t) * (lambda*t)/(n+1) = premult_n(t) * lt/(n+1)
-            final double inv = 1.0 / (n + 1.0);
-            for (int t = 0; t < T; ++t) {
-                s.premult[t] *= s.lt[t] * inv;
-            }
-
-            // w0: (1-xh)^n -> (1-xh)^(n+1) for interior points
-            for (int t = 0; t < T; ++t) {
-                if (!s.isZero[t] && !s.isOne[t]) {
-                    s.w0[t] *= s.oneMinus[t];
-                }
-            }
-        }
-    }
-
-    private void loopCyclePdfAddToOriginalOrderFast(
-            int h, int n,
-            double ratio,
-            double w0,                 // (1-xh)^n
-            double premult,
-            double time,
-            double[] WtOriginal,
-            double[] incSorted) {
-
-        final double temp = (lambda * invAlphaDiff[h]) * premult * time;
-        final double[] C = cumulantMatrices.values();
-
-        Arrays.fill(incSorted, 0.0);
-
-        // k = 0
-        {
-            final int aOff = cOffset(h, n + 1, 1);
-            final int bOff = cOffset(h, n + 1, 0);
-            for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w0 * (C[aOff + uv] - C[bOff + uv]);
-            }
-        }
-
-        // k = 1..n via Bernstein recurrence
-        double w = w0;
-        for (int k = 0; k < n; ++k) {
-            w *= ((double) (n - k) / (double) (k + 1)) * ratio;
-            final int kp1 = k + 1;
-
-            final int aOff = cOffset(h, n + 1, kp1 + 1);
-            final int bOff = cOffset(h, n + 1, kp1);
-
-            for (int uv = 0; uv < dim2; ++uv) {
-                incSorted[uv] += w * (C[aOff + uv] - C[bOff + uv]);
-            }
-        }
-
-        // write to ORIGINAL order
-        for (int uS = 0; uS < dim; ++uS) {
-            final int outRowBase = outRowBaseBySorted[uS];
-            final int inRowBase = uS * dim;
-            for (int vS = 0; vS < dim; ++vS) {
-                WtOriginal[outRowBase + outColBySorted[vS]] += temp * incSorted[inRowBase + vS];
-            }
-        }
-    }
-
-    private void addDiffBlockToOriginalOrder(double[] WtOriginal, double temp, int aOff, int bOff) {
-        final double[] C = cumulantMatrices.values();
-        for (int uS = 0; uS < dim; ++uS) {
-            final int outRowBase = outRowBaseBySorted[uS];
-            final int inRowBase = uS * dim;
-            for (int vS = 0; vS < dim; ++vS) {
-                final int uvS = inRowBase + vS;
-                final int outIdx = outRowBase + outColBySorted[vS];
-                WtOriginal[outIdx] += temp * (C[aOff + uvS] - C[bOff + uvS]);
-            }
-        }
     }
 
     private void ensureCForTime(double time, int extraN) {
@@ -657,10 +568,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         if (s.isOne == null || s.isOne.length < T) s.isOne = new boolean[T];
 
         if (s.inc == null || s.inc.length != dim2) s.inc = new double[dim2];
-    }
-
-    private int cOffset(int h, int n, int k) {
-        return cumulantMatrices.offset(h, n, k);
     }
 
     private double determineLambda(double[] QrowMajor) {

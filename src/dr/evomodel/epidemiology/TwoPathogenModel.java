@@ -1,44 +1,22 @@
 package dr.evomodel.epidemiology;
 
 import dr.inference.model.Parameter;
+
 import java.util.List;
 
-public class SIRCompartmentalModel extends CompartmentalModel {
+public class TwoPathogenModel extends CompartmentalModel {
 
-    // Eventually move these variables to CompartmentalModel
-
-    //Parameter transmissionRate;
-    //Parameter recoveryRate;
-    //Parameter samplingProportion;
-    //Parameter resusRate; // re-susceptibility rate
-    //List<Parameter> rateParameters;
-    //List<Parameter> compartmentCounts;
-    //Parameter numS;
-    //Parameter numI;
-    //Parameter numR;
-    //Parameter origin;
-    //Parameter tauStep;
-    //int numGridPoints;
-    //double cutOff;
-    //Parameter epsilon;
-    //int numReactionChannels;
-    // number of different kinds of species/particle types
-    //int numSpecies;
-    // v matrix describes how count vector changes with reaction
-    // row corresponds to species/particle type, column corresponds to reaction channel
-    //int[][] vMatrix;
-
-    protected Parameter originTimeNumS;
-
-    public SIRCompartmentalModel(
+    // To start, just coped code from SIRCompartmentalModel
+    // Everything needs to be changed
+    public TwoPathogenModel(
             List<Parameter> rateParams,
             List<Parameter> compartmentCounts,
             Parameter origin,
-            Parameter originTimeNumS,
+            Parameter originTimeNumSS,
             int numReactionChannels,
             int numGridPoints,
             double cutOff) {
-        super("SIRCompartmentalModel");
+        super("Two-Pathogen CompartmentalModel");
 
         this.rateParameters = rateParams;
         for(int i = 0; i < rateParameters.size(); i++) {
@@ -56,13 +34,13 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         this.numReactionChannels = numReactionChannels;
         this.numSpecies = compartmentCounts.size();
         this.vMatrix = getVMatrix();
-        this.originTimeNumS = originTimeNumS;
-        addVariable(originTimeNumS);
+        //this.originTimeNumS = originTimeNumS;
+        //addVariable(originTimeNumS);
     }
 
     protected void setOriginTimeCompartmentCounts(int index){
         // initial S value
-        compartmentCounts.get(0).setParameterValue(index, originTimeNumS.getParameterValue(0));
+        compartmentCounts.get(0).setParameterValue(index, 1000);
         // initial I value
         compartmentCounts.get(1).setParameterValue(index, 1);
         // initial R value
@@ -71,7 +49,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
 
     protected void setDefaultCompartmentCounts(int index){
         // default S value
-        compartmentCounts.get(0).setParameterValue(index, originTimeNumS.getParameterValue(0)+1);
+        compartmentCounts.get(0).setParameterValue(index, 999);
         // default I value
         compartmentCounts.get(1).setParameterValue(index, 0);
         // default R value
@@ -118,26 +96,6 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         return rVec;
     }
 
-    // Moved to TauLeapingSimulator.java
-    /*
-    protected double[] getMaxFiringTimes(double[] currentCounts, double[] r){
-        double[] returnVal = new double[numReactionChannels];
-        for (int c = 0; c < numReactionChannels; c++) {
-            returnVal[c] = 0;
-            for(int i = 0; i < numSpecies; i++) {
-                if(vMatrix[i][c] < 0) {
-                    double candidate = currentCounts[i] / Math.abs(vMatrix[i][c]);
-                    if (r[i] > 0) {
-                        if (returnVal[c] == 0 || returnVal[c] > candidate) {
-                            returnVal[c] = candidate;
-                        }
-                    }
-                }
-            }
-        }
-        return returnVal;
-    }
-    */
 
     // compute derivative of r_j(x) with respect to time for all reactions j
     protected double[] getTimeDerivatives(double[] currentCounts){
@@ -157,17 +115,6 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         return returnVec;
     }
 
-    // moved to TauLeapingSimulator.java
-    /*
-    protected double[] getTauLeapingPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau){
-        double[] returnVal = new double[numReactionChannels];
-        // for standard tau leaping
-        for(int r = 0; r < numReactionChannels; r++) {
-            returnVal[r] = reactionInt[r]*tau;
-        }
-        return returnVal;
-    }
-    */
 
     protected double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau){
         double[] returnVal = new double[numReactionChannels];
@@ -194,19 +141,6 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         return updatedCounts;
     }
 
-    /*
-    protected boolean hasMinimalCounts(int[] counts) {
-        // check for negative counts
-        for (int i = 0; i < counts.length; i++) {
-            if (counts[i] < 0) {
-                return false;
-            }
-        }
-        // check if less than 1 susceptible
-        if(counts[1] < 1){
-            return false;
-        }
-        return true;
-    }
-    */
+
+
 }

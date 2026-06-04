@@ -5,23 +5,24 @@ import dr.inference.operators.JointOperator;
 
 public class JointCompartmentalModelOperator extends JointOperator {
 
-    CompartmentalModel compartmentalModel;
+    //CompartmentalModel compartmentalModel;
+    StochasticSimulator simulator;
 
     public JointCompartmentalModelOperator (double weight, double targetAcceptanceProbability,
-                                            CompartmentalModel compartmentalModel) {
+                                            StochasticSimulator simulator) {
         super(weight, targetAcceptanceProbability);
 
         //operatorList = new ArrayList<SimpleMCMCOperator>();
         //operatorToOptimizeList = new ArrayList<Integer>();
 
-        this.compartmentalModel = compartmentalModel;
+        this.simulator = simulator;
 
         setWeight(weight);
     }
 
     public double doOperation() {
 
-        compartmentalModel.simulateTrajectory();
+        simulator.simulateTrajectory();
 
         double logP = 0;
 

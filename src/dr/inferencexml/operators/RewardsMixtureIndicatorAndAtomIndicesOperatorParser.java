@@ -38,7 +38,6 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
 
     private static final String INDICATOR_Z = "indicatorZ";
     private static final String ATOM_INDEX = "atomIndex";
-    private static final String PI = "pi";
     private static final String UPDATE_PROPORTION = "updateProportion";
 
     @Override
@@ -102,6 +101,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 
             new ElementRule(RewardsAwareBranchModel.class, false),
+            new ElementRule(TreeDataLikelihood.class, false),
 
             new ElementRule(INDICATOR_Z,
                     new XMLSyntaxRule[] { new ElementRule(Parameter.class) },

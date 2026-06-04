@@ -1,7 +1,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentBirthDeathModel;
+import dr.evomodel.speciation.agedependent.AgeDependentBirthDeathModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;

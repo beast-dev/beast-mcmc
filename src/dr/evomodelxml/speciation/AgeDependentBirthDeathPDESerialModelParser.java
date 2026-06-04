@@ -1,7 +1,8 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentBirthDeathPDESerialModel;
+import dr.evomodel.speciation.agedependent.AgeDependentBirthDeathPDESerialModel;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -11,9 +12,9 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
     private static final String ORIGIN_TIME = "originTime";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
-    private static final String BIRTH_SHAPE = "birthShape";
+    private static final String BIRTH_HAZARD = "birthHazard";
     private static final String DEATH_SCALE = "deathScale";
-    private static final String DEATH_SHAPE = "deathShape";
+    private static final String DEATH_HAZARD = "deathHazard";
     private static final String SAMPLING_SCALE = "samplingScale";
     private static final String EXTANT_SAMPLING_PROB = "extantSamplingProb";
     private static final String AGE_STEPS = "ageSteps";
@@ -38,11 +39,11 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
         }
 
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
-        Parameter birthShape = (Parameter) xo.getElementFirstChild(BIRTH_SHAPE);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
-        Parameter deathShape = (Parameter) xo.getElementFirstChild(DEATH_SHAPE);
         Parameter samplingScale = (Parameter) xo.getElementFirstChild(SAMPLING_SCALE);
         Parameter extantSamplingProb = (Parameter) xo.getElementFirstChild(EXTANT_SAMPLING_PROB);
+        AgeHazard birthHazard = (AgeHazard) xo.getElementFirstChild(BIRTH_HAZARD);
+        AgeHazard deathHazard = (AgeHazard) xo.getElementFirstChild(DEATH_HAZARD);
 
         int ageSteps = xo.getIntegerAttribute(AGE_STEPS);
         int timeSteps = xo.getIntegerAttribute(TIME_STEPS);
@@ -62,14 +63,6 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
         }
 
         int numEpochs = (epochTimes != null) ? epochTimes.getDimension() + 1 : 1;
-        if (birthShape.getDimension() != 2 && birthShape.getDimension() != 2 * numEpochs) {
-            throw new XMLParseException("birthShape must have dimension 2 [r, gamma] or "
-                    + (2 * numEpochs) + " (2 per epoch), got " + birthShape.getDimension());
-        }
-        if (deathShape.getDimension() != 2 && deathShape.getDimension() != 2 * numEpochs) {
-            throw new XMLParseException("deathShape must have dimension 2 [r, gamma] or "
-                    + (2 * numEpochs) + " (2 per epoch), got " + deathShape.getDimension());
-        }
         if (birthScale.getDimension() != 1 && birthScale.getDimension() != numEpochs) {
             throw new XMLParseException("birthScale must have dimension 1 or " + numEpochs +
                     " (number of epochs), got " + birthScale.getDimension());
@@ -82,14 +75,16 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
             throw new XMLParseException("samplingScale must have dimension 1 or " + numEpochs +
                     " (number of epochs), got " + samplingScale.getDimension());
         }
+        validateShape(birthHazard, BIRTH_HAZARD, numEpochs);
+        validateShape(deathHazard, DEATH_HAZARD, numEpochs);
 
         return new AgeDependentBirthDeathPDESerialModel(
                 xo.getId(),
                 tree,
                 birthScale,
-                birthShape,
+                birthHazard,
                 deathScale,
-                deathShape,
+                deathHazard,
                 samplingScale,
                 extantSamplingProb,
                 epochTimes,
@@ -101,6 +96,15 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
                 rateZeroThreshold,
                 numThreads
         );
+    }
+
+    private static void validateShape(AgeHazard shape, String name,
+                                      int numEpochs) throws XMLParseException {
+        int n = shape.getEpochCount();
+        if (n != 1 && n != numEpochs) {
+            throw new XMLParseException(name + ": r and gamma must have dimension 1 (shared) or "
+                    + numEpochs + " (one per epoch), got " + n);
+        }
     }
 
     public String getParserDescription() {
@@ -127,14 +131,14 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
             new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+            new ElementRule(BIRTH_HAZARD, new XMLSyntaxRule[]{
+                    new ElementRule(AgeHazard.class)
             }),
             new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+            new ElementRule(DEATH_HAZARD, new XMLSyntaxRule[]{
+                    new ElementRule(AgeHazard.class)
             }),
             new ElementRule(SAMPLING_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)

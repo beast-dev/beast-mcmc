@@ -1,4 +1,4 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent.simulation;
 
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
@@ -41,8 +41,8 @@ public class AgeDependentBirthDeathSimulator {
     /**
      * @param birthScale  piecewise-constant birth scale, one per epoch
      * @param deathScale  piecewise-constant death scale, one per epoch (or length 1 for constant)
-     * @param birthShape  [r, gamma] for birth hazard, with b = r*gamma
-     * @param deathShape  [r, gamma] for death hazard, with b = r*gamma
+     * @param birthHazard  [r, gamma] for birth hazard, with b = r*gamma
+     * @param deathHazard  [r, gamma] for death hazard, with b = r*gamma
      * @param epochTimes  internal epoch boundaries in backwards time (ascending); does not include origin
      * @param originTime  the origin time (most ancient point)
      * @param symmetric   if true, both daughters get age 0; if false, one inherits parent age
@@ -50,18 +50,18 @@ public class AgeDependentBirthDeathSimulator {
      */
     public AgeDependentBirthDeathSimulator(double[] birthScale,
                                            double[] deathScale,
-                                           double[] birthShape,
-                                           double[] deathShape,
+                                           double[] birthHazard,
+                                           double[] deathHazard,
                                            double[] epochTimes,
                                            double originTime,
                                            boolean symmetric,
                                            int maxLineages) {
         this.birthScale = birthScale;
         this.deathScale = deathScale;
-        this.birthGamma = birthShape[1];
-        this.birthB = birthShape[0] * this.birthGamma;
-        this.deathGamma = deathShape[1];
-        this.deathB = deathShape[0] * this.deathGamma;
+        this.birthGamma = birthHazard[1];
+        this.birthB = birthHazard[0] * this.birthGamma;
+        this.deathGamma = deathHazard[1];
+        this.deathB = deathHazard[0] * this.deathGamma;
         this.epochBounds = new double[epochTimes.length + 2];
         this.epochBounds[0] = 0.0;
         System.arraycopy(epochTimes, 0, this.epochBounds, 1, epochTimes.length);

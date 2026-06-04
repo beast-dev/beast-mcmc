@@ -1,15 +1,16 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
 import dr.math.RungeKutta;
 import dr.xml.Reportable;
 import dr.util.TaskPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Frederik M. Andersen
@@ -53,17 +54,15 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     private final boolean excludeRootBranch;
 
     private final Parameter birthScale;
-    private final Parameter birthShape;
     private final Parameter deathScale;
-    private final Parameter deathShape;
     private final Parameter samplingScale;
     private final Parameter extantSamplingProb;
     private final Parameter epochTimes;
+    private final AgeHazard birthHazard;
+    private final AgeHazard deathHazard;
     private final boolean constBirth;
     private final boolean constDeath;
     private final boolean constSampling;
-    private final boolean constBirthShape;
-    private final boolean constDeathShape;
     private final int numEpochs;
     private final int numBoundaries;
 
@@ -159,9 +158,9 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     public AgeDependentBirthDeathPDESerialModel(String name,
                                                 Tree tree,
                                                 Parameter birthScale,
-                                                Parameter birthShape,
+                                                AgeHazard birthHazard,
                                                 Parameter deathScale,
-                                                Parameter deathShape,
+                                                AgeHazard deathHazard,
                                                 Parameter samplingScale,
                                                 Parameter extantSamplingProb,
                                                 Parameter epochTimes,
@@ -184,15 +183,9 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         this.birthScale = birthScale;
         this.constBirth = birthScale.getDimension() == 1;
         addVariable(birthScale);
-        this.birthShape = birthShape;
-        this.constBirthShape = birthShape.getDimension() == 2;
-        addVariable(birthShape);
         this.deathScale = deathScale;
         this.constDeath = deathScale.getDimension() == 1;
         addVariable(deathScale);
-        this.deathShape = deathShape;
-        this.constDeathShape = deathShape.getDimension() == 2;
-        addVariable(deathShape);
         this.samplingScale = samplingScale;
         this.constSampling = samplingScale.getDimension() == 1;
         addVariable(samplingScale);
@@ -205,6 +198,11 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         this.numBoundaries = (epochTimes != null) ? epochTimes.getDimension() : 0;
         this.numEpochs = numBoundaries + 1;
 
+        this.birthHazard = birthHazard;
+        this.deathHazard = deathHazard;
+        addModel(birthHazard);
+        if (deathHazard != birthHazard) addModel(deathHazard);
+
         this.originTime = originTime;
         this.Na = Na;
         this.Nt = Math.max(Na, Nt);
@@ -214,11 +212,9 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         this.dt = originTime / this.Nt;
         this.dt05 = 0.5 * dt;
 
-        // Birth rate truncation
         this.rateZeroThreshold = rateZeroThreshold;
         this.jLamZero = Na + 1;
 
-        // Work arrays
         int totalNodes = tree.getNodeCount();
         int Nt2 = 2 * this.Nt;
 
@@ -232,13 +228,11 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
 
         this.postOrder = new int[totalNodes];
 
-        // Shared tip solveL buffers
         this.numExternal = tree.getExternalNodeCount();
         this.invalidTipNums = new int[numExternal];
         this.invalidTipHeights = new double[numExternal];
         this.invalidTipParentHeights = new double[numExternal];
 
-        // Hazards
         this.birthHaz = new double[numEpochs][Na + 1];
         this.storedBirthHaz = new double[numEpochs][Na + 1];
         this.deathHaz = new double[numEpochs][Na + 1];
@@ -252,16 +246,13 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         this.epBounds = new double[numBoundaries];
         this.storedEpBounds = new double[numBoundaries];
 
-        // Likelihood rescaling
         this.nodeLogScale = new double[totalNodes];
         this.storedNodeLogScale = new double[totalNodes];
 
-        // Node caching
         this.nodeValid = new boolean[totalNodes];
         this.storedNodeValid = new boolean[totalNodes];
         this.modifiedNodes = new int[totalNodes];
 
-        // Parallelization
         this.numThreads = Math.max(1, numThreads);
         this.taskPool = (this.numThreads > 1) ? new TaskPool(this.numThreads, this.numThreads) : null;
 
@@ -275,7 +266,6 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
             this.depthBucketSizes = null;
         }
 
-        // Per-worker pools
         this.LPool   = new double[this.numThreads][Na + 1];
         this.LmergedPool = new double[this.numThreads][Na + 1];
         this.p0BufPool   = new double[this.numThreads][Na + 1];
@@ -303,22 +293,8 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         }
 
         for (int k = 0; k < numEpochs; k++) {
-            int bOff = constBirthShape ? 0 : 2 * k;
-            int dOff = constDeathShape ? 0 : 2 * k;
-            double bShapeR     = birthShape.getParameterValue(bOff);
-            double bShapeGamma = birthShape.getParameterValue(bOff + 1);
-            double dShapeR     = deathShape.getParameterValue(dOff);
-            double dShapeGamma = deathShape.getParameterValue(dOff + 1);
-
-            double bShapeLin = bShapeR * bShapeGamma;
-            double dShapeLin = dShapeR * dShapeGamma;
-            double[] bHazK = birthHaz[k];
-            double[] dHazK = deathHaz[k];
-            for (int j = 0; j <= Na; j++) {
-                double a = j * da;
-                bHazK[j] = (1.0 + bShapeLin * a) * Math.exp(-bShapeGamma * a);
-                dHazK[j] = (1.0 + dShapeLin * a) * Math.exp(-dShapeGamma * a);
-            }
+            birthHazard.evaluate(Na, da, birthHaz[k], k);
+            deathHazard.evaluate(Na, da, deathHaz[k], k);
         }
 
         jLamZero = 0;
@@ -917,20 +893,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
 
     /*
      * Invalidate a node's branchTopL cache and everything whose cache could
-     * legitimately depend on it:
-     *   - the node itself (its branch was integrated against its parent height),
-     *   - all its immediate children (their branchTopL is integrated up to this
-     *     node's height; if the node moved or was rewired, those L curves
-     *     belong to a different time interval now),
-     *   - the full ancestor chain up to the root (each ancestor's branchTopL
-     *     consumes the child L we just invalidated),
-     *   - and each ancestor's other child along the chain, as a defense against
-     *     topology operators that may not fire an event for every site.
-     *
-     * Wilson-Balding, SubtreeSlide, and exchange operators fire one
-     * TreeChangedEvent per addChild call, so detach and reattach sites each
-     * push their own event and the union of these per-event invalidations
-     * covers the full set of dirty branches.
+     * legitimately depend on it.
      */
     private void invalidateNode(NodeRef node) {
         int nChildren = tree.getChildCount(node);

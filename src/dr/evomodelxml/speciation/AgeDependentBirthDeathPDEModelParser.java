@@ -1,7 +1,8 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentBirthDeathPDEModel;
+import dr.evomodel.speciation.agedependent.AgeDependentBirthDeathPDEModel;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -11,9 +12,9 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
     private static final String ORIGIN_TIME = "originTime";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
-    private static final String BIRTH_SHAPE = "birthShape";
+    private static final String BIRTH_HAZARD = "birthHazard";
     private static final String DEATH_SCALE = "deathScale";
-    private static final String DEATH_SHAPE = "deathShape";
+    private static final String DEATH_HAZARD = "deathHazard";
     private static final String AGE_STEPS = "ageSteps";
     private static final String TIME_STEPS = "timeSteps";
     private static final String SYMMETRIC = "symmetric";
@@ -36,9 +37,9 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
         }
 
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
-        Parameter birthShape = (Parameter) xo.getElementFirstChild(BIRTH_SHAPE);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
-        Parameter deathShape = (Parameter) xo.getElementFirstChild(DEATH_SHAPE);
+        AgeHazard birthHazard = (AgeHazard) xo.getElementFirstChild(BIRTH_HAZARD);
+        AgeHazard deathHazard = (AgeHazard) xo.getElementFirstChild(DEATH_HAZARD);
 
         int ageSteps = xo.getIntegerAttribute(AGE_STEPS);
         int timeSteps = xo.getIntegerAttribute(TIME_STEPS);
@@ -52,13 +53,6 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
                     EXCLUDE_ROOT_BRANCH + " is only supported when " + SYMMETRIC + "=true");
         }
 
-        if (birthShape.getDimension() != 2) {
-            throw new XMLParseException("birthShape must have dimension 2 [r, gamma], got " + birthShape.getDimension());
-        }
-        if (deathShape.getDimension() != 2) {
-            throw new XMLParseException("deathShape must have dimension 2 [r, gamma], got " + deathShape.getDimension());
-        }
-
         int numEpochs = (epochTimes != null) ? epochTimes.getDimension() + 1 : 1;
         if (birthScale.getDimension() != 1 && birthScale.getDimension() != numEpochs) {
             throw new XMLParseException("birthScale must have dimension 1 or " + numEpochs +
@@ -68,14 +62,16 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
             throw new XMLParseException("deathScale must have dimension 1 or " + numEpochs +
                     " (number of epochs), got " + deathScale.getDimension());
         }
+        validateShape(birthHazard, BIRTH_HAZARD, numEpochs);
+        validateShape(deathHazard, DEATH_HAZARD, numEpochs);
 
         return new AgeDependentBirthDeathPDEModel(
                 xo.getId(),
                 tree,
                 birthScale,
-                birthShape,
+                birthHazard,
                 deathScale,
-                deathShape,
+                deathHazard,
                 epochTimes,
                 originTime,
                 ageSteps,
@@ -87,10 +83,18 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
         );
     }
 
+    private static void validateShape(AgeHazard shape, String name,
+                                      int numEpochs) throws XMLParseException {
+        int n = shape.getEpochCount();
+        if (n != 1 && n != numEpochs) {
+            throw new XMLParseException(name + ": r and gamma must have dimension 1 (shared) or "
+                    + numEpochs + " (one per epoch), got " + n);
+        }
+    }
+
     public String getParserDescription() {
         return "Age-dependent birth-death model solved via Method of Lines (PDE formulation) " +
-               "with fixed-step RK4 time stepping. " +
-               "Uses linear-exponential age hazard h(a) = (1 + b*a) * exp(-gamma*a).";
+               "with fixed-step RK4 time stepping.";
     }
 
     public Class getReturnType() {
@@ -110,14 +114,14 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
             new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+            new ElementRule(BIRTH_HAZARD, new XMLSyntaxRule[]{
+                    new ElementRule(AgeHazard.class)
             }),
             new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+            new ElementRule(DEATH_HAZARD, new XMLSyntaxRule[]{
+                    new ElementRule(AgeHazard.class)
             }),
             AttributeRule.newIntegerRule(AGE_STEPS),
             AttributeRule.newIntegerRule(TIME_STEPS),

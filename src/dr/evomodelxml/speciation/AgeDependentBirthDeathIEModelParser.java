@@ -1,7 +1,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentBirthDeathIEModel;
+import dr.evomodel.speciation.agedependent.AgeDependentBirthDeathIEModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -11,9 +11,9 @@ public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser
     private static final String ORIGIN_TIME = "originTime";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
-    private static final String BIRTH_SHAPE = "birthShape";
+    private static final String BIRTH_HAZARD = "birthHazard";
     private static final String DEATH_SCALE = "deathScale";
-    private static final String DEATH_SHAPE = "deathShape";
+    private static final String DEATH_HAZARD = "deathHazard";
 
     private static final String STEPS = "timeSteps";
     private static final String EPS_PICARD = "epsPicard";
@@ -37,9 +37,9 @@ public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser
         }
 
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
-        Parameter birthShape = (Parameter) xo.getElementFirstChild(BIRTH_SHAPE);
+        Parameter birthHazard = (Parameter) xo.getElementFirstChild(BIRTH_HAZARD);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
-        Parameter deathShape = (Parameter) xo.getElementFirstChild(DEATH_SHAPE);
+        Parameter deathHazard = (Parameter) xo.getElementFirstChild(DEATH_HAZARD);
 
         int numSteps = xo.getIntegerAttribute(STEPS);
         double epsPicard = xo.getDoubleAttribute(EPS_PICARD);
@@ -68,11 +68,11 @@ public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser
             throw new XMLParseException("deathScale dimension (" + deathScale.getDimension() +
                     ") must be 1 or equal to epochTimes dimension (" + numEpochs + ")");
         }
-        if (birthShape.getDimension() != 2) {
-            throw new XMLParseException("birthShape must have dimension 2 [b, gamma], got " + birthShape.getDimension());
+        if (birthHazard.getDimension() != 2) {
+            throw new XMLParseException("birthHazard must have dimension 2 [b, gamma], got " + birthHazard.getDimension());
         }
-        if (deathShape.getDimension() != 2) {
-            throw new XMLParseException("deathShape must have dimension 2 [b, gamma], got " + deathShape.getDimension());
+        if (deathHazard.getDimension() != 2) {
+            throw new XMLParseException("deathHazard must have dimension 2 [b, gamma], got " + deathHazard.getDimension());
         }
 
         return new AgeDependentBirthDeathIEModel(
@@ -81,9 +81,9 @@ public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser
                 epochTimes,
                 originTime,
                 birthScale,
-                birthShape,
+                birthHazard,
                 deathScale,
-                deathShape,
+                deathHazard,
                 numSteps,
                 epsPicard,
                 maxIterPicard,
@@ -111,9 +111,9 @@ public class AgeDependentBirthDeathIEModelParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(ORIGIN_TIME),
             new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }, true),
             new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
-            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
+            new ElementRule(BIRTH_HAZARD, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
             new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
-            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
+            new ElementRule(DEATH_HAZARD, new XMLSyntaxRule[]{ new ElementRule(Parameter.class) }),
             AttributeRule.newIntegerRule(STEPS),
             AttributeRule.newDoubleRule(EPS_PICARD),
             AttributeRule.newIntegerRule(MAX_ITER_PICARD),

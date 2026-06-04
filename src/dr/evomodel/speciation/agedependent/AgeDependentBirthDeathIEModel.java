@@ -1,4 +1,4 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -59,8 +59,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Inputs:
  *   - tree                                   sampled tree
- *   - birthScale, birthShape                 lambda(t, a) parameters
- *   - deathScale, deathShape                 mu(t, a) parameters
+ *   - birthScale, birthHazard                 lambda(t, a) parameters
+ *   - deathScale, deathHazard                 mu(t, a) parameters
  *   - epochTimes                             skyline epoch boundaries
  *   - originTime, numSteps                   integration domain and step count (h = originTime / numSteps)
  *   - epsPicard, maxIterPicard               Picard iteration tolerance and cap
@@ -76,9 +76,9 @@ public class AgeDependentBirthDeathIEModel extends AbstractModelLikelihood imple
     private final boolean excludeRootBranch;
 
     private final Parameter birthScale;
-    private final Parameter birthShape;
+    private final Parameter birthHazard;
     private final Parameter deathScale;
-    private final Parameter deathShape;
+    private final Parameter deathHazard;
     private final Parameter epochTimes;
     private final boolean constBirth;
     private final boolean constDeath;
@@ -178,9 +178,9 @@ public class AgeDependentBirthDeathIEModel extends AbstractModelLikelihood imple
                                          Parameter epochTimes,
                                          double originTime,
                                          Parameter birthScale,
-                                         Parameter birthShape,
+                                         Parameter birthHazard,
                                          Parameter deathScale,
-                                         Parameter deathShape,
+                                         Parameter deathHazard,
                                          int numSteps,
                                          double epsPicard,
                                          int maxIterPicard,
@@ -193,9 +193,9 @@ public class AgeDependentBirthDeathIEModel extends AbstractModelLikelihood imple
         this.epochTimes = epochTimes;
         this.originTime = originTime;
         this.birthScale = birthScale;
-        this.birthShape = birthShape;
+        this.birthHazard = birthHazard;
         this.deathScale = deathScale;
-        this.deathShape = deathShape;
+        this.deathHazard = deathHazard;
 
         this.numBoundaries = (epochTimes != null) ? epochTimes.getDimension() : 0;
         this.numEpochs = numBoundaries + 1;
@@ -221,9 +221,9 @@ public class AgeDependentBirthDeathIEModel extends AbstractModelLikelihood imple
             addVariable(epochTimes);
         }
         addVariable(birthScale);
-        addVariable(birthShape);
+        addVariable(birthHazard);
         addVariable(deathScale);
-        addVariable(deathShape);
+        addVariable(deathHazard);
 
         this.p0 = new double[numSteps + 1];
         this.S = new double[numSteps + 1];
@@ -310,10 +310,10 @@ public class AgeDependentBirthDeathIEModel extends AbstractModelLikelihood imple
             dScaleDelta[k] = dScale[k] - dScale[k - 1];
         }
 
-        double bR = birthShape.getParameterValue(0);
-        double bGamma = birthShape.getParameterValue(1);
-        double dR = deathShape.getParameterValue(0);
-        double dGamma = deathShape.getParameterValue(1);
+        double bR = birthHazard.getParameterValue(0);
+        double bGamma = birthHazard.getParameterValue(1);
+        double dR = deathHazard.getParameterValue(0);
+        double dGamma = deathHazard.getParameterValue(1);
         double bB = bR * bGamma;
         double dB = dR * dGamma;
 

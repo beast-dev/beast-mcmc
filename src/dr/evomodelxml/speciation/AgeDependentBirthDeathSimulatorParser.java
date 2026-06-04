@@ -1,7 +1,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AgeDependentBirthDeathSimulator;
+import dr.evomodel.speciation.agedependent.simulation.AgeDependentBirthDeathSimulator;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -14,8 +14,8 @@ import dr.xml.*;
  * &lt;ageDependentBirthDeathSimulator id="simTree" symmetric="true" originTime="10.0" minTips="2" maxAttempts="1000"&gt;
  *     &lt;birthScale&gt;&lt;parameter value="1.0 0.7"/&gt;&lt;/birthScale&gt;
  *     &lt;deathScale&gt;&lt;parameter value="0.2 0.4"/&gt;&lt;/deathScale&gt;
- *     &lt;birthShape&gt;&lt;parameter value="0.05 0.15"/&gt;&lt;/birthShape&gt;
- *     &lt;deathShape&gt;&lt;parameter value="0.02 0.1"/&gt;&lt;/deathShape&gt;
+ *     &lt;birthHazard&gt;&lt;parameter value="0.05 0.15"/&gt;&lt;/birthHazard&gt;
+ *     &lt;deathHazard&gt;&lt;parameter value="0.02 0.1"/&gt;&lt;/deathHazard&gt;
  *     &lt;epochTimes&gt;&lt;parameter value="5.0"/&gt;&lt;/epochTimes&gt;
  * &lt;/ageDependentBirthDeathSimulator&gt;
  * </pre>
@@ -27,9 +27,9 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
     public static final String PARSER_NAME = "ageDependentBirthDeathSimulator";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
-    private static final String BIRTH_SHAPE = "birthShape";
+    private static final String BIRTH_HAZARD = "birthHazard";
     private static final String DEATH_SCALE = "deathScale";
-    private static final String DEATH_SHAPE = "deathShape";
+    private static final String DEATH_HAZARD = "deathHazard";
     private static final String SYMMETRIC = "symmetric";
     private static final String MIN_TIPS = "minTips";
     private static final String MAX_TIPS = "maxTips";
@@ -48,9 +48,9 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
         double originTime = xo.getDoubleAttribute(ORIGIN_TIME);
 
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
-        Parameter birthShape = (Parameter) xo.getElementFirstChild(BIRTH_SHAPE);
+        Parameter birthHazard = (Parameter) xo.getElementFirstChild(BIRTH_HAZARD);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
-        Parameter deathShape = (Parameter) xo.getElementFirstChild(DEATH_SHAPE);
+        Parameter deathHazard = (Parameter) xo.getElementFirstChild(DEATH_HAZARD);
 
         double[] epochTimesValues;
         if (xo.hasChildNamed(EPOCH_TIMES)) {
@@ -90,18 +90,18 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
             throw new XMLParseException("deathScale dimension (" + deathScale.getDimension() +
                     ") must be 1 or equal to number of epochs (" + numEpochs + ")");
         }
-        if (birthShape.getDimension() != 2) {
-            throw new XMLParseException("birthShape must have dimension 2 [r, gamma], got " + birthShape.getDimension());
+        if (birthHazard.getDimension() != 2) {
+            throw new XMLParseException("birthHazard must have dimension 2 [r, gamma], got " + birthHazard.getDimension());
         }
-        if (deathShape.getDimension() != 2) {
-            throw new XMLParseException("deathShape must have dimension 2 [r, gamma], got " + deathShape.getDimension());
+        if (deathHazard.getDimension() != 2) {
+            throw new XMLParseException("deathHazard must have dimension 2 [r, gamma], got " + deathHazard.getDimension());
         }
 
         AgeDependentBirthDeathSimulator simulator = new AgeDependentBirthDeathSimulator(
                 birthScale.getParameterValues(),
                 deathScale.getParameterValues(),
-                birthShape.getParameterValues(),
-                deathShape.getParameterValues(),
+                birthHazard.getParameterValues(),
+                deathHazard.getParameterValues(),
                 epochTimesValues,
                 originTime,
                 symmetric,
@@ -131,13 +131,13 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
             new ElementRule(BIRTH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(BIRTH_SHAPE, new XMLSyntaxRule[]{
+            new ElementRule(BIRTH_HAZARD, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(DEATH_SHAPE, new XMLSyntaxRule[]{
+            new ElementRule(DEATH_HAZARD, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{

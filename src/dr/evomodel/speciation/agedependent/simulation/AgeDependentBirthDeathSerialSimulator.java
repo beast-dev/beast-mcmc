@@ -1,4 +1,4 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent.simulation;
 
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
@@ -46,8 +46,8 @@ public class AgeDependentBirthDeathSerialSimulator {
      * @param deathScale         piecewise-constant death scale, one per epoch (or length 1)
      * @param samplingScale      piecewise-constant serial sampling rate psi(t), one per epoch (or length 1)
      * @param extantSamplingProb extant sampling probability rho in [0, 1]
-     * @param birthShape         [r, gamma] for birth hazard, with b = r*gamma; length 2 (shared) or 2*numEpochs
-     * @param deathShape         [r, gamma] for death hazard, with b = r*gamma; length 2 (shared) or 2*numEpochs
+     * @param birthHazard         [r, gamma] for birth hazard, with b = r*gamma; length 2 (shared) or 2*numEpochs
+     * @param deathHazard         [r, gamma] for death hazard, with b = r*gamma; length 2 (shared) or 2*numEpochs
      * @param epochTimes         internal epoch boundaries in backwards time (ascending); excludes origin
      * @param originTime         the origin time (most ancient point)
      * @param symmetric          if true, both daughters get age 0; if false, one inherits parent age
@@ -57,8 +57,8 @@ public class AgeDependentBirthDeathSerialSimulator {
                                                  double[] deathScale,
                                                  double[] samplingScale,
                                                  double extantSamplingProb,
-                                                 double[] birthShape,
-                                                 double[] deathShape,
+                                                 double[] birthHazard,
+                                                 double[] deathHazard,
                                                  double[] epochTimes,
                                                  double originTime,
                                                  boolean symmetric,
@@ -72,15 +72,15 @@ public class AgeDependentBirthDeathSerialSimulator {
         this.birthB = new double[numEpochs];
         this.deathGamma = new double[numEpochs];
         this.deathB = new double[numEpochs];
-        boolean constBirthShape = birthShape.length == 2;
-        boolean constDeathShape = deathShape.length == 2;
+        boolean constBirthShape = birthHazard.length == 2;
+        boolean constDeathShape = deathHazard.length == 2;
         for (int k = 0; k < numEpochs; k++) {
             int bOff = constBirthShape ? 0 : 2 * k;
             int dOff = constDeathShape ? 0 : 2 * k;
-            this.birthGamma[k] = birthShape[bOff + 1];
-            this.birthB[k]     = birthShape[bOff] * this.birthGamma[k];
-            this.deathGamma[k] = deathShape[dOff + 1];
-            this.deathB[k]     = deathShape[dOff] * this.deathGamma[k];
+            this.birthGamma[k] = birthHazard[bOff + 1];
+            this.birthB[k]     = birthHazard[bOff] * this.birthGamma[k];
+            this.deathGamma[k] = deathHazard[dOff + 1];
+            this.deathB[k]     = deathHazard[dOff] * this.deathGamma[k];
         }
         this.epochBounds = new double[epochTimes.length + 2];
         this.epochBounds[0] = 0.0;

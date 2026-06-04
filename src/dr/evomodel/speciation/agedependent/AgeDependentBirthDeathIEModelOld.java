@@ -1,4 +1,4 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent;
 
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeChangedEvent;
@@ -35,9 +35,9 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
     private final Tree tree;
     private final Parameter times;
     private final Parameter birthScale;
-    private final Parameter birthShape;
+    private final Parameter birthHazard;
     private final Parameter deathScale;
-    private final Parameter deathShape;
+    private final Parameter deathHazard;
 
     private final int numEpochs;
     private final int maxSteps;
@@ -108,14 +108,14 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
                                             Tree tree,
                                             Parameter times,
                                             Parameter birthScale,
-                                            Parameter birthShape,
+                                            Parameter birthHazard,
                                             Parameter deathScale,
-                                            Parameter deathShape,
+                                            Parameter deathHazard,
                                             int numSteps,
                                             double epsPicard,
                                             int maxIterPicard,
                                             boolean useDirectQuadrature) {
-        this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
+        this(name, tree, times, birthScale, birthHazard, deathScale, deathHazard,
              numSteps, epsPicard, maxIterPicard, useDirectQuadrature, 1, false);
     }
 
@@ -123,15 +123,15 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
                                             Tree tree,
                                             Parameter times,
                                             Parameter birthScale,
-                                            Parameter birthShape,
+                                            Parameter birthHazard,
                                             Parameter deathScale,
-                                            Parameter deathShape,
+                                            Parameter deathHazard,
                                             int numSteps,
                                             double epsPicard,
                                             int maxIterPicard,
                                             boolean useDirectQuadrature,
                                             int numThreads) {
-        this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
+        this(name, tree, times, birthScale, birthHazard, deathScale, deathHazard,
              numSteps, epsPicard, maxIterPicard, useDirectQuadrature, numThreads, false);
     }
 
@@ -139,9 +139,9 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
                                             Tree tree,
                                             Parameter times,
                                             Parameter birthScale,
-                                            Parameter birthShape,
+                                            Parameter birthHazard,
                                             Parameter deathScale,
-                                            Parameter deathShape,
+                                            Parameter deathHazard,
                                             int numSteps,
                                             double epsPicard,
                                             int maxIterPicard,
@@ -153,9 +153,9 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
         this.tree = tree;
         this.times = times;
         this.birthScale = birthScale;
-        this.birthShape = birthShape;
+        this.birthHazard = birthHazard;
         this.deathScale = deathScale;
-        this.deathShape = deathShape;
+        this.deathHazard = deathHazard;
 
         this.numEpochs = times.getDimension();
         this.maxSteps = numSteps;
@@ -174,9 +174,9 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
 
         addVariable(times);
         addVariable(birthScale);
-        addVariable(birthShape);
+        addVariable(birthHazard);
         addVariable(deathScale);
-        addVariable(deathShape);
+        addVariable(deathHazard);
 
         this.p0 = new double[maxSteps + 1];
         this.S = new double[maxSteps + 1];
@@ -215,13 +215,13 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
                                             Tree tree,
                                             Parameter times,
                                             Parameter birthScale,
-                                            Parameter birthShape,
+                                            Parameter birthHazard,
                                             Parameter deathScale,
-                                            Parameter deathShape,
+                                            Parameter deathHazard,
                                             int numSteps,
                                             double epsPicard,
                                             int maxIterPicard) {
-        this(name, tree, times, birthScale, birthShape, deathScale, deathShape,
+        this(name, tree, times, birthScale, birthHazard, deathScale, deathHazard,
              numSteps, epsPicard, maxIterPicard, false);
     }
 
@@ -263,10 +263,10 @@ public class AgeDependentBirthDeathIEModelOld extends AbstractModelLikelihood im
         }
 
         // Age-hazard arrays: linear-exponential h(a) = (1 + b*a) * exp(-gamma*a)
-        double bB = birthShape.getParameterValue(0);
-        double bGamma = birthShape.getParameterValue(1);
-        double dB = deathShape.getParameterValue(0);
-        double dGamma = deathShape.getParameterValue(1);
+        double bB = birthHazard.getParameterValue(0);
+        double bGamma = birthHazard.getParameterValue(1);
+        double dB = deathHazard.getParameterValue(0);
+        double dGamma = deathHazard.getParameterValue(1);
 
         for (int d = 0; d <= numSteps; d++) {
             double age = d * h;

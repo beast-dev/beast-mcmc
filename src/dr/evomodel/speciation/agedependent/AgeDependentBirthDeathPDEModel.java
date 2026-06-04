@@ -1,15 +1,16 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
 import dr.math.RungeKutta;
 import dr.xml.Reportable;
 import dr.util.TaskPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Frederik M. Andersen
@@ -38,15 +39,12 @@ import java.util.Arrays;
  * Conditioning:
  *   - on survival from the origin:
  *      L(t_origin, 0) / (1 - p0(t_origin, 0))
- *   - on survival of both mrca subtrees (only for symmetric tres):
+ *   - on survival of both mrca subtrees (only for symmetric trees):
  *      L_left(t_mrca, 0) L_right(t_mrca, 0) / (1 - p0(t_mrca, 0))^2
  *
- * Currently implemented for birth and death rates of scaled linear-exponential form:
- *      rate(t, a) = scale(t) (1 + r * gamma * a) exp(-gamma * a)
- * where scale is piecewise constant, r >= 0 and gamma >= 0
- * r = 0 or gamma = 0 collapses to a constant-rate process
- * r > 1 produces a hump with peak at a* = (r - 1)/(r * gamma) of amplitude
- * f_max = r * exp(1/r - 1). Other age-shapes are easily implemented.
+ * Rate form:
+ *      rate(t, a) = scale(t) * h(a)
+ * where h is supplied as an {@link AgeHazard} per epoch (one per epoch for both birth and death).
  *
  * Implementation:
  *   - Each branch PDE is turned into a system of ODEs in t by discretizing the age-derivatives, and integrated
@@ -56,22 +54,8 @@ import java.util.Arrays;
  *   - Node caching ensures that subtree likelihoods not touched by a tree-change operator are not recomputed.
  *   - Birth rates can be truncated to effectively reduce Na without losing step size accuracy.
  *   - PDE integration over internal branches can be parallelized.
- *
- * Inputs:
- *   - tree                                   sampled tree
- *   - birthScale, birthShape                 lambda(t, a) parameters
- *   - deathScale, deathShape                 mu(t, a) parameters
- *   - epochTimes                             skyline epoch boundaries
- *   - originTime, Na, da, dt                 PDE domain and discretization
- *   - symmetric                              speciation mode (see above)
- *   - excludeRootBranch                      condition on mrca instead of origin
- *   - rateZeroThreshold                      truncate birth rates below this to zero, default 1e-12
- *
- * Output:
- *   - logLikelihood                          conditioned tree log-likelihood
  */
 public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood implements Reportable {
-    // Diagnostics - TODO: Remove when done
     private static final boolean DIAG_INF = Boolean.getBoolean("beast.abd.diag");
     private static final boolean DIAG_COMP = Boolean.getBoolean("beast.abd.diagcomp");
     private static final double DIAG_COMP_THRESHOLD =
@@ -85,10 +69,10 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     private final boolean excludeRootBranch;
 
     private final Parameter birthScale;
-    private final Parameter birthShape;
     private final Parameter deathScale;
-    private final Parameter deathShape;
     private final Parameter epochTimes;
+    private final AgeHazard birthHazard;
+    private final AgeHazard deathHazard;
     private final boolean constBirth;
     private final boolean constDeath;
     private final int numEpochs;
@@ -119,20 +103,16 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     private double[] p0Curr;
     private double[] p0Next;
 
-    private double[] birthHaz;
-    private double[] storedBirthHaz;
-    private double[] deathHaz;
-    private double[] storedDeathHaz;
+    private double[][] birthHaz;
+    private double[][] storedBirthHaz;
+    private double[][] deathHaz;
+    private double[][] storedDeathHaz;
     private double[] bScale;
     private double[] storedBScale;
     private double[] dScale;
     private double[] storedDScale;
     private double[] epBounds;
     private double[] storedEpBounds;
-    private double dShapeLin;
-    private double dShapeExp;
-    private double storedDShapeLin;
-    private double storedDShapeExp;
 
     // Shared tip solveL buffers
     private final int numExternal;
@@ -186,9 +166,9 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     public AgeDependentBirthDeathPDEModel(String name,
                                           Tree tree,
                                           Parameter birthScale,
-                                          Parameter birthShape,
+                                          AgeHazard birthHazard,
                                           Parameter deathScale,
-                                          Parameter deathShape,
+                                          AgeHazard deathHazard,
                                           Parameter epochTimes,
                                           double originTime,
                                           int Na,
@@ -209,19 +189,20 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         this.birthScale = birthScale;
         this.constBirth = birthScale.getDimension() == 1;
         addVariable(birthScale);
-        this.birthShape = birthShape;
-        addVariable(birthShape);
         this.deathScale = deathScale;
         this.constDeath = deathScale.getDimension() == 1;
         addVariable(deathScale);
-        this.deathShape = deathShape;
-        addVariable(deathShape);
         this.epochTimes = epochTimes;
         if (epochTimes != null) {
             addVariable(epochTimes);
         }
         this.numBoundaries = (epochTimes != null) ? epochTimes.getDimension() : 0;
         this.numEpochs = numBoundaries + 1;
+
+        this.birthHazard = birthHazard;
+        this.deathHazard = deathHazard;
+        addModel(birthHazard);
+        if (deathHazard != birthHazard) addModel(deathHazard);
 
         this.originTime = originTime;
         this.Na = Na;
@@ -232,11 +213,9 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         this.dt = originTime / this.Nt;
         this.dt05 = 0.5 * dt;
 
-        // Birth rate truncation
         this.rateZeroThreshold = rateZeroThreshold;
         this.jLamZero = Na + 1;
 
-        // Work arrays
         int totalNodes = tree.getNodeCount();
         int Nt2 = 2 * this.Nt;
 
@@ -250,16 +229,14 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
 
         this.postOrder = new int[totalNodes];
 
-        // Shared tip solveL buffers
         this.numExternal = tree.getExternalNodeCount();
         this.invalidTipNums = new int[numExternal];
         this.invalidTipParentHeights = new double[numExternal];
 
-        // Hazards
-        this.birthHaz = new double[Na + 1];
-        this.storedBirthHaz = new double[Na + 1];
-        this.deathHaz = new double[Na + 1];
-        this.storedDeathHaz = new double[Na + 1];
+        this.birthHaz = new double[numEpochs][Na + 1];
+        this.storedBirthHaz = new double[numEpochs][Na + 1];
+        this.deathHaz = new double[numEpochs][Na + 1];
+        this.storedDeathHaz = new double[numEpochs][Na + 1];
         this.bScale = new double[numEpochs];
         this.storedBScale = new double[numEpochs];
         this.dScale = new double[numEpochs];
@@ -267,16 +244,13 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         this.epBounds = new double[numBoundaries];
         this.storedEpBounds = new double[numBoundaries];
 
-        // Likelihood rescaling
         this.nodeLogScale = new double[totalNodes];
         this.storedNodeLogScale = new double[totalNodes];
 
-        // Node caching
         this.nodeValid = new boolean[totalNodes];
         this.storedNodeValid = new boolean[totalNodes];
         this.modifiedNodes = new int[totalNodes];
 
-        // Parallelization
         this.numThreads = Math.max(1, numThreads);
         this.taskPool = (this.numThreads > 1) ? new TaskPool(this.numThreads, this.numThreads) : null;
 
@@ -290,7 +264,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             this.depthBucketSizes = null;
         }
 
-        // Per-worker pools
         this.LPool   = new double[this.numThreads][Na + 1];
         this.LmergedPool = new double[this.numThreads][Na + 1];
         this.p0BufPool   = new double[this.numThreads][Na + 1];
@@ -315,37 +288,25 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             epBounds[k] = epochTimes.getParameterValue(k);
         }
 
-        double bShapeR     = birthShape.getParameterValue(0);
-        double bShapeGamma = birthShape.getParameterValue(1);
-        double dShapeR     = deathShape.getParameterValue(0);
-        double dShapeGamma = deathShape.getParameterValue(1);
-
-        dShapeLin = dShapeR * dShapeGamma;
-        dShapeExp = dShapeGamma;
-        double bShapeLin = bShapeR * bShapeGamma;
-        double bShapeExp = bShapeGamma;
-
-        for (int j = 0; j <= Na; j++) {
-            double a = j * da;
-            birthHaz[j] = (1.0 + bShapeLin * a) * Math.exp(-bShapeExp * a);
-            deathHaz[j] = (1.0 + dShapeLin * a) * Math.exp(-dShapeExp * a);
-        }
-
-        // Find truncation index such that after NaTrunc lambda(t, a) \approx 0
-        double maxBScale = bScale[0];
-        for (int k = 1; k < numEpochs; k++) {
-            maxBScale = Math.max(maxBScale, bScale[k]);
+        for (int k = 0; k < numEpochs; k++) {
+            birthHazard.evaluate(Na, da, birthHaz[k], k);
+            deathHazard.evaluate(Na, da, deathHaz[k], k);
         }
 
         jLamZero = 0;
-        for (int k = Na; k >= 0; k--) {
-            if (maxBScale * birthHaz[k] >= rateZeroThreshold) {
-                jLamZero = k + 1;
+        for (int j = Na; j >= 0; j--) {
+            double maxLam = 0.0;
+            for (int k = 0; k < numEpochs; k++) {
+                double v = bScale[k] * birthHaz[k][j];
+                if (v > maxLam) maxLam = v;
+            }
+            if (maxLam >= rateZeroThreshold) {
+                jLamZero = j + 1;
                 break;
             }
         }
 
-        NaTrunc = Math.min(Na, Math.max(10, Math.min(jLamZero, Na))); // Changed floor from 2. I think that breaks the age stencil, 10 is probably unnecessarily high
+        NaTrunc = Math.min(Na, Math.max(10, Math.min(jLamZero, Na)));
     }
 
     /*
@@ -356,9 +317,11 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         double[] muCurr = muCurrPool[worker];
         double bs = bScale[epoch];
         double ds = dScale[epoch];
+        double[] bHaz = birthHaz[epoch];
+        double[] dHaz = deathHaz[epoch];
         for (int j = 0; j <= NaTrunc; j++) {
-            lamCurr[j] = bs * birthHaz[j];
-            muCurr[j] = ds * deathHaz[j];
+            lamCurr[j] = bs * bHaz[j];
+            muCurr[j] = ds * dHaz[j];
         }
     }
 
@@ -381,9 +344,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     // p0 solve
     //===============
 
-    /*
-     * Evaluate right hand side of p0 PDE
-     */
     private void p0Rhs(int worker, double t, double[] p0, double[] dp0dt) {
         final double p0_0 = p0[0];
         ageDeriv(p0, dp0dt);
@@ -408,7 +368,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
     }
 
-
     /*
      * Forward-solve p0 with half sized steps dt05
      */
@@ -426,7 +385,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         for (int i = 1; i <= 2 * Nt; i++) {
             double tNext = i * dt05;
 
-            // Handle epoch boundary lying before tNext
             if (epoch < numBoundaries && epBounds[epoch] < tNext) {
                 double boundary = epBounds[epoch];
                 if (boundary - t > EPS) {
@@ -484,14 +442,10 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
     }
 
-
     //===============
     // L solve
     //===============
 
-    /*
-     * Evaluate right hand side of L PDE
-     */
     private void LRhs(int worker, double[] L, double[] p0AtT, double[] dLdt) {
         final double L_0 = L[0];
         final double p0_0 = p0AtT[0];
@@ -515,8 +469,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             }
         }
     }
-
-
 
     /*
      * Solve L over [startTime, endTime]
@@ -548,7 +500,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         for (int i = firstIdx; i <= lastIdx + 1; i++) {
             double tNext = (i <= lastIdx) ? i * dt : endTime;
 
-            // Handle epoch boundary lying before tNext.
             if (epoch < numBoundaries && epBounds[epoch] < tNext) {
                 double boundary = epBounds[epoch];
                 if (boundary - t > EPS) {
@@ -574,11 +525,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
     }
 
-    /*
-     * Per-step rescale: brings max(L) back to 1 when it strays outside
-     * [SCALE_LO, SCALE_HI], accumulating the factor into logScalePool.
-     * Returns false if L has gone non-finite or all-zero (caller should bail).
-     */
     private boolean rescaleL(int worker, double[] L) {
         double maxL = 0.0;
         for (int j = 0; j <= NaTrunc; j++) {
@@ -629,7 +575,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             double parentHeight = invalidTipParentHeights[i];
             int tipNum = invalidTipNums[i];
 
-            // Skip tips with equal parent heights, particularly cherries
             if (parentHeight != prevHeight) {
                 solveL(worker, L, prevHeight, parentHeight);
                 prevHeight = parentHeight;
@@ -640,7 +585,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             modifiedNodes[modifiedNodeCount++] = tipNum;
         }
     }
-
 
     /*
      * Solve L for a given internal branch
@@ -676,20 +620,18 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         nodeLogScale[rootNum] = logScalePool[worker];
     }
 
-
     // =========================
     // Likelihood computation
     // =========================
     private double calculateLogLikelihood() {
         double rootH = tree.getNodeHeight(tree.getRoot());
 
-            if (originTime <= rootH) { // FIXME: Delete when done testing
+        if (originTime <= rootH) {
             if (DIAG_INF) System.err.println("ABD -Inf [rootHeight]: rootHeight="
                     + rootH + " >= originTime=" + originTime);
             return Double.NEGATIVE_INFINITY;
         }
 
-        // Cache and recompute rate dependent quantities only when necessary
         if (parametersDirty) {
             refreshRates();
             solveP0();
@@ -699,7 +641,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
 
         modifiedNodeCount = 0;
 
-        // Compute partial likelihood for tips
         solveLTips();
 
         TreeUtils.postOrderTraversalList(tree, postOrder);
@@ -721,7 +662,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 int[] bucket = depthBuckets[lvl];
 
                 if (n == 1) {
-                    // skip pool overhead for single-node levels
                     solveLInternal(0, bucket[0]);
                     modifiedNodes[modifiedSlot.getAndIncrement()] = bucket[0];
                     continue;
@@ -741,10 +681,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             modifiedNodeCount = modifiedSlot.get();
         }
 
-        // All nodes are now valid
         Arrays.fill(nodeValid, true);
 
-        // Initialize likelihood computation
         double logLik = 0.0;
         double totalLogScale = 0.0;
         for (double v : nodeLogScale) totalLogScale += v;
@@ -756,7 +694,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             int left = tree.getChild(root, 0).getNumber();
             int right = tree.getChild(root, 1).getNumber();
 
-            // FIXME: Delete all this when done testing
             double leftL_0 = branchTopL[left][0];
             double rightL_0 = branchTopL[right][0];
             if (!Double.isFinite(leftL_0) || !Double.isFinite(rightL_0)
@@ -766,11 +703,9 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // Get extinction probability at root height
             double[] p0Buf = p0BufPool[0];
             p0Inter(rootHeight, p0Buf);
 
-            // FIXME: Delete when done testing
             double p0Root = p0Buf[0];
             if (!Double.isFinite(p0Root) || p0Root >= 1.0) {
                 if (DIAG_INF) System.err.println("ABD -Inf [p0Root]: p0Root="
@@ -778,16 +713,12 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // Add partial likelihood of the two subtrees under the root starting with age 0
             double logLPartial = Math.log(branchTopL[left][0]) + Math.log(branchTopL[right][0]);
-            // Condition on survival of both subtrees
             double logSurvival = -2.0 * Math.log(1.0 - p0Buf[0]);
-            // Rescale likelihood to original scale
             logLik += logLPartial + logSurvival + totalLogScale;
             if (DIAG_COMP) diagPrintBreakdown(logLPartial, logSurvival, totalLogScale,
                     p0Buf[0], rootHeight, true);
         } else {
-            // FIXME: Delete when done testing
             double LRoot_0 = branchTopL[rootNum][0];
             if (!Double.isFinite(LRoot_0) || LRoot_0 <= 0.0) {
                 if (DIAG_INF) System.err.println("ABD -Inf [rootL]: LRoot_0=" + LRoot_0);
@@ -800,11 +731,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // Partial likelihood at originTime and age 0
             double logLPartial = Math.log(branchTopL[rootNum][0]);
-            // Condition on survival of tree from originTime
-            double logSurvival = -1.0 * Math.log(1.0 - p0Origin); // -2.0 * Math.log(1.0 - p0Origin);
-            // Rescale likelihood to original scale
+            double logSurvival = -1.0 * Math.log(1.0 - p0Origin);
             logLik += logLPartial + logSurvival + totalLogScale;
             if (DIAG_COMP) diagPrintBreakdown(logLPartial, logSurvival, totalLogScale,
                     p0Origin, tree.getNodeHeight(root), false);
@@ -840,10 +768,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         double total = logLPartial + logSurvival + totalLogScale;
         if (Math.abs(total) < DIAG_COMP_THRESHOLD) return;
         diagCompCallCount++;
-        double bs0 = bScale[0];
-        double ds0 = dScale[0];
-        double bShapeLin = birthShape.getParameterValue(0);
-        double bShapeExp = birthShape.getParameterValue(1);
         double rootH = tree.getNodeHeight(tree.getRoot());
         double treeLen = computeTreeLength();
         System.err.println("ABD-DIAG"
@@ -856,12 +780,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 + " condHeight=" + condHeight
                 + " rootH=" + rootH
                 + " treeLen=" + treeLen
-                + " bScale[0]=" + bs0
-                + " dScale[0]=" + ds0
-                + " bShape.b=" + bShapeLin
-                + " bShape.gamma=" + bShapeExp
-                + " dShape.b=" + dShapeLin
-                + " dShape.gamma=" + dShapeExp
+                + " bScale[0]=" + bScale[0]
+                + " dScale[0]=" + dScale[0]
                 + " NaTrunc=" + NaTrunc + "/" + Na);
     }
 
@@ -869,9 +789,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     // Utils
     // =======
 
-    /**
-     * Find epoch index for a given time
-     */
     private int getEpochIndex(double t) {
         int epoch = 0;
         while (epoch < numBoundaries && t >= epBounds[epoch]) {
@@ -914,9 +831,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     // Parallelization utils
     // ========================
 
-    /*
-     * Bucket internal branches by their depth for parallel dispatch
-     */
     private void buildDepthBuckets() {
         Arrays.fill(depthBucketSizes, 0);
         maxDepth = 0;
@@ -976,7 +890,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         return logLikelihood;
     }
 
-
     /*
      * Invalidate a node's branchTopL cache and everything whose cache could
      * legitimately depend on it:
@@ -988,11 +901,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
      *     consumes the child L we just invalidated),
      *   - and each ancestor's other child along the chain, as a defense against
      *     topology operators that may not fire an event for every site.
-     *
-     * Wilson-Balding, SubtreeSlide, and exchange operators fire one
-     * TreeChangedEvent per addChild call, so detach and reattach sites each
-     * push their own event and the union of these per-event invalidations
-     * covers the full set of dirty branches.
      */
     private void invalidateNode(NodeRef node) {
         int nChildren = tree.getChildCount(node);
@@ -1052,16 +960,16 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         storedParametersDirty = parametersDirty;
         storedJLamZero = jLamZero;
         storedNaTrunc = NaTrunc;
-        storedDShapeLin = dShapeLin;
-        storedDShapeExp = dShapeExp;
 
         if (storedStateDirty || rateStateDirty) {
             int totalCols = 2 * Nt + 1;
             for (int i = 0; i < totalCols; i++) {
                 System.arraycopy(p0Grid[i], 0, storedP0Grid[i], 0, NaTrunc + 1);
             }
-            System.arraycopy(birthHaz, 0, storedBirthHaz, 0, birthHaz.length);
-            System.arraycopy(deathHaz, 0, storedDeathHaz, 0, deathHaz.length);
+            for (int k = 0; k < numEpochs; k++) {
+                System.arraycopy(birthHaz[k], 0, storedBirthHaz[k], 0, Na + 1);
+                System.arraycopy(deathHaz[k], 0, storedDeathHaz[k], 0, Na + 1);
+            }
             System.arraycopy(bScale, 0, storedBScale, 0, bScale.length);
             System.arraycopy(dScale, 0, storedDScale, 0, dScale.length);
             System.arraycopy(epBounds, 0, storedEpBounds, 0, numBoundaries);
@@ -1092,8 +1000,6 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         parametersDirty = storedParametersDirty;
         jLamZero = storedJLamZero;
         NaTrunc = storedNaTrunc;
-        dShapeLin = storedDShapeLin;
-        dShapeExp = storedDShapeExp;
 
         if (rateStateDirty) {
             double[][] tmp2D;
@@ -1101,8 +1007,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             boolean[] tmpB;
 
             tmp2D = p0Grid; p0Grid = storedP0Grid; storedP0Grid = tmp2D;
-            tmpD = birthHaz; birthHaz = storedBirthHaz; storedBirthHaz = tmpD;
-            tmpD = deathHaz; deathHaz = storedDeathHaz; storedDeathHaz = tmpD;
+            tmp2D = birthHaz; birthHaz = storedBirthHaz; storedBirthHaz = tmp2D;
+            tmp2D = deathHaz; deathHaz = storedDeathHaz; storedDeathHaz = tmp2D;
             tmpD = bScale; bScale = storedBScale; storedBScale = tmpD;
             tmpD = dScale; dScale = storedDScale; storedDScale = tmpD;
             tmpD = epBounds; epBounds = storedEpBounds; storedEpBounds = tmpD;

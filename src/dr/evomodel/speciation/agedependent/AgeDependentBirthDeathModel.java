@@ -1,4 +1,4 @@
-package dr.evomodel.speciation;
+package dr.evomodel.speciation.agedependent;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;

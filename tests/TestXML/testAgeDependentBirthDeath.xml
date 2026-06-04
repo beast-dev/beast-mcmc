@@ -7,6 +7,24 @@
   conditioning (excludeRootBranch=true). Linear-exponential age hazard
   h(a) = (1 + r*gamma*a) * exp(-gamma*a).
 
+  The PDE model uses the AgeHazard interface. A single <linExpAgeHazard>
+  element holds r and gamma as Parameters:
+    - dimension 1:        shape shared across all epochs
+    - dimension numEpochs: one (r, gamma) per epoch
+
+  Example (shared): <linExpAgeHazard>
+                        <r><parameter value="0.4"/></r>
+                        <gamma><parameter value="0.25"/></gamma>
+                    </linExpAgeHazard>
+
+  Example (per-epoch, 2 epochs):
+                    <linExpAgeHazard>
+                        <r><parameter value="0.4 0.7"/></r>
+                        <gamma><parameter value="0.25 0.1"/></gamma>
+                    </linExpAgeHazard>
+
+  The IE model retains its flat-parameter interface.
+
   Scenario 1b anchors both solvers against the closed-form Stadler/Gernhard
   2008 reconstructed-BD labelled-tree density, conditioned on survival of
   the process from the origin:
@@ -22,11 +40,12 @@
     1.  Constant rates                      (r=gamma=0,    1 epoch, MRCA)
     1b. Stadler closed-form anchor (IE)     (origin conditioning, high-res)
     2.  Age-dependent rates                 (r,gamma > 0,  1 epoch, MRCA)
-    3.  Skyline + age-dependent rates       (r,gamma > 0,  2 epochs, MRCA)
+    3.  Skyline + age-dependent rates       (r,gamma > 0,  2 epochs, MRCA, shared shape)
     4.  Conditioning on origin              (excludeRootBranch=false, age-dep)
     5.  Optional optimizations vs baselines (IE quadrature solver, IE/PDE
                                              multi-threading, PDE birth-rate
                                              truncation)
+    6.  Per-epoch age shapes (PDE only)     (shared values → must equal scenario 3)
 -->
 <beast>
     <taxa id="taxa">
@@ -64,9 +83,9 @@
             excludeRootBranch="true">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <birthHazard><parameter value="0.0 0.0"/></birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.0 0.0"/></deathShape>
+        <deathHazard><parameter value="0.0 0.0"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.const" originTime="10.0"
@@ -74,9 +93,19 @@
             symmetric="true" excludeRootBranch="true">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.0"/></r>
+                <gamma><parameter value="0.0"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.0 0.0"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.0"/></r>
+                <gamma><parameter value="0.0"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Constant rates — IE:  <ageDependentBirthDeathIEModel idref="ie.const"/></report>
@@ -93,18 +122,16 @@
     </assertEqual>
 
     <!-- ============================================================ -->
-    <!-- Scenario 1b: Closed-form Stadler/Gernhard anchor with        -->
-    <!-- survival conditioning at the origin. See header comment for  -->
-    <!-- the formula and numeric breakdown (target: -68.4247409600).  -->
+    <!-- Scenario 1b: Closed-form Stadler/Gernhard anchor            -->
     <!-- ============================================================ -->
     <ageDependentBirthDeathIEModel id="ie.anchor" originTime="10.0"
             timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
             excludeRootBranch="false">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <birthHazard><parameter value="0.0 0.0"/></birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.0 0.0"/></deathShape>
+        <deathHazard><parameter value="0.0 0.0"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.anchor" originTime="10.0"
@@ -112,9 +139,19 @@
             symmetric="true" excludeRootBranch="false">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.0 0.0"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.0"/></r>
+                <gamma><parameter value="0.0"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.0 0.0"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.0"/></r>
+                <gamma><parameter value="0.0"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Anchor (origin) — IE:  <ageDependentBirthDeathIEModel idref="ie.anchor"/></report>
@@ -144,9 +181,9 @@
             excludeRootBranch="true">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <birthHazard><parameter value="0.5 0.3"/></birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.2 0.1"/></deathShape>
+        <deathHazard><parameter value="0.2 0.1"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.linexp" originTime="10.0"
@@ -154,9 +191,19 @@
             symmetric="true" excludeRootBranch="true">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.5"/></r>
+                <gamma><parameter value="0.3"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.2 0.1"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.2"/></r>
+                <gamma><parameter value="0.1"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Age-dep rates — IE:  <ageDependentBirthDeathIEModel idref="ie.linexp"/></report>
@@ -173,7 +220,7 @@
     </assertEqual>
 
     <!-- ============================================================ -->
-    <!-- Scenario 3: Skyline (2 epochs) + age-dependent rates         -->
+    <!-- Scenario 3: Skyline (2 epochs) + shared age shape            -->
     <!-- ============================================================ -->
     <ageDependentBirthDeathIEModel id="ie.skyline" originTime="10.0"
             timeSteps="20000" epsPicard="1e-12" maxIterPicard="200"
@@ -181,9 +228,9 @@
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard><parameter value="0.4 0.25"/></birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard><parameter value="0.3 0.15"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.skyline" originTime="10.0"
@@ -192,9 +239,19 @@
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.4"/></r>
+                <gamma><parameter value="0.25"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.3"/></r>
+                <gamma><parameter value="0.15"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Skyline + age-dep — IE:  <ageDependentBirthDeathIEModel idref="ie.skyline"/></report>
@@ -218,9 +275,9 @@
             excludeRootBranch="false">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <birthHazard><parameter value="0.5 0.3"/></birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.2 0.1"/></deathShape>
+        <deathHazard><parameter value="0.2 0.1"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.origin" originTime="10.0"
@@ -228,9 +285,19 @@
             symmetric="true" excludeRootBranch="false">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.5 0.3"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.5"/></r>
+                <gamma><parameter value="0.3"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.8" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.2 0.1"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.2"/></r>
+                <gamma><parameter value="0.1"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Origin-conditioned — IE:  <ageDependentBirthDeathIEModel idref="ie.origin"/></report>
@@ -248,11 +315,6 @@
 
     <!-- ============================================================ -->
     <!-- Scenario 5: Optional optimizations should not change result. -->
-    <!-- Re-runs the skyline+age-dep configuration of scenario 3 with: -->
-    <!--   - IE direct-quadrature solver (vs default FFT-Picard)      -->
-    <!--   - IE multi-threaded internal-branch solves                  -->
-    <!--   - PDE multi-threaded internal-branch solves                 -->
-    <!--   - PDE birth-rate truncation (rateZeroThreshold > 0)         -->
     <!-- ============================================================ -->
     <ageDependentBirthDeathIEModel id="ie.quad" originTime="10.0"
             solver="quadrature"
@@ -261,9 +323,9 @@
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard><parameter value="0.4 0.25"/></birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard><parameter value="0.3 0.15"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathIEModel id="ie.parallel" originTime="10.0"
@@ -272,33 +334,51 @@
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard><parameter value="0.4 0.25"/></birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard><parameter value="0.3 0.15"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.parallel" originTime="10.0"
             timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true"
-            numThreads="4">
+            symmetric="true" excludeRootBranch="true" numThreads="4">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.4"/></r>
+                <gamma><parameter value="0.25"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.3"/></r>
+                <gamma><parameter value="0.15"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <ageDependentBirthDeathPDEModel id="pde.trunc" originTime="10.0"
             timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true"
-            rateZeroThreshold="1e-6">
+            symmetric="true" excludeRootBranch="true" rateZeroThreshold="1e-6">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
-        <birthShape><parameter value="0.4 0.25"/></birthShape>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.4"/></r>
+                <gamma><parameter value="0.25"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
         <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
-        <deathShape><parameter value="0.3 0.15"/></deathShape>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.3"/></r>
+                <gamma><parameter value="0.15"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
     <report>Skyline+age-dep — IE (quadrature):       <ageDependentBirthDeathIEModel idref="ie.quad"/></report>
@@ -306,7 +386,6 @@
     <report>Skyline+age-dep — PDE (4 threads):       <ageDependentBirthDeathPDEModel idref="pde.parallel"/></report>
     <report>Skyline+age-dep — PDE (rate truncation): <ageDependentBirthDeathPDEModel idref="pde.trunc"/></report>
 
-    <!-- IE optimizations: must match IE FFT-Picard baseline tightly -->
     <assertEqual tolerance="0.1" verbose="true">
         <message>Scenario 5a: IE quadrature vs IE FFT-Picard (same algorithm class)</message>
         <actual regex="logLikelihood:\s+(\S+)">
@@ -327,7 +406,6 @@
         </expected>
     </assertEqual>
 
-    <!-- PDE optimizations: must match PDE single-threaded baseline tightly -->
     <assertEqual tolerance="1e-10" verbose="true">
         <message>Scenario 5c: PDE parallel vs PDE single-threaded (should be bitwise-close)</message>
         <actual regex="logLikelihood:\s+(\S+)">
@@ -342,6 +420,48 @@
         <message>Scenario 5d: PDE rate-truncation vs PDE no-truncation</message>
         <actual regex="logLikelihood:\s+(\S+)">
             <ageDependentBirthDeathPDEModel idref="pde.trunc"/>
+        </actual>
+        <expected regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.skyline"/>
+        </expected>
+    </assertEqual>
+
+    <!-- ============================================================ -->
+    <!-- Scenario 6: Per-epoch age shapes (PDE only)                 -->
+    <!--                                                              -->
+    <!-- The IE model uses a single shared shape; per-epoch shapes   -->
+    <!-- are a PDE-only feature and are tested here by self-         -->
+    <!-- consistency: specifying the same (r, gamma) in both epoch   -->
+    <!-- slots must produce the exact same likelihood as the shared- -->
+    <!-- shape pde.skyline (scenario 3).                             -->
+    <!-- ============================================================ -->
+    <ageDependentBirthDeathPDEModel id="pde.per_epoch" originTime="10.0"
+            timeSteps="2000" ageSteps="2000"
+            symmetric="true" excludeRootBranch="true">
+        <treeModel idref="treeModel"/>
+        <epochTimes><parameter value="3.0"/></epochTimes>
+        <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
+        <birthHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.4 0.4"/></r>
+                <gamma><parameter value="0.25 0.25"/></gamma>
+            </linExpAgeHazard>
+        </birthHazard>
+        <deathScale><parameter value="0.6 1.0" lower="0.0"/></deathScale>
+        <deathHazard>
+            <linExpAgeHazard>
+                <r><parameter value="0.3 0.3"/></r>
+                <gamma><parameter value="0.15 0.15"/></gamma>
+            </linExpAgeHazard>
+        </deathHazard>
+    </ageDependentBirthDeathPDEModel>
+
+    <report>Per-epoch shapes — PDE: <ageDependentBirthDeathPDEModel idref="pde.per_epoch"/></report>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>Scenario 6 (per-epoch shapes, identical values): must equal shared-shape result</message>
+        <actual regex="logLikelihood:\s+(\S+)">
+            <ageDependentBirthDeathPDEModel idref="pde.per_epoch"/>
         </actual>
         <expected regex="logLikelihood:\s+(\S+)">
             <ageDependentBirthDeathPDEModel idref="pde.skyline"/>

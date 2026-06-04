@@ -2,7 +2,6 @@ package dr.inference.timeseries.engine.kalman;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
@@ -24,29 +23,16 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
 
     private final CanonicalGaussianBranchTransitionKernel transitionKernel;
     private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
-    private final LinearGaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
     private final int stateDimension;
-    private final int observationDimension;
     private final int timeCount;
-    private final int maximumMatrixDimension;
 
     private final CanonicalGaussianState filteredState;
     private final CanonicalGaussianState predictedState;
     private final CanonicalGaussianTransition transition;
     private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
-
-    private final double[] designMatrix;
-    private final double[] noiseCovariance;
-    private final double[] noisePrecision;
-    private final double[] observationPrecisionContribution;
-    private final double[] obsWorkspace;
-    private final double[] observationVector;
-    private final double[] observationInformation;
-    private final double[] observationVectorWorkspace;
-    private final double[] flatCholeskyWorkspace;
-    private final double[] flatLowerInverseWorkspace;
+    private final CanonicalObservationUpdate observationUpdate;
 
     private boolean likelihoodKnown;
     private double logLikelihood;
@@ -72,12 +58,9 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         }
         this.transitionKernel = transitionKernel;
         this.cachedTransitionRepresentation = cachedTransitionRepresentation;
-        this.observationModel = observationModel;
         this.timeGrid = timeGrid;
         this.stateDimension = transitionKernel.getStateDimension();
-        this.observationDimension = observationModel.getObservationDimension();
         this.timeCount = timeGrid.getTimeCount();
-        this.maximumMatrixDimension = Math.max(stateDimension, observationDimension);
 
         if (observationModel.getTimeCount() != timeCount) {
             throw new IllegalArgumentException(
@@ -89,17 +72,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
         this.predictedState = new CanonicalGaussianState(stateDimension);
         this.transition = new CanonicalGaussianTransition(stateDimension);
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
-
-        this.designMatrix = new double[observationDimension * stateDimension];
-        this.noiseCovariance = new double[observationDimension * observationDimension];
-        this.noisePrecision = new double[observationDimension * observationDimension];
-        this.observationPrecisionContribution = new double[stateDimension * stateDimension];
-        this.obsWorkspace = new double[observationDimension * stateDimension];
-        this.observationVector = new double[observationDimension];
-        this.observationInformation = new double[stateDimension];
-        this.observationVectorWorkspace = new double[observationDimension];
-        this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
-        this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.observationUpdate = new CanonicalObservationUpdate(observationModel, stateDimension);
         if (cachedTransitionRepresentation != null) {
             cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
         }
@@ -120,10 +93,7 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
     }
 
     private double computeLogLikelihood() {
-        observationModel.fillDesignMatrixFlat(designMatrix, stateDimension);
-        observationModel.fillNoiseCovarianceFlat(noiseCovariance);
-        final double noiseLogDet = invertPositiveDefinite(noiseCovariance, noisePrecision, observationDimension);
-        buildObservationPrecisionContribution();
+        observationUpdate.refreshStaticMatrices();
 
         transitionKernel.fillInitialCanonicalState(filteredState);
 
@@ -136,22 +106,12 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
                 predict(filteredState, transition, predictedState);
             }
 
-            if (observationModel.isObservationMissing(timeIndex)) {
+            if (!observationUpdate.prepareForTime(timeIndex)) {
                 copyState(predictedState, filteredState);
                 continue;
             }
 
-            observationModel.fillObservationVector(timeIndex, observationVector);
-            buildObservationInformation(observationVector);
-
-            addMatrices(predictedState.precision, observationPrecisionContribution, filteredState.precision);
-            addVectors(predictedState.information, observationInformation, filteredState.information);
-            filteredState.logNormalizer = CanonicalGaussianMessageOps.normalizedLogNormalizer(
-                    filteredState, messageWorkspace);
-
-            value += filteredState.logNormalizer
-                    - predictedState.logNormalizer
-                    - observationPotentialLogNormalizer(observationVector, noiseLogDet);
+            value += observationUpdate.applyTo(predictedState, filteredState, messageWorkspace);
         }
         return value;
     }
@@ -160,42 +120,6 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
                          final CanonicalGaussianTransition transition,
                          final CanonicalGaussianState out) {
         CanonicalGaussianMessageOps.pushForward(previous, transition, messageWorkspace, out);
-    }
-
-    private void buildObservationPrecisionContribution() {
-        MatrixOps.matMul(noisePrecision, designMatrix, obsWorkspace,
-                observationDimension, observationDimension, stateDimension);
-        MatrixOps.matMulTransposedLeft(designMatrix, obsWorkspace, observationPrecisionContribution,
-                observationDimension, stateDimension);
-        MatrixOps.symmetrize(observationPrecisionContribution, stateDimension);
-    }
-
-    private void buildObservationInformation(final double[] observation) {
-        MatrixOps.matVec(noisePrecision, observation, observationVectorWorkspace,
-                observationDimension, observationDimension);
-        for (int i = 0; i < stateDimension; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < observationDimension; ++j) {
-                sum += designMatrix[j * stateDimension + i] * observationVectorWorkspace[j];
-            }
-            observationInformation[i] = sum;
-        }
-    }
-
-    private double observationPotentialLogNormalizer(final double[] observation, final double logDetNoise) {
-        final double quadratic = MatrixOps.quadraticForm(
-                observation, noisePrecision, observationDimension, observationVectorWorkspace);
-        return 0.5 * (observationDimension * MatrixOps.LOG_TWO_PI + logDetNoise + quadratic);
-    }
-
-    private double invertPositiveDefinite(final double[] matrix,
-                                          final double[] inverseOut,
-                                          final int dimension) {
-        if (!MatrixOps.tryCholesky(matrix, flatCholeskyWorkspace, dimension)) {
-            throw new IllegalArgumentException("Matrix is not positive definite");
-        }
-        return MatrixOps.invertFromCholesky(
-                flatCholeskyWorkspace, flatLowerInverseWorkspace, inverseOut, dimension);
     }
 
     private double validatedDelta(final int fromIndex, final int toIndex) {
@@ -213,22 +137,6 @@ public final class CanonicalKalmanLikelihoodEngine implements LikelihoodEngine {
             cachedTransitionRepresentation.getCanonicalTransition(fromIndex, toIndex, timeGrid, out);
         } else {
             transitionKernel.fillCanonicalTransition(validatedDelta(fromIndex, toIndex), out);
-        }
-    }
-
-    private static void addMatrices(final double[] left,
-                                    final double[] right,
-                                    final double[] out) {
-        for (int i = 0; i < left.length; ++i) {
-            out[i] = left[i] + right[i];
-        }
-    }
-
-    private static void addVectors(final double[] left,
-                                   final double[] right,
-                                   final double[] out) {
-        for (int i = 0; i < left.length; ++i) {
-            out[i] = left[i] + right[i];
         }
     }
 

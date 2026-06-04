@@ -2106,6 +2106,109 @@ public class MomentAnalyticalKalmanGradientEngineTest extends TestCase {
                 momentSmoother.getSmoothedCovariancesFlat(), canonicalSmoother.getSmoothedCovariancesFlat(), 1e-9);
     }
 
+    public void testCanonicalKalmanLikelihoodAndSmootherAllowPartialObservationColumns() {
+        final MatrixParameter drift = makeMatrix("A.canonical.partial", new double[][]{
+                {0.45, -0.07},
+                {0.10, 0.95}
+        });
+        final MatrixParameter diffusion = makeMatrix("Q.canonical.partial", new double[][]{
+                {1.1, 0.12},
+                {0.12, 0.85}
+        });
+        final Parameter mean = new Parameter.Default(new double[]{0.2, -0.1});
+        final MatrixParameter initCov = makeMatrix("P0.canonical.partial", new double[][]{
+                {0.9, 0.03},
+                {0.03, 1.05}
+        });
+        final OUProcessModel process = new OUProcessModel(
+                "ouCanonicalPartial", 2, drift, diffusion, mean, initCov, CovarianceGradientMethod.LYAPUNOV_ADJOINT);
+
+        final MatrixParameter partialH = makeMatrix("H.canonical.partial.full", new double[][]{{1, 0}, {0, 1}});
+        final MatrixParameter partialR = makeMatrix("R.canonical.partial.full", new double[][]{
+                {0.4, 0.02},
+                {0.02, 0.5}
+        });
+        final MatrixParameter partialY = makeMatrix("Y.canonical.partial.full", new double[][]{
+                {0.5, Double.NaN, -0.3, 1.1},
+                {Double.NaN, Double.NaN, Double.NaN, Double.NaN}
+        });
+        final LinearGaussianObservationModel partialObs = new LinearGaussianObservationModel(
+                "obsCanonicalPartialFull", 2, partialH, partialR, partialY);
+
+        final MatrixParameter reducedH = makeMatrix("H.canonical.partial.reduced", new double[][]{{1, 0}});
+        final MatrixParameter reducedR = makeMatrix("R.canonical.partial.reduced", new double[][]{{0.4}});
+        final MatrixParameter reducedY = makeMatrix("Y.canonical.partial.reduced", new double[][]{
+                {0.5, Double.NaN, -0.3, 1.1}
+        });
+        final LinearGaussianObservationModel reducedObs = new LinearGaussianObservationModel(
+                "obsCanonicalPartialReduced", 1, reducedH, reducedR, reducedY);
+        final TimeGrid grid = new UniformTimeGrid(4, 0.0, 0.25);
+
+        final CanonicalKalmanLikelihoodEngine partialLikelihood = new CanonicalKalmanLikelihoodEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class), partialObs, grid);
+        final CanonicalKalmanLikelihoodEngine reducedLikelihood = new CanonicalKalmanLikelihoodEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class), reducedObs, grid);
+
+        assertEquals("Canonical likelihood should marginalize partial observation columns",
+                reducedLikelihood.getLogLikelihood(),
+                partialLikelihood.getLogLikelihood(),
+                1e-9);
+
+        final CanonicalKalmanSmootherEngine partialSmoother = new CanonicalKalmanSmootherEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class),
+                representation(process, GaussianTransitionRepresentation.class),
+                partialObs,
+                grid);
+        final CanonicalKalmanSmootherEngine reducedSmoother = new CanonicalKalmanSmootherEngine(
+                representation(process, CanonicalGaussianBranchTransitionKernel.class),
+                representation(process, GaussianTransitionRepresentation.class),
+                reducedObs,
+                grid);
+
+        assertEquals("Canonical smoother likelihood should marginalize partial observation columns",
+                reducedSmoother.getLogLikelihood(), partialSmoother.getLogLikelihood(), 1e-9);
+        assertFlatArrayEquals("Partial-observation predicted means",
+                reducedSmoother.getPredictedMeansFlat(), partialSmoother.getPredictedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Partial-observation predicted covariances",
+                reducedSmoother.getPredictedCovariancesFlat(), partialSmoother.getPredictedCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Partial-observation filtered means",
+                reducedSmoother.getFilteredMeansFlat(), partialSmoother.getFilteredMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Partial-observation filtered covariances",
+                reducedSmoother.getFilteredCovariancesFlat(), partialSmoother.getFilteredCovariancesFlat(), 1e-9);
+        assertFlatArrayEquals("Partial-observation smoothed means",
+                reducedSmoother.getSmoothedMeansFlat(), partialSmoother.getSmoothedMeansFlat(), 1e-9);
+        assertFlatArrayEquals("Partial-observation smoothed covariances",
+                reducedSmoother.getSmoothedCovariancesFlat(), partialSmoother.getSmoothedCovariancesFlat(), 1e-9);
+
+        final BasicTimeSeriesModel model = new BasicTimeSeriesModel(
+                "tsCanonicalPartial", latent(process), partialObs, grid);
+        final TimeSeriesLikelihood topLevelCanonical = GaussianTimeSeriesLikelihoodFactory.create(
+                "tsCanonicalPartialLike",
+                model,
+                GaussianForwardComputationMode.CANONICAL,
+                GaussianSmootherComputationMode.CANONICAL,
+                GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
+        assertEquals("Top-level canonical likelihood should allow partial observation columns",
+                partialLikelihood.getLogLikelihood(), topLevelCanonical.getLogLikelihood(), 1e-9);
+        final double[] canonicalGradient = topLevelCanonical.getGradientWrt(process.getDriftMatrix())
+                .getGradientLogDensity(null);
+        for (int i = 0; i < canonicalGradient.length; ++i) {
+            assertTrue("Top-level canonical gradient should be finite at index " + i,
+                    Double.isFinite(canonicalGradient[i]));
+        }
+
+        try {
+            new MomentKalmanLikelihoodEngine(
+                    representation(process, GaussianTransitionRepresentation.class),
+                    partialObs,
+                    grid).getLogLikelihood();
+            fail("Moment-form likelihood should still reject partial observation columns");
+        } catch (IllegalArgumentException expected) {
+            assertTrue("Expected partial missing observation error",
+                    expected.getMessage().contains("Partial missing observations"));
+        }
+    }
+
     public void testCanonicalKalmanLikelihoodMatchesMomentEngine_Euler() {
         final MatrixParameter drift = makeMatrix("A.canonical.filter.euler", new double[][]{
                 {0.18, -0.03},

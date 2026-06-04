@@ -24,13 +24,10 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
     private final GaussianTransitionRepresentation transitionRepresentation;
     private final CachedGaussianTransitionRepresentation cachedTransitionRepresentation;
-    private final LinearGaussianObservationModel observationModel;
     private final TimeGrid timeGrid;
 
     private final int stateDimension;
     private final int timeCount;
-    private final int observationDimension;
-    private final int maximumMatrixDimension;
 
     private final CanonicalGaussianState futureMessage;
     private final CanonicalGaussianState backwardMessage;
@@ -39,15 +36,8 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
     private final CanonicalBranchGradientCache branchGradientCache;
     private final MomentBranchSmootherStats[] smootherStats;
     private final CanonicalGaussianMessageOps.Workspace messageWorkspace;
+    private final CanonicalObservationUpdate observationUpdate;
 
-    private final double[] designMatrix;
-    private final double[] noiseCovariance;
-    private final double[] noisePrecision;
-    private final double[] observationPrecisionContribution;
-    private final double[] obsWorkspace;
-    private final double[] observationVector;
-    private final double[] observationInformation;
-    private final double[] observationVectorWorkspace;
     private final double[] stateVectorWorkspace;
     private final double[] flatMatrixWorkspace;
     private final double[] flatInverseWorkspace;
@@ -80,12 +70,9 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
         this.cachedTransitionRepresentation = transitionRepresentation instanceof CachedGaussianTransitionRepresentation
                 ? (CachedGaussianTransitionRepresentation) transitionRepresentation
                 : null;
-        this.observationModel = observationModel;
         this.timeGrid = timeGrid;
         this.stateDimension = canonicalKernel.getStateDimension();
         this.timeCount = timeGrid.getTimeCount();
-        this.observationDimension = observationModel.getObservationDimension();
-        this.maximumMatrixDimension = Math.max(stateDimension, observationDimension);
 
         this.futureMessage = new CanonicalGaussianState(stateDimension);
         this.backwardMessage = new CanonicalGaussianState(stateDimension);
@@ -99,19 +86,12 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
             smootherStats[t] = new MomentBranchSmootherStats(t, stateDimension, t < timeCount - 1);
         }
 
-        this.designMatrix = new double[observationDimension * stateDimension];
-        this.noiseCovariance = new double[observationDimension * observationDimension];
-        this.noisePrecision = new double[observationDimension * observationDimension];
-        this.observationPrecisionContribution = new double[stateDimension * stateDimension];
-        this.obsWorkspace = new double[observationDimension * stateDimension];
-        this.observationVector = new double[observationDimension];
-        this.observationInformation = new double[stateDimension];
-        this.observationVectorWorkspace = new double[observationDimension];
+        this.observationUpdate = new CanonicalObservationUpdate(observationModel, stateDimension);
         this.stateVectorWorkspace = new double[stateDimension];
-        this.flatMatrixWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
-        this.flatInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
-        this.flatCholeskyWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
-        this.flatLowerInverseWorkspace = new double[maximumMatrixDimension * maximumMatrixDimension];
+        this.flatMatrixWorkspace = new double[stateDimension * stateDimension];
+        this.flatInverseWorkspace = new double[stateDimension * stateDimension];
+        this.flatCholeskyWorkspace = new double[stateDimension * stateDimension];
+        this.flatLowerInverseWorkspace = new double[stateDimension * stateDimension];
         this.sharedSchedule = null;
         if (cachedTransitionRepresentation != null) {
             cachedTransitionRepresentation.prepareTimeGrid(timeGrid);
@@ -243,10 +223,7 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
     }
 
     private double runForwardPass() {
-        observationModel.fillDesignMatrixFlat(designMatrix, stateDimension);
-        observationModel.fillNoiseCovarianceFlat(noiseCovariance);
-        final double noiseLogDet = invertPositiveDefinite(noiseCovariance, noisePrecision, observationDimension);
-        buildObservationPrecisionContribution();
+        observationUpdate.refreshStaticMatrices();
 
         double value = 0.0;
         CanonicalGaussianState previousFiltered = null;
@@ -265,20 +242,10 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
                 predict(previousFiltered, transition, predictedState);
             }
 
-            if (observationModel.isObservationMissing(timeIndex)) {
+            if (!observationUpdate.prepareForTime(timeIndex)) {
                 copyState(predictedState, filteredState);
             } else {
-                observationModel.fillObservationVector(timeIndex, observationVector);
-                buildObservationInformation(observationVector);
-
-                addMatrices(predictedState.precision, observationPrecisionContribution, filteredState.precision);
-                addVectors(predictedState.information, observationInformation, filteredState.information);
-                filteredState.logNormalizer = normalizedLogNormalizerFlat(filteredState.precision,
-                        filteredState.information);
-
-                value += filteredState.logNormalizer
-                        - predictedState.logNormalizer
-                        - observationPotentialLogNormalizer(observationVector, noiseLogDet);
+                value += observationUpdate.applyTo(predictedState, filteredState, messageWorkspace);
             }
             previousFiltered = filteredState;
         }
@@ -362,43 +329,6 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
         System.arraycopy(stateVectorWorkspace, 0, meanOut, meanOutOffset, stateDimension);
     }
 
-    private void buildObservationPrecisionContribution() {
-        MatrixOps.matMul(noisePrecision, designMatrix, obsWorkspace,
-                observationDimension, observationDimension, stateDimension);
-        MatrixOps.matMulTransposedLeft(designMatrix, obsWorkspace, observationPrecisionContribution,
-                observationDimension, stateDimension);
-        MatrixOps.symmetrize(observationPrecisionContribution, stateDimension);
-    }
-
-    private void buildObservationInformation(final double[] observation) {
-        MatrixOps.matVec(noisePrecision, observation, observationVectorWorkspace,
-                observationDimension, observationDimension);
-        for (int i = 0; i < stateDimension; ++i) {
-            double sum = 0.0;
-            for (int j = 0; j < observationDimension; ++j) {
-                sum += designMatrix[j * stateDimension + i] * observationVectorWorkspace[j];
-            }
-            observationInformation[i] = sum;
-        }
-    }
-
-    private double observationPotentialLogNormalizer(final double[] observation, final double logDetNoise) {
-        final double quadratic = MatrixOps.quadraticForm(
-                observation, noisePrecision, observationDimension, observationVectorWorkspace);
-        return 0.5 * (observationDimension * MatrixOps.LOG_TWO_PI + logDetNoise + quadratic);
-    }
-
-    private double normalizedLogNormalizerFlat(final double[] precision, final double[] information) {
-        if (!MatrixOps.tryCholesky(precision, flatCholeskyWorkspace, stateDimension)) {
-            throw new IllegalArgumentException("Matrix is not positive definite");
-        }
-        final double logDet = MatrixOps.invertFromCholesky(
-                flatCholeskyWorkspace, flatLowerInverseWorkspace, flatInverseWorkspace, stateDimension);
-        MatrixOps.matVec(flatInverseWorkspace, information, stateVectorWorkspace, stateDimension);
-        final double quadratic = dot(information, stateVectorWorkspace);
-        return 0.5 * (stateDimension * MatrixOps.LOG_TWO_PI - logDet + quadratic);
-    }
-
     private void invertPositiveDefiniteFlatInput(final double[] matrix,
                                                 final double[] inverseOut,
                                                 final int inverseOutOffset,
@@ -420,42 +350,12 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
         }
     }
 
-    private double invertPositiveDefinite(final double[] matrix,
-                                          final double[] inverseOut,
-                                          final int dimension) {
-        if (!MatrixOps.tryCholesky(matrix, flatCholeskyWorkspace, dimension)) {
-            throw new IllegalArgumentException("Matrix is not positive definite");
-        }
-        return MatrixOps.invertFromCholesky(
-                flatCholeskyWorkspace, flatLowerInverseWorkspace, inverseOut, dimension);
-    }
-
     private double validatedDelta(final int fromIndex, final int toIndex) {
         final double dt = timeGrid.getDelta(fromIndex, toIndex);
         if (!(dt > 0.0)) {
             throw new IllegalArgumentException("Time increments must be strictly positive");
         }
         return dt;
-    }
-
-    private static void addMatrices(final double[] left, final double[] right, final double[] out) {
-        for (int i = 0; i < left.length; ++i) {
-            out[i] = left[i] + right[i];
-        }
-    }
-
-    private static void addVectors(final double[] left, final double[] right, final double[] out) {
-        for (int i = 0; i < left.length; ++i) {
-            out[i] = left[i] + right[i];
-        }
-    }
-
-    private static double dot(final double[] left, final double[] right) {
-        double sum = 0.0;
-        for (int i = 0; i < left.length; ++i) {
-            sum += left[i] * right[i];
-        }
-        return sum;
     }
 
     private static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {

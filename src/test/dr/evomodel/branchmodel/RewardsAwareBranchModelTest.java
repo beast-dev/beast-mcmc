@@ -121,6 +121,40 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
+    public void testVectorizedPdfWithSharedTimeMatchesScalarCalls() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double[] rewardProportions = new double[]{0.2, 0.45, 0.8};
+        double time = 0.9;
+        double[][] vectorized = newMatrixRows(rewardProportions.length, 4);
+
+        sericola.computePdfInto(rewardProportions, time, vectorized);
+
+        assertVectorizedPdfMatchesScalarCalls(sericola, rewardProportions, new double[]{time}, vectorized);
+    }
+
+    public void testVectorizedPdfWithPerEntryTimesMatchesScalarCalls() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double[] rewardProportions = new double[]{0.2, 0.45, 0.8};
+        double[] times = new double[]{0.4, 0.9, 1.3};
+        double[][] vectorized = newMatrixRows(rewardProportions.length, 4);
+
+        sericola.computePdfInto(rewardProportions, times, vectorized);
+
+        assertVectorizedPdfMatchesScalarCalls(sericola, rewardProportions, times, vectorized);
+    }
+
     public void testRewardProportionOutsideSupportThrowsDiagnosticException() {
         Fixture fixture = createFixture(
                 new double[]{0.35, 0.65},
@@ -176,6 +210,37 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         );
 
         return new Fixture(tree, branchModel);
+    }
+
+    private static void assertVectorizedPdfMatchesScalarCalls(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double[] rewardProportions,
+            double[] times,
+            double[][] vectorized) {
+
+        final boolean singleTime = times.length == 1;
+        double[] scalar = new double[4];
+
+        for (int t = 0; t < rewardProportions.length; t++) {
+            double time = singleTime ? times[0] : times[t];
+            sericola.computePdfInto(rewardProportions[t], time, scalar);
+            assertMatrixEntryEquals("row " + t, scalar, vectorized[t]);
+        }
+    }
+
+    private static double[][] newMatrixRows(int rows, int columns) {
+        double[][] matrix = new double[rows][];
+        for (int i = 0; i < rows; i++) {
+            matrix[i] = new double[columns];
+        }
+        return matrix;
+    }
+
+    private static void assertMatrixEntryEquals(String label, double[] expected, double[] observed) {
+        assertEquals(expected.length, observed.length);
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals(label + " entry " + i, expected[i], observed[i], TOL);
+        }
     }
 
     private static void assertIllegalRewardProportion(

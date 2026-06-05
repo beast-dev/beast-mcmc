@@ -69,7 +69,11 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
         addVariable(this.rateParameter);
 
         this.invarParameter = invarParameter;
-        addVariable(this.invarParameter);
+        if(!(invarParameter == null)){
+            this.categoryCount += 1;
+            addVariable(this.invarParameter);
+            invarParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        }
 
         this.weightParameter = weightParameter;
         if (this.weightParameter.getDimension() == 1) {
@@ -94,16 +98,21 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
     public void getCategories(double[] categoryRates, double[] categoryProportions) {
         assert categoryRates != null && categoryRates.length == categoryCount;
         assert categoryProportions != null && categoryProportions.length == categoryCount;
+        int offset = 0;
 
-
+        if (invarParameter != null) {
+            categoryRates[0] = 0.0;
+            categoryProportions[0] = invarParameter.getParameterValue(0);
+            offset = 1;
+        }
 //        if (parameterization == Parameterization.ABSOLUTE) {
         double meanRate = 0.0;
         double sumWeights = 0.0;
-        for (int i = 0; i < categoryCount; i++) {
-            categoryRates[i] = rateParameter.getParameterValue(i);
-            categoryProportions[i] = weightParameter.getParameterValue(i);
-            meanRate += categoryRates[i]*categoryProportions[i];
-            sumWeights += categoryProportions[i];
+        for (int i = 0; i < rateParameter.getDimension(); i++) {
+            categoryRates[i + offset] = rateParameter.getParameterValue(i);
+            categoryProportions[i + offset] = weightParameter.getParameterValue(i);
+            meanRate += categoryRates[i+ offset]*categoryProportions[i+ offset];
+            sumWeights += categoryProportions[i+ offset];
         }
         assert Math.abs(meanRate - 1.0) < 1E-10;
         assert Math.abs(sumWeights - 1.0) < 1E-10;
@@ -150,7 +159,7 @@ public class FreeRateDelegate extends AbstractModel implements SiteRateDelegate,
     private  Parameter invarParameter;
 
 
-    private final int categoryCount;
+    private int categoryCount;
 
 //    private final Parameterization parameterization;
 

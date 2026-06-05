@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
@@ -58,6 +59,15 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 
     void simulate(int[] operations, int operationCount, int rootNodeNumber);
+
+    default boolean isVectorized() {
+        return true;
+    }
+
+    @SuppressWarnings("unused")
+    default void simulate(List<DataLikelihoodDelegate.NodeOperation> nodeOperations, NodeRef root) {
+        throw new RuntimeException("Not implemented");
+    }
 
     void setCallback(ProcessSimulation simulationProcess);
 
@@ -123,6 +133,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return node;
         }
 
+        @SuppressWarnings("unused")
         protected double getNormalization() {
             return 1.0;
         }
@@ -139,13 +150,17 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void setupStatistics();
 
-        protected abstract void simulateRoot(final int rootNumber);
+        protected void simulateRoot(final int rootNumber) {
+            throw new RuntimeException("Not implemented");
+        }
 
-        protected abstract void simulateNode(final int v0,
-                                             final int v1,
-                                             final int v2,
-                                             final int v3,
-                                             final int v4);
+        protected void simulateNode(final int v0,
+                                    final int v1,
+                                    final int v2,
+                                    final int v3,
+                                    final int v4) {
+            throw new RuntimeException("Not implemented");
+        }
 
         final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
@@ -289,10 +304,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             return engine.getT(null);
         }
-
-//        static WrappedMatrix getCholeskyOfVariance(final ReadableMatrix variance, final int dim) {
-//            return CholeskyDecomposition.execute(variance, dim);
-//        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toArrayComponents();

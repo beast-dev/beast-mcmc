@@ -31,7 +31,6 @@ import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.inference.hmc.ParallelNumericalGradient;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -49,7 +48,7 @@ import java.util.logging.Logger;
  */
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements
-        TreeTraitProvider, Citable, Profileable, Reportable {
+        ProcessAlongTree, TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -102,18 +101,14 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             rateRescalingScheme = null;
         }
 
-        if(likelihoodDelegate != null) {
-            hasInitialized = true;
-        }else{
-            hasInitialized = false;
-        }
+        hasInitialized = likelihoodDelegate != null;
     }
 
-    public final Tree getTree() {
+    public Tree getTree() {
         return treeModel;
     }
 
-    public final BranchRateModel getBranchRateModel() {
+    public BranchRateModel getBranchRateModel() {
         return branchRateModel;
     }
 
@@ -137,13 +132,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // **************************************************************
 
     @Override
-    public final Model getModel() {
+    public Model getModel() {
         return this;
     }
 
     @Override
     @SuppressWarnings("Duplicates")
-    public final double getLogLikelihood() {
+    public double getLogLikelihood() {
         if(likelihoodDelegate != null) {
             if (COUNT_TOTAL_OPERATIONS)
                 totalGetLogLikelihoodCount++;
@@ -174,7 +169,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-    final void calculatePostOrderStatistics() {
+    public void calculatePostOrderStatistics() {
         if(likelihoodDelegate != null) {
             if (COUNT_TOTAL_OPERATIONS) {
                 totalPostOrderStatistics++;
@@ -199,7 +194,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-    public final void makeDirty() {
+    public void makeDirty() {
         if(likelihoodDelegate != null) {
             if (COUNT_TOTAL_OPERATIONS)
                 totalMakeDirtyCount++;
@@ -210,7 +205,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-    public final boolean isLikelihoodKnown() {
+    public boolean isLikelihoodKnown() {
         return likelihoodKnown;
     }
 
@@ -227,8 +222,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // **************************************************************
 
     @Override
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
-        if(likelihoodDelegate != null) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (likelihoodDelegate != null) {
             if (model == treeModel) {
                 if (object instanceof TreeChangedEvent) {
 
@@ -239,7 +234,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     if (treeChangedEvent.isNodeChanged()) {
                         // If a node event occurs the node and its two child nodes
                         // are flagged for updating (this will result in everything
-                        // above being updated as well. Node events occur when a node
+                        // above being updated as well). Node events occur when a node
                         // is added to a branch, removed from a branch or its height or
                         // rate changes.
                         if (rateRescalingScheme == RateRescalingScheme.NONE ||             // The usual behaviour
@@ -255,16 +250,13 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                         // This event type is now used for EmpiricalTreeDistributions.
                         updateAllNodes();
                     }
-//                else {
-//                    // Other event types are ignored (probably trait changes).
-//                }
+                    // Other event types are ignored (probably trait changes).
                 }
             } else if (model == likelihoodDelegate) {
 
-                if(object instanceof Parameter){
+                if (object instanceof Parameter){
                     updateAllNodes();
-                    likelihoodKnown = false;
-                }else {
+                } else {
                     if (index == -1) {
                         updateAllNodes();
                     } else {
@@ -297,7 +289,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // **************************************************************
 
     @Override
-    protected final void storeState() {
+    protected void storeState() {
 
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
 
@@ -306,7 +298,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-    protected final void restoreState() {
+    protected void restoreState() {
 
         // restore the likelihood and flag it as known
         logLikelihood = storedLogLikelihood;
@@ -370,7 +362,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * Set update flag for a node only
      */
-    protected void updateNode(NodeRef node) {
+    private void updateNode(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
@@ -381,7 +373,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * Set update flag for a node and its direct children
      */
-    protected void updateNodeAndChildren(NodeRef node) {
+    private void updateNodeAndChildren(NodeRef node) {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
 
@@ -389,21 +381,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodKnown = false;
     }
 
-//    /**
-//     * Set update flag for a node and all its descendents
-//     */
-//    protected void updateNodeAndDescendents(NodeRef node) {
-//        if (COUNT_TOTAL_OPERATIONS)
-//            totalRateUpdateSingleCount++;
-//
-//        treeTraversalDelegate.updateNodeAndDescendents(node);
-//        likelihoodKnown = false;
-//    }
-
     /**
      * Set update flag for all nodes
      */
-    protected void updateAllNodes() {
+    private void updateAllNodes() {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
 
@@ -552,7 +533,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     private double logLikelihood;
     private double storedLogLikelihood;
-    protected boolean likelihoodKnown;
+    private boolean likelihoodKnown;
 
     private boolean hasInitialized;
 

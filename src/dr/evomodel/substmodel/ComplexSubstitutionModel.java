@@ -118,7 +118,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         getTransitionProbabilities(distance, matrix, getEigenDecomposition());
     }
 
-    protected void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+    public void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+
         double temp;
         if (eigen == null) {
             Arrays.fill(matrix, 0.0);

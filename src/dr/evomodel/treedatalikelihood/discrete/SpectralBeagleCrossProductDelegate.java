@@ -137,6 +137,11 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         return stateCount * stateCount * substitutionModelCount;
     }
 
+    private int getRootPostOrderBuffer() {
+        NodeRef root = tree.getRoot();
+        return getPostOrderPartialIndex(root.getNumber());
+    }
+
     private int coverWholeTree(int[] postBufferIndices,
                                int[] preBufferIndices,
                                int[] matrixBufferIndices,
@@ -212,7 +217,7 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             // this rotates branch-top pre-order messages into the kernel basis.
             EigenDecomposition ted = ed.transpose();
 
-            if (useComplexBlockKernelUtils) {
+            if (useComplexBlockKernelUtils && !BEAGLE_OVERRIDE) {
                 ComplexBlockKernelUtils.fillStructure(kernelPlan, ed);
             }
             Arrays.fill(eigenBasisAccum, 0, eigenBasisAccum.length, 0.0);
@@ -286,8 +291,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             beagle.calculateAdjointCrossProductDifferentials(
                     postBufferIndices, preBufferIndices,
                     matrixBufferIndices,
-                    new int[]{0}, new int[]{0},
-                    branchLengths, branchLengths.length, first, null);
+                    new int[]{0}, new int[]{0}, getRootPostOrderBuffer(), 0,
+                    branchLengths.length, first, null);
 
         } else {
             for (int i = start; i < end; ++i) {

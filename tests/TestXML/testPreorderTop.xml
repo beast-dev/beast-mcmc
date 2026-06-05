@@ -102,6 +102,7 @@
                         usePreOrder="true"
                         phyloGeoFastRepresentation="spectralRotated"
                         phyloGeoFast="true">
+
 <!-- 
     <treeDataLikelihood id="host.treeLikelihood"
                         useAmbiguities="true"
@@ -109,6 +110,7 @@
                         usePreOrder="true"
                         phyloGeoFast="true"> 
  -->
+
         <patterns idref="host.pattern"/>
         <siteModel idref="host.siteModel"/>
         <treeModel idref="treeModel"/>
@@ -136,8 +138,9 @@
     
     
     <treeDataLikelihood id="old.treeLikelihood"
-                        useAmbiguities="true"
+                        useAmbiguities="false"
                         usePreOrder="true"
+                        scalingScheme="never"
                         useSpectralRepresentation="true">
         <patterns idref="host.pattern"/>
         <siteModel idref="host.siteModel"/>
@@ -153,6 +156,12 @@
         <discretePreOrderReport type="top-spectral">
             <treeDataLikelihood idref="old.treeLikelihood"/>
         </discretePreOrderReport>
+
+<!-- 
+		<discretePreOrderReport type="top">
+            <treeDataLikelihood idref="old.treeLikelihood"/>
+        </discretePreOrderReport> 
+ -->
     </report> 
     
     <report>
@@ -161,7 +170,9 @@
     	    <treeDataLikelihood idref="old.treeLikelihood"/>
 	        <logRateSubstitutionModel idref="host.model"/>
 	    </approximateLogCtmcRateGradient>
-	</report>  
+	</report> 
+
+ 
 
      
 

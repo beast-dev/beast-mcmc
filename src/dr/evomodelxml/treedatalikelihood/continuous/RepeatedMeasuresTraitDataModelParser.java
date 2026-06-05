@@ -44,12 +44,12 @@ import dr.xml.*;
 import static dr.evomodelxml.continuous.ContinuousTraitDataModelParser.NUM_TRAITS;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FORCE_FULL_PRECISION;
 
+public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser
+        implements BeautiModelIDProvider {
 
-public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
     public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
     private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
-
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -109,7 +109,6 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
             utilities.jitter(xo, samplingPrecision.getColumnDimension(), subModel.getDataMissingIndicators());
         }
 
-
         if (!scaleByTipHeight) {
             return new RepeatedMeasuresTraitDataModel(
                     modelName,
@@ -145,7 +144,6 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         return rules;
     }
 
-
     @Override
     public String getParserDescription() {
         return null;
@@ -155,7 +153,6 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
     public Class getReturnType() {
         return RepeatedMeasuresTraitDataModel.class;
     }
-
 
     @Override
     public String getParserName() {
@@ -213,7 +210,7 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
 //        return modelName + "." + extendedName;
 //    }
 
-    private static final String PRECISION_ID = "samplingPrecision";
+//    private static final String PRECISION_ID = "samplingPrecision";
 
     public static final String EXTENSION_PRECISION = "extensionPrecision";
     public static final String EXTENSION_VARIANCE = "extensionVarCovar";
@@ -223,10 +220,9 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
 //    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider(EXTENSION_PRECISION);
 //    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider(EXTENSION_PRECISION);
 
-
     public BeautiParameterIDProvider getBeautiParameterIDProvider(String parameterKey) {
-        for (int i = 0; i < ALLOWABLE_PARAMETERS.length; i++) {
-            if (parameterKey.equalsIgnoreCase(ALLOWABLE_PARAMETERS[i])) {
+        for (String allowableParameter : ALLOWABLE_PARAMETERS) {
+            if (parameterKey.equalsIgnoreCase(allowableParameter)) {
                 return new BeautiParameterIDProvider(parameterKey);
             }
         }

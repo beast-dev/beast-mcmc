@@ -47,11 +47,13 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
     public static final String FREE_RATE_SITE_RATE_MODEL = "freeRateSiteRateModel";
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String WEIGHT = "weight";
     public static final String RATES = "rates";
+    public static final String PROPORTION_INVARIANT = "proportionInvariant";
     public static final String CATEGORIES = "categories";
 //    public static final String PARAMETERIZATION = "parameterization";
     public static final String WEIGHTS = "weights";
@@ -104,14 +106,21 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").info("\nCreating free rate site rate model.");
         }
 
-        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount,
-//                parameterization,
-                ratesParameter, weightsParameter);
+        Parameter invarParam = null;
+        if (xo.hasChildNamed(PROPORTION_INVARIANT)) {
+            invarParam = (Parameter) xo.getElementFirstChild(PROPORTION_INVARIANT);
+            msg += "\n  initial proportion of invariant sites = " + invarParam.getParameterValue(0);
+        }
+
+        FreeRateDelegate delegate = new FreeRateDelegate("FreeRateDelegate", catCount, ratesParameter, weightsParameter, invarParam);
 
         DiscretizedSiteRateModel siteRateModel =  new DiscretizedSiteRateModel(SiteModel.SITE_MODEL, muParam, muWeight, delegate);
 
-        siteRateModel.setSubstitutionModel(substitutionModel);
-        siteRateModel.addModel(substitutionModel);
+        if(substitutionModel!=null){
+            siteRateModel.setSubstitutionModel(substitutionModel);
+            siteRateModel.addModel(substitutionModel);
+        }
+
 
         return siteRateModel;
     }

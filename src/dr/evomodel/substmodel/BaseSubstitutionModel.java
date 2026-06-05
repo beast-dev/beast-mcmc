@@ -278,7 +278,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         updateMatrix = false;
     }
 
-    protected double setupMatrix() {
+    public double setupMatrix() {
         setupRelativeRates(relativeRates);
         double[] pi = getPi();
         setupQMatrix(relativeRates, pi, q);

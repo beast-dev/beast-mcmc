@@ -40,6 +40,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
+import dr.evolution.tree.TreeTrait;
 
 /**
  * @author Xiang Ji
@@ -265,22 +266,116 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             }
         },
 
-        ALL("all") {
+        R0("R0") {
             @Override
             double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
-                throw new RuntimeException("Not yet implemented");
+                return null;
             }
 
             @Override
             Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof NewBirthDeathSerialSamplingModel) {
+                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getR0Parameter();
+                    }
+                }
+                throw new RuntimeException("R0 parameter not available");
+            }
 
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[0] }; // Extract R0 component
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5]; // Extract R0 component for each interval
+                }
+                return grad;
+            }
+        },
+
+        D("D") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return null;
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof NewBirthDeathSerialSamplingModel) {
+                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getDParameter();
+                    }
+                }
+                throw new RuntimeException("D parameter not available");
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[1] }; // Extract D component
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5 + 1];
+                }
+                return grad;
+            }
+        },
+
+        S("S") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return null;
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof NewBirthDeathSerialSamplingModel) {
+                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getSParameter();
+                    }
+                }
+                throw new RuntimeException("S parameter not available");
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[2] };
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5 + 2];
+                }
+                return grad;
+            }
+        },
+
+        ALL("all") {
+            @Override
+            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+                return provider.getBirthRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
                 CompoundParameter cp = new CompoundParameter("allSpeciationParameters");
                 cp.addParameter(provider.getBirthRateParameter());
                 cp.addParameter(provider.getDeathRateParameter());
                 cp.addParameter(provider.getSamplingRateParameter());
                 cp.addParameter(provider.getSamplingProbabilityParameter());
                 cp.addParameter(provider.getTreatmentProbabilityParameter());
-
                 return cp;
             }
 

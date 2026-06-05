@@ -63,7 +63,7 @@ public class DiagonalMatrixParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(Parameter.class, 1, 1),
     };
 

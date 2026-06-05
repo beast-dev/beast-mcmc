@@ -122,4 +122,6 @@ public interface SpeciationModelGradientProvider {
     default void updateGradientModelValues(int currentModelSegment) { throw new RuntimeException("Not yet implemented"); }
 
     default int getGradientLength() { throw new RuntimeException("Not yet implemented"); }
+
+    default void setupGradientDelegates(EfficientSpeciationLikelihood likelihood) { throw new RuntimeException("Not yet implemented"); }
 }

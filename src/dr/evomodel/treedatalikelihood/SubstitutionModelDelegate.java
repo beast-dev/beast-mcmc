@@ -45,7 +45,7 @@ import java.util.List;
  * @author Filip Bielejec
  * @author Marc A. Suchard
  */
-public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
+public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
     public static final boolean MEASURE_RUN_TIME = false;

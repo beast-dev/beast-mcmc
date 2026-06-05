@@ -27,6 +27,7 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.PopulationSizeModelType;
@@ -36,6 +37,9 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
+import dr.evolution.coalescent.structure.StructuredCoalescent;
+import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihood;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
@@ -84,11 +88,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //	private BeautiFrame frame = null;
 //	private BeautiOptions options = null;
 
-    PartitionTreePrior partitionTreePrior;
+    private PartitionTreePrior partitionTreePrior;
     private final TreesPanel treesPanel;
 
     private boolean settingOptions = false;
-
 
     public PartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, final TreesPanel parent) {
         super(12, (OSType.isMac() ? 6 : 24));
@@ -332,11 +335,16 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
 //                break;
 
+            case SET_BY_BIT:
+                citation = StructuredCoalescentLikelihood.CITATIONS[0].toString() + "\n" +
+                        StructuredCoalescentLikelihood.CITATIONS[1].toString();
+                break;
+
             default:
                 throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
         }
 
-        if (treesPanel.options.maximumTipHeight > 0)
+        if (BeautiOptions.getInstance().maximumTipHeight > 0)
             citation = citation
 //                    + "\n" +
 //                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
@@ -346,10 +354,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        addComponentWithLabel("Citation:", citationText);
 //        citationText.setText(citation);
 
-        for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
+        for (PartitionTreeModel model : treesPanel.getPartitionTreeModels()) {
             if (model != null) {
-                treesPanel.treeModelPanels.get(model).setOptions();
-                treesPanel.treeModelPanels.get(model).setupPanel();
+                treesPanel.getPartitionTreeModelPanel(model).setOptions();
+                treesPanel.getPartitionTreeModelPanel(model).setupPanel();
             }
         }
 
@@ -473,7 +481,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
         treePriorCombo.removeAllItems();
 
-
         for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
             treePriorCombo.addItem(treePriorType);
             if (treePriorType == TreePriorType.EXPANSION ||
@@ -481,6 +488,22 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treePriorCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
             }
         }
+
+        if (BeautiOptions.getInstance().needCoalescentModel.get(this.partitionTreePrior.getName())) {
+            //if FIT model, then remove the SET_BY_BIT option / TreePriorType
+            treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
+        } else {
+            //if BIT model, select the SET_BY_BIT option / TreePriorType and disable the JComboBox
+            treePriorCombo.removeAllItems();
+            treePriorCombo.addItem(TreePriorType.SET_BY_BIT);
+            treePriorCombo.setEnabled(false);
+            //treePriorCombo.setEditable(false);
+        }
+
+        // would be much better to disable these rather than removing them
+//        if (isMultiLocus) {
+//            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+//        }
 
         if (isTipCalibrated) {
             // remove models that require contemporaneous tips...

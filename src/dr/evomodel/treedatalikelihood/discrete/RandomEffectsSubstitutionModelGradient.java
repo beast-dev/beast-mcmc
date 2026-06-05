@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
@@ -72,23 +73,10 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
     }
 
     @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    total += differentials[index(i, j)] * generator[index(i, j)];
-                }
-            }
-        }
-        return total;
-    }
-
-    @Override
     double processSingleGradientDimension(int k,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         double elementUpper = generator[indexIJ(k)];
         double total = (differentials[indexIJ(k)]  - differentials[indexII(k)]) * elementUpper;
@@ -98,25 +86,6 @@ public class RandomEffectsSubstitutionModelGradient extends AbstractGlmSubstitut
         }
         
         return total;
-    }
-
-    private int[][] makeAsymmetricMap() {
-        int[][] map = new int[stateCount * (stateCount - 1)][];
-
-        int k = 0;
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = i + 1; j < stateCount; ++j) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        for (int j = 0; j < stateCount; ++j) {
-            for (int i = j + 1; i < stateCount; ++i) {
-                map[k++] = new int[]{i, j};
-            }
-        }
-
-        return map;
     }
 
     private int indexIJ(int k) {

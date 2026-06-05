@@ -1,0 +1,93 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="Tarsius_syrichta"/>
+        <taxon id="Lemur_catta"/>
+        <taxon id="Homo_sapiens"/>
+<!--        <taxon id="Pan"/>-->
+<!--        <taxon id="Gorilla"/>-->
+<!--        <taxon id="Pongo"/>-->
+<!--        <taxon id="Hylobates"/>-->
+<!--        <taxon id="Macaca_fuscata"/>-->
+<!--        <taxon id="M_mulatta"/>-->
+<!--        <taxon id="M_fascicularis"/>-->
+<!--        <taxon id="M_sylvanus"/>-->
+<!--        <taxon id="Saimiri_sciureus"/>-->
+    </taxa>
+
+    <newick id="startingTree" usingDates="false" usingHeights="true">
+        (Tarsius_syrichta:2.5,(Homo_sapiens:2,Lemur_catta:3):2)
+<!--        (((Macaca_fuscata:0.20934831365385195,Saimiri_sciureus:0.20934831365385195):3.699998223992463,(M_mulatta:2.864001911470406,M_sylvanus:2.864001911470406):1.0453446261759094):47.869927095738085,(((Gorilla:3.7885436528693903,(M_fascicularis:2.327302602043325,Pan:2.327302602043325):1.4612410508260654):7.2735111979861236,(Hylobates:1.1876438325068404,Tarsius_syrichta:1.1876438325068404):9.874411018348674):14.005116670009485,(Homo_sapiens:4.335985284504221,(Lemur_catta:1.2838719570698733,Pongo:1.2838719570698733):3.0521133274343475):20.731186236360777):26.7121021125194);-->
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel1.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel1.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel1.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <multiLocusNPCoalescentLikelihood id="skygrid">
+        <populationTree>
+            <treeModel idref="treeModel"/>
+        </populationTree>
+        <populationSizes>
+            <parameter id="skygrid.logPopSize" value="10 20 30 40"/>
+        </populationSizes>
+        <gridPoints>
+            <parameter id="skygrid.gridPoints" value="1.5 2 4"/>
+            <!--            <parameter id="skygrid.gridPoints" value="0.043835616438173 0.128767123287616 0.20547945205476 0.290410958903976 0.37534246575342 0.457534246575278 0.542465753424494 0.62465753424658 0.709589041095796 0.794520547945012 0.876712328767098 0.961643835616314 1.04383561643817 1.12876712328762 1.20547945205476 1.29041095890398 1.37534246575342 1.45753424657528 1.54246575342449 1.62465753424658 1.7095890410958 1.79452054794501 1.8767123287671 1.96164383561631 2.04383561643817 2.12876712328762 2.20547945205476 2.29041095881735 2.37511041236939 2.45707762548409 2.54177707903591 2.6237442921506 2.70844374570265 2.79314319925447 2.87511041236939 2.95980986592122 3.04177707903591 3.12647653258796 3.20571150526553 3.29041095890398 3.37534246575342 3.45753424657528 3.54246575342449 3.62465753424658 3.7095890410958 3.79452054794501 3.8767123287671 3.96164383561631 4.04383561643817 4.12876712328762 4.20547945205476 4.29041095890398 4.37534246575342 4.45753424657528 4.54246575342449 4.62465753424658 4.7095890410958 4.79452054794501 4.8767123287671"/>-->
+        </gridPoints>
+    </multiLocusNPCoalescentLikelihood>
+
+    <multilocusNPCoalescentLikelihoodGradient id="gradient">
+        <multiLocusNPCoalescentLikelihood idref="skygrid"/>
+        <parameter idref="skygrid.logPopSize"/>
+    </multilocusNPCoalescentLikelihoodGradient>
+
+    <report>
+        <multiLocusNPCoalescentLikelihood idref="skygrid"/>
+    </report>
+
+    <report>
+        <multilocusNPCoalescentLikelihoodGradient idref="gradient"/>
+    </report>
+
+    <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check multilocus likelihood
+        </message>
+        <actual regex="Non-parametric Coalescent LogLikelihood: (.*?)\n">
+            <report>
+                <multiLocusNPCoalescentLikelihood idref="skygrid"/>
+            </report>
+        </actual>
+        <expected>
+            -70.00002
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            check multilocus likelihood gradient
+        </message>
+        <actual regex="analytic:\s*\[\s*([-?\d.Ee+, ]+)\]">
+            <cachedReport>
+                <multilocusNPCoalescentLikelihoodGradient idref="gradient"/>
+            </cachedReport>
+        </actual>
+        <expected>
+            2.269996e-05 1.030577e-09 -1 -1
+        </expected>
+    </assertEqual>
+
+
+
+</beast>

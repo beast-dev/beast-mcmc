@@ -283,8 +283,8 @@ public class AnnotationAction implements CladeAction {
                         }
                     }
                 }
-                i++;
             }
+            i++;
         }
     }
 

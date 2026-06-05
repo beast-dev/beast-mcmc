@@ -45,7 +45,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
     public final static boolean UNROLL_COMPOUND = true;
 
-    public final static boolean BENCHMARK_TIME = true;
+    public final static boolean BENCHMARK_TIME = false;
     public BenchmarkTimer timer = new BenchmarkTimer();
 
     public final static boolean EVALUATION_TIMERS = true;

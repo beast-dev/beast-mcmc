@@ -53,7 +53,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
-    public final static boolean BENCHMARK_TIME = true;
+    public final static boolean BENCHMARK_TIME = false;
     public BenchmarkTimer timer = new BenchmarkTimer();
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,

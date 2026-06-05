@@ -48,7 +48,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private final Parameter parameter;
     private final ParallelGradientExecutor parallelExecutor;
 
-    public final static boolean BENCHMARK_TIME = true;
+    public final static boolean BENCHMARK_TIME = false;
     public BenchmarkTimer timer = new BenchmarkTimer();
 
     final List<GradientWrtParameterProvider> derivativeList;

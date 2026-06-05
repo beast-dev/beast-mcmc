@@ -1,0 +1,968 @@
+Index: src/dr/evomodel/tree/TreeStatistic.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/evomodel/tree/TreeStatistic.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evomodel/tree/TreeStatistic.java	(revision )
+@@ -26,6 +26,7 @@
+ package dr.evomodel.tree;
+ 
+ import dr.evolution.tree.Tree;
++import dr.inference.model.Statistic;
+ 
+ /**
+  * An interface for statistics on trees
+@@ -35,10 +36,14 @@
+  * @author Andrew Rambaut
+  *
+  */
+-public interface TreeStatistic {
++public abstract class TreeStatistic extends Statistic.Abstract {
+        
+ 	public static final String TREE = "tree";
+ 
+-	void setTree(Tree tree);
+-	Tree getTree();
++	public TreeStatistic(String name) {
++		super(name);
++	}
++
++	public abstract void setTree(Tree tree);
++	public abstract Tree getTree();
+ }
+Index: src/dr/evolution/tree/BranchScoreMetric.java
+===================================================================
+--- src/dr/evolution/tree/BranchScoreMetric.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evolution/tree/treemetrics/BranchScoreMetric.java	(revision )
+@@ -24,9 +24,9 @@
+  */
+ 
+ /**
+- * 
++ *
+  */
+-package dr.evolution.tree;
++package dr.evolution.tree.treemetrics;
+ 
+ import java.util.ArrayList;
+ import java.util.BitSet;
+@@ -35,150 +35,159 @@
+ import java.util.List;
+ import java.util.Map;
+ 
+-import jebl.evolution.taxa.Taxon;
+-import jebl.evolution.graphs.Node;
+-import jebl.evolution.treemetrics.RootedTreeMetric;
+-import jebl.evolution.trees.RootedTree;
++import dr.evolution.tree.Clade;
++import dr.evolution.tree.NodeRef;
++import dr.evolution.tree.Tree;
+ 
+ /**
++ * @author Andrew Rambaut
+  * @author Sebastian Hoehna
+- * @version 1.0
+- * 
++ *
+  */
+-public class BranchScoreMetric implements RootedTreeMetric {
++public class BranchScoreMetric implements TreeMetric {
++    private Tree focalTree;
++    private List<Clade> focalClades;
++    private final boolean fixedFocalTree;
+ 
+-   public BranchScoreMetric() {
++    public BranchScoreMetric() {
+-      taxonMap = null;
++        this.fixedFocalTree = false;
+-   }
++    }
+ 
+-   public BranchScoreMetric(List<Taxon> taxa) {
+-      taxonMap = new HashMap<Taxon, Integer>();
+-      for (int i = 0; i < taxa.size(); i++) {
+-         taxonMap.put(taxa.get(i), i);
++    public BranchScoreMetric(Tree focalTree) {
++        this.focalTree = focalTree;
++        this.fixedFocalTree = true;
++        List<Clade> focalClades = new ArrayList<Clade>();
++        getClades(focalTree, focalTree.getRoot(), focalClades, null);
+-      }
++    }
+-   }
+ 
+-   public double getMetric(RootedTree tree1, RootedTree tree2) {
+ 
+-      if (!tree1.getTaxa().equals(tree2.getTaxa())) {
+-         throw new IllegalArgumentException("Trees contain different taxa");
+-      }
++    public double getMetric(Tree tree1, Tree tree2) {
+ 
+-      Map<Taxon, Integer> tm = taxonMap;
++        checkTreeTaxa(tree1, tree2);
+ 
+-      if (tm == null) {
+-         List<Taxon> taxa = new ArrayList<Taxon>(tree1.getTaxa());
++        if (tree1 != focalTree) {
++            if (fixedFocalTree) {
++                // If we set a focal tree in the constructor then it makes sense to check it is the same
++                // as the one set here.
++                throw new RuntimeException("Focal tree is different from that set in the constructor.");
++            }
+ 
+-         if (!tree2.getTaxa().equals(taxa))
+-            tm = new HashMap<Taxon, Integer>();
+-         for (int i = 0; i < taxa.size(); i++) {
+-            tm.put(taxa.get(i), i);
++            // cache tree1 and the pre-computed path for future calls
++            focalTree = tree1;
++            List<Clade> clades1 = new ArrayList<Clade>();
++            getClades(tree1, tree1.getRoot(), clades1, null);
+-         }
++        }
+-      }
+ 
+-      List<Clade> clades1 = new ArrayList<Clade>();
++        List<Clade> clades1 = new ArrayList<Clade>();
+-      getClades(tm, tree1, tree1.getRootNode(), clades1, null);
++        getClades(tree1, tree1.getRoot(), clades1, null);
+ 
+-      List<Clade> clades2 = new ArrayList<Clade>();
++        List<Clade> clades2 = new ArrayList<Clade>();
+-      getClades(tm, tree2, tree2.getRootNode(), clades2, null);
++        getClades(tree2, tree2.getRoot(), clades2, null);
+ 
+-      return getDistance(clades1, clades2);
+-   }
++        return getDistance(clades1, clades2);
++    }
+ 
+-   private void getClades(Map<Taxon, Integer> taxonMap, RootedTree tree,
+-         Node node, List<Clade> clades, BitSet bits) {
++    private void checkTreeTaxa(Tree tree1, Tree tree2) {
++        //check if taxon lists are in the same order!!
++        if (tree1.getExternalNodeCount() != tree2.getExternalNodeCount()) {
++            throw new RuntimeException("Different number of taxa in both trees.");
++        } else {
++            for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
++                if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
++                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
++                }
++            }
++        }
++    }
+ 
++    private void getClades(Tree tree, NodeRef node, List<Clade> clades, BitSet bits) {
++
+-      BitSet bits2 = new BitSet();
++        BitSet bits2 = new BitSet();
+ 
+-      if (tree.isExternal(node)) {
++        if (tree.isExternal(node)) {
+ 
+-         int index = taxonMap.get(tree.getTaxon(node));
++            int index = node.getNumber();
+-         bits2.set(index);
++            bits2.set(index);
+ 
+-      } else {
++        } else {
+-
+-         for (Node child : tree.getChildren(node)) {
+-            getClades(taxonMap, tree, child, clades, bits2);
++            getClades(tree, tree.getChild(node, 0), clades, bits2);
++            getClades(tree, tree.getChild(node, 1), clades, bits2);
++            clades.add(new Clade(bits2, tree.getNodeHeight(node)));
+-         }
++        }
+-         clades.add(new Clade(bits2, tree.getHeight(node)));
+-      }
+ 
+-      if (bits != null) {
+-         bits.or(bits2);
+-      }
+-   }
++        if (bits != null) {
++            bits.or(bits2);
++        }
++    }
+ 
+-   private double getDistance(List<Clade> clades1, List<Clade> clades2) {
++    private double getDistance(List<Clade> clades1, List<Clade> clades2) {
+ 
+-      Collections.sort(clades1);
+-      Collections.sort(clades2);
+-      double distance = 0.0;
+-      int indexClade2 = 0;
+-      Clade clade2 = null;
+-      Clade parent1, parent2 = null;
+-      double height1, height2;
++        Collections.sort(clades1);
++        Collections.sort(clades2);
++        double distance = 0.0;
++        int indexClade2 = 0;
++        Clade clade2 = null;
++        Clade parent1, parent2 = null;
++        double height1, height2;
+ 
+-      for (Clade clade1 : clades1) {
+-         
+-         parent1 = findParent(clade1, clades1);
+-         height1 = parent1.getHeight() - clade1.getHeight();
++        for (Clade clade1 : clades1) {
++
++            parent1 = findParent(clade1, clades1);
++            height1 = parent1.getHeight() - clade1.getHeight();
+ 
+-         if (indexClade2 < clades2.size()) {
+-            clade2 = clades2.get(indexClade2);
+-            parent2 = findParent(clade2, clades2);
+-         }
+-         while (clade1.compareTo(clade2) > 0 && indexClade2 < clades2.size()) {
+-            height2 = parent2.getHeight() - clade2.getHeight();
+-            distance += height2 * height2;
+-            indexClade2++;
+-            if (indexClade2 < clades2.size()) {
+-               clade2 = clades2.get(indexClade2);
+-               parent2 = findParent(clade2, clades2);
+-            }
+-         }
+-         if (clade1.compareTo(clade2) == 0) {
+-            height2 = parent2.getHeight() - clade2.getHeight();
+-            distance += (height1 - height2) * (height1 - height2);
+-            indexClade2++;
+-         } else {
+-            distance += height1 * height1;
+-         }
+-      }
++            if (indexClade2 < clades2.size()) {
++                clade2 = clades2.get(indexClade2);
++                parent2 = findParent(clade2, clades2);
++            }
++            while (clade1.compareTo(clade2) > 0 && indexClade2 < clades2.size()) {
++                height2 = parent2.getHeight() - clade2.getHeight();
++                distance += height2 * height2;
++                indexClade2++;
++                if (indexClade2 < clades2.size()) {
++                    clade2 = clades2.get(indexClade2);
++                    parent2 = findParent(clade2, clades2);
++                }
++            }
++            if (clade1.compareTo(clade2) == 0) {
++                height2 = parent2.getHeight() - clade2.getHeight();
++                distance += (height1 - height2) * (height1 - height2);
++                indexClade2++;
++            } else {
++                distance += height1 * height1;
++            }
++        }
+ 
+-      return Math.sqrt(distance);
+-   }
++        return Math.sqrt(distance);
++    }
+ 
+-   private Clade findParent(Clade clade1, List<Clade> clades) {
+-      Clade parent = null;
+-      for (Clade clade2 : clades) {
+-         if (isParent(clade2, clade1)) {
+-            if (parent == null || parent.getSize() > clade2.getSize())
+-            parent = clade2;
+-         }
+-      }
+-      
+-      if (parent == null){
+-         //the case that this clade is the whole tree 
+-         return clade1;
+-      }
++    private Clade findParent(Clade clade1, List<Clade> clades) {
++        Clade parent = null;
++        for (Clade clade2 : clades) {
++            if (isParent(clade2, clade1)) {
++                if (parent == null || parent.getSize() > clade2.getSize())
++                    parent = clade2;
++            }
++        }
++
++        if (parent == null){
++            //the case that this clade is the whole tree
++            return clade1;
++        }
+ 
+-      return parent;
+-   }
++        return parent;
++    }
+ 
+-   private boolean isParent(Clade parent, Clade child) {
+-      if (parent.getSize() <= child.getSize()) {
+-         return false;
+-      }
++    private boolean isParent(Clade parent, Clade child) {
++        if (parent.getSize() <= child.getSize()) {
++            return false;
++        }
+ 
+-      tmpBits.clear();
+-      tmpBits.or(parent.getBits());
+-      tmpBits.xor(child.getBits());
++        tmpBits.clear();
++        tmpBits.or(parent.getBits());
++        tmpBits.xor(child.getBits());
+ 
+-      return tmpBits.cardinality() < parent.getSize();
+-   }
++        return tmpBits.cardinality() < parent.getSize();
++    }
+ 
+-   BitSet                            tmpBits = new BitSet();
++    BitSet tmpBits = new BitSet();
+-
+-   private final Map<Taxon, Integer> taxonMap;
+-
+ }
+Index: src/dr/evolution/tree/SPPathDifferenceMetric.java
+===================================================================
+--- src/dr/evolution/tree/SPPathDifferenceMetric.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evolution/tree/treemetrics/SPPathDifferenceMetric.java	(revision )
+@@ -23,78 +23,72 @@
+  * Boston, MA  02110-1301  USA
+  */
+ 
+-package dr.evolution.tree;
++package dr.evolution.tree.treemetrics;
+ 
+ import dr.evolution.io.Importer;
+ import dr.evolution.io.NewickImporter;
++import dr.evolution.tree.NodeRef;
++import dr.evolution.tree.Tree;
++
+ import java.io.IOException;
+-import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.HashSet;
+ import java.util.Set;
+ 
+ /**
+  * @author Guy Baele
++ * @author Andrew Rambaut
+  * Path difference metric according to Steel & Penny (1993)
+  */
+-public class SPPathDifferenceMetric {
++public class SPPathDifferenceMetric implements TreeMetric {
+ 
+     private Tree focalTree;
+     private int dim;
+     private double[] focalPath;
++    private final boolean fixedFocalTree;
+ 
+     public SPPathDifferenceMetric() {
+-
++        this.fixedFocalTree = false;
+     }
+ 
+     public SPPathDifferenceMetric(Tree focalTree) {
+         this.focalTree = focalTree;
++        this.fixedFocalTree = true;
+         this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
+         this.focalPath = new double[dim];
+ 
+         traverse(this.focalTree, this.focalTree.getRoot(), focalPath);
+     }
+ 
+-    public double getMetric(Tree tree) {
+-
+-        checkTreeTaxa(focalTree, tree);
+-
+-        double[] pathTwo = new double[dim];
+-
+-        traverse(tree, tree.getRoot(), pathTwo);
+-
+-        int n = tree.getExternalNodeCount();
+-
+-        double metric = 0.0;
+-        for (int i = 0; i < n; i++) {
+-            for (int j = i + 1; j < n; j++) {
+-                int index = (i * n) + j;
+-                metric += Math.pow(focalPath[index] - pathTwo[index], 2);
+-            }
+-        }
+-        metric = Math.sqrt(metric);
+-
+-        return metric;
+-    }
+-
+     /**
+-     * This method bypasses the constructor entirely, computing the metric on the two provided trees
+-     * and ignoring the internally stored tree.
+-     * @param tree1 Focal tree that will be used for computing the metric
+-     * @param tree2 Provided tree that will be compared to the focal tree
++     * Compute the metric between two trees. If tree1 is not the focal tree provided to the
++     * constructor then it will store this as the new focal tree. If the focal tree is constant
++     * from call to call then a cached set of precomputation will be used, increasing efficiency.
++     * @param tree1
++     * @param tree2
+      * @return
+      */
+     public double getMetric(Tree tree1, Tree tree2) {
+ 
+         checkTreeTaxa(tree1, tree2);
+ 
+-//        int dim = (tree1.getExternalNodeCount() - 2) * (tree1.getExternalNodeCount() - 1) + tree1.getExternalNodeCount();
+-        int dim = tree1.getExternalNodeCount() * tree1.getExternalNodeCount();
++        if (tree1 != focalTree) {
++            if (fixedFocalTree) {
++                // If we set a focal tree in the constructor then it makes sense to check it is the same
++                // as the one set here.
++                throw new RuntimeException("Focal tree is different from that set in the constructor.");
++            }
+ 
+-        double[] pathOne = new double[dim];
+-        double[] pathTwo = new double[dim];
++            // cache tree1 and the pre-computed path for future calls
++            focalTree = tree1;
++            if (focalPath == null) {
++                this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
++                this.focalPath = new double[dim];
++            }
++            traverse(focalTree, focalTree.getRoot(), focalPath);
++        }
+ 
+-        traverse(tree1, tree1.getRoot(), pathOne);
++        double[] pathTwo = new double[dim];
+         traverse(tree2, tree2.getRoot(), pathTwo);
+ 
+         int n = tree1.getExternalNodeCount();
+@@ -103,7 +97,7 @@
+         for (int i = 0; i < n; i++) {
+             for (int j = i + 1; j < n; j++) {
+                 int index = (i * n) + j;
+-                metric += Math.pow(pathOne[index] - pathTwo[index], 2);
++                metric += Math.pow(focalPath[index] - pathTwo[index], 2);
+             }
+         }
+         metric = Math.sqrt(metric);
+@@ -118,7 +112,7 @@
+         } else {
+             for (int i = 0; i < tree1.getExternalNodeCount(); i++) {
+                 if (!tree1.getNodeTaxon(tree1.getExternalNode(i)).getId().equals(tree2.getNodeTaxon(tree2.getExternalNode(i)).getId())) {
+-                    throw new RuntimeException("Mismatch between taxa in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
++                    throw new RuntimeException("Mismatch between taxa (or taxon order) in both trees: " + tree1.getNodeTaxon(tree1.getExternalNode(i)).getId() + " vs. " + tree2.getNodeTaxon(tree2.getExternalNode(i)).getId());
+                 }
+             }
+         }
+@@ -184,7 +178,7 @@
+ 
+             //Additional test for comparing a collection of trees against a (fixed) focal tree
+             SPPathDifferenceMetric fixed = new SPPathDifferenceMetric(treeOne);
+-            metric = fixed.getMetric(treeTwo);
++            metric = fixed.getMetric(treeOne, treeTwo);
+ 
+             System.out.println("path difference = " + metric);
+ 
+Index: src/dr/evolution/tree/TreeMetrics.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/evolution/tree/TreeMetrics.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evolution/tree/TreeMetrics.java	(revision )
+@@ -38,6 +38,7 @@
+  * @author Alexei Drummond
+  * @author Korbinian Strimmer
+  */
++@Deprecated
+ public class TreeMetrics {
+ 
+ 	/**
+Index: src/dr/evomodel/tree/TreeMetricStatistic.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/evomodel/tree/TreeMetricStatistic.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evomodel/tree/TreeMetricStatistic.java	(revision )
+@@ -25,57 +25,39 @@
+ 
+ package dr.evomodel.tree;
+ 
+-import dr.evolution.tree.BranchScoreMetric;
++import dr.evolution.tree.treemetrics.BranchScoreMetric;
+ import dr.evolution.tree.CladeMetric;
+ import dr.evolution.tree.Tree;
+ import dr.evolution.tree.TreeUtils;
+-import dr.inference.model.Statistic;
++import dr.evolution.tree.treemetrics.TreeMetric;
+ import jebl.evolution.treemetrics.BilleraMetric;
+ import jebl.evolution.treemetrics.CladeHeightMetric;
+ import jebl.evolution.treemetrics.RobinsonsFouldMetric;
+-import jebl.evolution.treemetrics.RootedTreeMetric;
+-import jebl.evolution.trees.SimpleRootedTree;
+ 
+ /**
+  * A statistic that returns the distance between two trees.
+- * <p/>
+- * Currently supports the following metrics,
+- * 1. compare - returns a 0 for identity of topology, 1 otherwise.
+- * 2. Billera tree distance.
+- * 3. ROBINSONS FOULD
+- * 4. Clade height
+- * 5. Branch Score
+  *
+- * @author Alexei Drummond
+  * @author Andrew Rambaut
+- * @author Joseph Heled
+- * @author Sebastian Hoehna
+- * @version $Id: TreeMetricStatistic.java,v 1.14 2005/07/11 14:06:25 rambaut Exp $
+  */
+-public class TreeMetricStatistic extends Statistic.Abstract implements TreeStatistic {
++public class TreeMetricStatistic extends TreeStatistic {
+ 
+-    public enum Method {
+-        TOPOLOGY, BILLERA, ROBINSONSFOULD, CLADEHEIGHTM, BRANCHSCORE, CLADEMETRIC
++    /**
++     * Constructor which creates statistic that just says whether two trees have the same topology
++     * @param name
++     * @param focalTree
++     */
++    public TreeMetricStatistic(String name, Tree focalTree) {
++        this(name, focalTree, null);
+     }
+ 
+-    public TreeMetricStatistic(String name, Tree target, Tree reference, Method method) {
++    public TreeMetricStatistic(String name, Tree focalTree, TreeMetric treeMetric) {
+         super(name);
+ 
+-        this.target = target;
+-        this.method = method;
++        this.focalTree = focalTree;
++        this.treeMetric = treeMetric;
++        this.focalNewick = TreeUtils.uniqueNewick(focalTree, focalTree.getRoot());
+ 
+         switch (method) {
+-            case TOPOLOGY: {
+-                this.referenceNewick = TreeUtils.uniqueNewick(reference, reference.getRoot());
+-                break;
+-            }
+-            default: {
+-                jreference = TreeUtils.asJeblTree(reference);
+-                break;
+-            }
+-        }
+-
+-        switch (method) {
+             case BILLERA:
+                 metric = new BilleraMetric();
+                 break;
+@@ -111,35 +93,24 @@
+      */
+     public double getStatisticValue(int dim) {
+ 
+-        if (method == Method.TOPOLOGY) {
++        if (treeMetric == null) {
++            // simply return if the two trees have the same topology
+             return compareTreesByTopology();
+         }
+ 
+-        return metric.getMetric(jreference, TreeUtils.asJeblTree(target));
++        return treeMetric.getMetric(focalTree, target);
+     }
+ 
+     private double compareTreesByTopology() {
+-        final String tar = TreeUtils.uniqueNewick(target, target.getRoot());
+-        return tar.equals(referenceNewick) ? 0.0 : 1.0;
++        final String targetNewick = TreeUtils.uniqueNewick(target, target.getRoot());
++        return targetNewick.equals(focalNewick) ? 1.0 : 0.0;
+     }
+ 
+-    public static String methodNames(String s) {
+-        String r = "";
+-        for (Method m : Method.values()) {
+-            if (r.length() > 0)
+-                r = r + s;
+-            r = r + m.name();
+-        }
+-        return r;
+-    }
+-
+-    private final Method method;
+-
+     private Tree target = null;
+ 
+-    private String referenceNewick = null;
++    private final Tree focalTree;
+ 
+-    private SimpleRootedTree jreference = null;
++    private final String focalNewick;
+ 
+-    RootedTreeMetric metric = null;
++    private final TreeMetric treeMetric;
+ }
+Index: src/dr/evolution/tree/KCPathDifferenceMetric.java
+===================================================================
+--- src/dr/evolution/tree/KCPathDifferenceMetric.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evolution/tree/treemetrics/KCPathDifferenceMetric.java	(revision )
+@@ -23,11 +23,13 @@
+  * Boston, MA  02110-1301  USA
+  */
+ 
+-package dr.evolution.tree;
++package dr.evolution.tree.treemetrics;
+ 
+ import dr.evolution.io.Importer;
+ import dr.evolution.io.NewickImporter;
+-import dr.util.Pair;
++import dr.evolution.tree.NodeRef;
++import dr.evolution.tree.Tree;
++import dr.evolution.tree.TreeUtils;
+ 
+ import java.io.IOException;
+ import java.util.*;
+@@ -36,17 +38,25 @@
+  * @author Guy Baele
+  * Path difference metric according to Kendall & Colijn (2015)
+  */
+-public class KCPathDifferenceMetric {
++public class KCPathDifferenceMetric implements TreeMetric {
+ 
+     private Tree focalTree;
+     private int dim;
+     private double[] focalSmallM, focalLargeM;
++    private final boolean fixedFocalTree;
++    private final double lambda;
+ 
+-    public KCPathDifferenceMetric() {
++    public KCPathDifferenceMetric(double lambda) {
++        this.lambda = lambda;
++
++        this.fixedFocalTree = false;
+     }
+ 
+-    public KCPathDifferenceMetric(Tree focalTree) {
++    public KCPathDifferenceMetric(double lambda, Tree focalTree) {
++        this.lambda = lambda;
++
+         this.focalTree = focalTree;
++        this.fixedFocalTree = true;
+         //this.dim = (externalNodeCount-2)*(externalNodeCount-1)+externalNodeCount;
+         this.dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
+         this.focalSmallM = new double[dim];
+@@ -55,56 +65,45 @@
+         traverse(focalTree, focalTree.getRoot(), 0.0, 0, focalLargeM, focalSmallM);
+     }
+ 
+-    public List<Double> getMetric(Tree tree, ArrayList<Double> lambda) {
+-
+-        checkTreeTaxa(focalTree, tree);
+-
+-        double[] smallMTwo = new double[dim];
+-        double[] largeMTwo = new double[dim];
+-
+-        traverse(tree, tree.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
+-
+-        List<Double> results = new ArrayList<Double>();
+-
+-        int n = tree.getExternalNodeCount();
+-        for (Double l : lambda) {
+-            results.add(calculateMetric(focalSmallM, focalLargeM, smallMTwo, largeMTwo, n, l));
+-        }
+-
+-        return results;
+-
+-    }
+-
+     /**
+-     * This method bypasses the constructor entirely, computing the metric on the two provided trees
+-     * and ignoring the internally stored tree.
+-     * @param tree1 Focal tree that will be used for computing the metric
+-     * @param tree2 Provided tree that will be compared to the focal tree
+-     * @param lambda Collection of lambda values for which to compute the metric
++     * Compute the metric between two trees. If tree1 is not the focal tree provided to the
++     * constructor then it will store this as the new focal tree. If the focal tree is constant
++     * from call to call then a cached set of precomputation will be used, increasing efficiency.
++     * @param tree1
++     * @param tree2
+      * @return
+      */
+-    public List<Double> getMetric(Tree tree1, Tree tree2, ArrayList<Double> lambda) {
++    public double getMetric(Tree tree1, Tree tree2) {
+ 
+         checkTreeTaxa(tree1, tree2);
+ 
+-        int dim = tree1.getExternalNodeCount() * tree1.getExternalNodeCount();
++        if (tree1 != focalTree) {
++            if (fixedFocalTree) {
++                // If we set a focal tree in the constructor then it makes sense to check it is the same
++                // as the one set here.
++                throw new RuntimeException("Focal tree is different from that set in the constructor.");
++            }
+ 
+-        double[] smallMOne = new double[dim];
+-        double[] largeMOne = new double[dim];
++            // cache tree1 and the pre-computed path for future calls
++            focalTree = tree1;
++            if (focalSmallM == null) {
++                dim = focalTree.getExternalNodeCount() * focalTree.getExternalNodeCount();
++                focalSmallM = new double[dim];
++                focalLargeM = new double[dim];
++            }
++            traverse(focalTree, focalTree.getRoot(), 0.0, 0, focalLargeM, focalSmallM);
++        }
++
+         double[] smallMTwo = new double[dim];
+         double[] largeMTwo = new double[dim];
+ 
+-        traverse(tree1, tree1.getRoot(), 0.0, 0, largeMOne, smallMOne);
+         traverse(tree2, tree2.getRoot(), 0.0, 0, largeMTwo, smallMTwo);
+ 
+         List<Double> results = new ArrayList<Double>();
+ 
+         int n = tree1.getExternalNodeCount();
+-        for (Double l : lambda) {
+-            results.add(calculateMetric(smallMOne, largeMOne, smallMTwo, largeMTwo, n, l));
+-        }
+ 
+-        return results;
++        return calculateMetric(focalSmallM, focalLargeM, smallMTwo, largeMTwo, n, lambda);
+     }
+ 
+     private double calculateMetric(double[] smallMOne, double[] largeMOne, double[] smallMTwo, double[] largeMTwo, int n, double l) {
+@@ -399,30 +398,35 @@
+ 
+             importer = new NewickImporter("((('A':0.8,'B':1.4):0.3,'C':0.7):0.9,'D':1.0)");
+             Tree treeTwo = importer.importNextTree();
+-            System.out.println("4-taxa tree 2: " + treeTwo + "\n");
++            System.out.println("4-taxa tree 2: " + treeTwo);
++            System.out.println();
+ 
+-            ArrayList<Double> lambdaValues = new ArrayList<Double>();
+-            lambdaValues.add(0.0);
+-            lambdaValues.add(0.5);
+-            lambdaValues.add(1.0);
+-            List<Double> metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
+-            List<Double> metric_old = (new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues));
++            double metrics[] = new double[] {
++                    (new KCPathDifferenceMetric(0.0).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(1.0).getMetric(treeOne, treeTwo)),
++            };
+ 
+-            System.out.println("\nPaired trees:");
+-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
++            System.out.println("Paired trees:");
++            System.out.println("lambda (0.0) = " + metrics[0]);
++            System.out.println("lambda (0.5) = " + metrics[1]);
++            System.out.println("lambda (1.0) = " + metrics[2]);
++            System.out.println();
+ 
+             //Additional test for comparing a collection of trees against a (fixed) focal tree
+-            metric = new KCPathDifferenceMetric(treeOne).getMetric(treeTwo, lambdaValues);
+-            metric_old = new KCPathDifferenceMetric(treeOne).getMetric_old(treeTwo, lambdaValues);
++            metrics = new double[] {
++                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
++            };
+ 
+-            System.out.println("\nFocal trees:");
+-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
++            System.out.println("Focal trees:");
++            System.out.println("lambda (0.0) = " + metrics[0]);
++            System.out.println("lambda (0.5) = " + metrics[1]);
++            System.out.println("lambda (1.0) = " + metrics[2]);
++            System.out.println();
++            System.out.println();
+ 
+-
+             //5-taxa example
+             importer = new NewickImporter("(((('A':0.6,'B':0.6):0.1,'C':0.5):0.4,'D':0.7):0.1,'E':1.3)");
+             treeOne = importer.importNextTree();
+@@ -430,43 +434,50 @@
+ 
+             importer = new NewickImporter("((('A':0.8,'B':1.4):0.1,'C':0.7):0.2,('D':1.0,'E':0.9):1.3)");
+             treeTwo = importer.importNextTree();
+-            System.out.println("5-taxa tree 2: " + treeTwo + "\n");
++            System.out.println("5-taxa tree 2: " + treeTwo);
++            System.out.println();
+ 
+             //lambda = 0.0 should yield: sqrt(7) = 2.6457513110645907162
+             //lambda = 1.0 should yield: sqrt(2.96) = 1.7204650534085252911
+ 
+-            lambdaValues = new ArrayList<Double>();
+-            lambdaValues.add(0.0);
+-            lambdaValues.add(0.5);
+-            lambdaValues.add(1.0);
+-            metric = (new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues));
++            metrics = new double[] {
++                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
++            };
+ 
+-            System.out.println("\nPaired trees:");
+-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
++            System.out.println("Paired trees:");
++            System.out.println("lambda (0.0) = " + metrics[0]);
++            System.out.println("lambda (0.5) = " + metrics[1]);
++            System.out.println("lambda (1.0) = " + metrics[2]);
++            System.out.println();
+ 
+             //Additional test for comparing a collection of trees against a (fixed) focal tree
+-            metric = new KCPathDifferenceMetric(treeOne).getMetric(treeTwo, lambdaValues);
++            metrics = new double[] {
++                    (new KCPathDifferenceMetric(0.0, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(0.5, treeOne).getMetric(treeOne, treeTwo)),
++                    (new KCPathDifferenceMetric(1.0, treeOne).getMetric(treeOne, treeTwo)),
++            };
+ 
+-            System.out.println("\nFocal trees:");
+-            System.out.println("lambda (0.0) = " + metric.get(0) + " old = " + metric_old.get(0));
+-            System.out.println("lambda (0.5) = " + metric.get(1) + " old = " + metric_old.get(1));
+-            System.out.println("lambda (1.0) = " + metric.get(2) + " old = " + metric_old.get(2));
++            System.out.println("Focal trees:");
++            System.out.println("lambda (0.0) = " + metrics[0]);
++            System.out.println("lambda (0.5) = " + metrics[1]);
++            System.out.println("lambda (1.0) = " + metrics[2]);
++            System.out.println();
+ 
+ 
+             //timings
++//            long startTime = System.currentTimeMillis();
++//            for (int i = 0; i < 1000000; i++) {
++//                new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
++//            }
++//            System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
++
+             long startTime = System.currentTimeMillis();
+             for (int i = 0; i < 1000000; i++) {
+-                new KCPathDifferenceMetric().getMetric_old(treeOne, treeTwo, lambdaValues);
++                new KCPathDifferenceMetric(0.5).getMetric(treeOne, treeTwo);
+             }
+-            System.out.println("Old algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
+-
+-            startTime = System.currentTimeMillis();
+-            for (int i = 0; i < 1000000; i++) {
+-                new KCPathDifferenceMetric().getMetric(treeOne, treeTwo, lambdaValues);
+-            }
+-            System.out.println("New algorithm: " + (System.currentTimeMillis() - startTime) + " ms");
++            System.out.println("New algorithm, 1M reps: " + (System.currentTimeMillis() - startTime) + " ms");
+ 
+         } catch(Importer.ImportException ie) {
+             System.err.println(ie);
+Index: src/dr/app/tools/TopologyTracer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/app/tools/TopologyTracer.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/app/tools/TopologyTracer.java	(revision )
+@@ -33,6 +33,8 @@
+ import dr.evolution.io.NexusImporter;
+ import dr.evolution.io.TreeImporter;
+ import dr.evolution.tree.*;
++import dr.evolution.tree.treemetrics.BranchScoreMetric;
++import dr.evolution.tree.treemetrics.SPPathDifferenceMetric;
+ import dr.util.Version;
+ import jebl.evolution.treemetrics.BilleraMetric;
+ import jebl.evolution.treemetrics.CladeHeightMetric;
+@@ -40,7 +42,6 @@
+ 
+ import java.io.*;
+ import java.util.ArrayList;
+-import java.util.List;
+ import java.util.Locale;
+ 
+ /**
+@@ -116,8 +117,8 @@
+             }
+ 
+             SPPathDifferenceMetric SPPathFocal = new SPPathDifferenceMetric(focalTree);
+-            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
+-            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
++//            KCPathDifferenceMetric KCPathFocal = new KCPathDifferenceMetric(focalTree);
++//            List<Double> allKCMetrics = KCPathFocal.getMetric(focalTree, lambdaValues);
+ 
+             if (!userProvidedTree) {
+                 //take into account first distance of focal tree to itself
+@@ -127,11 +128,11 @@
+                 billeraMetric.add(new BilleraMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                 cladeHeightMetric.add(new CladeHeightMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+                 branchScoreMetric.add(new BranchScoreMetric().getMetric(TreeUtils.asJeblTree(focalTree), TreeUtils.asJeblTree(focalTree)));
+-                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree));
+-                for (int i = 0; i < allKCMetrics.size(); i++) {
+-                    kcMetrics.get(i).add(allKCMetrics.get(i));
++                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, focalTree));
++//                for (int i = 0; i < allKCMetrics.size(); i++) {
++//                    kcMetrics.get(i).add(allKCMetrics.get(i));
++//                }
+-                }
++            }
+-            }
+ 
+             int numberOfTrees = 1;
+ 
+@@ -168,16 +169,16 @@
+ 
+                 beforeTime = System.currentTimeMillis();
+                 //pathDifferenceMetric.add(new SPPathDifferenceMetric().getMetric(focalTree, tree));
+-                pathDifferenceMetric.add(SPPathFocal.getMetric(tree));
++                pathDifferenceMetric.add(SPPathFocal.getMetric(focalTree, tree));
+                 afterTime = System.currentTimeMillis();
+                 timings[4] += afterTime - beforeTime;
+ 
+                 beforeTime = System.currentTimeMillis();
+                 //allKCMetrics = (new KCPathDifferenceMetric().getMetric(focalTree, tree, lambdaValues));
+-                allKCMetrics = KCPathFocal.getMetric(tree, lambdaValues);
+-                for (int i = 0; i < allKCMetrics.size(); i++) {
+-                    kcMetrics.get(i).add(allKCMetrics.get(i));
+-                }
++//                allKCMetrics = KCPathFocal.getMetric(focalTree, tree, lambdaValues);
++//                for (int i = 0; i < allKCMetrics.size(); i++) {
++//                    kcMetrics.get(i).add(allKCMetrics.get(i));
++//                }
+                 afterTime = System.currentTimeMillis();
+                 timings[5] += afterTime - beforeTime;
+ 
+Index: src/dr/evolution/tree/SubtreeSlide.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/evolution/tree/SubtreeSlide.java	(revision 5832c04610a2c8bb9887162cf25a5d2fbf4173a1)
++++ src/dr/evolution/tree/SubtreeSlide.java	(revision )
+@@ -38,6 +38,7 @@
+  *
+  * @version $Id: SubtreeSlide.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
+  */
++@Deprecated
+ public class SubtreeSlide {
+ 
+ 	public SubtreeSlide(double size, boolean gaussian) {
+Index: src/dr/evolution/tree/treemetrics/TreeMetric.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/dr/evolution/tree/treemetrics/TreeMetric.java	(revision )
++++ src/dr/evolution/tree/treemetrics/TreeMetric.java	(revision )
+@@ -0,0 +1,13 @@
++package dr.evolution.tree.treemetrics;
++
++import dr.evolution.tree.Tree;
++
++/**
++ * @author Andrew Rambaut
++ * @version $Id$
++ */
++public interface TreeMetric {
++
++    double getMetric(Tree tree1, Tree tree2);
++
++}

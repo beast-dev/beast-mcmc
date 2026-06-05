@@ -32,8 +32,10 @@ import dr.evomodel.continuous.hmc.FullyConjugateTreeTipsPotentialDerivative;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.SubsetTreeTipGradient;
 import dr.evomodel.treedatalikelihood.continuous.TreeTipGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
@@ -99,7 +101,12 @@ public class FullyConjugateTreeTipsPotentialDerivativeParser extends AbstractXML
 
             final ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 
-            return new TreeTipGradient(traitName, specifiedParameter, treeDataLikelihood, continuousData, mask);
+            MaskedParameter maskedParameter = (MaskedParameter) xo.getChild(MaskedParameter.class);
+            if (maskedParameter == null) {
+                return new TreeTipGradient(traitName, specifiedParameter, treeDataLikelihood, continuousData, mask);
+            } else {
+                return new SubsetTreeTipGradient(traitName, maskedParameter, treeDataLikelihood, continuousData);
+            }
         } else {
             throw new XMLParseException("Must provide a tree likelihood");
         }

@@ -66,16 +66,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String ALLOW_SINGULAR = "allowSingular";
     public static final String FORCE_FULL_PRECISION = "forceFullPrecision"; // TODO: maybe discourage using this
     private static final String FORCE_COMPLETELY_MISSING = "forceCompletelyMissing"; // TODO: maybe discourage using this
+    private static final String FORCE_COMPLETELY_OBSERVED = "forceCompletelyObserved";
 
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
 
-
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
-
-    public static final String FACTOR_NAME = "factors";
 
     public String getParserName() {
         return CONTINUOUS_DATA_LIKELIHOOD;
@@ -164,8 +162,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                         dataModel.getPrecisionType().getTag() + "'.");
             }
 
-//            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
-
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
                 System.err.println("Jitter is specified in " + xo.getAttribute(XMLObject.ID) + " but will be ignored, as a data model is provided. If a jitter is needed, please add it to the data model " + dataModel.getClass().toString() + ".");
             }
@@ -214,8 +210,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         dataModel.addTreeAndRateModel(treeModel, rateTransformation);
 
 
+        boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, forceCompletelyObserved, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
             ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
@@ -248,16 +245,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
-
-//                String partialTraitName = getPartiallyMissingTraitName(traitName);
-//
-//                ProcessSimulationDelegate partialSimulationDelegate = new ProcessSimulationDelegate.ConditionalOnPartiallyMissingTipsDelegate(partialTraitName,
-//                        treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, rateModel, delegate);
-//
-//                TreeTraitProvider partialTraitProvider = new ProcessSimulation(partialTraitName,
-//                        treeDataLikelihood, partialSimulationDelegate);
-//
-//                treeDataLikelihood.addTraits(partialTraitProvider.getTreeTraits());
             }
 
             //TODO: remove below (should let ConditionalTraitSimulationHelper figure everything out)
@@ -312,6 +299,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
+            AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

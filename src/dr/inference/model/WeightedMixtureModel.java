@@ -116,7 +116,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood implements Cit
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter weights = (Parameter) xo.getChild(Parameter.class);
-            List<AbstractModelLikelihood> likelihoodList = new ArrayList<AbstractModelLikelihood>();
+            List<AbstractModelLikelihood> likelihoodList = new ArrayList<>();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof Likelihood)
@@ -296,7 +296,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood implements Cit
             }
         };
 
-        List<AbstractModelLikelihood> likelihoodList = new ArrayList<AbstractModelLikelihood>();
+        List<AbstractModelLikelihood> likelihoodList = new ArrayList<>();
         likelihoodList.add(like1);
         likelihoodList.add(like2);
 

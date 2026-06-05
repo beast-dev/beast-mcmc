@@ -44,13 +44,13 @@ import dr.xml.Reportable;
 public class TreeTipGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
-    private final Tree tree;
+    final TreeTrait treeTraitProvider;
+    final Tree tree;
     private final Parameter traitParameter;
 
-    private final int nTaxa;
-    private final int nTraits;
-    private final int dimTrait;
+    final int nTaxa;
+    final int nTraits;
+    final int dimTrait;
 
     private final Parameter maskParameter;
     private final int gradientOffset;
@@ -162,6 +162,8 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
     @Override
     public double[] getGradientLogDensity() {
 
+        // TODO better handling of mask ABCD
+
         double[] gradient = new double[nTaxa * dimTrait * nTraits];
 
         int offsetOutput = 0;
@@ -184,8 +186,11 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
 
     @Override
     public String getReport() {
+        double tolerance = getTolerance();
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, tolerance);
     }
 
-    private double tolerance = 1E-3;
+    double getTolerance() {
+        return 1E-3;
+    }
 }

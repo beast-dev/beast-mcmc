@@ -116,6 +116,11 @@ public enum PrecisionType {
             double scalar = partial[offset + getPrecisionOffset(dimTrait)];
             return PrecisionType.scale(diffusionPrecision, scalar);
         }
+
+        @Override
+        public double getPrecisionScalar(double[] partial, int offset, int dimTrait) {
+            return partial[offset + getPrecisionOffset(dimTrait)];
+        }
     },
 
     MIXED("mixed method", "mixed", 1) {
@@ -332,6 +337,7 @@ public enum PrecisionType {
 
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
+    @SuppressWarnings("unused")
     public int getMeanOffset(int dimTrait) {
         return 0;
     }
@@ -357,6 +363,10 @@ public enum PrecisionType {
         throw new RuntimeException("precision type " + tag + " does not store remainders");
     }
 
+    public double getPrecisionScalar(double[] partial, int offset, int dimTrait) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 
     public int getPartialsDimension(int dimTrait) {
@@ -367,6 +377,7 @@ public enum PrecisionType {
         return false;
     }
 
+    @SuppressWarnings("unused")
     public boolean hasDeterminant() {
         return false;
     }

@@ -1759,13 +1759,13 @@ public class AncestralSequenceAnnotator {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
-                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.StringOption("beastInput", new String[]{"true", "false"}, false, "If the input is taken from BEAST rather than BAli-Phy"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.StringOption("kalign", "full_path_to_kalign", "specifies full path to the kalign executable file")
+                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("beastInput", null, new String[]{"true", "false"}, false, "If the input is taken from BEAST rather than BAli-Phy"),
+                        new Arguments.RealOption("limit", null, "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.StringOption("target", null, "target_file_name", "specifies a user target tree to be annotated"),
+                        new Arguments.Option("help", "h", "option to print this message"),
+                        new Arguments.StringOption("kalign", null, "full_path_to_kalign", "specifies full path to the kalign executable file")
                 });
 
         try {

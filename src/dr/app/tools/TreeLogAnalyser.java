@@ -199,13 +199,13 @@ public class TreeLogAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
-                        new Arguments.StringOption("export", "file-name", "name of file to export"),
-                        new Arguments.RealOption("limit", "don't export trees with support lower than limit [default = 0.0]"),
-                        new Arguments.RealOption("probability", "credible set probability limit [default = 0.95]"),
-                        new Arguments.IntegerOption("max", "export no more than max trees [default = all]"),
-                        new Arguments.Option("short", "use this option to produce a short report"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.StringOption("export", "e", "file-name", "name of file to export"),
+                        new Arguments.RealOption("limit", "l", "don't export trees with support lower than limit [default = 0.0]"),
+                        new Arguments.RealOption("probability", "p", "credible set probability limit [default = 0.95]"),
+                        new Arguments.IntegerOption("max", "m", "export no more than max trees [default = all]"),
+                        new Arguments.Option("short", "s", "use this option to produce a short report"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

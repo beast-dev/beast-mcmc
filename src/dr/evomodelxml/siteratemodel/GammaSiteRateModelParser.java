@@ -52,6 +52,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String CATEGORIES = "categories";
     public static final String PROPORTION_INVARIANT = "proportionInvariant";
+    public static final String DISCRETIZATION = "discretization";
 
     public String getParserName() {
         return GAMMA_SITE_RATE_MODEL;
@@ -90,6 +91,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
         int catCount = 4;
         catCount = xo.getIntegerAttribute(CATEGORIES);
 
+
         Parameter shapeParam = null;
         if (xo.hasChildNamed(GAMMA_SHAPE)) {
             XMLObject cxo = xo.getChild(GAMMA_SHAPE);
@@ -97,7 +99,8 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
             shapeParam = (Parameter) cxo.getChild(Parameter.class);
 
             msg += "\n  " + catCount + " category discrete gamma with initial shape = " + shapeParam.getParameterValue(0);
-            msg += "\n  using equal weight discretization of gamma distribution";
+                msg += "\n  using equal weight discretization of gamma distribution";
+
         }
 
         Parameter invarParam = null;
@@ -148,6 +151,7 @@ public class GammaSiteRateModelParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
 
             AttributeRule.newIntegerRule(CATEGORIES, false),
+            AttributeRule.newStringRule(DISCRETIZATION, true),
             new XORRule(
                     new XORRule(
                             new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{

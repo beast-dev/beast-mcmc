@@ -234,12 +234,12 @@ public class CheckPointUpdaterApp {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
-                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
-                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a state from"),
-                        new Arguments.StringOption("output_file", "FILENAME", "Specify a filename for the output file"),
-                        new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
-                        new Arguments.Option("help", "Print this information and stop")
+                        new Arguments.StringOption("BEAST_XML", null,"FILENAME", "Specify a BEAST XML file"),
+                        new Arguments.LongOption("seed", null,"Specify a random number generator seed"),
+                        new Arguments.StringOption("load_state", null,"FILENAME", "Specify a filename to load a state from"),
+                        new Arguments.StringOption("output_file",null, "FILENAME", "Specify a filename for the output file"),
+                        new Arguments.StringOption("update_choice",null, "UPDATECHOICE", "Specify a function by which to update the tree"),
+                        new Arguments.Option("help", "h", "Print this information and stop")
                 });
 
         try {

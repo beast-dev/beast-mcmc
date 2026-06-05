@@ -270,6 +270,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         Type type = Type.NONE;
 
         MinimumTravelInformation categoryBoundaryTime = findCategoricalBoundaryTime(position, velocity);
+        // TODO the above _scans_ the whole array; why do this multiple times in parallel?
 
         if (categoryBoundaryTime.time < minimumTime){
             minimumTime = categoryBoundaryTime.time;

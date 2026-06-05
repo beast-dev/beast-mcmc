@@ -1,0 +1,739 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# BEAST X — Release workflow
+#
+# Triggered by pushing a version tag (e.g. v10.5.1 or v10.5.1-beta4).
+#
+# Jobs
+# ────
+#  build-jars        ubuntu-latest   Compile Java sources, upload beast.jar /
+#                                    beauti.jar as a reusable artifact.
+#
+#  package           macos-latest    Download JARs, produce Mac and Linux packages:
+#                                      • Mac   – two notarised DMGs:
+#                                              no-JVM (requires Java on user's Mac)
+#                                              arm64  (Temurin 21 + BEAGLE, jpackage)
+#                                      • Linux – shell scripts + JARs → GNU-tar TGZ
+#
+#  windows-package   windows-latest  jpackage app-image with bundled Temurin 21
+#                                    JRE; BEAST X, BEAUTi, TreeAnnotator and
+#                                    LogCombiner share one runtime → ZIP
+#
+#  release           ubuntu-latest   Create a (draft) GitHub Release and attach
+#                                    the four platform archives.
+#
+# Required GitHub repository secrets
+# ────────────────────────────────────
+#  MACOS_APP_CERT                Base64-encoded Developer ID Application .p12
+#                                  openssl pkcs12 -export ... | base64 | pbcopy
+#  MACOS_APP_CERT_PASSWORD       Password used when exporting the .p12
+#  MACOS_INSTALLER_CERT          Base64-encoded Developer ID Installer .p12
+#                                  (used to sign the final DMG file)
+#  MACOS_INSTALLER_CERT_PASSWORD Password for the installer .p12
+#  KEYCHAIN_PASSWORD             Any random string; used for the temporary
+#                                  CI keychain (never leaves the runner)
+#  APPLE_NOTARIZE_APPLE_ID       Apple ID email address (e.g. user@example.com)
+#  APPLE_NOTARIZE_TEAM_ID        10-character Apple Team ID (e.g. LC992Z5R7E)
+#  APPLE_NOTARIZE_PASSWORD       App-specific password from appleid.apple.com
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Only one release pipeline runs at a time; a newer tag cancels the old one.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 1. Compile Java sources and upload the JARs as an artifact.
+  #    Using the cheapest runner for the CPU-heavy compilation step.
+  # ───────────────────────────────────────────────────────────────────────────
+  build-jars:
+    name: Build JARs
+    runs-on: ubuntu-latest
+
+    outputs:
+      version:       ${{ steps.parse-tag.outputs.version }}
+      version_number: ${{ steps.parse-tag.outputs.version_number }}
+      extra_tag:     ${{ steps.parse-tag.outputs.extra_tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 11 is used for compilation; source/target compatibility is set to
+      # 1.8 inside build.xml so the output JARs run on Java 8+.
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      # Parse the tag into its component parts:
+      #   v10.5.1-beta4  →  version=10.5.1  extra_tag=-beta4
+      #   v10.5.1        →  version=10.5.1  extra_tag=
+      - name: Parse version from tag
+        id: parse-tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          VERSION="${TAG%%-*}"          # everything before the first hyphen
+          if [[ "$TAG" == *"-"* ]]; then
+            EXTRA_TAG="-${TAG#*-}"     # everything after the first hyphen
+          else
+            EXTRA_TAG=""
+          fi
+          echo "version=$VERSION"        >> "$GITHUB_OUTPUT"
+          echo "version_number=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "extra_tag=$EXTRA_TAG"    >> "$GITHUB_OUTPUT"
+          echo "Parsed: version=$VERSION  extra_tag=$EXTRA_TAG"
+
+      - name: Build JARs (ant dist)
+        run: |
+          ant -f build.xml dist \
+            -Dversion="${{ steps.parse-tag.outputs.version }}" \
+            -Dversion_number="${{ steps.parse-tag.outputs.version_number }}" \
+            -Dextra_release_tag="${{ steps.parse-tag.outputs.extra_tag }}"
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: beast-jars
+          path: build/dist/
+          retention-days: 1
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 2. Build Mac and Linux packages on a macOS runner.
+  #
+  #    • GNU tar format is used for the Linux archive (set in build_release.xml)
+  #      so the tarball is compatible with Linux GNU tar regardless of the host.
+  #    • Mac .app bundles are signed with Hardened Runtime (--options runtime)
+  #      and a custom entitlements plist so Apple's notarisation service accepts
+  #      them.
+  # ───────────────────────────────────────────────────────────────────────────
+  package:
+    name: Package (Mac · Linux)
+    needs: build-jars
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11 (ANT runtime)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      # Restore the JARs built in job 1
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: beast-jars
+          path: build/dist/
+
+      # ── Convenience variables ──────────────────────────────────
+      - name: Set version env vars
+        run: |
+          echo "VERSION=${{ needs.build-jars.outputs.version }}"                  >> "$GITHUB_ENV"
+          echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}"    >> "$GITHUB_ENV"
+          echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"              >> "$GITHUB_ENV"
+
+      # ── Linux packaging ────────────────────────────────────────
+      - name: Package Linux (TGZ)
+        run: |
+          ant -f build_release.xml package-linux \
+            -Dversion="$VERSION" \
+            -Dversion_number="$VERSION_NUMBER" \
+            -Dextra_release_tag="$EXTRA_TAG" \
+            -Ddist.dir=build/dist
+
+      # ── Install Temurin 21 arm64 and build BEAGLE ─────────────
+      #
+      # The arm64 DMG embeds Eclipse Temurin 21 (aarch64) and the BEAGLE
+      # native library built for Apple Silicon.
+      # Both are installed / built up-front so they are ready when needed.
+      - name: Install Temurin 21 (arm64) for Apple Silicon bundling
+        run: |
+          brew install --cask temurin@21
+          echo "ARM64_JDK_DIR=/Library/Java/JavaVirtualMachines/temurin-21.jdk" >> "$GITHUB_ENV"
+
+      - name: Build BEAGLE library for Apple Silicon
+        run: |
+          BEAGLE_SRC="$RUNNER_TEMP/beagle-src"
+          BEAGLE_BUILD="$RUNNER_TEMP/beagle-build"
+          git clone --depth=1 https://github.com/beagle-dev/beagle-lib.git "$BEAGLE_SRC"
+          mkdir -p "$BEAGLE_BUILD"
+          cd "$BEAGLE_BUILD"
+          cmake "$BEAGLE_SRC" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_OPENCL=OFF
+          make -j$(sysctl -n hw.logicalcpu)
+          echo "BEAGLE_BUILD_DIR=$BEAGLE_BUILD" >> "$GITHUB_ENV"
+
+      # ── Mac code-signing setup ─────────────────────────────────
+      #
+      # We import both certificates into a short-lived keychain that only
+      # exists for the duration of this job.  All secrets stay in memory;
+      # the decoded .p12 files are deleted immediately after import.
+      - name: Create signing keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/beast-signing.keychain-db"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          # Keep unlocked for up to 6 hours (the notarisation wait can be slow)
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+
+      - name: Import Developer ID Application certificate
+        env:
+          CERT_B64:  ${{ secrets.MACOS_APP_CERT }}
+          CERT_PASS: ${{ secrets.MACOS_APP_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          printf '%s' "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/app_cert.p12"
+          security import "$RUNNER_TEMP/app_cert.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERT_PASS" \
+            -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/app_cert.p12"
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Import Developer ID Installer certificate
+        env:
+          CERT_B64:  ${{ secrets.MACOS_INSTALLER_CERT }}
+          CERT_PASS: ${{ secrets.MACOS_INSTALLER_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          printf '%s' "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/installer_cert.p12"
+          security import "$RUNNER_TEMP/installer_cert.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERT_PASS" \
+            -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/installer_cert.p12"
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      # Derive the full identity strings from the imported certs so we do not
+      # have to hard-code them in the workflow or in a secret.
+      - name: Resolve signing identities
+        run: |
+          APP_SIGNER=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+            | grep "Developer ID Application" \
+            | head -1 \
+            | awk '{print $2}')
+          echo "APP_SIGNER=$APP_SIGNER" >> "$GITHUB_ENV"
+          echo "Resolved Application signer: $APP_SIGNER"
+
+      # ── Mac packaging ──────────────────────────────────────────
+      #
+      # Two DMGs are produced:
+      #   BEAST X v<ver>-no-jvm.dmg            — no bundled JVM (smaller; requires
+      #                                          a Java installation on the user's Mac)
+      #   BEAST X v<ver>-arm64.dmg          — Temurin 21 arm64 JDK + BEAGLE,
+      #                                          packaged with jpackage
+      #
+      # Steps 1-2: create .app bundles (no JVM) → sign → create + sign no-JVM DMG
+      # Step 8: jlink runtime → 4 × jpackage app-image → embed BEAGLE → sign → DMG
+
+      # Step 1: create the four .app bundles without a bundled JVM
+      - name: Create Mac .app bundles (unsigned, no bundled JVM)
+        run: |
+          ant -f build_release.xml package-mac \
+            -Dversion="$VERSION" \
+            -Dversion_number="$VERSION_NUMBER" \
+            -Dextra_release_tag="$EXTRA_TAG" \
+            -Ddist.dir=build/dist
+
+      # Step 2a: sign the no-JVM apps
+      - name: Sign .app bundles (no bundled JVM)
+        run: |
+          MAC_DIR="release/Mac/BEAST X v${VERSION}"
+          for APP in \
+            "BEAST v${VERSION}.app" \
+            "BEAUti v${VERSION}.app" \
+            "LogCombiner v${VERSION}.app" \
+            "TreeAnnotator v${VERSION}.app"; do
+            codesign \
+              --deep --force \
+              --options runtime \
+              --entitlements packaging_tools/mac/entitlements.plist \
+              --sign "$APP_SIGNER" \
+              --verbose \
+              "${MAC_DIR}/${APP}"
+          done
+
+      # Step 2b: create the no-JVM DMG
+      - name: Create DMG (no bundled JVM)
+        run: |
+          /usr/bin/hdiutil create -ov \
+            -srcfolder "release/Mac/BEAST X v${VERSION}" \
+            -volname "BEAST v${VERSION}${EXTRA_TAG}" \
+            "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
+
+      # Step 2c: sign the no-JVM DMG
+      - name: Sign DMG (no bundled JVM)
+        run: |
+          codesign \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
+
+      # ── Notarisation (no-JVM DMG) ──────────────────────────────
+      - name: Notarise DMG (no-JVM)
+        env:
+          APPLE_ID:       ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
+          TEAM_ID:        ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
+          NOTARIZE_PASS:  ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
+        run: |
+          xcrun notarytool submit "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format plist
+
+      - name: Staple notarisation ticket (no-JVM)
+        run: |
+          xcrun stapler staple   "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
+          xcrun stapler validate "release/BEAST_X_v${VERSION}${EXTRA_TAG}-no-jvm.dmg"
+
+      # ── jpackage arm64 DMG (arm64 JVM + BEAGLE) ──────────────
+      #
+      # Four separate .app bundles (BEAST, BEAUTi, TreeAnnotator, LogCombiner)
+      # are created with jpackage, sharing one jlink runtime image.
+      # BEAGLE dylibs are placed only in BEAST.app.
+
+      # Step 8a: build jlink runtime image once, then build all 4 app-images.
+      - name: Build Mac arm64 app-images with jpackage (4 apps)
+        run: |
+          JPACKAGE="$ARM64_JDK_DIR/Contents/Home/bin/jpackage"
+          JLINK="$ARM64_JDK_DIR/Contents/Home/bin/jlink"
+          ICONS="release/common/icons"
+          mkdir -p jpackage-mac-input staging-mac
+          cp build/dist/beast.jar  jpackage-mac-input/
+          cp build/dist/beauti.jar jpackage-mac-input/
+
+          # Build a compact jlink runtime shared by all four apps.
+          "$JLINK" \
+            --add-modules java.se \
+            --strip-debug \
+            --no-header-files \
+            --no-man-pages \
+            --compress=2 \
+            --output jpackage-runtime
+
+          # BEAST
+          "$JPACKAGE" \
+            --type app-image \
+            --name "BEAST X v${VERSION}${EXTRA_TAG}" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.beast \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.beast.BeastMain \
+            --java-options "-Xmx8192m" \
+            --arguments "-window" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/beast.icns" \
+            --dest staging-mac
+
+          # BEAUTi
+          "$JPACKAGE" \
+            --type app-image \
+            --name "BEAUti v${VERSION}${EXTRA_TAG}" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.beauti \
+            --input jpackage-mac-input \
+            --main-jar beauti.jar \
+            --main-class dr.app.beauti.BeautiApp \
+            --java-options "-Xmx2048m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/beauti.icns" \
+            --dest staging-mac
+
+          # TreeAnnotator
+          "$JPACKAGE" \
+            --type app-image \
+            --name "TreeAnnotator v${VERSION}${EXTRA_TAG}" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.treeannotator \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.tools.treeannotator.TreeAnnotator \
+            --java-options "-Xmx4096m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/utility.icns" \
+            --dest staging-mac
+
+          # LogCombiner
+          "$JPACKAGE" \
+            --type app-image \
+            --name "LogCombiner v${VERSION}${EXTRA_TAG}" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --mac-package-identifier org.beastdev.logcombiner \
+            --input jpackage-mac-input \
+            --main-jar beast.jar \
+            --main-class dr.app.tools.logcombiner.LogCombiner \
+            --java-options "-Xmx2048m" \
+            --runtime-image jpackage-runtime \
+            --icon "${ICONS}/utility.icns" \
+            --dest staging-mac
+
+      # Step 8b-diag: list BEAGLE build output for debugging.
+      - name: List BEAGLE build output (diagnostic)
+        run: |
+          echo "=== All native libraries in BEAGLE_BUILD_DIR ==="
+          find "$BEAGLE_BUILD_DIR" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
+            | sort
+          echo "==="
+
+      # Step 8b: copy BEAGLE libraries into Contents/app/.
+      #
+      # jpackage sets java.library.path to include Contents/app/ so the JVM
+      # finds libhmsbeagle-jni.jnilib (the JNI bridge Java loads first) there
+      # without any cfg patching.
+      #
+      # Three file types produced by BEAGLE's cmake on macOS (all Mach-O):
+      #   .dylib  – main library (libhmsbeagle) and versioned copies
+      #   .jnilib – JNI bridge: cmake sets SUFFIX ".jnilib" for Apple targets
+      #   .so     – CPU plugins: cmake sets SUFFIX ".so" for all plugins;
+      #             PLUGIN_VERSION="41" for 4.1.x, so the plugin loader calls
+      #             dlopen("libhmsbeagle-cpu.41.so") at runtime.
+      #
+      # dlopen with a simple filename searches the runpath (LC_RPATH) of the
+      # calling library.  We add @loader_path to every library's RPATH so that
+      # when libhmsbeagle.dylib calls dlopen("libhmsbeagle-cpu.41.so"), dyld
+      # expands @loader_path to Contents/app/ and finds the file there.
+      #
+      # -L dereferences all symlinks so every file in Contents/app/ is a real
+      # Mach-O binary (required for install_name_tool and codesign).
+      - name: Add BEAGLE libraries to jpackage app
+        run: |
+          APP_BUNDLE="staging-mac/BEAST X v${VERSION}${EXTRA_TAG}.app"
+          DEST="${APP_BUNDLE}/Contents/app"
+          find "$BEAGLE_BUILD_DIR" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
+            -exec cp -L {} "$DEST/" \;
+          # Add @loader_path RPATH to every library.
+          find "$DEST" \
+            \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+               -o -name 'libhmsbeagle*.so' \) \
+            | while read -r lib; do
+                install_name_tool -add_rpath @loader_path "$lib" 2>/dev/null || true
+              done
+
+      # Step 8c: sign all four jpackage .app bundles for Apple notarisation.
+      #
+      # codesign --deep is NOT used because it does not reliably apply
+      # --options runtime to every Mach-O inside the jpackage JRE image
+      # (Contents/runtime/).  Apple's notarisation rejects any bundle that
+      # contains a Mach-O binary without the Hardened Runtime flag set.
+      #
+      # Each bundle is signed in three explicit passes:
+      #   Pass 1 – all Mach-O files inside Contents/runtime/
+      #   Pass 2 – BEAGLE dylibs in Contents/app/ (no-op for non-BEAST bundles)
+      #   Pass 3 – the whole .app bundle (seals the native launcher + JARs)
+      - name: Sign jpackage .app bundles (arm64 + BEAGLE)
+        run: |
+          for APP_BUNDLE in \
+              "staging-mac/BEAST X v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/BEAUti v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/TreeAnnotator v${VERSION}${EXTRA_TAG}.app" \
+              "staging-mac/LogCombiner v${VERSION}${EXTRA_TAG}.app"; do
+
+            # Pass 1: sign every Mach-O file in the jlink runtime.
+            # The `file` test skips plain-text scripts and data files that
+            # happen to have execute permission.
+            find "${APP_BUNDLE}/Contents/runtime" -type f \
+              \( -name "*.dylib" -o -name "*.so" -o -perm +0111 \) \
+              | while read -r f; do
+                  if file "$f" 2>/dev/null | grep -q "Mach-O"; then
+                    codesign --force --options runtime \
+                      --sign "$APP_SIGNER" "$f"
+                  fi
+                done
+
+            # Pass 2: sign BEAGLE libraries (only present in BEAST.app).
+            # Covers .dylib (main library), .jnilib (JNI bridge), and
+            # .so (CPU plugins: libhmsbeagle-cpu.41.so etc.).
+            find "${APP_BUNDLE}/Contents/app" \
+              \( -name 'libhmsbeagle*.dylib' -o -name 'libhmsbeagle*.jnilib' \
+                 -o -name 'libhmsbeagle*.so' \) \
+              -exec codesign --force --options runtime \
+                --sign "$APP_SIGNER" {} \;
+
+            # Pass 3: sign the whole bundle.
+            codesign --force \
+              --options runtime \
+              --entitlements packaging_tools/mac/entitlements.plist \
+              --sign "$APP_SIGNER" \
+              --verbose \
+              "$APP_BUNDLE"
+          done
+
+      # Step 8d: wrap the signed .app in a DMG.
+      - name: Create DMG (jpackage arm64 + BEAGLE)
+        run: |
+          /usr/bin/hdiutil create -ov \
+            -srcfolder staging-mac \
+            -volname "BEAST v${VERSION}${EXTRA_TAG}" \
+            "release/BEAST_X_v${VERSION}${EXTRA_TAG}-arm64.dmg"
+
+      # Step 8e: sign the DMG.
+      - name: Sign DMG (jpackage arm64 + BEAGLE)
+        run: |
+          codesign \
+            --sign "$APP_SIGNER" \
+            --verbose \
+            "release/BEAST_X_v${VERSION}${EXTRA_TAG}-arm64.dmg"
+
+      # Step 8f: notarise the jpackage DMG.
+      # Use JSON output so we can extract and verify the status string —
+      # notarytool exits 0 for "Accepted" and non-zero for "Invalid"/"Rejected",
+      # but checking the status field here makes the failure reason explicit.
+      - name: Notarise DMG (jpackage arm64 + BEAGLE)
+        env:
+          APPLE_ID:      ${{ secrets.APPLE_NOTARIZE_APPLE_ID }}
+          TEAM_ID:       ${{ secrets.APPLE_NOTARIZE_TEAM_ID }}
+          NOTARIZE_PASS: ${{ secrets.APPLE_NOTARIZE_PASSWORD }}
+        run: |
+          DMG="release/BEAST_X_v${VERSION}${EXTRA_TAG}-arm64.dmg"
+          OUTPUT=$(xcrun notarytool submit "$DMG" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$NOTARIZE_PASS" \
+            --wait --output-format json)
+          echo "$OUTPUT"
+          STATUS=$(echo "$OUTPUT" | python3 -c \
+            "import json,sys; print(json.load(sys.stdin).get('status',''))")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarisation status: '$STATUS' (expected 'Accepted')" >&2
+            exit 1
+          fi
+
+      # Step 8g: staple the notarisation ticket.
+      # The jpackage DMG is typically larger than the traditional ones (it
+      # bundles a full JRE) so Apple's CloudKit CDN may need a moment to
+      # propagate the ticket after notarytool returns.  Retry up to 5 times
+      # with a 30 s pause to handle any propagation delay.
+      - name: Staple notarisation ticket (jpackage arm64 + BEAGLE)
+        run: |
+          DMG="release/BEAST_X_v${VERSION}${EXTRA_TAG}-arm64.dmg"
+          n=1
+          until xcrun stapler staple "$DMG"; do
+            if [ $n -ge 5 ]; then
+              echo "stapler failed after $n attempts" >&2
+              exit 1
+            fi
+            n=$((n + 1))
+            echo "Attempt $n/5: waiting 30 s for CDN propagation..."
+            sleep 30
+          done
+          xcrun stapler validate "$DMG"
+
+      # ── Clean up keychain ──────────────────────────────────────
+      - name: Delete signing keychain
+        if: always()
+        run: |
+          # Restore the login keychain as default before deleting ours;
+          # macOS runners reject deletion of the active default keychain.
+          security default-keychain -s ~/Library/Keychains/login.keychain-db
+          security delete-keychain "$KEYCHAIN_PATH" || true
+
+      # ── Upload platform artifacts ──────────────────────────────
+      - name: Upload Mac DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: beast-mac
+          path: "release/BEAST_X_v*.dmg"
+
+      - name: Upload Linux TGZ
+        uses: actions/upload-artifact@v4
+        with:
+          name: beast-linux
+          path: release/BEAST_X_v*.tgz
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 3. Build the Windows package on a native Windows runner.
+  #
+  #    jpackage (JDK 21) produces a self-contained app-image with a bundled
+  #    Temurin 21 JRE.  A single jpackage invocation creates four launchers
+  #    (BEAST, BEAUTi, TreeAnnotator, LogCombiner) sharing one JRE — so the
+  #    ZIP is much smaller than four separate app-images would be.
+  #    The runtime is automatically trimmed by jpackage's internal jlink to
+  #    include only the modules the application actually uses.
+  # ───────────────────────────────────────────────────────────────────────────
+  windows-package:
+    name: Package (Windows)
+    needs: build-jars
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # JDK 21 provides both the jpackage tool and the JRE that gets embedded
+      # in the app-image.
+      - name: Set up JDK 21 (jpackage + bundled runtime)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: beast-jars
+          path: build/dist/
+
+      - name: Set version env vars
+        run: |
+          echo "VERSION=${{ needs.build-jars.outputs.version }}"               >> "$GITHUB_ENV"
+          echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}" >> "$GITHUB_ENV"
+          echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"           >> "$GITHUB_ENV"
+
+      # Each additional launcher (BEAUTi, TreeAnnotator, LogCombiner) is
+      # described in a small properties file.  All four apps use the Windows
+      # GUI subsystem (no console window), matching the previous launch4j
+      # <headerType>gui</headerType> setting.
+      # The heredoc content is indented to match the YAML block indentation;
+      # the literal-block-scalar parser strips those leading spaces so the
+      # resulting properties files contain no leading whitespace.
+      - name: Write add-launcher properties files
+        run: |
+          cat > beauti.properties << 'EOF'
+          main-class=dr.app.beauti.BeautiApp
+          main-jar=beauti.jar
+          java-options=-Xmx1024m
+          icon=release/common/icons/beauti.ico
+          win-console=false
+          EOF
+
+          cat > treeannotator.properties << 'EOF'
+          main-class=dr.app.tools.treeannotator.TreeAnnotator
+          main-jar=beast.jar
+          java-options=-Xmx4096m
+          icon=release/common/icons/utility.ico
+          win-console=false
+          EOF
+
+          cat > logcombiner.properties << 'EOF'
+          main-class=dr.app.tools.logcombiner.LogCombiner
+          main-jar=beast.jar
+          java-options=-Xmx2048m
+          icon=release/common/icons/utility.ico
+          win-console=false
+          EOF
+
+      # jpackage creates a self-contained app-image at staging/BEAST/.
+      # --type app-image produces a directory (not an MSI installer) that can
+      # be zipped with the same layout users are familiar with.
+      # --app-version must be a dotted-numeric string (e.g. 10.5.1); the
+      # pre-release tag (e.g. -beta7) is applied to the ZIP filename only.
+      - name: Build Windows app-image with jpackage
+        run: |
+          mkdir -p jpackage-input staging release
+          cp build/dist/beast.jar  jpackage-input/
+          cp build/dist/beauti.jar jpackage-input/
+          jpackage \
+            --type app-image \
+            --name "BEAST X" \
+            --app-version "$VERSION" \
+            --vendor "BEAST Dev Team" \
+            --input jpackage-input \
+            --main-jar beast.jar \
+            --main-class dr.app.beast.BeastMain \
+            --java-options "-Xmx8192m" \
+            --icon "release/common/icons/beast.ico" \
+            --add-launcher "BEAUTi=beauti.properties" \
+            --add-launcher "TreeAnnotator=treeannotator.properties" \
+            --add-launcher "LogCombiner=logcombiner.properties" \
+            --dest staging
+
+      # Rename the staging directory to the versioned package name, then
+      # add documentation and support files alongside the app-image.
+      - name: Assemble final package directory
+        run: |
+          PKG_DIR="staging/BEAST X v${VERSION}${EXTRA_TAG}"
+          mv "staging/BEAST X" "$PKG_DIR"
+          cp -r examples                           "$PKG_DIR/examples"
+
+      - name: Create Windows ZIP
+        run: |
+          cd staging
+          7z a "../release/BEAST_X_v${VERSION}${EXTRA_TAG}.zip" \
+            "BEAST X v${VERSION}${EXTRA_TAG}/"
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: beast-windows
+          path: "release/BEAST_X_v*.zip"
+
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 4. Create a draft GitHub Release and attach the four archives.
+  #
+  #    The release is created as a draft so you can review the artefacts and
+  #    edit the release notes before publishing.  Pre-release tags (those
+  #    containing a hyphen, e.g. v10.5.1-beta4) are flagged as pre-releases.
+  # ───────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [build-jars, package, windows-package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: beast-mac
+          path: release-files/
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: beast-windows
+          path: release-files/
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: beast-linux
+          path: release-files/
+          merge-multiple: true
+
+      - name: List release files
+        run: ls -lh release-files/
+
+      - name: Create GitHub Release (draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "BEAST X v${{ needs.build-jars.outputs.version }}${{ needs.build-jars.outputs.extra_tag }}"
+          draft: true
+          prerelease: ${{ needs.build-jars.outputs.extra_tag != '' }}
+          generate_release_notes: true
+          files: |
+            release-files/*.dmg
+            release-files/*.zip
+            release-files/*.tgz

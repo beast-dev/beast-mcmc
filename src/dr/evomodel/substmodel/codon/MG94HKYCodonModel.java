@@ -236,7 +236,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
         Parameter beta = betaParameter;
         Parameter kappa = kappaParameter;
 
-        FrequencyModel frequencyModel = freqModel;
+        FrequencyModel frequencies = freqModel;
 
         assert(oldParameters.size() == newParameters.size());
 
@@ -251,11 +251,16 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                 beta = newParameter;
             } else if (oldParameter == kappaParameter) {
                 kappa = newParameter;
-            } else {
-                throw new RuntimeException("Unknown parameter");
+            } else if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
             }
         }
-        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel, options);
+
+        if (alpha == alphaParameter && beta == betaParameter && kappa == kappaParameter && frequencies == freqModel) {
+            return this;
+        } else {
+            return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencies, options);
+        }
     }
 
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {

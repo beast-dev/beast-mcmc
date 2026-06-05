@@ -74,7 +74,7 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
             new ElementRule(BayesianBridgeStatisticsProvider.class),
             new ElementRule(DistributionLikelihood.class, true),

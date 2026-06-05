@@ -327,7 +327,7 @@ public class NexusApplicationImporter extends NexusImporter {
                 }
             } else if (match("NGAMMACAT", subcommand, 2)) {
 
-                model.setGammaCategories(readInteger(";"));
+                model.setRateCategories(readInteger(";"));
             } else {
 
                 System.err.println("The option, '" + subcommand + "', in the LSET command is not used by BEAST and has been ignored");

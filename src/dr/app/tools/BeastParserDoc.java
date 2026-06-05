@@ -184,7 +184,7 @@ public class BeastParserDoc {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[] {
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

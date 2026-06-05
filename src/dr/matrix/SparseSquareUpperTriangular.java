@@ -44,4 +44,19 @@ public class SparseSquareUpperTriangular extends SparseCompressedMatrix {
             x[i  + xOffset] = (b[i + bOffset] - sum) / values[majorStarts[i]];
         }
     }
+
+    public static class Scaled {
+
+        private final SparseSquareUpperTriangular matrix;
+        private final double scalar;
+
+        public Scaled(SparseSquareUpperTriangular matrix, double scalar) {
+            this.matrix = matrix;
+            this.scalar = scalar;
+        }
+
+        public SparseSquareUpperTriangular getMatrix() { return matrix; }
+
+        public double getScalar() { return scalar; }
+    }
 }

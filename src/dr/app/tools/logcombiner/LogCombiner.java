@@ -742,7 +742,7 @@ public class LogCombiner {
                                     "(the original sampling frequency must be a factor of this value)"),
                             new Arguments.RealOption("scale", "s", "a scaling factor that will multiply any time units by this value"),
                             new Arguments.Option("strip", null, "strip out all annotations (trees only)"),
-                            new Arguments.Option("renumber", "r", "this option renumbers output states consecutively"),
+                            new Arguments.Option("renumber", "n", "this option renumbers output states consecutively"),
                             new Arguments.Option("help", "h", "option to print this message")
                     });
 

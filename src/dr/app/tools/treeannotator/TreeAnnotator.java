@@ -43,6 +43,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.util.Author;
+import dr.util.Citation;
+import dr.util.CitationLogHandler;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 
@@ -968,7 +971,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninStates,
                         heightsOption,
                         posteriorLimit,
-                        5,
+                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -1039,6 +1042,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 heights = HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
+            } else if (value.equalsIgnoreCase("keep")) {
+                heights = HeightsSummary.KEEP_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
                 printUsage(arguments);
@@ -1073,7 +1078,7 @@ public class TreeAnnotator extends BaseTreeTool {
             posteriorLimit = arguments.getRealOption("limitFrequency");
         }
 
-        int countLimit = 5;
+        int countLimit = 0;
         if (arguments.hasOption("limitCount")) {
             countLimit = arguments.getIntegerOption("limitCount");
         }
@@ -1101,6 +1106,12 @@ public class TreeAnnotator extends BaseTreeTool {
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
+        }
+
+        if (target != Target.MAX_CLADE_CREDIBILITY && target != Target.USER_TARGET_TREE && heights == HeightsSummary.KEEP_HEIGHTS) {
+            progressStream.println("Keep original heights is only valid for MCC or user target trees");
+            printUsage(arguments);
+            System.exit(1);
         }
 
         if (arguments.hasOption("reference")) {
@@ -1153,9 +1164,11 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Found Maximum Clade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
-            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION.toString());
         } else if (target == Target.MRHIPSTR) {
-            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION);
         } else if (target == Target.MAJORITY_RULE) {
             progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {

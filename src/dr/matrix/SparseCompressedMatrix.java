@@ -29,6 +29,8 @@ public class SparseCompressedMatrix {
         return values.length;
     }
 
+    public int getDimension() { return nMajor * nMajor; }
+
     public SparseCompressedMatrix(int[] majorStarts, int[] minorIndices, double[] values,
                                   int nMajor, int nMinor) {
         this.majorStarts = majorStarts;
@@ -149,6 +151,44 @@ public class SparseCompressedMatrix {
 
         double[] result = new double[nMajor];
         multiplyInPlaceMatrixVector(vector, vectorOffset, result, 0);
+
+        return result;
+    }
+
+    public void multiplyInPlaceMatrixVectorDifference(double[] vectorA, int vectorAOffset,
+                                                      double[] vectorB, int vectorBOffset,
+                                                      double scale,
+                                                      double[] result, int resultOffset) {
+
+        assert vectorA.length - vectorAOffset >= nMajor;
+        assert vectorB.length - vectorBOffset >= nMajor;
+        assert result.length - resultOffset >= nMajor;
+
+        for (int i = 0; i < nMajor; ++i) {
+            final int begin = majorStarts[i];
+            final int end = majorStarts[i + 1];
+
+            double sum = 0.0;
+
+            for (int k = begin; k < end; ++k) {
+                final int j = minorIndices[k];
+                final double value = values[k];
+
+                sum += scale * value * (vectorA[vectorAOffset + j] - vectorB[vectorBOffset + j]);
+            }
+
+            result[resultOffset + i] = sum;
+        }
+    }
+
+    public double[] multiplyMatrixVectorDifference(double[] vectorA, int vectorAOffset,
+                                                   double[] vectorB, int vectorBOffset,
+                                                   double scale) {
+
+        double[] result = new double[nMajor];
+        multiplyInPlaceMatrixVectorDifference(vectorA, vectorAOffset, vectorB, vectorBOffset,
+                scale,
+                result, 0);
 
         return result;
     }

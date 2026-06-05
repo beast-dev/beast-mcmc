@@ -30,6 +30,8 @@ package dr.app.tools.treeannotator;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.util.Author;
+import dr.util.Citation;
 import dr.util.Pair;
 
 import java.util.*;
@@ -40,6 +42,25 @@ public class HIPSTRTreeBuilder {
     private static final double MAJORITY_RULE_REWARD = 1E10;
 
     private final Map<Clade, Double> credibilityCache = new HashMap<>();
+
+    public final static Citation CITATION = new Citation(
+            new Author[] {
+                    new Author("G", "Baele"),
+                    new Author("LM", "Carvalho"),
+                    new Author("M", "Brusselmans"),
+                    new Author("G", "Dudas"),
+                    new Author("X", "Ji"),
+                    new Author("JT", "McCrone"),
+                    new Author("PL", "Lemey"),
+                    new Author("MA", "Suchard"),
+                    new Author("A", "Rambaut")
+            },
+            "HIPSTR: highest independent posterior subtree reconstruction in TreeAnnotator X",
+            2025,
+            "Bioinformatics",
+            41, "btaf488",
+            "10.1093/bioinformatics/btaf488"
+    );
 
     public MutableTree getHIPSTRTree(CladeSystem cladeSystem, TaxonList taxonList, boolean majorityRule) {
         BiClade rootClade = (BiClade)cladeSystem.getRootClade();

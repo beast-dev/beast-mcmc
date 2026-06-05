@@ -183,6 +183,7 @@ public class BeastMain {
             if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.LOAD_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
                 System.setProperty(CHKPT_OVERRULE, "true");
             }
@@ -444,6 +445,7 @@ public class BeastMain {
                         new Arguments.StringOption("save_state", null, "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", null, "Use hex-encoded doubles in checkpoint files"),
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
+                        new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
                         new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
                         new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
@@ -722,7 +724,6 @@ public class BeastMain {
 
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
-            System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(seed));
             if (seed <= 0) {
                 printTitle();
                 System.err.println("The random number seed should be > 0");
@@ -791,6 +792,11 @@ public class BeastMain {
 
             if (arguments.hasOption("force_resume")) {
                 System.setProperty("force.resume", Boolean.TRUE.toString());
+            }
+
+            if (arguments.hasOption("checkpoint_seed")) {
+                long checkpointSeed = arguments.getLongOption("checkpoint_seed");
+                System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(checkpointSeed));
             }
 
             if (arguments.hasOption("citations_file")) {

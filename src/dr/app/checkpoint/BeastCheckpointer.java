@@ -28,6 +28,7 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -310,6 +311,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                     out.print("\n");
                 }
+//                if (parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")) {
+//                }
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -342,7 +345,14 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
 
-                if (model instanceof TreeModel) {
+                if (model instanceof EmpiricalTreeDistributionModel) {
+                    out.print("empirical tree");
+                    out.print("\t");
+                    out.print(model.getModelName());
+                    out.print("\t");
+                    out.println(((EmpiricalTreeDistributionModel)model).getCurrentTreeIndex());
+
+                } else if (model instanceof TreeModel) {
                     out.print("tree");
                     out.print("\t");
                     out.println(model.getModelName());
@@ -496,7 +506,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.err.println();
                     }
 
-                    if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
+                    if (fields[1].endsWith(".rootNodeNumber")) {
                         // System.out.println("eek");
                         double value = parser.parseDouble(fields[3]);
                         parameter.setParameterValue(0, value);
@@ -508,6 +518,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             System.out.print("restoring " + fields[1] + " with values ");
                         }
                         for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
+
                             try {
                                 parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
                             } catch (RuntimeException rte) {
@@ -556,8 +568,23 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             //store list of TreeModels for debugging purposes
             ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+            
+            boolean hasTreeModel = false;
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
+
+                if (model instanceof  EmpiricalTreeDistributionModel) {
+                    if (DEBUG) {
+                        System.out.println("model = " + model.getModelName());
+                    }
+
+                    line = in.readLine();
+                    fields = line.split("\t");
+
+                    EmpiricalTreeDistributionModel empiricalTreeDistributionModel = (EmpiricalTreeDistributionModel) model;
+                    int currentTreeIndex = Integer.parseInt(fields[2]);
+                    empiricalTreeDistributionModel.setTree(currentTreeIndex);
+                } else
 
                 if (model instanceof TreeModel) {
                     if (DEBUG) {
@@ -572,6 +599,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
                         System.out.println();
                     }
+
+                    hasTreeModel = true;
                 } else {
                     if (DEBUG) {
                         System.out.println("Not a TreeModel: " + model.getModelName());
@@ -607,126 +636,129 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 linkedModels.put(name, tpmList);
             }
 
-            line = in.readLine();
-            fields = line.split("\t");
-            // Read in all (possibly more than one) trees
-            while (fields[0].equals("tree")) {
-
-                if (DEBUG) {
-                    System.out.println("\ntree: " + fields[1]);
-                }
-
-                for (Model model : Model.CONNECTED_MODEL_SET) {
-                    if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
-                        line = in.readLine();
-                        line = in.readLine();
-                        fields = line.split("\t");
-                        //read number of nodes
-                        int nodeCount = Integer.parseInt(fields[0]);
-                        double[] nodeHeights = new double[nodeCount];
-                        String[] taxaNames = new String[(nodeCount+1)/2];
-
-                        for (int i = 0; i < nodeCount; i++) {
-                            line = in.readLine();
-                            fields = line.split("\t");
-                            nodeHeights[i] = parser.parseDouble(fields[1]);
-                            if (i < taxaNames.length) {
-                                taxaNames[i] = fields[2];
-                            }
-                        }
-
-                        //on to reading edge information
-                        line = in.readLine();
-                        line = in.readLine();
-                        line = in.readLine();
-                        fields = line.split("\t");
-
-                        int edgeCount = Integer.parseInt(fields[0]);
-                        if (DEBUG) {
-                            System.out.println("edge count = " + edgeCount);
-                            System.out.println("model: " + model.getId());
-                            System.out.println("linkedModels size = " + linkedModels.size());
-                            System.out.println(linkedModels.get(model.getId()));
-                        }
-
-                        //create data matrix of doubles to store information from list of TreeParameterModels
-                        //size of matrix depends on the number of TreeParameterModels assigned to a TreeModel
-                        double[][] traitValues = new double[linkedModels.get(model.getId()).size()][edgeCount];
-
-                        //create array to store whether a node is left or right child of its parent
-                        //can be important for certain tree transition kernels
-                        int[] childOrder = new int[edgeCount];
-                        for (int i = 0; i < childOrder.length; i++) {
-                            childOrder[i] = -1;
-                        }
-
-                        int[] parents = new int[edgeCount];
-                        for (int i = 0; i < edgeCount; i++){
-                            parents[i] = -1;
-                        }
-                        for (int i = 0; i < edgeCount-1; i++) {
-                            line = in.readLine();
-                            if (line != null) {
-                                if (DEBUG) {
-                                    System.out.println("DEBUG: " + line);
-                                }
-                                fields = line.split("\t");
-                                parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                                // childOrder[i] = Integer.parseInt(fields[2]);
-                                childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
-                                for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
-                                    traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3+j]);
-                                }
-                            }
-                        }
-
-                        //perform magic with the acquired information
-                        if (DEBUG) {
-                            System.out.println("adopting tree structure");
-                        }
-
-                        //adopt the loaded tree structure
-                        ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
-                        if (traitModels.size() > 0) {
-                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
-                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
-                        }
-                        ((TreeModel) model).endTreeEdit();
-
-                        expectedTreeModelNames.remove(model.getModelName());
-
-                    }
-
-                }
+            if (hasTreeModel) {
 
                 line = in.readLine();
-                if (line != null) {
-                    fields = line.split("\t");
-                }
+                fields = line.split("\t");
+                // Read in all (possibly more than one) trees
+                while (fields[0].equals("tree")) {
 
-            }
-
-            if (expectedTreeModelNames.size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (String notFoundName : expectedTreeModelNames) {
-                    sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
-                }
-                throw new RuntimeException("\n" + sb.toString());
-            }
-
-            if (DEBUG) {
-                System.out.println("\nDouble checking:");
-                for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                    if (parameter.getParameterName() != null && parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
-                        System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
+                    if (DEBUG) {
+                        System.out.println("\ntree: " + fields[1]);
                     }
+
+                    for (Model model : Model.CONNECTED_MODEL_SET) {
+                        if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
+                            line = in.readLine();
+                            line = in.readLine();
+                            fields = line.split("\t");
+                            //read number of nodes
+                            int nodeCount = Integer.parseInt(fields[0]);
+                            double[] nodeHeights = new double[nodeCount];
+                            String[] taxaNames = new String[(nodeCount + 1) / 2];
+
+                            for (int i = 0; i < nodeCount; i++) {
+                                line = in.readLine();
+                                fields = line.split("\t");
+                                nodeHeights[i] = parser.parseDouble(fields[1]);
+                                if (i < taxaNames.length) {
+                                    taxaNames[i] = fields[2];
+                                }
+                            }
+
+                            //on to reading edge information
+                            line = in.readLine();
+                            line = in.readLine();
+                            line = in.readLine();
+                            fields = line.split("\t");
+
+                            int edgeCount = Integer.parseInt(fields[0]);
+                            if (DEBUG) {
+                                System.out.println("edge count = " + edgeCount);
+                                System.out.println("model: " + model.getId());
+                                System.out.println("linkedModels size = " + linkedModels.size());
+                                System.out.println(linkedModels.get(model.getId()));
+                            }
+
+                            //create data matrix of doubles to store information from list of TreeParameterModels
+                            //size of matrix depends on the number of TreeParameterModels assigned to a TreeModel
+                            double[][] traitValues = new double[linkedModels.get(model.getId()).size()][edgeCount];
+
+                            //create array to store whether a node is left or right child of its parent
+                            //can be important for certain tree transition kernels
+                            int[] childOrder = new int[edgeCount];
+                            for (int i = 0; i < childOrder.length; i++) {
+                                childOrder[i] = -1;
+                            }
+
+                            int[] parents = new int[edgeCount];
+                            for (int i = 0; i < edgeCount; i++) {
+                                parents[i] = -1;
+                            }
+                            for (int i = 0; i < edgeCount - 1; i++) {
+                                line = in.readLine();
+                                if (line != null) {
+                                    if (DEBUG) {
+                                        System.out.println("DEBUG: " + line);
+                                    }
+                                    fields = line.split("\t");
+                                    parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                                    // childOrder[i] = Integer.parseInt(fields[2]);
+                                    childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
+                                    for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
+                                        //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
+                                        traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3 + j]);
+                                    }
+                                }
+                            }
+
+                            //perform magic with the acquired information
+                            if (DEBUG) {
+                                System.out.println("adopting tree structure");
+                            }
+
+                            //adopt the loaded tree structure
+                            ((TreeModel) model).beginTreeEdit();
+                            ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                            if (traitModels.size() > 0) {
+                                System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel) model).getId());
+                                ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                            }
+                            ((TreeModel) model).endTreeEdit();
+
+                            expectedTreeModelNames.remove(model.getModelName());
+
+                        }
+
+                    }
+
+                    line = in.readLine();
+                    if (line != null) {
+                        fields = line.split("\t");
+                    }
+
                 }
-                System.out.println("\nPrinting trees:");
-                for (TreeModel tm : treeModelList) {
-                    System.out.println(tm.getId() + ": ");
-                    System.out.println(tm.getNewick());
+
+                if (expectedTreeModelNames.size() > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (String notFoundName : expectedTreeModelNames) {
+                        sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
+                    }
+                    throw new RuntimeException("\n" + sb.toString());
+                }
+
+                if (DEBUG) {
+                    System.out.println("\nDouble checking:");
+                    for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                        if (parameter.getParameterName() != null && parameter.getParameterName().endsWith(".rootNodeNumber")) {
+                            System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
+                        }
+                    }
+                    System.out.println("\nPrinting trees:");
+                    for (TreeModel tm : treeModelList) {
+                        System.out.println(tm.getId() + ": ");
+                        System.out.println(tm.getNewick());
+                    }
                 }
             }
 

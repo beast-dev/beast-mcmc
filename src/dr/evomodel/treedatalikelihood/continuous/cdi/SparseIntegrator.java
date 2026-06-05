@@ -286,6 +286,11 @@ public class SparseIntegrator extends ContinuousDiffusionIntegrator.Basic {
     }
 
     @Override
+    public DiffusionRepresentation diffusionFactory(int count) {
+        return new DiffusionRepresentation.Sparse(count);
+    }
+
+    @Override
     void updatePrecisionOffsetAndDeterminant(int precisionIndex) {
         super.updatePrecisionOffsetAndDeterminant(precisionIndex);
         this.precisionIndex = precisionIndex;

@@ -46,10 +46,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     // Dimensions
     private final int dim;
     private final int dim2;
-    private final int phi; // dim - 1
-
-    // Accuracy / truncation
-    private final double epsilon;
 
     // -----------------------
     // Sorting buffers / maps
@@ -81,6 +77,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final SericolaCumulantMatrices cumulantMatrices;
     private final SericolaRewardDensityPdf rewardDensityPdf;
     private final SericolaRewardDensityDerivative rewardDensityDerivative;
+    private final ThreadLocal<SericolaRewardDensityWorkspace> workspaces;
 
     // Exponential for conditional probabilities (optional)
     private final EigenSystem eigenSystem;
@@ -89,28 +86,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final double[] out;
 
     private final boolean conditionalOnZ0;
-
-    // Thread-local scratch to avoid allocations in hot path
-    private static final class Scratch {
-        int[] H;
-        int[] NN;
-        double[] lt;
-        double[] premult;
-        double[] xh;        // in [0,1]
-        double[] oneMinus;  // 1-xh
-        double[] ratio;     // xh/(1-xh)
-        double[] w0;        // (1-xh)^n evolving across n
-        boolean[] isZero;   // xh ~ 0
-        boolean[] isOne;    // xh ~ 1
-        double[] inc;       // length dim2, SORTED uv
-    }
-
-    private final ThreadLocal<Scratch> tls = ThreadLocal.withInitial(Scratch::new);
-
-    // Temporary scalar wrappers (allocation-free)
-    private final double[] scratchRewardProportion1 = new double[1];
-    private final double[] scratchT1 = new double[1];
-    private final double[][] scratchW1 = new double[1][];
 
     private final Parameter rewardRatesValues;   // distinct reward values
     private final Parameter rewardRatesValuesInternal;
@@ -159,8 +134,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
         this.dim = dim;
         this.dim2 = dim * dim;
-        this.phi = dim - 1;
-        this.epsilon = epsilon;
 
         this.unsortedQ = new double[dim2];
         this.sortedQ = new double[dim2];
@@ -178,6 +151,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 new SericolaRewardDensityPdf(dim, outRowBaseBySorted, outColBySorted);
         this.rewardDensityDerivative =
                 new SericolaRewardDensityDerivative(dim, outRowBaseBySorted, outColBySorted);
+        this.workspaces = ThreadLocal.withInitial(() -> new SericolaRewardDensityWorkspace(dim, epsilon));
 
         this.eigenSystem = new DefaultEigenSystem(dim);
         this.out = new double[dim2];
@@ -209,14 +183,16 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         if (out == null || out.length != dim2) {
             throw new IllegalArgumentException("out must be length dim*dim=" + dim2);
         }
-        scratchRewardProportion1[0] = rewardProportion;
-        scratchT1[0] = time;
-        scratchW1[0] = out;
-        computePdfInto(scratchRewardProportion1, scratchT1, false, scratchW1);
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        computePdfInto(
+                workspace.scalarRewardProportions(rewardProportion),
+                workspace.scalarTimes(time),
+                false,
+                workspace.scalarOutputs(out));
     }
 
     public void computePdfInto(double[] rewardProportions, double time, double[][] W) {
-        computePdfInto(rewardProportions, new double[]{time}, false, W);
+        computePdfInto(rewardProportions, workspace().scalarTimes(time), false, W);
     }
 
     public void computePdfInto(double[] rewardProportions, double[] times, double[][] W) {
@@ -231,10 +207,14 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         ensureNumericsUpToDate();
         validateAndZeroOutputs(W, T);
 
-        final Scratch s = tls.get();
-        ensureScratchCapacity(s, T);
-
-        final double maxT = precomputePdfScratch(rewardProportions, times, parsimonious, s);
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final double maxT = workspace.preparePdf(
+                rewardProportions,
+                times,
+                parsimonious,
+                lambda,
+                sortedAlpha,
+                invAlphaDiff);
 
         // Ensure C is available up to required N (pdf uses n+1)
         ensureCForTime(maxT, /*extraN=*/1);
@@ -247,16 +227,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 lambda,
                 invAlphaDiff,
                 cumulantMatrices,
-                s.H,
-                s.NN,
-                s.lt,
-                s.premult,
-                s.ratio,
-                s.w0,
-                s.oneMinus,
-                s.isZero,
-                s.isOne,
-                s.inc);
+                workspace);
 
         if (conditionalOnZ0) {
             if (times.length == 1) {
@@ -303,82 +274,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         }
     }
 
-    private double precomputePdfScratch(double[] rewardProportions, double[] times, boolean parsimonious, Scratch s) {
-        final int T = rewardProportions.length;
-        final boolean singleTime = (times.length == 1);
-        double maxT = 0.0;
-
-        if (singleTime) {
-            final double time = times[0];
-            if (time <= 0.0) throw new IllegalArgumentException("time must be > 0");
-            maxT = time;
-
-            final double lt = lambda * time;
-            final double premult0 = Math.exp(-lt);
-            final int NN0 = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
-
-            for (int t = 0; t < T; ++t) {
-                s.lt[t] = lt;
-                s.premult[t] = premult0;
-                s.NN[t] = NN0;
-
-                final double rewardProportion = rewardProportions[t];
-                final int h = getHfromRewardProportion(rewardProportion);
-                s.H[t] = h;
-
-                fillXhPrecomp(s, t, rewardProportion, h);
-            }
-            return maxT;
-        }
-
-        for (int t = 0; t < T; ++t) {
-            final double time = times[t];
-            if (time <= 0.0) throw new IllegalArgumentException("time must be > 0 at index " + t);
-            if (time > maxT) maxT = time;
-
-            final double lt = lambda * time;
-            s.lt[t] = lt;
-            s.premult[t] = Math.exp(-lt);
-            s.NN[t] = (parsimonious ? determineNumberOfSteps(time) : Integer.MAX_VALUE);
-
-            final double rewardProportion = rewardProportions[t];
-            final int h = getHfromRewardProportion(rewardProportion);
-            s.H[t] = h;
-
-            fillXhPrecomp(s, t, rewardProportion, h);
-        }
-        return maxT;
-    }
-
-    private void fillXhPrecomp(Scratch s, int t, double rewardProportion, int h) {
-        final double invDiff = invAlphaDiff[h];
-        double xh = (rewardProportion - sortedAlpha[h - 1]) * invDiff;
-
-        if (xh <= 0.0) {
-            s.xh[t] = 0.0;
-            s.isZero[t] = true;
-            s.isOne[t] = false;
-            return;
-        }
-        if (xh >= 1.0) {
-            s.xh[t] = 1.0;
-            s.isZero[t] = false;
-            s.isOne[t] = true;
-            return;
-        }
-
-        s.xh[t] = xh;
-        s.isZero[t] = false;
-        s.isOne[t] = false;
-
-        final double om = 1.0 - xh;
-        s.oneMinus[t] = om;
-        s.ratio[t] = xh / om;
-        s.w0[t] = 1.0;
-    }
-
     private void ensureCForTime(double time, int extraN) {
-        final int requiredN = determineNumberOfSteps(time) + extraN;
+        final int requiredN = workspace().determineNumberOfSteps(lambda, time) + extraN;
         cumulantMatrices.ensureForTime(time, requiredN, P, sortedAlpha);
     }
 
@@ -554,20 +451,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     // Helpers
     // ============================================================
 
-    private void ensureScratchCapacity(Scratch s, int T) {
-        if (s.H == null || s.H.length < T) s.H = new int[T];
-        if (s.NN == null || s.NN.length < T) s.NN = new int[T];
-        if (s.lt == null || s.lt.length < T) s.lt = new double[T];
-        if (s.premult == null || s.premult.length < T) s.premult = new double[T];
-
-        if (s.xh == null || s.xh.length < T) s.xh = new double[T];
-        if (s.oneMinus == null || s.oneMinus.length < T) s.oneMinus = new double[T];
-        if (s.ratio == null || s.ratio.length < T) s.ratio = new double[T];
-        if (s.w0 == null || s.w0.length < T) s.w0 = new double[T];
-        if (s.isZero == null || s.isZero.length < T) s.isZero = new boolean[T];
-        if (s.isOne == null || s.isOne.length < T) s.isOne = new boolean[T];
-
-        if (s.inc == null || s.inc.length != dim2) s.inc = new double[dim2];
+    private SericolaRewardDensityWorkspace workspace() {
+        return workspaces.get();
     }
 
     private double determineLambda(double[] QrowMajor) {
@@ -600,51 +485,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
     public double getUniformizationRate() {
         return getLambda();
-    }
-
-    private int getHfromRewardProportion(double rewardProportion) {
-        final double lo = sortedAlpha[0];
-        final double hi = sortedAlpha[phi];
-
-        if (rewardProportion < lo) {
-            throw new IllegalArgumentException(
-                    "rewardProportion=" + rewardProportion + " < min(alpha)=" + lo +
-                            "; snapping to boundary is not supported; rewardProportion must be >= min(alpha)");
-        }
-        if (rewardProportion > hi) {
-            throw new IllegalArgumentException(
-                    "rewardProportion=" + rewardProportion + " > max(alpha)=" + hi +
-                            "; snapping to boundary is not supported; rewardProportion must be <= max(alpha)");
-        }
-
-        int idx = Arrays.binarySearch(sortedAlpha, 0, phi + 1, rewardProportion);
-
-        if (idx >= 0) {
-            if (idx == 0) return 1;
-            if (idx == phi) return phi;
-            return idx + 1;
-        }
-
-        int insertionPoint = -idx - 1;
-        return Math.max(1, Math.min(phi, insertionPoint));
-    }
-
-    private int determineNumberOfSteps(double time) {
-        final double target = 1.0 - epsilon;
-        final double lt = lambda * time;
-
-        double term = Math.exp(-lt);
-        double sum = term;
-
-        int i = 0;
-        final int hardCap = Math.max(5000, (int) (lt + 10.0 * Math.sqrt(lt + 1.0)));
-
-        while (sum < target && i < hardCap) {
-            i++;
-            term *= lt / i;
-            sum += term;
-        }
-        return i;
     }
 
     private double[][] squareMatrix(final double[] matRowMajor) {
@@ -758,20 +598,15 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         }
         Arrays.fill(out, 0.0);
         ensureNumericsUpToDate();
-        final int h = getHfromRewardProportion(rewardProportion);
-        final Scratch s = tls.get();
-        ensureScratchCapacity(s, 1);
-        fillXhPrecomp(s, 0, rewardProportion, h);
-        if (s.isZero[0] || s.isOne[0]) {
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
+        if (workspace.isZero(0) || workspace.isOne(0)) {
             throw new UnsupportedOperationException(
                     "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
                             "until the boundary convention is explicit. rewardProportion=" + rewardProportion +
                             ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
-                            ", xh=" + s.xh[0]);
+                            ", xh=" + workspace.xh(0));
         }
-
-        final boolean xIsZero = s.isZero[0];
-        final boolean xIsOne  = s.isOne[0];
 
         ensureCForTime(branchLength, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;
@@ -782,11 +617,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 branchLength,
                 lambda,
                 invAlphaDiff[h],
-                s.xh[0],
-                xIsZero,
-                xIsOne,
+                workspace.xh(0),
+                workspace.isZero(0),
+                workspace.isOne(0),
                 cumulantMatrices,
-                s.inc,
+                workspace.increments(),
                 out);
     }
 

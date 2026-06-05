@@ -29,18 +29,19 @@ final class SericolaRewardDensityPdf {
             double lambda,
             double[] invAlphaDiff,
             SericolaCumulantMatrices cumulants,
-            int[] H,
-            int[] NN,
-            double[] lt,
-            double[] premult,
-            double[] ratio,
-            double[] w0,
-            double[] oneMinus,
-            boolean[] isZero,
-            boolean[] isOne,
-            double[] incSorted) {
+            SericolaRewardDensityWorkspace workspace) {
 
         final double[] C = cumulants.values();
+        final int[] H = workspace.intervals();
+        final int[] NN = workspace.stepCounts();
+        final double[] lt = workspace.lambdaTimes();
+        final double[] premult = workspace.premults();
+        final double[] ratio = workspace.ratios();
+        final double[] w0 = workspace.bernsteinStartWeights();
+        final double[] oneMinus = workspace.oneMinus();
+        final boolean[] isZero = workspace.isZero();
+        final boolean[] isOne = workspace.isOne();
+        final double[] incSorted = workspace.increments();
 
         for (int n = 0; n <= N; ++n) {
             for (int t = 0; t < T; ++t) {

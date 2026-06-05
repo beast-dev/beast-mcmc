@@ -22,13 +22,17 @@ problem_cases
 !examples/**/*.xml
 !examples/data
 benchmarking/Results/
+!tests/**/*.xml
+!build*.xml
 
 zig_zag
 src/revision.txt
+src/version.txt
 *.dmg
 *.zip
 *.tgz
 release*
+!release.yml
 src/revision.txt
 
 *.citations.txt

@@ -7,6 +7,11 @@ dist/
 out/
 packaging_tools/**/.*
 Testing/
+tests
+test*
+examples/**/.*
+benchmarking
+problem_cases
 .idea
 .DS_Store
 
@@ -15,8 +20,7 @@ Testing/
 *.tree
 *.xml
 !examples/**/*.xml
-!tests/**/*.xml
-!benchmarking/**/*.xml
+!examples/data
 benchmarking/Results/
 
 zig_zag

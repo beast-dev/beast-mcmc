@@ -623,6 +623,9 @@ public class BeastMain {
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
         }
+        if(arguments.hasOption("beagle_tensor_core")) {
+            beagleFlags |= BeagleFlag.VECTOR_TENSOR.getMask();
+        }
         if (arguments.hasOption("beagle_cuda")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();
         }

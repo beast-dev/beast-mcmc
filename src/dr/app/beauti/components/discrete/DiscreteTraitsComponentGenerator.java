@@ -555,14 +555,23 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "nonZeroRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+        }
         writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
         writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "actualRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "rates");
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        }
         writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 
@@ -879,7 +888,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             String prefix = model.getName() + ".";
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                prefix = BACKWARD + "." + prefix;
                 writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
                         "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
             }
@@ -888,12 +896,22 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
                 writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
             } else {
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "rates");
 
-                if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-                    writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                        writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+                        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    }
+                } else {
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+
+                    if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    }
                 }
+
             }
         }
 
@@ -946,7 +964,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             }
             if (model.isActivateBSSVS()) {
                 //If "BSSVS" is not activated, rateIndicator should not be there.
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+                }
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
             }
         }

@@ -110,9 +110,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         boolean hasGLM = false;
+        boolean isBIT = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
+            }
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                isBIT = true;
             }
         }
 
@@ -122,13 +126,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_MCMC_LIKELIHOOD:
             case IN_SCREEN_LOG:
             case IN_FILE_LOG_PARAMETERS:
+                return isBIT;
             case IN_FILE_LOG_LIKELIHOODS:
+                return isBIT;
             case AFTER_FILE_LOG:
                 return true;
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS();
+                return hasGLM || hasBSSVS() || isBIT;
             default:
                 return false;
         }
@@ -161,15 +167,20 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                         writeGLMBinomialLikelihood(model, writer);
                     }
                 }
+                for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+                    if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                        writeTreeLikelihoodReference(model, writer);
+                    }
+                }
                 writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_MCMC_LIKELIHOOD:
-                writeTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer, false);
                 break;
 
             case IN_FILE_LOG_LIKELIHOODS:
-                writeTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer, true);
                 break;
 
             case IN_SCREEN_LOG:
@@ -698,6 +709,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     /**
      * Write Tree Likelihood reference for a specific partition / model
+     * Currently used for backward-in-time (BIT) models
      *
      * @param model PartitionSubstitutionModel
      * @param writer XMLWriter
@@ -719,12 +731,51 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
+    /**
+     * Write all Tree Likelihood references
+     *
+     * @param writer XMLWriter
+     */
     private void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
                 AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
                 String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+                }
+                if (!enableInsertionPointBIT) {
+                    continue;
+                }
+                if (ancestralStatesOptions.isCountingStates(partition)) {
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
+
+                TraitData trait = partition.getTraits().get(0);
+                String prefix = partition.getName() + ".";
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    writer.writeIDref(treeLikelihoodTag,
+                            prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                }
+            }
+        }
+    }
+
+    /**
+     * Write all Tree Likelihood references, with a choice to include BIT models
+     *
+     * @param includeBIT boolean
+     * @param writer XMLWriter
+     */
+    private void writeTreeLikelihoodReferences(XMLWriter writer, boolean includeBIT) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            if (partition.getTraits() != null) {
+                AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+                String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    if (!includeBIT) {
+                        continue;
+                    }
                     treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
                 }
                 if (!enableInsertionPointBIT) {

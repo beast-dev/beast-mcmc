@@ -377,7 +377,7 @@ public class BeastMain {
 
                         new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("strict", "s", "Fail on non-conforming BEAST XML file"),
+                        new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
                         new Arguments.Option("window", "w", "Provide a console window"),
                         new Arguments.Option("options", "o", "Display an options dialog"),
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
@@ -977,7 +977,7 @@ public class BeastMain {
             }
         }
 
-        if (inputFile != null && inputFile.getParent() != null && working) {
+        if (inputFile != null && inputFile.getParent() != null && (working || options)) {
             System.setProperty("user.dir", inputFile.getParent());
         }
 

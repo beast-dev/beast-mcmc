@@ -63,6 +63,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
                 // BSSVS
                 modelOptions.createParameter(prefix + "indicators", "a vector of bits indicating non-zero rates for BSSVS", 1.0);
+                modelOptions.createParameter(BACKWARD + "." + prefix + "indicators", "a vector of bits indicating non-zero rates for BSSVS", 1.0);
 
                 // Poisson Prior on non zero ratesBSSVS
                 modelOptions.createDiscreteStatistic(prefix + "nonZeroRates", "the number of non-zero rates for BSSVS");
@@ -80,8 +81,9 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 // Operators
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
-                modelOptions.createOperator(BACKWARD + "." + prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
+                modelOptions.createOperator(BACKWARD + "." + prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
+                modelOptions.createOperator(BACKWARD + "." + prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
                 //modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
 
                 modelOptions.createZeroOneParameterUniformPrior(prefix + "root.frequencies", "discrete state root frequencies", 0.25);
@@ -180,7 +182,9 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                     ops.add(modelOptions.getOperator(prefix + "rates"));
                 }
 
-                if (substitutionModel.isActivateBSSVS()) {
+                if (substitutionModel.isActivateBSSVS() && substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    ops.add(modelOptions.getOperator(BACKWARD + "." + prefix + "indicators"));
+                } else {
                     ops.add(modelOptions.getOperator(prefix + "indicators"));
                 }
 

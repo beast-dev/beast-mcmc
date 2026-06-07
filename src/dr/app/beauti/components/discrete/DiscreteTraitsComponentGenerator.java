@@ -125,10 +125,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case AFTER_TREE_LIKELIHOOD:
             case IN_MCMC_LIKELIHOOD:
             case IN_SCREEN_LOG:
+                //return true;
             case IN_FILE_LOG_PARAMETERS:
-                return isBIT;
+                //return isBIT;
             case IN_FILE_LOG_LIKELIHOODS:
-                return isBIT;
+                //return isBIT;
             case AFTER_FILE_LOG:
                 return true;
             case IN_OPERATORS:
@@ -776,6 +777,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
      * @param includeBIT boolean
      * @param writer XMLWriter
      */
+    //TODO debug this, it should write a reference to the likelihood for the FIT model
     private void writeTreeLikelihoodReferences(XMLWriter writer, boolean includeBIT) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {

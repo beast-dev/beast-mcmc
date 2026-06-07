@@ -111,12 +111,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         boolean hasGLM = false;
         boolean isBIT = false;
+        boolean connected = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
             }
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
                 isBIT = true;
+                connected = true;
+            } else if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                connected = true;
             }
         }
 
@@ -126,15 +130,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_MCMC_LIKELIHOOD:
             case IN_SCREEN_LOG:
             case IN_FILE_LOG_PARAMETERS:
-                return isBIT;
             case IN_FILE_LOG_LIKELIHOODS:
-                return isBIT;
             case AFTER_FILE_LOG:
                 return true;
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS() || isBIT;
+                return hasGLM || connected || isBIT;
             default:
                 return false;
         }
@@ -180,7 +182,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case IN_FILE_LOG_LIKELIHOODS:
+                this.enableInsertionPointBIT = true;
                 writeTreeLikelihoodReferences(writer, true);
+                this.enableInsertionPointBIT = false;
+                writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_SCREEN_LOG:
@@ -458,13 +463,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    private boolean hasBSSVS() {
+    /*private boolean hasBSSVS() {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.isActivateBSSVS())
                 return true;
         }
         return false;
-    }
+    }*/
 
     private void writeDiscreteFrequencyModel(String prefix, String dataTypePrefix, int stateCount, Boolean normalize, XMLWriter writer) {
         if (normalize == null) {
@@ -787,7 +792,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     }
                     treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
                 }
-                if (!enableInsertionPointBIT) {
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT && !enableInsertionPointBIT) {
                     continue;
                 }
                 if (ancestralStatesOptions.isCountingStates(partition)) {

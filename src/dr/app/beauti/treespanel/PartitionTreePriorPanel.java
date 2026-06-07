@@ -492,6 +492,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         if (BeautiOptions.getInstance().needCoalescentModel.get(this.partitionTreePrior.getName())) {
             //if FIT model, then remove the SET_BY_BIT option / TreePriorType
             treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
+            treePriorCombo.setEnabled(true);
         } else {
             //if BIT model, select the SET_BY_BIT option / TreePriorType and disable the JComboBox
             treePriorCombo.removeAllItems();

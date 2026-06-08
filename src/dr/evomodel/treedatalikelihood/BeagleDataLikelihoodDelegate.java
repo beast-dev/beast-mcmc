@@ -211,10 +211,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
             }
 
-            if (settings.useRewardAwareBranchModelDelegate) {
-                evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree,
-                        (TransitionMatrixProviderBranchModel) branchModel, 0, extraBufferCount, settings);
-            }  else if (settings.branchInfinitesimalDerivative) {
+            if (settings.branchInfinitesimalDerivative) {
                     evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
                             extraBufferCount, settings);
             } else {

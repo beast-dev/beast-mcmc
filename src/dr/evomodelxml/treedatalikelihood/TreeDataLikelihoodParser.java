@@ -295,16 +295,16 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     );
 
                 } else {
-                 dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                        treeModel,
-                        subPatterns,
-                        branchModels.get(i),
-                        siteRateModels.get(i),
-                        useAmbiguities,
-                        preferGPU,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        settings);
+                    dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                            treeModel,
+                            subPatterns,
+                            branchModels.get(i),
+                            siteRateModels.get(i),
+                            useAmbiguities,
+                            preferGPU,
+                            scalingScheme,
+                            delayRescalingUntilUnderflow,
+                            settings);
                 }
                 TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -371,12 +371,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean useSpectralRepresentation = xo.getAttribute(USE_SPECTRAL_REPRESENTATION, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
-        boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
         PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
-                useSpectralRepresentation, useRewardAwareBranchModelDelegate);
+                useSpectralRepresentation);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);
@@ -563,6 +562,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
             AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
+            AttributeRule.newStringRule(PHYLOGEOFAST_REPRESENTATION, true),
+            AttributeRule.newBooleanRule(DELAY_SCALING, true),
+            AttributeRule.newBooleanRule(USE_PREORDER, true),
+            AttributeRule.newBooleanRule(BRANCHRATE_DERIVATIVE, true),
+            AttributeRule.newBooleanRule(BRANCHINFINITESIMAL_DERIVATIVE, true),
+            AttributeRule.newBooleanRule(USE_SPECTRAL_REPRESENTATION, true),
             AttributeRule.newStringRule(PHYLOGEOFAST_REPRESENTATION, true),
 
             // really it should be this set of elements or the PARTITION elements

@@ -26,7 +26,11 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     private final boolean adaptUpdateProportion;
     private double adaptableParameter;
 
-    private final int[] branchBuffer;
+    private final int branchCount;
+    private final int[] nodeNumberByParameterIndex;
+    private final int[] candidateParameterBuffer;
+    private final int[] borderParameterBuffer;
+    private int borderCount = 0;
 
     private final RewardsAwareBranchModel rewardsAwareBranchModel;
     private final TreeDataLikelihood treeDataLikelihood;
@@ -37,13 +41,10 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
     private final double[] prePartial;
     private final double[] postPartial;
-    private final double[] atomicWeightsScratch;
 
-    private final boolean DEBUG = false;
-
-    private final double[] preScales = new double[1];
-    private final double[] postScales = new double[1];
     private final double[] logAtomicWeights;
+    private double logAtomicTotalWeight;
+    private double logCtsWeight;
 
     public RewardsMixtureIndicatorAndAtomIndicesOperator(
             final Parameter indicatorZ,
@@ -56,11 +57,17 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     ) {
         super(adaptUpdateProportion ? AdaptationMode.ADAPTATION_ON : ADAPTATION_OFF);
 
+        if (indicatorZ == null) throw new IllegalArgumentException("indicatorZ must be non-null");
+        if (atomIndex == null) throw new IllegalArgumentException("atomIndex must be non-null");
+        if (rewardsAwareBranchModel == null) {
+            throw new IllegalArgumentException("rewardsAwareBranchModel must be non-null");
+        }
+        if (treeDataLikelihood == null) throw new IllegalArgumentException("treeDataLikelihood must be non-null");
+
         this.indicatorZ = indicatorZ;
         this.atomIndex = atomIndex;
         this.rewardsAwareBranchModel = rewardsAwareBranchModel;
         this.treeDataLikelihood = treeDataLikelihood;
-        this.borderBuffer = new int[treeDataLikelihood.getTree().getNodeCount()]; // max possible size
 
         final DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof DiscreteDataLikelihoodDelegate)) {
@@ -73,6 +80,15 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         this.tree = rewardsAwareBranchModel.getTree();
         this.nstates = rewardsAwareBranchModel.getStateCount();
 
+        if (treeDataLikelihood.getTree().getNodeCount() != tree.getNodeCount()) {
+            throw new IllegalArgumentException(
+                    "TreeDataLikelihood and RewardsAwareBranchModel must use trees with the same node count."
+            );
+        }
+        if (updateProportion <= 0.0 || updateProportion > 1.0) {
+            throw new IllegalArgumentException("updateProportion must be in (0, 1]. Found: " + updateProportion);
+        }
+
         this.updateProportion = updateProportion;
         this.adaptUpdateProportion = adaptUpdateProportion;
         this.adaptableParameter = logit(updateProportion);
@@ -81,15 +97,21 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             throw new IllegalArgumentException("atomIndex and indicatorZ must have the same dimension.");
         }
 
-        final int B = indicatorZ.getDimension();
-        this.branchBuffer = new int[B];
-        for (int i = 0; i < B; i++) {
-            branchBuffer[i] = i;
+        this.branchCount = indicatorZ.getDimension();
+        if (branchCount != tree.getNodeCount() - 1) {
+            throw new IllegalArgumentException(
+                    "indicatorZ dimension must equal the number of non-root branches. Found dimension=" +
+                            branchCount + ", expected=" + (tree.getNodeCount() - 1)
+            );
         }
+
+        this.nodeNumberByParameterIndex = new int[branchCount];
+        this.candidateParameterBuffer = new int[branchCount];
+        this.borderParameterBuffer = new int[branchCount];
+        initializeBranchMappings();
 
         this.prePartial = new double[nstates];
         this.postPartial = new double[nstates];
-        this.atomicWeightsScratch = new double[nstates];
 
         this.logAtomicWeights = new double[nstates];
 
@@ -101,99 +123,134 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         return "RewardsMixtureIndicatorAndAtomIndicesOperator";
     }
 
+    private void initializeBranchMappings() {
+        Arrays.fill(nodeNumberByParameterIndex, -1);
+
+        int observedBranches = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final NodeRef node = tree.getNode(i);
+            if (tree.isRoot(node)) {
+                continue;
+            }
+
+            final int nodeNumber = node.getNumber();
+            final int parameterIndex = rewardsAwareBranchModel.getParameterIndexForNode(nodeNumber);
+            if (parameterIndex < 0 || parameterIndex >= branchCount) {
+                throw new IllegalArgumentException(
+                        "Invalid branch parameter index " + parameterIndex + " for node " + nodeNumber +
+                                "; branch parameter dimension is " + branchCount
+                );
+            }
+            if (nodeNumberByParameterIndex[parameterIndex] != -1) {
+                throw new IllegalArgumentException(
+                        "Multiple non-root nodes map to branch parameter index " + parameterIndex
+                );
+            }
+
+            nodeNumberByParameterIndex[parameterIndex] = nodeNumber;
+            observedBranches++;
+        }
+
+        if (observedBranches != branchCount) {
+            throw new IllegalArgumentException(
+                    "Observed " + observedBranches + " non-root branches, but indicatorZ dimension is " + branchCount
+            );
+        }
+        for (int i = 0; i < branchCount; i++) {
+            if (nodeNumberByParameterIndex[i] < 0) {
+                throw new IllegalArgumentException("No branch node maps to parameter index " + i);
+            }
+        }
+    }
+
     @Override
     public double doOperation() {
+
+        initializeBranchMappings();
 
         discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
         discreteDelegate.ensurePreOrderComputed();
 
-        final int B = indicatorZ.getDimension();
-        final int nToUpdate = 1; // TODO temporary
-//                Math.max(1, (int) Math.round(updateProportion * B));
+        final int nToUpdate = Math.max(1, Math.min(branchCount, (int) Math.round(updateProportion * branchCount)));
 
-        if (nToUpdate >= B) {
-            for (int b = 0; b < B; b++) {
-                resampleBranch(b);
+        if (nToUpdate >= branchCount) {
+            for (int parameterIndex = 0; parameterIndex < branchCount; parameterIndex++) {
+                resampleBranchByParameterIndex(parameterIndex);
             }
             atomIndex.fireParameterChangedEvent();
             indicatorZ.fireParameterChangedEvent();
             return 0.0;
         }
 
-        for (int i = 0; i < B; i++) {
-            branchBuffer[i] = i;
-        }
-        int branchNumber = chooseCandidateBranch(tree, indicatorZ);
-        int b = rewardsAwareBranchModel.getParameterIndexForNode(branchNumber);
-        branchBuffer[b] = branchNumber;
-        resampleBranch(b);
+        if (nToUpdate == 1) {
+            resampleBranchByParameterIndex(chooseCandidateParameterIndex());
+        } else {
+            for (int i = 0; i < branchCount; i++) {
+                candidateParameterBuffer[i] = i;
+            }
+            for (int i = 0; i < nToUpdate; i++) {
+                final int j = i + MathUtils.nextInt(branchCount - i);
+                final int tmp = candidateParameterBuffer[i];
+                candidateParameterBuffer[i] = candidateParameterBuffer[j];
+                candidateParameterBuffer[j] = tmp;
 
-//        for (int i = 0; i < nToUpdate; i++) {
-//            final int j = i + MathUtils.nextInt(B - i);
-//            final int tmp = branchBuffer[i];
-//            branchBuffer[i] = branchBuffer[j];
-//            branchBuffer[j] = tmp;
-//
-//            resampleBranch(branchBuffer[i]);
-//        }
+                resampleBranchByParameterIndex(candidateParameterBuffer[i]);
+            }
+        }
 
         atomIndex.fireParameterChangedEvent();
         indicatorZ.fireParameterChangedEvent();
 
         return 0.0;
     }
-    private void resampleBranch(final int b) {
 
-        if (b < 0 || b >= branchBuffer.length) {
-            throw new IllegalArgumentException("Branch index out of range: " + b);
+    private void resampleBranchByParameterIndex(final int parameterIndex) {
+
+        if (parameterIndex < 0 || parameterIndex >= branchCount) {
+            throw new IllegalArgumentException("Branch parameter index out of range: " + parameterIndex);
         }
-        if (b >= indicatorZ.getDimension()) {
-            throw new IllegalArgumentException("Branch index out of range for indicatorZ: " + b);
+        if (parameterIndex >= indicatorZ.getDimension()) {
+            throw new IllegalArgumentException("Branch parameter index out of range for indicatorZ: " + parameterIndex);
         }
-        if (b >= atomIndex.getDimension()) {
-            throw new IllegalArgumentException("Branch index out of range for atomIndex: " + b);
+        if (parameterIndex >= atomIndex.getDimension()) {
+            throw new IllegalArgumentException("Branch parameter index out of range for atomIndex: " + parameterIndex);
         }
 
-        final int branchNodeNumber = branchBuffer[b];
+        final int branchNodeNumber = nodeNumberByParameterIndex[parameterIndex];
 
-        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
-                computeBranchWeights(branchNodeNumber);
+        computeBranchWeightsInto(branchNodeNumber);
 
         final int newIndicator =
                 RewardsMixtureBranchResamplingHelper.sampleIndicatorFromLogs(
-                        weights.logAtomicTotalWeight,
-                        weights.logCtsWeight
+                        logAtomicTotalWeight,
+                        logCtsWeight
                 );
 
-        final int currentIndicator = (int) Math.round(indicatorZ.getParameterValue(b));
-        final int currentAtom = (int) Math.round(atomIndex.getParameterValue(b));
+        final int currentIndicator = (int) Math.round(indicatorZ.getParameterValue(parameterIndex));
+        final int currentAtom = (int) Math.round(atomIndex.getParameterValue(parameterIndex));
 
         if (newIndicator == 1) {
             final int newAtom =
                     RewardsMixtureBranchResamplingHelper.sampleAtomFromLogs(
-                            weights.logAtomicWeights,
+                            logAtomicWeights,
                             nstates
                     );
 
             // update atom index first, then indicator
             // so that when the branch becomes atomic it already has a valid state
             if (currentAtom != newAtom) {
-                atomIndex.setParameterValueQuietly(b, newAtom);
+                atomIndex.setParameterValueQuietly(parameterIndex, newAtom);
             }
             if (currentIndicator != 1) {
-                indicatorZ.setParameterValueQuietly(b, 1.0);
+                indicatorZ.setParameterValueQuietly(parameterIndex, 1.0);
             }
 
         } else {
             // continuous branch: keep atomIndex unchanged
             if (currentIndicator != 0) {
-                indicatorZ.setParameterValueQuietly(b, 0.0);
+                indicatorZ.setParameterValueQuietly(parameterIndex, 0.0);
             }
         }
-
-        // fire one event per parameter at the end
-        atomIndex.fireParameterChangedEvent();
-        indicatorZ.fireParameterChangedEvent();
     }
 
 
@@ -206,17 +263,11 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         discreteDelegate.getPreOrderAtBranchStartInto(nodeNum, prePartialOut);
         discreteDelegate.getPostOrderAtBranchEndInto(nodeNum, postPartialOut);
     }
-    private RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeights(int branchNodeNumber) {
+
+    private void computeBranchWeightsInto(int branchNodeNumber) {
 
         // Load normalized preorder/postorder branch messages
         loadBranchPartials(branchNodeNumber, prePartial, postPartial);
-
-        // Load associated log-scales
-        discreteDelegate.getPreOrderBranchScalesInto(branchNodeNumber, preScales);
-        discreteDelegate.getPostOrderBranchScalesInto(branchNodeNumber, postScales);
-
-        final double preScale = preScales[0];
-        final double postScale = postScales[0];
 
         // Atomic local factor: no-actual-jump mass = exp(Q_jj * t), state by state.
         final NodeRef node = tree.getNode(branchNodeNumber);
@@ -230,26 +281,22 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                     RewardsMixtureBranchResamplingHelper.logAtomicWeight(
                             prePartial[j],
                             postPartial[j],
-                            logAtomicLocalFactor,
-                            preScale,
-                            postScale
+                            logAtomicLocalFactor
                     );
         }
 
-        final double logAtomicTotalWeight =
+        logAtomicTotalWeight =
                 RewardsMixtureBranchResamplingHelper.logSum(logAtomicWeights, nstates);
 
         // Continuous weight
         final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
 
-        final double logCtsWeight =
+        logCtsWeight =
                 RewardsMixtureBranchResamplingHelper.logContinuousWeight(
                         prePartial,
                         continuousMatrix,
                         postPartial,
-                        nstates,
-                        preScale,
-                        postScale
+                        nstates
                 );
 
         if (!Double.isFinite(logAtomicTotalWeight) && !Double.isFinite(logCtsWeight)) {
@@ -258,55 +305,39 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                     .append(", continuous=").append(logCtsWeight)
                     .append(", branchNodeNumber=").append(branchNodeNumber)
                     .append(", branchLength=").append(branchLength)
-                    .append(", preScale=").append(preScale)
-                    .append(", postScale=").append(postScale)
                     .append(", prePartial=").append(java.util.Arrays.toString(prePartial))
                     .append(", postPartial=").append(java.util.Arrays.toString(postPartial))
                     .append(", logAtomicWeights=").append(java.util.Arrays.toString(logAtomicWeights));
             throw new IllegalStateException(sb.toString());
         }
-
-        return new RewardsMixtureBranchResamplingHelper.BranchWeights(
-                java.util.Arrays.copyOf(logAtomicWeights, nstates),
-                logAtomicTotalWeight,
-                logCtsWeight
-        );
     }
 
-    private final int[] borderBuffer;
-    private int borderCount = 0;
-
-    private void collectBorderBranches(Tree tree, Parameter indicatorZ) {
+    private void collectBorderBranches() {
         borderCount = 0;
 
-        for (int b = 0; b < tree.getNodeCount(); b++) {
-            NodeRef node = tree.getNode(b);
+        for (int parameterIndex = 0; parameterIndex < branchCount; parameterIndex++) {
+            final int nodeNumber = nodeNumberByParameterIndex[parameterIndex];
+            final NodeRef node = tree.getNode(nodeNumber);
 
-            if (tree.isRoot(node)) {
-                continue; // no branch above the root
-            }
-
-            final int zb = (int) indicatorZ.getParameterValue(b);
+            final int z = getIndicatorState(parameterIndex);
             boolean isBorder = false;
 
             // check parent-adjacent branch
-            NodeRef parent = tree.getParent(node);
+            final NodeRef parent = tree.getParent(node);
             if (parent != null && !tree.isRoot(parent)) {
-                int parentBranch = parent.getNumber();
-                int zParent = (int) indicatorZ.getParameterValue(parentBranch);
-                if (zParent != zb) {
+                final int parentParameterIndex = rewardsAwareBranchModel.getParameterIndexForNode(parent.getNumber());
+                if (getIndicatorState(parentParameterIndex) != z) {
                     isBorder = true;
                 }
             }
 
             // check child-adjacent branches
             if (!isBorder) {
-                int childCount = tree.getChildCount(node);
+                final int childCount = tree.getChildCount(node);
                 for (int i = 0; i < childCount; i++) {
-                    NodeRef child = tree.getChild(node, i);
-                    int childBranch = child.getNumber();
-                    int zChild = (int) indicatorZ.getParameterValue(childBranch);
-                    if (zChild != zb) {
+                    final NodeRef child = tree.getChild(node, i);
+                    final int childParameterIndex = rewardsAwareBranchModel.getParameterIndexForNode(child.getNumber());
+                    if (getIndicatorState(childParameterIndex) != z) {
                         isBorder = true;
                         break;
                     }
@@ -314,88 +345,36 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             }
 
             if (isBorder) {
-                borderBuffer[borderCount++] = b;
+                borderParameterBuffer[borderCount++] = parameterIndex;
             }
         }
     }
-    private int chooseCandidateBranch(Tree tree, Parameter indicatorZ) {
-        collectBorderBranches(tree, indicatorZ);
+
+    private int chooseCandidateParameterIndex() {
+        collectBorderBranches();
 
         // mostly choose from border, occasionally from all branches
         if (borderCount > 0 && MathUtils.nextDouble() < 0.5) {
-            return borderBuffer[MathUtils.nextInt(borderCount)];
+            return borderParameterBuffer[MathUtils.nextInt(borderCount)];
         }
 
         // fallback global draw for irreducibility
-        int b;
-        do {
-            b = MathUtils.nextInt(tree.getNodeCount());
-        } while (tree.isRoot(tree.getNode(b)));
-
-        return b;
+        return MathUtils.nextInt(branchCount);
     }
 
-//    private RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeights(
-//            final NodeRef node,
-//            final int nodeNum,
-//            final double[] prePartial,
-//            final double[] postPartial,
-//            final double[] atomicWeightsOut
-//    ) {
-//        Arrays.fill(atomicWeightsOut, 0.0);
-//
-//        computeAtomicWeightsForBranchInto(node, prePartial, postPartial, atomicWeightsOut);
-//
-//        double atomicTotal = 0.0;
-//        for (int j = 0; j < nstates; j++) {
-//            final double w = atomicWeightsOut[j];
-//            if (Double.isNaN(w) || Double.isInfinite(w) || w < 0.0) {
-//                throw new IllegalStateException("Invalid atomic weight at state " + j + ": " + w);
-//            }
-//            atomicTotal += w;
-//        }
-//
-//        final double ctsWeight = computeCtsWeightForBranch(nodeNum, prePartial, postPartial);
-//        if (Double.isNaN(ctsWeight) || Double.isInfinite(ctsWeight) || ctsWeight < 0.0) {
-//            throw new IllegalStateException("Invalid continuous weight: " + ctsWeight);
-//        }
-//        if (DEBUG) {
-//            System.out.println("Atomic weights: " + Arrays.toString(atomicWeightsScratch));
-//            System.out.println("Atomic weight: " + atomicTotal);
-//            System.out.println("Cts weight: " + ctsWeight);
-//        }
-//
-//        final double denom = atomicTotal + ctsWeight;
-//        if (!(denom > 0.0) || Double.isInfinite(denom)) {
-//            throw new IllegalStateException(
-//                    "Invalid total weight: atomic=" + atomicTotal + ", continuous=" + ctsWeight
-//            );
-//        }
-//
-//        return new RewardsMixtureBranchResamplingHelper.BranchWeights(
-//                atomicWeightsOut,
-//                atomicTotal,
-//                ctsWeight
-//        );
-//    }
-
-    private void computeAtomicWeightsForBranchInto(final NodeRef node,
-                                                   double[] prePartial,
-                                                   double[] postPartial,
-                                                   double[] atomicWeightsOut) {
-        final double branchLength = tree.getBranchLength(node);
-
-        for (int j = 0; j < nstates; j++) {
-            final double scale = Math.exp(rewardsAwareBranchModel.getAtomicLogScaleForState(j, branchLength));
-            atomicWeightsOut[j] = scale * prePartial[j] * postPartial[j];
+    private int getIndicatorState(final int parameterIndex) {
+        if (parameterIndex < 0 || parameterIndex >= indicatorZ.getDimension()) {
+            throw new IllegalArgumentException("Indicator parameter index out of range: " + parameterIndex);
         }
-    }
-
-    private double computeCtsWeightForBranch(final int nodeNum,
-                                             double[] prePartial,
-                                             double[] postPartial) {
-        final double[] W = rewardsAwareBranchModel.getTransitionMatrixCts(nodeNum);
-        return RewardsMixtureBranchResamplingHelper.bilinearFormStable(prePartial, W, postPartial, nstates);
+        final double raw = indicatorZ.getParameterValue(parameterIndex);
+        final int value = (int) Math.round(raw);
+        if (Math.abs(raw - value) > 1.0e-9 || (value != 0 && value != 1)) {
+            throw new IllegalArgumentException(
+                    "indicatorZ must contain 0/1 values, found " + raw +
+                            " at parameter index " + parameterIndex
+            );
+        }
+        return value;
     }
 
     @Override
@@ -442,6 +421,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
     @Override
     public String getReport() {
+        initializeBranchMappings();
+
         StringBuilder sb = new StringBuilder();
 
         final int dim = indicatorZ.getDimension();
@@ -454,6 +435,15 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         sb.append("RewardsMixtureIndicatorAndAtomIndicesOperator\n");
 
         sb.append("dimension: ").append(dim).append("\n");
+
+        sb.append("nodeNumberByParameterIndex: [");
+        for (int i = 0; i < dim; i++) {
+            if (i > 0) {
+                sb.append(" ");
+            }
+            sb.append(nodeNumberByParameterIndex[i]);
+        }
+        sb.append("]\n");
 
         sb.append("indicatorZ: [");
         for (int i = 0; i < dim; i++) {
@@ -552,9 +542,6 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                     .append((int) atomIndex.getParameterValue(i));
         }
         sb.append("]\n");
-
-//        sb.append("lastBranchIndex: ").append(lastBranchIndex).append("\n");
-//        sb.append("lastNodeNumber: ").append(lastNodeNumber).append("\n");
 
         sb.append("lastPrePartial: [");
         for (int i = 0; i < prePartial.length; i++) {

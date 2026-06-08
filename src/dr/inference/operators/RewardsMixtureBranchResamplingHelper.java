@@ -10,20 +10,6 @@ public final class RewardsMixtureBranchResamplingHelper {
         // no instances
     }
 
-    public static final class BranchWeights {
-        public final double[] logAtomicWeights;
-        public final double logAtomicTotalWeight;
-        public final double logCtsWeight;
-
-        public BranchWeights(final double[] logAtomicWeights,
-                             final double logAtomicTotalWeight,
-                             final double logCtsWeight) {
-            this.logAtomicWeights = logAtomicWeights;
-            this.logAtomicTotalWeight = logAtomicTotalWeight;
-            this.logCtsWeight = logCtsWeight;
-        }
-    }
-
     public static int sampleIndicatorFromLogs(final double logAtomicWeight,
                                               final double logCtsWeight) {
 
@@ -123,78 +109,26 @@ public final class RewardsMixtureBranchResamplingHelper {
         return acc;
     }
 
-//    public static double logAtomicWeight(final double pre,
-//                                         final double post,
-//                                         final double logLocalFactor,
-//                                         final double preScale,
-//                                         final double postScale) {
-//        if (!(pre > 0.0) || !(post > 0.0)) {
-//            return Double.NEGATIVE_INFINITY;
-//        }
-//        return Math.log(pre) + Math.log(post) + logLocalFactor + preScale + postScale;
-//    }
-
     public static double logAtomicWeight(final double pre,
                                          final double post,
-                                         final double logLocalFactor,
-                                         final double preScale,
-                                         final double postScale) {
+                                         final double logLocalFactor) {
         if (!(pre > 0.0) || !(post > 0.0)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-//        final double safePreScale = Double.isFinite(preScale) ? preScale : 0.0;
-//        final double safePostScale = Double.isFinite(postScale) ? postScale : 0.0;
-
         return Math.log(pre) + Math.log(post) + logLocalFactor;
-//        + safePreScale + safePostScale;
     }
 
     public static double logContinuousWeight(final double[] pre,
                                              final double[] D,
                                              final double[] post,
-                                             final int nstates,
-                                             final double preScale,
-                                             final double postScale) {
+                                             final int nstates) {
         final double inner = bilinearFormStable(pre, D, post, nstates);
         if (!(inner > 0.0) || Double.isNaN(inner)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-//        final double safePreScale = sanitizeScale(preScale, pre, nstates);
-//        final double safePostScale = sanitizeScale(postScale, post, nstates);
-
-//        if (!Double.isFinite(safePreScale) || !Double.isFinite(safePostScale)) {
-//            return Double.NEGATIVE_INFINITY;
-//        }
-
         return Math.log(inner);
-//        + safePreScale + safePostScale;
-    }
-
-//    public static double logContinuousWeight(final double[] pre,
-//                                             final double[] D,
-//                                             final double[] post,
-//                                             final int nstates,
-//                                             final double preScale,
-//                                             final double postScale) {
-//        final double inner = bilinearFormStable(pre, D, post, nstates);
-//        if (!(inner > 0.0) || Double.isNaN(inner)) {
-//            return Double.NEGATIVE_INFINITY;
-//        }
-//        return Math.log(inner) + preScale + postScale;
-//    }
-    private static double sanitizeScale(double scale, double[] partial, int nstates) {
-        if (Double.isFinite(scale)) {
-            return scale;
-        }
-
-        double sum = 0.0;
-        for (int i = 0; i < nstates; i++) {
-            sum += partial[i];
-        }
-
-        return sum > 0.0 ? 0.0 : Double.NEGATIVE_INFINITY;
     }
 
     public static double logSum(final double[] x, final int n) {

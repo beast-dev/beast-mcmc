@@ -1,0 +1,133 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="a"/>
+        <taxon id="b"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="binary">
+        <sequence>
+            <taxon idref="a"/>
+            0
+        </sequence>
+        <sequence>
+            <taxon idref="b"/>
+            1
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1" unique="false" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree">(a:0.9,b:0.9);</newick>
+
+    <treeModel id="treeModel">
+        <newick idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <frequencyModel id="binaryFreqModel" dataType="binary">
+        <frequencies>
+            <parameter id="binary.frequencies" value="0.5 0.5"/>
+        </frequencies>
+    </frequencyModel>
+
+    <complexSubstitutionModel id="twoStateModel" dataType="binary" normalized="false">
+        <frequencies>
+            <frequencyModel idref="binaryFreqModel"/>
+        </frequencies>
+        <rates>
+            <parameter id="twoStateRates" value="2.0 3.0"/>
+        </rates>
+    </complexSubstitutionModel>
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <complexSubstitutionModel idref="twoStateModel"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="siteModel.mu" value="1.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <arbitraryBranchRates id="reward.branchRates" reciprocal="false" exp="false" centerAtOne="false">
+        <rates>
+            <parameter id="rewardProportion" value="0.35 0.65" lower="0.0" upper="1.0"/>
+        </rates>
+        <treeModel idref="treeModel"/>
+    </arbitraryBranchRates>
+
+    <rewardsAwareBranchModel id="rewardAwareBranchModel" conditional="false">
+        <arbitraryBranchRates idref="reward.branchRates"/>
+        <complexSubstitutionModel idref="twoStateModel"/>
+        <indicator>
+            <parameter id="indicator" value="0.0 0.0"/>
+        </indicator>
+        <atomIndices>
+            <parameter id="atomIndices" value="0.0 1.0"/>
+        </atomIndices>
+        <rewardRates>
+            <values>
+                <parameter id="rewardRates" value="0.2 0.8"/>
+            </values>
+            <varyingValues>
+                <parameter id="rewardRatesInternal" dimension="0"/>
+            </varyingValues>
+            <stateIndices>
+                <parameter id="rewardRatesMapping" value="0.0 1.0"/>
+            </stateIndices>
+        </rewardRates>
+    </rewardsAwareBranchModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true" branchRateDerivative="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <rewardsAwareBranchModel idref="rewardAwareBranchModel"/>
+        <arbitraryBranchRates idref="reward.branchRates"/>
+    </treeDataLikelihood>
+
+    <rewardAwareBranchModelRewardRateGradient id="rewardRateGradient"
+                                              gradientCheckTolerance="1e-3"
+                                              numericStepSize="small">
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <rewardsAwareBranchModel idref="rewardAwareBranchModel"/>
+        <rewardRates>
+            <values>
+                <parameter idref="rewardRates"/>
+            </values>
+        </rewardRates>
+    </rewardAwareBranchModelRewardRateGradient>
+
+    <cachedReport id="rewardRateGradientReport">
+        <rewardAwareBranchModelRewardRateGradient idref="rewardRateGradient"/>
+    </cachedReport>
+
+    <assertEqual tolerance="1e-8" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check reward-aware branch-model gradient with respect to reward-rate values
+        </message>
+        <actual regex="analytic\s*:(.*?)\n">
+            <cachedReport idref="rewardRateGradientReport"/>
+        </actual>
+        <expected>
+            4.024147225510788, -3.0534426598596367
+        </expected>
+    </assertEqual>
+
+    <report>
+        <cachedReport idref="rewardRateGradientReport"/>
+    </report>
+
+</beast>

@@ -177,6 +177,45 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
+    public void testSericolaRewardRateAdjointMatchesFiniteDifferenceThroughValues() {
+        Fixture fixture = createFixture(
+                createTwoStateSubstitutionFixture(),
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0},
+                new double[]{0.2, 0.8}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.45;
+        double time = 0.9;
+        double[] upstream = new double[]{0.70, -0.25, 0.40, 1.10};
+        double[] rewardRateAdjoint = new double[fixture.rewardRateValues.getDimension()];
+
+        sericola.computePdfGradientWrtRewardRatesInto(
+                rewardProportion,
+                time,
+                upstream,
+                rewardRateAdjoint);
+
+        for (int p = 0; p < fixture.rewardRateValues.getDimension(); p++) {
+            double oldValue = fixture.rewardRateValues.getParameterValue(p);
+            double step = 1.0e-6;
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue + step);
+            double objectivePlus = sericolaObjective(sericola, rewardProportion, time, upstream);
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue - step);
+            double objectiveMinus = sericolaObjective(sericola, rewardProportion, time, upstream);
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue);
+
+            double finiteDifference = (objectivePlus - objectiveMinus) / (2.0 * step);
+            double tolerance = Math.max(2.0e-6, Math.abs(finiteDifference) * 5.0e-5);
+            assertEquals("reward-rate value " + p, finiteDifference, rewardRateAdjoint[p], tolerance);
+        }
+    }
+
     public void testVectorizedPdfWithSharedTimeMatchesScalarCalls() {
         Fixture fixture = createFixture(
                 new double[]{0.25, 0.75},
@@ -253,6 +292,17 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
             double[] indicatorValues,
             double[] atomValues) {
 
+        return createFixture(substitutionFixture, rewardProportionValues, indicatorValues, atomValues,
+                new double[]{0.0, 1.0});
+    }
+
+    private static Fixture createFixture(
+            SubstitutionFixture substitutionFixture,
+            double[] rewardProportionValues,
+            double[] indicatorValues,
+            double[] atomValues,
+            double[] rewardRateValueArray) {
+
         TreeModel tree = createTwoTipTree();
         SubstitutionModel substitutionModel = substitutionFixture.substitutionModel;
 
@@ -264,7 +314,7 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
                 false
         );
 
-        Parameter rewardRateValues = new Parameter.Default("rewardRates", new double[]{0.0, 1.0});
+        Parameter rewardRateValues = new Parameter.Default("rewardRates", rewardRateValueArray);
         Parameter rewardRateInternalValues = new Parameter.Default("rewardRatesInternal", new double[0]);
         Parameter rewardRateMapping = new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0});
         Parameter indicator = new Parameter.Default("indicator", indicatorValues);
@@ -282,7 +332,7 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
                 false
         );
 
-        return new Fixture(tree, branchModel, substitutionModel, substitutionFixture.rates);
+        return new Fixture(tree, branchModel, substitutionModel, substitutionFixture.rates, rewardRateValues);
     }
 
     private static double sericolaObjective(
@@ -426,16 +476,19 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         final RewardsAwareBranchModel branchModel;
         final SubstitutionModel substitutionModel;
         final Parameter substitutionRates;
+        final Parameter rewardRateValues;
 
         Fixture(
                 TreeModel tree,
                 RewardsAwareBranchModel branchModel,
                 SubstitutionModel substitutionModel,
-                Parameter substitutionRates) {
+                Parameter substitutionRates,
+                Parameter rewardRateValues) {
             this.tree = tree;
             this.branchModel = branchModel;
             this.substitutionModel = substitutionModel;
             this.substitutionRates = substitutionRates;
+            this.rewardRateValues = rewardRateValues;
         }
     }
 

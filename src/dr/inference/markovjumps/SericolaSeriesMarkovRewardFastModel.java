@@ -93,6 +93,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final Parameter rewardRatesMapping;  // state i -> index into rewardRatesValues
     private final double[] alphaVals;
     private final int[] idx;
+    private final double[] sortedRewardRateGradient;
 
     public SericolaSeriesMarkovRewardFastModel(
             SubstitutionModel underlyingSubstitutionModel,
@@ -157,6 +158,8 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         this.eigenSystem = new DefaultEigenSystem(dim);
         this.out = new double[dim2];
         this.conditionalOnZ0 = conditionalOnZ0; // TODO add this to the signature
+
+        this.sortedRewardRateGradient = new double[dim];
 
         addModel(underlyingSubstitutionModel);
         addVariable(rewardRatesValues);
@@ -634,6 +637,93 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         final int lambdaSource = lambdaSourceSortedIndex();
         final int originalState = perm[lambdaSource];
         infinitesimalMatrixGradient[originalState * dim + originalState] -= totalLambdaAdjoint;
+    }
+
+    public void computePdfGradientWrtRewardRatesInto(
+            double rewardProportion,
+            double branchLength,
+            double[] densityAdjoint,
+            double[] rewardRateGradient) {
+
+        if (densityAdjoint == null || densityAdjoint.length != dim2) {
+            throw new IllegalArgumentException("densityAdjoint must be length dim*dim=" + dim2);
+        }
+        if (rewardRateGradient == null || rewardRateGradient.length != rewardRatesValues.getDimension()) {
+            throw new IllegalArgumentException(
+                    "rewardRateGradient must be length rewardRatesValues.dimension=" +
+                            rewardRatesValues.getDimension());
+        }
+
+        final SericolaRewardDensityGradient gradient = gradientWorkspace();
+        computeSortedRewardRateGradientInto(
+                rewardProportion,
+                branchLength,
+                densityAdjoint,
+                gradient,
+                sortedRewardRateGradient);
+
+        Arrays.fill(rewardRateGradient, 0.0);
+        for (int sortedIndex = 0; sortedIndex < dim; ++sortedIndex) {
+            final int originalState = perm[sortedIndex];
+            final int rewardRateIndex = rewardRateValueIndexForState(originalState);
+            rewardRateGradient[rewardRateIndex] += sortedRewardRateGradient[sortedIndex];
+        }
+    }
+
+    private void computeSortedRewardRateGradientInto(
+            double rewardProportion,
+            double branchLength,
+            double[] densityAdjoint,
+            SericolaRewardDensityGradient gradient,
+            double[] sortedRewardRateGradient) {
+
+        if (branchLength <= 0.0) {
+            throw new IllegalArgumentException("branchLength must be > 0");
+        }
+        if (sortedRewardRateGradient == null || sortedRewardRateGradient.length != dim) {
+            throw new IllegalArgumentException("sortedRewardRateGradient must be length dim=" + dim);
+        }
+
+        ensureNumericsUpToDate();
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
+        if (workspace.isZero(0) || workspace.isOne(0)) {
+            throw new UnsupportedOperationException(
+                    "Reward-rate gradients at reward-rate breakpoints are not defined by the interior " +
+                            "reverse-mode convention. rewardProportion=" + rewardProportion +
+                            ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
+                            ", xh=" + workspace.xh(0));
+        }
+
+        ensureCForTime(branchLength, /*extraN=*/1);
+        final int N = cumulantMatrices.computedN() - 1;
+
+        gradient.computeWrtRewardRatesInto(
+                densityAdjoint,
+                h,
+                N,
+                branchLength,
+                lambda,
+                invAlphaDiff[h],
+                workspace.isZero(0),
+                workspace.isOne(0),
+                workspace.xh(0),
+                conditionalOnZ0,
+                P,
+                sortedAlpha,
+                cumulantMatrices,
+                sortedRewardRateGradient);
+    }
+
+    private int rewardRateValueIndexForState(int originalState) {
+        final double raw = rewardRatesMapping.getParameterValue(originalState);
+        final int index = (int) Math.round(raw);
+        if (Math.abs(raw - index) > 1.0e-10 || index < 0 || index >= rewardRatesValues.getDimension()) {
+            throw new IllegalArgumentException(
+                    "rewardRatesMapping[" + originalState + "]=" + raw +
+                            " is not a valid rewardRatesValues index");
+        }
+        return index;
     }
 
     private double[][] squareMatrix(final double[] matRowMajor) {

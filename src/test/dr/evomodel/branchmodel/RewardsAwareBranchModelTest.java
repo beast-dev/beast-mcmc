@@ -81,17 +81,29 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         Fixture fixture = createFixture(
                 new double[]{0.35, 0.65},
                 new double[]{1.0, 0.0},
-                new double[]{1.0, 0.0}
+                new double[]{0.0, 1.0}
         );
 
-        double[] matrix = fixture.branchModel.getTransitionMatrix(fixture.tree.getNode(0));
-        double expected = Math.exp(-fixture.branchModel.getUniformizationRate() *
-                fixture.tree.getBranchLength(fixture.tree.getNode(0)));
+        final int atomState = 0;
+        final double branchLength = fixture.tree.getBranchLength(fixture.tree.getNode(0));
+        final double[] infinitesimalMatrix = infinitesimalMatrix(fixture.substitutionModel);
+        final double expectedLogScale =
+                infinitesimalMatrix[atomState * fixture.branchModel.getStateCount() + atomState] * branchLength;
+        final double expected = Math.exp(expectedLogScale);
+        final double zeroUniformizationEventMass =
+                Math.exp(-fixture.branchModel.getUniformizationRate() * branchLength);
 
-        assertEquals(0.0, matrix[0], TOL);
+        assertTrue(Math.abs(expected - zeroUniformizationEventMass) > 1.0e-8);
+        assertEquals(expectedLogScale,
+                fixture.branchModel.getAtomicBranchLogScaleForState(fixture.tree.getNode(0).getNumber(), atomState),
+                TOL);
+
+        double[] matrix = fixture.branchModel.getTransitionMatrix(fixture.tree.getNode(0));
+
+        assertEquals(expected, matrix[0], TOL);
         assertEquals(0.0, matrix[1], TOL);
         assertEquals(0.0, matrix[2], TOL);
-        assertEquals(expected, matrix[3], TOL);
+        assertEquals(0.0, matrix[3], TOL);
     }
 
     public void testSericolaDerivativeMatchesFiniteDifference() {

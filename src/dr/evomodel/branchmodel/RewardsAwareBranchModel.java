@@ -94,6 +94,9 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final int[] branchIndexToNodeNr;
     private final int[] nodeNrToBranchIndex;
 
+    private final double[] infinitesimalMatrix;
+    private final double[] stateNoJumpLogRate;
+    private boolean noJumpLogRatesDirty = true;
     private final double[] atomicScale;
     private boolean atomicScalesDirty = true;
     private final int[] atomicNonZeroIndex;
@@ -144,6 +147,8 @@ public class RewardsAwareBranchModel extends AbstractModel
         this.times = new double[branchCount];
         this.Wpacked = new double[branchCount][];
 
+        this.infinitesimalMatrix = new double[dim2];
+        this.stateNoJumpLogRate = new double[nstates];
         this.atomicScale = new double[nodeCount];
         this.atomicNonZeroIndex = new int[nodeCount];
         Arrays.fill(this.atomicNonZeroIndex, -1);
@@ -260,15 +265,17 @@ public class RewardsAwareBranchModel extends AbstractModel
     private void computeAtomicScales() {
         if (!atomicScalesDirty) return;
 
-        final double lambda = sericola.getLambda();
+        ensureNoJumpLogRatesUpToDate();
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (tree.isRoot(node)) continue;
 
             final int nodeNr = node.getNumber();
+            final int paramIndex = getParameterIndexForNode(nodeNr);
+            final int atomState = getAtomStateForParameterIndex(paramIndex);
             final double t = tree.getBranchLength(node);
-            atomicScale[nodeNr] = Math.exp(-lambda * t);
+            atomicScale[nodeNr] = Math.exp(stateNoJumpLogRate[atomState] * t);
         }
 
         atomicScalesDirty = false;
@@ -278,7 +285,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         computeAtomicScales();
 
         final int paramIndex = getParameterIndexForNode(nodeNr);
-        final int atomState = (int) atomIndices.getParameterValue(paramIndex);
+        final int atomState = getAtomStateForParameterIndex(paramIndex);
         final int newIndex = atomState * nstates + atomState;
 
         final double[] matrix = Watomic[nodeNr];
@@ -349,12 +356,58 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public int getAtomicBranchState(int branchNodeNumber) {
         final int paramIndex = getParameterIndexForNode(branchNodeNumber);
-        return (int) atomIndices.getParameterValue(paramIndex);
+        return getAtomStateForParameterIndex(paramIndex);
     }
 
     public double getAtomicBranchScale(int branchNodeNumber) {
         computeAtomicScales();
         return atomicScale[branchNodeNumber];
+    }
+
+    public double getAtomicBranchLogScaleForState(int branchNodeNumber, int stateIndex) {
+        final NodeRef node = tree.getNode(branchNodeNumber);
+        if (tree.isRoot(node)) {
+            throw new IllegalArgumentException("Root node has no branch: " + branchNodeNumber);
+        }
+        return getAtomicLogScaleForState(stateIndex, tree.getBranchLength(node));
+    }
+
+    public double getAtomicLogScaleForState(int stateIndex, double branchLength) {
+        if (stateIndex < 0 || stateIndex >= nstates) {
+            throw new IllegalArgumentException("stateIndex out of range: " + stateIndex);
+        }
+        if (branchLength < 0.0) {
+            throw new IllegalArgumentException("branchLength must be non-negative: " + branchLength);
+        }
+        ensureNoJumpLogRatesUpToDate();
+        return stateNoJumpLogRate[stateIndex] * branchLength;
+    }
+
+    private void ensureNoJumpLogRatesUpToDate() {
+        if (!noJumpLogRatesDirty) return;
+
+        underlyingSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+        for (int state = 0; state < nstates; state++) {
+            final double qii = infinitesimalMatrix[state * nstates + state];
+            if (Double.isNaN(qii) || Double.isInfinite(qii) || qii > 1.0e-12) {
+                throw new IllegalStateException(
+                        "Invalid infinitesimal diagonal for no-jump atom at state " + state + ": " + qii);
+            }
+            stateNoJumpLogRate[state] = qii > 0.0 ? 0.0 : qii;
+        }
+
+        noJumpLogRatesDirty = false;
+    }
+
+    private int getAtomStateForParameterIndex(int paramIndex) {
+        final double raw = atomIndices.getParameterValue(paramIndex);
+        final int state = (int) Math.round(raw);
+        if (Math.abs(raw - state) > 1.0e-9 || state < 0 || state >= nstates) {
+            throw new IllegalArgumentException(
+                    "atomIndices must contain integer state indices in [0, " + (nstates - 1) +
+                            "], found " + raw + " at parameter index " + paramIndex);
+        }
+        return state;
     }
 
     // -------------------- Branch model mapping --------------------
@@ -385,7 +438,12 @@ public class RewardsAwareBranchModel extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (ignoreModelChangedEvent) return;
-        if (model == sericola || model == tree) {
+        if (model == sericola) {
+            invalidateNoJumpLogRates();
+            invalidateAtomicScales();
+            invalidateCtsMatrices();
+        }
+        if (model == tree) {
             invalidateAtomicScales();
             invalidateCtsMatrices();
         }
@@ -416,6 +474,9 @@ public class RewardsAwareBranchModel extends AbstractModel
     private boolean atomicScalesDirtyDuringProposal = false;
     private boolean storedAtomicScalesDirty;
 
+    private boolean noJumpLogRatesDirtyDuringProposal = false;
+    private boolean storedNoJumpLogRatesDirty;
+
     private void invalidateCtsMatrices() {
         ctsMatricesDirty = true;
         ctsMatricesDirtyDuringProposal = true;
@@ -423,6 +484,10 @@ public class RewardsAwareBranchModel extends AbstractModel
     private void invalidateAtomicScales() {
         atomicScalesDirty = true;
         atomicScalesDirtyDuringProposal = true;
+    }
+    private void invalidateNoJumpLogRates() {
+        noJumpLogRatesDirty = true;
+        noJumpLogRatesDirtyDuringProposal = true;
     }
 
     @Override
@@ -432,6 +497,9 @@ public class RewardsAwareBranchModel extends AbstractModel
 
         storedAtomicScalesDirty = atomicScalesDirty;
         atomicScalesDirtyDuringProposal = false;
+
+        storedNoJumpLogRatesDirty = noJumpLogRatesDirty;
+        noJumpLogRatesDirtyDuringProposal = false;
     }
 
     @Override
@@ -443,12 +511,16 @@ public class RewardsAwareBranchModel extends AbstractModel
 
         atomicScalesDirty = storedAtomicScalesDirty || atomicScalesDirtyDuringProposal;
         atomicScalesDirtyDuringProposal = false;
+
+        noJumpLogRatesDirty = storedNoJumpLogRatesDirty || noJumpLogRatesDirtyDuringProposal;
+        noJumpLogRatesDirtyDuringProposal = false;
     }
 
     @Override
     protected void acceptState() {
         ctsMatricesDirtyDuringProposal = false;
         atomicScalesDirtyDuringProposal = false;
+        noJumpLogRatesDirtyDuringProposal = false;
     }
 
     public int getStateCount() {

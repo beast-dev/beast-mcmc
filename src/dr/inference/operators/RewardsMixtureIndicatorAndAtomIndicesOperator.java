@@ -218,14 +218,14 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         final double preScale = preScales[0];
         final double postScale = postScales[0];
 
-        // Atomic local factor: no-jump mass = exp(-lambda * t)
+        // Atomic local factor: no-actual-jump mass = exp(Q_jj * t), state by state.
         final NodeRef node = tree.getNode(branchNodeNumber);
         final double branchLength = tree.getBranchLength(node);
-        final double lambda = rewardsAwareBranchModel.getUniformizationRate();
-        final double logAtomicLocalFactor = -lambda * branchLength;
 
         // Atomic weights by state
         for (int j = 0; j < nstates; j++) {
+            final double logAtomicLocalFactor =
+                    rewardsAwareBranchModel.getAtomicLogScaleForState(j, branchLength);
             logAtomicWeights[j] =
                     RewardsMixtureBranchResamplingHelper.logAtomicWeight(
                             prePartial[j],
@@ -258,7 +258,6 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                     .append(", continuous=").append(logCtsWeight)
                     .append(", branchNodeNumber=").append(branchNodeNumber)
                     .append(", branchLength=").append(branchLength)
-                    .append(", lambda=").append(lambda)
                     .append(", preScale=").append(preScale)
                     .append(", postScale=").append(postScale)
                     .append(", prePartial=").append(java.util.Arrays.toString(prePartial))
@@ -384,11 +383,10 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                                                    double[] prePartial,
                                                    double[] postPartial,
                                                    double[] atomicWeightsOut) {
-        final double uniformizationRate = rewardsAwareBranchModel.getUniformizationRate();
         final double branchLength = tree.getBranchLength(node);
-        final double scale = Math.exp(-uniformizationRate * branchLength);
 
         for (int j = 0; j < nstates; j++) {
+            final double scale = Math.exp(rewardsAwareBranchModel.getAtomicLogScaleForState(j, branchLength));
             atomicWeightsOut[j] = scale * prePartial[j] * postPartial[j];
         }
     }

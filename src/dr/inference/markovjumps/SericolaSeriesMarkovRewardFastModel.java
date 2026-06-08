@@ -78,6 +78,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final SericolaRewardDensityPdf rewardDensityPdf;
     private final SericolaRewardDensityDerivative rewardDensityDerivative;
     private final ThreadLocal<SericolaRewardDensityWorkspace> workspaces;
+    private ThreadLocal<SericolaRewardDensityGradient> gradientWorkspaces;
 
     // Exponential for conditional probabilities (optional)
     private final EigenSystem eigenSystem;
@@ -455,6 +456,78 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         return workspaces.get();
     }
 
+    private SericolaRewardDensityGradient gradientWorkspace() {
+        ThreadLocal<SericolaRewardDensityGradient> local = gradientWorkspaces;
+        if (local == null) {
+            synchronized (this) {
+                local = gradientWorkspaces;
+                if (local == null) {
+                    local = ThreadLocal.withInitial(
+                            () -> new SericolaRewardDensityGradient(dim, outRowBaseBySorted, outColBySorted));
+                    gradientWorkspaces = local;
+                }
+            }
+        }
+        return local.get();
+    }
+
+    private double computeSortedUniformizationGradientInto(
+            double rewardProportion,
+            double branchLength,
+            double[] densityAdjoint,
+            SericolaRewardDensityGradient gradient) {
+
+        if (branchLength <= 0.0) {
+            throw new IllegalArgumentException("branchLength must be > 0");
+        }
+
+        ensureNumericsUpToDate();
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
+
+        ensureCForTime(branchLength, /*extraN=*/1);
+        final int N = cumulantMatrices.computedN() - 1;
+
+        return gradient.computeWrtUniformizationMatrixInto(
+                densityAdjoint,
+                h,
+                N,
+                branchLength,
+                lambda,
+                invAlphaDiff[h],
+                workspace.isZero(0),
+                workspace.isOne(0),
+                workspace.xh(0),
+                conditionalOnZ0,
+                P,
+                sortedAlpha,
+                cumulantMatrices);
+    }
+
+    private void mapSortedMatrixToOriginal(double[] sortedMatrix, double[] originalMatrix) {
+        Arrays.fill(originalMatrix, 0.0);
+        for (int uS = 0; uS < dim; ++uS) {
+            final int originalRowBase = perm[uS] * dim;
+            final int sortedRowBase = uS * dim;
+            for (int vS = 0; vS < dim; ++vS) {
+                originalMatrix[originalRowBase + perm[vS]] = sortedMatrix[sortedRowBase + vS];
+            }
+        }
+    }
+
+    private int lambdaSourceSortedIndex() {
+        int source = 0;
+        double minDiag = sortedQ[0];
+        for (int i = 1; i < dim; ++i) {
+            final double d = sortedQ[i * dim + i];
+            if (d < minDiag) {
+                minDiag = d;
+                source = i;
+            }
+        }
+        return source;
+    }
+
     private double determineLambda(double[] QrowMajor) {
         double minDiag = QrowMajor[0];
         for (int i = 1; i < dim; ++i) {
@@ -485,6 +558,82 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
     public double getUniformizationRate() {
         return getLambda();
+    }
+
+    /**
+     * Reverse-mode adjoint of the continuous reward-density matrix with respect
+     * to the uniformized transition matrix P = I + Q / lambda.
+     *
+     * @return direct adjoint contribution with respect to lambda, excluding the
+     * chain-rule term through P.
+     */
+    public double computePdfGradientWrtUniformizationMatrixInto(
+            double rewardProportion,
+            double branchLength,
+            double[] densityAdjoint,
+            double[] uniformizationMatrixGradient) {
+
+        if (densityAdjoint == null || densityAdjoint.length != dim2) {
+            throw new IllegalArgumentException("densityAdjoint must be length dim*dim=" + dim2);
+        }
+        if (uniformizationMatrixGradient == null || uniformizationMatrixGradient.length != dim2) {
+            throw new IllegalArgumentException("uniformizationMatrixGradient must be length dim*dim=" + dim2);
+        }
+
+        final SericolaRewardDensityGradient gradient = gradientWorkspace();
+        final double directLambdaAdjoint = computeSortedUniformizationGradientInto(
+                rewardProportion,
+                branchLength,
+                densityAdjoint,
+                gradient);
+
+        mapSortedMatrixToOriginal(gradient.transitionMatrixAdjoint(), uniformizationMatrixGradient);
+        return directLambdaAdjoint;
+    }
+
+    public void computePdfGradientWrtInfinitesimalMatrixInto(
+            double rewardProportion,
+            double branchLength,
+            double[] densityAdjoint,
+            double[] infinitesimalMatrixGradient) {
+
+        if (densityAdjoint == null || densityAdjoint.length != dim2) {
+            throw new IllegalArgumentException("densityAdjoint must be length dim*dim=" + dim2);
+        }
+        if (infinitesimalMatrixGradient == null || infinitesimalMatrixGradient.length != dim2) {
+            throw new IllegalArgumentException("infinitesimalMatrixGradient must be length dim*dim=" + dim2);
+        }
+
+        final SericolaRewardDensityGradient gradient = gradientWorkspace();
+        final double directLambdaAdjoint = computeSortedUniformizationGradientInto(
+                rewardProportion,
+                branchLength,
+                densityAdjoint,
+                gradient);
+        final double[] sortedPAdjoint = gradient.transitionMatrixAdjoint();
+
+        double pQInnerProduct = 0.0;
+        for (int uv = 0; uv < dim2; ++uv) {
+            pQInnerProduct += sortedPAdjoint[uv] * sortedQ[uv];
+        }
+
+        final double totalLambdaAdjoint =
+                directLambdaAdjoint - pQInnerProduct / (lambda * lambda);
+        final double invLambda = 1.0 / lambda;
+
+        Arrays.fill(infinitesimalMatrixGradient, 0.0);
+        for (int uS = 0; uS < dim; ++uS) {
+            final int outRowBase = perm[uS] * dim;
+            final int sortedRowBase = uS * dim;
+            for (int vS = 0; vS < dim; ++vS) {
+                infinitesimalMatrixGradient[outRowBase + perm[vS]] +=
+                        invLambda * sortedPAdjoint[sortedRowBase + vS];
+            }
+        }
+
+        final int lambdaSource = lambdaSourceSortedIndex();
+        final int originalState = perm[lambdaSource];
+        infinitesimalMatrixGradient[originalState * dim + originalState] -= totalLambdaAdjoint;
     }
 
     private double[][] squareMatrix(final double[] matRowMajor) {

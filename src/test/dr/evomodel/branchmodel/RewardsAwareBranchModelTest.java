@@ -121,6 +121,50 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
+    public void testSericolaInfinitesimalMatrixAdjointMatchesFiniteDifferenceThroughRates() {
+        Fixture fixture = createFixtureWithSubstitutionRates(
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.45;
+        double time = 0.9;
+        double[] upstream = new double[]{0.70, -0.25, 0.40, 1.10};
+        double[] qAdjoint = new double[4];
+
+        sericola.computePdfGradientWrtInfinitesimalMatrixInto(
+                rewardProportion,
+                time,
+                upstream,
+                qAdjoint);
+
+        for (int p = 0; p < fixture.substitutionRates.getDimension(); p++) {
+            double oldValue = fixture.substitutionRates.getParameterValue(p);
+            double step = 1.0e-6 * Math.max(1.0, Math.abs(oldValue));
+
+            fixture.substitutionRates.setParameterValue(p, oldValue + step);
+            double objectivePlus = sericolaObjective(sericola, rewardProportion, time, upstream);
+            double[] qPlus = infinitesimalMatrix(fixture.substitutionModel);
+
+            fixture.substitutionRates.setParameterValue(p, oldValue - step);
+            double objectiveMinus = sericolaObjective(sericola, rewardProportion, time, upstream);
+            double[] qMinus = infinitesimalMatrix(fixture.substitutionModel);
+
+            fixture.substitutionRates.setParameterValue(p, oldValue);
+
+            double finiteDifference = (objectivePlus - objectiveMinus) / (2.0 * step);
+            double chainRule = 0.0;
+            for (int i = 0; i < qAdjoint.length; i++) {
+                chainRule += qAdjoint[i] * (qPlus[i] - qMinus[i]) / (2.0 * step);
+            }
+
+            double tolerance = Math.max(1.0e-6, Math.abs(finiteDifference) * 2.0e-5);
+            assertEquals("rate parameter " + p, finiteDifference, chainRule, tolerance);
+        }
+    }
+
     public void testVectorizedPdfWithSharedTimeMatchesScalarCalls() {
         Fixture fixture = createFixture(
                 new double[]{0.25, 0.75},
@@ -180,8 +224,25 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
     }
 
     private static Fixture createFixture(double[] rewardProportionValues, double[] indicatorValues, double[] atomValues) {
+        return createFixture(createTwoStateSubstitutionFixture(), rewardProportionValues, indicatorValues, atomValues);
+    }
+
+    private static Fixture createFixtureWithSubstitutionRates(
+            double[] rewardProportionValues,
+            double[] indicatorValues,
+            double[] atomValues) {
+
+        return createFixture(createTwoStateSubstitutionFixture(), rewardProportionValues, indicatorValues, atomValues);
+    }
+
+    private static Fixture createFixture(
+            SubstitutionFixture substitutionFixture,
+            double[] rewardProportionValues,
+            double[] indicatorValues,
+            double[] atomValues) {
+
         TreeModel tree = createTwoTipTree();
-        SubstitutionModel substitutionModel = createTwoStateSubstitutionModel();
+        SubstitutionModel substitutionModel = substitutionFixture.substitutionModel;
 
         Parameter rewardProportion = new Parameter.Default("rewardProportion", rewardProportionValues);
         ArbitraryBranchRates branchRates = new ArbitraryBranchRates(
@@ -209,7 +270,29 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
                 false
         );
 
-        return new Fixture(tree, branchModel);
+        return new Fixture(tree, branchModel, substitutionModel, substitutionFixture.rates);
+    }
+
+    private static double sericolaObjective(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double rewardProportion,
+            double time,
+            double[] upstream) {
+
+        double[] density = new double[upstream.length];
+        sericola.computePdfInto(rewardProportion, time, density);
+        double objective = 0.0;
+        for (int i = 0; i < density.length; i++) {
+            objective += upstream[i] * density[i];
+        }
+        return objective;
+    }
+
+    private static double[] infinitesimalMatrix(SubstitutionModel substitutionModel) {
+        int n = substitutionModel.getDataType().getStateCount();
+        double[] matrix = new double[n * n];
+        substitutionModel.getInfinitesimalMatrix(matrix);
+        return matrix;
     }
 
     private static void assertVectorizedPdfMatchesScalarCalls(
@@ -290,14 +373,14 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         return new DefaultTreeModel("rewardAwareTestTree", tree);
     }
 
-    private static SubstitutionModel createTwoStateSubstitutionModel() {
+    private static SubstitutionFixture createTwoStateSubstitutionFixture() {
         DataType dataType = TwoStates.INSTANCE;
         FrequencyModel frequencyModel = new FrequencyModel(dataType, new double[]{0.5, 0.5});
         Parameter rates = new Parameter.Default("twoStateRates", new double[]{2.0, 3.0});
         ComplexSubstitutionModel substitutionModel =
                 new ComplexSubstitutionModel("twoState", dataType, frequencyModel, rates);
         substitutionModel.setNormalization(false);
-        return substitutionModel;
+        return new SubstitutionFixture(substitutionModel, rates);
     }
 
     private static void assertFiniteNonNegative(double[] values) {
@@ -329,10 +412,28 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
     private static final class Fixture {
         final TreeModel tree;
         final RewardsAwareBranchModel branchModel;
+        final SubstitutionModel substitutionModel;
+        final Parameter substitutionRates;
 
-        Fixture(TreeModel tree, RewardsAwareBranchModel branchModel) {
+        Fixture(
+                TreeModel tree,
+                RewardsAwareBranchModel branchModel,
+                SubstitutionModel substitutionModel,
+                Parameter substitutionRates) {
             this.tree = tree;
             this.branchModel = branchModel;
+            this.substitutionModel = substitutionModel;
+            this.substitutionRates = substitutionRates;
+        }
+    }
+
+    private static final class SubstitutionFixture {
+        final SubstitutionModel substitutionModel;
+        final Parameter rates;
+
+        SubstitutionFixture(SubstitutionModel substitutionModel, Parameter rates) {
+            this.substitutionModel = substitutionModel;
+            this.rates = rates;
         }
     }
 }

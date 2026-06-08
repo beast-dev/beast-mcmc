@@ -44,6 +44,14 @@ public class SericolaCumulantMatricesTest extends TestCase {
             0.08, 0.83, 0.09,
             0.04, 0.19, 0.77
     };
+    private static final double[] INV_ALPHA_DIFF = inverseAlphaDiff();
+    private static final int[] OUT_ROW_BASE_BY_SORTED = {0, DIM, 2 * DIM};
+    private static final int[] OUT_COL_BY_SORTED = {0, 1, 2};
+    private static final double[] UPSTREAM_DENSITY_ADJOINT = {
+            0.70, -0.20, 0.30,
+            0.15, 0.90, -0.45,
+            -0.10, 0.25, 0.55
+    };
 
     public void testGrowthRecomputesConsistentCumulants() {
         SericolaCumulantMatrices cache = new SericolaCumulantMatrices(DIM);
@@ -106,6 +114,57 @@ public class SericolaCumulantMatricesTest extends TestCase {
 
         assertSecondDifferenceRow(cache, 1, 3);
         assertSecondDifferenceRow(cache, 2, 4);
+    }
+
+    public void testReverseUniformizationMatrixAdjointMatchesFiniteDifference() {
+        final double lambda = 1.35;
+        final double rewardProportion = 0.52;
+        final double time = 0.75;
+        final double step = 1.0e-6;
+
+        double[] transitionAdjoint = reverseUniformizationAdjoint(
+                TRANSITION_MATRIX,
+                lambda,
+                rewardProportion,
+                time,
+                UPSTREAM_DENSITY_ADJOINT);
+
+        for (int uv = 0; uv < DIM2; uv++) {
+            double[] plus = TRANSITION_MATRIX.clone();
+            double[] minus = TRANSITION_MATRIX.clone();
+            plus[uv] += step;
+            minus[uv] -= step;
+
+            double finiteDifference = (
+                    rewardDensityObjective(plus, lambda, rewardProportion, time, UPSTREAM_DENSITY_ADJOINT) -
+                            rewardDensityObjective(minus, lambda, rewardProportion, time, UPSTREAM_DENSITY_ADJOINT)) /
+                    (2.0 * step);
+
+            double tolerance = Math.max(5.0e-6, Math.abs(finiteDifference) * 5.0e-5);
+            assertEquals("P entry " + uv, finiteDifference, transitionAdjoint[uv], tolerance);
+        }
+    }
+
+    public void testReverseUniformizationRateAdjointMatchesFiniteDifference() {
+        final double lambda = 1.35;
+        final double rewardProportion = 0.52;
+        final double time = 0.75;
+        final double step = 1.0e-6;
+
+        double lambdaAdjoint = reverseUniformizationRateAdjoint(
+                TRANSITION_MATRIX,
+                lambda,
+                rewardProportion,
+                time,
+                UPSTREAM_DENSITY_ADJOINT);
+
+        double finiteDifference = (
+                rewardDensityObjective(TRANSITION_MATRIX, lambda + step, rewardProportion, time, UPSTREAM_DENSITY_ADJOINT) -
+                        rewardDensityObjective(TRANSITION_MATRIX, lambda - step, rewardProportion, time, UPSTREAM_DENSITY_ADJOINT)) /
+                (2.0 * step);
+
+        double tolerance = Math.max(5.0e-6, Math.abs(finiteDifference) * 5.0e-5);
+        assertEquals(finiteDifference, lambdaAdjoint, tolerance);
     }
 
     private static void assertSecondDifferenceRow(SericolaCumulantMatrices cache, int h, int n) {
@@ -177,5 +236,132 @@ public class SericolaCumulantMatricesTest extends TestCase {
 
     private static int validBlockCount(int maxN) {
         return PHI * (maxN + 1) * (maxN + 2) / 2;
+    }
+
+    private static double[] reverseUniformizationAdjoint(
+            double[] transitionMatrix,
+            double lambda,
+            double rewardProportion,
+            double time,
+            double[] densityAdjoint) {
+
+        SericolaRewardDensityGradient gradient = computeReverseGradient(
+                transitionMatrix,
+                lambda,
+                rewardProportion,
+                time,
+                densityAdjoint);
+        return gradient.transitionMatrixAdjoint().clone();
+    }
+
+    private static double reverseUniformizationRateAdjoint(
+            double[] transitionMatrix,
+            double lambda,
+            double rewardProportion,
+            double time,
+            double[] densityAdjoint) {
+
+        SericolaCumulantMatrices cache = new SericolaCumulantMatrices(DIM);
+        SericolaRewardDensityWorkspace workspace = new SericolaRewardDensityWorkspace(DIM, 1.0e-10);
+        int h = workspace.prepareDerivative(rewardProportion, SORTED_ALPHA, INV_ALPHA_DIFF);
+        int requiredN = workspace.determineNumberOfSteps(lambda, time) + 1;
+        cache.ensureForTime(time, requiredN, transitionMatrix, SORTED_ALPHA);
+
+        SericolaRewardDensityGradient gradient =
+                new SericolaRewardDensityGradient(DIM, OUT_ROW_BASE_BY_SORTED, OUT_COL_BY_SORTED);
+        return gradient.computeWrtUniformizationMatrixInto(
+                densityAdjoint,
+                h,
+                cache.computedN() - 1,
+                time,
+                lambda,
+                INV_ALPHA_DIFF[h],
+                workspace.isZero(0),
+                workspace.isOne(0),
+                workspace.xh(0),
+                false,
+                transitionMatrix,
+                SORTED_ALPHA,
+                cache);
+    }
+
+    private static SericolaRewardDensityGradient computeReverseGradient(
+            double[] transitionMatrix,
+            double lambda,
+            double rewardProportion,
+            double time,
+            double[] densityAdjoint) {
+
+        SericolaCumulantMatrices cache = new SericolaCumulantMatrices(DIM);
+        SericolaRewardDensityWorkspace workspace = new SericolaRewardDensityWorkspace(DIM, 1.0e-10);
+        int h = workspace.prepareDerivative(rewardProportion, SORTED_ALPHA, INV_ALPHA_DIFF);
+        int requiredN = workspace.determineNumberOfSteps(lambda, time) + 1;
+        cache.ensureForTime(time, requiredN, transitionMatrix, SORTED_ALPHA);
+
+        SericolaRewardDensityGradient gradient =
+                new SericolaRewardDensityGradient(DIM, OUT_ROW_BASE_BY_SORTED, OUT_COL_BY_SORTED);
+        gradient.computeWrtUniformizationMatrixInto(
+                densityAdjoint,
+                h,
+                cache.computedN() - 1,
+                time,
+                lambda,
+                INV_ALPHA_DIFF[h],
+                workspace.isZero(0),
+                workspace.isOne(0),
+                workspace.xh(0),
+                false,
+                transitionMatrix,
+                SORTED_ALPHA,
+                cache);
+        return gradient;
+    }
+
+    private static double rewardDensityObjective(
+            double[] transitionMatrix,
+            double lambda,
+            double rewardProportion,
+            double time,
+            double[] densityAdjoint) {
+
+        SericolaCumulantMatrices cache = new SericolaCumulantMatrices(DIM);
+        SericolaRewardDensityWorkspace workspace = new SericolaRewardDensityWorkspace(DIM, 1.0e-10);
+        int requiredN = workspace.determineNumberOfSteps(lambda, time) + 1;
+        cache.ensureForTime(time, requiredN, transitionMatrix, SORTED_ALPHA);
+
+        double[][] density = new double[][]{new double[DIM2]};
+        workspace.preparePdf(
+                new double[]{rewardProportion},
+                new double[]{time},
+                false,
+                lambda,
+                SORTED_ALPHA,
+                INV_ALPHA_DIFF);
+        new SericolaRewardDensityPdf(DIM, OUT_ROW_BASE_BY_SORTED, OUT_COL_BY_SORTED).accumulateInto(
+                density,
+                1,
+                cache.computedN() - 1,
+                lambda,
+                INV_ALPHA_DIFF,
+                cache,
+                workspace);
+
+        return dot(densityAdjoint, density[0]);
+    }
+
+    private static double dot(double[] left, double[] right) {
+        double sum = 0.0;
+        for (int i = 0; i < left.length; i++) {
+            sum += left[i] * right[i];
+        }
+        return sum;
+    }
+
+    private static double[] inverseAlphaDiff() {
+        double[] inverse = new double[DIM];
+        for (int h = 1; h < DIM; h++) {
+            inverse[h] = 1.0 / (SORTED_ALPHA[h] - SORTED_ALPHA[h - 1]);
+        }
+        return inverse;
     }
 }

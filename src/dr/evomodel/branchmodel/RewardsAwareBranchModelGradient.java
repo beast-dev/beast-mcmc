@@ -181,11 +181,15 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
     @Override
     public String getReport() {
+        StringBuilder sb = new StringBuilder();
         if (tolerance == null) {
-            return "Reward-aware branch-model gradient (no check tolerance specified).";
+            sb.append("Reward-aware branch-model gradient (no check tolerance specified).");
         } else {
-            return "Reward-aware branch-model gradient; check tolerance=" + tolerance;
+            sb.append("Reward-aware branch-model gradient; check tolerance=").append(tolerance);
         }
+        sb.append('\n');
+        sb.append("analytic: ").append(Arrays.toString(getGradientLogDensity())).append('\n');
+        return sb.toString();
     }
 
     public static String getGradientTraitName(String traitName) {

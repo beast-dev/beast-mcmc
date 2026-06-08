@@ -272,8 +272,6 @@ public class PriorSettingsPanel extends JPanel {
         repaint();
     }
 
-    NumberFormatter formatter = new NumberFormatter(4);
-
     void setupChart() {
         chart.removeAllPlots();
 
@@ -297,6 +295,8 @@ public class PriorSettingsPanel extends JPanel {
 
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
+            int sf = 5;
+            NumberFormatter formatter = new NumberFormatter(sf);
             quantileText.setText(formatter.format(distribution.quantile(0.025)) +
                     "\n" + formatter.format(distribution.quantile(0.05)) +
                     "\n" + formatter.format(distribution.quantile(0.5)) +

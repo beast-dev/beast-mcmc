@@ -121,6 +121,26 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         }
     }
 
+    public Parameter getIndicator() {
+        return indicator;
+    }
+
+    public Parameter getAtomIndices() {
+        return atomIndices;
+    }
+
+    public Parameter getRewardRatesValues() {
+        return rewardRatesValues;
+    }
+
+    public Parameter getRewardRatesInternal() {
+        return rewardRatesInternal;
+    }
+
+    public Parameter getRewardRatesMapping() {
+        return rewardRatesMapping;
+    }
+
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == indicator || variable == atomIndices ||

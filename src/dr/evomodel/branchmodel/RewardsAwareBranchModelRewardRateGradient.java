@@ -39,6 +39,7 @@ public final class RewardsAwareBranchModelRewardRateGradient
     private final BranchRateModel branchRateModel;
     private final SericolaSeriesMarkovRewardFastModel sericola;
     private final Parameter rewardRatesValues;
+    private final Parameter rewardRatesVaryingValues;
     private final Parameter indicator;
     private final int nstates;
 
@@ -57,6 +58,7 @@ public final class RewardsAwareBranchModelRewardRateGradient
             TreeDataLikelihood treeDataLikelihood,
             RewardsAwareBranchModel rewardsAwareBranchModel,
             Parameter rewardRatesValues,
+            Parameter rewardRatesVaryingValues,
             Double tolerance) {
 
         if (treeDataLikelihood == null) {
@@ -68,6 +70,11 @@ public final class RewardsAwareBranchModelRewardRateGradient
         if (rewardRatesValues == null) {
             throw new IllegalArgumentException("rewardRatesValues must be non-null");
         }
+        if (rewardRatesVaryingValues != null &&
+                rewardRatesVaryingValues.getDimension() != rewardRatesValues.getDimension() - 2) {
+            throw new IllegalArgumentException(
+                    "rewardRatesVaryingValues dimension must equal rewardRatesValues dimension - 2");
+        }
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.rewardsAwareBranchModel = rewardsAwareBranchModel;
@@ -75,6 +82,9 @@ public final class RewardsAwareBranchModelRewardRateGradient
         this.branchRateModel = rewardsAwareBranchModel.getRateBranchModel();
         this.sericola = rewardsAwareBranchModel.getSericolaModel();
         this.rewardRatesValues = rewardRatesValues;
+        this.rewardRatesVaryingValues = rewardRatesVaryingValues == null
+                ? rewardRatesValues
+                : rewardRatesVaryingValues;
         this.indicator = rewardsAwareBranchModel.getIndicator();
         this.nstates = rewardsAwareBranchModel.getStateCount();
         this.tolerance = tolerance;
@@ -106,12 +116,12 @@ public final class RewardsAwareBranchModelRewardRateGradient
 
     @Override
     public Parameter getParameter() {
-        return rewardRatesValues;
+        return rewardRatesVaryingValues;
     }
 
     @Override
     public int getDimension() {
-        return rewardRatesValues.getDimension();
+        return rewardRatesVaryingValues.getDimension();
     }
 
     @Override
@@ -137,7 +147,19 @@ public final class RewardsAwareBranchModelRewardRateGradient
             accumulateContinuousBranchGradient(node, nodeNumber);
         }
 
-        return gradientBuffer;
+        return compactGradientIfNeeded(gradientBuffer);
+    }
+
+    private double[] compactGradientIfNeeded(final double[] fullGradient) {
+        if (rewardRatesVaryingValues == rewardRatesValues) {
+            return fullGradient;
+        }
+
+        final double[] compact = new double[rewardRatesVaryingValues.getDimension()];
+        for (int i = 0; i < compact.length; i++) {
+            compact[i] = fullGradient[i + 2];
+        }
+        return compact;
     }
 
     private void accumulateContinuousBranchGradient(final NodeRef node, final int nodeNumber) {

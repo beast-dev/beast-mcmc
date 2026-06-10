@@ -1,10 +1,10 @@
 package dr.evomodelxml.branchratemodel;
 
+import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.RewardsAwareMixtureBranchRatesRewardRateGradient;
 import dr.inference.hmc.NumericGradientStepSizeProvider;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -35,36 +35,23 @@ public final class RewardsAwareMixtureBranchRatesRewardRateGradientParser extend
         final RewardsAwareMixtureBranchRates branchRateModel =
                 (RewardsAwareMixtureBranchRates) xo.getChild(RewardsAwareMixtureBranchRates.class);
 
-        final XMLObject rewardRatesObject = xo.getChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES);
-        if (rewardRatesObject == null) {
-            throw new XMLParseException("Must provide rewardRates.");
+        final RewardRates rewardRates = (RewardRates) xo.getChild(RewardRates.class);
+        if (rewardRates.getValues() != branchRateModel.getRewardRatesValues() ||
+                rewardRates.getVaryingValues() != branchRateModel.getRewardRatesInternal() ||
+                rewardRates.getStateIndices() != branchRateModel.getRewardRatesMapping()) {
+            throw new XMLParseException("rewardRates must reference the reward-rate parameters used by rewardsAwareMixtureBranchRates.");
         }
-
-        final Parameter rewardRatesValues = parseParameter(
-                rewardRatesObject,
-                RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES);
-        final Parameter rewardRatesVaryingValues = parseParameter(
-                rewardRatesObject,
-                RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES);
 
         final RewardsAwareMixtureBranchRatesRewardRateGradient gradient =
                 new RewardsAwareMixtureBranchRatesRewardRateGradient(
                         treeDataLikelihood,
                         branchRateModel,
-                        rewardRatesValues,
-                        rewardRatesVaryingValues,
+                        rewardRates.getValues(),
+                        rewardRates.getVaryingValues(),
                         tolerance);
 
         gradient.setNumericGradientStepSize(NumericGradientStepSizeProvider.parseStepSizeRatio(xo));
         return gradient;
-    }
-
-    private static Parameter parseParameter(XMLObject xo, String name) throws XMLParseException {
-        final Object child = xo.getElementFirstChild(name);
-        if (!(child instanceof Parameter)) {
-            throw new XMLParseException("rewardRates/" + name + " must contain a parameter.");
-        }
-        return (Parameter) child;
     }
 
     @Override
@@ -78,21 +65,12 @@ public final class RewardsAwareMixtureBranchRatesRewardRateGradientParser extend
 
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(RewardsAwareMixtureBranchRates.class),
-            new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES, new XMLSyntaxRule[]{
-                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES,
-                            new XMLSyntaxRule[]{
-                                    new ElementRule(Parameter.class)
-                            }),
-                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES,
-                            new XMLSyntaxRule[]{
-                                    new ElementRule(Parameter.class)
-                            })
-            })
+            new ElementRule(RewardRates.class)
     };
 
     @Override
     public String getParserDescription() {
-        return "Provides the dependent-process gradient with respect to free reward-rate values "
+        return "Provides the dependent-process gradient with respect to varying reward-rate values "
                 + "under RewardsAwareMixtureBranchRates.";
     }
 

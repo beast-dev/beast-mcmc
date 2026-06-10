@@ -1,7 +1,6 @@
 package dr.inferencexml.operators;
 
-import dr.evomodelxml.branchratemodel.RewardsAwareMixtureBranchRatesParser;
-import dr.inference.model.Parameter;
+import dr.evomodel.branchratemodel.RewardRates;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OneZeroOneShuffleOperator;
 import dr.xml.*;
@@ -9,9 +8,12 @@ import dr.xml.*;
 /**
  * <oneZeroOneShuffleOperator id="..." weight="..." tol="...">
  *   <rewardRates>
- *     <values>
- *       <parameter idref="ind.rewardRates.values"/>
- *     </values>
+ *     <fixedValues>
+ *       <parameter idref="ind.rewardRates.fixedValues"/>
+ *     </fixedValues>
+ *     <varyingValues>
+ *       <parameter idref="ind.rewardRates.varyingValues"/>
+ *     </varyingValues>
  *     <stateIndices>
  *       <parameter idref="ind.rewardRates.stateIndices"/>
  *     </stateIndices>
@@ -40,14 +42,14 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
         final double weight = xo.getDoubleAttribute(WEIGHT);
         final double tol = xo.hasAttribute(TOL) ? xo.getDoubleAttribute(TOL) : 0.0;
 
-        final XMLObject rewardRatesObj = xo.getChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES);
-        final Parameter rewardRatesValues = (Parameter)
-                rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES);
-        final Parameter rewardRatesMapping = (Parameter)
-                rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING);
+        final RewardRates rewardRates = (RewardRates) xo.getChild(RewardRates.class);
 
         final OneZeroOneShuffleOperator op =
-                new OneZeroOneShuffleOperator(rewardRatesValues, rewardRatesMapping, weight, tol);
+                new OneZeroOneShuffleOperator(
+                        rewardRates.getValues(),
+                        rewardRates.getStateIndices(),
+                        weight,
+                        tol);
 
         return op;
 
@@ -73,13 +75,6 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newDoubleRule(TOL, true),
 
-            new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES, new XMLSyntaxRule[]{
-                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    }),
-                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    })
-            })
+            new ElementRule(RewardRates.class)
     };
 }

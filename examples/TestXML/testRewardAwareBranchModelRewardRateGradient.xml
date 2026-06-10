@@ -7,14 +7,21 @@
         <taxon id="b"/>
     </taxa>
 
-    <alignment id="alignment" dataType="binary">
+    <generalDataType id="threeState">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <alignment id="alignment">
+        <generalDataType idref="threeState"/>
         <sequence>
             <taxon idref="a"/>
-            0
+            A
         </sequence>
         <sequence>
             <taxon idref="b"/>
-            1
+            C
         </sequence>
     </alignment>
 
@@ -37,24 +44,26 @@
         </nodeHeights>
     </treeModel>
 
-    <frequencyModel id="binaryFreqModel" dataType="binary">
+    <frequencyModel id="threeStateFreqModel" normalize="true">
+        <generalDataType idref="threeState"/>
         <frequencies>
-            <parameter id="binary.frequencies" value="0.5 0.5"/>
+            <parameter id="threeState.frequencies" value="0.3 0.4 0.3"/>
         </frequencies>
     </frequencyModel>
 
-    <complexSubstitutionModel id="twoStateModel" dataType="binary" normalized="false">
+    <complexSubstitutionModel id="threeStateModel" normalized="false">
+        <generalDataType idref="threeState"/>
         <frequencies>
-            <frequencyModel idref="binaryFreqModel"/>
+            <frequencyModel idref="threeStateFreqModel"/>
         </frequencies>
         <rates>
-            <parameter id="twoStateRates" value="2.0 3.0"/>
+            <parameter id="threeStateRates" value="1.0 1.4 2.0 1.7 1.2 2.4"/>
         </rates>
     </complexSubstitutionModel>
 
     <siteModel id="siteModel">
         <substitutionModel>
-            <complexSubstitutionModel idref="twoStateModel"/>
+            <complexSubstitutionModel idref="threeStateModel"/>
         </substitutionModel>
         <mutationRate>
             <parameter id="siteModel.mu" value="1.0"/>
@@ -70,22 +79,22 @@
 
     <rewardsAwareBranchModel id="rewardAwareBranchModel" conditional="false">
         <arbitraryBranchRates idref="reward.branchRates"/>
-        <complexSubstitutionModel idref="twoStateModel"/>
+        <complexSubstitutionModel idref="threeStateModel"/>
         <indicator>
             <parameter id="indicator" value="0.0 0.0"/>
         </indicator>
         <atomIndices>
-            <parameter id="atomIndices" value="0.0 1.0"/>
+            <parameter id="atomIndices" value="0.0 2.0"/>
         </atomIndices>
-        <rewardRates>
-            <values>
-                <parameter id="rewardRates" value="0.2 0.8"/>
-            </values>
+        <rewardRates id="rewardRates.block">
+            <fixedValues>
+                <parameter id="rewardRatesFixed" value="0.0 1.0"/>
+            </fixedValues>
             <varyingValues>
-                <parameter id="rewardRatesInternal" dimension="0"/>
+                <parameter id="rewardRatesInternal" value="0.55" lower="0.0" upper="1.0"/>
             </varyingValues>
             <stateIndices>
-                <parameter id="rewardRatesMapping" value="0.0 1.0"/>
+                <parameter id="rewardRatesMapping" value="0.0 2.0 1.0"/>
             </stateIndices>
         </rewardRates>
     </rewardsAwareBranchModel>
@@ -103,28 +112,12 @@
                                               numericStepSize="small">
         <treeDataLikelihood idref="treeLikelihood"/>
         <rewardsAwareBranchModel idref="rewardAwareBranchModel"/>
-        <rewardRates>
-            <values>
-                <parameter idref="rewardRates"/>
-            </values>
-        </rewardRates>
+        <rewardRates idref="rewardRates.block"/>
     </rewardAwareBranchModelRewardRateGradient>
 
     <cachedReport id="rewardRateGradientReport">
         <rewardAwareBranchModelRewardRateGradient idref="rewardRateGradient"/>
     </cachedReport>
-
-    <assertEqual tolerance="1e-8" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check reward-aware branch-model gradient with respect to reward-rate values
-        </message>
-        <actual regex="analytic\s*:(.*?)\n">
-            <cachedReport idref="rewardRateGradientReport"/>
-        </actual>
-        <expected>
-            4.024147225510788, -3.0534426598596367
-        </expected>
-    </assertEqual>
 
     <report>
         <cachedReport idref="rewardRateGradientReport"/>

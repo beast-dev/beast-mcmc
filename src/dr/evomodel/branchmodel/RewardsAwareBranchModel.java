@@ -30,6 +30,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModel;
@@ -62,6 +63,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     public static final String REWARDS_AWARE_BRANCH_MODEL = "RewardsAwareBranchModel";
 
     private final Parameter atomIndices;
+    private final RewardRates rewardRates;
     private final SubstitutionModel underlyingSubstitutionModel;
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
@@ -101,13 +103,30 @@ public class RewardsAwareBranchModel extends AbstractModel
     private boolean atomicScalesDirty = true;
     private final int[] atomicNonZeroIndex;
 
+    @Deprecated
     public RewardsAwareBranchModel(TreeModel tree,
                                    SubstitutionModel underlyingSubstitutionModel,
                                    Parameter rewardRatesValues,
                                    Parameter rewardRatesValuesInternal,
                                    Parameter rewardRatesMapping,
                                    Parameter indicator,
-                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewaerdsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                   Parameter atomIndices,
+                                   boolean conditional) {
+        this(tree,
+                underlyingSubstitutionModel,
+                new RewardRates(rewardRatesValues, null, rewardRatesValuesInternal, rewardRatesMapping),
+                indicator,
+                branchRateModel,
+                atomIndices,
+                conditional);
+    }
+
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   RewardRates rewardRates,
+                                   Parameter indicator,
+                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
                                    Parameter atomIndices,
                                    boolean conditional) {
 
@@ -116,8 +135,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         if (underlyingSubstitutionModel == null) {
             throw new IllegalArgumentException("RewardsAwareBranchModel must be provided with an underlying substitution model");
         }
-        if (rewardRatesMapping == null) throw new IllegalArgumentException("rewardRatesMapping must be non-null");
-        if (rewardRatesValues == null) throw new IllegalArgumentException("rewardRatesValues must be non-null");
+        if (rewardRates == null) throw new IllegalArgumentException("rewardRates must be non-null");
         if (branchRateModel == null) throw new IllegalArgumentException("branchRateModel must be non-null");
         if (indicator == null) throw new IllegalArgumentException("indicator must be non-null");
         if (atomIndices == null) throw new IllegalArgumentException("atomIndices must be non-null");
@@ -128,6 +146,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         this.branchRateModel = branchRateModel;
         this.indicator = indicator;
         this.atomIndices = atomIndices;
+        this.rewardRates = rewardRates;
 
         final int dim = branchRateModel.getRateParameter().getDimension();
         if (indicator.getDimension() != dim) {
@@ -156,9 +175,9 @@ public class RewardsAwareBranchModel extends AbstractModel
         final double epsilon = 1e-10;
         this.sericola = new SericolaSeriesMarkovRewardFastModel( //only for cts values
                 underlyingSubstitutionModel,
-                rewardRatesValues,
-                rewardRatesValuesInternal,
-                rewardRatesMapping,
+                rewardRates.getValues(),
+                rewardRates.getVaryingValues(),
+                rewardRates.getStateIndices(),
                 nstates,
                 epsilon,
                 conditional
@@ -210,11 +229,17 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public TreeModel getTree() { return tree; }
 
-//    public Parameter getRewardRates() { return rewardRates; }
+    public RewardRates getRewardRates() { return rewardRates; }
 
     public BranchRateModel getRateBranchModel() { return branchRateModel; }
 
     public SericolaSeriesMarkovRewardFastModel getSericolaModel() { return sericola; }
+
+    public Parameter getRewardRatesValues() { return rewardRates.getValues(); }
+
+    public Parameter getRewardRatesInternal() { return rewardRates.getVaryingValues(); }
+
+    public Parameter getRewardRatesMapping() { return rewardRates.getStateIndices(); }
 
     public double getUniformizationRate() {
         return sericola.getUniformizationRate();

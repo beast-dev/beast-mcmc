@@ -34,6 +34,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -317,15 +318,14 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         Parameter rewardRateValues = new Parameter.Default("rewardRates", rewardRateValueArray);
         Parameter rewardRateInternalValues = new Parameter.Default("rewardRatesInternal", new double[0]);
         Parameter rewardRateMapping = new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0});
+        RewardRates rewardRates = new RewardRates(rewardRateValues, null, rewardRateInternalValues, rewardRateMapping);
         Parameter indicator = new Parameter.Default("indicator", indicatorValues);
         Parameter atomIndices = new Parameter.Default("atomIndices", atomValues);
 
         RewardsAwareBranchModel branchModel = new RewardsAwareBranchModel(
                 tree,
                 substitutionModel,
-                rewardRateValues,
-                rewardRateInternalValues,
-                rewardRateMapping,
+                rewardRates,
                 indicator,
                 branchRates,
                 atomIndices,

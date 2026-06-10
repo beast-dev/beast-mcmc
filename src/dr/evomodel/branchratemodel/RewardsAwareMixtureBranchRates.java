@@ -26,11 +26,9 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
 
     private final Parameter indicator;
     private final Parameter atomIndices;
-    private final Parameter rewardRatesValues;
-    private final Parameter rewardRatesMapping;
-    private final Parameter rewardRatesInternal;
+    private final RewardRates rewardRates;
 
-
+    @Deprecated
     public RewardsAwareMixtureBranchRates(TreeModel tree,
                                           Parameter ctsParameter,
                                           Parameter indicator,
@@ -38,6 +36,24 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
                                           Parameter rewardRatesValues,
                                           Parameter rewardRatesInternal,
                                           Parameter rewardRatesMapping,
+                                          BranchRateTransform transform,
+                                          boolean setRates,
+                                          TreeParameterModel.Type includeRoot) {
+        this(tree,
+                ctsParameter,
+                indicator,
+                atomIndices,
+                new RewardRates(rewardRatesValues, null, rewardRatesInternal, rewardRatesMapping),
+                transform,
+                setRates,
+                includeRoot);
+    }
+
+    public RewardsAwareMixtureBranchRates(TreeModel tree,
+                                          Parameter ctsParameter,
+                                          Parameter indicator,
+                                          Parameter atomIndices,
+                                          RewardRates rewardRates,
                                           BranchRateTransform transform,
                                           boolean setRates,
                                           TreeParameterModel.Type includeRoot) {
@@ -51,21 +67,13 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         if (atomIndices == null) {
             throw new IllegalArgumentException("atomIndices must be non-null");
         }
-        if (rewardRatesValues == null) {
-            throw new IllegalArgumentException("rewardRatesValues must be non-null");
-        }
-        if (rewardRatesMapping == null) {
-            throw new IllegalArgumentException("rewardRatesMapping must be non-null");
-        }
-        if (rewardRatesInternal == null) {
-            throw new IllegalArgumentException("rewardRatesInternal must be non-null");
+        if (rewardRates == null) {
+            throw new IllegalArgumentException("rewardRates must be non-null");
         }
 
         this.indicator = indicator;
         this.atomIndices = atomIndices;
-        this.rewardRatesValues = rewardRatesValues;
-        this.rewardRatesInternal = rewardRatesInternal;
-        this.rewardRatesMapping = rewardRatesMapping;
+        this.rewardRates = rewardRates;
 
         final int expected = ctsParameter.getDimension();
 
@@ -82,9 +90,9 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
 
         addVariable(indicator);
         addVariable(atomIndices);
-        addVariable(rewardRatesValues);
-        addVariable(rewardRatesInternal);
-        addVariable(rewardRatesMapping);
+        addVariable(rewardRates.getValues());
+        addVariable(rewardRates.getVaryingValues());
+        addVariable(rewardRates.getStateIndices());
     }
 
     @Override
@@ -93,7 +101,8 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
 
         if (isOne(indicator.getParameterValue(p))) {
             final int stateIndex = (int) atomIndices.getParameterValue(p);
-            return rewardRatesValues.getParameterValue((int) rewardRatesMapping.getParameterValue(stateIndex));
+            final int rewardRateIndex = (int) rewardRates.getStateIndices().getParameterValue(stateIndex);
+            return rewardRates.getValues().getParameterValue(rewardRateIndex);
         } else {
             return super.getUntransformedBranchRate(tree, node);
         }
@@ -129,23 +138,27 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         return atomIndices;
     }
 
+    public RewardRates getRewardRates() {
+        return rewardRates;
+    }
+
     public Parameter getRewardRatesValues() {
-        return rewardRatesValues;
+        return rewardRates.getValues();
     }
 
     public Parameter getRewardRatesInternal() {
-        return rewardRatesInternal;
+        return rewardRates.getVaryingValues();
     }
 
     public Parameter getRewardRatesMapping() {
-        return rewardRatesMapping;
+        return rewardRates.getStateIndices();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == indicator || variable == atomIndices ||
-                variable == rewardRatesValues || variable == rewardRatesInternal ||
-                variable == rewardRatesMapping) {
+                variable == rewardRates.getValues() || variable == rewardRates.getVaryingValues() ||
+                variable == rewardRates.getStateIndices()) {
             fireModelChanged();
         } else {
             super.handleVariableChangedEvent(variable, index, type);

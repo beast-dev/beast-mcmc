@@ -1,6 +1,7 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -18,10 +19,6 @@ public final class RewardsAwareMixtureBranchRatesParser extends AbstractXMLObjec
     public static final String INDICATOR = "indicator";
     public static final String INCLUDE_ROOT = "includeRoot";
     public static final String ATOMS_INDICES = "atomIndices";
-    public static final String REWARD_RATES = "rewardRates";
-    public static final String REWARD_RATES_VALUES = "values";
-    public static final String REWARD_RATES_VARYING_VALUES = "varyingValues";
-    public static final String REWARD_RATES_MAPPING = "stateIndices";
 
     @Override
     public String getParserName() { return NAME; }
@@ -39,18 +36,7 @@ public final class RewardsAwareMixtureBranchRatesParser extends AbstractXMLObjec
 
         Parameter atomIndices = (Parameter) atomicObj.getElementFirstChild(ATOMS_INDICES);
 
-        XMLObject rewardsRatesObj = atomicObj.getChild(REWARD_RATES);
-        Parameter rewardRatesValues = (Parameter) rewardsRatesObj.getElementFirstChild(REWARD_RATES_VALUES);
-        validateRewardRatesValues(rewardRatesValues);
-        Parameter rewardRatesVaryingValues = (Parameter) rewardsRatesObj.getElementFirstChild(REWARD_RATES_VARYING_VALUES);
-        Parameter rewardRatesMapping = (Parameter) rewardsRatesObj.getElementFirstChild(REWARD_RATES_MAPPING);
-        validatePermutation(rewardRatesMapping);
-        if (rewardRatesValues.getDimension() != rewardRatesMapping.getDimension()) {
-            throw new XMLParseException("rewardRates values dim must match the number of states indicated by rewardRates mapping dim");
-        }
-        if (rewardRatesVaryingValues.getDimension() != rewardRatesValues.getDimension() - 2) {
-            throw new XMLParseException("rewardRates varying values dim must match the number of states minus 2");
-        }
+        RewardRates rewardRates = (RewardRates) atomicObj.getChild(RewardRates.class);
 
         TreeParameterModel.Type includeRoot = xo.getAttribute(INCLUDE_ROOT, false)
                 ? TreeParameterModel.Type.WITH_ROOT
@@ -70,63 +56,7 @@ public final class RewardsAwareMixtureBranchRatesParser extends AbstractXMLObjec
         final ArbitraryBranchRates.BranchRateTransform transform = ArbitraryBranchRatesParser.parseTransform(xo);
 
         return new RewardsAwareMixtureBranchRates(tree, cts, indicator, atomIndices,
-                rewardRatesValues, rewardRatesVaryingValues, rewardRatesMapping,
-                transform, false, includeRoot);
-    }
-
-    public static void validatePermutation(Parameter mapping) throws XMLParseException {
-        final int K = mapping.getDimension();
-        final boolean[] seen = new boolean[K];
-
-        for (int i = 0; i < K; i++) {
-            double v = mapping.getParameterValue(i);
-
-            // check integer-like
-            int idx = (int) Math.round(v);
-            if (Math.abs(v - idx) > 1e-10) {
-                throw new XMLParseException("rewardRatesMapping must contain integer values.");
-            }
-
-            // check bounds
-            if (idx < 0 || idx >= K) {
-                throw new XMLParseException("rewardRatesMapping entries must be in [0, " + (K - 1) + "].");
-            }
-
-            // check uniqueness
-            if (seen[idx]) {
-                throw new XMLParseException("rewardRatesMapping contains duplicate value: " + idx);
-            }
-
-            seen[idx] = true;
-        }
-
-        // optional: this is redundant but makes intent explicit
-        for (int i = 0; i < K; i++) {
-            if (!seen[i]) {
-                throw new XMLParseException("rewardRatesMapping is missing value: " + i);
-            }
-        }
-    }
-
-    private static void validateRewardRatesValues(Parameter values) throws XMLParseException {
-        final int K = values.getDimension();
-
-        if (K < 2) {
-            throw new XMLParseException("rewardRatesValues must have dimension at least 2 (for 0 and 1).");
-        }
-
-        final double tol = 1e-10;
-
-        double v0 = values.getParameterValue(0);
-        double v1 = values.getParameterValue(1);
-
-        if (Math.abs(v0 - 0.0) > tol) {
-            throw new XMLParseException("rewardRatesValues[0] must be 0, found: " + v0);
-        }
-
-        if (Math.abs(v1 - 1.0) > tol) {
-            throw new XMLParseException("rewardRatesValues[1] must be 1, found: " + v1);
-        }
+                rewardRates, transform, false, includeRoot);
     }
 
     @Override
@@ -154,17 +84,7 @@ public final class RewardsAwareMixtureBranchRatesParser extends AbstractXMLObjec
                         new ElementRule(ATOMS_INDICES, new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class)
                         }),
-                        new ElementRule(REWARD_RATES, new XMLSyntaxRule[] {
-                                new ElementRule(REWARD_RATES_VALUES, new XMLSyntaxRule[] {
-                                        new ElementRule(Parameter.class)
-                                }),
-                                new ElementRule(REWARD_RATES_VARYING_VALUES, new XMLSyntaxRule[] {
-                                        new ElementRule(Parameter.class)
-                                }),
-                                new ElementRule(REWARD_RATES_MAPPING, new XMLSyntaxRule[] {
-                                        new ElementRule(Parameter.class)
-                                })
-                        })
+                        new ElementRule(RewardRates.class)
                 }),
 
                 AttributeRule.newBooleanRule(INCLUDE_ROOT, true),

@@ -78,9 +78,9 @@
             <parameter id="atomIndices" value="0.0 1.0"/>
         </atomIndices>
         <rewardRates>
-            <values>
-                <parameter id="rewardRates" value="0.0 1.0"/>
-            </values>
+            <fixedValues>
+                <parameter id="rewardRatesFixed" value="0.0 1.0"/>
+            </fixedValues>
             <varyingValues>
                 <parameter id="rewardRatesInternal" dimension="0"/>
             </varyingValues>

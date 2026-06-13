@@ -29,7 +29,7 @@ package dr.evomodelxml.birthdeath;
 
 import dr.evolution.util.Units;
 import dr.evomodel.birthdeath.BirthDeathEpisodicSeriallySampledModel;
-import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.BirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;

@@ -1,7 +1,7 @@
 /*
  * BirthDeathSerialSkylineModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,13 +25,13 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 

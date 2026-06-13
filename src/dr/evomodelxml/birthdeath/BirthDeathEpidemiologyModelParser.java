@@ -28,7 +28,7 @@
 package dr.evomodelxml.birthdeath;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.BirthDeathSerialSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -40,6 +40,7 @@ import java.util.logging.Logger;
  * @author Tanja Stadler
  * @author Alexei Drummond
  * @author Joseph Heled
+ * @deprecated
  */
 public class BirthDeathEpidemiologyModelParser extends AbstractXMLObjectParser {
 

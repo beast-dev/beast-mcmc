@@ -28,8 +28,8 @@
 package dr.evomodelxml.birthdeath;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
-import dr.evomodel.speciation.BirthDeathSerialSkylineModel;
+import dr.evomodel.birthdeath.BirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.BirthDeathSerialSkylineModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
+ * @deprecated
  */
 public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser {
 

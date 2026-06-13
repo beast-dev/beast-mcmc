@@ -29,7 +29,8 @@ package dr.evomodel.speciation;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -57,8 +58,8 @@ import static org.apache.commons.math.special.Gamma.logGamma;
  * @author Joseph Heled
  *         Date: 24/02/2008
  */
-public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
-        implements SpeciationModelGradientProvider, Citable {
+public class Gernhard08BirthDeathModel extends UltrametricSpeciationModel
+        implements BirthDeathModelGradientProvider, Citable {
 
     public enum TreeType {
         UNSCALED,     // no coefficient 
@@ -67,7 +68,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
         LABELED,      // 2^(n-1)/(n-1)!  (conditional on root: 2^(n-1)/n!(n-1) )
     }
 
-    public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
+    public static final String BIRTH_DEATH_MODEL = Gernhard08BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
     /*
      * mu/lambda
@@ -91,7 +92,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
      * rho *
      */
 
-    public BirthDeathGernhard08Model(Parameter birthDiffRateParameter,
+    public Gernhard08BirthDeathModel(Parameter birthDiffRateParameter,
                                      Parameter relativeDeathRateParameter,
                                      Parameter sampleProbability,
                                      TreeType type,
@@ -100,7 +101,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
         this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, sampleProbability, type, units, false);
     }
 
-    public BirthDeathGernhard08Model(String modelName,
+    public Gernhard08BirthDeathModel(String modelName,
                                      Parameter birthDiffRateParameter,
                                      Parameter relativeDeathRateParameter,
                                      Parameter sampleProbability,
@@ -133,7 +134,7 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
         this.type = type;
     }
 
-    public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
+    public BirthDeathModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
         return this;
     }
 

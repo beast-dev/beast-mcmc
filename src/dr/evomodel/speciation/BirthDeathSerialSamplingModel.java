@@ -44,6 +44,7 @@ import java.util.Set;
  * Beginning of tree prior for birth-death + serial sampling + extant sample proportion. More Tanja magic...
  *
  * @author Alexei Drummond
+ * @deprecated
  */
 public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel implements Citable {
 

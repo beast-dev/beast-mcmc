@@ -47,6 +47,8 @@ import java.util.Set;
  * unclear marked with todo
  *
  * @author Alexei Drummond
+ *
+ * @deprecated
  */
 public class BirthDeathSerialSkylineModel extends SpeciationModel {
 

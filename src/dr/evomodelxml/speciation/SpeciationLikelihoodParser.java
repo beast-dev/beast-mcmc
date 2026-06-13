@@ -32,7 +32,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.CalibrationPoints;
-import dr.evomodel.speciation.EfficientSpeciationLikelihood;
+import dr.evomodel.birthdeath.EfficientBirthDeathLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.distribution.DistributionLikelihood;
@@ -193,13 +193,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        boolean useNewLoop = xo.getAttribute(USE_NEW_LOOP, false);
-
-        if (useNewLoop) {
-            return new EfficientSpeciationLikelihood(tree, specModel, excludeTaxa, null);
-        } else {
-            return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
-        }
+        return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
     }
 
     //************************************************************************

@@ -1,7 +1,7 @@
 /*
  * BirthDeathEpisodicSeriallySampledModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,19 +25,12 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.util.Citable;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -47,7 +40,7 @@ import java.util.Set;
  *
  * @author Andy Magee
  */
-public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel implements SpeciationModelGradientProvider{
+public class BirthDeathEpisodicSeriallySampledModel extends BirthDeathModel implements BirthDeathModelGradientProvider {
 
 
     // extant sampling proportion
@@ -120,7 +113,7 @@ public class BirthDeathEpisodicSeriallySampledModel extends SpeciationModel impl
                 originTime, numIntervals, gridEnd, units);
     }
 
-    public SpeciationModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
+    public BirthDeathModelGradientProvider getProvider() { // This is less INTRUSIVE to the exisiting file
         return this;
     }
 

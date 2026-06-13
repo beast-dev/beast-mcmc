@@ -1,7 +1,7 @@
 /*
  * MasBirthDeathSerialSamplingModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.inference.model.Parameter;
 

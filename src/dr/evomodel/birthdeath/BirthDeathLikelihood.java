@@ -25,13 +25,11 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -48,43 +46,38 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class SpeciationLikelihood extends AbstractModelLikelihood implements Reportable, Units {
+public class BirthDeathLikelihood extends AbstractModelLikelihood implements Reportable, Units {
 
     // PUBLIC STUFF
     /**
      * @param tree            the tree
-     * @param speciationModel the model of speciation
+     * @param birthDeathModel the model of birth-death
      * @param id              a unique identifier for this likelihood
      * @param exclude         taxa to exclude from this model
      */
-    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
-        this(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, tree, speciationModel, exclude);
+    public BirthDeathLikelihood(Tree tree, BirthDeathModel birthDeathModel, Set<Taxon> exclude, String id) {
+        this("birthDeathLikelihood", tree, birthDeathModel, exclude);
         setId(id);
     }
 
-    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
-        this(tree, speciationModel, null, id);
+    public BirthDeathLikelihood(Tree tree, BirthDeathModel birthDeathModel, String id) {
+        this(tree, birthDeathModel, null, id);
     }
 
-    public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
+    public BirthDeathLikelihood(String name, Tree tree, BirthDeathModel birthDeathModel, Set<Taxon> exclude) {
 
         super(name);
 
         this.tree = tree;
-        this.speciationModel = speciationModel;
+        this.birthDeathModel = birthDeathModel;
         this.exclude = exclude;
 
         if (tree instanceof Model) {
             addModel((Model) tree);
         }
-        if (speciationModel != null) {
-            addModel(speciationModel);
+        if (birthDeathModel != null) {
+            addModel(birthDeathModel);
         }
-    }
-
-    public SpeciationLikelihood(Tree tree, SpeciationModel specModel, String id, CalibrationPoints calibration) {
-        this(tree, specModel, id);
-        this.calibration = calibration;
     }
 
     // **************************************************************
@@ -155,20 +148,16 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
     double calculateLogLikelihood() {
 
         if (exclude != null) {
-            return speciationModel.calculateTreeLogLikelihood(tree, exclude);
+            return birthDeathModel.calculateTreeLogLikelihood(tree, exclude);
         }
 
-        if ( calibration != null ) {
-            return speciationModel.calculateTreeLogLikelihood(tree, calibration);
-        }
-
-        return speciationModel.calculateTreeLogLikelihood(tree);
+        return birthDeathModel.calculateTreeLogLikelihood(tree);
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
     public BirthDeathModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {
-            gradientProvider = speciationModel.getProvider();
+            gradientProvider = birthDeathModel.getProvider();
         }
         return gradientProvider;
     }
@@ -194,9 +183,9 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
 
     @Override
     public String getReport() {
-        String report = "SpeciationLikelihoodReport:\n" +
-                "Model: " + speciationModel.getModelName() + "\n" +
-                "ID: " + speciationModel.getId() + "\n" +
+        String report = "BirthDeathLikelihoodReport:\n" +
+                "Model: " + birthDeathModel.getModelName() + "\n" +
+                "ID: " + birthDeathModel.getId() + "\n" +
                 "lnL: " + calculateLogLikelihood();
         return report;
     }
@@ -211,8 +200,8 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
         }
     }
 
-    public SpeciationModel getSpeciationModel() {
-        return speciationModel;
+    public BirthDeathModel getBirthDeathModel() {
+        return birthDeathModel;
     }
 
     // **************************************************************
@@ -224,7 +213,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
      * measured in.
      */
     public final void setUnits(Type u) {
-        speciationModel.setUnits(u);
+        birthDeathModel.setUnits(u);
     }
 
     /**
@@ -232,16 +221,16 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
      * measured in.
      */
     public final Type getUnits() {
-        return speciationModel.getUnits();
+        return birthDeathModel.getUnits();
     }
 
     @Override
     public String prettyName() {
-        String s = speciationModel.getClass().getName();
+        String s = birthDeathModel.getClass().getName();
         String[] parts = s.split("\\.");
         s = parts[parts.length - 1];
-        if( speciationModel.getId() != null ) {
-           s = s + '/' + speciationModel.getId();
+        if( birthDeathModel.getId() != null ) {
+           s = s + '/' + birthDeathModel.getId();
         }
         s = s + '(' + tree.getId() + ')';
         return s;
@@ -253,15 +242,13 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
     /**
      * The speciation model.
      */
-    final SpeciationModel speciationModel;
+    final BirthDeathModel birthDeathModel;
 
     /**
      * The tree.
      */
     Tree tree;
     private final Set<Taxon> exclude;
-
-    private CalibrationPoints calibration;
 
     private double logLikelihood;
     private double storedLogLikelihood;

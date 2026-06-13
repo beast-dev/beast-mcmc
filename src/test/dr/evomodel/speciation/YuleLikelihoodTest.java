@@ -31,7 +31,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodelxml.tree.TreeModelParser;
@@ -76,7 +76,7 @@ public class YuleLikelihoodTest extends TestCase {
         Parameter b = new Parameter.Default("b", birthRate, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.TIMESONLY,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.TIMESONLY,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "yule.like");
 

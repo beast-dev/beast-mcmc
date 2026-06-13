@@ -37,12 +37,10 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
-import dr.evolution.coalescent.structure.StructuredCoalescent;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihood;
 import dr.evolution.util.Taxa;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
+import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -320,11 +318,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 break;
 
             case BIRTH_DEATH:
-                citation = BirthDeathModelParser.getCitation();
+                citation = Gernhard08BirthDeathModelParser.getCitation();
                 break;
 
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
-                citation = BirthDeathModelParser.getCitationRHO();
+                citation = Gernhard08BirthDeathModelParser.getCitationRHO();
                 break;
 
             case BIRTH_DEATH_SERIAL_SAMPLING:

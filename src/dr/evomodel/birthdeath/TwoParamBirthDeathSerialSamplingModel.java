@@ -1,7 +1,7 @@
 /*
  * TwoParamBirthDeathSerialSamplingModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,13 +25,16 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.inference.model.Parameter;
 
 public class TwoParamBirthDeathSerialSamplingModel extends MasBirthDeathSerialSamplingModel {
 
-    public TwoParamBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
+    public TwoParamBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate,
+                                                 Parameter treatmentProbability, Parameter samplingProbability,
+                                                 Parameter originTime, boolean condition, int numIntervals, double gridEnd,
+                                                 Type units) {
         super(birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 

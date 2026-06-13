@@ -31,7 +31,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.Units;
 import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -117,7 +117,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.TIMESONLY,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.TIMESONLY,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 

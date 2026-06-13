@@ -1,7 +1,7 @@
 /*
  * BirthDeathCompoundParameterLogger.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,12 +25,9 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.model.Statistic;
-import dr.math.UnivariateMinimum;
 
 // TODO use "implements Loggable" instead of "extends Statistic.Abstract"
 // TODO hard-code names

@@ -1,7 +1,7 @@
 /*
  * NewBirthDeathSerialSamplingModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present, and the possibility of treatmentProbability.
  */
-public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements SpeciationModelGradientProvider, Citable {
+public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements BirthDeathModelGradientProvider, Citable {
     // TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors
     // TODO don't check if rho >= minVal, just 0 (likelihood won't blow up unless it's _exactly_ 0
     // TODO the "is time t event time ti" can/should probably get moved to the point at which we pass the tree to the birth-death model
@@ -1223,7 +1223,7 @@ public class NewBirthDeathSerialSamplingModel extends SpeciationModel implements
     // Some useful JVM flags: -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
 
     @Override
-    public SpeciationModelGradientProvider getProvider() {
+    public BirthDeathModelGradientProvider getProvider() {
         return this;
     }
 

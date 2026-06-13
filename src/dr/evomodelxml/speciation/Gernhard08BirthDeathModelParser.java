@@ -28,7 +28,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -39,9 +39,9 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Joseph Heled
  */
-public class BirthDeathModelParser extends AbstractXMLObjectParser {
+public class Gernhard08BirthDeathModelParser extends AbstractXMLObjectParser {
 
-    public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
+    public static final String BIRTH_DEATH_MODEL = "Gernhard08BirthDeathModel";
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
     public static final String SAMPLE_PROB = "sampleProbability";
@@ -60,8 +60,8 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-        final String s = xo.getAttribute(TREE_TYPE, BirthDeathGernhard08Model.TreeType.UNSCALED.toString());
-        final BirthDeathGernhard08Model.TreeType treeType = BirthDeathGernhard08Model.TreeType.valueOf(s);
+        final String s = xo.getAttribute(TREE_TYPE, Gernhard08BirthDeathModel.TreeType.UNSCALED.toString());
+        final Gernhard08BirthDeathModel.TreeType treeType = Gernhard08BirthDeathModel.TreeType.valueOf(s);
         final boolean conditonalOnRoot =  xo.getAttribute(CONDITIONAL_ON_ROOT, false);
 
         final Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
@@ -73,7 +73,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         final String modelName = xo.getId();
 
-        return new BirthDeathGernhard08Model(modelName, birthParameter, deathParameter, sampleProbability,
+        return new Gernhard08BirthDeathModel(modelName, birthParameter, deathParameter, sampleProbability,
                 treeType, units, conditonalOnRoot);
     }
 
@@ -94,7 +94,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return BirthDeathGernhard08Model.class;
+        return Gernhard08BirthDeathModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

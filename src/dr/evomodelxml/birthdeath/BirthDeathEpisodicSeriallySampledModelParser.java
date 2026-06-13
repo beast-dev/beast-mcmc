@@ -1,7 +1,7 @@
 /*
  * BirthDeathEpisodicSeriallySampledModelParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,17 +25,14 @@
  *
  */
 
-package dr.evomodelxml.speciation;
+package dr.evomodelxml.birthdeath;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathEpisodicSeriallySampledModel;
+import dr.evomodel.birthdeath.BirthDeathEpisodicSeriallySampledModel;
 import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
-import dr.evomodel.speciation.BirthDeathSerialSkylineModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.logging.Logger;
 
 public class BirthDeathEpisodicSeriallySampledModelParser extends AbstractXMLObjectParser {
 

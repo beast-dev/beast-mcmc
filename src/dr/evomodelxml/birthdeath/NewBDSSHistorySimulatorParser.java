@@ -1,7 +1,7 @@
 /*
  * NewBDSSHistorySimulatorParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,10 +25,10 @@
  *
  */
 
-package dr.evomodelxml.speciation;
+package dr.evomodelxml.birthdeath;
 
-import dr.evomodel.speciation.NewBDSSHistorySimulator;
-import dr.evomodel.speciation.NewBirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.NewBDSSHistorySimulator;
+import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;

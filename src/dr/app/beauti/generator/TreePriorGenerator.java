@@ -37,7 +37,6 @@ import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -49,11 +48,10 @@ import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.LogisticGrowthModelParser;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
+import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
-import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evoxml.TaxaParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.GammaDistributionModelParser;
@@ -280,24 +278,24 @@ public class TreePriorGenerator extends Generator {
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
                 writer.writeComment("A prior on the distribution node heights defined given");
                 writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING ?
-                        BirthDeathModelParser.getCitationRHO() : BirthDeathModelParser.getCitation());
+                        Gernhard08BirthDeathModelParser.getCitationRHO() : Gernhard08BirthDeathModelParser.getCitation());
                 writer.writeOpenTag(
-                        BirthDeathModelParser.BIRTH_DEATH_MODEL,
+                        Gernhard08BirthDeathModelParser.BIRTH_DEATH_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathModelParser.BIRTH_DEATH),
+                                new Attribute.Default<String>(XMLParser.ID, prefix + Gernhard08BirthDeathModelParser.BIRTH_DEATH),
                                 new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
                         }
                 );
 
-                writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, prior, writer);
-                writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
+                writeParameter(Gernhard08BirthDeathModelParser.BIRTHDIFF_RATE, Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, prior, writer);
+                writeParameter(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE, Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
 
                 if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
-                    writeParameter(BirthDeathModelParser.SAMPLE_PROB,
-                            BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, prior, writer);
+                    writeParameter(Gernhard08BirthDeathModelParser.SAMPLE_PROB,
+                            Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB, prior, writer);
                 }
 
-                writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
+                writer.writeCloseTag(Gernhard08BirthDeathModelParser.BIRTH_DEATH_MODEL);
 
                 break;
 
@@ -708,7 +706,7 @@ public class TreePriorGenerator extends Generator {
                 break;
             case BIRTH_DEATH:
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
-                writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, priorPrefix + BirthDeathModelParser.BIRTH_DEATH);
+                writer.writeIDref(Gernhard08BirthDeathModelParser.BIRTH_DEATH_MODEL, priorPrefix + Gernhard08BirthDeathModelParser.BIRTH_DEATH);
                 break;
             case BIRTH_DEATH_SERIAL_SAMPLING:
                 writer.writeIDref(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
@@ -922,11 +920,11 @@ public class TreePriorGenerator extends Generator {
                 break;
             case BIRTH_DEATH:
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
-                writeParameterRef(priorPrefix + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, writer);
-                writeParameterRef(priorPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
+                writeParameterRef(priorPrefix + Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, writer);
+                writeParameterRef(priorPrefix + Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
                 if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
-                    writeParameterRef(priorPrefix + BirthDeathModelParser.BIRTH_DEATH + "."
-                            + BirthDeathModelParser.SAMPLE_PROB, writer);
+                    writeParameterRef(priorPrefix + Gernhard08BirthDeathModelParser.BIRTH_DEATH + "."
+                            + Gernhard08BirthDeathModelParser.SAMPLE_PROB, writer);
                 break;
             case BIRTH_DEATH_SERIAL_SAMPLING:
                 writeParameterRef(priorPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."

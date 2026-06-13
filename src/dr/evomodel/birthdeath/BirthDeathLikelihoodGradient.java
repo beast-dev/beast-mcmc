@@ -26,11 +26,9 @@
  */
 
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
-import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -45,9 +43,9 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class SpeciationLikelihoodGradient implements GradientWrtParameterProvider, Reportable, Loggable {
+public class BirthDeathLikelihoodGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    private final SpeciationLikelihood likelihood;
+    private final BirthDeathLikelihood likelihood;
     private final Parameter parameter;
     private final WrtParameter wrtParameter;
     private final TreeModel tree;
@@ -56,7 +54,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     private static final boolean DO_IT_RIGHT = false;
 
-    public SpeciationLikelihoodGradient(SpeciationLikelihood likelihood,
+    public BirthDeathLikelihoodGradient(BirthDeathLikelihood likelihood,
                                         TreeModel tree,
                                         WrtParameter wrtParameter) {
 

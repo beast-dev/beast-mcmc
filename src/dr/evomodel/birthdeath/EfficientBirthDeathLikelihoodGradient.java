@@ -1,7 +1,7 @@
 /*
  * EfficientSpeciationLikelihoodGradient.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,10 +25,8 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
@@ -36,28 +34,27 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
-import dr.util.Timer;
 import dr.xml.Reportable;
 
-import static dr.evomodel.speciation.CachedGradientDelegate.MEASURE_RUN_TIME;
+import static dr.evomodel.birthdeath.CachedGradientDelegate.MEASURE_RUN_TIME;
 
 /**
  * @author Andy Magee
  * @author Yucai Shao
  * @author Marc Suchard
  */
-public class EfficientSpeciationLikelihoodGradient extends AbstractModel
+public class EfficientBirthDeathLikelihoodGradient extends AbstractModel
         implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    static final String GRADIENT_KEY = "speciationGradient";
+    static final String GRADIENT_KEY = "birthDeathGradient";
 
-    private final EfficientSpeciationLikelihood likelihood;
+    private final EfficientBirthDeathLikelihood likelihood;
     private final Parameter parameter;
-    private final SpeciationLikelihoodGradient.WrtParameter wrtParameter;
+    private final BirthDeathLikelihoodGradient.WrtParameter wrtParameter;
     private final TreeModel tree;
-    private final SpeciationModel speciationModel;
+    private final BirthDeathModel birthDeathModel;
     private final BigFastTreeIntervals treeIntervals;
-    private final SpeciationModelGradientProvider provider;
+    private final BirthDeathModelGradientProvider provider;
 
     private final TreeTrait gradientProvider;
 
@@ -65,8 +62,8 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
     private double[] gradient;
     private double[] storedGradient;
 
-    public EfficientSpeciationLikelihoodGradient(EfficientSpeciationLikelihood likelihood,
-                                                 SpeciationLikelihoodGradient.WrtParameter wrtParameter) {
+    public EfficientBirthDeathLikelihoodGradient(EfficientBirthDeathLikelihood likelihood,
+                                                 BirthDeathLikelihoodGradient.WrtParameter wrtParameter) {
         super("efficientSpeciationLikelihoodGradient");
 
         this.likelihood = likelihood;
@@ -74,20 +71,20 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
         this.tree = likelihood.getTreeModel();
 
-        this.speciationModel = likelihood.getSpeciationModel();
+        this.birthDeathModel = likelihood.getBirthDeathModel();
         this.treeIntervals = likelihood.getTreeIntervals();
         this.provider = likelihood.getGradientProvider();
         
 
-        CompoundBirthDeathParameters compoundParams = speciationModel instanceof NewBirthDeathSerialSamplingModel ? 
-            ((NewBirthDeathSerialSamplingModel)speciationModel).compoundParameters : null;
+        CompoundBirthDeathParameters compoundParams = birthDeathModel instanceof NewBirthDeathSerialSamplingModel ?
+            ((NewBirthDeathSerialSamplingModel)birthDeathModel).compoundParameters : null;
             
         likelihood.setupGradientDelegates(compoundParams);
         
 
-        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.R0 ||
-            wrtParameter == SpeciationLikelihoodGradient.WrtParameter.D ||
-            wrtParameter == SpeciationLikelihoodGradient.WrtParameter.S) {
+        if (wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.R0 ||
+            wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.D ||
+            wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.S) {
             this.gradientProvider = likelihood.getTreeTrait(CachedGradientDelegate.COMPOUND_GRADIENT_KEY);
         } else {
             this.gradientProvider = likelihood.getTreeTrait(GRADIENT_KEY);
@@ -96,8 +93,8 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
         this.parameter = wrtParameter.getParameter(provider, tree);
 
         likelihood.addModel(this);
-        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
-            speciationModel.addModelListener(this);
+        if (wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
+            birthDeathModel.addModelListener(this);
             treeIntervals.addModelListener(this);
         }
 
@@ -121,17 +118,17 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     public double[] getGradientLogDensity() {
-        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
+        if (wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
             if (!gradientKnown) {
                 gradient = wrtParameter.getGradientLogDensity(provider, tree);
                 gradientKnown = true;
             }
             return gradient;
         } else {
-            if (speciationModel instanceof BirthDeathEpisodicSeriallySampledModel) {
-                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((BirthDeathEpisodicSeriallySampledModel) speciationModel).numIntervals);
+            if (birthDeathModel instanceof BirthDeathEpisodicSeriallySampledModel) {
+                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((BirthDeathEpisodicSeriallySampledModel) birthDeathModel).numIntervals);
             } else {
-                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((NewBirthDeathSerialSamplingModel) speciationModel).numIntervals);
+                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((NewBirthDeathSerialSamplingModel) birthDeathModel).numIntervals);
             }
         }
     }
@@ -153,7 +150,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == speciationModel || model == treeIntervals) {
+        if (model == birthDeathModel || model == treeIntervals) {
             gradientKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown model: " + model.getId());
@@ -167,7 +164,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     protected void storeState() {
-        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
+        if (wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
             if (gradient != null) {
                 if (storedGradient == null) {
                     storedGradient = new double[gradient.length];
@@ -179,7 +176,7 @@ public class EfficientSpeciationLikelihoodGradient extends AbstractModel
 
     @Override
     protected void restoreState() {
-        if (wrtParameter == SpeciationLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
+        if (wrtParameter == BirthDeathLikelihoodGradient.WrtParameter.NODE_HEIGHT) {
             double[] tmp = gradient;
             gradient = storedGradient;
             storedGradient = tmp;

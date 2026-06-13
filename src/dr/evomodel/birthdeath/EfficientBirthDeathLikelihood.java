@@ -1,7 +1,7 @@
 /*
  * EfficientSpeciationLikelihood.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,19 +25,17 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.bigfasttree.ModelCompressedBigFastTreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
-import dr.math.distributions.BetaDistribution;
 import dr.util.Timer;
 
 import java.util.Set;
@@ -47,7 +45,7 @@ import java.util.Set;
  * @author Yucai Shao
  * @author Marc Suchard
  */
-public class EfficientSpeciationLikelihood extends SpeciationLikelihood implements TreeTraitProvider {
+public class EfficientBirthDeathLikelihood extends BirthDeathLikelihood implements TreeTraitProvider {
 
     private final BigFastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
@@ -60,8 +58,8 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
 
     private final double TOLERANCE = 1e-5;
 
-    public EfficientSpeciationLikelihood(Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude, String id) {
-        super(tree, speciationModel, exclude, id);
+    public EfficientBirthDeathLikelihood(Tree tree, BirthDeathModel birthDeathModel, Set<Taxon> exclude, String id) {
+        super(tree, birthDeathModel, exclude, id);
 
         if (!(tree instanceof DefaultTreeModel)) {
             throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
@@ -102,19 +100,19 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             timer = new Timer();
             timer.start();
         }
-        speciationModel.updateLikelihoodModelValues(0);
+        birthDeathModel.updateLikelihoodModelValues(0);
 
-        double[] modelBreakPoints = speciationModel.getBreakPoints();
+        double[] modelBreakPoints = birthDeathModel.getBreakPoints();
         assert modelBreakPoints[modelBreakPoints.length - 1] == Double.POSITIVE_INFINITY;
 
         int currentModelSegment = 0;
 
         while (treeIntervals.getStartTime() >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
             ++currentModelSegment;
-            speciationModel.updateLikelihoodModelValues(currentModelSegment);
+            birthDeathModel.updateLikelihoodModelValues(currentModelSegment);
         }
 
-        double logL = speciationModel.processSampling(currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
+        double logL = birthDeathModel.processSampling(currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
 
         for (int i = 0; i < treeIntervals.getIntervalCount(); ++i) {
 
@@ -125,24 +123,24 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
             while (intervalEnd >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
 
                 final double segmentIntervalEnd = modelBreakPoints[currentModelSegment];
-                logL += speciationModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
+                logL += birthDeathModel.processModelSegmentBreakPoint(currentModelSegment, intervalStart, segmentIntervalEnd, nLineages);
                 intervalStart = segmentIntervalEnd;
                 ++currentModelSegment;
-                speciationModel.updateLikelihoodModelValues(currentModelSegment);
+                birthDeathModel.updateLikelihoodModelValues(currentModelSegment);
             }
 
             if (intervalEnd > intervalStart) {
-                logL += speciationModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
+                logL += birthDeathModel.processInterval(currentModelSegment, intervalStart, intervalEnd, nLineages);
             }
 
             // Interval ends with a coalescent or sampling event at time intervalEnd
             if (treeIntervals.getIntervalType(i) == IntervalType.SAMPLE) {
 
-                logL += speciationModel.processSampling(currentModelSegment, intervalEnd);
+                logL += birthDeathModel.processSampling(currentModelSegment, intervalEnd);
 
             } else if (treeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                logL += speciationModel.processCoalescence(currentModelSegment,intervalEnd);
+                logL += birthDeathModel.processCoalescence(currentModelSegment,intervalEnd);
 
             } else {
                 throw new RuntimeException("Birth-death tree includes non birth/death/sampling event.");
@@ -150,9 +148,9 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         }
 
         // origin branch is a fake branch that doesn't exist in the tree, now compute its contribution
-        logL += speciationModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
+        logL += birthDeathModel.processOrigin(currentModelSegment, treeIntervals.getTotalDuration());
 
-        logL += speciationModel.logConditioningProbability(currentModelSegment);
+        logL += birthDeathModel.logConditioningProbability(currentModelSegment);
 
         if (MEASURE_RUN_TIME) {
             timer.stop();
@@ -169,7 +167,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
         // DefaultTreeModel cleanTree = new DefaultTreeModel(tree);
         TreeModel cleanTree = getTreeModel();
 
-        double[] intervalTimes = speciationModel.getBreakPoints();
+        double[] intervalTimes = birthDeathModel.getBreakPoints();
         for (int i = 0; i < cleanTree.getExternalNodeCount(); i++) {
             // TODO we can be lazy since we only do this once but a linear search is still sad
             NodeRef node = cleanTree.getExternalNode(i);
@@ -222,14 +220,14 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
-    public SpeciationModelGradientProvider getGradientProvider() {
+    public BirthDeathModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {
-            gradientProvider = speciationModel.getProvider();
+            gradientProvider = birthDeathModel.getProvider();
         }
         return gradientProvider;
     }
 
-    private SpeciationModelGradientProvider gradientProvider = null;
+    private BirthDeathModelGradientProvider gradientProvider = null;
 
     @Override
     public TreeTrait[] getTreeTraits() {
@@ -256,7 +254,7 @@ public class EfficientSpeciationLikelihood extends SpeciationLikelihood implemen
     }
 
     public void setupGradientDelegates(CompoundBirthDeathParameters compoundParams) {
-        TreeTrait rawGradientTrait = getTreeTrait(EfficientSpeciationLikelihoodGradient.GRADIENT_KEY);
+        TreeTrait rawGradientTrait = getTreeTrait(EfficientBirthDeathLikelihoodGradient.GRADIENT_KEY);
         if (rawGradientTrait == null) {
             CachedGradientDelegate delegate = new CachedGradientDelegate(this);
             addModel(delegate);

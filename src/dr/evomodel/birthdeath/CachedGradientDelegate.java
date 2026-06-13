@@ -1,7 +1,7 @@
 /*
  * CachedGradientDelegate.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.speciation;
+package dr.evomodel.birthdeath;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
@@ -37,13 +37,12 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Timer;
-import dr.xml.Reportable;
 
 class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]> {
 
-    private final SpeciationModelGradientProvider provider;
+    private final BirthDeathModelGradientProvider provider;
     private final BigFastTreeIntervals treeIntervals;
-    private final SpeciationModel speciationModel;
+    private final BirthDeathModel birthDeathModel;
 
     private final CompoundBirthDeathParameters compoundParams;
     private final Parameter birthRate;
@@ -61,18 +60,18 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
     private boolean gradientKnown;
     private boolean storedGradientKnown;
 
-    CachedGradientDelegate(EfficientSpeciationLikelihood likelihood) {
-        this(likelihood, null, EfficientSpeciationLikelihoodGradient.GRADIENT_KEY);
+    CachedGradientDelegate(EfficientBirthDeathLikelihood likelihood) {
+        this(likelihood, null, EfficientBirthDeathLikelihoodGradient.GRADIENT_KEY);
     }
 
-    CachedGradientDelegate(EfficientSpeciationLikelihood likelihood, 
-                          CompoundBirthDeathParameters compoundParams,
-                          String traitName) {
+    CachedGradientDelegate(EfficientBirthDeathLikelihood likelihood,
+                           CompoundBirthDeathParameters compoundParams,
+                           String traitName) {
         super("cachedGradientDelegate");
 
         this.provider = likelihood.getGradientProvider();
         this.treeIntervals = likelihood.getTreeIntervals();
-        this.speciationModel = likelihood.getSpeciationModel();
+        this.birthDeathModel = likelihood.getBirthDeathModel();
         this.compoundParams = compoundParams;
         this.traitName = traitName;
 
@@ -87,7 +86,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
         }
 
         addModel(this.treeIntervals);
-        addModel(this.speciationModel);
+        addModel(this.birthDeathModel);
         gradientTime = 0;
         gradientCounts = 0;
         gradientKnown = false;
@@ -148,7 +147,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
         while (treeIntervals.getStartTime() >= modelBreakPoints[currentModelSegment]) { // TODO Maybe it's >= ?
             ++currentModelSegment;
-            speciationModel.updateLikelihoodModelValues(currentModelSegment);
+            birthDeathModel.updateLikelihoodModelValues(currentModelSegment);
         }
 
         provider.processGradientSampling(gradient, currentModelSegment, treeIntervals.getStartTime()); // TODO Fix for getStartTime() != 0.0
@@ -245,7 +244,7 @@ class CachedGradientDelegate extends AbstractModel implements TreeTrait<double[]
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeIntervals || model == speciationModel) {
+        if (model == treeIntervals || model == birthDeathModel) {
             gradientKnown = false;
         } else {
             throw new IllegalArgumentException("Unknown model: " + model.getId());

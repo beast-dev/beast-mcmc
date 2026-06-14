@@ -36,6 +36,7 @@ import dr.xml.*;
 
 /**
  * Parses an element from an DOM document into a ConstantPopulation.
+ * @deprecated
  */
 public class ConstantPopulationSizeModelParser extends AbstractXMLObjectParser {
 

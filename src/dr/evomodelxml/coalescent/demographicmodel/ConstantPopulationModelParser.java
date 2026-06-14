@@ -34,6 +34,8 @@ import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * Parses an element from an DOM document into a ConstantPopulation.
  */
@@ -57,8 +59,11 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
 
         if (logSpace) {
             // ConstantPopulationSizeModel provides a model with N0 in log space
+            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model (population size in log space).");
+
             return new ConstantPopulationSizeModel(N0Param, units);
         } else {
+            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model.");
             return new ConstantPopulationModel(N0Param, units);
         }
     }

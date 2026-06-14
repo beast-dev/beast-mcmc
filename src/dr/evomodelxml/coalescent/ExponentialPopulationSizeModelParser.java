@@ -36,6 +36,7 @@ import dr.xml.*;
 
 /**
  * Parses an element from an DOM document into a ExponentialGrowth.
+ * @deprecated
  */
 public class ExponentialPopulationSizeModelParser extends AbstractXMLObjectParser {
 

@@ -68422,7 +68422,7 @@
         <parameter id="birthRateDelta" dimension="71" value="0.01"/>
     </compoundParameter>
 
-    <transformedVectorSumTransform id="bdss.birthRate" dim="10" incrementTransformType="log">
+    <transformedVectorSumTransform id="ebds.birthRate" dim="10" incrementTransformType="log">
         <compoundParameter idref="birthRate.increments"/>
     </transformedVectorSumTransform>
 
@@ -68431,7 +68431,7 @@
         <parameter id="deathRateDelta" dimension="71" value="0"/>
     </compoundParameter>
 
-    <transformedVectorSumTransform id="bdss.deathRate" dim="10" incrementTransformType="log">
+    <transformedVectorSumTransform id="ebds.deathRate" dim="10" incrementTransformType="log">
         <compoundParameter idref="deathRate.increments"/>
     </transformedVectorSumTransform>
 
@@ -68440,31 +68440,31 @@
         <parameter id="samplingRateDelta" dimension="71" value="0.01"/>
     </compoundParameter>
 
-    <transformedVectorSumTransform id="bdss.samplingRate" dim="10" incrementTransformType="log">
+    <transformedVectorSumTransform id="ebds.samplingRate" dim="10" incrementTransformType="log">
         <compoundParameter idref="samplingRate.increments"/>
     </transformedVectorSumTransform>
 
-    <newBirthDeathSerialSampling id="bdss" units="years" hasFinalSample="false" conditionOnSurvival="false">
+    <episodicBirthDeathSamplingModel id="ebds" units="years" hasFinalSample="false" conditionOnSurvival="false">
         <birthRate>
-            <parameter idref="bdss.birthRate"/>
+            <parameter idref="ebds.birthRate"/>
         </birthRate>
         <deathRate gradientFlag = "false">
-            <parameter idref="bdss.deathRate"/>
+            <parameter idref="ebds.deathRate"/>
         </deathRate>
         <samplingRate>
-            <parameter idref="bdss.samplingRate"/>
+            <parameter idref="ebds.samplingRate"/>
         </samplingRate>
         <samplingProbability gradientFlag = "false">
-            <compoundParameter id="bdss.samplingProbability">
+            <compoundParameter id="ebds.samplingProbability">
                 <parameter id="samplingAtPresent" value="0" dimension="1" lower="0.0" upper="1.0"/>
                 <parameter id="otherSampling" value="0" dimension="71" lower="0.0" upper="1.0"/>
             </compoundParameter>
         </samplingProbability>
         <treatmentProbability gradientFlag = "false">
-            <parameter id="bdss.treatmentProbability" value="1.0" dimension="72" lower="0.0" upper="1.0"/>
+            <parameter id="ebds.treatmentProbability" value="1.0" dimension="72" lower="0.0" upper="1.0"/>
         </treatmentProbability>
         <origin>
-            <parameter id="bdss.origin" value="0.235" lower="0.0"/>
+            <parameter id="ebds.origin" value="0.235" lower="0.0"/>
         </origin>
         <cutOff>
             <parameter value="0.203333333"/>
@@ -68472,16 +68472,16 @@
         <numGridPoints>
             <parameter value="72"/>
         </numGridPoints>
-    </newBirthDeathSerialSampling>
+    </episodicBirthDeathSamplingModel>
 
-    <speciationLikelihood id="speciation" useNewLoop="true">
+    <birthDeathLikelihood id="birthDeathLikelihood" useNewLoop="true">
         <model>
-            <birthDeathSerialSampling idref="bdss"/>
+            <birthDeathSerialSampling idref="ebds"/>
         </model>
         <speciesTree>
            <treeModel idref="treeModel"/>
         </speciesTree>
-    </speciationLikelihood>
+    </birthDeathLikelihood>
 
     <distributionLikelihood id="birthRateAtPresentPrior">
         <data>
@@ -68569,7 +68569,7 @@
     </gammaPrior>
 
 
-    <compoundGradient id="grad.bdss.prior">
+    <compoundGradient id="grad.ebds.prior">
         <gradient>
             <multivariateDistributionLikelihood idref="birthRateAtPresentPrior"/>
             <parameter idref="birthRateAtPresent"/>
@@ -68582,25 +68582,25 @@
         <bayesianBridge idref="samplingRateDeltaPrior"/>
     </compoundGradient>
 
-    <compoundGradient id="grad.bdssIncrements.likelihood">
+    <compoundGradient id="grad.ebdsIncrements.likelihood">
         <gradientWrtIncrements1D id="grad.birthRateIncrements" incrementTransformType="log">
-            <speciationLikelihoodGradient wrtParameter="birthRate" useNewLoop="true">
-                <speciationLikelihood idref="speciation"/>
+            <birthDeathLikelihoodGradient wrtParameter="birthRate" useNewLoop="true">
+                <birthDeathLikelihood idref="birthDeathLikelihood"/>
                 <treeModel idref="treeModel"/>
-            </speciationLikelihoodGradient>
+            </birthDeathLikelihoodGradient>
             <compoundParameter idref="birthRate.increments"/>
         </gradientWrtIncrements1D>
         <gradientWrtIncrements1D id="grad.samplingRateIncrements" incrementTransformType="log">
-            <speciationLikelihoodGradient wrtParameter="samplingRate" useNewLoop="true">
-                <speciationLikelihood idref="speciation"/>
+            <birthDeathLikelihoodGradient wrtParameter="samplingRate" useNewLoop="true">
+                <birthDeathLikelihood idref="birthDeathLikelihood"/>
                 <treeModel idref="treeModel"/>
-            </speciationLikelihoodGradient>
+            </birthDeathLikelihoodGradient>
             <compoundParameter idref="samplingRate.increments"/>
         </gradientWrtIncrements1D>
     </compoundGradient>
 
    <birthDeathCompoundParameterLogger id="effectiveReproductiveNumber" compoundParameterType = "effectiveReproductiveNumber">
-	   <newBirthDeathSerialSampling idref="bdss"/>
+	   <newBirthDeathSerialSampling idref="ebds"/>
    </birthDeathCompoundParameterLogger>
 
 	<!-- Define operators                                                        -->
@@ -68613,8 +68613,8 @@
 									   gradientCheckCount="0"
 									   preconditioningUpdateFrequency="3" preconditioningDelay="0">
 			<jointGradient>
-				<compoundGradient idref="grad.bdssIncrements.likelihood"/>
-				<compoundGradient idref="grad.bdss.prior"/>
+				<compoundGradient idref="grad.ebdsIncrements.likelihood"/>
+				<compoundGradient idref="grad.ebds.prior"/>
 			</jointGradient>
 			<preconditioner>
 				<compoundPriorPreconditioner id="priorPreconditioner">
@@ -68635,7 +68635,7 @@
 			<parameter idref="deathRateAtPresent"/>
 		</randomWalkOperator>
 		<randomWalkOperator windowSize="1.0" weight="1.0">
-			<parameter idref="bdss.origin"/>
+			<parameter idref="ebds.origin"/>
 		</randomWalkOperator>
 
 
@@ -68665,13 +68665,13 @@
 				<distributionLikelihood idref="deathRateAtPresentPrior"/>
 				<truncated lower="0.0">
 					<normalPrior mean="0.21" stdev="0.02">
-						<parameter idref="bdss.origin"/>
+						<parameter idref="ebds.origin"/>
 					</normalPrior>
 				</truncated>
 
 			</prior>
 			<likelihood id="likelihood">
-                <speciationLikelihood idref="speciation"/>
+                <birthDeathLikelihood idref="birthDeathLikelihood"/>
 			</likelihood>
 		</joint>
 		<operators idref="operators"/>
@@ -68704,9 +68704,9 @@
 			<tmrcaStatistic idref="age(root)"/>
 			<statistic idref="treeModel.currentTree"/>
 			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="bdss.birthRate"/>
-			<parameter idref="bdss.deathRate"/>
-			<parameter idref="bdss.samplingRate"/>
+			<parameter idref="ebds.birthRate"/>
+			<parameter idref="ebds.deathRate"/>
+			<parameter idref="ebds.samplingRate"/>
 			<parameter idref="birthRate.increments"/>
 			<parameter idref="deathRate.increments"/>
             <parameter idref="samplingRate.increments"/>
@@ -68714,9 +68714,9 @@
 			<parameter idref="birthRateDeltaPrior.localScale"/>
 			<parameter idref="samplingRateDeltaPrior.globalScale"/>
 			<parameter idref="samplingRateDeltaPrior.localScale"/>
-			<parameter idref="bdss.origin"/>
+			<parameter idref="ebds.origin"/>
             <birthDeathCompoundParameterLogger idref="effectiveReproductiveNumber"/>
-            <speciationLikelihood idref="speciation"/>
+            <birthDeathLikelihood idref="birthDeathLikelihood"/>
 		</log>
 
 <!--

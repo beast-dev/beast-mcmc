@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
+ * Parser for the likelihood of a tree given a birth death model.
  */
 public class BirthDeathLikelihoodParser extends AbstractXMLObjectParser {
 
@@ -50,12 +51,9 @@ public class BirthDeathLikelihoodParser extends AbstractXMLObjectParser {
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
-    public static final String CORRECTION = "correction";
     public static final String POINT = "point";
 
     private static final String USE_NEW_LOOP = "useNewLoop";
-
-    public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
 
     public String getParserName() {
         return BIRTH_DEATH_LIKELIHOOD;

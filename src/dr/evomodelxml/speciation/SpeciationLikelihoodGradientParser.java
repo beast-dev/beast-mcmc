@@ -27,10 +27,6 @@
 
 package dr.evomodelxml.speciation;
 
-import dr.evomodel.birthdeath.BirthDeathEpisodicSeriallySampledModel;
-import dr.evomodel.birthdeath.EfficientBirthDeathLikelihood;
-import dr.evomodel.birthdeath.EfficientBirthDeathLikelihoodGradient;
-import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.*;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;

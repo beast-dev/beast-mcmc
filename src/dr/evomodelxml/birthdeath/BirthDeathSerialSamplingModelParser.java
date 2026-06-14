@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 /**
  * @author Alexei Drummond
  * @author Joseph Heled
+ * @deprecated
  */
 public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser {
 

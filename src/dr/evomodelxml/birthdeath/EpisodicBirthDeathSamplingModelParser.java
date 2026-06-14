@@ -28,7 +28,7 @@
 package dr.evomodelxml.birthdeath;
 
 import dr.evolution.util.Units;
-import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.EpisodicBirthDeathSamplingModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -36,9 +36,12 @@ import dr.xml.*;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser {
+/**
+ * Parser for the EpisodicBirthDeathSamplingModel (EBDS).
+ */
+public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectParser {
 
-    public static final String BIRTH_DEATH_SERIAL_MODEL = "newBirthDeathSerialSampling";
+    public static final String EPISODIC_BIRTH_DEATH_SAMPLING_MODEL = "episodicBirthDeathSamplingModel";
     public static final String BIRTH_RATE = "birthRate";
     public static final String DEATH_RATE = "deathRate";
     public static final String SAMPLING_RATE = "samplingRate";
@@ -55,7 +58,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     public static final String GRIDS = "grids";
 
     public String getParserName() {
-        return BIRTH_DEATH_SERIAL_MODEL;
+        return EPISODIC_BIRTH_DEATH_SAMPLING_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -124,16 +127,16 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
 
         boolean condition = xo.getAttribute(CONDITION, false);
 
-        NewBirthDeathSerialSamplingModel model;
+        EpisodicBirthDeathSamplingModel model;
 
         if (R0Parameter != null) {
-            model = NewBirthDeathSerialSamplingModel.createWithCompoundParameters(
+            model = EpisodicBirthDeathSamplingModel.createWithCompoundParameters(
                     R0Parameter, DParameter, SParameter,
                     r, rho, originParameter,
                     condition, (int)numGridPoints.getParameterValue(0), 
                     cutoff.getParameterValue(0), units);
         } else {
-            model = new NewBirthDeathSerialSamplingModel(lambda, mu, psi, r, rho, originParameter, 
+            model = new EpisodicBirthDeathSamplingModel(lambda, mu, psi, r, rho, originParameter,
                     condition, (int)(numGridPoints.getParameterValue(0)), 
                     cutoff.getParameterValue(0), units);
         }
@@ -157,7 +160,7 @@ public class NewBirthDeathSerialSamplingModelParser extends AbstractXMLObjectPar
     }
 
     public Class getReturnType() {
-        return NewBirthDeathSerialSamplingModel.class;
+        return EpisodicBirthDeathSamplingModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

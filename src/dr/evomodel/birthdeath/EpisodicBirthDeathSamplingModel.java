@@ -38,9 +38,10 @@ import dr.util.Citation;
 import java.util.*;
 
 /**
- * A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present, and the possibility of treatmentProbability.
+ * A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present,
+ * and the possibility of treatmentProbability.
  */
-public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements BirthDeathModelGradientProvider, Citable {
+public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements BirthDeathModelGradientProvider, Citable {
     // TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors
     // TODO don't check if rho >= minVal, just 0 (likelihood won't blow up unless it's _exactly_ 0
     // TODO the "is time t event time ti" can/should probably get moved to the point at which we pass the tree to the birth-death model
@@ -119,7 +120,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
     public CompoundBirthDeathParameters compoundParameters = null;
 
 
-    public NewBirthDeathSerialSamplingModel(
+    public EpisodicBirthDeathSamplingModel(
             Parameter lambda,
             Parameter mu,
             Parameter psi,
@@ -136,7 +137,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
     }
 
 
-    public NewBirthDeathSerialSamplingModel(
+    public EpisodicBirthDeathSamplingModel(
             String modelName,
             Parameter lambda,
             Parameter mu,
@@ -162,7 +163,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
     }
 
     // Factory method for compound parameters (compound-as-primary mode)
-    public static NewBirthDeathSerialSamplingModel createWithCompoundParameters(
+    public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
             Parameter R0Parameter,
             Parameter DParameter,
             Parameter SParameter,
@@ -179,7 +180,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
     }
     
 
-    public static NewBirthDeathSerialSamplingModel createWithCompoundParameters(
+    public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
             String modelName,
             Parameter R0Parameter,
             Parameter DParameter,
@@ -207,7 +208,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
         Parameter serialSamplingRate = compoundParams.getSamplingRate();
         
 
-        NewBirthDeathSerialSamplingModel model = new NewBirthDeathSerialSamplingModel(
+        EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
                 modelName, birthRate, deathRate, serialSamplingRate,
                 treatmentProbability, samplingProbability, originTime,
                 condition, numIntervals, gridEnd, units, compoundParams);
@@ -220,7 +221,7 @@ public class NewBirthDeathSerialSamplingModel extends BirthDeathModel implements
     }
     
 
-    private NewBirthDeathSerialSamplingModel(
+    private EpisodicBirthDeathSamplingModel(
             String modelName,
             Parameter birthRate,
             Parameter deathRate,

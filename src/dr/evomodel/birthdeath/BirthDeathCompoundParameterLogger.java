@@ -60,7 +60,7 @@ public class BirthDeathCompoundParameterLogger extends Statistic.Abstract {
 //        private String label;
     }
 
-    public BirthDeathCompoundParameterLogger(NewBirthDeathSerialSamplingModel bdss, BDPCompoundParameterType type) {
+    public BirthDeathCompoundParameterLogger(EpisodicBirthDeathSamplingModel bdss, BDPCompoundParameterType type) {
         this.bdss = bdss;
         this.type = type;
         this.dim = bdss.getDeathRateParameter().getDimension();
@@ -86,7 +86,7 @@ public class BirthDeathCompoundParameterLogger extends Statistic.Abstract {
         return getCompoundParameter(dim);
     }
 
-    private final NewBirthDeathSerialSamplingModel bdss;
+    private final EpisodicBirthDeathSamplingModel bdss;
     private final int dim;
     private final BDPCompoundParameterType type;
 

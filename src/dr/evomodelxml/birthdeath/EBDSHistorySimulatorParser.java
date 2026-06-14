@@ -27,15 +27,15 @@
 
 package dr.evomodelxml.birthdeath;
 
-import dr.evomodel.birthdeath.NewBDSSHistorySimulator;
-import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.EBDSHistorySimulator;
+import dr.evomodel.birthdeath.EpisodicBirthDeathSamplingModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
-public class NewBDSSHistorySimulatorParser extends AbstractXMLObjectParser {
+public class EBDSHistorySimulatorParser extends AbstractXMLObjectParser {
 
-    public static final String NAME = "newBDSSHistorySimulator";
+    public static final String NAME = "ebdsHistorySimulator";
     public static final String CONDITION_SURVIVAL = "conditionOnSurvival";
     public static final String ORIGIN = "startAtOrigin";
     public static final String RECORD = "recordBeforeSampling";
@@ -48,7 +48,7 @@ public class NewBDSSHistorySimulatorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        NewBirthDeathSerialSamplingModel bdss = (NewBirthDeathSerialSamplingModel) xo.getChild(NewBirthDeathSerialSamplingModel.class);
+        EpisodicBirthDeathSamplingModel ebds = (EpisodicBirthDeathSamplingModel) xo.getChild(EpisodicBirthDeathSamplingModel.class);
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
@@ -56,11 +56,11 @@ public class NewBDSSHistorySimulatorParser extends AbstractXMLObjectParser {
         boolean origin = xo.getAttribute(ORIGIN, true);
         boolean recordFirst = xo.getAttribute(RECORD, true);
 
-        return new NewBDSSHistorySimulator(bdss, tree, origin, survival, recordFirst);
+        return new EBDSHistorySimulator(ebds, tree, origin, survival, recordFirst);
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(NewBirthDeathSerialSamplingModel.class, "The birth-death model."),
+            new ElementRule(EpisodicBirthDeathSamplingModel.class, "The birth-death model."),
             new ElementRule(Tree.class,true),
             AttributeRule.newBooleanRule("conditionOnSurvival",true,"Should only simulations which survive until the time of the most recent sample (the present) be considered? Default: false."),
             AttributeRule.newBooleanRule("startAtOrigin",true,"Should the simulation start at the origin (with one lineage, true) or at the root (with two lineages, false)? Default: true."),
@@ -78,8 +78,8 @@ public class NewBDSSHistorySimulatorParser extends AbstractXMLObjectParser {
     }
 
     @Override
-    public Class<NewBDSSHistorySimulator> getReturnType() {
-        return NewBDSSHistorySimulator.class;
+    public Class<EBDSHistorySimulator> getReturnType() {
+        return EBDSHistorySimulator.class;
     }
 
 }// END: class

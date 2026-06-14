@@ -7,7 +7,14 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 
 ---
 
-## BEAST X v10.5.1 *(in development)*
+## BEAST X v10.6.0 *(in development)*
+
+### New features
+
+#### BEAUti
+
+- Added option to write doubling time in days to the log file when using a coalescent model with an exponential growth parameter.
+- Added an option to write the epidemiological reproduction number (R0) to the log file when using a coalescent model with an exponential growth parameter. This requires an estimate of the mean and standard deviation of the generation time distribution to be specified in BEAUti.
 
 ### Bug fixes
 
@@ -36,6 +43,8 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
   BEAUti were being silently replaced by the CTMC reference prior when the XML
   was written.
   ([#1238](https://github.com/beast-dev/beast-mcmc/issues/1238))
+
+- Fixed an issue where if the name stem was too long, the names of the log files and tree files could be truncated in the XML.
 
 ### Other changes
 

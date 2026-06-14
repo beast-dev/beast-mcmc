@@ -35,13 +35,13 @@ import dr.math.MathUtils;
 
 import java.util.Arrays;
 
-public class NewBDSSHistorySimulator implements Loggable {
+public class EBDSHistorySimulator implements Loggable {
 
-    public NewBDSSHistorySimulator(NewBirthDeathSerialSamplingModel bdss,
-                                   Tree tree,
-                                   boolean startAtOrigin,
-                                   boolean conditionOnSurvivalToPresent,
-                                   boolean recordBeforeSampling) {
+    public EBDSHistorySimulator(EpisodicBirthDeathSamplingModel bdss,
+                                Tree tree,
+                                boolean startAtOrigin,
+                                boolean conditionOnSurvivalToPresent,
+                                boolean recordBeforeSampling) {
         this.bdss = bdss;
         this.tree = tree;
         this.startAtOrigin = startAtOrigin;
@@ -179,7 +179,7 @@ public class NewBDSSHistorySimulator implements Loggable {
         return columns;
     }
 
-    private final NewBirthDeathSerialSamplingModel bdss;
+    private final EpisodicBirthDeathSamplingModel bdss;
     private final Tree tree;
     private final boolean startAtOrigin;
     private final boolean conditionOnSurvivalToPresent;

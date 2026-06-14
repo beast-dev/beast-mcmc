@@ -39,9 +39,7 @@ import dr.xml.Reportable;
 import java.util.Set;
 
 /**
- * A likelihood function for speciation processes. Takes a tree and a speciation model.
- * <p/>
- * Parts of this class were derived from C++ code provided by Oliver Pybus.
+ * A likelihood function for birth-death processes. Takes a tree and a birth-death model.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

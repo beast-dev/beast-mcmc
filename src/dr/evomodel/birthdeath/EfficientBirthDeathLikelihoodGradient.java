@@ -76,8 +76,8 @@ public class EfficientBirthDeathLikelihoodGradient extends AbstractModel
         this.provider = likelihood.getGradientProvider();
         
 
-        CompoundBirthDeathParameters compoundParams = birthDeathModel instanceof NewBirthDeathSerialSamplingModel ?
-            ((NewBirthDeathSerialSamplingModel)birthDeathModel).compoundParameters : null;
+        CompoundBirthDeathParameters compoundParams = birthDeathModel instanceof EpisodicBirthDeathSamplingModel ?
+            ((EpisodicBirthDeathSamplingModel)birthDeathModel).compoundParameters : null;
             
         likelihood.setupGradientDelegates(compoundParams);
         
@@ -128,7 +128,7 @@ public class EfficientBirthDeathLikelihoodGradient extends AbstractModel
             if (birthDeathModel instanceof BirthDeathEpisodicSeriallySampledModel) {
                 return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((BirthDeathEpisodicSeriallySampledModel) birthDeathModel).numIntervals);
             } else {
-                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((NewBirthDeathSerialSamplingModel) birthDeathModel).numIntervals);
+                return wrtParameter.filter((double[]) gradientProvider.getTrait(null, null), ((EpisodicBirthDeathSamplingModel) birthDeathModel).numIntervals);
             }
         }
     }

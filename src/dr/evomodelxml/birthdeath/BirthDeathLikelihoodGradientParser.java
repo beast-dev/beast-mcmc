@@ -47,7 +47,7 @@ public class BirthDeathLikelihoodGradientParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
-        if (! ((likelihood.getBirthDeathModel() instanceof NewBirthDeathSerialSamplingModel) ||
+        if (! ((likelihood.getBirthDeathModel() instanceof EpisodicBirthDeathSamplingModel) ||
                 (likelihood.getBirthDeathModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
             throw new RuntimeException("Not yet implemented for other cases.");
         }

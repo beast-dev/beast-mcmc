@@ -271,8 +271,8 @@ public class BirthDeathLikelihoodGradient implements GradientWrtParameterProvide
 
             @Override
             Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
-                if (provider instanceof NewBirthDeathSerialSamplingModel) {
-                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
                     if (model.compoundParameters != null) {
                         return model.compoundParameters.getR0Parameter();
                     }
@@ -303,8 +303,8 @@ public class BirthDeathLikelihoodGradient implements GradientWrtParameterProvide
 
             @Override
             Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
-                if (provider instanceof NewBirthDeathSerialSamplingModel) {
-                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
                     if (model.compoundParameters != null) {
                         return model.compoundParameters.getDParameter();
                     }
@@ -335,8 +335,8 @@ public class BirthDeathLikelihoodGradient implements GradientWrtParameterProvide
 
             @Override
             Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
-                if (provider instanceof NewBirthDeathSerialSamplingModel) {
-                    NewBirthDeathSerialSamplingModel model = (NewBirthDeathSerialSamplingModel) provider;
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
                     if (model.compoundParameters != null) {
                         return model.compoundParameters.getSParameter();
                     }

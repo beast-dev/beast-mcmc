@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.birthdeath;
 
-import dr.evomodel.birthdeath.NewBirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.EpisodicBirthDeathSamplingModel;
 import dr.evomodel.birthdeath.BirthDeathCompoundParameterLogger;
 import dr.xml.*;
 
@@ -43,7 +43,7 @@ public class BirthDeathCompoundParameterLoggerParser extends AbstractXMLObjectPa
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        NewBirthDeathSerialSamplingModel bdss = (NewBirthDeathSerialSamplingModel) xo.getChild(NewBirthDeathSerialSamplingModel.class);
+        EpisodicBirthDeathSamplingModel bdss = (EpisodicBirthDeathSamplingModel) xo.getChild(EpisodicBirthDeathSamplingModel.class);
 
         BirthDeathCompoundParameterLogger.BDPCompoundParameterType type = parseFromString(xo.getStringAttribute(TYPE));
 
@@ -76,7 +76,7 @@ public class BirthDeathCompoundParameterLoggerParser extends AbstractXMLObjectPa
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(NewBirthDeathSerialSamplingModel.class, "The birth-death model containing the natural parameters (lambda, mu, psi, r)."),
+            new ElementRule(EpisodicBirthDeathSamplingModel.class, "The birth-death model containing the natural parameters (lambda, mu, psi, r)."),
             new StringAttributeRule(TYPE,"What compound parameter should be computed? Allowed: effectiveReproductiveNumber.")
     };
 }

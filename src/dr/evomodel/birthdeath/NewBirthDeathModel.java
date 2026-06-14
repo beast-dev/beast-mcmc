@@ -1,4 +1,3 @@
-///*
 // * CriticalBirthDeathSerialSamplingModel.java
 // *
 // * Copyright (c) 2002-2022 Alexei Drummond, Andrew Rambaut and Marc Suchard
@@ -22,15 +21,19 @@
 // * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 // * Boston, MA  02110-1301  USA
 // */
-//
-//package dr.evomodel.speciation;
-//
+
+package dr.evomodel.birthdeath;
+
 //import dr.inference.model.Parameter;
 //
 //import static java.lang.Math.exp;
 //import static java.lang.Math.log;
 //
 //
+@Deprecated
+public class NewBirthDeathModel {
+}
+
 //public class NewBirthDeathModel extends NewBirthDeathSerialSamplingModel {
 //    // TODO
 //    //   1) this probably should not extend a more parameter-rich model

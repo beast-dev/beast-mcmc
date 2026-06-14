@@ -29,9 +29,9 @@ package dr.evomodel.birthdeath;
 
 import dr.inference.model.Parameter;
 
-public class MasBirthDeathSerialSamplingModel extends NewBirthDeathSerialSamplingModel {
+public class MasEpisodicBirthDeathSamplingModel extends EpisodicBirthDeathSamplingModel {
 
-    public MasBirthDeathSerialSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
+    public MasEpisodicBirthDeathSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
         super(birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 

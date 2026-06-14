@@ -56,6 +56,11 @@ public class PartitionTreePrior extends PartitionOptions {
     private double skyGridInterval = Double.NaN;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
+    private boolean doublingTimeLogging = false;
+    private boolean growthRateLogging = false;
+    private boolean r0Logging = false;
+    private double serialIntervalMean = 0.0;
+    private double serialIntervalStdev = 0.0;
     private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
     private boolean fixedTree = false;
     private Taxa subtreeTaxonSet = null;
@@ -87,6 +92,10 @@ public class PartitionTreePrior extends PartitionOptions {
 
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;
+        this.doublingTimeLogging = source.doublingTimeLogging;
+        this.r0Logging = source.r0Logging;
+        this.serialIntervalMean = source.serialIntervalMean;
+        this.serialIntervalStdev = source.serialIntervalStdev;
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
 
@@ -519,12 +528,41 @@ public class PartitionTreePrior extends PartitionOptions {
         this.nodeHeightPrior = nodeHeightPrior;
     }
 
+    public void setParameterization(TreePriorParameterizationType parameterization) {
+        this.parameterization = parameterization;
+    }
     public TreePriorParameterizationType getParameterization() {
         return parameterization;
     }
-
-    public void setParameterization(TreePriorParameterizationType parameterization) {
-        this.parameterization = parameterization;
+    public void setDoublingTimeLogging(boolean doublingTimeLogging) {
+        this.doublingTimeLogging = doublingTimeLogging;
+    }
+    public boolean isDoublingTimeLogging() {
+        return doublingTimeLogging;
+    }
+    public void setGrowthRateLogging(boolean growthRateLogging) {
+        this.growthRateLogging = growthRateLogging;
+    }
+    public boolean isGrowthRateLogging() {
+        return growthRateLogging;
+    }
+    public void setR0Logging(boolean r0Logging) {
+        this.r0Logging = r0Logging;
+    }
+    public boolean isR0Logging() {
+        return r0Logging;
+    }
+    public void setSerialIntervalMean(double serialIntervalMean) {
+        this.serialIntervalMean = serialIntervalMean;
+    }
+    public double getSerialIntervalMean() {
+        return serialIntervalMean;
+    }
+    public void setSerialIntervalStdev(double serialIntervalStdev) {
+        this.serialIntervalStdev = serialIntervalStdev;
+    }
+    public double getSerialIntervalStdev() {
+        return serialIntervalStdev;
     }
 
     public int getSkylineGroupCount() {

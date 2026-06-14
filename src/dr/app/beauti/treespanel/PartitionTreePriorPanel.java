@@ -72,6 +72,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private final JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
 
+    private final JCheckBox doublingTimeCheckBox = new JCheckBox("Log the Doubling Time calculated from the Growth Rate");
+    private final JCheckBox growthRateCheckBox = new JCheckBox("Log the Growth Rate calculated from the Doubling Time");
+    private final JCheckBox r0CheckBox = new JCheckBox("Log R0 from the Growth Rate");
+    private final RealNumberField serialIntervalMean = new RealNumberField(0.0, Double.MAX_VALUE);
+    private final RealNumberField serialIntervalStdev = new RealNumberField(0.0, Double.MAX_VALUE);
+    JLabel siMeanLabel, siStdevLabel;
     private final JCheckBox subtreePriorCheckBox = new JCheckBox("Use seperate prior for subtree");
     private final JComboBox subtreeTaxonSetCombo = new JComboBox();
     private final JLabel subtreeTaxonSetComboLabel = new JLabel("Taxon set to define subtree:");
@@ -100,30 +106,80 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         setTreePriorChoices(false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
-        treePriorCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
+        treePriorCombo.addItemListener(ev -> {
 
-                if (treePriorCombo.getSelectedItem() != null) {
-                    setupPanel();
+            if (treePriorCombo.getSelectedItem() != null) {
+                setupPanel();
 
-                    PartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
-                    parent.fireTreePriorsChanged();
-                }
+                PartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
             }
         });
 
+        // Parametric coalescent models
         PanelUtils.setupComponent(parameterizationCombo);
         parameterizationCombo.setToolTipText("<html>" +
                 "Select the parameterization of growth rate to use for<br>" +
                 "the parametric coalescent model. This does not affect<br>" +
                 "nature of the model but may assist with mixing.<html>");
-        parameterizationCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                PartitionTreePriorPanel.this.partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+        parameterizationCombo.addItemListener(ev -> {
+            PartitionTreePriorPanel.this.partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+            parent.fireTreePriorsChanged();
+            setupPanel();
+        });
+
+        PanelUtils.setupComponent(doublingTimeCheckBox);
+        doublingTimeCheckBox.setToolTipText("<html>" +
+                "This will log the doubling time (in days) for the current<br/>" +
+                "exponential growth rate.<html>");
+        doublingTimeCheckBox.addItemListener(ev -> {
+                    PartitionTreePriorPanel.this.partitionTreePrior.setDoublingTimeLogging(doublingTimeCheckBox.isSelected());
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+        PanelUtils.setupComponent(growthRateCheckBox);
+        growthRateCheckBox.setToolTipText("<html>" +
+                "This will log the growth rate (/year) for the current<br/>" +
+                "doubling time.<html>");
+        growthRateCheckBox.addItemListener(ev -> {
+                    PartitionTreePriorPanel.this.partitionTreePrior.setDoublingTimeLogging(growthRateCheckBox.isSelected());
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+        PanelUtils.setupComponent(r0CheckBox);
+        r0CheckBox.setToolTipText("<html>" +
+                "This will log an estimate of R0 for the current exponential<br/>" +
+                "growth rate using the Grassly and Fraser modification of<br/>" +
+                "Wallinga and Lipsitch (2007, Proc Roy Soc B, 274:599–604)<br/><br/>" +
+                "A mean and standard deviation of the gamma-distributed serial<br/>" +
+                "interval must be provided.<html>");
+
+        r0CheckBox.addItemListener(ev -> {
+                    boolean selected = r0CheckBox.isSelected();
+                    PartitionTreePriorPanel.this.partitionTreePrior.setR0Logging(selected);
+                    serialIntervalMean.setEnabled(selected);
+                    serialIntervalStdev.setEnabled(selected);
+                    siMeanLabel.setEnabled(selected);
+                    siStdevLabel.setEnabled(selected);
+                    parent.fireTreePriorsChanged();
+                }
+        );
+        PanelUtils.setupComponent(serialIntervalMean);
+        serialIntervalMean.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+                parent.fireTreePriorsChanged();
+            }
+        });
+        PanelUtils.setupComponent(serialIntervalStdev);
+        serialIntervalStdev.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
                 parent.fireTreePriorsChanged();
             }
         });
 
+        // Skything coalescent models
         PanelUtils.setupComponent(skyGridInterval);
         skyGridInterval.setToolTipText("<html>" +
                 "This sets the time interval over which the change-points<br>" +
@@ -136,11 +192,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         });
 
         PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
-        gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                PartitionTreePriorPanel.this.partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
-            }
+        gmrfBayesianSkyrideCombo.addItemListener(ev -> {
+            PartitionTreePriorPanel.this.partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+            parent.fireTreePriorsChanged();
         });
 
 //        PanelUtils.setupComponent(skyGridPointsCombo);
@@ -162,13 +216,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         });
 
         PanelUtils.setupComponent(populationSizeCombo);
-        populationSizeCombo.addItemListener(new ItemListener() {
-                                                public void itemStateChanged(ItemEvent ev) {
-                                                    PartitionTreePriorPanel.this.partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
-                                                    parent.fireTreePriorsChanged();
-                                                }
-                                            }
+        populationSizeCombo.addItemListener(ev -> {
+                    PartitionTreePriorPanel.this.partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                    parent.fireTreePriorsChanged();
+                }
         );
+
 
         PanelUtils.setupComponent(subtreePriorCheckBox);
         subtreePriorCheckBox.setToolTipText("<html>" +
@@ -177,25 +230,23 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "taxon set. This should be specified as monophyletic.<br>" +
                 "<br>" +
                 "The rest of the tree will be have the prior defined above.<html>");
-        subtreePriorCheckBox.addItemListener(new ItemListener() {
-                                                 public void itemStateChanged(ItemEvent ev) {
-                                                     boolean selected = subtreePriorCheckBox.isSelected();
-                                                     subtreeTaxonSetCombo.setEnabled(selected);
-                                                     subtreeTaxonSetComboLabel.setEnabled(selected);
-                                                     subtreePriorCombo.setEnabled(selected);
-                                                     subtreePriorComboLabel.setEnabled(selected);
+        subtreePriorCheckBox.addItemListener(ev -> {
+                    boolean selected = subtreePriorCheckBox.isSelected();
+                    subtreeTaxonSetCombo.setEnabled(selected);
+                    subtreeTaxonSetComboLabel.setEnabled(selected);
+                    subtreePriorCombo.setEnabled(selected);
+                    subtreePriorComboLabel.setEnabled(selected);
 
-                                                     if (selected &&
-                                                             subtreeTaxonSetCombo.getSelectedItem() != null &&
-                                                             !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined") ) {
-                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa)subtreeTaxonSetCombo.getSelectedItem());
-                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType)subtreePriorCombo.getSelectedItem());
-                                                     } else {
-                                                         PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
-                                                     }
-                                                     parent.fireTreePriorsChanged();
-                                                 }
-                                             }
+                    if (selected &&
+                            subtreeTaxonSetCombo.getSelectedItem() != null &&
+                            !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined") ) {
+                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa)subtreeTaxonSetCombo.getSelectedItem());
+                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType)subtreePriorCombo.getSelectedItem());
+                    } else {
+                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+                    }
+                    parent.fireTreePriorsChanged();
+                }
         );
 
         subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
@@ -259,7 +310,22 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             case LOGISTIC:
             case EXPANSION:
                 addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+                TreePriorParameterizationType parameterizationType = (TreePriorParameterizationType) parameterizationCombo.getSelectedItem();
+                partitionTreePrior.setParameterization(parameterizationType);
+                if (parameterizationType == TreePriorParameterizationType.DOUBLING_TIME) {
+                    addComponent(growthRateCheckBox);
+                } else if (parameterizationType == TreePriorParameterizationType.GROWTH_RATE) {
+                    addComponent(doublingTimeCheckBox);
+                }
+                addComponent(r0CheckBox);
+                siMeanLabel = addComponentWithLabel("Serial interval mean:", serialIntervalMean);
+                serialIntervalMean.setColumns(10);
+                siStdevLabel = addComponentWithLabel("Serial interval stdev:", serialIntervalStdev);
+                serialIntervalStdev.setColumns(10);
+                serialIntervalMean.setEnabled(r0CheckBox.isSelected());
+                serialIntervalStdev.setEnabled(r0CheckBox.isSelected());
+                siMeanLabel.setEnabled(r0CheckBox.isSelected());
+                siStdevLabel.setEnabled(r0CheckBox.isSelected());
 
                 citation = //citationCoalescent +  "\n" +
                         "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
@@ -383,8 +449,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
 
-
         parameterizationCombo.setSelectedItem(partitionTreePrior.getParameterization());
+        doublingTimeCheckBox.setSelected(partitionTreePrior.isDoublingTimeLogging());
+        growthRateCheckBox.setSelected(partitionTreePrior.isGrowthRateLogging());
+        r0CheckBox.setSelected(partitionTreePrior.isR0Logging());
+        serialIntervalMean.setValue(partitionTreePrior.getSerialIntervalMean());
+        serialIntervalStdev.setValue(partitionTreePrior.getSerialIntervalStdev());
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
@@ -445,6 +515,19 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     public void getOptions() {
         if (settingOptions) return;
 
+        if ((treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL ||
+                treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC ||
+                treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) &&
+                r0CheckBox.isSelected()) {
+            double mean = serialIntervalMean.getValue();
+            double stdev = serialIntervalStdev.getValue();
+            if (mean <= 0.0 || stdev <= 0.0) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid mean and standard deviation for the serial interval to log R0.");
+                return;
+            }
+            partitionTreePrior.setSerialIntervalMean(mean);
+            partitionTreePrior.setSerialIntervalStdev(stdev);
+        }
 //        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
 
 //        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {

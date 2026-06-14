@@ -48,6 +48,7 @@ import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExpansionModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.LogisticGrowthModelParser;
+import dr.evomodelxml.epidemiology.EpidemiologyStatisticParser;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
@@ -149,6 +150,7 @@ public class TreePriorGenerator extends Generator {
 
                 writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
 
+                writeEpidemiologicalStatistics(writer, prior, parameterization, prefix, "exponential");
                 break;
 
             case LOGISTIC:
@@ -218,6 +220,8 @@ public class TreePriorGenerator extends Generator {
 
                 initialPopSize = "logistic.popSize";
 
+                writeEpidemiologicalStatistics(writer, prior, parameterization, prefix, "logistic");
+
                 break;
 
             case EXPANSION:
@@ -249,6 +253,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeCloseTag(ExpansionModelParser.EXPANSION_MODEL);
 
                 initialPopSize = "expansion.popSize";
+
+                writeEpidemiologicalStatistics(writer, prior, parameterization, prefix, "expansion");
 
                 break;
 
@@ -380,6 +386,77 @@ public class TreePriorGenerator extends Generator {
             }
             writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
             writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
+        }
+    }
+
+    private void writeEpidemiologicalStatistics(XMLWriter writer, PartitionTreePrior prior, TreePriorParameterizationType parameterization, String prefix, String growthModel) {
+        if (parameterization == TreePriorParameterizationType.GROWTH_RATE && prior.isDoublingTimeLogging()) {
+            writer.writeComment("A statistic for logging the doubling time of the exponential growth model");
+            writer.writeOpenTag(
+                    EpidemiologyStatisticParser.DOUBLING_TIME,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "doublingTime"),
+                            new Attribute.Default<String>("timeUnits", "days")
+                    }
+            );
+            writer.writeOpenTag(
+                    EpidemiologyStatisticParser.GROWTH_RATE,
+                    new Attribute.Default<String>("timeUnits", "years")
+            );
+            writeParameterRef(prefix + growthModel + ".growthRate", writer);
+            writer.writeCloseTag(EpidemiologyStatisticParser.GROWTH_RATE);
+            writer.writeCloseTag(EpidemiologyStatisticParser.DOUBLING_TIME);
+        }
+        if (parameterization == TreePriorParameterizationType.DOUBLING_TIME && prior.isGrowthRateLogging()) {
+            writer.writeComment("A statistic for logging the growth rate of the exponential growth model");
+            writer.writeOpenTag(
+                    EpidemiologyStatisticParser.GROWTH_RATE,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "growthRate"),
+                            new Attribute.Default<String>("timeUnits", "years")
+                    }
+            );
+            writer.writeOpenTag(
+                    EpidemiologyStatisticParser.DOUBLING_TIME,
+                    new Attribute.Default<String>("timeUnits", "years")
+            );
+            writeParameterRef(prefix + growthModel + ".doublingTime", writer);
+            writer.writeCloseTag(EpidemiologyStatisticParser.DOUBLING_TIME);
+            writer.writeCloseTag(EpidemiologyStatisticParser.GROWTH_RATE);
+        }
+        if (prior.isR0Logging()) {
+            writer.writeComment("A statistic for logging the basic reproductive number R0 of the exponential growth model");
+            writer.writeOpenTag(
+                    EpidemiologyStatisticParser.R0,
+                    new Attribute.Default<String>(XMLParser.ID, prefix + "R0")
+
+            );
+            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
+                writer.writeOpenTag(
+                        EpidemiologyStatisticParser.GROWTH_RATE,
+                        new Attribute.Default<String>("timeUnits", "years")
+                );
+                writeParameterRef(prefix + growthModel + ".growthRate", writer);
+                writer.writeCloseTag(EpidemiologyStatisticParser.GROWTH_RATE);
+            } else if (parameterization == TreePriorParameterizationType.DOUBLING_TIME) {
+                writer.writeOpenTag(
+                        EpidemiologyStatisticParser.DOUBLING_TIME,
+                        new Attribute.Default<String>("timeUnits", "years")
+                );
+                writeParameterRef(prefix + growthModel + ".doublingTime", writer);
+                writer.writeCloseTag(EpidemiologyStatisticParser.DOUBLING_TIME);
+            } else {
+                throw new IllegalArgumentException("Unknown parameterization type for exponential growth model: " + parameterization);
+            }
+            writer.writeTag(
+                    EpidemiologyStatisticParser.SERIAL_INTERVAL,
+                    new Attribute[]{
+                            new Attribute.Default<Double>("mean", prior.getSerialIntervalMean()),
+                            new Attribute.Default<Double>("stdev", prior.getSerialIntervalStdev())
+                    },
+                    true
+            );
+            writer.writeCloseTag(EpidemiologyStatisticParser.R0);
         }
     }
 
@@ -879,6 +956,7 @@ public class TreePriorGenerator extends Generator {
                 } else {
                     writeParameterRef(priorPrefix + "exponential.doublingTime", writer);
                 }
+                writeEpidemiologicalStatisticRefs(writer, prior, priorPrefix);
                 break;
             case LOGISTIC:
                 writeParameterRef(priorPrefix + "logistic.popSize", writer);
@@ -888,6 +966,7 @@ public class TreePriorGenerator extends Generator {
                     writeParameterRef(priorPrefix + "logistic.doublingTime", writer);
                 }
                 writeParameterRef(priorPrefix + "logistic.t50", writer);
+                writeEpidemiologicalStatisticRefs(writer, prior, priorPrefix);
                 break;
             case EXPANSION:
                 writeParameterRef(priorPrefix + "expansion.popSize", writer);
@@ -897,6 +976,7 @@ public class TreePriorGenerator extends Generator {
                     writeParameterRef(priorPrefix + "expansion.doublingTime", writer);
                 }
                 writeParameterRef(priorPrefix + "expansion.ancestralProportion", writer);
+                writeEpidemiologicalStatisticRefs(writer, prior, priorPrefix);
                 break;
 //            case SKYLINE:
 //                writeParameterRef(priorPrefix + "skyline.popSize", writer);
@@ -964,6 +1044,18 @@ public class TreePriorGenerator extends Generator {
                 default:
                     throw new IllegalArgumentException("Unsupported tree prior type for subtree");
             }
+        }
+    }
+
+    private void writeEpidemiologicalStatisticRefs(XMLWriter writer, PartitionTreePrior prior, String priorPrefix) {
+        if (prior.getParameterization() == TreePriorParameterizationType.GROWTH_RATE && prior.isDoublingTimeLogging()) {
+            writeParameterRef(priorPrefix + "doublingTime", writer);
+        }
+        if (prior.getParameterization() == TreePriorParameterizationType.DOUBLING_TIME && prior.isGrowthRateLogging()) {
+            writeParameterRef(priorPrefix + "growthRate", writer);
+        }
+        if (prior.isR0Logging()) {
+            writeParameterRef(priorPrefix + "R0", writer);
         }
     }
 

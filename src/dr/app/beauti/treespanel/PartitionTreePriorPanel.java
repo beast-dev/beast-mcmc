@@ -143,7 +143,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "This will log the growth rate (/year) for the current<br/>" +
                 "doubling time.<html>");
         growthRateCheckBox.addItemListener(ev -> {
-                    PartitionTreePriorPanel.this.partitionTreePrior.setDoublingTimeLogging(growthRateCheckBox.isSelected());
+                    PartitionTreePriorPanel.this.partitionTreePrior.setGrowthRateLogging(growthRateCheckBox.isSelected());
                     parent.fireTreePriorsChanged();
                 }
         );

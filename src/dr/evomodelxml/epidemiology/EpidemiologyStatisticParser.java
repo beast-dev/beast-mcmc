@@ -39,6 +39,7 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 import java.util.Locale;
+import java.util.logging.Logger;
 
 /**
  */
@@ -78,11 +79,13 @@ public class EpidemiologyStatisticParser extends AbstractXMLObjectParser {
         }
 
         if (parserName.equals(DOUBLING_TIME)) {
+            Logger.getLogger("dr.evomodel").info("Logging doubling time (in " + timeUnits + ") calculated from growth rate.");
             return new EpidemiologyStatistic(name, EpidemiologyStatistic.StatisticType.DOUBLING_TIME,
                     growthRate, null, timeUnits);
         }
 
         if (parserName.equals(GROWTH_RATE)) {
+            Logger.getLogger("dr.evomodel").info("Logging growth rate (per " + timeUnits + ") calculated from doubling time.");
             return new EpidemiologyStatistic(name, EpidemiologyStatistic.StatisticType.GROWTH_RATE,
                     null, doublingTime, timeUnits);
         }
@@ -92,6 +95,9 @@ public class EpidemiologyStatisticParser extends AbstractXMLObjectParser {
             XMLObject cxo = xo.getChild(SERIAL_INTERVAL);
             double mean = cxo.getAttribute(MEAN, 0.0);
             double stdev = cxo.getAttribute(STDEV, 0.0);
+
+            Logger.getLogger("dr.evomodel").info("Logging R0 estimated from growth rate with serial " +
+                    "interval (mean = " + mean + ", stdev = " + stdev + ")");
 
             return new EpidemiologyStatistic(name, growthRate, doublingTime, timeUnits, mean, stdev);
         } else {

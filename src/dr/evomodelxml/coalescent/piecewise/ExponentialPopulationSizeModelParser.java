@@ -1,7 +1,7 @@
 /*
  * ExponentialPopulationSizeModelParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,18 +25,17 @@
  *
  */
 
-package dr.evomodelxml.coalescent;
+package dr.evomodelxml.coalescent.piecewise;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ExponentialPopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.ExponentialPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * Parses an element from an DOM document into a ExponentialGrowth.
- * @deprecated
+ * An exponential growth/decline population size model for use with the PiecewisePopulationSizeModel.
  */
 public class ExponentialPopulationSizeModelParser extends AbstractXMLObjectParser {
 

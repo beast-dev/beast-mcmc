@@ -27,17 +27,11 @@
 
 package dr.evomodel.coalescent;
 
-import java.util.ArrayList;
-import java.util.logging.Logger;
-
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.math.Binomial;
 
 public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 

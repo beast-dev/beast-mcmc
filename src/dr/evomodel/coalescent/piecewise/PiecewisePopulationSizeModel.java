@@ -1,7 +1,7 @@
 /*
  * PiecewisePopulationSizeModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

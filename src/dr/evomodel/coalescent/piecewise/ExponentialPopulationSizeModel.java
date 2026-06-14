@@ -1,7 +1,7 @@
 /*
  * ExponentialPopulationSizeModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,9 +25,9 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
-import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
+import dr.evomodelxml.coalescent.piecewise.ExponentialPopulationSizeModelParser;
 import dr.inference.model.Parameter;
 
 /**
@@ -44,7 +44,7 @@ public class ExponentialPopulationSizeModel extends PopulationSizeModel {
      */
     public ExponentialPopulationSizeModel(Parameter N0Parameter, Parameter rateParameter, Type units) {
 
-        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, N0Parameter, rateParameter, units);
+        this(ExponentialPopulationSizeModelParser.EXPONENTIAL_POPULATION_SIZE_MODEL, N0Parameter, rateParameter, units);
     }
 
     /**

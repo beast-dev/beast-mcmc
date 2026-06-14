@@ -30,27 +30,12 @@ package dr.evomodel.coalescent;
 import dr.evolution.io.Importer;
 import dr.inference.model.Parameter;
 
-//import dr.evolution.io.NexusImporter;
-//import dr.evolution.io.TreeImporter;
-//import dr.evolution.tree.Tree;
-//import dr.inference.operators.AdaptationMode;
-//import dr.inference.trace.AbstractTraceList;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
-//import dr.inference.trace.TraceFactory;
 import dr.stats.DiscreteStatistics;
-//import dr.util.FileHelpers;
-//import dr.util.HeapSort;
 import dr.util.TabularData;
-//import no.uib.cipr.matrix.SymmTridiagEVD;
-//import no.uib.cipr.matrix.*;
-
-
 import java.io.*;
-//import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.StringTokenizer;
 
 /**
  * @author Joseph Heled

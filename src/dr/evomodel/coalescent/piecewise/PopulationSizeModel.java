@@ -1,7 +1,7 @@
 /*
  * PopulationSizeModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,13 +25,15 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
 import dr.evolution.util.Units;
 import dr.inference.model.*;
 
 /**
- * This interface provides a model that returns a PopulationSizeFunction.
+ * This interface provides a model that returns a PopulationSizeFunction
+ * that can be chained together in PiecewisePopulationSizeModel.
+ * The model is parameterized by the log of the population size at the first epoch.
  *
  * @author Andrew Rambaut
  */

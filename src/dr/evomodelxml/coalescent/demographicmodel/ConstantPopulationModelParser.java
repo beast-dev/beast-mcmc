@@ -28,7 +28,7 @@
 package dr.evomodelxml.coalescent.demographicmodel;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;

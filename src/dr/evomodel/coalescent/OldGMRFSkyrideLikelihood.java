@@ -27,12 +27,10 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.distribution.shrinkage.OldBayesianBridgeLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;

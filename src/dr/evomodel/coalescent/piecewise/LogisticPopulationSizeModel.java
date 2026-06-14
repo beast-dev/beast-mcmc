@@ -1,7 +1,7 @@
 /*
  * LogisticPopulationSizeModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.inference.model.Parameter;
@@ -37,7 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Implements an exponential growth population size model.
+ * Implements a logistic growth population size model.
+ * Parser not implemented yet
  *
  * @author Andrew Rambaut
  */
@@ -50,7 +51,7 @@ public class LogisticPopulationSizeModel extends PopulationSizeModel implements 
      */
     public LogisticPopulationSizeModel(Parameter logN0Parameter, Parameter rateParameter, Parameter shapeParameter, Type units) {
 
-        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, logN0Parameter, rateParameter, shapeParameter, units);
+        this("LogisticPopulationSizeModel", logN0Parameter, rateParameter, shapeParameter, units);
     }
 
     /**

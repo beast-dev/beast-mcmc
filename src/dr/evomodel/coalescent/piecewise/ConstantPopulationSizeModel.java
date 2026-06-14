@@ -1,7 +1,7 @@
 /*
  * ConstantPopulationSizeModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,9 +25,9 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
-import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.piecewise.ConstantPopulationSizeModelParser;
 import dr.inference.model.Parameter;
 
 /**
@@ -45,7 +45,7 @@ public class ConstantPopulationSizeModel extends PopulationSizeModel {
      */
     public ConstantPopulationSizeModel(Parameter logN0Parameter, Type units) {
 
-        this(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, logN0Parameter, units);
+        this(ConstantPopulationSizeModelParser.CONSTANT_POPULATION_MODEL, logN0Parameter, units);
     }
 
     /**

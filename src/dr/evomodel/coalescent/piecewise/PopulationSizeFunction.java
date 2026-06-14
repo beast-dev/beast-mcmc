@@ -1,7 +1,7 @@
 /*
  * PopulationSizeFunction.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,15 +25,9 @@
  *
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.piecewise;
 
 import dr.evolution.util.Units;
-import dr.math.Binomial;
-import dr.math.MathUtils;
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MaxIterationsExceededException;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
-import org.apache.commons.math.analysis.integration.RombergIntegrator;
 
 /**
  * This interface provides a function of population size over time

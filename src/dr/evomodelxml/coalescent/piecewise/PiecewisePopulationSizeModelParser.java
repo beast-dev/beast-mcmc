@@ -1,7 +1,7 @@
 /*
  * PiecewisePopulationSizeModelParser.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,11 +25,11 @@
  *
  */
 
-package dr.evomodelxml.coalescent;
+package dr.evomodelxml.coalescent.piecewise;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.PiecewisePopulationSizeModel;
-import dr.evomodel.coalescent.PopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.PiecewisePopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;

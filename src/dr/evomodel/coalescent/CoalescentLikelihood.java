@@ -32,6 +32,8 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.piecewise.PopulationSizeFunction;
+import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.math.Binomial;
 

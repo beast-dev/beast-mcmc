@@ -39,7 +39,6 @@ import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 
 /**

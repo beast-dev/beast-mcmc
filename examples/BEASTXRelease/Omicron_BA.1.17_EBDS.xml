@@ -68476,11 +68476,11 @@
 
     <birthDeathLikelihood id="birthDeathLikelihood" useNewLoop="true">
         <model>
-            <birthDeathSerialSampling idref="ebds"/>
+            <episodicBirthDeathSamplingModel idref="ebds"/>
         </model>
-        <speciesTree>
+        <tree>
            <treeModel idref="treeModel"/>
-        </speciesTree>
+        </tree>
     </birthDeathLikelihood>
 
     <distributionLikelihood id="birthRateAtPresentPrior">
@@ -68600,7 +68600,7 @@
     </compoundGradient>
 
    <birthDeathCompoundParameterLogger id="effectiveReproductiveNumber" compoundParameterType = "effectiveReproductiveNumber">
-	   <newBirthDeathSerialSampling idref="ebds"/>
+	   <episodicBirthDeathSamplingModel idref="ebds"/>
    </birthDeathCompoundParameterLogger>
 
 	<!-- Define operators                                                        -->

@@ -47,7 +47,7 @@ public class BirthDeathLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_LIKELIHOOD = "birthDeathLikelihood";
     public static final String MODEL = "model";
-    public static final String TREE = "speciesTree";
+    public static final String TREE = "tree";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 

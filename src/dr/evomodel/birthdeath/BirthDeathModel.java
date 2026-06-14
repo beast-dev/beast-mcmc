@@ -61,13 +61,6 @@ public abstract class BirthDeathModel extends AbstractModel implements Units {
         throw new RuntimeException("Not yet implemented");
     }
 
-    // True if Yule.
-    //
-    // Not abstract - non-supporting derived classes do not need to override anything
-    public boolean isYule() {
-        return false;
-    }
-    
     // Likelihood for the speciation model conditional on monophyly and calibration densities in
     // 'calibration'.
     //

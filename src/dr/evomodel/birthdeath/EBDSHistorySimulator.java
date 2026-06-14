@@ -37,24 +37,24 @@ import java.util.Arrays;
 
 public class EBDSHistorySimulator implements Loggable {
 
-    public EBDSHistorySimulator(EpisodicBirthDeathSamplingModel bdss,
+    public EBDSHistorySimulator(EpisodicBirthDeathSamplingModel ebds,
                                 Tree tree,
                                 boolean startAtOrigin,
                                 boolean conditionOnSurvivalToPresent,
                                 boolean recordBeforeSampling) {
-        this.bdss = bdss;
+        this.ebds = ebds;
         this.tree = tree;
         this.startAtOrigin = startAtOrigin;
         this.conditionOnSurvivalToPresent = conditionOnSurvivalToPresent;
         this.recordBeforeSampling = recordBeforeSampling;
-        this.dim = bdss.getDeathRateParameter().getDimension();
+        this.dim = ebds.getDeathRateParameter().getDimension();
 
         history = new double[dim];
         nSeen = 0;
     }
 
     private double getStartTime() {
-        double t = bdss.originTime.getParameterValue(0);
+        double t = ebds.originTime.getParameterValue(0);
         if ( !startAtOrigin ) {
             t = tree.getNodeHeight(tree.getRoot());
         }
@@ -63,7 +63,7 @@ public class EBDSHistorySimulator implements Loggable {
 
     private int getStartingIndex() {
         double t = getStartTime();
-        double[] grid = bdss.getBreakPoints();
+        double[] grid = ebds.getBreakPoints();
         int i = 0;
         while (grid[i] < t) {
             i++;
@@ -72,10 +72,10 @@ public class EBDSHistorySimulator implements Loggable {
     }
 
     private int drawNext(int idx, int n0, double tOld, double tYoung) {
-        double birth = bdss.getBirthRateParameter().getParameterValue(idx);
-        double death = bdss.getDeathRateParameter().getParameterValue(idx);
-        double sampling = bdss.getSamplingRateParameter().getParameterValue(idx);
-        double treatment = bdss.getTreatmentProbabilityParameter().getParameterValue(idx);
+        double birth = ebds.getBirthRateParameter().getParameterValue(idx);
+        double death = ebds.getDeathRateParameter().getParameterValue(idx);
+        double sampling = ebds.getSamplingRateParameter().getParameterValue(idx);
+        double treatment = ebds.getTreatmentProbabilityParameter().getParameterValue(idx);
 
         double totalDeath = death + sampling * treatment;
         double netBirth = birth - totalDeath;
@@ -100,8 +100,8 @@ public class EBDSHistorySimulator implements Loggable {
 
     private int doMassSampling(int idx, int n0) {
         int n = n0;
-        double rho = bdss.getSamplingProbabilityParameter().getParameterValue(idx);
-        double treatment = bdss.getTreatmentProbabilityParameter().getParameterValue(idx);
+        double rho = ebds.getSamplingProbabilityParameter().getParameterValue(idx);
+        double treatment = ebds.getTreatmentProbabilityParameter().getParameterValue(idx);
 
         if (rho > 0.0) {
             for (int i = 0; i < n; i++) {
@@ -124,7 +124,7 @@ public class EBDSHistorySimulator implements Loggable {
             int index = getStartingIndex();
             int n = startAtOrigin ? 1 : 2;
 
-            double[] grid = bdss.getBreakPoints();
+            double[] grid = ebds.getBreakPoints();
 
             while (index > -1) {
                 double gridIntervalStart = (index == 0) ? 0.0 : grid[index - 1];
@@ -179,7 +179,7 @@ public class EBDSHistorySimulator implements Loggable {
         return columns;
     }
 
-    private final EpisodicBirthDeathSamplingModel bdss;
+    private final EpisodicBirthDeathSamplingModel ebds;
     private final Tree tree;
     private final boolean startAtOrigin;
     private final boolean conditionOnSurvivalToPresent;

@@ -40,6 +40,7 @@ import java.util.Set;
  *
  * @author Andy Magee
  */
+@Deprecated
 public class BirthDeathEpisodicSeriallySampledModel extends BirthDeathModel implements BirthDeathModelGradientProvider {
 
 

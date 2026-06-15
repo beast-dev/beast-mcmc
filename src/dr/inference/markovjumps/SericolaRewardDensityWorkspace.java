@@ -29,6 +29,7 @@ final class SericolaRewardDensityWorkspace {
     private boolean[] isZero;
     private boolean[] isOne;
     private double[] inc;
+    private double[] contractionWeights;
 
     SericolaRewardDensityWorkspace(int dim, double epsilon) {
         this.dim2 = dim * dim;
@@ -110,6 +111,52 @@ final class SericolaRewardDensityWorkspace {
         return fillRewardProportionPrecomp(0, rewardProportion, sortedAlpha, invAlphaDiff);
     }
 
+    double prepareDerivative(
+            double[] rewardProportions,
+            double[] times,
+            int count,
+            double[] sortedAlpha,
+            double[] invAlphaDiff) {
+
+        if (count < 0 || count > rewardProportions.length) {
+            throw new IllegalArgumentException("count must be in [0, rewardProportions.length]");
+        }
+        if (times.length != 1 && times.length < count) {
+            throw new IllegalArgumentException("Either times.length==1 or times.length>=count");
+        }
+
+        ensureCapacity(count);
+
+        final boolean singleTime = times.length == 1;
+        double maxT = 0.0;
+
+        if (singleTime) {
+            final double time = times[0];
+            if (time <= 0.0) {
+                throw new IllegalArgumentException("time must be > 0");
+            }
+            maxT = time;
+
+            for (int t = 0; t < count; ++t) {
+                H[t] = fillRewardProportionPrecomp(t, rewardProportions[t], sortedAlpha, invAlphaDiff);
+            }
+            return maxT;
+        }
+
+        for (int t = 0; t < count; ++t) {
+            final double time = times[t];
+            if (time <= 0.0) {
+                throw new IllegalArgumentException("time must be > 0 at index " + t);
+            }
+            if (time > maxT) {
+                maxT = time;
+            }
+
+            H[t] = fillRewardProportionPrecomp(t, rewardProportions[t], sortedAlpha, invAlphaDiff);
+        }
+        return maxT;
+    }
+
     int determineNumberOfSteps(double lambda, double time) {
         final double target = 1.0 - epsilon;
         final double lambdaTime = lambda * time;
@@ -168,6 +215,10 @@ final class SericolaRewardDensityWorkspace {
         return inc;
     }
 
+    double[] contractionWeights() {
+        return contractionWeights;
+    }
+
     double xh(int index) {
         return xh[index];
     }
@@ -194,6 +245,9 @@ final class SericolaRewardDensityWorkspace {
         if (isOne == null || isOne.length < T) isOne = new boolean[T];
 
         if (inc == null || inc.length != dim2) inc = new double[dim2];
+        if (contractionWeights == null || contractionWeights.length != dim2) {
+            contractionWeights = new double[dim2];
+        }
     }
 
     private int fillRewardProportionPrecomp(

@@ -252,6 +252,154 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         assertVectorizedPdfMatchesScalarCalls(sericola, rewardProportions, times, vectorized);
     }
 
+    public void testVectorizedDerivativeWithSharedTimeMatchesScalarCalls() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double[] rewardProportions = new double[]{0.2, 0.45, 0.8};
+        double time = 0.9;
+        double[][] vectorized = newMatrixRows(rewardProportions.length, 4);
+
+        sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportions, new double[]{time}, vectorized, false);
+
+        assertVectorizedDerivativeMatchesScalarCalls(sericola, rewardProportions, new double[]{time}, vectorized);
+    }
+
+    public void testVectorizedDerivativeWithPerEntryTimesMatchesScalarCalls() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double[] rewardProportions = new double[]{0.2, 0.45, 0.8};
+        double[] times = new double[]{0.4, 0.9, 1.3};
+        double[][] vectorized = newMatrixRows(rewardProportions.length, 4);
+
+        sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportions, times, vectorized, false);
+
+        assertVectorizedDerivativeMatchesScalarCalls(sericola, rewardProportions, times, vectorized);
+    }
+
+    public void testDerivativeContractionMatchesMaterializedDerivative() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.45;
+        double time = 0.9;
+        double[] pre = new double[]{0.70, 0.30};
+        double[] post = new double[]{0.15, 0.85};
+        double[] materialized = new double[4];
+
+        sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportion, time, materialized, false);
+
+        double expected = bilinearFormStable(pre, materialized, post, 2);
+        double observed = sericola.contractPdfDerivativeWrtRewardProportion(
+                rewardProportion,
+                time,
+                pre,
+                post,
+                false);
+
+        assertEquals(expected, observed, Math.max(1.0e-10, Math.abs(expected) * 1.0e-10));
+    }
+
+    public void testVectorizedDerivativeContractionMatchesMaterializedDerivative() {
+        Fixture fixture = createFixture(
+                new double[]{0.25, 0.75},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double[] rewardProportions = new double[]{0.2, 0.45, 0.8};
+        double[] times = new double[]{0.4, 0.9, 1.3};
+        double[][] pre = new double[][]{
+                {0.80, 0.20},
+                {0.55, 0.45},
+                {0.10, 0.90}
+        };
+        double[][] post = new double[][]{
+                {0.30, 0.70},
+                {0.65, 0.35},
+                {0.40, 0.60}
+        };
+        double[] contracted = new double[rewardProportions.length];
+
+        sericola.contractPdfDerivativeWrtRewardProportionInto(
+                rewardProportions,
+                times,
+                pre,
+                post,
+                contracted,
+                false);
+
+        double[] materialized = new double[4];
+        for (int t = 0; t < rewardProportions.length; t++) {
+            sericola.computePdfDerivativeWrtRewardProportionInto(
+                    rewardProportions[t],
+                    times[t],
+                    materialized,
+                    false);
+            double expected = bilinearFormStable(pre[t], materialized, post[t], 2);
+            assertEquals("row " + t, expected, contracted[t],
+                    Math.max(1.0e-10, Math.abs(expected) * 1.0e-10));
+        }
+    }
+
+    public void testVectorizedDerivativeRejectsBoundaryRewardProportion() {
+        Fixture fixture = createFixture(
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        try {
+            sericola.computePdfDerivativeWrtRewardProportionInto(
+                    new double[]{0.25, 0.0, 0.75},
+                    new double[]{0.9, 0.9, 0.9},
+                    newMatrixRows(3, 4),
+                    false);
+            fail("Expected UnsupportedOperationException for a boundary rewardProportion in a vectorized derivative call");
+        } catch (UnsupportedOperationException e) {
+            assertTrue(e.getMessage().contains("Boundary Values for rewardProportion touched"));
+            assertTrue(e.getMessage().contains("rewardProportion=0.0"));
+        }
+    }
+
+    public void testVectorizedDerivativeContractionRejectsBoundaryRewardProportion() {
+        Fixture fixture = createFixture(
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        try {
+            sericola.contractPdfDerivativeWrtRewardProportionInto(
+                    new double[]{0.25, 0.0, 0.75},
+                    new double[]{0.9, 0.9, 0.9},
+                    new double[][]{{0.7, 0.3}, {0.7, 0.3}, {0.7, 0.3}},
+                    new double[][]{{0.2, 0.8}, {0.2, 0.8}, {0.2, 0.8}},
+                    new double[3],
+                    false);
+            fail("Expected UnsupportedOperationException for a boundary rewardProportion in a vectorized derivative-contraction call");
+        } catch (UnsupportedOperationException e) {
+            assertTrue(e.getMessage().contains("Boundary Values for rewardProportion touched"));
+            assertTrue(e.getMessage().contains("rewardProportion=0.0"));
+        }
+    }
+
     public void testRewardProportionOutsideSupportThrowsDiagnosticException() {
         Fixture fixture = createFixture(
                 new double[]{0.35, 0.65},
@@ -374,6 +522,22 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         }
     }
 
+    private static void assertVectorizedDerivativeMatchesScalarCalls(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double[] rewardProportions,
+            double[] times,
+            double[][] vectorized) {
+
+        final boolean singleTime = times.length == 1;
+        double[] scalar = new double[4];
+
+        for (int t = 0; t < rewardProportions.length; t++) {
+            double time = singleTime ? times[0] : times[t];
+            sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportions[t], time, scalar, false);
+            assertMatrixEntryEquals("row " + t, scalar, vectorized[t]);
+        }
+    }
+
     private static double[][] newMatrixRows(int rows, int columns) {
         double[][] matrix = new double[rows][];
         for (int i = 0; i < rows; i++) {
@@ -387,6 +551,33 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         for (int i = 0; i < expected.length; i++) {
             assertEquals(label + " entry " + i, expected[i], observed[i], TOL);
         }
+    }
+
+    private static double bilinearFormStable(double[] pre, double[] D, double[] post, int n) {
+        double acc = 0.0;
+        double cAcc = 0.0;
+
+        for (int i = 0; i < n; i++) {
+            double pre_i = pre[i];
+            if (pre_i == 0.0) continue;
+
+            int rowBase = i * n;
+            double rowDot = 0.0;
+            double cRow = 0.0;
+
+            for (int j = 0; j < n; j++) {
+                double y = D[rowBase + j] * post[j] - cRow;
+                double t = rowDot + y;
+                cRow = (t - rowDot) - y;
+                rowDot = t;
+            }
+
+            double y = pre_i * rowDot - cAcc;
+            double t = acc + y;
+            cAcc = (t - acc) - y;
+            acc = t;
+        }
+        return acc;
     }
 
     private static void assertIllegalRewardProportion(

@@ -864,4 +864,257 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 out);
     }
 
+    public void computePdfDerivativeWrtRewardProportionInto(
+            double[] rewardProportions,
+            double[] branchLengths,
+            double[][] out,
+            boolean shiftback) {
+
+        computePdfDerivativeWrtRewardProportionInto(
+                rewardProportions,
+                branchLengths,
+                rewardProportions == null ? 0 : rewardProportions.length,
+                out,
+                shiftback);
+    }
+
+    public void computePdfDerivativeWrtRewardProportionInto(
+            double[] rewardProportions,
+            double[] branchLengths,
+            int count,
+            double[][] out,
+            boolean shiftback) {
+
+        validateDerivativeInputs(rewardProportions, branchLengths, count, out);
+        if (count == 0) return;
+
+        ensureNumericsUpToDate();
+        zeroDerivativeOutputs(out, count);
+
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final double maxTime = workspace.prepareDerivative(
+                rewardProportions,
+                branchLengths,
+                count,
+                sortedAlpha,
+                invAlphaDiff);
+
+        for (int t = 0; t < count; ++t) {
+            if (workspace.isZero(t) || workspace.isOne(t)) {
+                final int h = workspace.intervals()[t];
+                throw new UnsupportedOperationException(
+                        "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
+                                "until the boundary convention is explicit. rewardProportion=" + rewardProportions[t] +
+                                ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
+                                ", xh=" + workspace.xh(t));
+            }
+        }
+
+        ensureCForTime(maxTime, /*extraN=*/1);
+        final int N = cumulantMatrices.computedN() - 1;
+        final int[] intervals = workspace.intervals();
+
+        for (int t = 0; t < count; ++t) {
+            final int h = intervals[t];
+            final double branchLength = branchLengths.length == 1 ? branchLengths[0] : branchLengths[t];
+
+            rewardDensityDerivative.computeWrtRewardProportionInto(
+                    h,
+                    N,
+                    branchLength,
+                    lambda,
+                    invAlphaDiff[h],
+                    workspace.xh(t),
+                    workspace.isZero(t),
+                    workspace.isOne(t),
+                    cumulantMatrices,
+                    workspace.increments(),
+                    out[t]);
+        }
+    }
+
+    public double contractPdfDerivativeWrtRewardProportion(
+            double rewardProportion,
+            double branchLength,
+            double[] preOriginal,
+            double[] postOriginal,
+            boolean shiftback) {
+
+        validateContractionVectors(preOriginal, postOriginal);
+        if (branchLength <= 0.0) {
+            throw new IllegalArgumentException("branchLength must be > 0");
+        }
+
+        ensureNumericsUpToDate();
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
+        if (workspace.isZero(0) || workspace.isOne(0)) {
+            throw new UnsupportedOperationException(
+                    "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
+                            "until the boundary convention is explicit. rewardProportion=" + rewardProportion +
+                            ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
+                            ", xh=" + workspace.xh(0));
+        }
+
+        ensureCForTime(branchLength, /*extraN=*/1);
+        final int N = cumulantMatrices.computedN() - 1;
+
+        return rewardDensityDerivative.contractWrtRewardProportion(
+                h,
+                N,
+                branchLength,
+                lambda,
+                invAlphaDiff[h],
+                workspace.xh(0),
+                workspace.isZero(0),
+                workspace.isOne(0),
+                cumulantMatrices,
+                workspace,
+                preOriginal,
+                postOriginal);
+    }
+
+    public void contractPdfDerivativeWrtRewardProportionInto(
+            double[] rewardProportions,
+            double[] branchLengths,
+            double[][] preOriginal,
+            double[][] postOriginal,
+            double[] out,
+            boolean shiftback) {
+
+        contractPdfDerivativeWrtRewardProportionInto(
+                rewardProportions,
+                branchLengths,
+                rewardProportions == null ? 0 : rewardProportions.length,
+                preOriginal,
+                postOriginal,
+                out,
+                shiftback);
+    }
+
+    public void contractPdfDerivativeWrtRewardProportionInto(
+            double[] rewardProportions,
+            double[] branchLengths,
+            int count,
+            double[][] preOriginal,
+            double[][] postOriginal,
+            double[] out,
+            boolean shiftback) {
+
+        validateDerivativeContractionInputs(rewardProportions, branchLengths, count, preOriginal, postOriginal, out);
+        if (count == 0) return;
+        Arrays.fill(out, 0, count, 0.0);
+
+        ensureNumericsUpToDate();
+
+        final SericolaRewardDensityWorkspace workspace = workspace();
+        final double maxTime = workspace.prepareDerivative(
+                rewardProportions,
+                branchLengths,
+                count,
+                sortedAlpha,
+                invAlphaDiff);
+
+        for (int t = 0; t < count; ++t) {
+            if (workspace.isZero(t) || workspace.isOne(t)) {
+                final int h = workspace.intervals()[t];
+                throw new UnsupportedOperationException(
+                        "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
+                                "until the boundary convention is explicit. rewardProportion=" + rewardProportions[t] +
+                                ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
+                                ", xh=" + workspace.xh(t));
+            }
+        }
+
+        ensureCForTime(maxTime, /*extraN=*/1);
+        final int N = cumulantMatrices.computedN() - 1;
+        final int[] intervals = workspace.intervals();
+
+        for (int t = 0; t < count; ++t) {
+            final int h = intervals[t];
+            final double branchLength = branchLengths.length == 1 ? branchLengths[0] : branchLengths[t];
+
+            out[t] = rewardDensityDerivative.contractWrtRewardProportion(
+                    h,
+                    N,
+                    branchLength,
+                    lambda,
+                    invAlphaDiff[h],
+                    workspace.xh(t),
+                    workspace.isZero(t),
+                    workspace.isOne(t),
+                    cumulantMatrices,
+                    workspace,
+                    preOriginal[t],
+                    postOriginal[t]);
+        }
+    }
+
+    private void validateDerivativeInputs(
+            double[] rewardProportions,
+            double[] branchLengths,
+            int count,
+            double[][] out) {
+
+        if (rewardProportions == null || branchLengths == null || out == null) {
+            throw new IllegalArgumentException("rewardProportions/branchLengths/out must be non-null");
+        }
+        if (count < 0 || count > rewardProportions.length) {
+            throw new IllegalArgumentException("count must be in [0, rewardProportions.length]");
+        }
+        if (branchLengths.length != 1 && branchLengths.length < count) {
+            throw new IllegalArgumentException("Either branchLengths.length==1 or branchLengths.length>=count");
+        }
+        if (out.length < count) {
+            throw new IllegalArgumentException("out.length must be >= count");
+        }
+        for (int t = 0; t < count; ++t) {
+            final double[] row = out[t];
+            if (row == null || row.length != dim2) {
+                throw new IllegalArgumentException("out[" + t + "] must be non-null and length dim*dim=" + dim2);
+            }
+        }
+    }
+
+    private void validateDerivativeContractionInputs(
+            double[] rewardProportions,
+            double[] branchLengths,
+            int count,
+            double[][] preOriginal,
+            double[][] postOriginal,
+            double[] out) {
+
+        if (rewardProportions == null || branchLengths == null ||
+                preOriginal == null || postOriginal == null || out == null) {
+            throw new IllegalArgumentException("rewardProportions/branchLengths/preOriginal/postOriginal/out must be non-null");
+        }
+        if (count < 0 || count > rewardProportions.length) {
+            throw new IllegalArgumentException("count must be in [0, rewardProportions.length]");
+        }
+        if (branchLengths.length != 1 && branchLengths.length < count) {
+            throw new IllegalArgumentException("Either branchLengths.length==1 or branchLengths.length>=count");
+        }
+        if (preOriginal.length < count || postOriginal.length < count || out.length < count) {
+            throw new IllegalArgumentException("preOriginal/postOriginal/out lengths must be >= count");
+        }
+        for (int t = 0; t < count; ++t) {
+            validateContractionVectors(preOriginal[t], postOriginal[t]);
+        }
+    }
+
+    private void validateContractionVectors(double[] preOriginal, double[] postOriginal) {
+        if (preOriginal == null || preOriginal.length != dim) {
+            throw new IllegalArgumentException("preOriginal must be non-null and length dim=" + dim);
+        }
+        if (postOriginal == null || postOriginal.length != dim) {
+            throw new IllegalArgumentException("postOriginal must be non-null and length dim=" + dim);
+        }
+    }
+
+    private void zeroDerivativeOutputs(double[][] out, int count) {
+        for (int t = 0; t < count; ++t) {
+            Arrays.fill(out[t], 0.0);
+        }
+    }
+
 }

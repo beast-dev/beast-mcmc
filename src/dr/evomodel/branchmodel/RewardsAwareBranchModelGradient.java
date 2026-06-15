@@ -45,12 +45,16 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     private static final String GRADIENT_TRAIT_PREFIX = "RewardAwareBranchModelGradient";
     private static final String HESSIAN_TRAIT_PREFIX  = "RewardAwareBranchModelHessian";
 
-    private final double[] prePartial;
-    private final double[] postPartial;
-    private final double[] differential;
     private final double[] prePartialAtNode;
 
     private final double[] gradientBuffer;
+    private final double[] batchRewardProportions;
+    private final double[] batchBranchLengths;
+    private final double[][] batchPrePartials;
+    private final double[][] batchPostPartials;
+    private final double[] batchDerivativeContractions;
+    private final double[] batchLikelihoodDenominators;
+    private final int[] batchParameterIndices;
 
     public RewardsAwareBranchModelGradient(TreeDataLikelihood treeDataLikelihood,
                                               RewardsAwareBranchModel rewardsAwareBranchModel,
@@ -81,12 +85,20 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
         }
         this.discreteDelegate = (DiscreteDataLikelihoodDelegate) delegate;
 
-        this.prePartial = new double[nstates];
         this.prePartialAtNode = new double[nstates];
-        this.postPartial = new double[nstates];
-        this.differential = new double[nstates * nstates];
 
         this.gradientBuffer = new double[parameter.getDimension()];
+        this.batchRewardProportions = new double[parameter.getDimension()];
+        this.batchBranchLengths = new double[parameter.getDimension()];
+        this.batchPrePartials = new double[parameter.getDimension()][];
+        this.batchPostPartials = new double[parameter.getDimension()][];
+        this.batchDerivativeContractions = new double[parameter.getDimension()];
+        this.batchLikelihoodDenominators = new double[parameter.getDimension()];
+        this.batchParameterIndices = new int[parameter.getDimension()];
+        for (int i = 0; i < parameter.getDimension(); i++) {
+            batchPrePartials[i] = new double[nstates];
+            batchPostPartials[i] = new double[nstates];
+        }
     }
 
     @Override
@@ -114,69 +126,61 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
         discreteDelegate.ensurePreOrderComputed();
 //        treeDataLikelihood.getLogLikelihood();
 
-        Arrays.fill(prePartial, 0.0);
         Arrays.fill(prePartialAtNode, 0.0);
-        Arrays.fill(postPartial, 0.0);
         Arrays.fill(gradientBuffer, 0.0);
 
+        final int activeCount = collectActiveContinuousBranchContexts();
+        if (activeCount == 0) {
+            return gradientBuffer;
+        }
+
+        sericola.contractPdfDerivativeWrtRewardProportionInto(
+                batchRewardProportions,
+                batchBranchLengths,
+                activeCount,
+                batchPrePartials,
+                batchPostPartials,
+                batchDerivativeContractions,
+                false);
+
+        for (int i = 0; i < activeCount; i++) {
+            final int b = batchParameterIndices[i];
+            gradientBuffer[b] = batchDerivativeContractions[i] / batchLikelihoodDenominators[i];
+        }
+
+        return gradientBuffer;
+    }
+
+    private int collectActiveContinuousBranchContexts() {
+        int activeCount = 0;
         for (int b = 0; b < parameter.getDimension(); b++) {
             if (indicator != null && indicator.getParameterValue(b) == indicatorOnBase) {
-                gradientBuffer[b] = 0.0;
                 continue;
             }
 
             final int nodeNum = totalRewardsBranchRates.getNodeNumberFromParameterIndex(b);
             final NodeRef node = tree.getNode(nodeNum);
 
-            computeDifferentialForBranch(node, differential);
+            batchParameterIndices[activeCount] = b;
+            batchBranchLengths[activeCount] = tree.getBranchLength(node);
+            batchRewardProportions[activeCount] = totalRewardsBranchRates.getBranchRate(tree, node);
 
+            final double[] prePartial = batchPrePartials[activeCount];
+            final double[] postPartial = batchPostPartials[activeCount];
             discreteDelegate.getPreOrderAtBranchStartInto(nodeNum, prePartial);
             discreteDelegate.getPreOrderAtBranchEndInto(nodeNum, prePartialAtNode);
             discreteDelegate.getPostOrderAtBranchEndInto(nodeNum, postPartial);
 
-//            System.out.println("Branch " + b + " (node " + nodeNum + "): prePartial=" + Arrays.toString(prePartial) + ",\n postPartial=" + Arrays.toString(postPartial) + ",\n differential=" + Arrays.toString(differential));
-
-            final double acc = bilinearFormStable(prePartial, differential, postPartial, nstates);
-
             double L = 0.0;
-            for (int i = 0; i < nstates; i++) {
-                L += prePartialAtNode[i] * postPartial[i];
+            for (int j = 0; j < nstates; j++) {
+                L += prePartialAtNode[j] * postPartial[j];
             }
-            gradientBuffer[b] = acc / L;
+            batchLikelihoodDenominators[activeCount] = L;
+
+            activeCount++;
         }
 
-        return gradientBuffer;
-    }
-
-    private void computeDifferentialForBranch(NodeRef node, double[] differential) {
-        final double branchLength = tree.getBranchLength(node);
-        final double totalReward = totalRewardsBranchRates.getBranchRate(tree, node);
-        sericola.computePdfDerivativeWrtRewardProportionInto(totalReward, branchLength, differential, false);
-    }
-
-    static double bilinearFormStable(double[] pre, double[] D, double[] post, int n) {
-        double acc = 0.0, cAcc = 0.0;
-
-        for (int i = 0; i < n; i++) {
-            double pre_i = pre[i];
-            if (pre_i == 0.0) continue;
-
-            int rowBase = i * n;
-            double rowDot = 0.0, cRow = 0.0;
-
-            for (int j = 0; j < n; j++) {
-                double y = D[rowBase + j] * post[j] - cRow;
-                double t = rowDot + y;
-                cRow = (t - rowDot) - y;
-                rowDot = t;
-            }
-
-            double y = pre_i * rowDot - cAcc;
-            double t = acc + y;
-            cAcc = (t - acc) - y;
-            acc = t;
-        }
-        return acc;
+        return activeCount;
     }
 
     @Override

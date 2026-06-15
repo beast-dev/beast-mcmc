@@ -142,6 +142,24 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
         return rewardRates;
     }
 
+    public double getBranchRateForRawReward(final Tree tree, final NodeRef node, final double rawReward) {
+        return getTransform().transform(rawReward, tree, node);
+    }
+
+    public double getRawRewardForAtomState(final int stateIndex) {
+        if (stateIndex < 0 || stateIndex >= rewardRates.getStateIndices().getDimension()) {
+            throw new IllegalArgumentException("stateIndex out of range: " + stateIndex);
+        }
+        final int rewardRateIndex = (int) Math.round(rewardRates.getStateIndices().getParameterValue(stateIndex));
+        if (rewardRateIndex < 0 || rewardRateIndex >= rewardRates.getValues().getDimension()) {
+            throw new IllegalArgumentException(
+                    "Reward-rate mapping for state " + stateIndex + " points outside rewardRates: " +
+                            rewardRateIndex
+            );
+        }
+        return rewardRates.getValues().getParameterValue(rewardRateIndex);
+    }
+
     public Parameter getRewardRatesValues() {
         return rewardRates.getValues();
     }

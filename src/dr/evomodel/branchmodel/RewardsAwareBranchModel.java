@@ -241,6 +241,28 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public Parameter getRewardRatesMapping() { return rewardRates.getStateIndices(); }
 
+    public double getContinuousRewardRawForBranch(int branchNodeNumber) {
+        final NodeRef node = tree.getNode(branchNodeNumber);
+        if (tree.isRoot(node)) {
+            throw new IllegalArgumentException("Root node has no branch: " + branchNodeNumber);
+        }
+        return branchRateModel.getUntransformedBranchRate(tree, node);
+    }
+
+    public double getRewardRateRawForState(int stateIndex) {
+        if (stateIndex < 0 || stateIndex >= nstates) {
+            throw new IllegalArgumentException("stateIndex out of range: " + stateIndex);
+        }
+        final int rewardRateIndex = (int) Math.round(rewardRates.getStateIndices().getParameterValue(stateIndex));
+        if (rewardRateIndex < 0 || rewardRateIndex >= rewardRates.getValues().getDimension()) {
+            throw new IllegalArgumentException(
+                    "Reward-rate mapping for state " + stateIndex + " points outside rewardRates: " +
+                            rewardRateIndex
+            );
+        }
+        return rewardRates.getValues().getParameterValue(rewardRateIndex);
+    }
+
     public double getUniformizationRate() {
         return sericola.getUniformizationRate();
     }

@@ -32,6 +32,9 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RewardsMixtureIndicatorAndAtomIndicesOperator;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends AbstractXMLObjectParser {
 
     public static final String OPERATOR_NAME = "rewardsMixtureIndicatorAndAtomIndicesOperator";
@@ -42,6 +45,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
     private static final String USE_CLUSTER_MOVES = "useClusterMoves";
     private static final String CLUSTER_SIZE = "clusterSize";
     private static final String CLUSTER_BORDER_BIAS = "clusterBorderBias";
+    private static final String DEPENDENT_CTMC_LIKELIHOODS = "dependentCtmcLikelihoods";
 
     @Override
     public String getParserName() {
@@ -81,12 +85,15 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 (RewardsAwareBranchModel) xo.getChild(RewardsAwareBranchModel.class);
         final TreeDataLikelihood treeDataLikelihood =
                 (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final TreeDataLikelihood[] dependentTreeDataLikelihoods =
+                parseDependentTreeDataLikelihoods(xo);
 
         return new RewardsMixtureIndicatorAndAtomIndicesOperator(
                 indicatorZ,
                 atomIndex,
                 rewardsAwareBranchModel,
                 treeDataLikelihood,
+                dependentTreeDataLikelihoods,
                 updateProportion,
                 adapt,
                 useClusterMoves,
@@ -94,6 +101,23 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 clusterBorderBias,
                 weight
         );
+    }
+
+    private TreeDataLikelihood[] parseDependentTreeDataLikelihoods(final XMLObject xo) {
+        if (!xo.hasChildNamed(DEPENDENT_CTMC_LIKELIHOODS)) {
+            return new TreeDataLikelihood[0];
+        }
+
+        final XMLObject dependentXo = xo.getChild(DEPENDENT_CTMC_LIKELIHOODS);
+        final List<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
+        for (int i = 0; i < dependentXo.getChildCount(); i++) {
+            final Object child = dependentXo.getChild(i);
+            if (child instanceof TreeDataLikelihood) {
+                likelihoods.add((TreeDataLikelihood) child);
+            }
+        }
+
+        return likelihoods.toArray(new TreeDataLikelihood[likelihoods.size()]);
     }
 
     @Override
@@ -121,6 +145,9 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
 
             new ElementRule(RewardsAwareBranchModel.class, false),
             new ElementRule(TreeDataLikelihood.class, false),
+            new ElementRule(DEPENDENT_CTMC_LIKELIHOODS,
+                    new XMLSyntaxRule[] { new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE) },
+                    "Optional dependent CTMC TreeDataLikelihoods sharing the reward vector.", true),
 
             new ElementRule(INDICATOR_Z,
                     new XMLSyntaxRule[] { new ElementRule(Parameter.class) },

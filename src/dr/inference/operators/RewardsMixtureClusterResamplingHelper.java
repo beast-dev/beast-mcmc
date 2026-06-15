@@ -25,6 +25,14 @@ public final class RewardsMixtureClusterResamplingHelper {
     }
 
     /**
+     * Callback used after quiet state edits to refresh post-order/pre-order
+     * messages before evaluating proposal probabilities under that state.
+     */
+    public interface LikelihoodStateRefresher {
+        void refreshCurrentState();
+    }
+
+    /**
      * Result of a blocked proposal. The proposed new state remains applied after construction.
      */
     public static final class ClusterProposal {
@@ -100,6 +108,8 @@ public final class RewardsMixtureClusterResamplingHelper {
     private final RewardsAwareBranchModel rewardsAwareBranchModel;
     private final TreeDataLikelihood treeDataLikelihood;
     private final DiscreteDataLikelihoodDelegate discreteDelegate;
+    private final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders;
+    private final LikelihoodStateRefresher likelihoodStateRefresher;
     private final Tree tree;
     private final int nstates;
     private final int maxClusterSize;
@@ -109,8 +119,8 @@ public final class RewardsMixtureClusterResamplingHelper {
     private final double[] prePartial;
     private final double[] postPartial;
     private final double[] logAtomicWeights;
-    private final double[] preScales = new double[1];
-    private final double[] postScales = new double[1];
+    private final double[] preScales;
+    private final double[] postScales;
 
     private final int[] borderBuffer;
     private int borderCount = 0;
@@ -127,6 +137,56 @@ public final class RewardsMixtureClusterResamplingHelper {
             final int maxClusterSize,
             final double borderBias,
             final ExactLogTargetEvaluator logTargetEvaluator
+    ) {
+        this(
+                indicatorZ,
+                atomIndex,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                discreteDelegate,
+                null,
+                maxClusterSize,
+                borderBias,
+                logTargetEvaluator
+        );
+    }
+
+    public RewardsMixtureClusterResamplingHelper(
+            final Parameter indicatorZ,
+            final Parameter atomIndex,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final DiscreteDataLikelihoodDelegate discreteDelegate,
+            final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders,
+            final int maxClusterSize,
+            final double borderBias,
+            final ExactLogTargetEvaluator logTargetEvaluator
+    ) {
+        this(
+                indicatorZ,
+                atomIndex,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                discreteDelegate,
+                dependentEvidenceProviders,
+                maxClusterSize,
+                borderBias,
+                logTargetEvaluator,
+                null
+        );
+    }
+
+    public RewardsMixtureClusterResamplingHelper(
+            final Parameter indicatorZ,
+            final Parameter atomIndex,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final DiscreteDataLikelihoodDelegate discreteDelegate,
+            final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders,
+            final int maxClusterSize,
+            final double borderBias,
+            final ExactLogTargetEvaluator logTargetEvaluator,
+            final LikelihoodStateRefresher likelihoodStateRefresher
     ) {
         if (indicatorZ == null) {
             throw new IllegalArgumentException("indicatorZ cannot be null.");
@@ -155,6 +215,10 @@ public final class RewardsMixtureClusterResamplingHelper {
         this.rewardsAwareBranchModel = rewardsAwareBranchModel;
         this.treeDataLikelihood = treeDataLikelihood;
         this.discreteDelegate = discreteDelegate;
+        this.dependentEvidenceProviders = dependentEvidenceProviders == null
+                ? new RewardDependentCtmcEdgeEvidenceProvider[0]
+                : Arrays.copyOf(dependentEvidenceProviders, dependentEvidenceProviders.length);
+        this.likelihoodStateRefresher = likelihoodStateRefresher;
         this.tree = rewardsAwareBranchModel.getTree();
         this.nstates = rewardsAwareBranchModel.getStateCount();
         this.maxClusterSize = Math.max(1, maxClusterSize);
@@ -164,6 +228,8 @@ public final class RewardsMixtureClusterResamplingHelper {
         this.prePartial = new double[nstates];
         this.postPartial = new double[nstates];
         this.logAtomicWeights = new double[nstates];
+        this.preScales = new double[discreteDelegate.getPatternCount()];
+        this.postScales = new double[discreteDelegate.getPatternCount()];
 
         this.borderBuffer = new int[tree.getNodeCount()];
         this.queueBuffer = new int[tree.getNodeCount()];
@@ -193,6 +259,8 @@ public final class RewardsMixtureClusterResamplingHelper {
             newAtoms[i] = oldAtoms[i];
         }
 
+        refreshLikelihoodState();
+
         final double logTargetOld =
                 logTargetEvaluator.computeCurrentLogTarget(branchNodeNumbers, clusterCount);
 
@@ -200,6 +268,8 @@ public final class RewardsMixtureClusterResamplingHelper {
                 proposeForward(branchNodeNumbers, clusterCount, newIndicators, newAtoms);
 
         applyState(parameterIndices, clusterCount, newIndicators, newAtoms);
+        fireParameterEvents();
+        refreshLikelihoodState();
 
         final double logTargetNew =
                 logTargetEvaluator.computeCurrentLogTarget(branchNodeNumbers, clusterCount);
@@ -234,6 +304,21 @@ public final class RewardsMixtureClusterResamplingHelper {
         }
         proposal.fireParameterEvents();
         return accept;
+    }
+
+    private void refreshLikelihoodState() {
+        if (likelihoodStateRefresher != null) {
+            likelihoodStateRefresher.refreshCurrentState();
+        } else {
+            treeDataLikelihood.makeDirty();
+            discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
+            discreteDelegate.ensurePreOrderComputed();
+        }
+    }
+
+    private void fireParameterEvents() {
+        atomIndex.fireParameterChangedEvent();
+        indicatorZ.fireParameterChangedEvent();
     }
 
     public int chooseSeedBranch() {
@@ -435,6 +520,8 @@ public final class RewardsMixtureClusterResamplingHelper {
         for (int j = 0; j < nstates; j++) {
             final double logAtomicLocalFactor =
                     rewardsAwareBranchModel.getAtomicLogScaleForState(j, branchLength);
+            final double dependentLogEvidence =
+                    getDependentLogEvidence(branchNodeNumber, rewardsAwareBranchModel.getRewardRateRawForState(j));
             logAtomicWeights[j] =
                     RewardsMixtureBranchResamplingHelper.logAtomicWeight(
                             prePartial[j],
@@ -442,7 +529,7 @@ public final class RewardsMixtureClusterResamplingHelper {
                             logAtomicLocalFactor,
                             preScale,
                             postScale
-                    );
+                    ) + dependentLogEvidence;
         }
 
         final double logAtomicTotalWeight =
@@ -458,6 +545,9 @@ public final class RewardsMixtureClusterResamplingHelper {
                         nstates,
                         preScale,
                         postScale
+                ) + getDependentLogEvidence(
+                        branchNodeNumber,
+                        rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber)
                 );
 
         return new RewardsMixtureBranchResamplingHelper.BranchWeights(
@@ -465,6 +555,18 @@ public final class RewardsMixtureClusterResamplingHelper {
                 logAtomicTotalWeight,
                 logCtsWeight
         );
+    }
+
+    private double getDependentLogEvidence(final int branchNodeNumber, final double rawReward) {
+        double logEvidence = 0.0;
+        for (RewardDependentCtmcEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+            final double contribution = provider.logEvidence(branchNodeNumber, rawReward);
+            if (!Double.isFinite(contribution)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+            logEvidence += contribution;
+        }
+        return logEvidence;
     }
 
     private void loadBranchPartials(final int nodeNum,

@@ -59,4 +59,24 @@ public class PreOrderSettings {
     public static PreOrderSettings getDefault() {
         return new PreOrderSettings(false, false, false, false);
     }
+
+    public boolean isUsePreOrder() {
+        return usePreOrder;
+    }
+
+    public boolean isBranchRateDerivative() {
+        return branchRateDerivative;
+    }
+
+    public boolean isBranchInfinitesimalDerivative() {
+        return branchInfinitesimalDerivative;
+    }
+
+    public boolean isUseAmbiguities() {
+        return useAmbiguities;
+    }
+
+    public boolean isUseSpectralRepresentation() {
+        return useSpectralRepresentation;
+    }
 }

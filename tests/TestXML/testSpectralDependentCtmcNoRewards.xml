@@ -1,0 +1,192 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast version="10.5.0-beta4">
+
+    <!--
+        Minimal reward-free regression for the dependent CTMC spectral likelihood issue.
+        This uses only a fixed HKY CTMC, a fixed tree, and fixed arbitraryBranchRates.
+        The first likelihood is the direct, non-spectral oracle. Keep usePreOrder=false
+        here so matrix-vector BEAGLE can evaluate the direct transition-kernel path
+        without entering the native preorder branch-rate path that currently segfaults.
+        The second likelihood uses useSpectralRepresentation="true" and currently
+        reproduces the spectral -Infinity failure under matrix-vector BEAGLE.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="taxon01"/>
+        <taxon id="taxon02"/>
+        <taxon id="taxon03"/>
+        <taxon id="taxon04"/>
+        <taxon id="taxon05"/>
+        <taxon id="taxon06"/>
+        <taxon id="taxon07"/>
+        <taxon id="taxon08"/>
+        <taxon id="taxon09"/>
+        <taxon id="taxon10"/>
+        <taxon id="taxon11"/>
+        <taxon id="taxon12"/>
+        <taxon id="taxon13"/>
+        <taxon id="taxon14"/>
+        <taxon id="taxon15"/>
+        <taxon id="taxon16"/>
+        <taxon id="taxon17"/>
+        <taxon id="taxon18"/>
+        <taxon id="taxon19"/>
+        <taxon id="taxon20"/>
+        <taxon id="taxon21"/>
+        <taxon id="taxon22"/>
+        <taxon id="taxon23"/>
+        <taxon id="taxon24"/>
+        <taxon id="taxon25"/>
+        <taxon id="taxon26"/>
+        <taxon id="taxon27"/>
+        <taxon id="taxon28"/>
+        <taxon id="taxon29"/>
+        <taxon id="taxon30"/>
+        <taxon id="taxon31"/>
+        <taxon id="taxon32"/>
+        <taxon id="taxon33"/>
+        <taxon id="taxon34"/>
+        <taxon id="taxon35"/>
+        <taxon id="taxon36"/>
+        <taxon id="taxon37"/>
+        <taxon id="taxon38"/>
+        <taxon id="taxon39"/>
+        <taxon id="taxon40"/>
+        <taxon id="taxon41"/>
+        <taxon id="taxon42"/>
+        <taxon id="taxon43"/>
+        <taxon id="taxon44"/>
+        <taxon id="taxon45"/>
+        <taxon id="taxon46"/>
+        <taxon id="taxon47"/>
+        <taxon id="taxon48"/>
+        <taxon id="taxon49"/>
+        <taxon id="taxon50"/>
+    </taxa>
+
+    <alignment id="dependent.alignment" dataType="nucleotide">
+        <sequence><taxon idref="taxon01"/>GA</sequence>
+        <sequence><taxon idref="taxon02"/>GA</sequence>
+        <sequence><taxon idref="taxon03"/>GA</sequence>
+        <sequence><taxon idref="taxon04"/>GA</sequence>
+        <sequence><taxon idref="taxon05"/>GA</sequence>
+        <sequence><taxon idref="taxon06"/>GA</sequence>
+        <sequence><taxon idref="taxon07"/>GA</sequence>
+        <sequence><taxon idref="taxon08"/>GC</sequence>
+        <sequence><taxon idref="taxon09"/>GA</sequence>
+        <sequence><taxon idref="taxon10"/>GA</sequence>
+        <sequence><taxon idref="taxon11"/>GA</sequence>
+        <sequence><taxon idref="taxon12"/>GA</sequence>
+        <sequence><taxon idref="taxon13"/>TA</sequence>
+        <sequence><taxon idref="taxon14"/>CA</sequence>
+        <sequence><taxon idref="taxon15"/>CA</sequence>
+        <sequence><taxon idref="taxon16"/>CA</sequence>
+        <sequence><taxon idref="taxon17"/>CA</sequence>
+        <sequence><taxon idref="taxon18"/>CA</sequence>
+        <sequence><taxon idref="taxon19"/>TA</sequence>
+        <sequence><taxon idref="taxon20"/>TA</sequence>
+        <sequence><taxon idref="taxon21"/>TA</sequence>
+        <sequence><taxon idref="taxon22"/>TA</sequence>
+        <sequence><taxon idref="taxon23"/>TA</sequence>
+        <sequence><taxon idref="taxon24"/>CA</sequence>
+        <sequence><taxon idref="taxon25"/>CA</sequence>
+        <sequence><taxon idref="taxon26"/>GT</sequence>
+        <sequence><taxon idref="taxon27"/>GT</sequence>
+        <sequence><taxon idref="taxon28"/>GT</sequence>
+        <sequence><taxon idref="taxon29"/>AT</sequence>
+        <sequence><taxon idref="taxon30"/>GT</sequence>
+        <sequence><taxon idref="taxon31"/>GT</sequence>
+        <sequence><taxon idref="taxon32"/>GT</sequence>
+        <sequence><taxon idref="taxon33"/>GT</sequence>
+        <sequence><taxon idref="taxon34"/>GT</sequence>
+        <sequence><taxon idref="taxon35"/>AT</sequence>
+        <sequence><taxon idref="taxon36"/>GT</sequence>
+        <sequence><taxon idref="taxon37"/>GG</sequence>
+        <sequence><taxon idref="taxon38"/>AC</sequence>
+        <sequence><taxon idref="taxon39"/>AC</sequence>
+        <sequence><taxon idref="taxon40"/>AC</sequence>
+        <sequence><taxon idref="taxon41"/>GA</sequence>
+        <sequence><taxon idref="taxon42"/>GA</sequence>
+        <sequence><taxon idref="taxon43"/>GC</sequence>
+        <sequence><taxon idref="taxon44"/>GT</sequence>
+        <sequence><taxon idref="taxon45"/>GC</sequence>
+        <sequence><taxon idref="taxon46"/>GT</sequence>
+        <sequence><taxon idref="taxon47"/>CT</sequence>
+        <sequence><taxon idref="taxon48"/>GT</sequence>
+        <sequence><taxon idref="taxon49"/>GA</sequence>
+        <sequence><taxon idref="taxon50"/>GT</sequence>
+    </alignment>
+
+    <patterns id="dependent.pattern" from="1" strip="false">
+        <alignment idref="dependent.alignment"/>
+    </patterns>
+
+    <newick id="startingTree" usingHeights="false" usingDates="false">
+        (((((taxon01:0.36,(taxon02:0.18,taxon03:0.18):0.18):0.18000000000000005,(taxon04:0.36,(taxon05:0.18,taxon06:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon07:0.36,(taxon08:0.18,taxon09:0.18):0.18):0.18000000000000005,(taxon10:0.36,(taxon11:0.18,taxon12:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994,(((taxon13:0.36,(taxon14:0.18,taxon15:0.18):0.18):0.18000000000000005,(taxon16:0.36,(taxon17:0.18,taxon18:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon19:0.36,(taxon20:0.18,taxon21:0.18):0.18):0.18000000000000005,((taxon22:0.18,taxon23:0.18):0.18,(taxon24:0.18,taxon25:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994):0.18000000000000016,((((taxon26:0.36,(taxon27:0.18,taxon28:0.18):0.18):0.18000000000000005,(taxon29:0.36,(taxon30:0.18,taxon31:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon32:0.36,(taxon33:0.18,taxon34:0.18):0.18):0.18000000000000005,(taxon35:0.36,(taxon36:0.18,taxon37:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994,(((taxon38:0.36,(taxon39:0.18,taxon40:0.18):0.18):0.18000000000000005,(taxon41:0.36,(taxon42:0.18,taxon43:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon44:0.36,(taxon45:0.18,taxon46:0.18):0.18):0.18000000000000005,((taxon47:0.18,taxon48:0.18):0.18,(taxon49:0.18,taxon50:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994):0.18000000000000016);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <arbitraryBranchRates id="fixedRewardEquivalentBranchRates" centerAtOne="false" includeRoot="false">
+        <treeModel idref="treeModel"/>
+        <rates>
+            <parameter id="fixed.branch.rates" dimension="98" value="0.57185382353529823 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.70000000000000007 0.70000000000000007 0.70000000000000007 0.70000000000000007 0.51566928285546909 0.70000000000000007 0.42612394228525163 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.43961210153036401 0.35000000000000003 0.35000000000000003 0.70000000000000007 0.70000000000000007 0.70000000000000007 0.70000000000000007 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.47872800433030732 0.70000000000000007 0.70000000000000007 0.35000000000000003 0.35000000000000003 0.51746151324862899 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.70000000000000007 0.70000000000000007 0.70000000000000007 0.35000000000000003 0.35000000000000003 0.35000000000000003 0.70000000000000007 0.35000000000000003 0.35000000000000003 0.70000000000000007 0.70000000000000007 0.65174078669104407 0.70000000000000007 0.35000000000000003 0.34999999999999998 0.35000000000000003 0.34999999999999998 0.41232531698152664 0.70000000000000007 0.64745591948798109 0.70000000000000007 0.69999999999999996 0.69999999999999996 0.69999999999999996 0.35000000000000003 0.34999999999999998 0.35000000000000003 0.34999999999999998 0.35696286824117945 0.35000000000000003 0.48456772900244416 0.70000000000000007 0.70000000000000007 0.69999999999999996 0.69999999999999996 0.69999999999999996 0.69999999999999996 0.35000000000000003 0.34999999999999998 0.65316184234092178 0.34999999999999998 0.39592272283685248 0.35000000000000003 0.34999999999999998 0.35000000000000003 0.34999999999999998 0.48750539407753762 0.69999999999999996 0.70000000000000007 0.69999999999999996 0.35000000000000003 0.69088575823813758 0.69999999999999996 0.64327339434241726 0.69999999999999996 0.70000000000000007 0.70000000000000007 0.69999999999999996 0.69999999999999996 0.69999999999999996 0.69999999999999996"/>
+        </rates>
+    </arbitraryBranchRates>
+
+    <hkyModel id="dependent.hky">
+        <frequencies>
+            <frequencyModel id="dependent.frequencyModel" normalize="true" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="dependent.frequencies" dimension="4" value="0.30 0.20 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="dependent.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="dependent.siteModel">
+        <substitutionModel>
+            <hkyModel idref="dependent.hky"/>
+        </substitutionModel>
+    </siteModel>
+
+<!--    <treeDataLikelihood id="fixed.plain.treeLikelihood" useAmbiguities="true" usePreOrder="false"-->
+<!--                        scalingScheme="always" delayScaling="false">-->
+<!--        <patterns idref="dependent.pattern"/>-->
+<!--        <siteModel idref="dependent.siteModel"/>-->
+<!--        <treeModel idref="treeModel"/>-->
+<!--        <arbitraryBranchRates idref="fixedRewardEquivalentBranchRates"/>-->
+<!--    </treeDataLikelihood>-->
+
+    <treeDataLikelihood id="fixed.spectral.treeLikelihood" useAmbiguities="true" usePreOrder="true"
+                        scalingScheme="always" delayScaling="false" useSpectralRepresentation="true">
+        <patterns idref="dependent.pattern"/>
+        <siteModel idref="dependent.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <arbitraryBranchRates idref="fixedRewardEquivalentBranchRates"/>
+    </treeDataLikelihood>
+
+<!--    <report>-->
+<!--        <treeDataLikelihood idref="fixed.plain.treeLikelihood"/>-->
+<!--    </report>-->
+
+    <report>
+        <treeDataLikelihood idref="fixed.spectral.treeLikelihood"/>
+    </report>
+
+</beast>

@@ -1,0 +1,32 @@
+<!--
+    Snippet: pass one or more dependent CTMC likelihoods to the reward-mixture
+    indicator/atom operator. The first treeDataLikelihood is the independent
+    reward-process likelihood. Each likelihood inside dependentCtmcLikelihoods
+    must be a CTMC TreeDataLikelihood using BeagleDataLikelihoodDelegate with
+    preorder enabled. Leave BEAGLE useSpectralRepresentation unset/false for
+    the full likelihood; the operator evaluates candidate edge kernels with
+    the substitution model eigensystem locally. The branch-rate model should be the same
+    rewardsAwareMixtureBranchRates used by the reward model.
+-->
+<rewardsMixtureIndicatorAndAtomIndicesOperator id="rewardMixtureIndicators"
+                                               weight="1.0"
+                                               updateProportion="0.10"
+                                               autoOptimize="true"
+                                               useClusterMoves="true"
+                                               clusterSize="2"
+                                               clusterBorderBias="0.75">
+    <indicatorZ>
+        <parameter idref="rewardIndicator"/>
+    </indicatorZ>
+    <atomIndex>
+        <parameter idref="rewardAtomIndices"/>
+    </atomIndex>
+
+    <rewardsAwareBranchModel idref="rewardAwareBranchModel"/>
+    <treeDataLikelihood idref="independentRewardTreeLikelihood"/>
+
+    <dependentCtmcLikelihoods>
+        <treeDataLikelihood idref="dependentCtmcLikelihood.1"/>
+        <treeDataLikelihood idref="dependentCtmcLikelihood.2"/>
+    </dependentCtmcLikelihoods>
+</rewardsMixtureIndicatorAndAtomIndicesOperator>

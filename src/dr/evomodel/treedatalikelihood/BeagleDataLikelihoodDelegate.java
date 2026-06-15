@@ -1415,7 +1415,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     @Override
     public int getPatternCount() {
-        throw new RuntimeException("Not yet implemented");
+        return patternCount;
     }
 
     @Override

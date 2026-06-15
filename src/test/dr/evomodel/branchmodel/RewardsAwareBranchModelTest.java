@@ -62,6 +62,7 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         assertTrue(acceptsElementClass(rules, TreeDataLikelihood.class));
         assertTrue(acceptsElementName(rules, "indicatorZ"));
         assertTrue(acceptsElementName(rules, "atomIndex"));
+        assertTrue(acceptsElementName(rules, "dependentCtmcLikelihoods"));
     }
 
     public void testContinuousTransitionMatrixIsFiniteAndNonNegative() {

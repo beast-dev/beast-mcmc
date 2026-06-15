@@ -94,11 +94,20 @@ public final class RewardsMixtureBranchResamplingHelper {
                                             final double[] D,
                                             final double[] post,
                                             final int n) {
+        return bilinearFormStable(pre, 0, D, post, 0, n);
+    }
+
+    public static double bilinearFormStable(final double[] pre,
+                                            final int preOffset,
+                                            final double[] D,
+                                            final double[] post,
+                                            final int postOffset,
+                                            final int n) {
         double acc = 0.0;
         double cAcc = 0.0;
 
         for (int i = 0; i < n; i++) {
-            final double prei = pre[i];
+            final double prei = pre[preOffset + i];
             if (prei == 0.0) {
                 continue;
             }
@@ -108,7 +117,7 @@ public final class RewardsMixtureBranchResamplingHelper {
             double cRow = 0.0;
 
             for (int j = 0; j < n; j++) {
-                final double y = D[rowBase + j] * post[j] - cRow;
+                final double y = D[rowBase + j] * post[postOffset + j] - cRow;
                 final double t = rowDot + y;
                 cRow = (t - rowDot) - y;
                 rowDot = t;

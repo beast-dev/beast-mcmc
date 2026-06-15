@@ -5,6 +5,7 @@ bin/
 build/
 dist/
 out/
+*.class
 .idea
 .DS_Store
 
@@ -12,6 +13,7 @@ out/
 *.trees
 *.tree
 *.xml
+!.run/*.run.xml
 !examples/**/*.xml
 !tests/**/*.xml
 

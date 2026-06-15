@@ -535,20 +535,24 @@ public final class RewardsMixtureClusterResamplingHelper {
         final double logAtomicTotalWeight =
                 RewardsMixtureBranchResamplingHelper.logSum(logAtomicWeights, nstates);
 
-        final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
+        final double rawContinuousReward =
+                rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber);
 
-        final double logCtsWeight =
-                RewardsMixtureBranchResamplingHelper.logContinuousWeight(
-                        prePartial,
-                        continuousMatrix,
-                        postPartial,
-                        nstates,
-                        preScale,
-                        postScale
-                ) + getDependentLogEvidence(
-                        branchNodeNumber,
-                        rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber)
-                );
+        final double logCtsWeight;
+        if (isContinuousRewardOutsideOpenSupport(rawContinuousReward)) {
+            logCtsWeight = Double.NEGATIVE_INFINITY;
+        } else {
+            final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
+            logCtsWeight =
+                    RewardsMixtureBranchResamplingHelper.logContinuousWeight(
+                            prePartial,
+                            continuousMatrix,
+                            postPartial,
+                            nstates,
+                            preScale,
+                            postScale
+                    ) + getDependentLogEvidence(branchNodeNumber, rawContinuousReward);
+        }
 
         return new RewardsMixtureBranchResamplingHelper.BranchWeights(
                 Arrays.copyOf(logAtomicWeights, nstates),
@@ -567,6 +571,18 @@ public final class RewardsMixtureClusterResamplingHelper {
             logEvidence += contribution;
         }
         return logEvidence;
+    }
+
+    private boolean isContinuousRewardOutsideOpenSupport(final double rawReward) {
+        double minReward = Double.POSITIVE_INFINITY;
+        double maxReward = Double.NEGATIVE_INFINITY;
+        for (int state = 0; state < nstates; state++) {
+            final double reward = rewardsAwareBranchModel.getRewardRateRawForState(state);
+            minReward = Math.min(minReward, reward);
+            maxReward = Math.max(maxReward, reward);
+        }
+        return RewardsMixtureBranchResamplingHelper.isContinuousRewardOutsideOpenSupport(
+                rawReward, minReward, maxReward);
     }
 
     private void loadBranchPartials(final int nodeNum,

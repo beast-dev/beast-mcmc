@@ -223,7 +223,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorTargetTest extends Mat
                 new GammaSiteRateModel("rewardMixtureTargetIndependentRateModel");
 
         final Parameter ctsRewards =
-                new Parameter.Default("targetRewardCts", new double[]{0.20, 0.20, 0.20, 0.20});
+                new Parameter.Default("targetRewardCts", new double[]{0.50, 0.50, 0.50, 0.50});
         final Parameter indicator =
                 new Parameter.Default("targetRewardIndicator", new double[]{0.0, 0.0, 0.0, 0.0});
         final Parameter atomIndices =

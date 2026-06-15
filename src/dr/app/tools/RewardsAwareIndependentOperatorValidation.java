@@ -336,7 +336,7 @@ public final class RewardsAwareIndependentOperatorValidation {
                     if (sweep > 0) {
                         step();
                     }
-                    if (sweep >= burnIn && ((sweep - burnIn) % logEvery == 0 || sweep == sweeps)) {
+                    if (sweep % logEvery == 0 || sweep == sweeps) {
                         writeLogRow(log, sweep);
                         sampleCount++;
                     }
@@ -758,7 +758,7 @@ public final class RewardsAwareIndependentOperatorValidation {
     private static double logTarget(final TreeDataLikelihood likelihood) {
         likelihood.makeDirty();
         final double logLikelihood = likelihood.getLogLikelihood();
-        if (Double.isNaN(logLikelihood) || logLikelihood == Double.POSITIVE_INFINITY) {
+        if (!Double.isFinite(logLikelihood)) {
             throw new IllegalStateException("Invalid log likelihood: " + logLikelihood);
         }
         return logLikelihood;

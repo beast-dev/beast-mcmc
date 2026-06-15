@@ -6,6 +6,8 @@ import dr.math.MathUtils;
  */
 public final class RewardsMixtureBranchResamplingHelper {
 
+    private static final double SUPPORT_BOUNDARY_TOLERANCE = 1.0e-12;
+
     private RewardsMixtureBranchResamplingHelper() {
         // no instances
     }
@@ -178,6 +180,21 @@ public final class RewardsMixtureBranchResamplingHelper {
         }
 
         return Math.log(inner) + safeScale(preScale) + safeScale(postScale);
+    }
+
+    public static boolean isContinuousRewardOutsideOpenSupport(final double reward,
+                                                               final double minReward,
+                                                               final double maxReward) {
+        if (!Double.isFinite(reward) || !Double.isFinite(minReward) || !Double.isFinite(maxReward)) {
+            return true;
+        }
+        if (!(minReward < maxReward)) {
+            return true;
+        }
+
+        final double scale = Math.max(1.0, Math.max(Math.abs(minReward), Math.abs(maxReward)));
+        final double tolerance = SUPPORT_BOUNDARY_TOLERANCE * scale;
+        return reward <= minReward + tolerance || reward >= maxReward - tolerance;
     }
 
     private static double safeScale(final double scale) {

@@ -46,6 +46,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     private final double[] preScales;
     private final double[] postScales;
     private final double[] logAtomicWeights;
+    private final double[] storedIndicatorValues;
+    private final double[] storedAtomValues;
 
     private final boolean useClusterMoves;
     private final int clusterSize;
@@ -177,6 +179,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         this.preScales = new double[discreteDelegate.getPatternCount()];
         this.postScales = new double[discreteDelegate.getPatternCount()];
         this.logAtomicWeights = new double[nstates];
+        this.storedIndicatorValues = new double[branchCount];
+        this.storedAtomValues = new double[branchCount];
 
         this.useClusterMoves = useClusterMoves;
         this.clusterSize = Math.max(1, clusterSize);
@@ -278,19 +282,20 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     private double doSingleBranchOperation() {
 
         final int nToUpdate = Math.max(1, Math.min(branchCount, (int) Math.round(updateProportion * branchCount)));
+        storeCurrentBranchState();
+        boolean proposalValid = true;
 
         if (nToUpdate >= branchCount) {
             for (int parameterIndex = 0; parameterIndex < branchCount; parameterIndex++) {
-                resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
+                proposalValid &= resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
             }
-            atomIndex.fireParameterChangedEvent();
-            indicatorZ.fireParameterChangedEvent();
-            return 0.0;
+            fireParameterChangedEvents();
+            return rejectInvalidProposalIfNeeded(proposalValid);
         }
 
         if (nToUpdate == 1) {
             final int parameterIndex = chooseCandidateParameterIndex();
-            resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
+            proposalValid = resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
         } else {
             for (int i = 0; i < branchCount; i++) {
                 candidateParameterBuffer[i] = i;
@@ -302,14 +307,13 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 candidateParameterBuffer[j] = tmp;
 
                 final int parameterIndex = candidateParameterBuffer[i];
-                resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
+                proposalValid &= resampleBranchQuietly(parameterIndex, nodeNumberByParameterIndex[parameterIndex]);
             }
         }
 
-        atomIndex.fireParameterChangedEvent();
-        indicatorZ.fireParameterChangedEvent();
+        fireParameterChangedEvents();
 
-        return 0.0;
+        return rejectInvalidProposalIfNeeded(proposalValid);
     }
 
     private double doClusterOperation() {
@@ -317,7 +321,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         return 0.0;
     }
 
-    private void resampleBranchQuietly(final int branchIndex, final int branchNodeNumber) {
+    private boolean resampleBranchQuietly(final int branchIndex, final int branchNodeNumber) {
 
         if (branchIndex < 0 || branchIndex >= indicatorZ.getDimension()) {
             throw new IllegalArgumentException("Branch parameter index out of range for indicatorZ: " + branchIndex);
@@ -328,6 +332,10 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
         final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
                 computeBranchWeights(branchNodeNumber);
+
+        if (!Double.isFinite(weights.logAtomicTotalWeight) && !Double.isFinite(weights.logCtsWeight)) {
+            return false;
+        }
 
         final int newIndicator =
                 RewardsMixtureBranchResamplingHelper.sampleIndicatorFromLogs(
@@ -355,6 +363,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         } else if (currentIndicator != 0) {
             indicatorZ.setParameterValueQuietly(branchIndex, 0.0);
         }
+
+        return true;
     }
 
     private void loadBranchPartials(final int nodeNum,
@@ -399,36 +409,25 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         final double logAtomicTotalWeight =
                 RewardsMixtureBranchResamplingHelper.logSum(logAtomicWeights, nstates);
 
-        final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
-        final double dependentContinuousEvidence = getDependentLogEvidence(
-                branchNodeNumber,
-                rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber)
-        );
+        final double rawContinuousReward =
+                rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber);
+        final double dependentContinuousEvidence =
+                getDependentLogEvidence(branchNodeNumber, rawContinuousReward);
 
-        final double logCtsWeight =
-                RewardsMixtureBranchResamplingHelper.logContinuousWeight(
-                        prePartial,
-                        continuousMatrix,
-                        postPartial,
-                        nstates,
-                        preScale,
-                        postScale
-                ) + dependentContinuousEvidence;
-
-        if (!Double.isFinite(logAtomicTotalWeight) && !Double.isFinite(logCtsWeight)) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Invalid total weight: atomic=").append(logAtomicTotalWeight)
-                    .append(", continuous=").append(logCtsWeight)
-                    .append(", branchNodeNumber=").append(branchNodeNumber)
-                    .append(", branchLength=").append(branchLength)
-                    .append(", preScale=").append(preScale)
-                    .append(", postScale=").append(postScale)
-                    .append(", prePartial=").append(Arrays.toString(prePartial))
-                    .append(", postPartial=").append(Arrays.toString(postPartial))
-                    .append(", dependentAtomicEvidence=").append(Arrays.toString(dependentAtomicEvidence))
-                    .append(", dependentContinuousEvidence=").append(dependentContinuousEvidence)
-                    .append(", logAtomicWeights=").append(Arrays.toString(logAtomicWeights));
-            throw new IllegalStateException(sb.toString());
+        final double logCtsWeight;
+        if (isContinuousRewardOutsideOpenSupport(rawContinuousReward)) {
+            logCtsWeight = Double.NEGATIVE_INFINITY;
+        } else {
+            final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
+            logCtsWeight =
+                    RewardsMixtureBranchResamplingHelper.logContinuousWeight(
+                            prePartial,
+                            continuousMatrix,
+                            postPartial,
+                            nstates,
+                            preScale,
+                            postScale
+                    ) + dependentContinuousEvidence;
         }
 
         return new RewardsMixtureBranchResamplingHelper.BranchWeights(
@@ -460,6 +459,68 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             logEvidence += contribution;
         }
         return logEvidence;
+    }
+
+    private boolean isContinuousRewardOutsideOpenSupport(final double rawReward) {
+        double minReward = Double.POSITIVE_INFINITY;
+        double maxReward = Double.NEGATIVE_INFINITY;
+        for (int state = 0; state < nstates; state++) {
+            final double reward = rewardsAwareBranchModel.getRewardRateRawForState(state);
+            minReward = Math.min(minReward, reward);
+            maxReward = Math.max(maxReward, reward);
+        }
+        return RewardsMixtureBranchResamplingHelper.isContinuousRewardOutsideOpenSupport(
+                rawReward, minReward, maxReward);
+    }
+
+    private void storeCurrentBranchState() {
+        for (int i = 0; i < branchCount; i++) {
+            storedIndicatorValues[i] = indicatorZ.getParameterValue(i);
+            storedAtomValues[i] = atomIndex.getParameterValue(i);
+        }
+    }
+
+    private void restoreStoredBranchStateQuietly() {
+        for (int i = 0; i < branchCount; i++) {
+            indicatorZ.setParameterValueQuietly(i, storedIndicatorValues[i]);
+            atomIndex.setParameterValueQuietly(i, storedAtomValues[i]);
+        }
+        fireParameterChangedEvents();
+        makeLikelihoodsDirty();
+    }
+
+    private void fireParameterChangedEvents() {
+        atomIndex.fireParameterChangedEvent();
+        indicatorZ.fireParameterChangedEvent();
+    }
+
+    private double rejectInvalidProposalIfNeeded(final boolean proposalValid) {
+        if (!proposalValid || !currentLogTargetIsFinite()) {
+            restoreStoredBranchStateQuietly();
+            return Double.NEGATIVE_INFINITY;
+        }
+        return 0.0;
+    }
+
+    private boolean currentLogTargetIsFinite() {
+        makeLikelihoodsDirty();
+        if (!Double.isFinite(treeDataLikelihood.getLogLikelihood())) {
+            return false;
+        }
+        for (TreeDataLikelihood dependentTreeDataLikelihood : dependentTreeDataLikelihoods) {
+            dependentTreeDataLikelihood.makeDirty();
+            if (!Double.isFinite(dependentTreeDataLikelihood.getLogLikelihood())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void makeLikelihoodsDirty() {
+        treeDataLikelihood.makeDirty();
+        for (TreeDataLikelihood dependentTreeDataLikelihood : dependentTreeDataLikelihoods) {
+            dependentTreeDataLikelihood.makeDirty();
+        }
     }
 
     private void collectBorderBranches() {

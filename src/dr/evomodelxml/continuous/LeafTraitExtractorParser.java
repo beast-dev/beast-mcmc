@@ -40,6 +40,7 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "leafTraitParameter";
     public static final String SET_BOUNDS = "setBounds";
+    public static final String REPLACEMENT = "replacement";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -53,6 +54,19 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Unable to find taxon '" + taxonString + "' in trees.");
         }
         final Parameter leafTrait = allTraits.getParameter(leafIndex);
+
+        if (xo.hasChildNamed(REPLACEMENT)) {
+            Parameter replacement = (Parameter) xo.getChild(REPLACEMENT).getChild(Parameter.class);
+            if (replacement.getDimension() != leafTrait.getDimension()) {
+                throw new XMLParseException(
+                        "Replacement parameter for taxon '" + taxonString +
+                                "' has dimension " + replacement.getDimension() +
+                                " but the leaf trait has dimension " +
+                                leafTrait.getDimension());
+            }
+            allTraits.replaceParameter(leafTrait, replacement);
+            return replacement;
+        }
 
         boolean setBounds = xo.getAttribute(SET_BOUNDS, true);
         if (setBounds) {
@@ -72,6 +86,9 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
                 AttributeRule.newBooleanRule(SET_BOUNDS, true),
                 new ElementRule(MutableTree.class),
                 new ElementRule(CompoundParameter.class),
+                new ElementRule(REPLACEMENT, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                }, true),
         };
     }
 

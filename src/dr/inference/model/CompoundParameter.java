@@ -108,6 +108,36 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         param.removeParameterListener(this);
     }
 
+    public void replaceParameter(Parameter oldParam, Parameter newParam) {
+
+        if (newParam.getDimension() != oldParam.getDimension()) {
+            throw new RuntimeException(
+                    "Replacement parameter dimension (" + newParam.getDimension()
+                            + ") must match the dimension of the parameter being replaced ("
+                            + oldParam.getDimension() + ")"
+            );
+        }
+
+        int paramIndex = uniqueParameters.indexOf(oldParam);
+        if (paramIndex == -1) {
+            throw new RuntimeException("Parameter to replace is not part of this compound parameter");
+        }
+
+        uniqueParameters.set(paramIndex, newParam);
+
+        for (int i = 0; i < parameters.size(); i++) {
+            if (parameters.get(i) == oldParam) {
+                parameters.set(i, newParam);
+            }
+        }
+
+        oldParam.removeParameterListener(this);
+        newParam.addParameterListener(this);
+        labelParameter(newParam);
+
+        newParam.fireParameterChangedEvent();
+    }
+
     /**
      * @return name if the parameter has been given a specific name, else it returns getId()
      */

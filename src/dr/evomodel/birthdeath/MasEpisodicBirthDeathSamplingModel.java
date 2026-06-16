@@ -32,7 +32,11 @@ import dr.inference.model.Parameter;
 public class MasEpisodicBirthDeathSamplingModel extends EpisodicBirthDeathSamplingModel {
 
     public MasEpisodicBirthDeathSamplingModel(Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
-        super("MasEpisodicBirthDeathSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
+        this("MasEpisodicBirthDeathSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
+    }
+
+    public MasEpisodicBirthDeathSamplingModel(String modelName, Parameter birthRate, Parameter deathRate, Parameter serialSamplingRate, Parameter treatmentProbability, Parameter samplingProbability, Parameter originTime, boolean condition, int numIntervals, double gridEnd, Type units) {
+        super(modelName, birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 
     @Override

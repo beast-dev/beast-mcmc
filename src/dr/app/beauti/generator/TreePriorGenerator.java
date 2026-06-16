@@ -101,6 +101,7 @@ public class TreePriorGenerator extends Generator {
         TreePriorParameterizationType parameterization = prior.getParameterization();
 
         switch (nodeHeightPrior) {
+            // Coalescent
             case CONSTANT:
                 writer.writeComment("A prior assumption that the population size has remained constant",
                         "throughout the time spanned by the genealogy.");
@@ -259,6 +260,99 @@ public class TreePriorGenerator extends Generator {
 
                 break;
 
+            // Epidemiological
+            case EPISODIC_BIRTH_DEATH_SAMPLING:
+//                writer.writeComment(EpisodicBirthDeathSamplingModelParser.getComment());
+
+                writer.writeOpenTag(
+                        EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID, prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME),
+                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(units)),
+                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CONDITION, false),
+                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS, false),
+                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CUT_OFF, false)
+                        }
+//                public static final String CONDITION = "conditionOnSurvival";
+//                public static final String NUM_GRID_POINTS = "numGridPoints";
+//                public static final String CUT_OFF = "cutOff";
+//                public static final String R0 = "R0";
+//                public static final String D = "D";
+//                public static final String S = "S";
+//                public static final String GRADIENT_FLAG = "gradientFlag";
+//                public static final String GRIDS = "grids";
+
+                );
+
+                writeParameter(EpisodicBirthDeathSamplingModelParser.BIRTH_RATE,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.BIRTH_RATE, prior, writer);
+                writeParameter(EpisodicBirthDeathSamplingModelParser.DEATH_RATE,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.DEATH_RATE, prior, writer);
+                writeParameter(EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE, prior, writer);
+                writeParameter(EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY, prior, writer);
+                writeParameter(EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY, prior, writer);
+                writeParameter(EpisodicBirthDeathSamplingModelParser.ORIGIN,
+                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.ORIGIN, prior, writer);
+
+                writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL);
+
+                break;
+
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
+
+                writer.writeOpenTag(
+                        BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathSerialSamplingModelParser.BDSS),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units)),
+                                new Attribute.Default<Boolean>(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, false)
+                        }
+                );
+
+                writeParameter(BirthDeathSerialSamplingModelParser.LAMBDA,
+                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.LAMBDA, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.RELATIVE_MU,
+                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, prior, writer);
+//                writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
+//                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.PSI,
+                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.PSI, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
+                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
+
+                writer.writeCloseTag(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL);
+
+                break;
+
+//            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+//                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationRT());
+//
+//                writer.writeOpenTag(
+//                        BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY),
+//                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
+//                        }
+//                );
+//
+//                writeParameter(BirthDeathEpidemiologyModelParser.R0,
+//                        BirthDeathEpidemiologyModelParser.R0, prior, writer);
+//                writeParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,
+//                        BirthDeathEpidemiologyModelParser.RECOVERY_RATE, prior, writer);
+//                writeParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY,
+//                        BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, prior, writer);
+//                writeParameter(BirthDeathEpidemiologyModelParser.ORIGIN,
+//                        BirthDeathEpidemiologyModelParser.ORIGIN, prior, writer);
+//
+//                writer.writeCloseTag(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
+//
+//                break;
+
+            // Speciation
             case YULE:
             case YULE_CALIBRATION:
                 if (nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
@@ -306,96 +400,6 @@ public class TreePriorGenerator extends Generator {
 
                 break;
 
-            case BIRTH_DEATH_SERIAL_SAMPLING:
-                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
-
-                writer.writeOpenTag(
-                        BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathSerialSamplingModelParser.BDSS),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units)),
-                                new Attribute.Default<Boolean>(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, false)
-                        }
-                );
-
-                writeParameter(BirthDeathSerialSamplingModelParser.LAMBDA,
-                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.LAMBDA, prior, writer);
-                writeParameter(BirthDeathSerialSamplingModelParser.RELATIVE_MU,
-                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, prior, writer);
-//                writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
-//                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, prior, writer);
-                writeParameter(BirthDeathSerialSamplingModelParser.PSI,
-                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.PSI, prior, writer);
-                writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
-                        BirthDeathSerialSamplingModelParser.SHORT_NAME + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
-
-                writer.writeCloseTag(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL);
-
-                break;
-
-            case EPISODIC_BIRTH_DEATH_SAMPLING:
-//                writer.writeComment(EpisodicBirthDeathSamplingModelParser.getComment());
-
-                writer.writeOpenTag(
-                        EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<>(XMLParser.ID, prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME),
-                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(units)),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CONDITION, false),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS, false),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CUT_OFF, false)
-                        }
-//                public static final String CONDITION = "conditionOnSurvival";
-//                public static final String NUM_GRID_POINTS = "numGridPoints";
-//                public static final String CUT_OFF = "cutOff";
-//                public static final String R0 = "R0";
-//                public static final String D = "D";
-//                public static final String S = "S";
-//                public static final String GRADIENT_FLAG = "gradientFlag";
-//                public static final String GRIDS = "grids";
-
-                );
-
-                writeParameter(EpisodicBirthDeathSamplingModelParser.BIRTH_RATE,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.BIRTH_RATE, prior, writer);
-                writeParameter(EpisodicBirthDeathSamplingModelParser.DEATH_RATE,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.DEATH_RATE, prior, writer);
-                writeParameter(EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE, prior, writer);
-                writeParameter(EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY, prior, writer);
-                writeParameter(EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY, prior, writer);
-                writeParameter(EpisodicBirthDeathSamplingModelParser.ORIGIN,
-                        EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.ORIGIN, prior, writer);
-
-                writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL);
-
-                break;
-
-//            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-//                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationRT());
-//
-//                writer.writeOpenTag(
-//                        BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY),
-//                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
-//                        }
-//                );
-//
-//                writeParameter(BirthDeathEpidemiologyModelParser.R0,
-//                        BirthDeathEpidemiologyModelParser.R0, prior, writer);
-//                writeParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,
-//                        BirthDeathEpidemiologyModelParser.RECOVERY_RATE, prior, writer);
-//                writeParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY,
-//                        BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, prior, writer);
-//                writeParameter(BirthDeathEpidemiologyModelParser.ORIGIN,
-//                        BirthDeathEpidemiologyModelParser.ORIGIN, prior, writer);
-//
-//                writer.writeCloseTag(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
-//
-//                break;
             case SKYGRID_HMC:
             case SKYGRID:
             case GMRF_SKYRIDE:
@@ -523,8 +527,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(
                         ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + "subtree.constant"),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                                new Attribute.Default<>(XMLParser.ID, prefix + "subtree.constant"),
+                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(options.units))
                         }
                 );
 
@@ -543,8 +547,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(
                         ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + "subtree.exponential"),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                                new Attribute.Default<>(XMLParser.ID, prefix + "subtree.exponential"),
+                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(options.units))
                         }
                 );
 

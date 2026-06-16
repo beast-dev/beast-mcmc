@@ -120,8 +120,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     public CompoundBirthDeathParameters compoundParameters = null;
 
     /**
-     * Factory method to...
-     * @param modelName
+     * Constructor for EpisodicBirthDeathSamplingModel.
      * @param birthRate
      * @param deathRate
      * @param serialSamplingRate
@@ -132,9 +131,25 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
      * @param numIntervals
      * @param gridEnd
      * @param units
-     * @return
      */
-    public static EpisodicBirthDeathSamplingModel createRawParameters(
+    public EpisodicBirthDeathSamplingModel(
+            Parameter birthRate,
+            Parameter deathRate,
+            Parameter serialSamplingRate,
+            Parameter treatmentProbability,
+            Parameter samplingProbability,
+            Parameter originTime,
+            boolean condition,
+            int numIntervals,
+            double gridEnd,
+            Type units) {
+
+        this("EpisodicBirthDeathSamplingModel", birthRate, deathRate, serialSamplingRate,
+                treatmentProbability, samplingProbability, originTime,
+                condition, numIntervals, gridEnd, units, null);
+    }
+
+    public EpisodicBirthDeathSamplingModel(
             String modelName,
             Parameter birthRate,
             Parameter deathRate,
@@ -147,17 +162,14 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             double gridEnd,
             Type units) {
 
-        EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
-                modelName, birthRate, deathRate, serialSamplingRate,
+        this(modelName, birthRate, deathRate, serialSamplingRate,
                 treatmentProbability, samplingProbability, originTime,
                 condition, numIntervals, gridEnd, units, null);
-
-        return model;
     }
 
-
     /**
-     * Factory method to...
+     * Factory method for alternative constructor that takes R0, D, and S parameters
+     * instead of birthRate, deathRate, and serialSamplingRate.
      *
      * @param modelName
      * @param R0Parameter
@@ -173,7 +185,6 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
      * @return
      */
     public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
-            String modelName,
             Parameter R0Parameter,
             Parameter DParameter,
             Parameter SParameter,
@@ -196,7 +207,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
         Parameter serialSamplingRate = compoundParams.getSamplingRate();
 
         EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
-                modelName, birthRate, deathRate, serialSamplingRate,
+                "EpisodicBirthDeathSamplingModel", birthRate, deathRate, serialSamplingRate,
                 treatmentProbability, samplingProbability, originTime,
                 condition, numIntervals, gridEnd, units, compoundParams);
 
@@ -207,7 +218,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
         return model;
     }
 
-    EpisodicBirthDeathSamplingModel(
+    private EpisodicBirthDeathSamplingModel(
             String modelName,
             Parameter birthRate, // lambda
             Parameter deathRate, // mu
@@ -220,7 +231,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             double gridEnd,
             Type units,
             CompoundBirthDeathParameters compoundParameters) {
-            
+
         super(modelName, units);
 
         initialize(birthRate, deathRate, serialSamplingRate,
@@ -271,13 +282,13 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
         this.birthRate = birthRate;
         addVariable(birthRate);
-        
+
         this.deathRate = deathRate;
         addVariable(deathRate);
-        
+
         this.serialSamplingRate = serialSamplingRate;
         addVariable(serialSamplingRate);
-        
+
         this.treatmentProbability = treatmentProbability;
         addVariable(treatmentProbability);
         treatmentProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, treatmentProbability.getSize()));
@@ -366,7 +377,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     private static final double log4 = Math.log(4.0);
-    
+
     // Named as per Gavryushkina et al 2014
     private static double computeA(double lambda, double mu, double psi) {
         return Math.abs(Math.sqrt(Math.pow(lambda - mu - psi, 2.0) + 4.0 * lambda * psi));  // TODO Why do we have Math.abs(always positive #)?
@@ -438,7 +449,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
     @Override
     public void updateLikelihoodModelValues(int model) {
-        
+
         modelStartTime = modelStartTimes[model];
 
         if (model == 0) {
@@ -469,12 +480,12 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
         A = computeA(lambda, mu, psi);
         B = computeB(lambda, mu, psi, rho, A, previousP);
-        
+
         this.savedQ = Double.NaN;
         this.partialQKnown = false;
 
         dACompute(dA);
-        
+
         dBCompute(model, dB);
 
         System.arraycopy(dPModelEnd, 0, dPModelEnd_prev, 0, numIntervals * 4);
@@ -486,7 +497,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             eAt_End = Math.exp(A * (end - start));
             dPCompute(model, end, start, eAt_End, dPModelEnd, dG2);
         }
-        
+
         computedBCurrent = true;
     }
 
@@ -966,7 +977,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     void accumulateGradientForSerialSampling(double[] gradient, int currentModelSegment, double term1,
-                                       double[] intermediate) {
+                                             double[] intermediate) {
         for (int k = 0; k <= currentModelSegment; k++) {
             for (int p = 0; p < 4; ++p) {
                 gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
@@ -975,7 +986,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     void accumulateGradientForIntensiveSampling(double[] gradient, int currentModelSegment, double term1,
-                                             double[] intermediate) {
+                                                double[] intermediate) {
         for (int k = 0; k < currentModelSegment; k++) {
             for (int p = 0; p < 4; ++p) {
                 gradient[k * 5 + p] += term1 * intermediate[k * 4 + p];
@@ -984,12 +995,12 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     void accumulateGradientForOrigin(double[] gradient, int currentModelSegment,
-                                       double[] dQEnd, double qOrigin,
-                                       double[] dQStart, double qIntervalStart) {
+                                     double[] dQEnd, double qOrigin,
+                                     double[] dQStart, double qIntervalStart) {
         for (int p = 0; p < 4; p++) {
-                for (int k = 0; k <= currentModelSegment; k++) {
-                    gradient[genericIndex(k, p, numIntervals)] += dQEnd[k * 4 + p] / qOrigin - dQStart[k * 4 + p] / qIntervalStart;
-                }
+            for (int k = 0; k <= currentModelSegment; k++) {
+                gradient[genericIndex(k, p, numIntervals)] += dQEnd[k * 4 + p] / qOrigin - dQStart[k * 4 + p] / qIntervalStart;
+            }
         }
     }
 
@@ -1004,7 +1015,7 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
         boolean samplesTakenAtEventTime = rho > 0;
 
         //if (sampleIsAtPresent && samplesTakenAtPresent) {
-            //gradient[fractionIndex(0, numIntervals)] += 1 / rho;
+        //gradient[fractionIndex(0, numIntervals)] += 1 / rho;
         if (sampleIsAtEventTime && samplesTakenAtEventTime) {
             gradient[fractionIndex(currentModelSegment, numIntervals)] += 1 / rho; // TODO Need to test!
         } else {

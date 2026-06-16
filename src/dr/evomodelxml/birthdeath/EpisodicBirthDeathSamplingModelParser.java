@@ -147,7 +147,7 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
 
         model.setupTimeline(grids != null ? grids.getParameterValues() : null);
 
-        Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model");
+        Logger.getLogger("dr.evomodel").info("Using episodic birth-death sampling model");
         Logger.getLogger("dr.evomodel").info("\tCondition on root: " + condition);
         Logger.getLogger("dr.evomodel").info("\tGrid size: " + (int)numGridPoints.getParameterValue(0));
         Logger.getLogger("dr.evomodel").info("\tGrid end: " + cutoff.getParameterValue(0));

@@ -35,7 +35,7 @@ public class TwoParamEpisodicBirthDeathSamplingModel extends MasEpisodicBirthDea
                                                    Parameter treatmentProbability, Parameter samplingProbability,
                                                    Parameter originTime, boolean condition, int numIntervals, double gridEnd,
                                                    Type units) {
-        super(birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
+        super("TwoParamEpisodicBirthDeathSamplingModel", birthRate, deathRate, serialSamplingRate, treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
     }
 
 

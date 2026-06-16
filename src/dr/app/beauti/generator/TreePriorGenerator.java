@@ -288,8 +288,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(
                         Gernhard08BirthDeathModelParser.BIRTH_DEATH_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + Gernhard08BirthDeathModelParser.BIRTH_DEATH),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
+                                new Attribute.Default<>(XMLParser.ID, prefix + Gernhard08BirthDeathModelParser.BIRTH_DEATH),
+                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(units))
                         }
                 );
 
@@ -307,6 +307,33 @@ public class TreePriorGenerator extends Generator {
 
             case BIRTH_DEATH_SERIAL_SAMPLING:
                 writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
+
+                writer.writeOpenTag(
+                        BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BirthDeathSerialSamplingModelParser.BDSS),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units)),
+                                new Attribute.Default<Boolean>(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, false)
+                        }
+                );
+
+                writeParameter(BirthDeathSerialSamplingModelParser.LAMBDA,
+                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.RELATIVE_MU,
+                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, prior, writer);
+//                writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
+//                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.PSI,
+                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, prior, writer);
+                writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
+                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
+
+                writer.writeCloseTag(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL);
+
+                break;
+
+            case EPISODIC_BIRTH_DEATH_SAMPLING:
+                writer.writeComment(EpisodicBirthDeathSamplingParser.getCitationPsiOrg());
 
                 writer.writeOpenTag(
                         BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,

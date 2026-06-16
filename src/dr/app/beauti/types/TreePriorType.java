@@ -36,17 +36,18 @@ public enum TreePriorType {
     EXPONENTIAL("Coalescent: Exponential Growth"),
     LOGISTIC("Coalescent: Logistic Growth"),
     EXPANSION("Coalescent: Expansion Growth"),
+    //    SKYLINE("Coalescent: Bayesian Skyline"), // @deprecated
     SKYGRID_HMC("Coalescent: Hamiltonian Monte Carlo SkyGrid"),
     SKYGRID("Coalescent: Bayesian SkyGrid"),
     GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
-//    SKYLINE("Coalescent: Bayesian Skyline"),
+    EPISODIC_BIRTH_DEATH_SAMPLING("Epidemiology: Episodic Birth-Death Sampling"),
+    BIRTH_DEATH_SERIAL_SAMPLING("Epidemiology: Birth-Death Serially Sampled"),
+    //    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number"),  // @deprecated
     YULE("Speciation: Yule Process"),
     YULE_CALIBRATION("Speciation: Calibrated Yule"),
     BIRTH_DEATH("Speciation: Birth-Death Process"),
     BIRTH_DEATH_INCOMPLETE_SAMPLING("Speciation: Birth-Death Incomplete Sampling"),
-    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled"),
     SET_BY_BIT("Set by backward-in-time model");
-//    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number");
 
     TreePriorType(String name) {
         this.name = name;

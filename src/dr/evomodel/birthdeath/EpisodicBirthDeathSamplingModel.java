@@ -119,109 +119,22 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
     public CompoundBirthDeathParameters compoundParameters = null;
 
-
-    public EpisodicBirthDeathSamplingModel(
-            Parameter lambda,
-            Parameter mu,
-            Parameter psi,
-            Parameter r,
-            Parameter rho,
-            Parameter origin,
-            boolean condition,
-            int numIntervals,
-            double gridEnd,
-            Type units) {
-            
-        this("NewBirthDeathSerialSamplingModel", lambda, mu, psi,
-                r, rho, origin, condition, numIntervals, gridEnd, units);
-    }
-
-
-    public EpisodicBirthDeathSamplingModel(
-            String modelName,
-            Parameter lambda,
-            Parameter mu,
-            Parameter psi,
-            Parameter r,
-            Parameter rho,
-            Parameter origin,
-            boolean condition,
-            int numIntervals,
-            double gridEnd,
-            Type units) {
-            
-        super(modelName, units);
-        
-
-        initialize(lambda, mu, psi,
-                r, rho, origin,
-                condition, numIntervals, gridEnd);
-                
-
-        this.compoundParameters = new CompoundBirthDeathParameters(
-                lambda, mu, psi, true);
-    }
-
-    // Factory method for compound parameters (compound-as-primary mode)
-    public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
-            Parameter R0Parameter,
-            Parameter DParameter,
-            Parameter SParameter,
-            Parameter treatmentProbability,
-            Parameter samplingProbability,
-            Parameter originTime,
-            boolean condition,
-            int numIntervals,
-            double gridEnd,
-            Type units) {
-            
-        return createWithCompoundParameters("NewBirthDeathSerialSamplingModel", R0Parameter, DParameter, SParameter,
-                treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
-    }
-    
-
-    public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
-            String modelName,
-            Parameter R0Parameter,
-            Parameter DParameter,
-            Parameter SParameter,
-            Parameter treatmentProbability,
-            Parameter samplingProbability,
-            Parameter originTime,
-            boolean condition,
-            int numIntervals,
-            double gridEnd,
-            Type units) {
-            
-
-        R0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, R0Parameter.getSize()));
-        DParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, DParameter.getSize()));
-        SParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, SParameter.getSize()));
-            
-
-        CompoundBirthDeathParameters compoundParams = new CompoundBirthDeathParameters(
-                R0Parameter, DParameter, SParameter);
-        
-
-        Parameter birthRate = compoundParams.getBirthRate();
-        Parameter deathRate = compoundParams.getDeathRate();
-        Parameter serialSamplingRate = compoundParams.getSamplingRate();
-        
-
-        EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
-                modelName, birthRate, deathRate, serialSamplingRate,
-                treatmentProbability, samplingProbability, originTime,
-                condition, numIntervals, gridEnd, units, compoundParams);
-        
-
-        model.addVariable(R0Parameter);
-        model.addVariable(DParameter);
-        model.addVariable(SParameter);
-        return model;
-    }
-    
-
-    private EpisodicBirthDeathSamplingModel(
+    /**
+     * Factory method to...
+     * @param modelName
+     * @param birthRate
+     * @param deathRate
+     * @param serialSamplingRate
+     * @param treatmentProbability
+     * @param samplingProbability
+     * @param originTime
+     * @param condition
+     * @param numIntervals
+     * @param gridEnd
+     * @param units
+     * @return
+     */
+    public static EpisodicBirthDeathSamplingModel createRawParameters(
             String modelName,
             Parameter birthRate,
             Parameter deathRate,
@@ -232,18 +145,93 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             boolean condition,
             int numIntervals,
             double gridEnd,
+            Type units) {
+
+        EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
+                modelName, birthRate, deathRate, serialSamplingRate,
+                treatmentProbability, samplingProbability, originTime,
+                condition, numIntervals, gridEnd, units, null);
+
+        return model;
+    }
+
+
+    /**
+     * Factory method to...
+     *
+     * @param modelName
+     * @param R0Parameter
+     * @param DParameter
+     * @param SParameter
+     * @param treatmentProbability
+     * @param samplingProbability
+     * @param originTime
+     * @param condition
+     * @param numIntervals
+     * @param gridEnd
+     * @param units
+     * @return
+     */
+    public static EpisodicBirthDeathSamplingModel createWithCompoundParameters(
+            String modelName,
+            Parameter R0Parameter,
+            Parameter DParameter,
+            Parameter SParameter,
+            Parameter treatmentProbability,
+            Parameter samplingProbability,
+            Parameter originTime,
+            boolean condition,
+            int numIntervals,
+            double gridEnd,
+            Type units) {
+
+        R0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, R0Parameter.getSize()));
+        DParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, DParameter.getSize()));
+        SParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, SParameter.getSize()));
+
+        CompoundBirthDeathParameters compoundParams = new CompoundBirthDeathParameters(R0Parameter, DParameter, SParameter);
+
+        Parameter birthRate = compoundParams.getBirthRate();
+        Parameter deathRate = compoundParams.getDeathRate();
+        Parameter serialSamplingRate = compoundParams.getSamplingRate();
+
+        EpisodicBirthDeathSamplingModel model = new EpisodicBirthDeathSamplingModel(
+                modelName, birthRate, deathRate, serialSamplingRate,
+                treatmentProbability, samplingProbability, originTime,
+                condition, numIntervals, gridEnd, units, compoundParams);
+
+        // AR - not sure we need to add these because the derived parameters are being added in the constructor
+        model.addVariable(R0Parameter);
+        model.addVariable(DParameter);
+        model.addVariable(SParameter);
+        return model;
+    }
+
+    EpisodicBirthDeathSamplingModel(
+            String modelName,
+            Parameter birthRate, // lambda
+            Parameter deathRate, // mu
+            Parameter serialSamplingRate, // psi
+            Parameter treatmentProbability, // r
+            Parameter samplingProbability, // rho
+            Parameter originTime,
+            boolean condition,
+            int intervalCount,
+            double gridEnd,
             Type units,
-            CompoundBirthDeathParameters compoundParams) {
+            CompoundBirthDeathParameters compoundParameters) {
             
         super(modelName, units);
-        
 
         initialize(birthRate, deathRate, serialSamplingRate,
                 treatmentProbability, samplingProbability, originTime,
-                condition, numIntervals, gridEnd);
-        
+                condition, intervalCount, gridEnd);
 
-        this.compoundParameters = compoundParams;
+        if (compoundParameters != null) {
+            this.compoundParameters = compoundParameters;
+        } else {
+            this.compoundParameters = new CompoundBirthDeathParameters(birthRate, deathRate, serialSamplingRate, true);
+        }
     }
 
     private void initialize(
@@ -254,31 +242,31 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             Parameter samplingProbability,
             Parameter originTime,
             boolean condition,
-            int numIntervals,
+            int intervalCount,
             double gridEnd) {
 
-        this.numIntervals = numIntervals;
+        this.numIntervals = intervalCount;
         this.gridEnd = gridEnd;
 
 
-        if (birthRate.getSize() != 1 && birthRate.getSize() != numIntervals) {
-            throw new RuntimeException("Length of birthRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        if (birthRate.getSize() != 1 && birthRate.getSize() != intervalCount) {
+            throw new RuntimeException("Length of birthRate parameter should be one or equal to the size of time parameter (size = " + intervalCount + ")");
         }
 
-        if (deathRate.getSize() != 1 && deathRate.getSize() != numIntervals) {
-            throw new RuntimeException("Length of deathRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        if (deathRate.getSize() != 1 && deathRate.getSize() != intervalCount) {
+            throw new RuntimeException("Length of deathRate parameter should be one or equal to the size of time parameter (size = " + intervalCount + ")");
         }
 
-        if (serialSamplingRate.getSize() != 1 && serialSamplingRate.getSize() != numIntervals) {
-            throw new RuntimeException("Length of serialSamplingRate parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        if (serialSamplingRate.getSize() != 1 && serialSamplingRate.getSize() != intervalCount) {
+            throw new RuntimeException("Length of serialSamplingRate parameter should be one or equal to the size of time parameter (size = " + intervalCount + ")");
         }
 
-        if (treatmentProbability.getSize() != 1 && treatmentProbability.getSize() != numIntervals) {
-            throw new RuntimeException("Length of r parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        if (treatmentProbability.getSize() != 1 && treatmentProbability.getSize() != intervalCount) {
+            throw new RuntimeException("Length of r parameter should be one or equal to the size of time parameter (size = " + intervalCount + ")");
         }
 
-        if (samplingProbability.getSize() != 1 && samplingProbability.getSize() != (numIntervals)) {
-            throw new RuntimeException("Length of samplingProbability parameter should be one or equal to the size of time parameter (size = " + numIntervals + ")");
+        if (samplingProbability.getSize() != 1 && samplingProbability.getSize() != (intervalCount)) {
+            throw new RuntimeException("Length of samplingProbability parameter should be one or equal to the size of time parameter (size = " + intervalCount + ")");
         }
 
         this.birthRate = birthRate;
@@ -315,18 +303,18 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
         this.savedLogQ = Double.NaN;
         this.savedQ = Double.NaN;
-        this.partialQ = new double[4 * numIntervals];
+        this.partialQ = new double[4 * intervalCount];
         this.partialQKnown = false;
         this.dA = new double[4];
         this.dG2 = new double[3];
-        this.dB = new double[numIntervals * 4];
-        this.dQStart = new double[numIntervals * 4];
-        this.dQEnd = new double[numIntervals * 4];
-        this.temp33 = new double[numIntervals * 4];
-        this.temp44 = new double[numIntervals * 4];
-        this.dPIntervalEnd = new double[numIntervals * 4];
-        this.dPModelEnd = new double[numIntervals * 4];
-        this.dPModelEnd_prev = new double[numIntervals * 4];
+        this.dB = new double[intervalCount * 4];
+        this.dQStart = new double[intervalCount * 4];
+        this.dQEnd = new double[intervalCount * 4];
+        this.temp33 = new double[intervalCount * 4];
+        this.temp44 = new double[intervalCount * 4];
+        this.dPIntervalEnd = new double[intervalCount * 4];
+        this.dPModelEnd = new double[intervalCount * 4];
+        this.dPModelEnd_prev = new double[intervalCount * 4];
 
         this.gradientFlags = new boolean[5];
         Arrays.fill(gradientFlags, Boolean.TRUE);

@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_SERIAL_MODEL = "birthDeathSerialSampling";
+    public static final String SHORT_NAME = "bdss";
     public static final String LAMBDA = "birthRate";
     public static final String MU = "deathRate";
     public static final String RELATIVE_MU = "relativeDeathRate";

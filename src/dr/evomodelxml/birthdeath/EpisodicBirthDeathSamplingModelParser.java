@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectParser {
 
     public static final String EPISODIC_BIRTH_DEATH_SAMPLING_MODEL = "episodicBirthDeathSamplingModel";
+    public static final String SHORT_NAME = "ebds";
     public static final String BIRTH_RATE = "birthRate";
     public static final String DEATH_RATE = "deathRate";
     public static final String SAMPLING_RATE = "samplingRate";
@@ -69,11 +70,11 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
         final Parameter cutoff = xo.hasChildNamed(CUT_OFF) ? (Parameter) xo.getElementFirstChild(CUT_OFF) : new Parameter.Default(Double.POSITIVE_INFINITY);
         final Parameter grids = xo.hasChildNamed(GRIDS) ? (Parameter) xo.getChild(GRIDS).getChild(Parameter.class) : null;
 
-        Parameter lambda = null;
-        Parameter mu = null;
-        Parameter psi = null;
-        Parameter r = null;
-        Parameter rho = null;
+        Parameter birthRateParameter = null;
+        Parameter deathRateParameter = null;
+        Parameter samplingRateParameter = null;
+        Parameter treatmentProbabilityParameter = null;
+        Parameter samplingProbabilityParameter = null;
 
         Parameter R0Parameter = null;
         Parameter DParameter = null;
@@ -84,9 +85,9 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
 
         if (xo.hasChildNamed(BIRTH_RATE)) {
 
-            lambda = (Parameter) xo.getChild(BIRTH_RATE).getChild(Parameter.class);
-            mu = (Parameter) xo.getChild(DEATH_RATE).getChild(Parameter.class);
-            psi = (Parameter) xo.getChild(SAMPLING_RATE).getChild(Parameter.class);
+            birthRateParameter = (Parameter) xo.getChild(BIRTH_RATE).getChild(Parameter.class);
+            deathRateParameter = (Parameter) xo.getChild(DEATH_RATE).getChild(Parameter.class);
+            samplingRateParameter = (Parameter) xo.getChild(SAMPLING_RATE).getChild(Parameter.class);
 
             if (xo.getChild(BIRTH_RATE).hasAttribute(GRADIENT_FLAG)) {
                 gradientFlags[0] = xo.getChild(BIRTH_RATE).getAttribute(GRADIENT_FLAG, true);
@@ -115,8 +116,8 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
         }
         }
 
-        r = (Parameter) xo.getChild(TREATMENT_PROBABILITY).getChild(Parameter.class);
-        rho = (Parameter) xo.getChild(SAMPLING_PROBABILITY).getChild(Parameter.class);
+        treatmentProbabilityParameter = (Parameter) xo.getChild(TREATMENT_PROBABILITY).getChild(Parameter.class);
+        samplingProbabilityParameter = (Parameter) xo.getChild(SAMPLING_PROBABILITY).getChild(Parameter.class);
 
         if (xo.getChild(TREATMENT_PROBABILITY).hasAttribute(GRADIENT_FLAG)) {
             gradientFlags[3] = xo.getChild(TREATMENT_PROBABILITY).getAttribute(GRADIENT_FLAG, true);
@@ -132,11 +133,11 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
         if (R0Parameter != null) {
             model = EpisodicBirthDeathSamplingModel.createWithCompoundParameters(
                     R0Parameter, DParameter, SParameter,
-                    r, rho, originParameter,
+                    treatmentProbabilityParameter, samplingProbabilityParameter, originParameter,
                     condition, (int)numGridPoints.getParameterValue(0), 
                     cutoff.getParameterValue(0), units);
         } else {
-            model = new EpisodicBirthDeathSamplingModel(lambda, mu, psi, r, rho, originParameter,
+            model = new EpisodicBirthDeathSamplingModel(birthRateParameter, deathRateParameter, samplingRateParameter, treatmentProbabilityParameter, samplingProbabilityParameter, originParameter,
                     condition, (int)(numGridPoints.getParameterValue(0)), 
                     cutoff.getParameterValue(0), units);
         }

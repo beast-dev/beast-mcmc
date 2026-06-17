@@ -72,6 +72,44 @@ public interface PreOrderRepresentation {
     }
 
     /**
+     * Whether this representation can reuse parent-side work across the two
+     * sibling combinations emitted by a binary preorder step.
+     */
+    default boolean supportsPreparedParentForSiblingCombinations() {
+        return false;
+    }
+
+    /**
+     * Prepare a parent preorder slice for repeated sibling combinations.
+     * Implementations that return true from
+     * {@link #supportsPreparedParentForSiblingCombinations()} should write an
+     * allocation-free prepared slice into {@code outPreparedParent}.
+     */
+    default void prepareParentForSiblingCombinations(double[] parentNodePreOrder,
+                                                     int parentOff,
+                                                     double[] outPreparedParent,
+                                                     int outOff) {
+        final int K = getStateCount();
+        for (int s = 0; s < K; s++) {
+            outPreparedParent[outOff + s] = parentNodePreOrder[parentOff + s];
+        }
+    }
+
+    /**
+     * Combine a prepared parent preorder slice with one sibling postorder slice.
+     */
+    default void combinePreparedParentAndSibling(double[] preparedParent,
+                                                 int preparedParentOff,
+                                                 double[] siblingBranchTopPostOrder,
+                                                 int siblingOff,
+                                                 double[] outChildBranchTopPreOrder,
+                                                 int outOff) {
+        combineParentAndSibling(preparedParent, preparedParentOff,
+                siblingBranchTopPostOrder, siblingOff,
+                outChildBranchTopPreOrder, outOff);
+    }
+
+    /**
      * Whether the internal pre-order partials are already expressed in the
      * standard data-type basis.
      */

@@ -67,8 +67,7 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
     }
 
     protected void setupRelativeRates(double[] rates) {
-        double[] transformedRates = lrm.getRates();
-        System.arraycopy(transformedRates,0,rates,0,rates.length);
+        lrm.fillRates(rates);
     }
 
     @Override

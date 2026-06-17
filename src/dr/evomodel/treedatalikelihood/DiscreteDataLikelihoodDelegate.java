@@ -170,6 +170,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private final boolean useSparseTipPartials;
     private final boolean tipPartialsDependOnSubstitutionModel;
     private final int[][] sparseTipStates;
+    private final boolean[][] stateSetCache;
     private final int partialRowCount;
 
 
@@ -294,6 +295,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         this.tipCount = tree.getExternalNodeCount();
         this.siteAssignInd = siteAssignInd;
         this.partitionCat = partitionCat;
+        this.stateSetCache = buildStateSetCache(dataType);
 
         this.branchLengths = new double[nodeCount];
         this.branchUpdateIndices = new int[nodeCount];
@@ -437,6 +439,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     public boolean isSpectralRepresentation() {
         return bidirectionalRepresentation instanceof
                 dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralRotatedPartialsRepresentation;
+    }
+
+    public boolean borrowRealBranchExponentials(int childNodeNumber,
+                                                double effectiveBranchLength,
+                                                RealBranchExponentialsProvider.BorrowedSlice out) {
+        if (bidirectionalRepresentation instanceof RealBranchExponentialsProvider) {
+            return ((RealBranchExponentialsProvider) bidirectionalRepresentation)
+                    .borrowRealBranchExponentials(childNodeNumber, effectiveBranchLength, out);
+        }
+        return false;
     }
 
     public double[] getPatternWeights() {
@@ -1120,7 +1132,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         final int state = patternList.getPatternState(sequenceIndex, patternIndex);
-        final boolean[] stateSet = dataType.getStateSet(state);
+        final boolean[] stateSet = getCachedStateSet(state);
         for (int s = 0; s < stateCount; s++) {
             dest[s] = stateSet[s] ? 1.0 : 0.0;
         }
@@ -1132,7 +1144,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     }
 
     private boolean[] getSparseTipStateSet(int nodeNumber, int patternIndex) {
-        return dataType.getStateSet(sparseTipStates[nodeNumber][patternIndex]);
+        return getCachedStateSet(sparseTipStates[nodeNumber][patternIndex]);
     }
 
     // -------------------------------------------------------------------------
@@ -1185,7 +1197,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     private void invalidateAllCaches() {
         preOrderValid = false;
-        Arrays.fill(nodePartialKnown, false);
+        Arrays.fill(nodePartialKnown, tipCount, nodePartialKnown.length, false);
         Arrays.fill(nodePreOrderKnown, false);
         if (preOrderDelegate != null) {
             preOrderDelegate.makeDirty();
@@ -1196,10 +1208,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         if (preOrderEndKnown != null) Arrays.fill(preOrderEndKnown, false);
         if (transformedPostOrderKnown != null) Arrays.fill(transformedPostOrderKnown, false);
         if (transformedPreOrderKnown != null) Arrays.fill(transformedPreOrderKnown, false);
-
-        for (int i = 0; i < tipCount; i++) {
-            nodePartialKnown[i] = true;
-        }
     }
 
     private void markDirtyFromNodeOperations(List<NodeOperation> nodeOperations) {
@@ -1220,7 +1228,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         NodeRef node = tree.getNode(nodeNumber);
         while (node != null) {
             final int n = node.getNumber();
-            nodePartialKnown[n] = false;
+            if (n >= tipCount) {
+                nodePartialKnown[n] = false;
+            }
             nodePreOrderKnown[n] = false;
 
             if (postOrderStartKnown != null) postOrderStartKnown[n] = false;
@@ -1234,10 +1244,6 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
                 break;
             }
             node = tree.getParent(node);
-        }
-
-        for (int i = 0; i < tipCount; i++) {
-            nodePartialKnown[i] = true;
         }
     }
 
@@ -1269,6 +1275,27 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     // -------------------------------------------------------------------------
     // Buffer utilities
     // -------------------------------------------------------------------------
+
+    private boolean[] getCachedStateSet(int state) {
+        if (state >= 0 && state < stateSetCache.length && stateSetCache[state] != null) {
+            return stateSetCache[state];
+        }
+        return dataType.getStateSet(state);
+    }
+
+    private static boolean[][] buildStateSetCache(DataType dataType) {
+        final int maxState = Math.max(dataType.getGapState(), dataType.getUnknownState());
+        final boolean[][] cache = new boolean[maxState + 1][];
+        for (int state = 0; state < cache.length; state++) {
+            try {
+                cache[state] = dataType.getStateSet(state);
+            } catch (RuntimeException ignored) {
+                // Some legacy DataType implementations advertise pseudo-state
+                // indices that they do not materialize unless those states occur.
+            }
+        }
+        return cache;
+    }
 
     private int flattenedPartialLength() {
         return categoryCount * patternCount * stateCount;

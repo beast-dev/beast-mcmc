@@ -185,7 +185,7 @@ public final class ComplexBlockKernelUtils {
 
     private static void ensureMetadataCapacity(ComplexKernelPlan plan) {
         final int scalarCount = plan.scalarCount;
-        if (plan.scalarBase == null || plan.scalarBase.length != scalarCount) {
+        if (plan.scalarBase == null || plan.scalarBase.length < scalarCount) {
             plan.scalarBase = new int[scalarCount];
             plan.scalarLeftStart = new int[scalarCount];
             plan.scalarRightStart = new int[scalarCount];
@@ -195,7 +195,7 @@ public final class ComplexBlockKernelUtils {
         }
 
         final int oneByTwoCount = plan.oneByTwoCount;
-        if (plan.oneByTwoBase == null || plan.oneByTwoBase.length != oneByTwoCount) {
+        if (plan.oneByTwoBase == null || plan.oneByTwoBase.length < oneByTwoCount) {
             plan.oneByTwoBase = new int[oneByTwoCount];
             plan.oneByTwoLeftStart = new int[oneByTwoCount];
             plan.oneByTwoRightStart = new int[oneByTwoCount];
@@ -207,7 +207,7 @@ public final class ComplexBlockKernelUtils {
         }
 
         final int twoByOneCount = plan.twoByOneCount;
-        if (plan.twoByOneBase == null || plan.twoByOneBase.length != twoByOneCount) {
+        if (plan.twoByOneBase == null || plan.twoByOneBase.length < twoByOneCount) {
             plan.twoByOneBase = new int[twoByOneCount];
             plan.twoByOneLeftStart = new int[twoByOneCount];
             plan.twoByOneRightStart = new int[twoByOneCount];
@@ -219,7 +219,7 @@ public final class ComplexBlockKernelUtils {
         }
 
         final int twoByTwoCount = plan.twoByTwoCount;
-        if (plan.twoByTwoBase == null || plan.twoByTwoBase.length != twoByTwoCount) {
+        if (plan.twoByTwoBase == null || plan.twoByTwoBase.length < twoByTwoCount) {
             plan.twoByTwoBase = new int[twoByTwoCount];
             plan.twoByTwoLeftStart = new int[twoByTwoCount];
             plan.twoByTwoRightStart = new int[twoByTwoCount];
@@ -239,16 +239,16 @@ public final class ComplexBlockKernelUtils {
         final int twoByOneCount = plan.twoByOneCount;
         final int twoByTwoCount = plan.twoByTwoCount;
 
-        if (plan.scalarCoefficients == null || plan.scalarCoefficients.length != scalarCount) {
+        if (plan.scalarCoefficients == null || plan.scalarCoefficients.length < scalarCount) {
             plan.scalarCoefficients = new double[scalarCount];
         }
-        if (plan.oneByTwoCoefficients == null || plan.oneByTwoCoefficients.length != oneByTwoCount * 4) {
+        if (plan.oneByTwoCoefficients == null || plan.oneByTwoCoefficients.length < oneByTwoCount * 4) {
             plan.oneByTwoCoefficients = new double[oneByTwoCount * 4];
         }
-        if (plan.twoByOneCoefficients == null || plan.twoByOneCoefficients.length != twoByOneCount * 4) {
+        if (plan.twoByOneCoefficients == null || plan.twoByOneCoefficients.length < twoByOneCount * 4) {
             plan.twoByOneCoefficients = new double[twoByOneCount * 4];
         }
-        if (plan.twoByTwoCoefficients == null || plan.twoByTwoCoefficients.length != twoByTwoCount * 16) {
+        if (plan.twoByTwoCoefficients == null || plan.twoByTwoCoefficients.length < twoByTwoCount * 16) {
             plan.twoByTwoCoefficients = new double[twoByTwoCount * 16];
         }
     }

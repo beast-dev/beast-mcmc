@@ -78,7 +78,7 @@ public abstract class AbstractDiscreteGradientDelegate extends ProcessSimulation
         }
 
         simulationProcess.cacheSimulatedTraits(node);
-        return gradient.clone();
+        return gradient;
     }
 
     protected double[] getHessian(Tree tree, NodeRef node) {

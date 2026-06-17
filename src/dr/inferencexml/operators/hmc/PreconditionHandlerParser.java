@@ -28,6 +28,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.hmc.MassPreconditionScheduler;
@@ -57,7 +58,9 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
 
     public static PreconditionHandler parsePreconditionHandler(XMLObject xo) throws XMLParseException {
         MassPreconditioner.Type preconditioningType;
-        if (xo.hasChildNamed(PRECONDITIONER)) {
+        XMLObject preconditionerXO = xo.hasChildNamed(PRECONDITIONER) ? xo.getChild(PRECONDITIONER) : null;
+        if (preconditionerXO != null &&
+                preconditionerXO.getChild(PriorPreconditioningProvider.class) != null) {
             preconditioningType = MassPreconditioner.Type.PRIOR_DIAGONAL;
         } else {
             preconditioningType = parsePreconditioning(xo);
@@ -80,6 +83,10 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
+        if (derivative == null && preconditionerXO == null) {
+            throw new XMLParseException("A preconditioning block requires either a gradient or a preconditioner");
+        }
+
         Parameter eigenLowerBound, eigenUpperBound;
         if (xo.hasChildNamed(EIGEN_BOUNDS)) {
             eigenLowerBound = xo.getChild(EIGEN_BOUNDS).getAllChildren(Parameter.class).get(0);
@@ -95,14 +102,30 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
 
         MassPreconditioner preconditioner;
 
-        if (xo.hasChildNamed(PRECONDITIONER)) {
-            PriorPreconditioningProvider priorPreconditioningProvider = (PriorPreconditioningProvider) xo.getChild(PRECONDITIONER).getChild(PriorPreconditioningProvider.class);
+        if (preconditionerXO != null) {
+            PriorPreconditioningProvider priorPreconditioningProvider =
+                    (PriorPreconditioningProvider) preconditionerXO.getChild(PriorPreconditioningProvider.class);
+            MassPreconditioner suppliedPreconditioner =
+                    (MassPreconditioner) preconditionerXO.getChild(MassPreconditioner.class);
+            HessianWrtParameterProvider hessian =
+                    (HessianWrtParameterProvider) preconditionerXO.getChild(HessianWrtParameterProvider.class);
+
             if (priorPreconditioningProvider !=  null) {
                 preconditioner = new MassPreconditioner.PriorPreconditioner(priorPreconditioningProvider, transform);
+            } else if (suppliedPreconditioner != null) {
+                preconditioner = suppliedPreconditioner;
+            } else if (hessian != null) {
+                if (derivative == null) {
+                    throw new XMLParseException("Hessian preconditioning requires a gradient provider");
+                }
+                preconditioner = preconditioningType.factory(derivative, hessian, transform, preconditioningOptions);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }
         } else {
+            if (derivative == null) {
+                throw new XMLParseException("Mass preconditioning requires a gradient provider");
+            }
             preconditioner = preconditioningType.factory(derivative, transform, preconditioningOptions);
         }
         PreconditionHandler preconditionHandler = new PreconditionHandler(preconditioner, preconditioningOptions, preconditionSchedulerType);
@@ -123,15 +146,16 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
 
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
 
-            new XORRule(
-                    new ElementRule(GradientWrtParameterProvider.class),
-                    new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
-                            new XORRule(
+            new ElementRule(GradientWrtParameterProvider.class, true),
+            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
+                    new XORRule(
+                            new XMLSyntaxRule[]{
                                     new ElementRule(MassPreconditioner.class),
-                                    new ElementRule(PriorPreconditioningProvider.class)
-                            ),
-                    })
-            ),
+                                    new ElementRule(PriorPreconditioningProvider.class),
+                                    new ElementRule(HessianWrtParameterProvider.class)
+                            }
+                    ),
+            }, true),
 
             new ElementRule(EIGEN_BOUNDS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class, 2, 2)

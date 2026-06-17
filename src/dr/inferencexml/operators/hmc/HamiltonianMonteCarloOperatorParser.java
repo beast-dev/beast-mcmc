@@ -28,6 +28,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -183,8 +184,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             }, true),
             new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
                     new XORRule(
-                            new ElementRule(MassPreconditioner.class),
-                            new ElementRule(PriorPreconditioningProvider.class)
+                            new XMLSyntaxRule[]{
+                                    new ElementRule(MassPreconditioner.class),
+                                    new ElementRule(PriorPreconditioningProvider.class),
+                                    new ElementRule(HessianWrtParameterProvider.class)
+                            }
                     ),
             }, true),
 

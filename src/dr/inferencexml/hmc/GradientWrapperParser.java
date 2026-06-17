@@ -33,6 +33,7 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.model.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -93,7 +94,12 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             final GradientProvider provider = (GradientProvider) dl.getDistribution();
             final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            // TODO Ensure that parameter and data inside provider are the same
+            // Ensure that parameter and data inside provider are the same
+            for (Attribute<double[]> data : dl.getDataList()) {
+                if (!data.equals(parameter)) {
+                    throw new XMLParseException("Parameter and data inside provider are not the same");
+                }
+            }
 
             return new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, dl);
         }

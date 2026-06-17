@@ -88,6 +88,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood imple
         return distribution;
     }
 
+    /**
+     * Set the index range of data to use for the likelihood calculation.
+     * @param from
+     * @param to
+     */
     public void setRange(int from, int to) {
         this.from = from;
         this.to = to;

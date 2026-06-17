@@ -38,7 +38,6 @@ import org.ejml.interfaces.linsol.LinearSolver;
 import java.util.Arrays;
 import java.util.List;
 
-import static dr.math.distributions.MultivariateNormalDistribution.gradLogPdf;
 import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDeterminant;
 
 /**
@@ -48,7 +47,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.invertAndGetDetermina
  * Duvenaud DK, Nickisch H, Rasmussen C. Additive Gaussian processes. In Shawe-Taylor J, Zemel R, Bartlett P, Pereira F, Weinberger KQ (eds.), Advances in Neural Information Processing Systems, volume 24. Curran Associates, Inc., 2011.
  * URL <a href="https://proceedings.neurips.cc/paper/2011/file/4c5bde74a8f110656874902f07378009-Paper.pdf"/>
  */
-public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution implements Reportable {
+public class GaussianProcessField extends RandomFieldDistribution implements Reportable {
 
     public static final String TYPE = "GaussianProcess";
 
@@ -78,8 +77,21 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 
     private boolean meanKnown = false;
     private boolean precisionAndDeterminantKnown = false;
+    private boolean factorizationKnown = false;
+    private boolean logDeterminantKnown = false;
     private boolean gramianAndVarianceKnown = false;
     private boolean precisionDiffKnown = false;
+
+    private boolean storedMeanKnown = false;
+    private boolean storedPrecisionAndDeterminantKnown = false;
+    private boolean storedFactorizationKnown = false;
+    private boolean storedLogDeterminantKnown = false;
+    private boolean storedGramianAndVarianceKnown = false;
+    private boolean storedPrecisionDiffKnown = false;
+    private boolean storedFieldUpdated = true;
+    private boolean covarianceChangedSinceStore = false;
+
+    private LinearSolver<DenseMatrix64F> solver;
 
     private static final boolean USE_CHOLESKY = true;
 
@@ -95,12 +107,12 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         }
     }
 
-    public AdditiveGaussianProcessDistribution(String name,
-                                               int dim,
-                                               Parameter orderVariance,
-                                               Parameter meanParameter,
-                                               Parameter nuggetParameter,
-                                               List<BasisDimension> bases) {
+    public GaussianProcessField(String name,
+                                int dim,
+                                Parameter orderVariance,
+                                Parameter meanParameter,
+                                Parameter nuggetParameter,
+                                List<BasisDimension> bases) {
         super(name);
 
         this.order = orderVariance.getDimension();
@@ -124,9 +136,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         this.storedMean = new double[dim]; // mu
 
         this.precisionDiff = new double[dim]; // -P (x - mu)
+        this.storedDiff = new double[dim];
+        this.storedPrecisionDiff = new double[dim];
 
         this.tmpMatrix = new double[dim * dim];
         this.tmp = new double[dim];
+
+        this.solver = LinearSolverFactory.symmPosDef(dim);
 
         addVariable(orderVariance);
 
@@ -157,6 +173,18 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return orderVariance;
     }
 
+    Parameter getFieldParameter() {
+        return field;
+    }
+
+    Parameter getMeanParameter() {
+        return meanParameter;
+    }
+
+    Parameter getNuggetParameter() {
+        return nuggetParameter;
+    }
+
     public List<BasisDimension> getBases() {
         return bases;
     }
@@ -177,21 +205,35 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     private void computePrecisionAndDeterminant() {
-        DenseMatrix64F variance = getVariance();
         if (USE_CHOLESKY) {
-            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(dim);
-            if (!solver.setA(variance)) {
-                if (DEBUG) System.out.println(bases.get(0).getKernel().getParameters());
-                throw new RuntimeException("Unable to decompose matrix");
-            }
-
+            ensureFactorizationAndDeterminant();
             solver.invert(precision);
-            logDeterminant = 2 * computeLogDeterminantFromTriangularMatrix(
-                    ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT());
-
         } else {
-            logDeterminant = invertAndGetDeterminant(variance, precision, true);
+            logDeterminant = invertAndGetDeterminant(getVariance(), precision, true);
         }
+        precisionAndDeterminantKnown = true;
+        logDeterminantKnown = true;
+    }
+
+    private void ensureFactorizationAndDeterminant() {
+        if (factorizationKnown) {
+            return;
+        }
+
+        if (!USE_CHOLESKY) {
+            computePrecisionAndDeterminant();
+            return;
+        }
+
+        if (!solver.setA(getVariance())) {
+            if (DEBUG) System.out.println(bases.get(0).getKernel().getParameters());
+            throw new RuntimeException("Unable to decompose matrix");
+        }
+
+        logDeterminant = 2 * computeLogDeterminantFromTriangularMatrix(
+                ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT());
+        factorizationKnown = true;
+        logDeterminantKnown = true;
     }
 
     private static double computeLogDeterminantFromTriangularMatrix(DenseMatrix64F T) {
@@ -216,15 +258,13 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     protected DenseMatrix64F getPrecisionAsMatrix() {
         if (!precisionAndDeterminantKnown) {
             computePrecisionAndDeterminant();
-            precisionAndDeterminantKnown = true;
         }
         return precision;
     }
 
     private double getLogDeterminant() {
-        if (!precisionAndDeterminantKnown) {
-            computePrecisionAndDeterminant();
-            precisionAndDeterminantKnown = true;
+        if (!logDeterminantKnown) {
+            ensureFactorizationAndDeterminant();
         }
         return logDeterminant;
     }
@@ -270,7 +310,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
     protected double[] getPrecisionDiff(double[] x) {
-        computingDelegate(x);
+        ensurePrecisionDiff(x);
         return precisionDiff;
     }
 
@@ -297,21 +337,14 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     @Override
     public double logPdf(double[] x) {
         if (DEBUG) System.out.println("LogPdf: " + precisionAndDeterminantKnown + " " + gramianAndVarianceKnown);
+        ensurePrecisionDiff(x);
+
         double exponent = 0.0;
-        if (field == null) {
-            computeDiff(x);
-            final double[] precision = getPrecision();
-            for (int i = 0; i < dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    exponent += diff[i] * precision[i * dim + j] * diff[j];
-                }
-            }
-        } else {
-            computingDelegate(x);
-            for (int i = 0; i < dim; ++i) {
-                exponent += diff[i] * precisionDiff[i];
-            }
-            exponent *= -1;
+        for (int i = 0; i < dim; ++i) {
+            exponent -= diff[i] * precisionDiff[i];
+        }
+
+        if (field != null) {
             if (DEBUG) System.out.println(bases.get(0).getKernel().getParameters());
             if (DEBUG)
                 System.out.println("First 4 values of precision: " + Arrays.toString(Arrays.copyOfRange(precision.getData(), 0, Math.min(4, diff.length))));
@@ -328,16 +361,12 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     @Override
     public double[] getGradientLogDensity(Object x) {
         if(DEBUG) System.out.println("GradientLogDensity");
-        if (field == null) {
-            return gradLogPdf((double[]) x, getMean(), getPrecision());
-        } else {
-            computingDelegate((double[]) x);
-            if (DEBUG) System.out.println("First 4 values of precisionDiff: " + Arrays.toString(Arrays.copyOfRange(precisionDiff, 0, Math.min(4, precisionDiff.length))));
-            return precisionDiff;
-        }
+        ensurePrecisionDiff((double[]) x);
+        if (DEBUG) System.out.println("First 4 values of precisionDiff: " + Arrays.toString(Arrays.copyOfRange(precisionDiff, 0, Math.min(4, precisionDiff.length))));
+        return precisionDiff;
     }
 
-    public void computingDelegate(double[] x) {
+    public void ensurePrecisionDiff(double[] x) {
         if (field == null) fieldUpdated = true;
 
         if (fieldUpdated || !meanKnown) {
@@ -379,13 +408,20 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         return false;
     }
 
+    private void invalidateCovarianceCaches() {
+        precisionAndDeterminantKnown = false;
+        factorizationKnown = false;
+        logDeterminantKnown = false;
+        gramianAndVarianceKnown = false;
+        precisionDiffKnown = false;
+        covarianceChangedSinceStore = true;
+    }
+
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (containsKernel(model)) {
             if(DEBUG) System.out.println("Model changed event: kernel");
-            precisionAndDeterminantKnown = false;
-            gramianAndVarianceKnown = false;
-            precisionDiffKnown = false;
+            invalidateCovarianceCaches();
             fireModelChanged();
         } else {
             throw new IllegalArgumentException("Unknown model");
@@ -397,11 +433,14 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
 //        if(DEBUG) System.out.println("Variable changed event");
         if (variable == meanParameter) {
             meanKnown = false;
+            fieldUpdated = true;
+            precisionDiffKnown = false;
             fireModelChanged();
         } else if (variable == nuggetParameter) {
-            precisionAndDeterminantKnown = false;
-            gramianAndVarianceKnown = false;
-            precisionDiffKnown = false;
+            invalidateCovarianceCaches();
+            fireModelChanged();
+        } else if (variable == orderVariance) {
+            invalidateCovarianceCaches();
             fireModelChanged();
         } else if (variable == field) {
             if(DEBUG) System.out.println("Field changed event"); //TODO this is called for every entry wit compound parameter inside HMC
@@ -410,9 +449,7 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
         } else {
             for (BasisDimension basis : bases) {
                 if (variable == basis.getDesignMatrix1() || variable == basis.getDesignMatrix2()) {
-                    gramianAndVarianceKnown = false;
-                    precisionAndDeterminantKnown = false;
-                    precisionDiffKnown = false;
+                    invalidateCovarianceCaches();
                     fireModelChanged();
                     return;
                 }
@@ -427,38 +464,81 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     protected void storeState() {
         if(DEBUG) System.out.println("Storing states");
         if(DEBUG) System.out.println("Storing precision and determinant");
-        storedPrecision = Arrays.copyOf(getPrecision(), dim * dim);
-        storedLogDeterminant = getLogDeterminant();
-        storedMean = Arrays.copyOf(getMean(), dim);
+
+        storedMeanKnown = meanKnown;
+        storedPrecisionAndDeterminantKnown = precisionAndDeterminantKnown;
+        storedFactorizationKnown = factorizationKnown;
+        storedLogDeterminantKnown = logDeterminantKnown;
+        storedGramianAndVarianceKnown = gramianAndVarianceKnown;
+        storedPrecisionDiffKnown = precisionDiffKnown;
+        storedFieldUpdated = fieldUpdated;
+        covarianceChangedSinceStore = false;
+
+        if (precisionAndDeterminantKnown) {
+            System.arraycopy(precision.getData(), 0, storedPrecision, 0, dim * dim);
+        }
+        storedLogDeterminant = logDeterminant;
+        if (meanKnown) {
+            System.arraycopy(mean, 0, storedMean, 0, dim);
+        }
         if (field != null) {
-            storedDiff = Arrays.copyOf(diff, dim);
-            storedPrecisionDiff = Arrays.copyOf(precisionDiff, dim);
+            System.arraycopy(diff, 0, storedDiff, 0, dim);
+            if (precisionDiffKnown) {
+                System.arraycopy(precisionDiff, 0, storedPrecisionDiff, 0, dim);
+            }
         }
     }
 
     @Override
     protected void restoreState() {
         if(DEBUG) System.out.println("Rejected state");
+        final boolean covarianceChanged = covarianceChangedSinceStore;
         double[] temp;
-        temp = storedPrecision;
-        storedPrecision = precision.getData();
-        precision.setData(temp);
 
-        logDeterminant = storedLogDeterminant;
+        if (storedPrecisionAndDeterminantKnown) {
+            temp = storedPrecision;
+            storedPrecision = precision.getData();
+            precision.setData(temp);
+        }
 
-        temp = storedMean;
-        storedMean = mean;
-        mean = temp;
+        if (storedLogDeterminantKnown) {
+            logDeterminant = storedLogDeterminant;
+        }
+
+        if (storedMeanKnown) {
+            temp = storedMean;
+            storedMean = mean;
+            mean = temp;
+        }
 
         if (field !=  null) {
             temp = storedDiff;
             storedDiff = diff;
             diff = temp;
 
-            temp = storedPrecisionDiff;
-            storedPrecisionDiff = precisionDiff;
-            precisionDiff = temp;
+            if (storedPrecisionDiffKnown) {
+                temp = storedPrecisionDiff;
+                storedPrecisionDiff = precisionDiff;
+                precisionDiff = temp;
+            }
         }
+
+        meanKnown = storedMeanKnown;
+        if (covarianceChanged) {
+            gramianAndVarianceKnown = false;
+            factorizationKnown = false;
+            precisionAndDeterminantKnown = storedPrecisionAndDeterminantKnown;
+            logDeterminantKnown = storedLogDeterminantKnown;
+        } else {
+            gramianAndVarianceKnown = storedGramianAndVarianceKnown || gramianAndVarianceKnown;
+            factorizationKnown = storedFactorizationKnown || factorizationKnown;
+            precisionAndDeterminantKnown = storedPrecisionAndDeterminantKnown || precisionAndDeterminantKnown;
+            logDeterminantKnown = storedLogDeterminantKnown || logDeterminantKnown;
+        }
+        precisionDiffKnown = field != null && storedPrecisionDiffKnown;
+        fieldUpdated = storedFieldUpdated;
+        covarianceChangedSinceStore = false;
+
         if (DEBUG) System.out.println("Restored states");
         if (DEBUG) System.out.println(bases.get(0).getKernel().getParameters());
         if (DEBUG)
@@ -473,69 +553,22 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     @Override
     protected void acceptState() {
         if(DEBUG) System.out.println("Accepting state");
+        covarianceChangedSinceStore = false;
     }
 
     @Override
     public GradientProvider getGradientWrt(Parameter parameter) {
-        if (parameter == meanParameter) {
-            return new GradientProvider() {
-                @Override
-                public int getDimension() {
-                    return meanParameter.getDimension();
-                }
-
-                @Override
-                public double[] getGradientLogDensity(Object x) {
-                    computingDelegate((double[]) x);
-                    if (meanParameter.getDimension() == dim) {
-                        return precisionDiff;
-                    } else if (meanParameter.getDimension() == 1) {
-                        double sum = 0.0;
-                        for (int i = 0; i < dim; ++i) {
-                            sum += precisionDiff[i];
-                        }
-                        return new double[]{sum};
-                    } else {
-                        throw new IllegalArgumentException("Unknown mean parameter structure");
-                    }
-                }
-            };
-        } else if (parameter == nuggetParameter) {
-            throw new RuntimeException("Not implemented");
-        } else {
-            for (BasisDimension basis : bases) {
-                if (parameter == basis.getDesignMatrix1() || parameter == basis.getDesignMatrix2()) {
-                    return new GradientProvider() {
-                        @Override
-                        public int getDimension() {
-                            return parameter.getDimension();
-                        }
-
-                        @Override
-                        public double[] getGradientLogDensity(Object x) {
-                            throw new RuntimeException("Not yet implemented (DesignMatrix Gradient)");
-                        }
-                    };
-                } else {
-                    for (Parameter kernelParameter : basis.getKernel().getParameters()) {
-                        if (parameter == kernelParameter) {
-                            throw new RuntimeException("Use GaussianProcessKernelGradient");
-                        }
-                    }
-                }
-            }
-            throw new IllegalArgumentException("Unknown parameter");
-        }
+        return GaussianProcessFieldGradient.createProvider(this, parameter);
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object x) {
-        throw new RuntimeException("Not yet implemented");
+        return GaussianProcessFieldHessian.getDiagonalHessianLogDensity(this);
     }
 
     @Override
     public double[][] getHessianLogDensity(Object x) {
-        throw new RuntimeException("Not yet implemented");
+        return GaussianProcessFieldHessian.getHessianLogDensity(this);
     }
 
     @Override
@@ -585,5 +618,3 @@ public class AdditiveGaussianProcessDistribution extends RandomFieldDistribution
     }
 
 }
-
-

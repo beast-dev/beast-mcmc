@@ -11,7 +11,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
     private final RandomField randomField;
     private final Parameter field;
     private final int dim;
-    private final AdditiveGaussianProcessDistribution distribution;
+    private final GaussianProcessField distribution;
     private final GaussianProcessKernel.Base kernel;
     private final DesignMatrix designMatrix1;
     private final DesignMatrix designMatrix2;
@@ -33,7 +33,7 @@ public class GaussianProcessKernelGradient implements GradientWrtParameterProvid
         this.dim = field.getDimension();
         this.basis = basis;
 
-        this.distribution = (AdditiveGaussianProcessDistribution) randomField.getDistribution();
+        this.distribution = (GaussianProcessField) randomField.getDistribution();
         this.kernel = (GaussianProcessKernel.Base) basis.getKernel();
 
         // TODO allow for designMatrices to change?

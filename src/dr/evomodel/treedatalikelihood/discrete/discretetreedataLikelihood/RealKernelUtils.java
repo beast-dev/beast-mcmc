@@ -107,20 +107,31 @@ public final class RealKernelUtils {
                                                    int stateCount) {
         final double[] ev      = eigenDecomp.getEigenValues();
         final double[] expR    = plan.expR;
-        final double[] invD    = plan.invDenom;
 
-        for (int i = 0; i < stateCount; i++) {
-            expR[i] = FastMath.exp(time * ev[i]);
-        }
+        fillExponentials(expR, 0, ev, time, stateCount);
 
+        applyToOuterProductFromExponentials(plan, expR, 0, time, leftVector, rightVector,
+                scale, eigenBasisGradient, stateCount);
+    }
+
+    public static void applyToOuterProductFromExponentials(RealKernelPlan plan,
+                                                           double[] expR,
+                                                           int expOffset,
+                                                           double time,
+                                                           double[] leftVector,
+                                                           double[] rightVector,
+                                                           double scale,
+                                                           double[] eigenBasisGradient,
+                                                           int stateCount) {
+        final double[] invD = plan.invDenom;
         for (int i = 0; i < stateCount; i++) {
             final double li = scale * leftVector[i];
             if (li == 0.0) continue;
-            final double expI   = expR[i];
+            final double expI   = expR[expOffset + i];
             final int    rowBase = i * stateCount;
             for (int j = 0; j < stateCount; j++) {
                 final double d     = invD[rowBase + j];
-                final double coeff = d == 0.0 ? time * expI : (expI - expR[j]) * d;
+                final double coeff = d == 0.0 ? time * expI : (expI - expR[expOffset + j]) * d;
                 eigenBasisGradient[rowBase + j] += coeff * li * rightVector[j];
             }
         }
@@ -136,18 +147,24 @@ public final class RealKernelUtils {
                                          int stateCount) {
         final double[] ev   = eigenDecomp.getEigenValues();
         final double[] expR = plan.expR;
+
+        fillExponentials(expR, 0, ev, time, stateCount);
+        fillCoefficientsFromExponentials(plan, expR, 0, time, stateCount);
+    }
+
+    public static void fillCoefficientsFromExponentials(RealKernelPlan plan,
+                                                        double[] expR,
+                                                        int expOffset,
+                                                        double time,
+                                                        int stateCount) {
         final double[] invD = plan.invDenom;
         final double[] c    = plan.coefficients;
-
         for (int i = 0; i < stateCount; i++) {
-            expR[i] = FastMath.exp(time * ev[i]);
-        }
-        for (int i = 0; i < stateCount; i++) {
-            final double expI   = expR[i];
+            final double expI   = expR[expOffset + i];
             final int    rowBase = i * stateCount;
             for (int j = 0; j < stateCount; j++) {
                 final double d = invD[rowBase + j];
-                c[rowBase + j] = d == 0.0 ? time * expI : (expI - expR[j]) * d;
+                c[rowBase + j] = d == 0.0 ? time * expI : (expI - expR[expOffset + j]) * d;
             }
         }
     }
@@ -166,6 +183,16 @@ public final class RealKernelUtils {
             for (int j = 0; j < stateCount; j++) {
                 eigenBasisGradient[rowBase + j] += c[rowBase + j] * li * rightVector[j];
             }
+        }
+    }
+
+    private static void fillExponentials(double[] expR,
+                                         int expOffset,
+                                         double[] eigenValues,
+                                         double time,
+                                         int stateCount) {
+        for (int i = 0; i < stateCount; i++) {
+            expR[expOffset + i] = FastMath.exp(time * eigenValues[i]);
         }
     }
 }

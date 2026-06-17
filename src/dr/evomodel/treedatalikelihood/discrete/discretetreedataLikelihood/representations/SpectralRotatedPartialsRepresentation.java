@@ -22,7 +22,7 @@ import java.util.Arrays;
  *   cachedBranchLength / cachedCoeffVersion : index = node * CACHE_SLOTS + slot
  */
 public final class SpectralRotatedPartialsRepresentation
-        implements BidirectionalRepresentation {
+        implements BidirectionalRepresentation, RealBranchExponentialsProvider {
 
     private static final double IMAG_TOL = 1.0e-15;
     private static final double PAIR_TOL = 1.0e-12;
@@ -115,6 +115,22 @@ public final class SpectralRotatedPartialsRepresentation
 
     @Override
     public void markDirty() { eigenDirty = true; }
+
+    @Override
+    public boolean borrowRealBranchExponentials(int nodeNumber,
+                                                double effectiveBranchLength,
+                                                BorrowedSlice out) {
+        ensureEigenSystemCurrent();
+        if (blockCount != stateCount) {
+            out.clear();
+            return false;
+        }
+
+        ensureBranchCoefficients(nodeNumber, effectiveBranchLength);
+        final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
+        out.set(coeffA, coeffBase, stateCount);
+        return true;
+    }
 
     @Override
     public void storeState() { /* caches are derived; nothing to snapshot */ }
@@ -298,8 +314,35 @@ public final class SpectralRotatedPartialsRepresentation
                                         int siblingOffset,
                                         double[] outChildBranchTopPreOrder,
                                         int outOffset) {
+        prepareParentForSiblingCombinations(parentNodePreOrder, parentOffset, tmpStandardA, 0);
+        combinePreparedParentAndSibling(tmpStandardA, 0,
+                siblingBranchTopPostOrder, siblingOffset,
+                outChildBranchTopPreOrder, outOffset);
+    }
+
+    @Override
+    public boolean supportsPreparedParentForSiblingCombinations() {
+        return true;
+    }
+
+    @Override
+    public void prepareParentForSiblingCombinations(double[] parentNodePreOrder,
+                                                    int parentOffset,
+                                                    double[] outPreparedParent,
+                                                    int outOffset) {
         ensureEigenSystemCurrent();
-        multiplyMatrixVectorOffset(matrixRInvT, parentNodePreOrder, parentOffset, tmpStandardA, 0, stateCount);
+        multiplyMatrixVectorOffset(matrixRInvT, parentNodePreOrder, parentOffset,
+                outPreparedParent, outOffset, stateCount);
+    }
+
+    @Override
+    public void combinePreparedParentAndSibling(double[] preparedParent,
+                                                int preparedParentOffset,
+                                                double[] siblingBranchTopPostOrder,
+                                                int siblingOffset,
+                                                double[] outChildBranchTopPreOrder,
+                                                int outOffset) {
+        ensureEigenSystemCurrent();
         // Fuse R×sibling + Hadamard into one pass.
         for (int i = 0; i < stateCount; i++) {
             double sum = 0.0;
@@ -307,7 +350,7 @@ public final class SpectralRotatedPartialsRepresentation
             for (int j = 0; j < stateCount; j++) {
                 sum += matrixR[base + j] * siblingBranchTopPostOrder[siblingOffset + j];
             }
-            tmpStandardB[i] = tmpStandardA[i] * sum;
+            tmpStandardB[i] = preparedParent[preparedParentOffset + i] * sum;
         }
         multiplyMatrixVectorOffset(matrixRT, tmpStandardB, 0, outChildBranchTopPreOrder, outOffset, stateCount);
     }
@@ -531,8 +574,18 @@ public final class SpectralRotatedPartialsRepresentation
         final long   branchBits  = Double.doubleToLongBits(branchLength);
         final int    nodeSlotBase = nodeNumber * CACHE_SLOTS;
 
-        // Fast path: scan all slots for this node.
+        final int activeSlot = activeSlotByNode[nodeNumber];
+        final int activeIdx = nodeSlotBase + activeSlot;
+        if (cachedCoeffVersion[activeIdx] == curVersion
+                && Double.doubleToLongBits(cachedBranchLength[activeIdx]) == branchBits) {
+            return;
+        }
+
+        // Fast path: scan the remaining slots for this node.
         for (int s = 0; s < CACHE_SLOTS; s++) {
+            if (s == activeSlot) {
+                continue;
+            }
             final int idx = nodeSlotBase + s;
             if (cachedCoeffVersion[idx] == curVersion
                     && Double.doubleToLongBits(cachedBranchLength[idx]) == branchBits) {

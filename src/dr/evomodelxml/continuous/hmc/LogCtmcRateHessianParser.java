@@ -33,6 +33,7 @@ import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.StronglyLumpableCtmcRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient;
@@ -90,6 +91,11 @@ public class LogCtmcRateHessianParser extends AbstractXMLObjectParser {
                 LogAdditiveCtmcRateProvider rates = substitutionModel.getRateProvider();
                 if (rates instanceof StronglyLumpableCtmcRates) {
                     throw new XMLParseException("Log CTMC rate Hessian is not implemented for strongly lumpable rates");
+                }
+                if (delegate instanceof DiscreteDataLikelihoodDelegate &&
+                        !((DiscreteDataLikelihoodDelegate) delegate).isSpectralRepresentation()) {
+                    throw new XMLParseException("Log CTMC rate Hessian preconditioning for Java discrete likelihoods " +
+                            "requires spectral-rotated partials");
                 }
 
                 AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode mode = parseMode(xo);

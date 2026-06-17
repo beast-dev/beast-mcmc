@@ -17,6 +17,8 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteGradientDelegate;
 public final class SpectralExactGradientDelegate extends AbstractDiscreteGradientDelegate {
 
     private static final String GRADIENT_TRAIT_NAME = "substitutionModelCrossProductGradient";
+    private static final String BRANCH_DIFFERENTIAL_TRAIT_NAME = "substitutionModelBranchDifferentials";
+    private static final String BRANCH_LOG_RATE_SCORE_TRAIT_NAME = "substitutionModelBranchLogRateScores";
 
     private final String name;
     private final SpectralExactBranchKernel kernel;
@@ -33,6 +35,14 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
 
     public static String getName(String name) {
         return GRADIENT_TRAIT_NAME + "." + name;
+    }
+
+    public static String getBranchDifferentialTraitName(String name) {
+        return BRANCH_DIFFERENTIAL_TRAIT_NAME + "." + name;
+    }
+
+    public static String getBranchLogRateScoreTraitName(String name) {
+        return BRANCH_LOG_RATE_SCORE_TRAIT_NAME + "." + name;
     }
 
     @Override
@@ -67,6 +77,38 @@ public final class SpectralExactGradientDelegate extends AbstractDiscreteGradien
             @Override
             public double[] getTrait(Tree tree, NodeRef node) {
                 return getGradient(node);
+            }
+        });
+        treeTraitHelper.addTrait(new TreeTrait.DA() {
+            @Override
+            public String getTraitName() {
+                return getBranchDifferentialTraitName(name);
+            }
+
+            @Override
+            public TreeTrait.Intent getIntent() {
+                return Intent.WHOLE_TREE;
+            }
+
+            @Override
+            public double[] getTrait(Tree tree, NodeRef node) {
+                return kernel.getBranchDifferentials();
+            }
+        });
+        treeTraitHelper.addTrait(new TreeTrait.DA() {
+            @Override
+            public String getTraitName() {
+                return getBranchLogRateScoreTraitName(name);
+            }
+
+            @Override
+            public TreeTrait.Intent getIntent() {
+                return Intent.WHOLE_TREE;
+            }
+
+            @Override
+            public double[] getTrait(Tree tree, NodeRef node) {
+                return kernel.getBranchLogRateScores();
             }
         });
     }

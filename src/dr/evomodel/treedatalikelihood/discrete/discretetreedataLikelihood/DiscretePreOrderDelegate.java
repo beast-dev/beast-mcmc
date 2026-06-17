@@ -9,7 +9,6 @@ import dr.inference.model.Model;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.logging.Logger;
 
 /**
@@ -31,9 +30,11 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private final Tree tree;
     private final PreOrderRepresentation preOrderRepresentation;
     private final PostOrderMessageProvider postOrderMessageProvider;
-    private final double[] tmpSiblingScales;
+    private final double[] tmpLeftBranchScales;
+    private final double[] tmpRightBranchScales;
     private final double[] effectiveBranchLengths;
     private final boolean cacheOnlyBranchTopPreOrder;
+    private final ArrayDeque<NodeRef> preOrderQueue;
     private double[] categoryRates;
 
     private final int nodeCount;
@@ -64,6 +65,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     // scratch
     private final double[] tmpParentNodePreOrder;
+    private final double[] tmpPreparedParentPreOrder;
 
     public DiscretePreOrderDelegate(Tree tree,
                                     double[] branchLengths,
@@ -117,7 +119,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.nodePreOrderLogScales = new double[nodeCount][patternCount];
         this.storedNodePreOrderLogScales = new double[nodeCount][patternCount];
 
-        this.tmpSiblingScales = new double[patternCount];
+        this.tmpLeftBranchScales = new double[patternCount];
+        this.tmpRightBranchScales = new double[patternCount];
+        this.preOrderQueue = new ArrayDeque<NodeRef>(nodeCount);
 
         this.preOrderAtBranchStart = cacheBranchStartPreOrder ? new double[nodeCount][nodeBufferLength] : null;
         this.preOrderAtBranchEnd = cacheBranchEndPreOrder ? new double[nodeCount][nodeBufferLength] : null;
@@ -127,6 +131,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         this.preOrderEndKnown = preOrderAtBranchEnd != null ? new boolean[nodeCount] : null;
 
         this.tmpParentNodePreOrder = new double[stateCount];
+        this.tmpPreparedParentPreOrder = new double[stateCount];
 
         LOGGER.info("Creating DiscretePreOrderDelegate");
         LOGGER.info("    Pre-order representation: " + preOrderRepresentation.getName());
@@ -209,11 +214,11 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             initializeRoot(rootNumber, rootFrequencies);
         }
 
-        final Queue<NodeRef> queue = new ArrayDeque<>();
-        queue.add(root);
+        preOrderQueue.clear();
+        preOrderQueue.add(root);
 
-        while (!queue.isEmpty()) {
-            final NodeRef parent = queue.remove();
+        while (!preOrderQueue.isEmpty()) {
+            final NodeRef parent = preOrderQueue.remove();
             if (tree.isExternal(parent)) {
                 continue;
             }
@@ -221,11 +226,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             final NodeRef left = tree.getChild(parent, 0);
             final NodeRef right = tree.getChild(parent, 1);
 
-            propagateToChild(parent, left, right, categoryRates);
-            propagateToChild(parent, right, left, categoryRates);
+            propagateChildren(parent, left, right, categoryRates);
 
-            queue.add(left);
-            queue.add(right);
+            preOrderQueue.add(left);
+            preOrderQueue.add(right);
         }
     }
 
@@ -264,98 +268,214 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         // Root has a branch-start preorder value, but exported caches are filled lazily.
     }
 
-    private void propagateToChild(NodeRef parent,
-                                  NodeRef child,
-                                  NodeRef sibling,
-                                  double[] categoryRates) {
+    private void propagateChildren(NodeRef parent,
+                                   NodeRef left,
+                                   NodeRef right,
+                                   double[] categoryRates) {
         final int parentNumber = parent.getNumber();
-        final int childNumber = child.getNumber();
-        if (nodePreOrderKnown[childNumber]) {
+        final int leftNumber = left.getNumber();
+        final int rightNumber = right.getNumber();
+
+        final boolean propagateLeft = !nodePreOrderKnown[leftNumber];
+        final boolean propagateRight = !nodePreOrderKnown[rightNumber];
+        if (!propagateLeft && !propagateRight) {
             return;
         }
 
-        final int siblingNumber = sibling.getNumber();
+        if (propagateLeft) {
+            clearChildPreOrderBuffers(leftNumber);
+            postOrderMessageProvider.getPostOrderBranchScalesInto(rightNumber, tmpRightBranchScales);
+        }
+        if (propagateRight) {
+            clearChildPreOrderBuffers(rightNumber);
+            postOrderMessageProvider.getPostOrderBranchScalesInto(leftNumber, tmpLeftBranchScales);
+        }
 
-        final double[] childPreOrderStart = branchStartPreOrder[childNumber];
-        final double[] childPreOrderEnd = cacheOnlyBranchTopPreOrder ? null : nodePreOrder[childNumber];
-        final double[] childPreOrderEndStandard =
+        final double[] leftPreOrderStart = branchStartPreOrder[leftNumber];
+        final double[] leftPreOrderEnd = cacheOnlyBranchTopPreOrder ? null : nodePreOrder[leftNumber];
+        final double[] leftPreOrderEndStandard =
                 nodePreOrderStandard == null
                         ? null
-                        : nodePreOrderStandard[childNumber];
+                        : nodePreOrderStandard[leftNumber];
+        final double[] leftScale = nodePreOrderLogScales[leftNumber];
 
-        final double[] childScale = nodePreOrderLogScales[childNumber];
-        final double[] siblingScale = tmpSiblingScales;
-        postOrderMessageProvider.getPostOrderBranchScalesInto(siblingNumber, siblingScale);
+        final double[] rightPreOrderStart = branchStartPreOrder[rightNumber];
+        final double[] rightPreOrderEnd = cacheOnlyBranchTopPreOrder ? null : nodePreOrder[rightNumber];
+        final double[] rightPreOrderEndStandard =
+                nodePreOrderStandard == null
+                        ? null
+                        : nodePreOrderStandard[rightNumber];
+        final double[] rightScale = nodePreOrderLogScales[rightNumber];
 
-        final double childLength = effectiveBranchLengths[childNumber];
-
-        Arrays.fill(childPreOrderStart, 0.0);
-        if (childPreOrderEnd != null) {
-            Arrays.fill(childPreOrderEnd, 0.0);
-        }
-        if (childPreOrderEndStandard != null) {
-            Arrays.fill(childPreOrderEndStandard, 0.0);
-        }
-
+        final double leftLength = effectiveBranchLengths[leftNumber];
+        final double rightLength = effectiveBranchLengths[rightNumber];
+        final boolean parentIsRoot = tree.isRoot(parent);
+        final boolean usePreparedParent =
+                propagateLeft && propagateRight
+                        && nodePreOrderStandard == null
+                        && preOrderRepresentation.supportsPreparedParentForSiblingCombinations();
         for (int c = 0; c < categoryCount; c++) {
-//            final double siblingEffectiveLength = siblingLength * categoryRates[c];
-            final double childEffectiveLength = childLength * categoryRates[c];
+            final double leftEffectiveLength = leftLength * categoryRates[c];
+            final double rightEffectiveLength = rightLength * categoryRates[c];
 
             for (int p = 0; p < patternCount; p++) {
                 final int off = offset(c, p, 0);
                 final double parentNodeScale = prepareParentNodePreOrder(
-                        parent, c, p, categoryRates, tmpParentNodePreOrder);
+                        parent, parentIsRoot, c, p, categoryRates, tmpParentNodePreOrder);
                 final double[] parentPreOrder = cacheOnlyBranchTopPreOrder
-                        ? (tree.isRoot(parent) ? branchStartPreOrder[parentNumber] : tmpParentNodePreOrder)
-                        : (tree.isRoot(parent) ? branchStartPreOrder[parentNumber] : nodePreOrder[parentNumber]);
-                final int parentOff = cacheOnlyBranchTopPreOrder && !tree.isRoot(parent) ? 0 : off;
+                        ? (parentIsRoot ? branchStartPreOrder[parentNumber] : tmpParentNodePreOrder)
+                        : (parentIsRoot ? branchStartPreOrder[parentNumber] : nodePreOrder[parentNumber]);
+                final int parentOff = cacheOnlyBranchTopPreOrder && !parentIsRoot ? 0 : off;
 
-                if (nodePreOrderStandard == null) {
-                    final double[] siblingBranchTopPostOrder =
-                            postOrderMessageProvider.getPostOrderBranchTopBuffer(siblingNumber);
-                    preOrderRepresentation.combineParentAndSibling(
-                            parentPreOrder, parentOff,
-                            siblingBranchTopPostOrder, off,
-                            childPreOrderStart, off
-                    );
+                if (usePreparedParent) {
+                    preOrderRepresentation.prepareParentForSiblingCombinations(
+                            parentPreOrder, parentOff, tmpPreparedParentPreOrder, 0);
+                    propagateChildFromPreparedParent(
+                            leftNumber, rightNumber,
+                            leftPreOrderStart, leftPreOrderEnd, leftPreOrderEndStandard,
+                            leftScale, tmpRightBranchScales,
+                            leftEffectiveLength, off, p, parentNodeScale);
+                    propagateChildFromPreparedParent(
+                            rightNumber, leftNumber,
+                            rightPreOrderStart, rightPreOrderEnd, rightPreOrderEndStandard,
+                            rightScale, tmpLeftBranchScales,
+                            rightEffectiveLength, off, p, parentNodeScale);
                 } else {
-                    final double[] parentNodePreOrderStandard = nodePreOrderStandard[parentNumber];
-                    final double[] siblingBranchTopPostOrderStandard =
-                            postOrderMessageProvider.getPostOrderBranchTopStandardBuffer(siblingNumber);
-                    preOrderRepresentation.importPreOrderProductFromStandard(
-                            parentNodePreOrderStandard, parentOff,
-                            siblingBranchTopPostOrderStandard, off,
-                            childPreOrderStart, off);
-                }
-
-                childScale[p] = parentNodeScale + siblingScale[p];
-
-                final double extraScaleStart = normalizePatternSlice(childPreOrderStart, off);
-                childScale[p] += extraScaleStart;
-
-                if (!cacheOnlyBranchTopPreOrder) {
-                    // propagate down the child branch — writes directly to childPreOrderEnd at off
-                    preOrderRepresentation.propagateToBranchBottom(
-                            childNumber,
-                            childEffectiveLength,
-                            childPreOrderStart, off,
-                            childPreOrderEnd, off
-                    );
-
-                    if (childPreOrderEndStandard != null) {
-                        childScale[p] += preOrderRepresentation.normalizeAndExportPreOrderPartialToStandard(
-                                childPreOrderEnd, off,
-                                childPreOrderEndStandard, off,
-                                DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
-                    } else {
-                        childScale[p] += normalizePatternSlice(childPreOrderEnd, off);
+                    if (propagateLeft) {
+                        propagateChildFromParent(
+                                parentNumber, leftNumber, rightNumber,
+                                parentPreOrder, parentOff,
+                                leftPreOrderStart, leftPreOrderEnd, leftPreOrderEndStandard,
+                                leftScale, tmpRightBranchScales,
+                                leftEffectiveLength, off, p, parentNodeScale);
+                    }
+                    if (propagateRight) {
+                        propagateChildFromParent(
+                                parentNumber, rightNumber, leftNumber,
+                                parentPreOrder, parentOff,
+                                rightPreOrderStart, rightPreOrderEnd, rightPreOrderEndStandard,
+                                rightScale, tmpLeftBranchScales,
+                                rightEffectiveLength, off, p, parentNodeScale);
                     }
                 }
             }
         }
 
-        nodePreOrderKnown[childNumber] = true;
+        if (propagateLeft) {
+            markChildPreOrderKnownAndCheck(leftNumber, leftPreOrderEnd);
+        }
+        if (propagateRight) {
+            markChildPreOrderKnownAndCheck(rightNumber, rightPreOrderEnd);
+        }
+    }
 
+    private void clearChildPreOrderBuffers(int childNumber) {
+        Arrays.fill(branchStartPreOrder[childNumber], 0.0);
+        if (!cacheOnlyBranchTopPreOrder) {
+            Arrays.fill(nodePreOrder[childNumber], 0.0);
+        }
+        if (nodePreOrderStandard != null) {
+            Arrays.fill(nodePreOrderStandard[childNumber], 0.0);
+        }
+    }
+
+    private void propagateChildFromPreparedParent(int childNumber,
+                                                  int siblingNumber,
+                                                  double[] childPreOrderStart,
+                                                  double[] childPreOrderEnd,
+                                                  double[] childPreOrderEndStandard,
+                                                  double[] childScale,
+                                                  double[] siblingScale,
+                                                  double childEffectiveLength,
+                                                  int off,
+                                                  int pattern,
+                                                  double parentNodeScale) {
+        final double[] siblingBranchTopPostOrder =
+                postOrderMessageProvider.getPostOrderBranchTopBuffer(siblingNumber);
+        preOrderRepresentation.combinePreparedParentAndSibling(
+                tmpPreparedParentPreOrder, 0,
+                siblingBranchTopPostOrder, off,
+                childPreOrderStart, off);
+        finishChildPreOrderPattern(
+                childNumber,
+                childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
+                childScale, siblingScale,
+                childEffectiveLength, off, pattern, parentNodeScale);
+    }
+
+    private void propagateChildFromParent(int parentNumber,
+                                          int childNumber,
+                                          int siblingNumber,
+                                          double[] parentPreOrder,
+                                          int parentOff,
+                                          double[] childPreOrderStart,
+                                          double[] childPreOrderEnd,
+                                          double[] childPreOrderEndStandard,
+                                          double[] childScale,
+                                          double[] siblingScale,
+                                          double childEffectiveLength,
+                                          int off,
+                                          int pattern,
+                                          double parentNodeScale) {
+        if (nodePreOrderStandard == null) {
+            final double[] siblingBranchTopPostOrder =
+                    postOrderMessageProvider.getPostOrderBranchTopBuffer(siblingNumber);
+            preOrderRepresentation.combineParentAndSibling(
+                    parentPreOrder, parentOff,
+                    siblingBranchTopPostOrder, off,
+                    childPreOrderStart, off);
+        } else {
+            final double[] parentNodePreOrderStandard = nodePreOrderStandard[parentNumber];
+            final double[] siblingBranchTopPostOrderStandard =
+                    postOrderMessageProvider.getPostOrderBranchTopStandardBuffer(siblingNumber);
+            preOrderRepresentation.importPreOrderProductFromStandard(
+                    parentNodePreOrderStandard, parentOff,
+                    siblingBranchTopPostOrderStandard, off,
+                    childPreOrderStart, off);
+        }
+
+        finishChildPreOrderPattern(
+                childNumber,
+                childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
+                childScale, siblingScale,
+                childEffectiveLength, off, pattern, parentNodeScale);
+    }
+
+    private void finishChildPreOrderPattern(int childNumber,
+                                            double[] childPreOrderStart,
+                                            double[] childPreOrderEnd,
+                                            double[] childPreOrderEndStandard,
+                                            double[] childScale,
+                                            double[] siblingScale,
+                                            double childEffectiveLength,
+                                            int off,
+                                            int pattern,
+                                            double parentNodeScale) {
+        childScale[pattern] = parentNodeScale + siblingScale[pattern];
+
+        final double extraScaleStart = normalizePatternSlice(childPreOrderStart, off);
+        childScale[pattern] += extraScaleStart;
+
+        if (!cacheOnlyBranchTopPreOrder) {
+            preOrderRepresentation.propagateToBranchBottom(
+                    childNumber,
+                    childEffectiveLength,
+                    childPreOrderStart, off,
+                    childPreOrderEnd, off);
+
+            if (childPreOrderEndStandard != null) {
+                childScale[pattern] += preOrderRepresentation.normalizeAndExportPreOrderPartialToStandard(
+                        childPreOrderEnd, off,
+                        childPreOrderEndStandard, off,
+                        DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
+            } else {
+                childScale[pattern] += normalizePatternSlice(childPreOrderEnd, off);
+            }
+        }
+    }
+
+    private void markChildPreOrderKnownAndCheck(int childNumber, double[] childPreOrderEnd) {
+        nodePreOrderKnown[childNumber] = true;
         if (childPreOrderEnd != null) {
             for (int i = 0; i < childPreOrderEnd.length; i++) {
                 if (!Double.isFinite(childPreOrderEnd[i])) {
@@ -371,6 +491,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private static final double DEFAULT_SCALING_CEILING = 1.0e200;
 
     private double prepareParentNodePreOrder(NodeRef parent,
+                                             boolean parentIsRoot,
                                              int category,
                                              int pattern,
                                              double[] categoryRates,
@@ -379,7 +500,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         final int off = offset(category, pattern, 0);
         double scale = nodePreOrderLogScales[parentNumber][pattern];
 
-        if (tree.isRoot(parent)) {
+        if (parentIsRoot) {
             return scale;
         }
 

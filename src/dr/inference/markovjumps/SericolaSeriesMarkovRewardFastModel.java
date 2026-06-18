@@ -824,9 +824,9 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     //
     // Computes: d/drewardProportion f^*_{ij}(rewardProportion | t)
     //
-    // One-sided interior derivative code exists in SericolaRewardDensityDerivative,
-    // but exact support-boundary derivative calls are rejected until that convention
-    // is made explicit for the full reward-aware gradient.
+    // Exact support-boundary derivative calls use the one-sided derivative from
+    // within the selected interval. This avoids killing HMC trajectories when a
+    // proposal lands exactly on a reward-rate boundary.
 
     public void computePdfDerivativeWrtRewardProportionInto(double rewardProportion, double branchLength, double[] out, boolean shiftback) {
         if (out == null || out.length != dim2) {
@@ -839,13 +839,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         ensureNumericsUpToDate();
         final SericolaRewardDensityWorkspace workspace = workspace();
         final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
-        if (workspace.isZero(0) || workspace.isOne(0)) {
-            throw new UnsupportedOperationException(
-                    "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
-                            "until the boundary convention is explicit. rewardProportion=" + rewardProportion +
-                            ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
-                            ", xh=" + workspace.xh(0));
-        }
 
         ensureCForTime(branchLength, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;
@@ -899,17 +892,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 sortedAlpha,
                 invAlphaDiff);
 
-        for (int t = 0; t < count; ++t) {
-            if (workspace.isZero(t) || workspace.isOne(t)) {
-                final int h = workspace.intervals()[t];
-                throw new UnsupportedOperationException(
-                        "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
-                                "until the boundary convention is explicit. rewardProportion=" + rewardProportions[t] +
-                                ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
-                                ", xh=" + workspace.xh(t));
-            }
-        }
-
         ensureCForTime(maxTime, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;
         final int[] intervals = workspace.intervals();
@@ -948,13 +930,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
         ensureNumericsUpToDate();
         final SericolaRewardDensityWorkspace workspace = workspace();
         final int h = workspace.prepareDerivative(rewardProportion, sortedAlpha, invAlphaDiff);
-        if (workspace.isZero(0) || workspace.isOne(0)) {
-            throw new UnsupportedOperationException(
-                    "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
-                            "until the boundary convention is explicit. rewardProportion=" + rewardProportion +
-                            ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
-                            ", xh=" + workspace.xh(0));
-        }
 
         ensureCForTime(branchLength, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;
@@ -1014,17 +989,6 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 count,
                 sortedAlpha,
                 invAlphaDiff);
-
-        for (int t = 0; t < count; ++t) {
-            if (workspace.isZero(t) || workspace.isOne(t)) {
-                final int h = workspace.intervals()[t];
-                throw new UnsupportedOperationException(
-                        "Boundary Values for rewardProportion touched; one-sided interior derivative is implemented but disabled " +
-                                "until the boundary convention is explicit. rewardProportion=" + rewardProportions[t] +
-                                ", interval=[" + sortedAlpha[h - 1] + "," + sortedAlpha[h] + "], h=" + h +
-                                ", xh=" + workspace.xh(t));
-            }
-        }
 
         ensureCForTime(maxTime, /*extraN=*/1);
         final int N = cumulantMatrices.computedN() - 1;

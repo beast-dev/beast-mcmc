@@ -69,6 +69,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     private final ContinuousTraitGradientForBranch branchProvider;
     protected Double numericGradientStepSize = null;
 
+    private static final double ZERO_BRANCH_LENGTH_TOLERANCE = 1.0e-12;
     private static int debugCount = 0;
 
     public BranchRateGradient(String traitName,
@@ -152,6 +153,12 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             final NodeRef node = tree.getNode(i);
 
             if (!tree.isRoot(node)) {
+                final int destinationIndex = getParameterIndexFromNode(node);
+                assert (destinationIndex != -1);
+
+                if (isZeroLengthBranch(node)) {
+                    continue;
+                }
 
                 List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
 
@@ -166,9 +173,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     gradient += branchProvider.getGradientForBranch(statisticsForNode.get(trait), scaling);
                 }
 
-                final int destinationIndex = getParameterIndexFromNode(node);
-                assert (destinationIndex != -1);
-
                 result[destinationIndex] = gradient;
             }
         }
@@ -180,6 +184,10 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
 
+    private boolean isZeroLengthBranch(NodeRef node) {
+        return Math.abs(tree.getBranchLength(node)) <= ZERO_BRANCH_LENGTH_TOLERANCE;
+    }
+
     @Override
     public double[] getDiagonalHessianLogDensity() {
 
@@ -188,6 +196,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
+                final int destinationIndex = getParameterIndexFromNode(node);
+                assert (destinationIndex != -1);
+
+                if (isZeroLengthBranch(node)) {
+                    continue;
+                }
+
                 List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
                 assert (statisticsForNode.size() == nTraits);
 
@@ -203,9 +218,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     hessian += branchProvider.getDiagonalHessianLogDensity(statisticsForNode.get(trait),
                             scaling, secondScaling);
                 }
-
-                final int destinationIndex = getParameterIndexFromNode(node);
-                assert (destinationIndex != -1);
 
                 diagonalHessianResult[destinationIndex] = hessian;
             }

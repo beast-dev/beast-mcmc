@@ -27,6 +27,7 @@ public final class RewardsAwareCtmcSimulationParser extends AbstractXMLObjectPar
     public static final String REWARD_RATES = "rewardRates";
     public static final String ROOT_FREQUENCIES = "rootFrequencies";
     public static final String BRANCH_REWARD_TOTALS = "branchRewardTotals";
+    public static final String BRANCH_DWELL_TIMES = "branchDwellTimes";
 
     @Override
     public String getParserName() {
@@ -90,6 +91,8 @@ public final class RewardsAwareCtmcSimulationParser extends AbstractXMLObjectPar
         final Parameter branchRewardTotals = parseParameter(xo, BRANCH_REWARD_TOTALS, false);
         final Parameter branchRewardProportions =
                 parseParameter(xo, RewardsAwareMixtureBranchRatesParser.CTS, false);
+        final Parameter branchDwellTimes =
+                parseParameter(xo, BRANCH_DWELL_TIMES, false);
         final Parameter indicators =
                 parseParameter(xo, RewardsAwareMixtureBranchRatesParser.INDICATOR, false);
         final Parameter atomIndices =
@@ -97,6 +100,7 @@ public final class RewardsAwareCtmcSimulationParser extends AbstractXMLObjectPar
 
         simulation.copyBranchRewardTotalsInto(branchRewardTotals);
         simulation.copyBranchRewardProportionsInto(branchRewardProportions);
+        simulation.copyBranchDwellTimesInto(branchDwellTimes);
         simulation.copyIndicatorsInto(indicators);
         simulation.copyAtomIndicesInto(atomIndices);
 
@@ -153,6 +157,9 @@ public final class RewardsAwareCtmcSimulationParser extends AbstractXMLObjectPar
                     new ElementRule(Parameter.class)
             }, true),
             new ElementRule(RewardsAwareMixtureBranchRatesParser.CTS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(BRANCH_DWELL_TIMES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
             new ElementRule(RewardsAwareMixtureBranchRatesParser.INDICATOR, new XMLSyntaxRule[]{

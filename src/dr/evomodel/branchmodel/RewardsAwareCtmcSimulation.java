@@ -54,6 +54,7 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
 
     private final Parameter branchRewardTotalsParameter;
     private final Parameter ctsRewardsParameter;
+    private final Parameter branchDwellTimesParameter;
     private final Parameter indicatorParameter;
     private final Parameter atomIndicesParameter;
     private final Parameter rewardRatesParameter;
@@ -128,6 +129,8 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
                 new Parameter.Default(this.id + ".branchRewardTotals", branchRewardTotals);
         this.ctsRewardsParameter =
                 new Parameter.Default(this.id + ".branchRewardProportions", branchRewardProportions);
+        this.branchDwellTimesParameter =
+                new Parameter.Default(this.id + ".branchDwellTimes", flatten(branchDwellTimes));
         this.indicatorParameter =
                 new Parameter.Default(this.id + ".indicator", toDouble(indicators));
         this.atomIndicesParameter =
@@ -256,6 +259,10 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
         return ctsRewardsParameter;
     }
 
+    public Parameter getBranchDwellTimesParameter() {
+        return branchDwellTimesParameter;
+    }
+
     public Parameter getIndicatorParameter() {
         return indicatorParameter;
     }
@@ -274,6 +281,10 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
 
     public void copyBranchRewardProportionsInto(final Parameter parameter) {
         copyIntoParameter(parameter, branchRewardProportions);
+    }
+
+    public void copyBranchDwellTimesInto(final Parameter parameter) {
+        copyIntoParameter(parameter, flatten(branchDwellTimes));
     }
 
     public void copyIndicatorsInto(final Parameter parameter) {
@@ -489,6 +500,7 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
         sb.append(summary).append('\n');
         sb.append("branchRewardTotals=").append(Arrays.toString(branchRewardTotals)).append('\n');
         sb.append("branchRewardProportions=").append(Arrays.toString(branchRewardProportions)).append('\n');
+        sb.append("branchDwellTimes=").append(Arrays.toString(flatten(branchDwellTimes))).append('\n');
         sb.append("indicators=").append(Arrays.toString(indicators)).append('\n');
         sb.append("atomIndices=").append(Arrays.toString(atomIndices)).append('\n');
         sb.append("tipStates=").append(Arrays.toString(tipStates)).append('\n');
@@ -661,6 +673,20 @@ public final class RewardsAwareCtmcSimulation implements Reportable {
         final double[][] out = new double[values.length][];
         for (int i = 0; i < values.length; i++) {
             out[i] = Arrays.copyOf(values[i], values[i].length);
+        }
+        return out;
+    }
+
+    private static double[] flatten(final double[][] values) {
+        int length = 0;
+        for (double[] row : values) {
+            length += row.length;
+        }
+        final double[] out = new double[length];
+        int offset = 0;
+        for (double[] row : values) {
+            System.arraycopy(row, 0, out, offset, row.length);
+            offset += row.length;
         }
         return out;
     }

@@ -370,6 +370,14 @@ public class RewardsAwareBranchModel extends AbstractModel
             final double t = tree.getBranchLength(node);
             final double rate = branchRateModel.getBranchRate(tree, node);
 
+            if (t < 0.0) {
+                throw new IllegalArgumentException("Negative branch length for node " + nodeNr + ": " + t);
+            }
+            if (t == 0.0) {
+                setZeroTimeContinuousTransition(nodeNr);
+                continue;
+            }
+
             times[k] = t;
             X[k] = rate;
 
@@ -388,9 +396,21 @@ public class RewardsAwareBranchModel extends AbstractModel
             throw new RuntimeException("finished printing");
         }
 
-        // Sericola handles all sorting/lazy caches and writes into ORIGINAL order by design
-        sericola.computePdfInto(X, times, true, Wpacked);
+        if (k == branchIndexToNodeNr.length) {
+            // Sericola handles all sorting/lazy caches and writes into ORIGINAL order by design.
+            sericola.computePdfInto(X, times, true, Wpacked);
+        } else if (k > 0) {
+            sericola.computePdfInto(
+                    Arrays.copyOf(X, k),
+                    Arrays.copyOf(times, k),
+                    true,
+                    Arrays.copyOf(Wpacked, k));
+        }
         ctsMatricesDirty = false;
+    }
+
+    private void setZeroTimeContinuousTransition(int nodeNr) {
+        Arrays.fill(W[nodeNr], 0.0);
     }
     public double[] getWPacked(int i) {
         return Wpacked[i];

@@ -88,6 +88,7 @@ public final class RewardsAwareMixtureBranchRatesParser extends AbstractXMLObjec
                 }),
 
                 AttributeRule.newBooleanRule(INCLUDE_ROOT, true),
+                AttributeRule.newBooleanRule(ArbitraryBranchRatesParser.LINEAR_LOCATION_SCALE, true),
 
                 new ElementRule(ArbitraryBranchRatesParser.SCALE,
                         Parameter.class, "optional scale parameter", true),

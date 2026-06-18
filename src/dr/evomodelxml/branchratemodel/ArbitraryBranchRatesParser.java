@@ -61,6 +61,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
     public static final String LOCATION = "location";
     public static final String SCALE = "scale";
+    public static final String LINEAR_LOCATION_SCALE = "linearLocationScale";
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;
@@ -159,6 +160,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         boolean exp = xo.getAttribute(EXP, false);
 
         boolean multiplier = xo.getAttribute(MULTIPLIER, false);
+        boolean linearLocationScale = xo.getAttribute(LINEAR_LOCATION_SCALE, false);
 
         BranchSpecificFixedEffects locationParameter = null;
         if (xo.hasChildNamed(LOCATION)) {
@@ -180,7 +182,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
                     ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, locationParameter);
         }
 
-        return make(reciprocal, exp, multiplier, locationParameter, scaleParameter);
+        return make(reciprocal, exp, multiplier, locationParameter, scaleParameter, linearLocationScale);
     }
 
     public Class getReturnType() {
@@ -199,6 +201,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RANDOMIZE_RATES, true),
             AttributeRule.newBooleanRule(EXP, true),
             AttributeRule.newDoubleRule(RANDOM_SCALE, true),
+            AttributeRule.newBooleanRule(LINEAR_LOCATION_SCALE, true),
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
             new ElementRule(RANDOM_INDICATOR, new XMLSyntaxRule[] {

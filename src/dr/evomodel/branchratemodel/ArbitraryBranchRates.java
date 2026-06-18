@@ -191,10 +191,21 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
     public static BranchRateTransform make(boolean reciprocal, boolean exp,  boolean multiplier,
                                            BranchSpecificFixedEffects location,
                                            Parameter scale) {
+        return make(reciprocal, exp, multiplier, location, scale, false);
+    }
+
+    public static BranchRateTransform make(boolean reciprocal, boolean exp, boolean multiplier,
+                                           BranchSpecificFixedEffects location,
+                                           Parameter scale,
+                                           boolean linearLocationScale) {
         final BranchRateTransform transform;
 
         if ((reciprocal || exp) && (location != null || scale != null)) {
             throw new RuntimeException("Not yet implemented");
+        }
+
+        if (linearLocationScale && multiplier) {
+            throw new RuntimeException("Cannot combine multiplier and linear location-scale transforms");
         }
 
         if (exp) {
@@ -206,7 +217,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
                     ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
                     location);
         } else {
-            if (location != null || scale != null) {
+            if (linearLocationScale) {
+                transform = new BranchRateTransform.LinearLocationScale(
+                        ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                        location, scale);
+            } else if (location != null || scale != null) {
                 transform = new BranchRateTransform.LocationScaleLogNormal(
                         ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
                         location, scale);
@@ -644,6 +659,92 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             private static double getSigmaPhi(double phi) {
                 return Math.sqrt(Math.log(1.0 + phi));
             }
+        }
+
+        class LinearLocationScale extends AbstractModel implements BranchRateTransform {
+
+            private final BranchSpecificFixedEffects location;
+            private final Parameter scale;
+
+            LinearLocationScale(String name, BranchSpecificFixedEffects location, Parameter scale) {
+
+                super(name);
+
+                this.location = location;
+                this.scale = scale;
+
+                if (location instanceof Model) {
+                    addModel((Model) location);
+                }
+
+                if (scale != null) {
+                    addVariable(scale);
+                }
+            }
+
+            @Override
+            public double differential(double raw, Tree tree, NodeRef node) {
+                return scale == null ? 1.0 : scale.getParameterValue(0);
+            }
+
+            @Override
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
+                return 0.0;
+            }
+
+            @Override
+            public double transform(double raw, Tree tree, NodeRef node) {
+                final double intercept = location == null ? 0.0 : location.getEffect(tree, node);
+                final double slope = scale == null ? 1.0 : scale.getParameterValue(0);
+                return intercept + slope * raw;
+            }
+
+            @Override
+            public double center() {
+                return 0.5;
+            }
+
+            @Override
+            public double lower() {
+                return 0.0;
+            }
+
+            @Override
+            public double upper() {
+                return 1.0;
+            }
+
+            @Override
+            public double randomize(double raw) {
+                return raw;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                if (model == location) {
+                    fireModelChanged();
+                } else {
+                    throw new RuntimeException("Unknown model");
+                }
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                if (variable == scale) {
+                    fireModelChanged();
+                } else {
+                    throw new RuntimeException("Unknown variable");
+                }
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
         }
     }
 

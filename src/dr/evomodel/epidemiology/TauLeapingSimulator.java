@@ -20,6 +20,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
     // Implements tau-leaping algorithm with step size selection as outlined by Cao et al. (2006)
     public void simulateTrajectory() {
 
+        System.out.println("Simulating a stochastic trajectory");
         // set up time interval vector
         // duration for which we need to simulate trajectory
         double T = compartmentalModel.origin.getParameterValue(0);

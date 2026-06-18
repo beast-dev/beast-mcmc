@@ -124,7 +124,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
                         int sampledReactionChannel = sampleReactionChannel(reactionInt, r0);
 
                         //update simulationTime and current compartment counts
+                        double previousSimulationTime = simulationTime;
                         simulationTime = simulationTime + timeToReaction;
+
+                        currentCounts = compartmentalModel.introduceSecondPathogen(
+                                previousSimulationTime,
+                                simulationTime,
+                                currentCounts
+                        );
 
                         for (int s = 0; s < numSpecies; s++) {
                             currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
@@ -289,7 +296,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
                             int sampledReactionChannel = sampleReactionChannel(reactionInt, r0);
 
                             //update simulationTime and current compartment counts
+                            double previousSimulationTime = simulationTime;
                             simulationTime = simulationTime + timeToReaction;
+
+                            currentCounts = compartmentalModel.introduceSecondPathogen(
+                                    previousSimulationTime,
+                                    simulationTime,
+                                    currentCounts
+                            );
 
                             for (int s = 0; s < numSpecies; s++) {
                                 currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
@@ -318,7 +332,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
                 }
 
                 // We can proceed and update the currentCounts and simulationTime and other parameters as necessary
+                double previousSimulationTime = simulationTime;
                 simulationTime = simulationTime + tau;
+
+                currentCounts = compartmentalModel.introduceSecondPathogen(
+                        previousSimulationTime,
+                        simulationTime,
+                        currentCounts
+                );
 
                 // if next reaction occurs after nextIntervalStartTime, record current compartment counts for next interval
                 while ((simulationTime > nextIntervalStartTime) && nextRecordIndex >= 0) {

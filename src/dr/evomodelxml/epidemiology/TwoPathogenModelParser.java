@@ -13,10 +13,15 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String TRANSMISSION_RATE_TWO = "transmissionRateTwo";
     public static final String RECOVERY_RATE_ONE = "recoveryRateOne";
     public static final String RECOVERY_RATE_TWO = "recoveryRateTwo";
+    public static final String CROSS_PROTECTION_RATE_ONE = "crossProtectionRateOne";
+    public static final String CROSS_PROTECTION_RATE_TWO = "crossProtectionRateTwo";
     public static final String SAMPLING_PROPORTION_ONE = "samplingProportionOne";
     public static final String SAMPLING_PROPORTION_TWO = "samplingProportionTwo";
     public static final String RESUSCEPTIBILITY_RATE_ONE = "resusRateOne";
     public static final String RESUSCEPTIBILITY_RATE_TWO = "resusRateTwo";
+    public static final String INFECTION_RATE_MODULATION_I = "infectionRateModulationI";
+    public static final String INFECTION_RATE_MODULATION_C = "infectionRateModulationC";
+    public static final String RECOVERY_RATE_MODULATION = "recoveryRateModulation";
     public static final String NUM_SS = "numSS";
     public static final String NUM_SI = "numSI";
     public static final String NUM_SC = "numSC";
@@ -38,6 +43,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String NUM_RR = "numRR";
 
     public static final String ORIGIN = "origin";
+    public static final String ORIGIN_TWO = "originTwo";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
     public static final String ORIGIN_TIME_NUM_SS = "originTimeNumSS";
@@ -53,6 +59,8 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         rateParams.add((Parameter) xo.getChild(TRANSMISSION_RATE_ONE).getChild(Parameter.class));
 
+        rateParams.add((Parameter) xo.getChild(CROSS_PROTECTION_RATE_ONE).getChild(Parameter.class));
+
         rateParams.add((Parameter) xo.getChild(RECOVERY_RATE_ONE).getChild(Parameter.class));
 
         rateParams.add((Parameter) xo.getChild(SAMPLING_PROPORTION_ONE).getChild(Parameter.class));
@@ -61,11 +69,19 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         rateParams.add((Parameter) xo.getChild(TRANSMISSION_RATE_TWO).getChild(Parameter.class));
 
+        rateParams.add((Parameter) xo.getChild(CROSS_PROTECTION_RATE_TWO).getChild(Parameter.class));
+
         rateParams.add((Parameter) xo.getChild(RECOVERY_RATE_TWO).getChild(Parameter.class));
 
         rateParams.add((Parameter) xo.getChild(SAMPLING_PROPORTION_TWO).getChild(Parameter.class));
 
         rateParams.add((Parameter) xo.getChild(RESUSCEPTIBILITY_RATE_TWO).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_I).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_C).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(RECOVERY_RATE_MODULATION).getChild(Parameter.class));
 
         final Parameter numGridPoints = (Parameter) xo.getChild(NUM_GRID_POINTS).getChild(Parameter.class);
 
@@ -172,13 +188,15 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         }
         compartmentCounts.add(numRRParam);
 
-
+        // origin changes here
         Parameter origin = (Parameter) xo.getChild(ORIGIN).getChild(Parameter.class);
+        Parameter originTwo = (Parameter) xo.getChild(ORIGIN_TWO).getChild(Parameter.class);
 
         Parameter originTimeNumSS = (Parameter) xo.getChild(ORIGIN_TIME_NUM_SS).getChild(Parameter.class);
 
+        //16 or 56? was originally 3
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
-                origin, originTimeNumSS,3, (int)(numGridPoints.getParameterValue(0)),
+                origin, originTwo, originTimeNumSS,16, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0));
 
         return twoPathogenModel;
@@ -282,6 +300,10 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                     }),
             new ElementRule(ORIGIN,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(ORIGIN_TWO,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),

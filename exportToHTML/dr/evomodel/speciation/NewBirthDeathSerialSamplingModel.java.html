@@ -1,0 +1,1275 @@
+<html>
+<head>
+<title>NewBirthDeathSerialSamplingModel.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080; font-style: italic;}
+.s1 { color: #000000;}
+.s2 { color: #000080; font-weight: bold;}
+.s3 { color: #008000; font-weight: bold;}
+.s4 { color: #0000ff;}
+.ln { color: #999999; font-weight: normal; font-style: normal; }
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+NewBirthDeathSerialSamplingModel.java</font>
+</center></td></tr></table>
+<pre><a name="l1"><span class="ln">1    </span></a><span class="s0">/* 
+<a name="l2"><span class="ln">2    </span></a> * NewBirthDeathSerialSamplingModel.java 
+<a name="l3"><span class="ln">3    </span></a> * 
+<a name="l4"><span class="ln">4    </span></a> * Copyright © 2002-2024 the BEAST Development Team 
+<a name="l5"><span class="ln">5    </span></a> * http://beast.community/about 
+<a name="l6"><span class="ln">6    </span></a> * 
+<a name="l7"><span class="ln">7    </span></a> * This file is part of BEAST. 
+<a name="l8"><span class="ln">8    </span></a> * See the NOTICE file distributed with this work for additional 
+<a name="l9"><span class="ln">9    </span></a> * information regarding copyright ownership and licensing. 
+<a name="l10"><span class="ln">10   </span></a> * 
+<a name="l11"><span class="ln">11   </span></a> * BEAST is free software; you can redistribute it and/or modify 
+<a name="l12"><span class="ln">12   </span></a> * it under the terms of the GNU Lesser General Public License as 
+<a name="l13"><span class="ln">13   </span></a> * published by the Free Software Foundation; either version 2 
+<a name="l14"><span class="ln">14   </span></a> * of the License, or (at your option) any later version. 
+<a name="l15"><span class="ln">15   </span></a> * 
+<a name="l16"><span class="ln">16   </span></a> *  BEAST is distributed in the hope that it will be useful, 
+<a name="l17"><span class="ln">17   </span></a> *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+<a name="l18"><span class="ln">18   </span></a> *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+<a name="l19"><span class="ln">19   </span></a> *  GNU Lesser General Public License for more details. 
+<a name="l20"><span class="ln">20   </span></a> * 
+<a name="l21"><span class="ln">21   </span></a> * You should have received a copy of the GNU Lesser General Public 
+<a name="l22"><span class="ln">22   </span></a> * License along with BEAST; if not, write to the 
+<a name="l23"><span class="ln">23   </span></a> * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+<a name="l24"><span class="ln">24   </span></a> * Boston, MA  02110-1301  USA 
+<a name="l25"><span class="ln">25   </span></a> * 
+<a name="l26"><span class="ln">26   </span></a> */</span>
+<a name="l27"><span class="ln">27   </span></a>
+<a name="l28"><span class="ln">28   </span></a><span class="s2">package </span>dr.evomodel.speciation;
+<a name="l29"><span class="ln">29   </span></a>
+<a name="l30"><span class="ln">30   </span></a><span class="s2">import </span>dr.evolution.tree.Tree;
+<a name="l31"><span class="ln">31   </span></a><span class="s2">import </span>dr.evolution.util.Taxon;
+<a name="l32"><span class="ln">32   </span></a><span class="s2">import </span>dr.inference.model.Parameter;
+<a name="l33"><span class="ln">33   </span></a><span class="s2">import </span>dr.inference.model.Variable;
+<a name="l34"><span class="ln">34   </span></a><span class="s2">import </span>dr.util.Author;
+<a name="l35"><span class="ln">35   </span></a><span class="s2">import </span>dr.util.Citable;
+<a name="l36"><span class="ln">36   </span></a><span class="s2">import </span>dr.util.Citation;
+<a name="l37"><span class="ln">37   </span></a>
+<a name="l38"><span class="ln">38   </span></a><span class="s2">import </span>java.util.*;
+<a name="l39"><span class="ln">39   </span></a>
+<a name="l40"><span class="ln">40   </span></a><span class="s0">/**</span>
+<a name="l41"><span class="ln">41   </span></a> <span class="s0">* A phylogenetic birth-death-sampling model which includes serial sampling, sampling at present, and the possibility of treatmentProbability.</span>
+<a name="l42"><span class="ln">42   </span></a> <span class="s0">*/</span>
+<a name="l43"><span class="ln">43   </span></a><span class="s2">public class </span>NewBirthDeathSerialSamplingModel <span class="s2">extends </span>SpeciationModel <span class="s2">implements </span>SpeciationModelGradientProvider, Citable {
+<a name="l44"><span class="ln">44   </span></a>    <span class="s0">// TODO should we pre-emptively put the combinatorial constant in here? It only really matters when inferring a tree where there may/may not be sampled ancestors</span>
+<a name="l45"><span class="ln">45   </span></a>    <span class="s0">// TODO don't check if rho &gt;= minVal, just 0 (likelihood won't blow up unless it's _exactly_ 0</span>
+<a name="l46"><span class="ln">46   </span></a>    <span class="s0">// TODO the &quot;is time t event time ti&quot; can/should probably get moved to the point at which we pass the tree to the birth-death model</span>
+<a name="l47"><span class="ln">47   </span></a>    <span class="s0">// extant sampling proportion</span>
+<a name="l48"><span class="ln">48   </span></a>    Parameter samplingProbability;
+<a name="l49"><span class="ln">49   </span></a>
+<a name="l50"><span class="ln">50   </span></a>    <span class="s0">// birth rate</span>
+<a name="l51"><span class="ln">51   </span></a>    Parameter birthRate;
+<a name="l52"><span class="ln">52   </span></a>
+<a name="l53"><span class="ln">53   </span></a>    <span class="s0">// death rate</span>
+<a name="l54"><span class="ln">54   </span></a>    Parameter deathRate;
+<a name="l55"><span class="ln">55   </span></a>
+<a name="l56"><span class="ln">56   </span></a>    <span class="s0">// serial sampling rate</span>
+<a name="l57"><span class="ln">57   </span></a>    Parameter serialSamplingRate;
+<a name="l58"><span class="ln">58   </span></a>
+<a name="l59"><span class="ln">59   </span></a>    <span class="s0">// &quot;treatmentProbability&quot; parameter aka r aka Pr(death | lineage is sampled)</span>
+<a name="l60"><span class="ln">60   </span></a>    Parameter treatmentProbability;
+<a name="l61"><span class="ln">61   </span></a>
+<a name="l62"><span class="ln">62   </span></a>    <span class="s0">// the originTime of the infection, origin &gt; tree.getRoot();</span>
+<a name="l63"><span class="ln">63   </span></a>    Parameter originTime;
+<a name="l64"><span class="ln">64   </span></a>
+<a name="l65"><span class="ln">65   </span></a>    <span class="s0">// Tolerance for declaring that a node time is equal to an event time</span>
+<a name="l66"><span class="ln">66   </span></a><span class="s0">//    double absTol = 1e-8;</span>
+<a name="l67"><span class="ln">67   </span></a>
+<a name="l68"><span class="ln">68   </span></a>    <span class="s0">// there are numIntervals intervalStarts, implicitly intervalStarts[-1] == 0</span>
+<a name="l69"><span class="ln">69   </span></a>    <span class="s2">int </span>numIntervals;
+<a name="l70"><span class="ln">70   </span></a>    <span class="s2">double </span>gridEnd;
+<a name="l71"><span class="ln">71   </span></a>    <span class="s2">double</span>[] modelStartTimes = <span class="s2">null</span>;
+<a name="l72"><span class="ln">72   </span></a>
+<a name="l73"><span class="ln">73   </span></a>    <span class="s0">// TODO if we want to supplant other birth-death models, need an ENUM, and choice of options</span>
+<a name="l74"><span class="ln">74   </span></a>    <span class="s0">// Minimally, need survival of 1 lineage (passable default for SSBDP) and nTaxa (which is current option for non-serially-sampled BDP)</span>
+<a name="l75"><span class="ln">75   </span></a>    <span class="s2">private final boolean </span>conditionOnSurvival;
+<a name="l76"><span class="ln">76   </span></a>
+<a name="l77"><span class="ln">77   </span></a>    <span class="s2">double </span>modelStartTime;
+<a name="l78"><span class="ln">78   </span></a>    <span class="s2">double </span>A;
+<a name="l79"><span class="ln">79   </span></a>    <span class="s2">double </span>B;
+<a name="l80"><span class="ln">80   </span></a>    <span class="s2">double </span>previousP;
+<a name="l81"><span class="ln">81   </span></a>
+<a name="l82"><span class="ln">82   </span></a>    <span class="s2">double </span>lambda;
+<a name="l83"><span class="ln">83   </span></a>    <span class="s2">double </span>mu;
+<a name="l84"><span class="ln">84   </span></a>    <span class="s2">double </span>psi;
+<a name="l85"><span class="ln">85   </span></a>    <span class="s2">double </span>r;
+<a name="l86"><span class="ln">86   </span></a>    <span class="s2">double </span>rho;
+<a name="l87"><span class="ln">87   </span></a>    <span class="s2">double </span>logRho;
+<a name="l88"><span class="ln">88   </span></a>    <span class="s0">//double rho0; // TODO remove</span>
+<a name="l89"><span class="ln">89   </span></a>
+<a name="l90"><span class="ln">90   </span></a>    <span class="s2">private boolean</span>[] gradientFlags;
+<a name="l91"><span class="ln">91   </span></a>
+<a name="l92"><span class="ln">92   </span></a>    <span class="s2">double </span>savedLogQ;
+<a name="l93"><span class="ln">93   </span></a>
+<a name="l94"><span class="ln">94   </span></a>    <span class="s2">private double </span>savedQ;
+<a name="l95"><span class="ln">95   </span></a>    <span class="s2">private double</span>[] partialQ;
+<a name="l96"><span class="ln">96   </span></a>    <span class="s2">private boolean </span>partialQKnown;
+<a name="l97"><span class="ln">97   </span></a>
+<a name="l98"><span class="ln">98   </span></a>    <span class="s2">private final double</span>[] dQStart;
+<a name="l99"><span class="ln">99   </span></a>    <span class="s2">private final double</span>[] dQEnd;
+<a name="l100"><span class="ln">100  </span></a>
+<a name="l101"><span class="ln">101  </span></a>    <span class="s2">private double</span>[] temp33;
+<a name="l102"><span class="ln">102  </span></a>    <span class="s2">private final double</span>[] temp44;
+<a name="l103"><span class="ln">103  </span></a>
+<a name="l104"><span class="ln">104  </span></a>    <span class="s2">private double </span>eAt_Old;
+<a name="l105"><span class="ln">105  </span></a>    <span class="s2">private double </span>eAt_End;
+<a name="l106"><span class="ln">106  </span></a>
+<a name="l107"><span class="ln">107  </span></a>    <span class="s2">final double</span>[] dA;
+<a name="l108"><span class="ln">108  </span></a>    <span class="s2">final double</span>[] dB;
+<a name="l109"><span class="ln">109  </span></a>    <span class="s2">private final double</span>[] dG2;
+<a name="l110"><span class="ln">110  </span></a>
+<a name="l111"><span class="ln">111  </span></a>    <span class="s2">boolean </span>computedBCurrent;
+<a name="l112"><span class="ln">112  </span></a>
+<a name="l113"><span class="ln">113  </span></a>    <span class="s2">private final double</span>[] dPIntervalEnd;
+<a name="l114"><span class="ln">114  </span></a>    <span class="s2">protected final double</span>[] dPModelEnd;
+<a name="l115"><span class="ln">115  </span></a>
+<a name="l116"><span class="ln">116  </span></a>    <span class="s2">private final double</span>[] dPModelEnd_prev;
+<a name="l117"><span class="ln">117  </span></a>
+<a name="l118"><span class="ln">118  </span></a>    <span class="s2">public </span>NewBirthDeathSerialSamplingModel(
+<a name="l119"><span class="ln">119  </span></a>            Parameter birthRate,
+<a name="l120"><span class="ln">120  </span></a>            Parameter deathRate,
+<a name="l121"><span class="ln">121  </span></a>            Parameter serialSamplingRate,
+<a name="l122"><span class="ln">122  </span></a>            Parameter treatmentProbability,
+<a name="l123"><span class="ln">123  </span></a>            Parameter samplingProbability,
+<a name="l124"><span class="ln">124  </span></a>            Parameter originTime,
+<a name="l125"><span class="ln">125  </span></a>            <span class="s2">boolean </span>condition,
+<a name="l126"><span class="ln">126  </span></a>            <span class="s2">int </span>numIntervals,
+<a name="l127"><span class="ln">127  </span></a>            <span class="s2">double </span>gridEnd,
+<a name="l128"><span class="ln">128  </span></a>            Type units) {
+<a name="l129"><span class="ln">129  </span></a>
+<a name="l130"><span class="ln">130  </span></a>        <span class="s2">this</span>(<span class="s3">&quot;NewBirthDeathSerialSamplingModel&quot;</span>, birthRate, deathRate, serialSamplingRate,
+<a name="l131"><span class="ln">131  </span></a>                treatmentProbability, samplingProbability, originTime, condition, numIntervals, gridEnd, units);
+<a name="l132"><span class="ln">132  </span></a>    }
+<a name="l133"><span class="ln">133  </span></a>
+<a name="l134"><span class="ln">134  </span></a>    <span class="s2">public </span>SpeciationModelGradientProvider getProvider() { <span class="s0">// This is less INTRUSIVE to the exisiting file</span>
+<a name="l135"><span class="ln">135  </span></a>        <span class="s2">return this</span>;
+<a name="l136"><span class="ln">136  </span></a>    }
+<a name="l137"><span class="ln">137  </span></a>
+<a name="l138"><span class="ln">138  </span></a>    <span class="s2">public </span>NewBirthDeathSerialSamplingModel(
+<a name="l139"><span class="ln">139  </span></a>            String modelName,
+<a name="l140"><span class="ln">140  </span></a>            Parameter birthRate,
+<a name="l141"><span class="ln">141  </span></a>            Parameter deathRate,
+<a name="l142"><span class="ln">142  </span></a>            Parameter serialSamplingRate,
+<a name="l143"><span class="ln">143  </span></a>            Parameter treatmentProbability,
+<a name="l144"><span class="ln">144  </span></a>            Parameter samplingProbability,
+<a name="l145"><span class="ln">145  </span></a>            Parameter originTime,
+<a name="l146"><span class="ln">146  </span></a>            <span class="s2">boolean </span>condition,
+<a name="l147"><span class="ln">147  </span></a>            <span class="s2">int </span>numIntervals,
+<a name="l148"><span class="ln">148  </span></a>            <span class="s2">double </span>gridEnd,
+<a name="l149"><span class="ln">149  </span></a>            Type units) {
+<a name="l150"><span class="ln">150  </span></a>
+<a name="l151"><span class="ln">151  </span></a>        <span class="s2">super</span>(modelName, units);
+<a name="l152"><span class="ln">152  </span></a>
+<a name="l153"><span class="ln">153  </span></a>        <span class="s2">this</span>.numIntervals = numIntervals;
+<a name="l154"><span class="ln">154  </span></a>        <span class="s2">this</span>.gridEnd = gridEnd;
+<a name="l155"><span class="ln">155  </span></a>        <span class="s0">// setupTimeline();</span>
+<a name="l156"><span class="ln">156  </span></a>
+<a name="l157"><span class="ln">157  </span></a>        <span class="s2">if </span>(birthRate.getSize() != <span class="s4">1 </span>&amp;&amp; birthRate.getSize() != numIntervals) {
+<a name="l158"><span class="ln">158  </span></a>            <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Length of birthRate parameter should be one or equal to the size of time parameter (size = &quot; </span>+ numIntervals + <span class="s3">&quot;)&quot;</span>);
+<a name="l159"><span class="ln">159  </span></a>        }
+<a name="l160"><span class="ln">160  </span></a>
+<a name="l161"><span class="ln">161  </span></a>        <span class="s2">if </span>(deathRate.getSize() != <span class="s4">1 </span>&amp;&amp; deathRate.getSize() != numIntervals) {
+<a name="l162"><span class="ln">162  </span></a>            <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Length of deathRate parameter should be one or equal to the size of time parameter (size = &quot; </span>+ numIntervals + <span class="s3">&quot;)&quot;</span>);
+<a name="l163"><span class="ln">163  </span></a>        }
+<a name="l164"><span class="ln">164  </span></a>
+<a name="l165"><span class="ln">165  </span></a>        <span class="s2">if </span>(serialSamplingRate.getSize() != <span class="s4">1 </span>&amp;&amp; serialSamplingRate.getSize() != numIntervals) {
+<a name="l166"><span class="ln">166  </span></a>            <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Length of serialSamplingRate parameter should be one or equal to the size of time parameter (size = &quot; </span>+ numIntervals + <span class="s3">&quot;)&quot;</span>);
+<a name="l167"><span class="ln">167  </span></a>        }
+<a name="l168"><span class="ln">168  </span></a>
+<a name="l169"><span class="ln">169  </span></a>        <span class="s2">if </span>(treatmentProbability.getSize() != <span class="s4">1 </span>&amp;&amp; treatmentProbability.getSize() != numIntervals) {
+<a name="l170"><span class="ln">170  </span></a>            <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Length of r parameter should be one or equal to the size of time parameter (size = &quot; </span>+ numIntervals + <span class="s3">&quot;)&quot;</span>);
+<a name="l171"><span class="ln">171  </span></a>        }
+<a name="l172"><span class="ln">172  </span></a>
+<a name="l173"><span class="ln">173  </span></a>        <span class="s2">if </span>(samplingProbability.getSize() != <span class="s4">1 </span>&amp;&amp; samplingProbability.getSize() != (numIntervals)) {
+<a name="l174"><span class="ln">174  </span></a>            <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Length of samplingProbability parameter should be one or equal to the size of time parameter (size = &quot; </span>+ numIntervals + <span class="s3">&quot;)&quot;</span>);
+<a name="l175"><span class="ln">175  </span></a>        }
+<a name="l176"><span class="ln">176  </span></a>
+<a name="l177"><span class="ln">177  </span></a>        <span class="s2">this</span>.birthRate = birthRate;
+<a name="l178"><span class="ln">178  </span></a>        addVariable(birthRate);
+<a name="l179"><span class="ln">179  </span></a>        birthRate.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, birthRate.getSize()));
+<a name="l180"><span class="ln">180  </span></a>
+<a name="l181"><span class="ln">181  </span></a>        <span class="s2">this</span>.deathRate = deathRate;
+<a name="l182"><span class="ln">182  </span></a>        addVariable(deathRate);
+<a name="l183"><span class="ln">183  </span></a>        deathRate.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, deathRate.getSize()));
+<a name="l184"><span class="ln">184  </span></a>
+<a name="l185"><span class="ln">185  </span></a>        <span class="s2">this</span>.serialSamplingRate = serialSamplingRate;
+<a name="l186"><span class="ln">186  </span></a>        addVariable(serialSamplingRate);
+<a name="l187"><span class="ln">187  </span></a>        deathRate.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, serialSamplingRate.getSize()));
+<a name="l188"><span class="ln">188  </span></a>
+<a name="l189"><span class="ln">189  </span></a>        <span class="s2">this</span>.treatmentProbability = treatmentProbability;
+<a name="l190"><span class="ln">190  </span></a>        addVariable(treatmentProbability);
+<a name="l191"><span class="ln">191  </span></a>        samplingProbability.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(<span class="s4">1.0</span>, <span class="s4">0.0</span>, treatmentProbability.getSize()));
+<a name="l192"><span class="ln">192  </span></a>
+<a name="l193"><span class="ln">193  </span></a>        <span class="s2">this</span>.samplingProbability = samplingProbability;
+<a name="l194"><span class="ln">194  </span></a>        addVariable(samplingProbability);
+<a name="l195"><span class="ln">195  </span></a>        samplingProbability.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(<span class="s4">1.0</span>, <span class="s4">0.0</span>, samplingProbability.getSize()));
+<a name="l196"><span class="ln">196  </span></a>
+<a name="l197"><span class="ln">197  </span></a>        <span class="s2">this</span>.conditionOnSurvival = condition;
+<a name="l198"><span class="ln">198  </span></a>
+<a name="l199"><span class="ln">199  </span></a>        <span class="s2">this</span>.originTime = originTime;
+<a name="l200"><span class="ln">200  </span></a>        <span class="s2">if </span>(originTime != <span class="s2">null</span>) {
+<a name="l201"><span class="ln">201  </span></a>            addVariable(originTime);
+<a name="l202"><span class="ln">202  </span></a>            originTime.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, <span class="s4">1</span>));
+<a name="l203"><span class="ln">203  </span></a>        }
+<a name="l204"><span class="ln">204  </span></a>
+<a name="l205"><span class="ln">205  </span></a>        <span class="s2">this</span>.savedLogQ = Double.NaN;
+<a name="l206"><span class="ln">206  </span></a>
+<a name="l207"><span class="ln">207  </span></a>        <span class="s2">this</span>.savedQ = Double.NaN;
+<a name="l208"><span class="ln">208  </span></a>        <span class="s2">this</span>.partialQ = <span class="s2">new double</span>[<span class="s4">4 </span>* numIntervals];
+<a name="l209"><span class="ln">209  </span></a>        <span class="s2">this</span>.partialQKnown = <span class="s2">false</span>;
+<a name="l210"><span class="ln">210  </span></a>
+<a name="l211"><span class="ln">211  </span></a>        <span class="s2">this</span>.dA = <span class="s2">new double</span>[<span class="s4">4</span>];
+<a name="l212"><span class="ln">212  </span></a>        <span class="s2">this</span>.dG2 = <span class="s2">new double</span>[<span class="s4">3</span>];
+<a name="l213"><span class="ln">213  </span></a>
+<a name="l214"><span class="ln">214  </span></a>        <span class="s2">this</span>.dB = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l215"><span class="ln">215  </span></a>
+<a name="l216"><span class="ln">216  </span></a>        <span class="s2">this</span>.dQStart = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l217"><span class="ln">217  </span></a>        <span class="s2">this</span>.dQEnd = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l218"><span class="ln">218  </span></a>
+<a name="l219"><span class="ln">219  </span></a>        <span class="s2">this</span>.temp33 = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l220"><span class="ln">220  </span></a>        <span class="s2">this</span>.temp44 = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l221"><span class="ln">221  </span></a>
+<a name="l222"><span class="ln">222  </span></a>        <span class="s2">this</span>.dPIntervalEnd = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l223"><span class="ln">223  </span></a>        <span class="s2">this</span>.dPModelEnd = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l224"><span class="ln">224  </span></a>        <span class="s2">this</span>.dPModelEnd_prev = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l225"><span class="ln">225  </span></a>
+<a name="l226"><span class="ln">226  </span></a>        <span class="s2">this</span>.gridEnd = gridEnd;
+<a name="l227"><span class="ln">227  </span></a>        <span class="s2">this</span>.numIntervals = numIntervals;
+<a name="l228"><span class="ln">228  </span></a>
+<a name="l229"><span class="ln">229  </span></a>        <span class="s2">this</span>.gradientFlags = <span class="s2">new boolean</span>[<span class="s4">5</span>];
+<a name="l230"><span class="ln">230  </span></a>        Arrays.fill(gradientFlags, Boolean.TRUE);
+<a name="l231"><span class="ln">231  </span></a>
+<a name="l232"><span class="ln">232  </span></a>        <span class="s0">// setupTimeline();</span>
+<a name="l233"><span class="ln">233  </span></a>    }
+<a name="l234"><span class="ln">234  </span></a>
+<a name="l235"><span class="ln">235  </span></a>    <span class="s2">public void </span>setupGradientFlags (<span class="s2">boolean</span>[] gradientFlags) {
+<a name="l236"><span class="ln">236  </span></a>        <span class="s2">this</span>.gradientFlags = gradientFlags;
+<a name="l237"><span class="ln">237  </span></a>    }
+<a name="l238"><span class="ln">238  </span></a>
+<a name="l239"><span class="ln">239  </span></a>    <span class="s0">// TODO should probably be replaced and brought in line with smoothSkygrid</span>
+<a name="l240"><span class="ln">240  </span></a>    <span class="s2">public void </span>setupTimeline(<span class="s2">double</span>[] times) {
+<a name="l241"><span class="ln">241  </span></a>        <span class="s2">if </span>(<span class="s2">this</span>.modelStartTimes == <span class="s2">null</span>) {
+<a name="l242"><span class="ln">242  </span></a>            <span class="s2">this</span>.modelStartTimes = <span class="s2">new double</span>[numIntervals];
+<a name="l243"><span class="ln">243  </span></a>        } <span class="s2">else </span>{
+<a name="l244"><span class="ln">244  </span></a>            Arrays.fill(<span class="s2">this</span>.modelStartTimes, <span class="s4">0.0</span>);
+<a name="l245"><span class="ln">245  </span></a>        }
+<a name="l246"><span class="ln">246  </span></a>        <span class="s2">if </span>(times != <span class="s2">null</span>) {
+<a name="l247"><span class="ln">247  </span></a>            <span class="s2">if </span>(times.length != <span class="s2">this</span>.numIntervals) {
+<a name="l248"><span class="ln">248  </span></a>                <span class="s2">throw new </span>IllegalArgumentException(<span class="s3">&quot;grids has the wrong dimension &quot; </span>+ times.length + <span class="s3">&quot;, not matching number of intervals &quot; </span>+ <span class="s2">this</span>.numIntervals + <span class="s3">&quot;!&quot;</span>);
+<a name="l249"><span class="ln">249  </span></a>            }
+<a name="l250"><span class="ln">250  </span></a>            <span class="s2">this</span>.modelStartTimes = times;
+<a name="l251"><span class="ln">251  </span></a>        } <span class="s2">else </span>{
+<a name="l252"><span class="ln">252  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>idx = <span class="s4">1</span>; idx &lt;= numIntervals - <span class="s4">1 </span>; idx++) {
+<a name="l253"><span class="ln">253  </span></a>                modelStartTimes[idx] = idx * (gridEnd / numIntervals);
+<a name="l254"><span class="ln">254  </span></a>            }
+<a name="l255"><span class="ln">255  </span></a>        }
+<a name="l256"><span class="ln">256  </span></a>    }
+<a name="l257"><span class="ln">257  </span></a>
+<a name="l258"><span class="ln">258  </span></a>    @Override
+<a name="l259"><span class="ln">259  </span></a>    <span class="s2">protected void </span>handleVariableChangedEvent(Variable variable, <span class="s2">int </span>index, Parameter.ChangeType type) {
+<a name="l260"><span class="ln">260  </span></a>        <span class="s0">// Do nothing</span>
+<a name="l261"><span class="ln">261  </span></a>    }
+<a name="l262"><span class="ln">262  </span></a>
+<a name="l263"><span class="ln">263  </span></a>    <span class="s2">final double </span>p(<span class="s2">int </span>model, <span class="s2">double </span>t) {
+<a name="l264"><span class="ln">264  </span></a>        <span class="s2">double </span>eAt = Math.exp(A * (t - modelStartTimes[model]));
+<a name="l265"><span class="ln">265  </span></a>        <span class="s2">return </span>p(eAt);
+<a name="l266"><span class="ln">266  </span></a>    }
+<a name="l267"><span class="ln">267  </span></a>
+<a name="l268"><span class="ln">268  </span></a>    <span class="s2">private double </span>p(<span class="s2">double </span>eAt) {
+<a name="l269"><span class="ln">269  </span></a>        <span class="s2">double </span>eAt1B = eAt * (<span class="s4">1.0 </span>+ B);
+<a name="l270"><span class="ln">270  </span></a>        <span class="s2">return </span>(lambda + mu + psi - A * ((eAt1B - (<span class="s4">1.0 </span>- B)) / (eAt1B + (<span class="s4">1.0 </span>- B)))) / (<span class="s4">2.0 </span>* lambda);
+<a name="l271"><span class="ln">271  </span></a>    }
+<a name="l272"><span class="ln">272  </span></a>
+<a name="l273"><span class="ln">273  </span></a>    <span class="s2">double </span>logQ(<span class="s2">int </span>model, <span class="s2">double </span>time) {
+<a name="l274"><span class="ln">274  </span></a>        <span class="s2">double </span>At = A * (time - modelStartTimes[model]);
+<a name="l275"><span class="ln">275  </span></a>        <span class="s2">double </span>eAt = Math.exp(At);
+<a name="l276"><span class="ln">276  </span></a>        <span class="s2">double </span>sqrtDenominator = g1(eAt);
+<a name="l277"><span class="ln">277  </span></a>        <span class="s2">return </span>At + log4 - <span class="s4">2 </span>* Math.log(sqrtDenominator); <span class="s0">// TODO log4 (additive constant) is not needed since we always see logQ(a) - logQ(b)</span>
+<a name="l278"><span class="ln">278  </span></a>    }
+<a name="l279"><span class="ln">279  </span></a>
+<a name="l280"><span class="ln">280  </span></a>    <span class="s2">private static final double </span>log4 = Math.log(<span class="s4">4.0</span>);
+<a name="l281"><span class="ln">281  </span></a>    
+<a name="l282"><span class="ln">282  </span></a>    <span class="s0">// Named as per Gavryushkina et al 2014</span>
+<a name="l283"><span class="ln">283  </span></a>    <span class="s2">private static double </span>computeA(<span class="s2">double </span>lambda, <span class="s2">double </span>mu, <span class="s2">double </span>psi) {
+<a name="l284"><span class="ln">284  </span></a>        <span class="s2">return </span>Math.abs(Math.sqrt(Math.pow(lambda - mu - psi, <span class="s4">2.0</span>) + <span class="s4">4.0 </span>* lambda * psi));  <span class="s0">// TODO Why do we have Math.abs(always positive #)?</span>
+<a name="l285"><span class="ln">285  </span></a>    }
+<a name="l286"><span class="ln">286  </span></a>
+<a name="l287"><span class="ln">287  </span></a>    <span class="s0">// Named as per Gavryushkina et al 2014</span>
+<a name="l288"><span class="ln">288  </span></a>    <span class="s2">private static double </span>computeB(<span class="s2">double </span>lambda, <span class="s2">double </span>mu, <span class="s2">double </span>psi, <span class="s2">double </span>rho, <span class="s2">double </span>A, <span class="s2">double </span>pPrevious) {
+<a name="l289"><span class="ln">289  </span></a>        <span class="s2">return </span>((<span class="s4">1.0 </span>- <span class="s4">2.0 </span>* (<span class="s4">1 </span>- rho) * pPrevious) * lambda + mu + psi)/A;
+<a name="l290"><span class="ln">290  </span></a>    }
+<a name="l291"><span class="ln">291  </span></a>
+<a name="l292"><span class="ln">292  </span></a>    @Override
+<a name="l293"><span class="ln">293  </span></a>    <span class="s2">public double </span>logConditioningProbability(<span class="s2">int </span>model) {
+<a name="l294"><span class="ln">294  </span></a>        <span class="s2">double </span>logP = <span class="s4">0.0</span>;
+<a name="l295"><span class="ln">295  </span></a>        <span class="s2">if </span>( conditionOnSurvival ) {
+<a name="l296"><span class="ln">296  </span></a>            <span class="s2">double </span>origin = originTime.getParameterValue(<span class="s4">0</span>);
+<a name="l297"><span class="ln">297  </span></a>            <span class="s2">double</span>[] modelBreakPoints = getBreakPoints();
+<a name="l298"><span class="ln">298  </span></a>
+<a name="l299"><span class="ln">299  </span></a>            <span class="s2">double </span>segmentIntervalEnd = modelBreakPoints[model];
+<a name="l300"><span class="ln">300  </span></a>
+<a name="l301"><span class="ln">301  </span></a>            <span class="s2">while </span>(origin &gt;= segmentIntervalEnd) { <span class="s0">// TODO Maybe it's &gt;= ?</span>
+<a name="l302"><span class="ln">302  </span></a>                ++model;
+<a name="l303"><span class="ln">303  </span></a>                updateLikelihoodModelValues(model);
+<a name="l304"><span class="ln">304  </span></a>                segmentIntervalEnd = modelBreakPoints[model];
+<a name="l305"><span class="ln">305  </span></a>            }
+<a name="l306"><span class="ln">306  </span></a>
+<a name="l307"><span class="ln">307  </span></a>            logP -= Math.log(<span class="s4">1.0 </span>- p(model, origin));
+<a name="l308"><span class="ln">308  </span></a>        }
+<a name="l309"><span class="ln">309  </span></a>        <span class="s2">return </span>logP;
+<a name="l310"><span class="ln">310  </span></a>    }
+<a name="l311"><span class="ln">311  </span></a>
+<a name="l312"><span class="ln">312  </span></a>    <span class="s2">public final double </span>calculateTreeLogLikelihood(Tree tree) {  <span class="s0">// TODO Remove</span>
+<a name="l313"><span class="ln">313  </span></a>        <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;To be removed&quot;</span>);
+<a name="l314"><span class="ln">314  </span></a>    }
+<a name="l315"><span class="ln">315  </span></a>
+<a name="l316"><span class="ln">316  </span></a>    @Override
+<a name="l317"><span class="ln">317  </span></a>    <span class="s2">public double</span>[] getBreakPoints() {
+<a name="l318"><span class="ln">318  </span></a>        <span class="s0">// TODO Fix, this is all messed up; we should hold one set of values [0, ..., \infty]</span>
+<a name="l319"><span class="ln">319  </span></a>        <span class="s0">// TODO when fixing this, also fix EfficientSpeciationLikelihood.fixTimes()</span>
+<a name="l320"><span class="ln">320  </span></a>        <span class="s2">double</span>[] breakPoints = <span class="s2">new double</span>[numIntervals];
+<a name="l321"><span class="ln">321  </span></a>        System.arraycopy(modelStartTimes, <span class="s4">1</span>, breakPoints, <span class="s4">0</span>, numIntervals - <span class="s4">1</span>);
+<a name="l322"><span class="ln">322  </span></a>
+<a name="l323"><span class="ln">323  </span></a><span class="s0">//        breakPoints[numIntervals-1] = originTime.getValue(0);</span>
+<a name="l324"><span class="ln">324  </span></a>        breakPoints[numIntervals - <span class="s4">1</span>] = Double.POSITIVE_INFINITY;
+<a name="l325"><span class="ln">325  </span></a>        <span class="s2">return </span>breakPoints;
+<a name="l326"><span class="ln">326  </span></a>    }
+<a name="l327"><span class="ln">327  </span></a>
+<a name="l328"><span class="ln">328  </span></a>    @Override
+<a name="l329"><span class="ln">329  </span></a>    <span class="s2">public double </span>processModelSegmentBreakPoint(<span class="s2">int </span>model, <span class="s2">double </span>intervalStart, <span class="s2">double </span>intervalEnd, <span class="s2">int </span>nLineages) {
+<a name="l330"><span class="ln">330  </span></a>        <span class="s2">double </span>lnL = nLineages * (logQ(model, intervalEnd) - logQ(model, intervalStart));
+<a name="l331"><span class="ln">331  </span></a>        <span class="s2">if </span>( samplingProbability.getValue(model + <span class="s4">1</span>) &gt; <span class="s4">0.0 </span>&amp;&amp; samplingProbability.getValue(model + <span class="s4">1</span>) &lt; <span class="s4">1.0</span>) {
+<a name="l332"><span class="ln">332  </span></a>            <span class="s0">// Add in probability of un-sampled lineages</span>
+<a name="l333"><span class="ln">333  </span></a>            <span class="s0">// We don't need this at t=0 because all lineages in the tree are sampled</span>
+<a name="l334"><span class="ln">334  </span></a>            <span class="s0">// TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?</span>
+<a name="l335"><span class="ln">335  </span></a>            lnL += nLineages * Math.log(<span class="s4">1.0 </span>- samplingProbability.getValue(model + <span class="s4">1</span>));
+<a name="l336"><span class="ln">336  </span></a>        }
+<a name="l337"><span class="ln">337  </span></a>        <span class="s2">this</span>.savedLogQ = Double.NaN;
+<a name="l338"><span class="ln">338  </span></a>        <span class="s2">return </span>lnL;
+<a name="l339"><span class="ln">339  </span></a>    }
+<a name="l340"><span class="ln">340  </span></a>
+<a name="l341"><span class="ln">341  </span></a>    <span class="s2">private void </span>updateParameterValues(<span class="s2">int </span>model) {
+<a name="l342"><span class="ln">342  </span></a>        lambda = birthRate.getParameterValue(model);
+<a name="l343"><span class="ln">343  </span></a>        mu = deathRate.getParameterValue(model);
+<a name="l344"><span class="ln">344  </span></a>        psi = serialSamplingRate.getParameterValue(model);
+<a name="l345"><span class="ln">345  </span></a>        r = treatmentProbability.getParameterValue(model);
+<a name="l346"><span class="ln">346  </span></a>        rho = samplingProbability.getParameterValue(model);
+<a name="l347"><span class="ln">347  </span></a><span class="s0">//        logRho = Math.log(rho);</span>
+<a name="l348"><span class="ln">348  </span></a>        <span class="s2">this</span>.savedLogQ = Double.NaN;
+<a name="l349"><span class="ln">349  </span></a>    }
+<a name="l350"><span class="ln">350  </span></a>
+<a name="l351"><span class="ln">351  </span></a>    @Override
+<a name="l352"><span class="ln">352  </span></a>    <span class="s2">public void </span>updateLikelihoodModelValues(<span class="s2">int </span>model) {
+<a name="l353"><span class="ln">353  </span></a>        
+<a name="l354"><span class="ln">354  </span></a>        modelStartTime = modelStartTimes[model];
+<a name="l355"><span class="ln">355  </span></a>
+<a name="l356"><span class="ln">356  </span></a>        <span class="s2">if </span>(model == <span class="s4">0</span>) {
+<a name="l357"><span class="ln">357  </span></a>            previousP = <span class="s4">1.0</span>;
+<a name="l358"><span class="ln">358  </span></a>        } <span class="s2">else</span>{
+<a name="l359"><span class="ln">359  </span></a>            previousP = p(model - <span class="s4">1</span>, modelStartTime);
+<a name="l360"><span class="ln">360  </span></a>        }
+<a name="l361"><span class="ln">361  </span></a>
+<a name="l362"><span class="ln">362  </span></a>        updateParameterValues(model);
+<a name="l363"><span class="ln">363  </span></a>
+<a name="l364"><span class="ln">364  </span></a>
+<a name="l365"><span class="ln">365  </span></a>        A = computeA(lambda, mu, psi);
+<a name="l366"><span class="ln">366  </span></a>        B = computeB(lambda, mu, psi, rho, A, previousP);
+<a name="l367"><span class="ln">367  </span></a>    }
+<a name="l368"><span class="ln">368  </span></a>
+<a name="l369"><span class="ln">369  </span></a>    @Override
+<a name="l370"><span class="ln">370  </span></a>    <span class="s2">public void </span>updateGradientModelValues(<span class="s2">int </span>model) {
+<a name="l371"><span class="ln">371  </span></a>
+<a name="l372"><span class="ln">372  </span></a>        modelStartTime = modelStartTimes[model];
+<a name="l373"><span class="ln">373  </span></a>
+<a name="l374"><span class="ln">374  </span></a>        <span class="s2">if </span>(model == <span class="s4">0</span>) {
+<a name="l375"><span class="ln">375  </span></a>            previousP = <span class="s4">1.0</span>;
+<a name="l376"><span class="ln">376  </span></a>        } <span class="s2">else</span>{
+<a name="l377"><span class="ln">377  </span></a>            previousP = p(eAt_End);
+<a name="l378"><span class="ln">378  </span></a>        }
+<a name="l379"><span class="ln">379  </span></a>
+<a name="l380"><span class="ln">380  </span></a>        updateParameterValues(model);
+<a name="l381"><span class="ln">381  </span></a>
+<a name="l382"><span class="ln">382  </span></a>        A = computeA(lambda, mu, psi);
+<a name="l383"><span class="ln">383  </span></a>        B = computeB(lambda, mu, psi, rho, A, previousP);
+<a name="l384"><span class="ln">384  </span></a>        
+<a name="l385"><span class="ln">385  </span></a>        <span class="s2">this</span>.savedQ = Double.NaN;
+<a name="l386"><span class="ln">386  </span></a>        <span class="s2">this</span>.partialQKnown = <span class="s2">false</span>;
+<a name="l387"><span class="ln">387  </span></a>
+<a name="l388"><span class="ln">388  </span></a>        dACompute(dA);
+<a name="l389"><span class="ln">389  </span></a>        
+<a name="l390"><span class="ln">390  </span></a>        dBCompute(model, dB);
+<a name="l391"><span class="ln">391  </span></a>
+<a name="l392"><span class="ln">392  </span></a>        System.arraycopy(dPModelEnd, <span class="s4">0</span>, dPModelEnd_prev, <span class="s4">0</span>, numIntervals * <span class="s4">4</span>);
+<a name="l393"><span class="ln">393  </span></a>
+<a name="l394"><span class="ln">394  </span></a>        <span class="s2">if </span>(numIntervals &gt; <span class="s4">1 </span>&amp;&amp; model &lt; numIntervals - <span class="s4">1</span>) {
+<a name="l395"><span class="ln">395  </span></a>
+<a name="l396"><span class="ln">396  </span></a>            <span class="s2">double </span>end = modelStartTimes[model + <span class="s4">1</span>];
+<a name="l397"><span class="ln">397  </span></a>            <span class="s2">double </span>start = modelStartTimes[model];
+<a name="l398"><span class="ln">398  </span></a>            eAt_End = Math.exp(A * (end - start));
+<a name="l399"><span class="ln">399  </span></a>            dPCompute(model, end, start, eAt_End, dPModelEnd, dG2);
+<a name="l400"><span class="ln">400  </span></a>        }
+<a name="l401"><span class="ln">401  </span></a>        
+<a name="l402"><span class="ln">402  </span></a>        computedBCurrent = <span class="s2">true</span>;
+<a name="l403"><span class="ln">403  </span></a>    }
+<a name="l404"><span class="ln">404  </span></a>
+<a name="l405"><span class="ln">405  </span></a>    @Override
+<a name="l406"><span class="ln">406  </span></a>    <span class="s2">public double </span>processInterval(<span class="s2">int </span>model, <span class="s2">double </span>tYoung, <span class="s2">double </span>tOld, <span class="s2">int </span>nLineages) {
+<a name="l407"><span class="ln">407  </span></a>        <span class="s2">double </span>logQ_young;
+<a name="l408"><span class="ln">408  </span></a>        <span class="s2">double </span>logQ_old = logQ(model, tOld);
+<a name="l409"><span class="ln">409  </span></a>        <span class="s2">if </span>(!Double.isNaN(<span class="s2">this</span>.savedLogQ)) {
+<a name="l410"><span class="ln">410  </span></a>            logQ_young = <span class="s2">this</span>.savedLogQ;
+<a name="l411"><span class="ln">411  </span></a>        } <span class="s2">else </span>{
+<a name="l412"><span class="ln">412  </span></a>            logQ_young = logQ(model, tYoung);
+<a name="l413"><span class="ln">413  </span></a>        }
+<a name="l414"><span class="ln">414  </span></a>        <span class="s2">this</span>.savedLogQ = logQ_old;
+<a name="l415"><span class="ln">415  </span></a>        <span class="s2">return </span>nLineages * (logQ_old - logQ_young);
+<a name="l416"><span class="ln">416  </span></a>    }
+<a name="l417"><span class="ln">417  </span></a>
+<a name="l418"><span class="ln">418  </span></a>    @Override
+<a name="l419"><span class="ln">419  </span></a>    <span class="s2">public double </span>processCoalescence(<span class="s2">int </span>model, <span class="s2">double </span>tOld) {
+<a name="l420"><span class="ln">420  </span></a>        <span class="s2">return </span>Math.log(lambda);
+<a name="l421"><span class="ln">421  </span></a>    }
+<a name="l422"><span class="ln">422  </span></a>
+<a name="l423"><span class="ln">423  </span></a>    @Override
+<a name="l424"><span class="ln">424  </span></a>    <span class="s2">public double </span>processSampling(<span class="s2">int </span>model, <span class="s2">double </span>tOld) {
+<a name="l425"><span class="ln">425  </span></a>
+<a name="l426"><span class="ln">426  </span></a>        <span class="s2">double </span>logSampProb;
+<a name="l427"><span class="ln">427  </span></a>
+<a name="l428"><span class="ln">428  </span></a>        <span class="s2">boolean </span>sampleIsAtEventTime = tOld == modelStartTimes[model];
+<a name="l429"><span class="ln">429  </span></a>        <span class="s2">boolean </span>samplesTakenAtEventTime = rho &gt; <span class="s4">0</span>;
+<a name="l430"><span class="ln">430  </span></a>
+<a name="l431"><span class="ln">431  </span></a>        <span class="s2">if </span>(sampleIsAtEventTime &amp;&amp; samplesTakenAtEventTime) {
+<a name="l432"><span class="ln">432  </span></a>            logSampProb = Math.log(rho);
+<a name="l433"><span class="ln">433  </span></a>            <span class="s2">if </span>(model &gt; <span class="s4">0</span>) {
+<a name="l434"><span class="ln">434  </span></a>                logSampProb = Math.log(rho) + Math.log(r + ((<span class="s4">1.0 </span>- r) * previousP));
+<a name="l435"><span class="ln">435  </span></a>            }
+<a name="l436"><span class="ln">436  </span></a>        } <span class="s2">else </span>{
+<a name="l437"><span class="ln">437  </span></a>            <span class="s2">double </span>logPsi = Math.log(psi);
+<a name="l438"><span class="ln">438  </span></a>            logSampProb = logPsi + Math.log(r + (<span class="s4">1.0 </span>- r) * p(model,tOld));
+<a name="l439"><span class="ln">439  </span></a>        }
+<a name="l440"><span class="ln">440  </span></a>
+<a name="l441"><span class="ln">441  </span></a>        <span class="s2">return </span>logSampProb;
+<a name="l442"><span class="ln">442  </span></a>    }
+<a name="l443"><span class="ln">443  </span></a>
+<a name="l444"><span class="ln">444  </span></a>    @Override
+<a name="l445"><span class="ln">445  </span></a>    <span class="s2">public double </span>processOrigin(<span class="s2">int </span>model, <span class="s2">double </span>rootAge) {
+<a name="l446"><span class="ln">446  </span></a>        <span class="s2">if </span>(originTime.getValue(<span class="s4">0</span>) &lt; rootAge) {
+<a name="l447"><span class="ln">447  </span></a>            <span class="s2">return </span>Double.NaN;
+<a name="l448"><span class="ln">448  </span></a>        } <span class="s2">else </span>{
+<a name="l449"><span class="ln">449  </span></a>            <span class="s2">double</span>[] modelBreakPoints = getBreakPoints();
+<a name="l450"><span class="ln">450  </span></a>            <span class="s2">double </span>logL = <span class="s4">0.0</span>;
+<a name="l451"><span class="ln">451  </span></a>
+<a name="l452"><span class="ln">452  </span></a>            <span class="s2">double </span>origin = originTime.getValue(<span class="s4">0</span>);
+<a name="l453"><span class="ln">453  </span></a>            <span class="s2">double </span>intervalStart = rootAge;
+<a name="l454"><span class="ln">454  </span></a>            <span class="s2">double </span>segmentIntervalEnd = modelBreakPoints[model];
+<a name="l455"><span class="ln">455  </span></a>
+<a name="l456"><span class="ln">456  </span></a>            <span class="s2">while </span>(origin &gt;= segmentIntervalEnd) { <span class="s0">// TODO Maybe it's &gt;= ?</span>
+<a name="l457"><span class="ln">457  </span></a>                logL += processModelSegmentBreakPoint(model, intervalStart, segmentIntervalEnd, <span class="s4">1</span>);
+<a name="l458"><span class="ln">458  </span></a>                intervalStart = segmentIntervalEnd;
+<a name="l459"><span class="ln">459  </span></a>                ++model;
+<a name="l460"><span class="ln">460  </span></a>                updateLikelihoodModelValues(model);
+<a name="l461"><span class="ln">461  </span></a>                segmentIntervalEnd = modelBreakPoints[model];
+<a name="l462"><span class="ln">462  </span></a>            }
+<a name="l463"><span class="ln">463  </span></a>            <span class="s2">if </span>(intervalStart &lt; origin) {
+<a name="l464"><span class="ln">464  </span></a>                logL += logQ(model, origin) - logQ(model, intervalStart);
+<a name="l465"><span class="ln">465  </span></a>            }
+<a name="l466"><span class="ln">466  </span></a>
+<a name="l467"><span class="ln">467  </span></a>            <span class="s2">return </span>logL;
+<a name="l468"><span class="ln">468  </span></a>        }
+<a name="l469"><span class="ln">469  </span></a>    }
+<a name="l470"><span class="ln">470  </span></a>
+<a name="l471"><span class="ln">471  </span></a>    <span class="s2">public double </span>calculateTreeLogLikelihood(Tree tree, Set&lt;Taxon&gt; exclude) {
+<a name="l472"><span class="ln">472  </span></a>        <span class="s2">if </span>(exclude.size() == <span class="s4">0</span>) <span class="s2">return </span>calculateTreeLogLikelihood(tree);
+<a name="l473"><span class="ln">473  </span></a>        <span class="s2">throw new </span>RuntimeException(<span class="s3">&quot;Not implemented!&quot;</span>);
+<a name="l474"><span class="ln">474  </span></a>    }
+<a name="l475"><span class="ln">475  </span></a>
+<a name="l476"><span class="ln">476  </span></a>    @Override
+<a name="l477"><span class="ln">477  </span></a>    <span class="s2">public </span>Citation.Category getCategory() {
+<a name="l478"><span class="ln">478  </span></a>        <span class="s2">return </span>Citation.Category.TREE_PRIORS;
+<a name="l479"><span class="ln">479  </span></a>    }
+<a name="l480"><span class="ln">480  </span></a>
+<a name="l481"><span class="ln">481  </span></a>    @Override
+<a name="l482"><span class="ln">482  </span></a>    <span class="s2">public </span>String getDescription() {
+<a name="l483"><span class="ln">483  </span></a>        <span class="s2">return </span><span class="s3">&quot;A (possibly episodic) serially-sampled birth-death model with the possibility of treatment (death when sampled) and intensive sampling.&quot;</span>;
+<a name="l484"><span class="ln">484  </span></a>    }
+<a name="l485"><span class="ln">485  </span></a>
+<a name="l486"><span class="ln">486  </span></a>    @Override
+<a name="l487"><span class="ln">487  </span></a>    <span class="s2">public </span>List&lt;Citation&gt; getCitations() {
+<a name="l488"><span class="ln">488  </span></a>        <span class="s2">return </span>Collections.singletonList(<span class="s2">new </span>Citation(
+<a name="l489"><span class="ln">489  </span></a>                <span class="s2">new </span>Author[]{
+<a name="l490"><span class="ln">490  </span></a>                        <span class="s2">new </span>Author(<span class="s3">&quot;A&quot;</span>, <span class="s3">&quot;Gavryushkina&quot;</span>),
+<a name="l491"><span class="ln">491  </span></a>                },
+<a name="l492"><span class="ln">492  </span></a>                <span class="s3">&quot;Bayesian Inference of Sampled Ancestor Trees&quot;</span>,
+<a name="l493"><span class="ln">493  </span></a>                <span class="s4">2014</span>,
+<a name="l494"><span class="ln">494  </span></a>                <span class="s3">&quot;PLoS Computational Biology&quot;</span>,
+<a name="l495"><span class="ln">495  </span></a>                <span class="s4">10</span>,
+<a name="l496"><span class="ln">496  </span></a>                <span class="s4">1</span>, <span class="s4">15</span>,
+<a name="l497"><span class="ln">497  </span></a>                <span class="s3">&quot;10.1371/journal.pcbi.1003919&quot;</span>
+<a name="l498"><span class="ln">498  </span></a>        ));
+<a name="l499"><span class="ln">499  </span></a>    }
+<a name="l500"><span class="ln">500  </span></a>
+<a name="l501"><span class="ln">501  </span></a>    <span class="s2">final double </span>g1(<span class="s2">double </span>eAt) {
+<a name="l502"><span class="ln">502  </span></a>        <span class="s2">return  </span>(<span class="s4">1 </span>+ B) * eAt + (<span class="s4">1 </span>- B);
+<a name="l503"><span class="ln">503  </span></a>    }
+<a name="l504"><span class="ln">504  </span></a>
+<a name="l505"><span class="ln">505  </span></a>    <span class="s2">final double </span>g2(<span class="s2">double </span>G1) {
+<a name="l506"><span class="ln">506  </span></a>        <span class="s2">return </span>A * (<span class="s4">1 </span>- <span class="s4">2 </span>* (<span class="s4">1 </span>- B) / G1);
+<a name="l507"><span class="ln">507  </span></a>    }
+<a name="l508"><span class="ln">508  </span></a>
+<a name="l509"><span class="ln">509  </span></a>    <span class="s2">public final double </span>q(<span class="s2">int </span>model, <span class="s2">double </span>t) {
+<a name="l510"><span class="ln">510  </span></a>        <span class="s2">double </span>eAt = Math.exp(A * (t - modelStartTimes[model]));
+<a name="l511"><span class="ln">511  </span></a>        <span class="s2">return </span>q(eAt);
+<a name="l512"><span class="ln">512  </span></a>    }
+<a name="l513"><span class="ln">513  </span></a>
+<a name="l514"><span class="ln">514  </span></a>    <span class="s2">public final double </span>q(<span class="s2">double </span>eAt) {
+<a name="l515"><span class="ln">515  </span></a>        <span class="s2">double </span>sqrtDenominator = g1(eAt);
+<a name="l516"><span class="ln">516  </span></a>        <span class="s2">return </span><span class="s4">4 </span>* eAt / (sqrtDenominator * sqrtDenominator);
+<a name="l517"><span class="ln">517  </span></a>    }
+<a name="l518"><span class="ln">518  </span></a>
+<a name="l519"><span class="ln">519  </span></a>
+<a name="l520"><span class="ln">520  </span></a>    @Override
+<a name="l521"><span class="ln">521  </span></a>    <span class="s2">public </span>Parameter getSamplingProbabilityParameter() {
+<a name="l522"><span class="ln">522  </span></a>        <span class="s2">return </span>samplingProbability;
+<a name="l523"><span class="ln">523  </span></a>    }
+<a name="l524"><span class="ln">524  </span></a>
+<a name="l525"><span class="ln">525  </span></a>    @Override
+<a name="l526"><span class="ln">526  </span></a>    <span class="s2">public </span>Parameter getDeathRateParameter() {
+<a name="l527"><span class="ln">527  </span></a>        <span class="s2">return </span>deathRate;
+<a name="l528"><span class="ln">528  </span></a>    }
+<a name="l529"><span class="ln">529  </span></a>
+<a name="l530"><span class="ln">530  </span></a>    @Override
+<a name="l531"><span class="ln">531  </span></a>    <span class="s2">public </span>Parameter getBirthRateParameter() {
+<a name="l532"><span class="ln">532  </span></a>        <span class="s2">return </span>birthRate;
+<a name="l533"><span class="ln">533  </span></a>    }
+<a name="l534"><span class="ln">534  </span></a>
+<a name="l535"><span class="ln">535  </span></a>    @Override
+<a name="l536"><span class="ln">536  </span></a>    <span class="s2">public </span>Parameter getSamplingRateParameter() {
+<a name="l537"><span class="ln">537  </span></a>        <span class="s2">return </span>serialSamplingRate;
+<a name="l538"><span class="ln">538  </span></a>    }
+<a name="l539"><span class="ln">539  </span></a>
+<a name="l540"><span class="ln">540  </span></a>    @Override
+<a name="l541"><span class="ln">541  </span></a>    <span class="s2">public </span>Parameter getTreatmentProbabilityParameter() {
+<a name="l542"><span class="ln">542  </span></a>        <span class="s2">return </span>treatmentProbability;
+<a name="l543"><span class="ln">543  </span></a>    }
+<a name="l544"><span class="ln">544  </span></a>
+<a name="l545"><span class="ln">545  </span></a>    <span class="s2">private void </span>dACompute(<span class="s2">double</span>[] dA) {
+<a name="l546"><span class="ln">546  </span></a>        <span class="s2">if </span>(gradientFlags[<span class="s4">0</span>]) dA[<span class="s4">0</span>] = (lambda - mu + psi) / A;
+<a name="l547"><span class="ln">547  </span></a>        <span class="s2">if </span>(gradientFlags[<span class="s4">1</span>]) dA[<span class="s4">1</span>] = (-lambda + mu + psi) / A;
+<a name="l548"><span class="ln">548  </span></a>        <span class="s2">if </span>(gradientFlags[<span class="s4">2</span>]) dA[<span class="s4">2</span>] = (lambda + mu + psi) / A;
+<a name="l549"><span class="ln">549  </span></a>    }
+<a name="l550"><span class="ln">550  </span></a>
+<a name="l551"><span class="ln">551  </span></a>    <span class="s2">void </span>dBCompute(<span class="s2">int </span>model, <span class="s2">double</span>[] dB) {
+<a name="l552"><span class="ln">552  </span></a>
+<a name="l553"><span class="ln">553  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt; model; ++k) {
+<a name="l554"><span class="ln">554  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; p++) {
+<a name="l555"><span class="ln">555  </span></a>                dB[k * <span class="s4">4 </span>+ p] = -<span class="s4">2 </span>* (<span class="s4">1 </span>- rho) * lambda / A * dPModelEnd[k * <span class="s4">4 </span>+ p];
+<a name="l556"><span class="ln">556  </span></a>            }
+<a name="l557"><span class="ln">557  </span></a>        }
+<a name="l558"><span class="ln">558  </span></a>
+<a name="l559"><span class="ln">559  </span></a>        <span class="s2">double </span>term1 = <span class="s4">1 </span>- <span class="s4">2 </span>* (<span class="s4">1 </span>- rho) * previousP;
+<a name="l560"><span class="ln">560  </span></a>
+<a name="l561"><span class="ln">561  </span></a>        dB[model * <span class="s4">4 </span>+ <span class="s4">0</span>] = (A * term1 - dA[<span class="s4">0</span>] * (term1 * lambda + mu + psi)) / (A * A);
+<a name="l562"><span class="ln">562  </span></a>        dB[model * <span class="s4">4 </span>+ <span class="s4">1</span>] = (A - dA[<span class="s4">1</span>] * (term1 * lambda + mu + psi)) / (A * A);
+<a name="l563"><span class="ln">563  </span></a>        dB[model * <span class="s4">4 </span>+ <span class="s4">2</span>] = (A - dA[<span class="s4">2</span>] * (term1 * lambda + mu + psi)) / (A * A);
+<a name="l564"><span class="ln">564  </span></a>        dB[model * <span class="s4">4 </span>+ <span class="s4">3</span>] = <span class="s4">2 </span>* lambda * previousP / A;
+<a name="l565"><span class="ln">565  </span></a>
+<a name="l566"><span class="ln">566  </span></a><span class="s0">//        for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l567"><span class="ln">567  </span></a><span class="s0">//            if (gradientFlags[p]) {</span>
+<a name="l568"><span class="ln">568  </span></a><span class="s0">//                for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l569"><span class="ln">569  </span></a><span class="s0">//                    dB[k * 4 + p] = -2 * (1 - rho) * lambda / A * dPModelEnd[k * 4 + p];</span>
+<a name="l570"><span class="ln">570  </span></a><span class="s0">//                }</span>
+<a name="l571"><span class="ln">571  </span></a><span class="s0">//                switch (p) {</span>
+<a name="l572"><span class="ln">572  </span></a><span class="s0">//                    case 0:</span>
+<a name="l573"><span class="ln">573  </span></a><span class="s0">//                        dB[model * 4 + p] = (A * term1 - dA[p] * (term1 * lambda + mu + psi)) / (A * A);</span>
+<a name="l574"><span class="ln">574  </span></a><span class="s0">//                        break;</span>
+<a name="l575"><span class="ln">575  </span></a><span class="s0">//                    case 1:</span>
+<a name="l576"><span class="ln">576  </span></a><span class="s0">//                    case 2:</span>
+<a name="l577"><span class="ln">577  </span></a><span class="s0">//                        dB[model * 4 + p] = (A - dA[p] * (term1 * lambda + mu + psi)) / (A * A);</span>
+<a name="l578"><span class="ln">578  </span></a><span class="s0">//                        break;</span>
+<a name="l579"><span class="ln">579  </span></a><span class="s0">//                    case 3:</span>
+<a name="l580"><span class="ln">580  </span></a><span class="s0">//                        dB[model * 4 + p] = 2 * lambda * previousP / A;</span>
+<a name="l581"><span class="ln">581  </span></a><span class="s0">//                        break;</span>
+<a name="l582"><span class="ln">582  </span></a><span class="s0">//                }</span>
+<a name="l583"><span class="ln">583  </span></a><span class="s0">//            }</span>
+<a name="l584"><span class="ln">584  </span></a><span class="s0">//        }</span>
+<a name="l585"><span class="ln">585  </span></a>
+<a name="l586"><span class="ln">586  </span></a><span class="s0">//        if (gradientFlags[0]) {</span>
+<a name="l587"><span class="ln">587  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l588"><span class="ln">588  </span></a><span class="s0">//                dB[k * 4] = -2 * (1 - rho) * lambda / A * dPModelEnd[k * 4];</span>
+<a name="l589"><span class="ln">589  </span></a><span class="s0">//            }</span>
+<a name="l590"><span class="ln">590  </span></a><span class="s0">//            dB[model * 4] = (A * term1 - dA[0] * (term1 * lambda + mu + psi)) / (A * A);</span>
+<a name="l591"><span class="ln">591  </span></a><span class="s0">//        }</span>
+<a name="l592"><span class="ln">592  </span></a>
+<a name="l593"><span class="ln">593  </span></a><span class="s0">//        if (gradientFlags[1]) {</span>
+<a name="l594"><span class="ln">594  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l595"><span class="ln">595  </span></a><span class="s0">//                dB[k * 4 + 1] = -2 * (1 - rho) * lambda / A * dPModelEnd[k * 4 + 1];</span>
+<a name="l596"><span class="ln">596  </span></a><span class="s0">//            }</span>
+<a name="l597"><span class="ln">597  </span></a><span class="s0">//            dB[model * 4 + 1] = (A - dA[1] * (term1 * lambda + mu + psi)) / (A * A);</span>
+<a name="l598"><span class="ln">598  </span></a><span class="s0">//        }</span>
+<a name="l599"><span class="ln">599  </span></a><span class="s0">//</span>
+<a name="l600"><span class="ln">600  </span></a><span class="s0">//        if (gradientFlags[2]) {</span>
+<a name="l601"><span class="ln">601  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l602"><span class="ln">602  </span></a><span class="s0">//                dB[k * 4 + 2] = -2 * (1 - rho) * lambda / A * dPModelEnd[k * 4 + 2];</span>
+<a name="l603"><span class="ln">603  </span></a><span class="s0">//            }</span>
+<a name="l604"><span class="ln">604  </span></a><span class="s0">//            dB[model * 4 + 2] = (A - dA[2] * (term1 * lambda + mu + psi)) / (A * A);</span>
+<a name="l605"><span class="ln">605  </span></a><span class="s0">//        }</span>
+<a name="l606"><span class="ln">606  </span></a><span class="s0">//</span>
+<a name="l607"><span class="ln">607  </span></a><span class="s0">//        if (gradientFlags[3]) {</span>
+<a name="l608"><span class="ln">608  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l609"><span class="ln">609  </span></a><span class="s0">//                dB[k * 4 + 3] = -2 * (1 - rho) * lambda / A * dPModelEnd[k * 4 + 3];</span>
+<a name="l610"><span class="ln">610  </span></a><span class="s0">//            }</span>
+<a name="l611"><span class="ln">611  </span></a><span class="s0">//            dB[model * 4 + 3] = 2 * lambda * previousP / A;</span>
+<a name="l612"><span class="ln">612  </span></a><span class="s0">//        }</span>
+<a name="l613"><span class="ln">613  </span></a>    }
+<a name="l614"><span class="ln">614  </span></a>
+<a name="l615"><span class="ln">615  </span></a>    <span class="s2">void </span>dPCompute(<span class="s2">int </span>model, <span class="s2">double </span>t, <span class="s2">double </span>intervalStart, <span class="s2">double </span>eAt, <span class="s2">double</span>[] dP, <span class="s2">double</span>[] dG2) {
+<a name="l616"><span class="ln">616  </span></a>
+<a name="l617"><span class="ln">617  </span></a>        <span class="s2">double </span>G1 = g1(eAt);
+<a name="l618"><span class="ln">618  </span></a>
+<a name="l619"><span class="ln">619  </span></a>        <span class="s2">double </span>term1 = -A / lambda * ((<span class="s4">1 </span>- B) * (eAt - <span class="s4">1</span>) + G1) / (G1 * G1);
+<a name="l620"><span class="ln">620  </span></a>
+<a name="l621"><span class="ln">621  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k  &lt; model; k ++) {
+<a name="l622"><span class="ln">622  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; p++) {
+<a name="l623"><span class="ln">623  </span></a>                dP[k * <span class="s4">4 </span>+ p] = term1 * dB[k * <span class="s4">4 </span>+ p];
+<a name="l624"><span class="ln">624  </span></a>            }
+<a name="l625"><span class="ln">625  </span></a>        }
+<a name="l626"><span class="ln">626  </span></a>
+<a name="l627"><span class="ln">627  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">3</span>; ++p) { <span class="s0">// TODO Only dG1[1] and dG2[2] are used</span>
+<a name="l628"><span class="ln">628  </span></a>            <span class="s2">double </span>term2 = eAt * (<span class="s4">1 </span>+ B) * dA[p] * (t - intervalStart) + (eAt - <span class="s4">1</span>) * dB[model * <span class="s4">4 </span>+ p];
+<a name="l629"><span class="ln">629  </span></a>            dG2[p] = dA[p] - <span class="s4">2 </span>* (G1 * (dA[p] * (<span class="s4">1 </span>- B) - dB[model * <span class="s4">4 </span>+ p] * A) - (<span class="s4">1 </span>- B) * term2 * A) / (G1 * G1);
+<a name="l630"><span class="ln">630  </span></a>        }
+<a name="l631"><span class="ln">631  </span></a>
+<a name="l632"><span class="ln">632  </span></a>        <span class="s2">double </span>G2 = g2(G1);
+<a name="l633"><span class="ln">633  </span></a>
+<a name="l634"><span class="ln">634  </span></a>        dP[model * <span class="s4">4 </span>+ <span class="s4">0</span>] = (-mu - psi - lambda * dG2[<span class="s4">0</span>] + G2) / (<span class="s4">2 </span>* lambda * lambda);
+<a name="l635"><span class="ln">635  </span></a>        dP[model * <span class="s4">4 </span>+ <span class="s4">1</span>] = (<span class="s4">1 </span>- dG2[<span class="s4">1</span>]) / (<span class="s4">2 </span>* lambda);
+<a name="l636"><span class="ln">636  </span></a>        dP[model * <span class="s4">4 </span>+ <span class="s4">2</span>] = (<span class="s4">1 </span>- dG2[<span class="s4">2</span>]) / (<span class="s4">2 </span>* lambda);
+<a name="l637"><span class="ln">637  </span></a>        dP[model * <span class="s4">4 </span>+ <span class="s4">3</span>] = -A / lambda * ((<span class="s4">1 </span>- B) * (eAt - <span class="s4">1</span>) + G1) * dB[model * <span class="s4">4 </span>+ <span class="s4">3</span>] / (G1 * G1);
+<a name="l638"><span class="ln">638  </span></a>
+<a name="l639"><span class="ln">639  </span></a><span class="s0">//        for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l640"><span class="ln">640  </span></a><span class="s0">//            if (gradientFlags[p]) {</span>
+<a name="l641"><span class="ln">641  </span></a><span class="s0">//                for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l642"><span class="ln">642  </span></a><span class="s0">//                    dP[k * 4 + p] = term1 * dB[k * 4 + p];</span>
+<a name="l643"><span class="ln">643  </span></a><span class="s0">//                }</span>
+<a name="l644"><span class="ln">644  </span></a><span class="s0">//                if (p &lt; 3) {</span>
+<a name="l645"><span class="ln">645  </span></a><span class="s0">//                    double term2 = eAt * (1 + B) * dA[p] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + p];</span>
+<a name="l646"><span class="ln">646  </span></a><span class="s0">//                    dG2[p] = dA[p] - 2 * (G1 * (dA[p] * (1 - B) - dB[model * 4 + p] * A) - (1 - B) * term2 * A) / (G1 * G1);</span>
+<a name="l647"><span class="ln">647  </span></a><span class="s0">//                }</span>
+<a name="l648"><span class="ln">648  </span></a><span class="s0">//                switch (p) {</span>
+<a name="l649"><span class="ln">649  </span></a><span class="s0">//                    case 0:</span>
+<a name="l650"><span class="ln">650  </span></a><span class="s0">//                        dP[model * 4 + p] = (-mu - psi - lambda * dG2[0] + g2(G1)) / (2 * lambda * lambda);</span>
+<a name="l651"><span class="ln">651  </span></a><span class="s0">//                        break;</span>
+<a name="l652"><span class="ln">652  </span></a><span class="s0">//                    case 1:</span>
+<a name="l653"><span class="ln">653  </span></a><span class="s0">//                        dP[model * 4 + p] = (1 - dG2[1]) / (2 * lambda);</span>
+<a name="l654"><span class="ln">654  </span></a><span class="s0">//                        break;</span>
+<a name="l655"><span class="ln">655  </span></a><span class="s0">//                    case 2:</span>
+<a name="l656"><span class="ln">656  </span></a><span class="s0">//                        dP[model * 4 + p] = (1 - dG2[2]) / (2 * lambda);</span>
+<a name="l657"><span class="ln">657  </span></a><span class="s0">//                        break;</span>
+<a name="l658"><span class="ln">658  </span></a><span class="s0">//                    case 3:</span>
+<a name="l659"><span class="ln">659  </span></a><span class="s0">//                        dP[model * 4 + p] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[model * 4 + 3] / (G1 * G1);</span>
+<a name="l660"><span class="ln">660  </span></a><span class="s0">//                        break;</span>
+<a name="l661"><span class="ln">661  </span></a><span class="s0">//                }</span>
+<a name="l662"><span class="ln">662  </span></a><span class="s0">//            }</span>
+<a name="l663"><span class="ln">663  </span></a><span class="s0">//        }</span>
+<a name="l664"><span class="ln">664  </span></a>
+<a name="l665"><span class="ln">665  </span></a><span class="s0">//        if (gradientFlags[0]) {</span>
+<a name="l666"><span class="ln">666  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l667"><span class="ln">667  </span></a><span class="s0">//                dP[k * 4] = term1 * dB[k * 4];</span>
+<a name="l668"><span class="ln">668  </span></a><span class="s0">//            }</span>
+<a name="l669"><span class="ln">669  </span></a><span class="s0">//            double term2 = eAt * (1 + B) * dA[0] * (t - intervalStart) + (eAt - 1) * dB[model * 4];</span>
+<a name="l670"><span class="ln">670  </span></a><span class="s0">//            dG2[0] = dA[0] - 2 * (G1 * (dA[0] * (1 - B) - dB[model * 4] * A) - (1 - B) * term2 * A) / (G1 * G1);</span>
+<a name="l671"><span class="ln">671  </span></a><span class="s0">//            dP[model * 4] = (-mu - psi - lambda * dG2[0] + g2(G1)) / (2 * lambda * lambda);</span>
+<a name="l672"><span class="ln">672  </span></a><span class="s0">//        }</span>
+<a name="l673"><span class="ln">673  </span></a>
+<a name="l674"><span class="ln">674  </span></a><span class="s0">//        if (gradientFlags[1]) {</span>
+<a name="l675"><span class="ln">675  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l676"><span class="ln">676  </span></a><span class="s0">//                dP[k * 4 + 1] = term1 * dB[k * 4 + 1];</span>
+<a name="l677"><span class="ln">677  </span></a><span class="s0">//            }</span>
+<a name="l678"><span class="ln">678  </span></a><span class="s0">//            double term2 = eAt * (1 + B) * dA[1] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + 1];</span>
+<a name="l679"><span class="ln">679  </span></a><span class="s0">//            dG2[1] = dA[1] - 2 * (G1 * (dA[1] * (1 - B) - dB[model * 4 + 1] * A) - (1 - B) * term2 * A) / (G1 * G1);</span>
+<a name="l680"><span class="ln">680  </span></a><span class="s0">//            dP[model * 4 + 1] = (1 - dG2[1]) / (2 * lambda);</span>
+<a name="l681"><span class="ln">681  </span></a><span class="s0">//        }</span>
+<a name="l682"><span class="ln">682  </span></a><span class="s0">//</span>
+<a name="l683"><span class="ln">683  </span></a><span class="s0">//        if (gradientFlags[2]) {</span>
+<a name="l684"><span class="ln">684  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l685"><span class="ln">685  </span></a><span class="s0">//                dP[k * 4 + 2] = term1 * dB[k * 4 + 2];</span>
+<a name="l686"><span class="ln">686  </span></a><span class="s0">//            }</span>
+<a name="l687"><span class="ln">687  </span></a><span class="s0">//            double term2 = eAt * (1 + B) * dA[2] * (t - intervalStart) + (eAt - 1) * dB[model * 4 + 2];</span>
+<a name="l688"><span class="ln">688  </span></a><span class="s0">//            dG2[2] = dA[2] - 2 * (G1 * (dA[2] * (1 - B) - dB[model * 4 + 2] * A) - (1 - B) * term2 * A) / (G1 * G1);</span>
+<a name="l689"><span class="ln">689  </span></a><span class="s0">//            dP[model * 4 + 2] = (1 - dG2[2]) / (2 * lambda);</span>
+<a name="l690"><span class="ln">690  </span></a><span class="s0">//        }</span>
+<a name="l691"><span class="ln">691  </span></a><span class="s0">//</span>
+<a name="l692"><span class="ln">692  </span></a><span class="s0">//        if (gradientFlags[3]) {</span>
+<a name="l693"><span class="ln">693  </span></a><span class="s0">//            for (int k = 0; k  &lt; model; k ++) {</span>
+<a name="l694"><span class="ln">694  </span></a><span class="s0">//                dP[k * 4 + 3] = term1 * dB[k * 4 + 3];</span>
+<a name="l695"><span class="ln">695  </span></a><span class="s0">//            }</span>
+<a name="l696"><span class="ln">696  </span></a><span class="s0">//            dP[model * 4 + 3] = -A / lambda * ((1 - B) * (eAt - 1) + G1) * dB[model * 4 + 3] / (G1 * G1);</span>
+<a name="l697"><span class="ln">697  </span></a><span class="s0">//        }</span>
+<a name="l698"><span class="ln">698  </span></a>    }
+<a name="l699"><span class="ln">699  </span></a>
+<a name="l700"><span class="ln">700  </span></a>    <span class="s2">private void </span>dQCompute(<span class="s2">int </span>model, <span class="s2">double </span>t, <span class="s2">double</span>[] dQ) {
+<a name="l701"><span class="ln">701  </span></a>
+<a name="l702"><span class="ln">702  </span></a>        <span class="s2">double </span>eAt = Math.exp(A * (t - modelStartTimes[model]));
+<a name="l703"><span class="ln">703  </span></a>        dQCompute(model, t, dQ, eAt);
+<a name="l704"><span class="ln">704  </span></a>    }
+<a name="l705"><span class="ln">705  </span></a>
+<a name="l706"><span class="ln">706  </span></a>    <span class="s2">void </span>dQCompute(<span class="s2">int </span>model, <span class="s2">double </span>t, <span class="s2">double</span>[] dQ, <span class="s2">double </span>eAt) {
+<a name="l707"><span class="ln">707  </span></a>
+<a name="l708"><span class="ln">708  </span></a>        <span class="s2">double </span>dwell = t - modelStartTimes[model];
+<a name="l709"><span class="ln">709  </span></a>        <span class="s2">double </span>G1 = g1(eAt);
+<a name="l710"><span class="ln">710  </span></a>
+<a name="l711"><span class="ln">711  </span></a>        <span class="s2">double </span>term1 = <span class="s4">8 </span>* eAt;
+<a name="l712"><span class="ln">712  </span></a>        <span class="s2">double </span>term2 = G1 / <span class="s4">2 </span>- eAt * (<span class="s4">1 </span>+ B);
+<a name="l713"><span class="ln">713  </span></a>        <span class="s2">double </span>term3 = eAt - <span class="s4">1</span>;
+<a name="l714"><span class="ln">714  </span></a>        <span class="s2">double </span>term4 = G1 * G1 * G1;
+<a name="l715"><span class="ln">715  </span></a>        <span class="s2">double </span>term5 = -term1 * term3 / term4;
+<a name="l716"><span class="ln">716  </span></a>
+<a name="l717"><span class="ln">717  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt; model; ++k) {
+<a name="l718"><span class="ln">718  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; ++p) {
+<a name="l719"><span class="ln">719  </span></a>                dQ[k * <span class="s4">4 </span>+ p] = term5 * dB[k * <span class="s4">4 </span>+ p];
+<a name="l720"><span class="ln">720  </span></a>            }
+<a name="l721"><span class="ln">721  </span></a>        }
+<a name="l722"><span class="ln">722  </span></a>
+<a name="l723"><span class="ln">723  </span></a>        <span class="s2">double </span>term6 = term1 / term4;
+<a name="l724"><span class="ln">724  </span></a>        <span class="s2">double </span>term7 = dwell * term2;
+<a name="l725"><span class="ln">725  </span></a>
+<a name="l726"><span class="ln">726  </span></a>        dQ[model * <span class="s4">4 </span>+ <span class="s4">0</span>] = term6 * (dA[<span class="s4">0</span>] * term7 - dB[model * <span class="s4">4 </span>+ <span class="s4">0</span>] * term3);
+<a name="l727"><span class="ln">727  </span></a>        dQ[model * <span class="s4">4 </span>+ <span class="s4">1</span>] = term6 * (dA[<span class="s4">1</span>] * term7 - dB[model * <span class="s4">4 </span>+ <span class="s4">1</span>] * term3);
+<a name="l728"><span class="ln">728  </span></a>        dQ[model * <span class="s4">4 </span>+ <span class="s4">2</span>] = term6 * (dA[<span class="s4">2</span>] * term7 - dB[model * <span class="s4">4 </span>+ <span class="s4">2</span>] * term3);
+<a name="l729"><span class="ln">729  </span></a>        dQ[model * <span class="s4">4 </span>+ <span class="s4">3</span>] = term5 * dB[model * <span class="s4">4 </span>+ <span class="s4">3</span>];
+<a name="l730"><span class="ln">730  </span></a>
+<a name="l731"><span class="ln">731  </span></a><span class="s0">//        for (int p = 0; p &lt; 4; ++p) {</span>
+<a name="l732"><span class="ln">732  </span></a><span class="s0">//            if (gradientFlags[p]) {</span>
+<a name="l733"><span class="ln">733  </span></a><span class="s0">//                for (int k = 0; k &lt; model; ++k) {</span>
+<a name="l734"><span class="ln">734  </span></a><span class="s0">//                    dQ[k * 4 + p] = term5 * dB[k * 4 + p];</span>
+<a name="l735"><span class="ln">735  </span></a><span class="s0">//                }</span>
+<a name="l736"><span class="ln">736  </span></a><span class="s0">//                switch (p) {</span>
+<a name="l737"><span class="ln">737  </span></a><span class="s0">//                    case 0:</span>
+<a name="l738"><span class="ln">738  </span></a><span class="s0">//                    case 1:</span>
+<a name="l739"><span class="ln">739  </span></a><span class="s0">//                    case 2:</span>
+<a name="l740"><span class="ln">740  </span></a><span class="s0">//                        dQ[model * 4 + p] = term6 * (dA[p] * term7 - dB[model * 4 + p] * term3);</span>
+<a name="l741"><span class="ln">741  </span></a><span class="s0">//                        break;</span>
+<a name="l742"><span class="ln">742  </span></a><span class="s0">//                    case 3:</span>
+<a name="l743"><span class="ln">743  </span></a><span class="s0">//                        dQ[model * 4 + p] = term5 * dB[model * 4 + p];</span>
+<a name="l744"><span class="ln">744  </span></a><span class="s0">//                        break;</span>
+<a name="l745"><span class="ln">745  </span></a><span class="s0">//                }</span>
+<a name="l746"><span class="ln">746  </span></a><span class="s0">//            }</span>
+<a name="l747"><span class="ln">747  </span></a><span class="s0">//        }</span>
+<a name="l748"><span class="ln">748  </span></a>
+<a name="l749"><span class="ln">749  </span></a><span class="s0">//        for (int p = 0; p &lt; 3; ++p) {</span>
+<a name="l750"><span class="ln">750  </span></a><span class="s0">//            if (gradientFlags[p]) {</span>
+<a name="l751"><span class="ln">751  </span></a><span class="s0">//                for (int k = 0; k &lt; model; ++k) {</span>
+<a name="l752"><span class="ln">752  </span></a><span class="s0">//                    dQ[k * 4 + p] = term5 * dB[k * 4 + p];</span>
+<a name="l753"><span class="ln">753  </span></a><span class="s0">//                }</span>
+<a name="l754"><span class="ln">754  </span></a><span class="s0">//                dQ[model * 4 + p] = term6 * (dA[p] * term7 - dB[model * 4 + p] * term3);</span>
+<a name="l755"><span class="ln">755  </span></a><span class="s0">//            }</span>
+<a name="l756"><span class="ln">756  </span></a><span class="s0">//        }</span>
+<a name="l757"><span class="ln">757  </span></a><span class="s0">//</span>
+<a name="l758"><span class="ln">758  </span></a><span class="s0">//        if (gradientFlags[3]) {</span>
+<a name="l759"><span class="ln">759  </span></a><span class="s0">//            for (int k = 0; k &lt; model; ++k) {</span>
+<a name="l760"><span class="ln">760  </span></a><span class="s0">//                dQ[k * 4 + 3] = term5 * dB[k * 4 + 3];</span>
+<a name="l761"><span class="ln">761  </span></a><span class="s0">//            }</span>
+<a name="l762"><span class="ln">762  </span></a><span class="s0">//            dQ[model * 4 + 3] = term5 * dB[model * 4 + 3];</span>
+<a name="l763"><span class="ln">763  </span></a><span class="s0">//        }</span>
+<a name="l764"><span class="ln">764  </span></a>
+<a name="l765"><span class="ln">765  </span></a>
+<a name="l766"><span class="ln">766  </span></a>
+<a name="l767"><span class="ln">767  </span></a>    }
+<a name="l768"><span class="ln">768  </span></a>
+<a name="l769"><span class="ln">769  </span></a>    @Override
+<a name="l770"><span class="ln">770  </span></a>    <span class="s2">public void </span>precomputeGradientConstants() {
+<a name="l771"><span class="ln">771  </span></a>
+<a name="l772"><span class="ln">772  </span></a>        <span class="s2">this</span>.savedQ = Double.NaN;
+<a name="l773"><span class="ln">773  </span></a>        <span class="s2">this</span>.partialQKnown = <span class="s2">false</span>;
+<a name="l774"><span class="ln">774  </span></a>    }
+<a name="l775"><span class="ln">775  </span></a>
+<a name="l776"><span class="ln">776  </span></a>    <span class="s2">public void </span>processGradientModelSegmentBreakPoint(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment,
+<a name="l777"><span class="ln">777  </span></a>                                                      <span class="s2">double </span>intervalStart, <span class="s2">double </span>intervalEnd, <span class="s2">int </span>nLineages) {
+<a name="l778"><span class="ln">778  </span></a>        <span class="s2">double </span>qStart;
+<a name="l779"><span class="ln">779  </span></a>        <span class="s2">if </span>(eAt_Old == <span class="s4">0</span>) {
+<a name="l780"><span class="ln">780  </span></a>            qStart = q(currentModelSegment, intervalStart);
+<a name="l781"><span class="ln">781  </span></a>        } <span class="s2">else </span>{
+<a name="l782"><span class="ln">782  </span></a>            qStart = q(eAt_Old);
+<a name="l783"><span class="ln">783  </span></a>        }
+<a name="l784"><span class="ln">784  </span></a>
+<a name="l785"><span class="ln">785  </span></a>        <span class="s0">/*        double qStart = q(currentModelSegment, intervalStart);*/</span>
+<a name="l786"><span class="ln">786  </span></a>        <span class="s2">double </span>qEnd = q(currentModelSegment, intervalEnd);
+<a name="l787"><span class="ln">787  </span></a>
+<a name="l788"><span class="ln">788  </span></a>        dQCompute(currentModelSegment, intervalStart, dQStart);
+<a name="l789"><span class="ln">789  </span></a>        dQCompute(currentModelSegment, intervalEnd, dQEnd, eAt_End);
+<a name="l790"><span class="ln">790  </span></a>
+<a name="l791"><span class="ln">791  </span></a><span class="s0">//        for (int k = 0; k &lt;= currentModelSegment; ++k) {</span>
+<a name="l792"><span class="ln">792  </span></a><span class="s0">//            for (int p = 0; p &lt; 4; ++p) {</span>
+<a name="l793"><span class="ln">793  </span></a><span class="s0">//                gradient[genericIndex(k, p, numIntervals)] += nLineages *</span>
+<a name="l794"><span class="ln">794  </span></a><span class="s0">//                        (dQEnd[k * 4 + p] / qEnd - dQStart[k * 4 + p] / qStart);</span>
+<a name="l795"><span class="ln">795  </span></a><span class="s0">//            }</span>
+<a name="l796"><span class="ln">796  </span></a><span class="s0">//        }</span>
+<a name="l797"><span class="ln">797  </span></a>
+<a name="l798"><span class="ln">798  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; ++p) {
+<a name="l799"><span class="ln">799  </span></a>            <span class="s2">if </span>(gradientFlags[p]) {
+<a name="l800"><span class="ln">800  </span></a>                <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt;= currentModelSegment; k++) {
+<a name="l801"><span class="ln">801  </span></a>                    gradient[genericIndex(k, p, numIntervals)] += nLineages *
+<a name="l802"><span class="ln">802  </span></a>                            (dQEnd[k * <span class="s4">4 </span>+ p] / qEnd - dQStart[k * <span class="s4">4 </span>+ p] / qStart);
+<a name="l803"><span class="ln">803  </span></a>                }
+<a name="l804"><span class="ln">804  </span></a>            }
+<a name="l805"><span class="ln">805  </span></a>        }
+<a name="l806"><span class="ln">806  </span></a>
+<a name="l807"><span class="ln">807  </span></a>        <span class="s2">if </span>( samplingProbability.getValue(currentModelSegment + <span class="s4">1</span>) &gt; <span class="s4">0.0 </span>&amp;&amp; samplingProbability.getValue(currentModelSegment + <span class="s4">1</span>) &lt; <span class="s4">1.0</span>) {
+<a name="l808"><span class="ln">808  </span></a>            <span class="s0">// Add in probability of un-sampled lineages</span>
+<a name="l809"><span class="ln">809  </span></a>            <span class="s0">// We don't need this at t=0 because all lineages in the tree are sampled</span>
+<a name="l810"><span class="ln">810  </span></a>            <span class="s0">// TODO: check if we're right about how many lineages are actually alive at this time. Are we inadvertently over-counting or under-counting due to samples added at this _exact_ time?</span>
+<a name="l811"><span class="ln">811  </span></a>            gradient[fractionIndex(currentModelSegment+<span class="s4">1</span>, numIntervals)] -= nLineages / (<span class="s4">1.0 </span>- samplingProbability.getValue(currentModelSegment + <span class="s4">1</span>));
+<a name="l812"><span class="ln">812  </span></a>        }
+<a name="l813"><span class="ln">813  </span></a>    }
+<a name="l814"><span class="ln">814  </span></a>
+<a name="l815"><span class="ln">815  </span></a>    @Override
+<a name="l816"><span class="ln">816  </span></a>    <span class="s2">public void </span>processGradientInterval(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment,
+<a name="l817"><span class="ln">817  </span></a>                                        <span class="s2">double </span>intervalStart, <span class="s2">double </span>intervalEnd, <span class="s2">int </span>nLineages) {
+<a name="l818"><span class="ln">818  </span></a>
+<a name="l819"><span class="ln">819  </span></a>        <span class="s2">double</span>[] partialQ_all_old = temp44;
+<a name="l820"><span class="ln">820  </span></a>
+<a name="l821"><span class="ln">821  </span></a>        eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
+<a name="l822"><span class="ln">822  </span></a>        <span class="s0">// dQCompute(currentModelSegment, intervalEnd, partialQ_all_old);</span>
+<a name="l823"><span class="ln">823  </span></a>        dQCompute(currentModelSegment, intervalEnd, partialQ_all_old, eAt_Old);
+<a name="l824"><span class="ln">824  </span></a>
+<a name="l825"><span class="ln">825  </span></a>        <span class="s2">double</span>[] partialQ_all_young;
+<a name="l826"><span class="ln">826  </span></a>        <span class="s0">// double Q_Old = q(currentModelSegment, intervalEnd);</span>
+<a name="l827"><span class="ln">827  </span></a>        <span class="s2">double </span>Q_Old = q(eAt_Old);
+<a name="l828"><span class="ln">828  </span></a>        <span class="s2">double </span>Q_young;
+<a name="l829"><span class="ln">829  </span></a>        <span class="s2">if </span>(!Double.isNaN(<span class="s2">this</span>.savedQ)) {
+<a name="l830"><span class="ln">830  </span></a>            Q_young = <span class="s2">this</span>.savedQ;
+<a name="l831"><span class="ln">831  </span></a>        } <span class="s2">else </span>{
+<a name="l832"><span class="ln">832  </span></a>            Q_young = q(currentModelSegment, intervalStart);
+<a name="l833"><span class="ln">833  </span></a>        }
+<a name="l834"><span class="ln">834  </span></a>        <span class="s2">this</span>.savedQ = Q_Old;
+<a name="l835"><span class="ln">835  </span></a>
+<a name="l836"><span class="ln">836  </span></a>        <span class="s2">if </span>(partialQKnown) {
+<a name="l837"><span class="ln">837  </span></a>            <span class="s0">// Only need 1 copy + 1 swap (instead of 2 copies)</span>
+<a name="l838"><span class="ln">838  </span></a>            <span class="s2">double</span>[] tmp = partialQ;
+<a name="l839"><span class="ln">839  </span></a>            partialQ = temp33;
+<a name="l840"><span class="ln">840  </span></a>            temp33 = tmp;
+<a name="l841"><span class="ln">841  </span></a>
+<a name="l842"><span class="ln">842  </span></a>            partialQ_all_young = temp33;
+<a name="l843"><span class="ln">843  </span></a><span class="s0">//            System.arraycopy(partialQ, 0, partialQ_all_young, 0, 4 * (currentModelSegment + 1));</span>
+<a name="l844"><span class="ln">844  </span></a>        } <span class="s2">else </span>{
+<a name="l845"><span class="ln">845  </span></a>            partialQ_all_young = temp33;
+<a name="l846"><span class="ln">846  </span></a>            dQCompute(currentModelSegment, intervalStart, partialQ_all_young);
+<a name="l847"><span class="ln">847  </span></a>            partialQKnown = <span class="s2">true</span>;
+<a name="l848"><span class="ln">848  </span></a>        }
+<a name="l849"><span class="ln">849  </span></a>        System.arraycopy(partialQ_all_old, <span class="s4">0</span>, partialQ, <span class="s4">0</span>, <span class="s4">4 </span>* (currentModelSegment + <span class="s4">1</span>));
+<a name="l850"><span class="ln">850  </span></a>
+<a name="l851"><span class="ln">851  </span></a><span class="s0">//        for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l852"><span class="ln">852  </span></a><span class="s0">//            for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l853"><span class="ln">853  </span></a><span class="s0">//                gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);</span>
+<a name="l854"><span class="ln">854  </span></a><span class="s0">//            }</span>
+<a name="l855"><span class="ln">855  </span></a><span class="s0">//        }</span>
+<a name="l856"><span class="ln">856  </span></a>
+<a name="l857"><span class="ln">857  </span></a><span class="s0">//        for (int p = 0; p &lt; 4; ++p) {</span>
+<a name="l858"><span class="ln">858  </span></a><span class="s0">//            if (gradientFlags[p]) {</span>
+<a name="l859"><span class="ln">859  </span></a><span class="s0">//                for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l860"><span class="ln">860  </span></a><span class="s0">//                    gradient[k * 5 + p] += nLineages * (partialQ_all_old[k * 4 + p] / Q_Old - partialQ_all_young[k * 4 + p] / Q_young);</span>
+<a name="l861"><span class="ln">861  </span></a><span class="s0">//                }</span>
+<a name="l862"><span class="ln">862  </span></a><span class="s0">//            }</span>
+<a name="l863"><span class="ln">863  </span></a><span class="s0">//        }</span>
+<a name="l864"><span class="ln">864  </span></a>
+<a name="l865"><span class="ln">865  </span></a>        accumulateGradientForInterval(gradient, currentModelSegment, nLineages,
+<a name="l866"><span class="ln">866  </span></a>                partialQ_all_old, Q_Old, partialQ_all_young, Q_young);
+<a name="l867"><span class="ln">867  </span></a>    }
+<a name="l868"><span class="ln">868  </span></a>
+<a name="l869"><span class="ln">869  </span></a>    <span class="s2">void </span>accumulateGradientForInterval(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">int </span>nLineages,
+<a name="l870"><span class="ln">870  </span></a>                                       <span class="s2">double</span>[] partialQ_all_old, <span class="s2">double </span>Q_Old,
+<a name="l871"><span class="ln">871  </span></a>                                       <span class="s2">double</span>[] partialQ_all_young, <span class="s2">double </span>Q_young) {
+<a name="l872"><span class="ln">872  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt;= currentModelSegment; k++) {
+<a name="l873"><span class="ln">873  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; ++p) {
+<a name="l874"><span class="ln">874  </span></a>                gradient[k * <span class="s4">5 </span>+ p] += nLineages * (partialQ_all_old[k * <span class="s4">4 </span>+ p] / Q_Old
+<a name="l875"><span class="ln">875  </span></a>                        - partialQ_all_young[k * <span class="s4">4 </span>+ p] / Q_young);
+<a name="l876"><span class="ln">876  </span></a>            }
+<a name="l877"><span class="ln">877  </span></a>        }
+<a name="l878"><span class="ln">878  </span></a>    }
+<a name="l879"><span class="ln">879  </span></a>
+<a name="l880"><span class="ln">880  </span></a>    <span class="s2">void </span>accumulateGradientForSerialSampling(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">double </span>term1,
+<a name="l881"><span class="ln">881  </span></a>                                       <span class="s2">double</span>[] intermediate) {
+<a name="l882"><span class="ln">882  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt;= currentModelSegment; k++) {
+<a name="l883"><span class="ln">883  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; ++p) {
+<a name="l884"><span class="ln">884  </span></a>                gradient[k * <span class="s4">5 </span>+ p] += term1 * intermediate[k * <span class="s4">4 </span>+ p];
+<a name="l885"><span class="ln">885  </span></a>            }
+<a name="l886"><span class="ln">886  </span></a>        }
+<a name="l887"><span class="ln">887  </span></a>    }
+<a name="l888"><span class="ln">888  </span></a>
+<a name="l889"><span class="ln">889  </span></a>    <span class="s2">void </span>accumulateGradientForIntensiveSampling(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">double </span>term1,
+<a name="l890"><span class="ln">890  </span></a>                                             <span class="s2">double</span>[] intermediate) {
+<a name="l891"><span class="ln">891  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt; currentModelSegment; k++) {
+<a name="l892"><span class="ln">892  </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; ++p) {
+<a name="l893"><span class="ln">893  </span></a>                gradient[k * <span class="s4">5 </span>+ p] += term1 * intermediate[k * <span class="s4">4 </span>+ p];
+<a name="l894"><span class="ln">894  </span></a>            }
+<a name="l895"><span class="ln">895  </span></a>        }
+<a name="l896"><span class="ln">896  </span></a>    }
+<a name="l897"><span class="ln">897  </span></a>
+<a name="l898"><span class="ln">898  </span></a>    <span class="s2">void </span>accumulateGradientForOrigin(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment,
+<a name="l899"><span class="ln">899  </span></a>                                       <span class="s2">double</span>[] dQEnd, <span class="s2">double </span>qOrigin,
+<a name="l900"><span class="ln">900  </span></a>                                       <span class="s2">double</span>[] dQStart, <span class="s2">double </span>qIntervalStart) {
+<a name="l901"><span class="ln">901  </span></a>        <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; p++) {
+<a name="l902"><span class="ln">902  </span></a>                <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt;= currentModelSegment; k++) {
+<a name="l903"><span class="ln">903  </span></a>                    gradient[genericIndex(k, p, numIntervals)] += dQEnd[k * <span class="s4">4 </span>+ p] / qOrigin - dQStart[k * <span class="s4">4 </span>+ p] / qIntervalStart;
+<a name="l904"><span class="ln">904  </span></a>                }
+<a name="l905"><span class="ln">905  </span></a>        }
+<a name="l906"><span class="ln">906  </span></a>    }
+<a name="l907"><span class="ln">907  </span></a>
+<a name="l908"><span class="ln">908  </span></a>    @Override
+<a name="l909"><span class="ln">909  </span></a>    <span class="s2">public void </span>processGradientSampling(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">double </span>intervalEnd) {
+<a name="l910"><span class="ln">910  </span></a>
+<a name="l911"><span class="ln">911  </span></a>        <span class="s0">//boolean sampleIsAtPresent = intervalEnd &lt;= 0;</span>
+<a name="l912"><span class="ln">912  </span></a>        <span class="s0">//boolean samplesTakenAtPresent = rho0 &gt; 0;</span>
+<a name="l913"><span class="ln">913  </span></a>
+<a name="l914"><span class="ln">914  </span></a>        <span class="s0">//TODO: need to confirm intensive sampling case is correct</span>
+<a name="l915"><span class="ln">915  </span></a>        <span class="s2">boolean </span>sampleIsAtEventTime = intervalEnd == modelStartTimes[currentModelSegment];
+<a name="l916"><span class="ln">916  </span></a>        <span class="s2">boolean </span>samplesTakenAtEventTime = rho &gt; <span class="s4">0</span>;
+<a name="l917"><span class="ln">917  </span></a>
+<a name="l918"><span class="ln">918  </span></a>        <span class="s0">//if (sampleIsAtPresent &amp;&amp; samplesTakenAtPresent) {</span>
+<a name="l919"><span class="ln">919  </span></a>            <span class="s0">//gradient[fractionIndex(0, numIntervals)] += 1 / rho;</span>
+<a name="l920"><span class="ln">920  </span></a>        <span class="s2">if </span>(sampleIsAtEventTime &amp;&amp; samplesTakenAtEventTime) {
+<a name="l921"><span class="ln">921  </span></a>            gradient[fractionIndex(currentModelSegment, numIntervals)] += <span class="s4">1 </span>/ rho; <span class="s0">// TODO Need to test!</span>
+<a name="l922"><span class="ln">922  </span></a>        } <span class="s2">else </span>{
+<a name="l923"><span class="ln">923  </span></a>            gradient[samplingIndex(currentModelSegment, numIntervals)] += <span class="s4">1 </span>/ psi;
+<a name="l924"><span class="ln">924  </span></a>        }
+<a name="l925"><span class="ln">925  </span></a>
+<a name="l926"><span class="ln">926  </span></a>        <span class="s2">if </span>(!sampleIsAtEventTime ) {
+<a name="l927"><span class="ln">927  </span></a>            <span class="s0">//double p_it = p(currentModelSegment, intervalEnd);</span>
+<a name="l928"><span class="ln">928  </span></a>            <span class="s2">if </span>(intervalEnd == modelStartTimes[currentModelSegment]) {
+<a name="l929"><span class="ln">929  </span></a>                eAt_Old = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));
+<a name="l930"><span class="ln">930  </span></a>            }
+<a name="l931"><span class="ln">931  </span></a>
+<a name="l932"><span class="ln">932  </span></a>            <span class="s2">double </span>p_it = p(eAt_Old);
+<a name="l933"><span class="ln">933  </span></a>
+<a name="l934"><span class="ln">934  </span></a>            gradient[treatmentIndex(currentModelSegment, numIntervals)] +=  (<span class="s4">1 </span>- p_it) / ((<span class="s4">1 </span>- r) * p_it + r);
+<a name="l935"><span class="ln">935  </span></a>
+<a name="l936"><span class="ln">936  </span></a>            <span class="s0">// double eAt = Math.exp(A * (intervalEnd - modelStartTimes[currentModelSegment]));</span>
+<a name="l937"><span class="ln">937  </span></a>
+<a name="l938"><span class="ln">938  </span></a>            dPCompute(currentModelSegment, intervalEnd, modelStartTimes[currentModelSegment], eAt_Old, dPIntervalEnd, dG2);
+<a name="l939"><span class="ln">939  </span></a>
+<a name="l940"><span class="ln">940  </span></a>            <span class="s2">double </span>term1 = (<span class="s4">1 </span>- r) / ((<span class="s4">1 </span>- r) * p_it + r);
+<a name="l941"><span class="ln">941  </span></a>
+<a name="l942"><span class="ln">942  </span></a><span class="s0">//            for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l943"><span class="ln">943  </span></a><span class="s0">//                gradient[birthIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 0];</span>
+<a name="l944"><span class="ln">944  </span></a><span class="s0">//                gradient[deathIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 1];</span>
+<a name="l945"><span class="ln">945  </span></a><span class="s0">//                gradient[samplingIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 2];</span>
+<a name="l946"><span class="ln">946  </span></a><span class="s0">//                gradient[fractionIndex(k, numIntervals)] += term1 * dPIntervalEnd[k * 4 + 3];</span>
+<a name="l947"><span class="ln">947  </span></a><span class="s0">//            }</span>
+<a name="l948"><span class="ln">948  </span></a>
+<a name="l949"><span class="ln">949  </span></a><span class="s0">//            for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l950"><span class="ln">950  </span></a><span class="s0">//                if (gradientFlags[p]) {</span>
+<a name="l951"><span class="ln">951  </span></a><span class="s0">//                    for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l952"><span class="ln">952  </span></a><span class="s0">//                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPIntervalEnd[k * 4 + p];</span>
+<a name="l953"><span class="ln">953  </span></a><span class="s0">//                    }</span>
+<a name="l954"><span class="ln">954  </span></a><span class="s0">//                }</span>
+<a name="l955"><span class="ln">955  </span></a><span class="s0">//            }</span>
+<a name="l956"><span class="ln">956  </span></a>
+<a name="l957"><span class="ln">957  </span></a>            accumulateGradientForSerialSampling(gradient, currentModelSegment, term1, dPIntervalEnd);
+<a name="l958"><span class="ln">958  </span></a>        }
+<a name="l959"><span class="ln">959  </span></a>
+<a name="l960"><span class="ln">960  </span></a>        <span class="s2">if </span>(sampleIsAtEventTime &amp;&amp; currentModelSegment &gt; <span class="s4">0</span>) {
+<a name="l961"><span class="ln">961  </span></a>
+<a name="l962"><span class="ln">962  </span></a>            gradient[treatmentIndex(currentModelSegment, numIntervals)] +=  (<span class="s4">1 </span>- previousP) / ((<span class="s4">1 </span>- r) * previousP + r);
+<a name="l963"><span class="ln">963  </span></a>
+<a name="l964"><span class="ln">964  </span></a>            <span class="s2">double </span>term1 = (<span class="s4">1 </span>- r) / ((<span class="s4">1 </span>- r) * previousP + r);
+<a name="l965"><span class="ln">965  </span></a>
+<a name="l966"><span class="ln">966  </span></a>
+<a name="l967"><span class="ln">967  </span></a><span class="s0">//            for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l968"><span class="ln">968  </span></a><span class="s0">//                if (gradientFlags[p]) {</span>
+<a name="l969"><span class="ln">969  </span></a><span class="s0">//                    for (int k = 0; k &lt; currentModelSegment; k++) {</span>
+<a name="l970"><span class="ln">970  </span></a><span class="s0">//                        gradient[genericIndex(k, p, numIntervals)] += term1 * dPModelEnd_prev[k * 4 + p];</span>
+<a name="l971"><span class="ln">971  </span></a><span class="s0">//                    }</span>
+<a name="l972"><span class="ln">972  </span></a><span class="s0">//                }</span>
+<a name="l973"><span class="ln">973  </span></a><span class="s0">//            }</span>
+<a name="l974"><span class="ln">974  </span></a>
+<a name="l975"><span class="ln">975  </span></a>            accumulateGradientForIntensiveSampling(gradient, currentModelSegment, term1, dPModelEnd_prev);
+<a name="l976"><span class="ln">976  </span></a>        }
+<a name="l977"><span class="ln">977  </span></a>    }
+<a name="l978"><span class="ln">978  </span></a>
+<a name="l979"><span class="ln">979  </span></a>    @Override
+<a name="l980"><span class="ln">980  </span></a>    <span class="s2">public void </span>processGradientCoalescence(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">double </span>intervalEnd) {
+<a name="l981"><span class="ln">981  </span></a>        gradient[birthIndex(currentModelSegment, numIntervals)] += <span class="s4">1 </span>/ lambda;
+<a name="l982"><span class="ln">982  </span></a>    }
+<a name="l983"><span class="ln">983  </span></a>
+<a name="l984"><span class="ln">984  </span></a>    @Override
+<a name="l985"><span class="ln">985  </span></a>    <span class="s2">public void </span>processGradientOrigin(<span class="s2">double</span>[] gradient, <span class="s2">int </span>currentModelSegment, <span class="s2">double </span>totalDuration) {
+<a name="l986"><span class="ln">986  </span></a>
+<a name="l987"><span class="ln">987  </span></a>        <span class="s2">double </span>origin = originTime.getValue(<span class="s4">0</span>);
+<a name="l988"><span class="ln">988  </span></a>
+<a name="l989"><span class="ln">989  </span></a>        <span class="s2">double</span>[] modelBreakPoints = getBreakPoints();
+<a name="l990"><span class="ln">990  </span></a>
+<a name="l991"><span class="ln">991  </span></a>        <span class="s2">double </span>intervalStart = totalDuration;
+<a name="l992"><span class="ln">992  </span></a>
+<a name="l993"><span class="ln">993  </span></a>        <span class="s2">while </span>(origin &gt;= modelBreakPoints[currentModelSegment]) { <span class="s0">// TODO Maybe it's &gt;= ?</span>
+<a name="l994"><span class="ln">994  </span></a>            <span class="s2">final double </span>segmentIntervalEnd = modelBreakPoints[currentModelSegment];
+<a name="l995"><span class="ln">995  </span></a>            processGradientModelSegmentBreakPoint(gradient, currentModelSegment, intervalStart, segmentIntervalEnd, <span class="s4">1</span>);
+<a name="l996"><span class="ln">996  </span></a>            intervalStart = segmentIntervalEnd;
+<a name="l997"><span class="ln">997  </span></a>            ++currentModelSegment;
+<a name="l998"><span class="ln">998  </span></a>            updateGradientModelValues(currentModelSegment);
+<a name="l999"><span class="ln">999  </span></a>        }
+<a name="l1000"><span class="ln">1000 </span></a>        <span class="s2">if </span>(intervalStart &lt; origin) {
+<a name="l1001"><span class="ln">1001 </span></a>            <span class="s2">double </span>qOrigin = q(currentModelSegment, origin);
+<a name="l1002"><span class="ln">1002 </span></a>            <span class="s2">double </span>qIntervalStart = q(currentModelSegment, intervalStart);
+<a name="l1003"><span class="ln">1003 </span></a>
+<a name="l1004"><span class="ln">1004 </span></a>            dQCompute(currentModelSegment, origin, dQEnd);
+<a name="l1005"><span class="ln">1005 </span></a>            dQCompute(currentModelSegment, intervalStart, dQStart);
+<a name="l1006"><span class="ln">1006 </span></a>
+<a name="l1007"><span class="ln">1007 </span></a><span class="s0">//            for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l1008"><span class="ln">1008 </span></a><span class="s0">//                gradient[birthIndex(k, numIntervals)] += dQEnd[k * 4 + 0] / qOrigin - dQStart[k * 4 + 0] / qIntervalStart;</span>
+<a name="l1009"><span class="ln">1009 </span></a><span class="s0">//                gradient[deathIndex(k, numIntervals)] += dQEnd[k * 4 + 1] / qOrigin - dQStart[k * 4 + 1] / qIntervalStart;</span>
+<a name="l1010"><span class="ln">1010 </span></a><span class="s0">//                gradient[samplingIndex(k, numIntervals)] += dQEnd[k * 4 + 2] / qOrigin - dQStart[k * 4 + 2] / qIntervalStart;</span>
+<a name="l1011"><span class="ln">1011 </span></a><span class="s0">//                gradient[fractionIndex(k, numIntervals)] += dQEnd[k * 4 + 3] / qOrigin - dQStart[k * 4 + 3] / qIntervalStart;</span>
+<a name="l1012"><span class="ln">1012 </span></a><span class="s0">//            }</span>
+<a name="l1013"><span class="ln">1013 </span></a><span class="s0">//            for (int p = 0; p &lt; 4; p++) {</span>
+<a name="l1014"><span class="ln">1014 </span></a><span class="s0">//                if (gradientFlags[p]) {</span>
+<a name="l1015"><span class="ln">1015 </span></a><span class="s0">//                    for (int k = 0; k &lt;= currentModelSegment; k++) {</span>
+<a name="l1016"><span class="ln">1016 </span></a><span class="s0">//                        gradient[genericIndex(k, p, numIntervals)] += dQEnd[k * 4 + p] / qOrigin - dQStart[k * 4 + p] / qIntervalStart;</span>
+<a name="l1017"><span class="ln">1017 </span></a><span class="s0">//                    }</span>
+<a name="l1018"><span class="ln">1018 </span></a><span class="s0">//                }</span>
+<a name="l1019"><span class="ln">1019 </span></a><span class="s0">//            }</span>
+<a name="l1020"><span class="ln">1020 </span></a>            accumulateGradientForOrigin(gradient, currentModelSegment, dQEnd,
+<a name="l1021"><span class="ln">1021 </span></a>                    qOrigin, dQStart, qIntervalStart);
+<a name="l1022"><span class="ln">1022 </span></a>        }
+<a name="l1023"><span class="ln">1023 </span></a>
+<a name="l1024"><span class="ln">1024 </span></a>
+<a name="l1025"><span class="ln">1025 </span></a>    }
+<a name="l1026"><span class="ln">1026 </span></a>
+<a name="l1027"><span class="ln">1027 </span></a>    @Override
+<a name="l1028"><span class="ln">1028 </span></a>    <span class="s2">public void </span>logConditioningProbability(<span class="s2">int </span>model, <span class="s2">double</span>[] gradient) {
+<a name="l1029"><span class="ln">1029 </span></a>        <span class="s2">double </span>grad = <span class="s4">0.0</span>;
+<a name="l1030"><span class="ln">1030 </span></a>        <span class="s2">double</span>[] dPOrigin = <span class="s2">new double</span>[numIntervals * <span class="s4">4</span>];
+<a name="l1031"><span class="ln">1031 </span></a>        <span class="s2">if </span>( conditionOnSurvival ) {
+<a name="l1032"><span class="ln">1032 </span></a>            <span class="s2">double </span>origin = originTime.getParameterValue(<span class="s4">0</span>);
+<a name="l1033"><span class="ln">1033 </span></a>            <span class="s2">double</span>[] modelBreakPoints = getBreakPoints();
+<a name="l1034"><span class="ln">1034 </span></a>            <span class="s2">double </span>intervalStart = model &gt; <span class="s4">0</span>? modelBreakPoints[model-<span class="s4">1</span>]:<span class="s4">0</span>;
+<a name="l1035"><span class="ln">1035 </span></a>            <span class="s2">double </span>segmentIntervalEnd = modelBreakPoints[model];
+<a name="l1036"><span class="ln">1036 </span></a>
+<a name="l1037"><span class="ln">1037 </span></a>            <span class="s2">while </span>(origin &gt;= segmentIntervalEnd) { <span class="s0">// TODO Maybe it's &gt;= ?</span>
+<a name="l1038"><span class="ln">1038 </span></a>                intervalStart = segmentIntervalEnd;
+<a name="l1039"><span class="ln">1039 </span></a>                ++model;
+<a name="l1040"><span class="ln">1040 </span></a>                updateGradientModelValues(model);
+<a name="l1041"><span class="ln">1041 </span></a>                segmentIntervalEnd = modelBreakPoints[model];
+<a name="l1042"><span class="ln">1042 </span></a>            }
+<a name="l1043"><span class="ln">1043 </span></a>            <span class="s2">double </span>eAt_Origin = Math.exp(A * (origin - intervalStart));
+<a name="l1044"><span class="ln">1044 </span></a>            grad += <span class="s4">1 </span>/(<span class="s4">1.0 </span>- p(eAt_Origin));
+<a name="l1045"><span class="ln">1045 </span></a>            dPCompute(model, origin, intervalStart, eAt_Origin, dPOrigin, dG2);
+<a name="l1046"><span class="ln">1046 </span></a>            <span class="s2">for </span>(<span class="s2">int </span>p = <span class="s4">0</span>; p &lt; <span class="s4">4</span>; p++) {
+<a name="l1047"><span class="ln">1047 </span></a>                <span class="s2">for </span>(<span class="s2">int </span>k = <span class="s4">0</span>; k &lt;= model; k++) {
+<a name="l1048"><span class="ln">1048 </span></a>                    gradient[genericIndex(k, p, numIntervals)] += grad * dPOrigin[k * <span class="s4">4 </span>+ p];
+<a name="l1049"><span class="ln">1049 </span></a>                }
+<a name="l1050"><span class="ln">1050 </span></a>            }
+<a name="l1051"><span class="ln">1051 </span></a>        }
+<a name="l1052"><span class="ln">1052 </span></a>    }
+<a name="l1053"><span class="ln">1053 </span></a>
+<a name="l1054"><span class="ln">1054 </span></a>    @Override
+<a name="l1055"><span class="ln">1055 </span></a>    <span class="s2">public int </span>getGradientLength() { <span class="s2">return </span><span class="s4">5 </span>* numIntervals; }
+<a name="l1056"><span class="ln">1056 </span></a>
+<a name="l1057"><span class="ln">1057 </span></a>    <span class="s2">private static final boolean </span>AOS = <span class="s2">true</span>;
+<a name="l1058"><span class="ln">1058 </span></a>
+<a name="l1059"><span class="ln">1059 </span></a>    <span class="s2">private static int </span>genericIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>p, <span class="s2">final int </span>stride) {
+<a name="l1060"><span class="ln">1060 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1061"><span class="ln">1061 </span></a>            <span class="s2">return </span>n * <span class="s4">5 </span>+ p;
+<a name="l1062"><span class="ln">1062 </span></a>        } <span class="s2">else </span>{
+<a name="l1063"><span class="ln">1063 </span></a>            <span class="s2">return </span>p * stride + n;
+<a name="l1064"><span class="ln">1064 </span></a>        }
+<a name="l1065"><span class="ln">1065 </span></a>    }
+<a name="l1066"><span class="ln">1066 </span></a>
+<a name="l1067"><span class="ln">1067 </span></a>    <span class="s2">private static int </span>birthIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>stride) {
+<a name="l1068"><span class="ln">1068 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1069"><span class="ln">1069 </span></a>            <span class="s2">return </span>n * <span class="s4">5</span>;
+<a name="l1070"><span class="ln">1070 </span></a>        } <span class="s2">else </span>{
+<a name="l1071"><span class="ln">1071 </span></a>            <span class="s2">return </span>n;
+<a name="l1072"><span class="ln">1072 </span></a>        }
+<a name="l1073"><span class="ln">1073 </span></a>    }
+<a name="l1074"><span class="ln">1074 </span></a>
+<a name="l1075"><span class="ln">1075 </span></a>    <span class="s2">private static int </span>deathIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>stride) {
+<a name="l1076"><span class="ln">1076 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1077"><span class="ln">1077 </span></a>            <span class="s2">return </span>n * <span class="s4">5 </span>+ <span class="s4">1</span>;
+<a name="l1078"><span class="ln">1078 </span></a>        } <span class="s2">else </span>{
+<a name="l1079"><span class="ln">1079 </span></a>            <span class="s2">return </span>stride + n;
+<a name="l1080"><span class="ln">1080 </span></a>        }
+<a name="l1081"><span class="ln">1081 </span></a>    }
+<a name="l1082"><span class="ln">1082 </span></a>
+<a name="l1083"><span class="ln">1083 </span></a>    <span class="s2">private static int </span>samplingIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>stride) {
+<a name="l1084"><span class="ln">1084 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1085"><span class="ln">1085 </span></a>            <span class="s2">return </span>n * <span class="s4">5 </span>+ <span class="s4">2</span>;
+<a name="l1086"><span class="ln">1086 </span></a>        } <span class="s2">else </span>{
+<a name="l1087"><span class="ln">1087 </span></a>            <span class="s2">return </span><span class="s4">2 </span>* stride + n;
+<a name="l1088"><span class="ln">1088 </span></a>        }
+<a name="l1089"><span class="ln">1089 </span></a>    }
+<a name="l1090"><span class="ln">1090 </span></a>
+<a name="l1091"><span class="ln">1091 </span></a>    <span class="s2">private static int </span>fractionIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>stride) {
+<a name="l1092"><span class="ln">1092 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1093"><span class="ln">1093 </span></a>            <span class="s2">return </span>n * <span class="s4">5 </span>+ <span class="s4">3</span>;
+<a name="l1094"><span class="ln">1094 </span></a>        } <span class="s2">else </span>{
+<a name="l1095"><span class="ln">1095 </span></a>            <span class="s2">return </span><span class="s4">3 </span>* stride + n;
+<a name="l1096"><span class="ln">1096 </span></a>        }
+<a name="l1097"><span class="ln">1097 </span></a>    }
+<a name="l1098"><span class="ln">1098 </span></a>
+<a name="l1099"><span class="ln">1099 </span></a>    <span class="s2">private static int </span>treatmentIndex(<span class="s2">final int </span>n, <span class="s2">final int </span>stride) {
+<a name="l1100"><span class="ln">1100 </span></a>        <span class="s2">if </span>(AOS) {
+<a name="l1101"><span class="ln">1101 </span></a>            <span class="s2">return </span>n * <span class="s4">5 </span>+ <span class="s4">4</span>;
+<a name="l1102"><span class="ln">1102 </span></a>        } <span class="s2">else </span>{
+<a name="l1103"><span class="ln">1103 </span></a>            <span class="s2">return </span><span class="s4">4 </span>* stride + n;
+<a name="l1104"><span class="ln">1104 </span></a>        }
+<a name="l1105"><span class="ln">1105 </span></a>    }
+<a name="l1106"><span class="ln">1106 </span></a>
+<a name="l1107"><span class="ln">1107 </span></a>    <span class="s2">private static void </span>swap(<span class="s2">double</span>[] array, <span class="s2">final int </span>i, <span class="s2">final int </span>j) {
+<a name="l1108"><span class="ln">1108 </span></a>        <span class="s2">double </span>tmp = array[i];
+<a name="l1109"><span class="ln">1109 </span></a>        array[i] = array[j];
+<a name="l1110"><span class="ln">1110 </span></a>        array[j] = tmp;
+<a name="l1111"><span class="ln">1111 </span></a>    }
+<a name="l1112"><span class="ln">1112 </span></a>
+<a name="l1113"><span class="ln">1113 </span></a>    <span class="s2">private static void </span>transpose(<span class="s2">double</span>[] array, <span class="s2">final int </span>majorDim, <span class="s2">final int </span>minorDim) { <span class="s0">// TODO untested</span>
+<a name="l1114"><span class="ln">1114 </span></a>        <span class="s2">int </span>oldIndex = <span class="s4">0</span>;
+<a name="l1115"><span class="ln">1115 </span></a>        <span class="s2">for </span>(<span class="s2">int </span>major = <span class="s4">0</span>; major &lt; majorDim; ++major) { <span class="s0">// TODO Not cache-friendly, see https://stackoverflow.com/questions/5200338/a-cache-efficient-matrix-transpose-program</span>
+<a name="l1116"><span class="ln">1116 </span></a>            <span class="s2">for </span>(<span class="s2">int </span>minor = major; minor &lt; minorDim; ++minor) {
+<a name="l1117"><span class="ln">1117 </span></a>                <span class="s2">final int </span>newIndex = minor * minorDim + majorDim;
+<a name="l1118"><span class="ln">1118 </span></a>                swap(array, newIndex, oldIndex);
+<a name="l1119"><span class="ln">1119 </span></a>                ++oldIndex;
+<a name="l1120"><span class="ln">1120 </span></a>            }
+<a name="l1121"><span class="ln">1121 </span></a>        }
+<a name="l1122"><span class="ln">1122 </span></a>    }
+<a name="l1123"><span class="ln">1123 </span></a>
+<a name="l1124"><span class="ln">1124 </span></a>    <span class="s0">// Some useful JVM flags: -XX:+PrintCompilation -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining</span>
+<a name="l1125"><span class="ln">1125 </span></a>
+<a name="l1126"><span class="ln">1126 </span></a>    <span class="s2">public abstract class </span>ParameterPack <span class="s2">implements </span>Iterable&lt;Parameter&gt; {
+<a name="l1127"><span class="ln">1127 </span></a>
+<a name="l1128"><span class="ln">1128 </span></a>        <span class="s2">public class </span>Constant <span class="s2">extends </span>ParameterPack {
+<a name="l1129"><span class="ln">1129 </span></a>
+<a name="l1130"><span class="ln">1130 </span></a>            <span class="s2">public </span>Constant(Parameter birthRate,
+<a name="l1131"><span class="ln">1131 </span></a>                            Parameter deathRate,
+<a name="l1132"><span class="ln">1132 </span></a>                            Parameter samplingRate,
+<a name="l1133"><span class="ln">1133 </span></a>                            Parameter samplingProbability,
+<a name="l1134"><span class="ln">1134 </span></a>                            Parameter treatmentProbability,
+<a name="l1135"><span class="ln">1135 </span></a>                            Parameter originTime) {
+<a name="l1136"><span class="ln">1136 </span></a>                <span class="s2">super</span>(birthRate, deathRate, samplingRate, samplingProbability, treatmentProbability, originTime, <span class="s2">null</span>);
+<a name="l1137"><span class="ln">1137 </span></a>            }
+<a name="l1138"><span class="ln">1138 </span></a>
+<a name="l1139"><span class="ln">1139 </span></a>            <span class="s2">public double </span>getBirthRate(<span class="s2">int </span>model) { <span class="s2">return </span>birthRate.getParameterValue(<span class="s4">0</span>); }
+<a name="l1140"><span class="ln">1140 </span></a>
+<a name="l1141"><span class="ln">1141 </span></a>            <span class="s2">public double </span>getDeathRate(<span class="s2">int </span>model) { <span class="s2">return </span>deathRate.getParameterValue(<span class="s4">0</span>); }
+<a name="l1142"><span class="ln">1142 </span></a>
+<a name="l1143"><span class="ln">1143 </span></a>            <span class="s2">public double </span>getSamplingRate(<span class="s2">int </span>model) { <span class="s2">return </span>samplingRate.getParameterValue(<span class="s4">0</span>); }
+<a name="l1144"><span class="ln">1144 </span></a>
+<a name="l1145"><span class="ln">1145 </span></a>            <span class="s2">public double </span>getSamplingProbability(<span class="s2">int </span>model) { <span class="s2">return </span>samplingProbability.getParameterValue(<span class="s4">0</span>); }
+<a name="l1146"><span class="ln">1146 </span></a>
+<a name="l1147"><span class="ln">1147 </span></a>            <span class="s2">public double </span>getTreatmentProbability(<span class="s2">int </span>model) { <span class="s2">return </span>treatmentProbability.getParameterValue(<span class="s4">0</span>); }
+<a name="l1148"><span class="ln">1148 </span></a>        }
+<a name="l1149"><span class="ln">1149 </span></a>
+<a name="l1150"><span class="ln">1150 </span></a>        <span class="s2">public class </span>Episodic <span class="s2">extends </span>ParameterPack {
+<a name="l1151"><span class="ln">1151 </span></a>
+<a name="l1152"><span class="ln">1152 </span></a>            <span class="s2">public </span>Episodic(Parameter birthRate,
+<a name="l1153"><span class="ln">1153 </span></a>                            Parameter deathRate,
+<a name="l1154"><span class="ln">1154 </span></a>                            Parameter samplingRate,
+<a name="l1155"><span class="ln">1155 </span></a>                            Parameter samplingProbability,
+<a name="l1156"><span class="ln">1156 </span></a>                            Parameter treatmentProbability,
+<a name="l1157"><span class="ln">1157 </span></a>                            Parameter originTime,
+<a name="l1158"><span class="ln">1158 </span></a>                            Parameter grid) {
+<a name="l1159"><span class="ln">1159 </span></a>                <span class="s2">super</span>(birthRate, deathRate, samplingRate, samplingProbability, treatmentProbability, originTime, grid);
+<a name="l1160"><span class="ln">1160 </span></a>            }
+<a name="l1161"><span class="ln">1161 </span></a>
+<a name="l1162"><span class="ln">1162 </span></a>            <span class="s2">public double </span>getBirthRate(<span class="s2">int </span>model) { <span class="s2">return </span>birthRate.getParameterValue(model); }
+<a name="l1163"><span class="ln">1163 </span></a>
+<a name="l1164"><span class="ln">1164 </span></a>            <span class="s2">public double </span>getDeathRate(<span class="s2">int </span>model) { <span class="s2">return </span>deathRate.getParameterValue(model); }
+<a name="l1165"><span class="ln">1165 </span></a>
+<a name="l1166"><span class="ln">1166 </span></a>            <span class="s2">public double </span>getSamplingRate(<span class="s2">int </span>model) { <span class="s2">return </span>samplingRate.getParameterValue(model); }
+<a name="l1167"><span class="ln">1167 </span></a>
+<a name="l1168"><span class="ln">1168 </span></a>            <span class="s2">public double </span>getSamplingProbability(<span class="s2">int </span>model) { <span class="s2">return </span>samplingProbability.getParameterValue(model); }
+<a name="l1169"><span class="ln">1169 </span></a>
+<a name="l1170"><span class="ln">1170 </span></a>            <span class="s2">public double </span>getTreatmentProbability(<span class="s2">int </span>model) { <span class="s2">return </span>treatmentProbability.getParameterValue(model); }
+<a name="l1171"><span class="ln">1171 </span></a>        }
+<a name="l1172"><span class="ln">1172 </span></a>
+<a name="l1173"><span class="ln">1173 </span></a>        <span class="s2">final </span>Parameter birthRate;
+<a name="l1174"><span class="ln">1174 </span></a>        <span class="s2">final </span>Parameter deathRate;
+<a name="l1175"><span class="ln">1175 </span></a>        <span class="s2">final </span>Parameter samplingRate;
+<a name="l1176"><span class="ln">1176 </span></a>        <span class="s2">final </span>Parameter samplingProbability;
+<a name="l1177"><span class="ln">1177 </span></a>        <span class="s2">final </span>Parameter treatmentProbability;
+<a name="l1178"><span class="ln">1178 </span></a>        <span class="s2">final </span>Parameter originTime;
+<a name="l1179"><span class="ln">1179 </span></a>        <span class="s2">final </span>Parameter grid;
+<a name="l1180"><span class="ln">1180 </span></a>
+<a name="l1181"><span class="ln">1181 </span></a>        <span class="s2">final int </span>dim;
+<a name="l1182"><span class="ln">1182 </span></a>
+<a name="l1183"><span class="ln">1183 </span></a>        <span class="s2">final </span>List&lt;Parameter&gt; parameterList = <span class="s2">new </span>ArrayList&lt;&gt;();
+<a name="l1184"><span class="ln">1184 </span></a>
+<a name="l1185"><span class="ln">1185 </span></a>        <span class="s2">private </span>ParameterPack(Parameter birthRate,
+<a name="l1186"><span class="ln">1186 </span></a>                              Parameter deathRate,
+<a name="l1187"><span class="ln">1187 </span></a>                              Parameter samplingRate,
+<a name="l1188"><span class="ln">1188 </span></a>                              Parameter samplingProbability,
+<a name="l1189"><span class="ln">1189 </span></a>                              Parameter treatmentProbability,
+<a name="l1190"><span class="ln">1190 </span></a>                              Parameter originTime,
+<a name="l1191"><span class="ln">1191 </span></a>                              Parameter grid) {
+<a name="l1192"><span class="ln">1192 </span></a>
+<a name="l1193"><span class="ln">1193 </span></a>            <span class="s2">this</span>.birthRate = birthRate;
+<a name="l1194"><span class="ln">1194 </span></a>            <span class="s2">this</span>.deathRate = deathRate;
+<a name="l1195"><span class="ln">1195 </span></a>            <span class="s2">this</span>.samplingRate = samplingRate;
+<a name="l1196"><span class="ln">1196 </span></a>            <span class="s2">this</span>.samplingProbability = samplingProbability;
+<a name="l1197"><span class="ln">1197 </span></a>            <span class="s2">this</span>.treatmentProbability = treatmentProbability;
+<a name="l1198"><span class="ln">1198 </span></a>            <span class="s2">this</span>.originTime = originTime;
+<a name="l1199"><span class="ln">1199 </span></a>            <span class="s2">this</span>.grid = grid;
+<a name="l1200"><span class="ln">1200 </span></a>
+<a name="l1201"><span class="ln">1201 </span></a>            <span class="s2">this</span>.dim = grid == <span class="s2">null </span>? <span class="s4">1 </span>: grid.getDimension() + <span class="s4">1</span>;
+<a name="l1202"><span class="ln">1202 </span></a>
+<a name="l1203"><span class="ln">1203 </span></a>            addIfNotNull(birthRate, Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, dim);
+<a name="l1204"><span class="ln">1204 </span></a>            addIfNotNull(deathRate, Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, dim);
+<a name="l1205"><span class="ln">1205 </span></a>            addIfNotNull(samplingRate, Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, dim);
+<a name="l1206"><span class="ln">1206 </span></a>            addIfNotNull(samplingProbability, <span class="s4">1.0</span>, <span class="s4">0.0</span>, dim);
+<a name="l1207"><span class="ln">1207 </span></a>            addIfNotNull(treatmentProbability, <span class="s4">1.0</span>, <span class="s4">0.0</span>, dim);
+<a name="l1208"><span class="ln">1208 </span></a>            addIfNotNull(originTime, Double.POSITIVE_INFINITY, <span class="s4">0.0</span>, <span class="s4">1</span>);
+<a name="l1209"><span class="ln">1209 </span></a>        }
+<a name="l1210"><span class="ln">1210 </span></a>
+<a name="l1211"><span class="ln">1211 </span></a>        <span class="s2">public abstract double </span>getBirthRate(<span class="s2">int </span>model);
+<a name="l1212"><span class="ln">1212 </span></a>        <span class="s2">public abstract double </span>getDeathRate(<span class="s2">int </span>model);
+<a name="l1213"><span class="ln">1213 </span></a>        <span class="s2">public abstract double </span>getSamplingRate(<span class="s2">int </span>model);
+<a name="l1214"><span class="ln">1214 </span></a>        <span class="s2">public abstract double </span>getSamplingProbability(<span class="s2">int </span>model);
+<a name="l1215"><span class="ln">1215 </span></a>        <span class="s2">public abstract double </span>getTreatmentProbability(<span class="s2">int </span>model);
+<a name="l1216"><span class="ln">1216 </span></a>
+<a name="l1217"><span class="ln">1217 </span></a>        <span class="s2">public double </span>getOriginTime() {
+<a name="l1218"><span class="ln">1218 </span></a>            <span class="s2">return </span>originTime.getParameterValue(<span class="s4">0</span>);
+<a name="l1219"><span class="ln">1219 </span></a>        }
+<a name="l1220"><span class="ln">1220 </span></a>
+<a name="l1221"><span class="ln">1221 </span></a>        <span class="s2">public double</span>[] getGrid() {
+<a name="l1222"><span class="ln">1222 </span></a>            <span class="s2">double</span>[] value = <span class="s2">new double</span>[dim + <span class="s4">1</span>];
+<a name="l1223"><span class="ln">1223 </span></a>            value[<span class="s4">0</span>] = <span class="s4">0.0</span>;
+<a name="l1224"><span class="ln">1224 </span></a>            <span class="s2">for </span>(<span class="s2">int </span>i = <span class="s4">1</span>; i &lt; dim; ++i) {
+<a name="l1225"><span class="ln">1225 </span></a>                value[i] = grid.getParameterValue(i - <span class="s4">1</span>);
+<a name="l1226"><span class="ln">1226 </span></a>            }
+<a name="l1227"><span class="ln">1227 </span></a>            value[dim] = Double.POSITIVE_INFINITY;
+<a name="l1228"><span class="ln">1228 </span></a>
+<a name="l1229"><span class="ln">1229 </span></a>            <span class="s2">return </span>value;
+<a name="l1230"><span class="ln">1230 </span></a>        }
+<a name="l1231"><span class="ln">1231 </span></a>
+<a name="l1232"><span class="ln">1232 </span></a>        <span class="s2">private void </span>addIfNotNull(Parameter parameter, <span class="s2">double </span>upper, <span class="s2">double </span>lower, <span class="s2">int </span>dim) {
+<a name="l1233"><span class="ln">1233 </span></a>            <span class="s2">if </span>(parameter != <span class="s2">null</span>) {
+<a name="l1234"><span class="ln">1234 </span></a>
+<a name="l1235"><span class="ln">1235 </span></a>                <span class="s2">if </span>(parameter.getDimension() != dim) {
+<a name="l1236"><span class="ln">1236 </span></a>                    <span class="s2">throw new </span>IllegalArgumentException(<span class="s3">&quot;Parameter '&quot; </span>+ parameter.getId() + <span class="s3">&quot;' has the wrong dimension&quot;</span>);
+<a name="l1237"><span class="ln">1237 </span></a>                }
+<a name="l1238"><span class="ln">1238 </span></a>
+<a name="l1239"><span class="ln">1239 </span></a>                parameterList.add(parameter);
+<a name="l1240"><span class="ln">1240 </span></a>                parameter.addBounds(<span class="s2">new </span>Parameter.DefaultBounds(upper, lower, dim));
+<a name="l1241"><span class="ln">1241 </span></a>            }
+<a name="l1242"><span class="ln">1242 </span></a>        }
+<a name="l1243"><span class="ln">1243 </span></a>
+<a name="l1244"><span class="ln">1244 </span></a>        <span class="s2">public boolean </span>contains(Variable variable) {
+<a name="l1245"><span class="ln">1245 </span></a>            <span class="s2">return </span>parameterList.contains((Parameter) variable);
+<a name="l1246"><span class="ln">1246 </span></a>        }
+<a name="l1247"><span class="ln">1247 </span></a>
+<a name="l1248"><span class="ln">1248 </span></a>        @Override
+<a name="l1249"><span class="ln">1249 </span></a>        <span class="s2">public </span>Iterator&lt;Parameter&gt; iterator() {
+<a name="l1250"><span class="ln">1250 </span></a>            <span class="s2">return </span>parameterList.iterator();
+<a name="l1251"><span class="ln">1251 </span></a>        }
+<a name="l1252"><span class="ln">1252 </span></a>    }
+<a name="l1253"><span class="ln">1253 </span></a>}
+<a name="l1254"><span class="ln">1254 </span></a></pre>
+</body>
+</html>

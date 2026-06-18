@@ -66,5 +66,13 @@ public abstract class CompartmentalModel extends AbstractModel {
     protected void acceptState() {
     } // no additional state needs accepting
 
+    // CompartmentalModel.java
+    public double[] introduceSecondPathogen(
+            double previousTime,
+            double currentTime,
+            double[] currentCounts) {
+
+        return currentCounts;
+    }
 
 }

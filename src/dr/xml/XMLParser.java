@@ -40,9 +40,14 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class XMLParser {
+
+    private static final Logger LOGGER = Logger.getLogger(XMLParser.class.getName());
 
     public static final String ID = XMLObject.ID;
     public static final String IDREF = "idref";
@@ -105,7 +110,24 @@ public class XMLParser {
     }
 
     public Iterator getThreads() {
-        return threads.iterator();
+        synchronized (threadLock) {
+            return new ArrayList<Thread>(threads).iterator();
+        }
+    }
+
+    public void interruptThreads() {
+        List<Thread> currentThreads;
+        synchronized (threadLock) {
+            if (interruptRequested) {
+                return;
+            }
+            interruptRequested = true;
+            currentThreads = new ArrayList<Thread>(threads);
+        }
+        for (Thread thread : currentThreads) {
+            requestThreadStop(thread);
+            thread.interrupt();
+        }
     }
 
     public void storeObject(String name, Object object) {
@@ -370,9 +392,13 @@ public class XMLParser {
                     for (int i = 0; i < xo.getChildCount(); i++) {
                         Object child = xo.getChild(i);
                         if (child instanceof Runnable) {
-                            Thread thread = new Thread((Runnable) child);
+                            Runnable runnable = (Runnable) child;
+                            Thread thread = new Thread(runnable);
                             thread.start();
-                            threads.add(thread);
+                            synchronized (threadLock) {
+                                threads.add(thread);
+                                threadTasks.put(thread, runnable);
+                            }
                         } else throw new XMLParseException("Concurrent element children must be runnable!");
                     }
                     concurrent = false;
@@ -387,13 +413,21 @@ public class XMLParser {
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();
                     } else {
-                        Thread thread = new Thread((Runnable) obj);
+                        Runnable runnable = (Runnable) obj;
+                        Thread thread = new Thread(runnable);
                         thread.start();
-                        threads.add(thread);
+                        synchronized (threadLock) {
+                            threads.add(thread);
+                            threadTasks.put(thread, runnable);
+                        }
                         waitForThread(thread);
                     }
                 }
-                threads.removeAllElements();
+                synchronized (threadLock) {
+                    threadTasks.clear();
+                    threads.removeAllElements();
+                    interruptRequested = false;
+                }
             }
 
             return xo;
@@ -551,8 +585,43 @@ public class XMLParser {
             try {
                 thread.join();
             } catch (InterruptedException ie) {
-                // DO NOTHING
+                // Preserve interrupt status for callers that manage parser shutdown.
+                Thread.currentThread().interrupt();
+                requestThreadStop(thread);
+                removeThreadTracking(thread);
+                return;
             }
+        }
+        removeThreadTracking(thread);
+    }
+
+    private void requestThreadStop(Thread thread) {
+        Runnable runnable;
+        synchronized (threadLock) {
+            runnable = threadTasks.get(thread);
+        }
+        if (runnable == null) {
+            return;
+        }
+        try {
+            Method method = runnable.getClass().getMethod("pleaseStop");
+            method.invoke(runnable);
+        } catch (NoSuchMethodException ignored) {
+            // Expected: runnable does not implement pleaseStop().
+        } catch (IllegalAccessException e) {
+            LOGGER.warning("Error while accessing pleaseStop() on " +
+                    runnable.getClass().getName() + ": " + e.getMessage());
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            LOGGER.warning("Error while invoking pleaseStop() on " +
+                    runnable.getClass().getName() + ": " + (cause == null ? e.getMessage() : cause.getMessage()));
+        }
+    }
+
+    private void removeThreadTracking(Thread thread) {
+        synchronized (threadLock) {
+            threadTasks.remove(thread);
+            threads.remove(thread);
         }
     }
 
@@ -612,7 +681,10 @@ public class XMLParser {
     private final Map<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
     private final Map<String, XMLObject> objectStore = new LinkedHashMap<String, XMLObject>();
     private final Map<Pair<String, String>, List<Citation>> citationStore = new LinkedHashMap<Pair<String, String>, List<Citation>>();
+    private final Map<Thread, Runnable> threadTasks = new HashMap<Thread, Runnable>();
+    private final Object threadLock = new Object();
     private boolean concurrent = false;
+    private boolean interruptRequested = false;
     private XMLObject root = null;
 
     private boolean verbose = false;
@@ -656,5 +728,3 @@ public class XMLParser {
     }
 
 }
-
-

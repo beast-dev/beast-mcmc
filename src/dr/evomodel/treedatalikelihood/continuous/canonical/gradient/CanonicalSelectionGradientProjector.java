@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.InvertibleMatrixParametrization;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransposedMatrixParameter;
@@ -107,6 +108,15 @@ public final class CanonicalSelectionGradientProjector {
             final double[] out = new double[orthogonalProvider.getOrthogonalParameter().getDimension()];
             orthogonalProvider.fillPullBackGradientFlat(gradientR, dimension, out);
             return out;
+        }
+        if (blockParameter.getRotationMatrixParameter() instanceof InvertibleMatrixParametrization) {
+            final InvertibleMatrixParametrization invertible =
+                    (InvertibleMatrixParametrization) blockParameter.getRotationMatrixParameter();
+            if (invertible.supportsNativeParameter(requestedParameter)) {
+                final double[] out = new double[invertible.getPullBackGradientDimension(requestedParameter)];
+                invertible.fillPullBackGradientForParameter(requestedParameter, gradientR, dimension, out, 0);
+                return out;
+            }
         }
         if (requestedParameter == blockParameter.getScalarBlockParameter()) {
             return new double[]{nativeBlockGradient[0]};

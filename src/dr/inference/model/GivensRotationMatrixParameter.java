@@ -15,7 +15,7 @@ import java.util.Collections;
  * </pre>
  * </p>
  */
-public final class GivensRotationMatrixParameter extends AbstractComputedCompoundMatrix
+public final class GivensRotationMatrixParameter extends InvertibleMatrixParametrization
         implements MatrixParameterInterface, OrthogonalMatrixProvider {
 
     public static final String NAME = "givensRotationMatrixParameter";
@@ -305,6 +305,29 @@ public final class GivensRotationMatrixParameter extends AbstractComputedCompoun
 
     public Parameter getAngleParameter() {
         return angleParameter;
+    }
+
+    @Override
+    public double getLogAbsDeterminant() {
+        return 0.0;
+    }
+
+    @Override
+    public double getDeterminantSign() {
+        return 1.0;
+    }
+
+    @Override
+    public double getDeterminant() {
+        return 1.0;
+    }
+
+    @Override
+    public void fillInverse(final double[] inverseRowMajor) {
+        if (inverseRowMajor == null || inverseRowMajor.length < dim * dim) {
+            throw new IllegalArgumentException("inverseRowMajor must have length at least " + (dim * dim));
+        }
+        fillOrthogonalTranspose(inverseRowMajor);
     }
 
     @Override

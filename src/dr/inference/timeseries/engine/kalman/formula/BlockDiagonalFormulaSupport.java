@@ -5,6 +5,7 @@ import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameteriz
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.InvertibleMatrixParametrization;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
@@ -214,6 +215,11 @@ final class BlockDiagonalFormulaSupport {
         if (blockParameter.getRotationMatrixParameter() instanceof OrthogonalMatrixProvider
                 && requestedParameter == ((OrthogonalMatrixProvider) blockParameter.getRotationMatrixParameter())
                 .getOrthogonalParameter()) {
+            return true;
+        }
+        if (blockParameter.getRotationMatrixParameter() instanceof InvertibleMatrixParametrization
+                && ((InvertibleMatrixParametrization) blockParameter.getRotationMatrixParameter())
+                .supportsNativeParameter(requestedParameter)) {
             return true;
         }
         if (requestedParameter == blockParameter.getScalarBlockParameter()

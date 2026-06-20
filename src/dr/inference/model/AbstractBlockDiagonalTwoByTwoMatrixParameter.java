@@ -73,6 +73,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
     private final DenseMatrix64F rMatrixView;
     private final DenseMatrix64F rinvMatrixView;
     private final WrappedMatrix reportMatrixView;
+    private final InvertibleMatrixParametrization invertibleRParam;
     private boolean savedRAndRinvKnown = false;
 
     private boolean rAndRinvKnown = false;
@@ -89,6 +90,9 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
                 buildParameterList(RParam, scalarBlockParam, twoByTwoBlockParams));
 
         this.RParam = RParam;
+        this.invertibleRParam = RParam instanceof InvertibleMatrixParametrization
+                ? (InvertibleMatrixParametrization) RParam
+                : null;
         if (scalarBlockParam != null) {
             this.scalarBlockParam = scalarBlockParam;
         } else {
@@ -219,7 +223,9 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
             }
         }
 
-        if (!CommonOps.invert(rMatrixView, rinvMatrixView)) {
+        if (invertibleRParam != null) {
+            invertibleRParam.fillInverse(rinvData);
+        } else if (!CommonOps.invert(rMatrixView, rinvMatrixView)) {
             throw new IllegalArgumentException("R is singular and cannot be inverted");
         }
 

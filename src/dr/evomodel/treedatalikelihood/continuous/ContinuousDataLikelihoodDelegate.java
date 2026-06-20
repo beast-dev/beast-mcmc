@@ -1112,7 +1112,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    void addBranchConditionalDensityTrait(String traitName) {
+    public void addBranchConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new BranchConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),

@@ -8,9 +8,4 @@ package dr.inference.operators;
  * for CTMC dependent processes sharing the reward coordinate with the
  * modulating reward process.
  */
-public interface RewardDependentCtmcEdgeEvidenceProvider {
-
-    void prepare();
-
-    double logEvidence(int branchNodeNumber, double rawReward);
-}
+public interface RewardDependentCtmcEdgeEvidenceProvider extends RewardDependentEdgeEvidenceProvider { }

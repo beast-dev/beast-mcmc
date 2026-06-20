@@ -108,7 +108,7 @@ public final class RewardsMixtureClusterResamplingHelper {
     private final RewardsAwareBranchModel rewardsAwareBranchModel;
     private final TreeDataLikelihood treeDataLikelihood;
     private final DiscreteDataLikelihoodDelegate discreteDelegate;
-    private final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders;
+    private final RewardDependentEdgeEvidenceProvider[] dependentEvidenceProviders;
     private final LikelihoodStateRefresher likelihoodStateRefresher;
     private final Tree tree;
     private final int nstates;
@@ -157,7 +157,7 @@ public final class RewardsMixtureClusterResamplingHelper {
             final RewardsAwareBranchModel rewardsAwareBranchModel,
             final TreeDataLikelihood treeDataLikelihood,
             final DiscreteDataLikelihoodDelegate discreteDelegate,
-            final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders,
+            final RewardDependentEdgeEvidenceProvider[] dependentEvidenceProviders,
             final int maxClusterSize,
             final double borderBias,
             final ExactLogTargetEvaluator logTargetEvaluator
@@ -182,7 +182,7 @@ public final class RewardsMixtureClusterResamplingHelper {
             final RewardsAwareBranchModel rewardsAwareBranchModel,
             final TreeDataLikelihood treeDataLikelihood,
             final DiscreteDataLikelihoodDelegate discreteDelegate,
-            final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders,
+            final RewardDependentEdgeEvidenceProvider[] dependentEvidenceProviders,
             final int maxClusterSize,
             final double borderBias,
             final ExactLogTargetEvaluator logTargetEvaluator,
@@ -216,7 +216,7 @@ public final class RewardsMixtureClusterResamplingHelper {
         this.treeDataLikelihood = treeDataLikelihood;
         this.discreteDelegate = discreteDelegate;
         this.dependentEvidenceProviders = dependentEvidenceProviders == null
-                ? new RewardDependentCtmcEdgeEvidenceProvider[0]
+                ? new RewardDependentEdgeEvidenceProvider[0]
                 : Arrays.copyOf(dependentEvidenceProviders, dependentEvidenceProviders.length);
         this.likelihoodStateRefresher = likelihoodStateRefresher;
         this.tree = rewardsAwareBranchModel.getTree();
@@ -563,7 +563,7 @@ public final class RewardsMixtureClusterResamplingHelper {
 
     private double getDependentLogEvidence(final int branchNodeNumber, final double rawReward) {
         double logEvidence = 0.0;
-        for (RewardDependentCtmcEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+        for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
             final double contribution = provider.logEvidence(branchNodeNumber, rawReward);
             if (!Double.isFinite(contribution)) {
                 return Double.NEGATIVE_INFINITY;

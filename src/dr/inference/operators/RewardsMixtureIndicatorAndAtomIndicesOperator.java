@@ -35,8 +35,9 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     private final RewardsAwareBranchModel rewardsAwareBranchModel;
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeDataLikelihood[] dependentTreeDataLikelihoods;
+    private final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods;
     private final DiscreteDataLikelihoodDelegate discreteDelegate;
-    private final RewardDependentCtmcEdgeEvidenceProvider[] dependentEvidenceProviders;
+    private final RewardDependentEdgeEvidenceProvider[] dependentEvidenceProviders;
 
     private final Tree tree;
     private final int nstates;
@@ -72,6 +73,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 rewardsAwareBranchModel,
                 treeDataLikelihood,
                 null,
+                null,
                 updateProportion,
                 adaptUpdateProportion,
                 useClusterMoves,
@@ -87,6 +89,36 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             final RewardsAwareBranchModel rewardsAwareBranchModel,
             final TreeDataLikelihood treeDataLikelihood,
             final TreeDataLikelihood[] dependentTreeDataLikelihoods,
+            final double updateProportion,
+            final boolean adaptUpdateProportion,
+            final boolean useClusterMoves,
+            final int clusterSize,
+            final double clusterBorderBias,
+            final double weight
+    ) {
+        this(
+                indicatorZ,
+                atomIndex,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                dependentTreeDataLikelihoods,
+                null,
+                updateProportion,
+                adaptUpdateProportion,
+                useClusterMoves,
+                clusterSize,
+                clusterBorderBias,
+                weight
+        );
+    }
+
+    public RewardsMixtureIndicatorAndAtomIndicesOperator(
+            final Parameter indicatorZ,
+            final Parameter atomIndex,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final TreeDataLikelihood[] dependentTreeDataLikelihoods,
+            final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods,
             final double updateProportion,
             final boolean adaptUpdateProportion,
             final boolean useClusterMoves,
@@ -116,6 +148,9 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         this.dependentTreeDataLikelihoods = dependentTreeDataLikelihoods == null
                 ? new TreeDataLikelihood[0]
                 : Arrays.copyOf(dependentTreeDataLikelihoods, dependentTreeDataLikelihoods.length);
+        this.dependentContinuousTreeDataLikelihoods = dependentContinuousTreeDataLikelihoods == null
+                ? new TreeDataLikelihood[0]
+                : Arrays.copyOf(dependentContinuousTreeDataLikelihoods, dependentContinuousTreeDataLikelihoods.length);
 
         final DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof DiscreteDataLikelihoodDelegate)) {
@@ -134,7 +169,9 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             );
         }
         this.dependentEvidenceProviders =
-                new RewardDependentCtmcEdgeEvidenceProvider[this.dependentTreeDataLikelihoods.length];
+                new RewardDependentEdgeEvidenceProvider[
+                        this.dependentTreeDataLikelihoods.length +
+                                this.dependentContinuousTreeDataLikelihoods.length];
         for (int i = 0; i < this.dependentTreeDataLikelihoods.length; i++) {
             final TreeDataLikelihood dependent = this.dependentTreeDataLikelihoods[i];
             if (dependent == null) {
@@ -148,6 +185,20 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             }
             this.dependentEvidenceProviders[i] =
                     new BeagleRewardDependentCtmcEdgeEvidenceProvider(dependent);
+        }
+        for (int i = 0; i < this.dependentContinuousTreeDataLikelihoods.length; i++) {
+            final TreeDataLikelihood dependent = this.dependentContinuousTreeDataLikelihoods[i];
+            if (dependent == null) {
+                throw new IllegalArgumentException("dependentContinuousTreeDataLikelihoods contains null at index " + i);
+            }
+            if (dependent.getTree().getNodeCount() != tree.getNodeCount()) {
+                throw new IllegalArgumentException(
+                        "Dependent continuous TreeDataLikelihood at index " + i +
+                                " must use a tree with the same node count as RewardsAwareBranchModel."
+                );
+            }
+            this.dependentEvidenceProviders[this.dependentTreeDataLikelihoods.length + i] =
+                    new BranchLocalContinuousRewardDependentEdgeEvidenceProvider(dependent);
         }
         if (updateProportion <= 0.0 || updateProportion > 1.0) {
             throw new IllegalArgumentException("updateProportion must be in (0, 1]. Found: " + updateProportion);
@@ -203,6 +254,10 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                                 RewardsMixtureIndicatorAndAtomIndicesOperator.this.treeDataLikelihood.getLogLikelihood();
                         for (TreeDataLikelihood dependentTreeDataLikelihood :
                                 RewardsMixtureIndicatorAndAtomIndicesOperator.this.dependentTreeDataLikelihoods) {
+                            logTarget += dependentTreeDataLikelihood.getLogLikelihood();
+                        }
+                        for (TreeDataLikelihood dependentTreeDataLikelihood :
+                                RewardsMixtureIndicatorAndAtomIndicesOperator.this.dependentContinuousTreeDataLikelihoods) {
                             logTarget += dependentTreeDataLikelihood.getLogLikelihood();
                         }
                         return logTarget;
@@ -438,7 +493,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     }
 
     private void prepareDependentEvidenceProviders() {
-        for (RewardDependentCtmcEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+        for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
             provider.prepare();
         }
     }
@@ -451,7 +506,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
 
     private double getDependentLogEvidence(final int branchNodeNumber, final double rawReward) {
         double logEvidence = 0.0;
-        for (RewardDependentCtmcEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+        for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
             final double contribution = provider.logEvidence(branchNodeNumber, rawReward);
             if (!Double.isFinite(contribution)) {
                 return Double.NEGATIVE_INFINITY;
@@ -513,12 +568,21 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 return false;
             }
         }
+        for (TreeDataLikelihood dependentTreeDataLikelihood : dependentContinuousTreeDataLikelihoods) {
+            dependentTreeDataLikelihood.makeDirty();
+            if (!Double.isFinite(dependentTreeDataLikelihood.getLogLikelihood())) {
+                return false;
+            }
+        }
         return true;
     }
 
     private void makeLikelihoodsDirty() {
         treeDataLikelihood.makeDirty();
         for (TreeDataLikelihood dependentTreeDataLikelihood : dependentTreeDataLikelihoods) {
+            dependentTreeDataLikelihood.makeDirty();
+        }
+        for (TreeDataLikelihood dependentTreeDataLikelihood : dependentContinuousTreeDataLikelihoods) {
             dependentTreeDataLikelihood.makeDirty();
         }
     }
@@ -650,6 +714,9 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         sb.append("useClusterMoves: ").append(useClusterMoves).append("\n");
         sb.append("clusterSize: ").append(clusterSize).append("\n");
         sb.append("clusterBorderBias: ").append(clusterBorderBias).append("\n");
+        sb.append("dependentCtmcLikelihoodCount: ").append(dependentTreeDataLikelihoods.length).append("\n");
+        sb.append("dependentContinuousLikelihoodCount: ")
+                .append(dependentContinuousTreeDataLikelihoods.length).append("\n");
 
         sb.append("nodeNumberByParameterIndex: [");
         for (int i = 0; i < dim; i++) {

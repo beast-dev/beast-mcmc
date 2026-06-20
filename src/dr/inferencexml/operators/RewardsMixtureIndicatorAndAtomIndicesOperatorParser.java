@@ -46,6 +46,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
     private static final String CLUSTER_SIZE = "clusterSize";
     private static final String CLUSTER_BORDER_BIAS = "clusterBorderBias";
     private static final String DEPENDENT_CTMC_LIKELIHOODS = "dependentCtmcLikelihoods";
+    private static final String DEPENDENT_CONTINUOUS_LIKELIHOODS = "dependentContinuousLikelihoods";
 
     @Override
     public String getParserName() {
@@ -87,6 +88,8 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         final TreeDataLikelihood[] dependentTreeDataLikelihoods =
                 parseDependentTreeDataLikelihoods(xo);
+        final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods =
+                parseDependentContinuousTreeDataLikelihoods(xo);
 
         return new RewardsMixtureIndicatorAndAtomIndicesOperator(
                 indicatorZ,
@@ -94,6 +97,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 rewardsAwareBranchModel,
                 treeDataLikelihood,
                 dependentTreeDataLikelihoods,
+                dependentContinuousTreeDataLikelihoods,
                 updateProportion,
                 adapt,
                 useClusterMoves,
@@ -109,6 +113,23 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
         }
 
         final XMLObject dependentXo = xo.getChild(DEPENDENT_CTMC_LIKELIHOODS);
+        final List<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
+        for (int i = 0; i < dependentXo.getChildCount(); i++) {
+            final Object child = dependentXo.getChild(i);
+            if (child instanceof TreeDataLikelihood) {
+                likelihoods.add((TreeDataLikelihood) child);
+            }
+        }
+
+        return likelihoods.toArray(new TreeDataLikelihood[likelihoods.size()]);
+    }
+
+    private TreeDataLikelihood[] parseDependentContinuousTreeDataLikelihoods(final XMLObject xo) {
+        if (!xo.hasChildNamed(DEPENDENT_CONTINUOUS_LIKELIHOODS)) {
+            return new TreeDataLikelihood[0];
+        }
+
+        final XMLObject dependentXo = xo.getChild(DEPENDENT_CONTINUOUS_LIKELIHOODS);
         final List<TreeDataLikelihood> likelihoods = new ArrayList<TreeDataLikelihood>();
         for (int i = 0; i < dependentXo.getChildCount(); i++) {
             final Object child = dependentXo.getChild(i);
@@ -148,6 +169,9 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             new ElementRule(DEPENDENT_CTMC_LIKELIHOODS,
                     new XMLSyntaxRule[] { new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE) },
                     "Optional dependent CTMC TreeDataLikelihoods sharing the reward vector.", true),
+            new ElementRule(DEPENDENT_CONTINUOUS_LIKELIHOODS,
+                    new XMLSyntaxRule[] { new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE) },
+                    "Optional dependent continuous TreeDataLikelihoods sharing the reward vector.", true),
 
             new ElementRule(INDICATOR_Z,
                     new XMLSyntaxRule[] { new ElementRule(Parameter.class) },

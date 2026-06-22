@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
@@ -14,15 +15,14 @@ final class GaussianLinkTipBranchContribution implements BranchContributionStrat
     }
 
     @Override
-    public boolean fillContribution(final int childIndex,
+    public boolean fillContribution(final BranchGradientMessageBundle messages,
                                     final CanonicalGaussianTransition transition,
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
-        final CanonicalTipObservationModel observationModel =
-                assembler.stateStore.tipObservationModels[childIndex];
+        final CanonicalTipObservationModel observationModel = messages.getTipObservationModel();
         observationModel.fillChildCanonicalState(workspace.state, workspace.observationWorkspace);
         CanonicalGaussianMessageOps.buildPairPosterior(
-                assembler.stateStore.branchAboveParent[childIndex],
+                messages.getAbovePreOrderAtParent(),
                 transition,
                 workspace.state,
                 workspace.pairState);

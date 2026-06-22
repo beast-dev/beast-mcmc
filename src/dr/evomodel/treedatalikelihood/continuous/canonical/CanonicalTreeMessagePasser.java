@@ -52,8 +52,24 @@ public interface CanonicalTreeMessagePasser {
 
     CanonicalGaussianState getPostOrderState(int nodeIndex);
 
+    void fillPostOrderNodeState(int nodeIndex, CanonicalGaussianState out);
+
+    void fillPostOrderBranchBottomState(int childNodeIndex, CanonicalGaussianState out);
+
+    void fillPostOrderBranchTopState(int childNodeIndex,
+                                     CanonicalBranchTransitionProvider transitionProvider,
+                                     CanonicalGaussianState out);
+
     void computePreOrder(CanonicalBranchTransitionProvider transitionProvider,
                          CanonicalRootPrior rootPrior);
+
+    void fillPreOrderBranchTopState(int childNodeIndex, CanonicalGaussianState out);
+
+    void fillPreOrderBranchBottomState(int childNodeIndex,
+                                      CanonicalBranchTransitionProvider transitionProvider,
+                                      CanonicalGaussianState out);
+
+    void fillRootPreOrderState(CanonicalGaussianState out);
 
     void computeGradientBranchLengths(CanonicalBranchTransitionProvider transitionProvider, double[] gradT);
 

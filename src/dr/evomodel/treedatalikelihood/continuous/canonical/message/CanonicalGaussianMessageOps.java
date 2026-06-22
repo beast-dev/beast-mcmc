@@ -191,6 +191,190 @@ public final class CanonicalGaussianMessageOps {
         out.logNormalizer = next.logNormalizer + transition.logNormalizer - eliminated;
     }
 
+    public static void pushBackwardDiagonalTransition(final CanonicalGaussianState next,
+                                                      final double[] actualizationDiagonal,
+                                                      final double[] displacement,
+                                                      final double[] branchPrecision,
+                                                      final double transitionLogNormalizer,
+                                                      final Workspace workspace,
+                                                      final CanonicalGaussianState out) {
+        final int d = next.getDimension();
+        ensureDimension(workspace, d);
+
+        final double[] a      = workspace.eliminationPrecision;
+        final double[] solveScratch = workspace.eliminationPrecisionInverse;
+        final double[] solvedMatrix = workspace.leftProductScratch;
+        final double[] matrixProduct = workspace.symmetricMatrixScratch;
+        final double[] h      = workspace.eliminationInformation;
+        final double[] solvedMean = workspace.meanScratch;
+
+        for (int i = 0; i < d; ++i) {
+            double branchInformation = 0.0;
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                branchInformation += branchPrecision[iOff + j] * displacement[j];
+                a[iOff + j] = next.precision[iOff + j] + branchPrecision[iOff + j];
+            }
+            h[i] = next.information[i] + branchInformation;
+        }
+
+        final double eliminated;
+        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
+            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+            solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
+            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
+            solveSymmetricFromCholeskyMatrix(a, branchPrecision, solvedMatrix, solveScratch, d);
+        } else {
+            eliminated = normalizedLogNormalizer(a, h, d, workspace, solveScratch, solvedMean);
+            MatrixOps.matMul(solveScratch, branchPrecision, solvedMatrix, d);
+            MatrixOps.matVec(solveScratch, h, solvedMean, d);
+        }
+
+        MatrixOps.matMul(branchPrecision, solvedMatrix, matrixProduct, d);
+        for (int i = 0; i < d; ++i) {
+            final double qi = actualizationDiagonal[i];
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                out.precision[iOff + j] =
+                        qi * (branchPrecision[iOff + j] - matrixProduct[iOff + j])
+                                * actualizationDiagonal[j];
+            }
+        }
+        MatrixOps.symmetrize(out.precision, d);
+
+        for (int i = 0; i < d; ++i) {
+            solvedMean[i] -= displacement[i];
+        }
+        for (int i = 0; i < d; ++i) {
+            double row = 0.0;
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                row += branchPrecision[iOff + j] * solvedMean[j];
+            }
+            out.information[i] = actualizationDiagonal[i] * row;
+        }
+        out.logNormalizer = next.logNormalizer + transitionLogNormalizer - eliminated;
+    }
+
+    public static void pushForwardDiagonalTransition(final CanonicalGaussianState previous,
+                                                     final double[] actualizationDiagonal,
+                                                     final double[] displacement,
+                                                     final double[] branchPrecision,
+                                                     final double transitionLogNormalizer,
+                                                     final Workspace workspace,
+                                                     final CanonicalGaussianState out) {
+        final int d = previous.getDimension();
+        ensureDimension(workspace, d);
+
+        final double[] a      = workspace.eliminationPrecision;
+        final double[] solveScratch = workspace.eliminationPrecisionInverse;
+        final double[] solvedMatrix = workspace.leftProductScratch;
+        final double[] rhsMatrix = workspace.symmetricMatrixScratch;
+        final double[] h      = workspace.eliminationInformation;
+        final double[] solvedMean = workspace.meanScratch;
+
+        for (int i = 0; i < d; ++i) {
+            double branchInformation = 0.0;
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                branchInformation += branchPrecision[iOff + j] * displacement[j];
+                a[iOff + j] = previous.precision[iOff + j]
+                        + actualizationDiagonal[i] * branchPrecision[iOff + j] * actualizationDiagonal[j];
+            }
+            h[i] = previous.information[i] - actualizationDiagonal[i] * branchInformation;
+        }
+
+        final double eliminated;
+        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
+            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+            solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
+            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
+            fillRowsScaledByDiagonal(branchPrecision, actualizationDiagonal, rhsMatrix, d);
+            solveSymmetricFromCholeskyMatrix(a, rhsMatrix, solvedMatrix, solveScratch, d);
+        } else {
+            eliminated = normalizedLogNormalizer(a, h, d, workspace, solveScratch, solvedMean);
+            fillRowsScaledByDiagonal(branchPrecision, actualizationDiagonal, rhsMatrix, d);
+            MatrixOps.matMul(solveScratch, rhsMatrix, solvedMatrix, d);
+            MatrixOps.matVec(solveScratch, h, solvedMean, d);
+        }
+
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                double correction = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    correction += branchPrecision[iOff + k] * actualizationDiagonal[k]
+                            * solvedMatrix[k * d + j];
+                }
+                out.precision[iOff + j] = branchPrecision[iOff + j] - correction;
+            }
+        }
+        MatrixOps.symmetrize(out.precision, d);
+
+        for (int i = 0; i < d; ++i) {
+            double row = 0.0;
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                row += branchPrecision[iOff + j]
+                        * (displacement[j] + actualizationDiagonal[j] * solvedMean[j]);
+            }
+            out.information[i] = row;
+        }
+        out.logNormalizer = previous.logNormalizer + transitionLogNormalizer - eliminated;
+    }
+
+    private static void fillRowsScaledByDiagonal(final double[] matrix,
+                                                 final double[] diagonal,
+                                                 final double[] out,
+                                                 final int dimension) {
+        for (int i = 0; i < dimension; ++i) {
+            final int iOff = i * dimension;
+            final double scale = diagonal[i];
+            for (int j = 0; j < dimension; ++j) {
+                out[iOff + j] = scale * matrix[iOff + j];
+            }
+        }
+    }
+
+    public static void conditionOnObservedSecondBlockDiagonalTransition(
+            final double[] actualizationDiagonal,
+            final double[] displacement,
+            final double[] branchPrecision,
+            final double transitionLogNormalizer,
+            final double[] observed,
+            final CanonicalGaussianState out) {
+        final int d = out.getDimension();
+        for (int i = 0; i < d; ++i) {
+            final double qi = actualizationDiagonal[i];
+            final int iOff = i * d;
+            double info = 0.0;
+            for (int j = 0; j < d; ++j) {
+                out.precision[iOff + j] =
+                        qi * branchPrecision[iOff + j] * actualizationDiagonal[j];
+                info += branchPrecision[iOff + j] * (observed[j] - displacement[j]);
+            }
+            out.information[i] = qi * info;
+        }
+        MatrixOps.symmetrize(out.precision, d);
+
+        double observedQuadratic = 0.0;
+        double displacementInformationDotObserved = 0.0;
+        for (int i = 0; i < d; ++i) {
+            double py = 0.0;
+            double pd = 0.0;
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                py += branchPrecision[iOff + j] * observed[j];
+                pd += branchPrecision[iOff + j] * displacement[j];
+            }
+            observedQuadratic += observed[i] * py;
+            displacementInformationDotObserved += observed[i] * pd;
+        }
+        out.logNormalizer = transitionLogNormalizer
+                + 0.5 * observedQuadratic
+                - displacementInformationDotObserved;
+    }
+
     public static void conditionOnObservedSecondBlock(final CanonicalGaussianTransition transition,
                                                       final double[] observed,
                                                       final CanonicalGaussianState out) {

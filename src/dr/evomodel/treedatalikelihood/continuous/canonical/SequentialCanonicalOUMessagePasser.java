@@ -29,9 +29,11 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.contribution.CanonicalBranchContributionAssembler;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchAdjointPreparer;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchLengthGradientEngine;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalTreeGradientEngine;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.StateStoreBranchGradientMessageProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeTraversal;
@@ -56,6 +58,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     private final int nodeCount;
     private final int tipCount;
     private final CanonicalTreeStateStore stateStore;
+    private final CanonicalTreeTraversal treeTraversal;
+    private final BranchGradientWorkspace messageWorkspace;
     private final CanonicalBranchContributionAssembler branchContributionAssembler;
     private final BranchGradientInputs preparedBranchGradientInputs;
     private final CanonicalTraversalRunner traversalRunner;
@@ -67,6 +71,16 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this(tree, dim, CanonicalGradientFallbackPolicy.branchGradientParallelismFromSystemProperties());
     }
 
+    public static SequentialCanonicalOUMessagePasser likelihoodOnly(final Tree tree, final int dim) {
+        return new SequentialCanonicalOUMessagePasser(
+                tree,
+                dim,
+                1,
+                CanonicalDebugOptions.fromSystemProperties(),
+                CanonicalGradientFallbackPolicy.fromSystemProperties(),
+                false);
+    }
+
     public SequentialCanonicalOUMessagePasser(final Tree tree,
                                               final int dim,
                                               final int branchGradientParallelism) {
@@ -74,7 +88,8 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 dim,
                 branchGradientParallelism,
                 CanonicalDebugOptions.fromSystemProperties(),
-                CanonicalGradientFallbackPolicy.fromSystemProperties());
+                CanonicalGradientFallbackPolicy.fromSystemProperties(),
+                true);
     }
 
     SequentialCanonicalOUMessagePasser(final Tree tree,
@@ -82,6 +97,15 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                        final int branchGradientParallelism,
                                        final CanonicalDebugOptions debugOptions,
                                        final CanonicalGradientFallbackPolicy fallbackPolicy) {
+        this(tree, dim, branchGradientParallelism, debugOptions, fallbackPolicy, true);
+    }
+
+    private SequentialCanonicalOUMessagePasser(final Tree tree,
+                                               final int dim,
+                                               final int branchGradientParallelism,
+                                               final CanonicalDebugOptions debugOptions,
+                                               final CanonicalGradientFallbackPolicy fallbackPolicy,
+                                               final boolean gradientSupport) {
         if (debugOptions == null) {
             throw new IllegalArgumentException("debugOptions must not be null");
         }
@@ -92,21 +116,16 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         this.nodeCount = tree.getNodeCount();
         this.tipCount = tree.getExternalNodeCount();
         this.stateStore = new CanonicalTreeStateStore(nodeCount, dim);
-        this.branchContributionAssembler = new CanonicalBranchContributionAssembler(tree, dim, stateStore);
-        this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
+        this.branchContributionAssembler = new CanonicalBranchContributionAssembler(dim);
         final BranchGradientWorkspace mainWorkspace = WorkspaceFactory.branchGradientWorkspace(dim);
-        final TaskPool branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
+        this.messageWorkspace = mainWorkspace;
+        final BranchGradientMessageProvider branchGradientMessageProvider =
+                new StateStoreBranchGradientMessageProvider(tree, stateStore);
         final TaskPool transitionPreloadTaskPool = new TaskPool(
                 nodeCount,
                 Math.max(1, Math.min(branchGradientParallelism, fallbackPolicy.getTransitionPreloadParallelism())));
-        final int branchGradientWorkspaceCount =
-                branchGradientTaskPool.getNumThreads() <= 1 ? 1 : branchGradientTaskPool.getNumThreads() + 1;
-        final BranchGradientWorkspace[] branchGradientWorkspaces =
-                new BranchGradientWorkspace[branchGradientWorkspaceCount];
-        for (int i = 0; i < branchGradientWorkspaces.length; ++i) {
-            branchGradientWorkspaces[i] = WorkspaceFactory.branchGradientWorkspace(dim);
-        }
         final CanonicalTreeTraversal treeTraversal = new CanonicalTreeTraversal(tree, dim);
+        this.treeTraversal = treeTraversal;
         this.traversalRunner = new CanonicalTraversalRunner(
                 treeTraversal,
                 stateStore,
@@ -115,33 +134,49 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 transitionPreloadTaskPool,
                 new DimensionWeightedChunkSizeStrategy(dim, Math.max(1, transitionPreloadTaskPool.getNumThreads()))
                         .chunkSize(nodeCount));
-        final CanonicalBranchAdjointPreparer branchAdjointPreparer = new CanonicalBranchAdjointPreparer(
-                tree,
-                dim,
-                branchGradientTaskPool,
-                mainWorkspace,
-                branchGradientWorkspaces,
-                branchContributionAssembler::fillLocalAdjointsForBranch);
-        this.gradientPreparationRunner = new CanonicalGradientPreparationRunner(
-                debugOptions,
-                stateStore,
-                traversalRunner,
-                branchAdjointPreparer);
-        this.treeGradientEngine = new CanonicalTreeGradientEngine(
-                dim,
-                Math.max(0, nodeCount - 1),
-                branchGradientTaskPool,
-                mainWorkspace,
-                branchGradientWorkspaces);
-        this.branchLengthGradientRunner = new CanonicalBranchLengthGradientRunner(
-                tree,
-                fallbackPolicy,
-                stateStore,
-                mainWorkspace,
-                traversalRunner,
-                gradientPreparationRunner,
-                preparedBranchGradientInputs,
-                new CanonicalBranchLengthGradientEngine());
+        if (gradientSupport) {
+            this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
+            final TaskPool branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));
+            final int branchGradientWorkspaceCount =
+                    branchGradientTaskPool.getNumThreads() <= 1 ? 1 : branchGradientTaskPool.getNumThreads() + 1;
+            final BranchGradientWorkspace[] branchGradientWorkspaces =
+                    new BranchGradientWorkspace[branchGradientWorkspaceCount];
+            for (int i = 0; i < branchGradientWorkspaces.length; ++i) {
+                branchGradientWorkspaces[i] = WorkspaceFactory.branchGradientWorkspace(dim);
+            }
+            final CanonicalBranchAdjointPreparer branchAdjointPreparer = new CanonicalBranchAdjointPreparer(
+                    tree,
+                    dim,
+                    branchGradientTaskPool,
+                    mainWorkspace,
+                    branchGradientWorkspaces,
+                    branchGradientMessageProvider,
+                    branchContributionAssembler::fillLocalAdjointsForBranch);
+            this.gradientPreparationRunner = new CanonicalGradientPreparationRunner(
+                    debugOptions,
+                    traversalRunner,
+                    branchAdjointPreparer);
+            this.treeGradientEngine = new CanonicalTreeGradientEngine(
+                    dim,
+                    Math.max(0, nodeCount - 1),
+                    branchGradientTaskPool,
+                    mainWorkspace,
+                    branchGradientWorkspaces);
+            this.branchLengthGradientRunner = new CanonicalBranchLengthGradientRunner(
+                    tree,
+                    fallbackPolicy,
+                    stateStore,
+                    mainWorkspace,
+                    traversalRunner,
+                    gradientPreparationRunner,
+                    preparedBranchGradientInputs,
+                    new CanonicalBranchLengthGradientEngine());
+        } else {
+            this.preparedBranchGradientInputs = null;
+            this.gradientPreparationRunner = null;
+            this.treeGradientEngine = null;
+            this.branchLengthGradientRunner = null;
+        }
     }
 
     @Override
@@ -176,14 +211,73 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     }
 
     @Override
+    public void fillPostOrderNodeState(final int nodeIndex, final CanonicalGaussianState out) {
+        requirePostOrderState();
+        checkOutputState(out);
+        treeTraversal.fillPostOrderNodeState(nodeIndex, stateStore, messageWorkspace, out);
+    }
+
+    @Override
+    public void fillPostOrderBranchBottomState(final int childNodeIndex,
+                                               final CanonicalGaussianState out) {
+        requirePostOrderState();
+        checkOutputState(out);
+        treeTraversal.fillPostOrderBranchBottomState(childNodeIndex, stateStore, messageWorkspace, out);
+    }
+
+    @Override
+    public void fillPostOrderBranchTopState(final int childNodeIndex,
+                                            final CanonicalBranchTransitionProvider transitionProvider,
+                                            final CanonicalGaussianState out) {
+        requirePostOrderState();
+        checkOutputState(out);
+        treeTraversal.fillPostOrderBranchTopState(
+                childNodeIndex,
+                transitionProvider,
+                stateStore,
+                messageWorkspace,
+                out);
+    }
+
+    @Override
     public void computePreOrder(final CanonicalBranchTransitionProvider transitionProvider,
                                 final CanonicalRootPrior rootPrior) {
         traversalRunner.computePreOrder(transitionProvider, rootPrior);
     }
 
     @Override
+    public void fillPreOrderBranchTopState(final int childNodeIndex,
+                                           final CanonicalGaussianState out) {
+        requirePreOrderState();
+        checkOutputState(out);
+        treeTraversal.fillPreOrderBranchTopState(childNodeIndex, stateStore, out);
+    }
+
+    @Override
+    public void fillPreOrderBranchBottomState(final int childNodeIndex,
+                                              final CanonicalBranchTransitionProvider transitionProvider,
+                                              final CanonicalGaussianState out) {
+        requirePreOrderState();
+        checkOutputState(out);
+        treeTraversal.fillPreOrderBranchBottomState(
+                childNodeIndex,
+                transitionProvider,
+                stateStore,
+                messageWorkspace,
+                out);
+    }
+
+    @Override
+    public void fillRootPreOrderState(final CanonicalGaussianState out) {
+        requirePreOrderState();
+        checkOutputState(out);
+        treeTraversal.fillRootPreOrderState(stateStore, out);
+    }
+
+    @Override
     public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                              final double[] gradT) {
+        requireGradientSupport();
         branchLengthGradientRunner.compute(transitionProvider, gradT);
     }
 
@@ -191,6 +285,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     public void computeGradientBranchLengths(final CanonicalBranchTransitionProvider transitionProvider,
                                              final BranchGradientInputs inputs,
                                              final double[] gradT) {
+        requireGradientSupport();
         branchLengthGradientRunner.compute(transitionProvider, inputs, gradT);
     }
 
@@ -199,6 +294,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                       final double[] gradA,
                                       final double[] gradQ,
                                       final double[] gradMu) {
+        requireGradientSupport();
         prepareBranchGradientInputs(transitionProvider, preparedBranchGradientInputs);
         computeJointGradients(transitionProvider, preparedBranchGradientInputs, gradA, gradQ, gradMu);
     }
@@ -223,6 +319,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     public void prepareBranchGradientInputs(final CanonicalBranchTransitionProvider transitionProvider,
                                             final String phase,
                                             final BranchGradientInputs out) {
+        requireGradientSupport();
         gradientPreparationRunner.prepare(transitionProvider, phase, out);
     }
 
@@ -231,6 +328,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                                       final double[] gradA,
                                       final double[] gradQ,
                                       final double[] gradMu) {
+        requireGradientSupport();
         treeGradientEngine.computeJointGradients(transitionProvider, inputs, gradA, gradQ, gradMu);
     }
 
@@ -247,10 +345,34 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
     @Override
     public void acceptState() { }
 
-    private boolean fillLocalAdjointsForBranch(final int childIndex,
-                                               final CanonicalBranchTransitionProvider transitionProvider,
-                                               final BranchGradientWorkspace workspace) {
-        return branchContributionAssembler.fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace);
+    private void requirePostOrderState() {
+        if (!stateStore.hasPostOrderState) {
+            throw new IllegalStateException(
+                    "Canonical post-order messages have not been computed.");
+        }
+    }
+
+    private void requirePreOrderState() {
+        if (!stateStore.hasPreOrderState) {
+            throw new IllegalStateException(
+                    "Canonical pre-order messages have not been computed.");
+        }
+    }
+
+    private void checkOutputState(final CanonicalGaussianState out) {
+        if (out == null) {
+            throw new IllegalArgumentException("Output state must not be null.");
+        }
+        if (out.getDimension() != dim) {
+            throw new IllegalArgumentException(
+                    "Output state dimension mismatch: " + out.getDimension() + " vs " + dim + ".");
+        }
+    }
+
+    private void requireGradientSupport() {
+        if (gradientPreparationRunner == null || treeGradientEngine == null || branchLengthGradientRunner == null) {
+            throw new UnsupportedOperationException("This canonical message passer was created for likelihood-only use.");
+        }
     }
 
 }

@@ -499,10 +499,47 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         }
 
         @Override
+        public void fillPostOrderNodeState(final int nodeIndex,
+                                           final CanonicalGaussianState out) {
+            delegate.fillPostOrderNodeState(nodeIndex, out);
+        }
+
+        @Override
+        public void fillPostOrderBranchBottomState(final int childNodeIndex,
+                                                   final CanonicalGaussianState out) {
+            delegate.fillPostOrderBranchBottomState(childNodeIndex, out);
+        }
+
+        @Override
+        public void fillPostOrderBranchTopState(final int childNodeIndex,
+                                                final CanonicalBranchTransitionProvider transitionProvider,
+                                                final CanonicalGaussianState out) {
+            delegate.fillPostOrderBranchTopState(childNodeIndex, transitionProvider, out);
+        }
+
+        @Override
         public void computePreOrder(final CanonicalBranchTransitionProvider transitionProvider,
                                     final CanonicalRootPrior rootPrior) {
             preOrderCalls++;
             delegate.computePreOrder(transitionProvider, rootPrior);
+        }
+
+        @Override
+        public void fillPreOrderBranchTopState(final int childNodeIndex,
+                                               final CanonicalGaussianState out) {
+            delegate.fillPreOrderBranchTopState(childNodeIndex, out);
+        }
+
+        @Override
+        public void fillPreOrderBranchBottomState(final int childNodeIndex,
+                                                  final CanonicalBranchTransitionProvider transitionProvider,
+                                                  final CanonicalGaussianState out) {
+            delegate.fillPreOrderBranchBottomState(childNodeIndex, transitionProvider, out);
+        }
+
+        @Override
+        public void fillRootPreOrderState(final CanonicalGaussianState out) {
+            delegate.fillRootPreOrderState(out);
         }
 
         @Override

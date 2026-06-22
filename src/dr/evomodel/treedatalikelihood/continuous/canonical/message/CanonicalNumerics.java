@@ -140,6 +140,43 @@ public final class CanonicalNumerics {
         return 2.0 * pivotStats.logDet;
     }
 
+    public static double copyAndInvertPositiveDefiniteFlat(
+            final double[] source,
+            final int dimension,
+            final double[] matrixOut,
+            final double[] inverseOut,
+            final double[] choleskyScratch,
+            final double[] lowerInverseScratch,
+            final CanonicalNumericsOptions options) {
+        final int d = dimension;
+        double maxAbsDiagonal = 0.0;
+        for (int i = 0; i < d; ++i) {
+            final int iOff = i * d;
+            for (int j = 0; j < d; ++j) {
+                final double value = 0.5 * (source[iOff + j] + source[j * d + i]);
+                matrixOut[iOff + j] = value;
+                choleskyScratch[iOff + j] = value;
+            }
+            maxAbsDiagonal = Math.max(maxAbsDiagonal, Math.abs(matrixOut[iOff + i]));
+        }
+
+        final double pivotFloor = options.jitterBase(maxAbsDiagonal);
+        final PivotStats pivotStats = factorCholeskyFlatInPlace(choleskyScratch, d, pivotFloor);
+        maybeReportPivotFloor(options, pivotStats, d, pivotFloor, maxAbsDiagonal);
+        invertFlatCholesky(choleskyScratch, lowerInverseScratch, d, pivotFloor);
+
+        for (int i = 0; i < d; ++i) {
+            for (int j = 0; j < d; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < d; ++k) {
+                    sum += lowerInverseScratch[k * d + i] * lowerInverseScratch[k * d + j];
+                }
+                inverseOut[i * d + j] = sum;
+            }
+        }
+        return 2.0 * pivotStats.logDet;
+    }
+
     private static boolean invertSymmetricPositiveDefiniteStrictFallback(
             final DenseMatrix64F symmetricSource,
             final DenseMatrix64F inverseOut,

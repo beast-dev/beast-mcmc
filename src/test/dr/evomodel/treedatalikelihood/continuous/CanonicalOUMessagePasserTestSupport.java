@@ -40,6 +40,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.GaussianCanonicalTipObservation;
 import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -450,6 +451,19 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         final CanonicalRootPrior canonicalRootPrior =
                 new CanonicalConjugateRootPriorAdapter(rootPrior, dimTrait);
         return new OUSetup(aMatrix, qMatrix, precisionMatrix, muParam, branchScale, provider, passer, canonicalRootPrior);
+    }
+
+    protected OUSetup buildDiagonalOUSetup(final String tag,
+                                           final CanonicalTipObservation[] tips) {
+        final Parameter attenuation =
+                new Parameter.Default("A.diagonal.values." + tag, new double[]{2.0, 3.0, 1.5});
+        final DiagonalMatrix diagonalMatrix = new DiagonalMatrix(attenuation);
+        return buildOUSetupFromElasticModel(
+                tag,
+                tips,
+                new MultivariateElasticModel(diagonalMatrix),
+                diagonalMatrix,
+                MU_VALUES.clone());
     }
 
     protected OrthogonalBlockOUSetup buildOrthogonalBlockOUSetup(final String tag,

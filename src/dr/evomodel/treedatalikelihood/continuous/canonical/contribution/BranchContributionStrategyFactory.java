@@ -1,14 +1,10 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
-import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 
 final class BranchContributionStrategyFactory {
-
-    private final Tree tree;
-    private final CanonicalTreeStateStore stateStore;
 
     private final BranchContributionStrategy fixedParentObservedTip =
             new FixedParentObservedTipContribution();
@@ -29,19 +25,13 @@ final class BranchContributionStrategyFactory {
     private final BranchContributionStrategy fixedParentGaussianLinkTip =
             new FixedParentGaussianLinkTipBranchContribution();
 
-    BranchContributionStrategyFactory(final Tree tree,
-                                      final int dimension,
-                                      final CanonicalTreeStateStore stateStore) {
-        this.tree = tree;
-        this.stateStore = stateStore;
+    BranchContributionStrategyFactory() {
     }
 
-    BranchContributionStrategy select(final int childIndex) {
-        final boolean fixedParent =
-                stateStore.hasFixedRootValue && tree.isRoot(tree.getParent(tree.getNode(childIndex)));
-        if (tree.isExternal(tree.getNode(childIndex))) {
-            final CanonicalTipObservationModel observationModel =
-                    stateStore.tipObservationModels[childIndex];
+    BranchContributionStrategy select(final BranchGradientMessageBundle messages) {
+        final boolean fixedParent = messages.isFixedParent();
+        if (messages.isExternalChild()) {
+            final CanonicalTipObservationModel observationModel = messages.getTipObservationModel();
             if (observationModel.getMode() == TipObservationMode.GAUSSIAN_LINK) {
                 return fixedParent ? fixedParentGaussianLinkTip : gaussianLinkTip;
             }

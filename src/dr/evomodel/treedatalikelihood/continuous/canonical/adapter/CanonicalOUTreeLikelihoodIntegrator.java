@@ -44,6 +44,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessageP
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
@@ -76,6 +77,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private final Tree tipTree;
     private final ContinuousTraitPartialsProvider tipDataModel;
     private final CanonicalTipObservation[] ownedTipObservations;
+    private double cachedLogLikelihood;
+    private double storedCachedLogLikelihood;
+    private boolean postOrderMessagesDirty;
+    private boolean storedPostOrderMessagesDirty;
+    private boolean preOrderMessagesDirty;
+    private boolean storedPreOrderMessagesDirty;
     private boolean gradientInputsDirty;
     private boolean storedGradientInputsDirty;
     private boolean jointGradientCacheDirty;
@@ -165,6 +172,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.tipTree = dataModel == null ? null : tree;
         this.tipDataModel = dataModel;
         this.ownedTipObservations = dataModel == null ? null : tipObservations;
+        this.cachedLogLikelihood = Double.NaN;
+        this.storedCachedLogLikelihood = Double.NaN;
+        this.postOrderMessagesDirty = true;
+        this.storedPostOrderMessagesDirty = true;
+        this.preOrderMessagesDirty = true;
+        this.storedPreOrderMessagesDirty = true;
         this.gradientInputsDirty = true;
         this.storedGradientInputsDirty = true;
         this.jointGradientCacheDirty = true;
@@ -203,6 +216,12 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.tipTree = null;
         this.tipDataModel = null;
         this.ownedTipObservations = null;
+        this.cachedLogLikelihood = Double.NaN;
+        this.storedCachedLogLikelihood = Double.NaN;
+        this.postOrderMessagesDirty = true;
+        this.storedPostOrderMessagesDirty = true;
+        this.preOrderMessagesDirty = true;
+        this.storedPreOrderMessagesDirty = true;
         this.gradientInputsDirty = true;
         this.storedGradientInputsDirty = true;
         this.jointGradientCacheDirty = true;
@@ -217,10 +236,62 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     @Override
     public double calculateLogLikelihood() {
         syncOwnedTipObservations();
-        final double logLikelihood = passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        modelDirty = false;
+        refreshPostOrderMessages(false);
         reportTransitionCacheDiagnostics("logLikelihood");
-        return logLikelihood;
+        return cachedLogLikelihood;
+    }
+
+    @Override
+    public int getTraitDimension() {
+        return passer.getDimension();
+    }
+
+    @Override
+    public void ensurePostOrderMessages() {
+        syncOwnedTipObservations();
+        ensurePostOrderMessages(false);
+    }
+
+    @Override
+    public void fillPostOrderNode(final int nodeIndex, final CanonicalGaussianState out) {
+        ensurePostOrderMessages();
+        passer.fillPostOrderNodeState(nodeIndex, out);
+    }
+
+    @Override
+    public void fillPostOrderBranchBottom(final int childNodeIndex, final CanonicalGaussianState out) {
+        ensurePostOrderMessages();
+        passer.fillPostOrderBranchBottomState(childNodeIndex, out);
+    }
+
+    @Override
+    public void fillPostOrderBranchTop(final int childNodeIndex, final CanonicalGaussianState out) {
+        ensurePostOrderMessages();
+        passer.fillPostOrderBranchTopState(childNodeIndex, transitionProvider, out);
+    }
+
+    @Override
+    public void ensurePreOrderMessages() {
+        syncOwnedTipObservations();
+        ensurePreOrderMessages(false);
+    }
+
+    @Override
+    public void fillPreOrderBranchTop(final int childNodeIndex, final CanonicalGaussianState out) {
+        ensurePreOrderMessages();
+        passer.fillPreOrderBranchTopState(childNodeIndex, out);
+    }
+
+    @Override
+    public void fillPreOrderBranchBottom(final int childNodeIndex, final CanonicalGaussianState out) {
+        ensurePreOrderMessages();
+        passer.fillPreOrderBranchBottomState(childNodeIndex, transitionProvider, out);
+    }
+
+    @Override
+    public void fillRootPreOrder(final CanonicalGaussianState out) {
+        ensurePreOrderMessages();
+        passer.fillRootPreOrderState(out);
     }
 
     @Override
@@ -271,7 +342,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
 
     public void reloadTips(final CanonicalTipObservation[] tipObservations) {
         loadTips(tipObservations);
-        markJointGradientCacheDirty();
+        markMessageAndGradientCachesDirty();
     }
 
     @Override
@@ -280,13 +351,16 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
             return;
         }
         tipObservationsDirty = true;
-        markJointGradientCacheDirty();
+        markMessageAndGradientCachesDirty();
     }
 
     @Override
     public void storeState() {
         passer.storeState();
         transitionProvider.storeState();
+        storedCachedLogLikelihood = cachedLogLikelihood;
+        storedPostOrderMessagesDirty = postOrderMessagesDirty;
+        storedPreOrderMessagesDirty = preOrderMessagesDirty;
         storedGradientInputsDirty = gradientInputsDirty;
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
@@ -302,6 +376,9 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     public void restoreState() {
         passer.restoreState();
         transitionProvider.restoreState();
+        cachedLogLikelihood = storedCachedLogLikelihood;
+        postOrderMessagesDirty = storedPostOrderMessagesDirty;
+        preOrderMessagesDirty = storedPreOrderMessagesDirty;
         gradientInputsDirty = storedGradientInputsDirty;
         jointGradientCacheDirty = storedJointGradientCacheDirty;
         modelDirty = storedModelDirty;
@@ -317,6 +394,9 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     public void acceptState() {
         passer.acceptState();
         transitionProvider.acceptState();
+        storedCachedLogLikelihood = cachedLogLikelihood;
+        storedPostOrderMessagesDirty = postOrderMessagesDirty;
+        storedPreOrderMessagesDirty = preOrderMessagesDirty;
         storedGradientInputsDirty = gradientInputsDirty;
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
@@ -333,7 +413,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         // Transition-provider cache invalidation is owned by the provider's
         // model listeners; this flag covers integrator-owned derived state.
         modelDirty = true;
-        markJointGradientCacheDirty();
+        markMessageAndGradientCachesDirty();
     }
 
     private void loadTips(final CanonicalTipObservation[] tipObservations) {
@@ -357,7 +437,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 tipTree, tipDataModel, passer.getDimension(), ownedTipObservations);
         loadTips(ownedTipObservations);
         tipObservationsDirty = false;
-        markJointGradientCacheDirty();
+        markMessageAndGradientCachesDirty();
     }
 
     private void ensureJointGradientCache() {
@@ -383,17 +463,52 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         if (!gradientInputsDirty) {
             return;
         }
-        long timingStart = CanonicalPhaseTimer.start();
-        passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
-        CanonicalPhaseTimer.recordPostorder(timingStart);
-        timingStart = CanonicalPhaseTimer.start();
-        passer.computePreOrder(transitionProvider, rootPrior);
-        CanonicalPhaseTimer.recordPreorder(timingStart);
-        timingStart = CanonicalPhaseTimer.start();
+        syncOwnedTipObservations();
+        ensurePreOrderMessages(true);
+        final long timingStart = CanonicalPhaseTimer.start();
         passer.prepareBranchGradientInputs(transitionProvider, phase, cachedGradientInputs);
         CanonicalPhaseTimer.recordBranchPrep(timingStart);
         modelDirty = false;
         gradientInputsDirty = false;
+    }
+
+    private void ensurePostOrderMessages(final boolean recordGradientTiming) {
+        if (!postOrderMessagesDirty) {
+            return;
+        }
+        refreshPostOrderMessages(recordGradientTiming);
+    }
+
+    private void refreshPostOrderMessages(final boolean recordGradientTiming) {
+        final long timingStart = CanonicalPhaseTimer.start();
+        cachedLogLikelihood = passer.computePostOrderLogLikelihood(transitionProvider, rootPrior);
+        if (recordGradientTiming) {
+            CanonicalPhaseTimer.recordPostorder(timingStart);
+        }
+        modelDirty = false;
+        postOrderMessagesDirty = false;
+        preOrderMessagesDirty = true;
+        markJointGradientCacheDirty();
+    }
+
+    private void ensurePreOrderMessages(final boolean recordGradientTiming) {
+        ensurePostOrderMessages(recordGradientTiming);
+        if (!preOrderMessagesDirty) {
+            return;
+        }
+        final long timingStart = CanonicalPhaseTimer.start();
+        passer.computePreOrder(transitionProvider, rootPrior);
+        if (recordGradientTiming) {
+            CanonicalPhaseTimer.recordPreorder(timingStart);
+        }
+        preOrderMessagesDirty = false;
+        markJointGradientCacheDirty();
+    }
+
+    private void markMessageAndGradientCachesDirty() {
+        postOrderMessagesDirty = true;
+        preOrderMessagesDirty = true;
+        markJointGradientCacheDirty();
     }
 
     private void markJointGradientCacheDirty() {

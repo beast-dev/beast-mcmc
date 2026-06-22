@@ -1,6 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
-import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
@@ -8,7 +7,8 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransi
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
@@ -30,32 +30,35 @@ public final class CanonicalBranchContributionAssembler {
                     "beast.experimental.canonicalUsePreparedTransitionMoments",
                     "true"));
 
-    private final Tree tree;
     private final int dim;
-    final CanonicalTreeStateStore stateStore;
     private final BranchContributionStrategyFactory strategyFactory;
     private final PartialIdentityTipContribution partialIdentityContribution;
 
-    public CanonicalBranchContributionAssembler(final Tree tree,
-                                         final int dim,
-                                         final CanonicalTreeStateStore stateStore) {
-        this.tree = tree;
+    public CanonicalBranchContributionAssembler(final int dim) {
         this.dim = dim;
-        this.stateStore = stateStore;
-        this.strategyFactory = new BranchContributionStrategyFactory(tree, dim, stateStore);
+        this.strategyFactory = new BranchContributionStrategyFactory();
         this.partialIdentityContribution = new PartialIdentityTipContribution(dim);
     }
 
     public boolean fillLocalAdjointsForBranch(final int childIndex,
-                                       final CanonicalBranchTransitionProvider transitionProvider,
-                                       final BranchGradientWorkspace workspace) {
-        final BranchContributionStrategy strategy = strategyFactory.select(childIndex);
+                                              final CanonicalBranchTransitionProvider transitionProvider,
+                                              final BranchGradientMessageProvider messageProvider,
+                                              final BranchGradientWorkspace workspace) {
+        messageProvider.fillBranchMessages(childIndex, workspace.branchMessages);
+        return fillLocalAdjointsForBranch(workspace.branchMessages, transitionProvider, workspace);
+    }
+
+    public boolean fillLocalAdjointsForBranch(final BranchGradientMessageBundle messages,
+                                             final CanonicalBranchTransitionProvider transitionProvider,
+                                             final BranchGradientWorkspace workspace) {
+        final int childIndex = messages.getChildNodeIndex();
+        final BranchContributionStrategy strategy = strategyFactory.select(messages);
         if (!strategy.contributes()) {
             return false;
         }
         final CanonicalGaussianTransition transition =
                 transitionFor(childIndex, transitionProvider, workspace);
-        if (!strategy.fillContribution(childIndex, transition, this, workspace)) {
+        if (!strategy.fillContribution(messages, transition, this, workspace)) {
             return false;
         }
 
@@ -178,16 +181,17 @@ public final class CanonicalBranchContributionAssembler {
 
     void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
                                                    final IdentityCanonicalTipObservationModel tipObservation,
+                                                   final double[] fixedRootValue,
                                                    final BranchGradientWorkspace workspace) {
         clearContribution(workspace);
         for (int i = 0; i < dim; ++i) {
-            final double xi = stateStore.fixedRootValue[i];
+            final double xi = fixedRootValue[i];
             final double yi = tipObservation.valueAt(i);
             workspace.contribution.dLogL_dInformationX[i] = xi;
             workspace.contribution.dLogL_dInformationY[i] = yi;
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                final double xj = stateStore.fixedRootValue[j];
+                final double xj = fixedRootValue[j];
                 final double yj = tipObservation.valueAt(j);
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
                 workspace.contribution.dLogL_dPrecisionXY[iOff + j] = -0.5 * (xi * yj);
@@ -200,22 +204,25 @@ public final class CanonicalBranchContributionAssembler {
 
     void fillContributionForFixedParentInternalNode(final CanonicalGaussianTransition transition,
                                                     final CanonicalGaussianState childMessage,
+                                                    final double[] fixedRootValue,
                                                     final BranchGradientWorkspace workspace) {
         CanonicalGaussianMessageOps.conditionOnObservedFirstBlock(
-                transition, stateStore.fixedRootValue, workspace.state);
+                transition, fixedRootValue, workspace.state);
         CanonicalGaussianMessageOps.combineStates(workspace.state, childMessage, workspace.parentPosterior);
         workspace.adjoint.fillMomentsFromCanonical(
                 workspace.parentPosterior, workspace.mean, workspace.covariance, dim);
-        fillContributionFromFixedParentChildMoments(workspace.mean, workspace.covariance, workspace);
+        fillContributionFromFixedParentChildMoments(
+                workspace.mean, workspace.covariance, fixedRootValue, workspace);
     }
 
     void fillContributionForFixedParentPartiallyObservedTip(final CanonicalGaussianTransition transition,
                                                             final IdentityCanonicalTipObservationModel tipObservation,
+                                                            final double[] fixedRootValue,
                                                             final BranchGradientWorkspace workspace) {
         partialIdentityContribution.fillContributionForFixedParentPartiallyObservedTip(
                 transition,
                 tipObservation,
-                stateStore.fixedRootValue,
+                fixedRootValue,
                 workspace.partialObservationWorkspace,
                 workspace.state,
                 workspace.contribution);
@@ -223,16 +230,17 @@ public final class CanonicalBranchContributionAssembler {
 
     private void fillContributionFromFixedParentChildMoments(final double[] childMean,
                                                              final double[] childCovariance,
+                                                             final double[] fixedRootValue,
                                                              final BranchGradientWorkspace workspace) {
         clearContribution(workspace);
         for (int i = 0; i < dim; ++i) {
-            final double xi = stateStore.fixedRootValue[i];
+            final double xi = fixedRootValue[i];
             final double yi = childMean[i];
             workspace.contribution.dLogL_dInformationX[i] = xi;
             workspace.contribution.dLogL_dInformationY[i] = yi;
             final int iOff = i * dim;
             for (int j = 0; j < dim; ++j) {
-                final double xj = stateStore.fixedRootValue[j];
+                final double xj = fixedRootValue[j];
                 final double yj = childMean[j];
                 final double eyy = childCovariance[iOff + j] + yi * yj;
                 workspace.contribution.dLogL_dPrecisionXX[iOff + j] = -0.5 * (xi * xj);
@@ -256,12 +264,13 @@ public final class CanonicalBranchContributionAssembler {
                 workspace.contribution);
     }
 
-    IdentityCanonicalTipObservationModel identityTipObservationModel(final int childIndex) {
-        final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
+    IdentityCanonicalTipObservationModel identityTipObservationModel(final BranchGradientMessageBundle messages) {
+        final CanonicalTipObservationModel observationModel = messages.getTipObservationModel();
         if (observationModel instanceof IdentityCanonicalTipObservationModel) {
             return (IdentityCanonicalTipObservationModel) observationModel;
         }
-        throw new IllegalStateException("Expected identity tip observation model for node " + childIndex
+        throw new IllegalStateException("Expected identity tip observation model for node "
+                + messages.getChildNodeIndex()
                 + " but found " + observationModel.getClass().getName());
     }
 

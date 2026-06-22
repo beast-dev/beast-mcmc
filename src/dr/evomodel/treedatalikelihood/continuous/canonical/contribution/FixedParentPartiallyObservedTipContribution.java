@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 
@@ -12,14 +13,16 @@ final class FixedParentPartiallyObservedTipContribution implements BranchContrib
     }
 
     @Override
-    public boolean fillContribution(final int childIndex,
+    public boolean fillContribution(final BranchGradientMessageBundle messages,
                                     final CanonicalGaussianTransition transition,
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
-        final IdentityCanonicalTipObservationModel tipObservation = assembler.identityTipObservationModel(childIndex);
+        final IdentityCanonicalTipObservationModel tipObservation =
+                assembler.identityTipObservationModel(messages);
         assembler.fillContributionForFixedParentPartiallyObservedTip(
                 transition,
                 tipObservation,
+                messages.getFixedRootValue(),
                 workspace);
         return true;
     }

@@ -3,6 +3,7 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 
 final class InternalNodeContribution implements BranchContributionStrategy {
@@ -13,14 +14,14 @@ final class InternalNodeContribution implements BranchContributionStrategy {
     }
 
     @Override
-    public boolean fillContribution(final int childIndex,
+    public boolean fillContribution(final BranchGradientMessageBundle messages,
                                     final CanonicalGaussianTransition transition,
                                     final CanonicalBranchContributionAssembler assembler,
                                     final BranchGradientWorkspace workspace) {
         CanonicalGaussianMessageOps.buildPairPosterior(
-                assembler.stateStore.branchAboveParent[childIndex],
+                messages.getAbovePreOrderAtParent(),
                 transition,
-                assembler.stateStore.postOrder[childIndex],
+                messages.getBelowPostOrderAtChild(),
                 workspace.pairState);
         CanonicalBranchMessageContributionUtils.fillFromPairState(
                 workspace.pairState,

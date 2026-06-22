@@ -3,21 +3,17 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchAdjointPreparer;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 
 final class CanonicalGradientPreparationRunner {
 
     private final CanonicalDebugOptions debugOptions;
-    private final CanonicalTreeStateStore stateStore;
     private final CanonicalTraversalRunner traversalRunner;
     private final CanonicalBranchAdjointPreparer branchAdjointPreparer;
 
     CanonicalGradientPreparationRunner(final CanonicalDebugOptions debugOptions,
-                                       final CanonicalTreeStateStore stateStore,
                                        final CanonicalTraversalRunner traversalRunner,
                                        final CanonicalBranchAdjointPreparer branchAdjointPreparer) {
         this.debugOptions = debugOptions;
-        this.stateStore = stateStore;
         this.traversalRunner = traversalRunner;
         this.branchAdjointPreparer = branchAdjointPreparer;
     }
@@ -28,7 +24,7 @@ final class CanonicalGradientPreparationRunner {
         try (CanonicalCachePhaseScope ignored = CanonicalCachePhaseScope.push(transitionProvider, phase)) {
             traversalRunner.requireGradientState();
             final long missesBefore = CanonicalCachePhaseScope.transitionCacheMisses(transitionProvider, phase);
-            branchAdjointPreparer.prepare(transitionProvider, stateStore, out);
+            branchAdjointPreparer.prepare(transitionProvider, out);
             assertNoGradientTransitionMisses(transitionProvider, phase, missesBefore);
         }
     }

@@ -27,6 +27,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
 
+import dr.evomodel.treedatalikelihood.continuous.message.ContinuousCanonicalPostOrderMessageProvider;
+import dr.evomodel.treedatalikelihood.continuous.message.ContinuousCanonicalPreOrderMessageProvider;
+
 /**
  * Centralized backend for canonical OU tree likelihood state.
  *
@@ -35,7 +38,9 @@ package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
  * MCMC state lifecycle through one object without depending on the concrete
  * message-passing implementation.</p>
  */
-public interface CanonicalOUIntegrator {
+public interface CanonicalOUIntegrator
+        extends ContinuousCanonicalPostOrderMessageProvider,
+        ContinuousCanonicalPreOrderMessageProvider {
 
     double calculateLogLikelihood();
 

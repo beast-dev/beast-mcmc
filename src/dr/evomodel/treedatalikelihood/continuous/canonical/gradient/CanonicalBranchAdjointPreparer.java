@@ -38,7 +38,6 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.ChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.util.TaskPool;
 
@@ -50,6 +49,7 @@ public final class CanonicalBranchAdjointPreparer {
     public interface Source {
         boolean fillLocalAdjointsForBranch(int childIndex,
                                            CanonicalBranchTransitionProvider transitionProvider,
+                                           BranchGradientMessageProvider messageProvider,
                                            BranchGradientWorkspace workspace);
     }
 
@@ -59,6 +59,7 @@ public final class CanonicalBranchAdjointPreparer {
     private final TaskPool taskPool;
     private final BranchGradientWorkspace mainWorkspace;
     private final BranchGradientWorkspace[] workspaces;
+    private final BranchGradientMessageProvider messageProvider;
     private final Source source;
     private final ChunkSizeStrategy chunkSizeStrategy;
 
@@ -67,6 +68,7 @@ public final class CanonicalBranchAdjointPreparer {
                                    final TaskPool taskPool,
                                    final BranchGradientWorkspace mainWorkspace,
                                    final BranchGradientWorkspace[] workspaces,
+                                   final BranchGradientMessageProvider messageProvider,
                                    final Source source) {
         this.tree = tree;
         this.dimension = dimension;
@@ -74,14 +76,14 @@ public final class CanonicalBranchAdjointPreparer {
         this.taskPool = taskPool;
         this.mainWorkspace = mainWorkspace;
         this.workspaces = workspaces;
+        this.messageProvider = messageProvider;
         this.source = source;
         this.chunkSizeStrategy =
                 new DimensionWeightedChunkSizeStrategy(dimension, Math.max(1, workspaces.length));
     }
 
     public void prepare(final CanonicalBranchTransitionProvider transitionProvider,
-                 final CanonicalTreeStateStore stateStore,
-                 final BranchGradientInputs out) {
+                        final BranchGradientInputs out) {
         out.checkCompatible(Math.max(0, nodeCount - 1), dimension);
         out.clear();
 
@@ -102,7 +104,8 @@ public final class CanonicalBranchAdjointPreparer {
                 if (childIndex == rootIndex) {
                     continue;
                 }
-                if (!source.fillLocalAdjointsForBranch(childIndex, transitionProvider, mainWorkspace)) {
+                if (!source.fillLocalAdjointsForBranch(
+                        childIndex, transitionProvider, messageProvider, mainWorkspace)) {
                     continue;
                 }
                 out.addBranch(requireSnapshot(snapshotProvider, childIndex), mainWorkspace.adjoints);
@@ -118,7 +121,8 @@ public final class CanonicalBranchAdjointPreparer {
                         }
 
                         final BranchGradientWorkspace workspace = workspaces[thread];
-                        if (!source.fillLocalAdjointsForBranch(childIndex, transitionProvider, workspace)) {
+                        if (!source.fillLocalAdjointsForBranch(
+                                childIndex, transitionProvider, messageProvider, workspace)) {
                             out.clearStagedBranch(childIndex);
                             return;
                         }
@@ -129,10 +133,7 @@ public final class CanonicalBranchAdjointPreparer {
                     });
             out.compactStagedBranches(rootIndex, preparedTransition != null);
         }
-        out.setRoot(
-                stateStore.lastRootDiffusionScale,
-                stateStore.branchAboveParent[rootIndex],
-                stateStore.postOrder[rootIndex]);
+        messageProvider.fillRootMessages(out);
     }
 
     private int branchGradientPreparationChunkSize(final int taskLimit) {

@@ -60,6 +60,8 @@ final class CanonicalTraversalRunner {
 
     private void preloadTransitions(final CanonicalBranchTransitionProvider transitionProvider) {
         if (!(transitionProvider instanceof CanonicalTransitionPreloader)
+                || transitionProvider instanceof CanonicalNativeBranchMessageProvider
+                && ((CanonicalNativeBranchMessageProvider) transitionProvider).bypassCanonicalTransitionPreload()
                 || transitionPreloadTaskPool == null
                 || transitionPreloadTaskPool.getNumThreads() <= 1) {
             return;

@@ -37,6 +37,8 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
 
     private static final String TRANSITION_CACHE_DIAGNOSTICS_PROPERTY =
             "beast.debug.canonicalTransitionCache";
+    private static final String NATIVE_DIAGONAL_MESSAGES_PROPERTY =
+            "beast.experimental.canonicalUseNativeDiagonalOUMessages";
     private static final int BRANCH_GRADIENT_BENCHMARK_REPEATS = 32;
 
     public CanonicalOUFocusedParityAndCacheTest(final String name) {
@@ -141,6 +143,68 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
                                 CanonicalTransitionCachePhases.GRADIENT_PREP));
             }
         });
+    }
+
+    public void testDiagonalNativeLikelihoodMatchesFullTransitionFallbackAndAvoidsTransitionCache() {
+        System.out.println("\nTest: diagonal canonical OU native messages match full-transition fallback");
+
+        withTransitionCacheDiagnostics(new CheckedRunnable() {
+            @Override
+            public void run() {
+                final String previous = System.getProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
+                try {
+                    System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true");
+                    final OUSetup nativeSetup =
+                            buildDiagonalOUSetup("focusedDiagonalNative", buildFullyObservedTips());
+                    assertTrue("diagonal provider advertises native branch messages",
+                            nativeSetup.provider.usesNativeDiagonalBranchMessages());
+                    final double nativeLogLikelihood =
+                            nativeSetup.passer.computePostOrderLogLikelihood(
+                                    nativeSetup.provider,
+                                    nativeSetup.rootPrior);
+                    assertTrue("native diagonal log-likelihood is finite",
+                            Double.isFinite(nativeLogLikelihood));
+                    assertEquals("native diagonal postorder bypasses full transition cache",
+                            0L,
+                            nativeSetup.provider.getTransitionCacheRequestCount(
+                                    CanonicalTransitionCachePhases.POSTORDER));
+                    assertEquals("native diagonal postorder does not rebuild full transitions",
+                            0L,
+                            nativeSetup.provider.getTransitionCacheRebuildCount());
+
+                    System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "false");
+                    final OUSetup fallbackSetup =
+                            buildDiagonalOUSetup("focusedDiagonalFallback", buildFullyObservedTips());
+                    assertFalse("fallback disables native branch messages",
+                            fallbackSetup.provider.usesNativeDiagonalBranchMessages());
+                    final double fallbackLogLikelihood =
+                            fallbackSetup.passer.computePostOrderLogLikelihood(
+                                    fallbackSetup.provider,
+                                    fallbackSetup.rootPrior);
+
+                    assertEquals("native diagonal vs full-transition fallback log-likelihood",
+                            fallbackLogLikelihood,
+                            nativeLogLikelihood,
+                            1.0e-9);
+                    assertTrue("fallback path requests full transitions",
+                            fallbackSetup.provider.getTransitionCacheRequestCount(
+                                    CanonicalTransitionCachePhases.POSTORDER) > 0L);
+                } finally {
+                    if (previous == null) {
+                        System.clearProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
+                    } else {
+                        System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, previous);
+                    }
+                }
+            }
+        });
+    }
+
+    public void testDiagonalNativeGradientsMatchFullTransitionFallback() {
+        System.out.println("\nTest: diagonal canonical OU native gradients match full-transition fallback");
+
+        checkDiagonalNativeGradientParity("exact tips", "exactTips", buildFullyObservedTips());
+        checkDiagonalNativeGradientParity("partial/missing tips", "partialMissingTips", buildPartiallyObservedTips());
     }
 
     public void testDenseGradientRestoreMatchesColdWorkspaceAfterSelectionPerturbation() {
@@ -329,6 +393,56 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
         fillMatrixParameter(setup.dense.aMatrix, setup.blockSelection.getParameterAsMatrix());
     }
 
+    private void checkDiagonalNativeGradientParity(final String label,
+                                                   final String tag,
+                                                   final CanonicalTipObservation[] tips) {
+        final String previous = System.getProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
+        try {
+            final DiagonalGradientSnapshot nativeGradient =
+                    diagonalGradientSnapshot("focusedDiagonalNativeGradient." + tag, tips, true);
+            final DiagonalGradientSnapshot fallbackGradient =
+                    diagonalGradientSnapshot("focusedDiagonalFallbackGradient." + tag, tips, false);
+
+            System.out.printf("  %s native dlogL/dA: %s%n",
+                    label, Arrays.toString(nativeGradient.gradA));
+            System.out.printf("  %s fallback dlogL/dA: %s%n",
+                    label, Arrays.toString(fallbackGradient.gradA));
+            assertVectorEquals("diagonal native vs fallback dlogL/dA (" + label + ")",
+                    fallbackGradient.gradA, nativeGradient.gradA, 1.0e-9);
+            assertVectorEquals("diagonal native vs fallback dlogL/dQ (" + label + ")",
+                    fallbackGradient.gradQ, nativeGradient.gradQ, 1.0e-9);
+            assertVectorEquals("diagonal native vs fallback dlogL/dmu (" + label + ")",
+                    fallbackGradient.gradMu, nativeGradient.gradMu, 1.0e-9);
+            assertVectorEquals("diagonal native vs fallback dlogL/dt (" + label + ")",
+                    fallbackGradient.gradT, nativeGradient.gradT, 1.0e-9);
+        } finally {
+            if (previous == null) {
+                System.clearProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
+            } else {
+                System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, previous);
+            }
+        }
+    }
+
+    private DiagonalGradientSnapshot diagonalGradientSnapshot(final String tag,
+                                                             final CanonicalTipObservation[] tips,
+                                                             final boolean nativeMessages) {
+        System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, Boolean.toString(nativeMessages));
+        final OUSetup setup = buildDiagonalOUSetup(tag, tips);
+        assertEquals("diagonal native message setting",
+                nativeMessages, setup.provider.usesNativeDiagonalBranchMessages());
+        refreshMessages(setup);
+
+        final int denseSelectionGradientDimension = dimTrait * dimTrait;
+        final double[] gradA = new double[denseSelectionGradientDimension];
+        final double[] gradQ = new double[dimTrait * dimTrait];
+        final double[] gradMu = new double[dimTrait];
+        final double[] gradT = new double[treeModel.getNodeCount()];
+        setup.passer.computeJointGradients(setup.provider, gradA, gradQ, gradMu);
+        setup.passer.computeGradientBranchLengths(setup.provider, gradT);
+        return new DiagonalGradientSnapshot(gradA, gradQ, gradMu, gradT);
+    }
+
     private CanonicalTipObservation observedTip(final double x0, final double x1, final double x2) {
         final CanonicalTipObservation observation = new CanonicalTipObservation(dimTrait);
         observation.setObserved(new double[]{x0, x1, x2});
@@ -375,5 +489,22 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
 
     private interface CheckedRunnable {
         void run();
+    }
+
+    private static final class DiagonalGradientSnapshot {
+        private final double[] gradA;
+        private final double[] gradQ;
+        private final double[] gradMu;
+        private final double[] gradT;
+
+        private DiagonalGradientSnapshot(final double[] gradA,
+                                         final double[] gradQ,
+                                         final double[] gradMu,
+                                         final double[] gradT) {
+            this.gradA = gradA;
+            this.gradQ = gradQ;
+            this.gradMu = gradMu;
+            this.gradT = gradT;
+        }
     }
 }

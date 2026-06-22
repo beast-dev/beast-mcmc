@@ -9,6 +9,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipObservationWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationModelWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipParentMessageWorkspace;
@@ -29,12 +30,19 @@ public final class BranchGradientWorkspace {
     public final CanonicalGaussianState parentPosterior;
     public final CanonicalGaussianState pairState;
     public final CanonicalGaussianMessageOps.Workspace gaussianWorkspace;
+    public final double[] diagonalObserved;
+    public final double[] diagonalOneMinusActualization;
+    public final double[] diagonalBranchCovariance;
+    public final double[] diagonalBranchCovarianceScratch;
+    public final double[] diagonalBranchCholeskyScratch;
+    public final double[] diagonalBranchLowerInverseScratch;
     public final TipObservationModelWorkspace observationWorkspace;
     public final TipParentMessageWorkspace tipParentMessageWorkspace;
     public final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
     public final CanonicalTransitionAdjointUtils.Workspace transitionAdjointWorkspace;
     public final CanonicalBranchMessageContribution contribution;
     public final CanonicalLocalTransitionAdjoints adjoints;
+    public final BranchGradientMessageBundle branchMessages;
     public final PartialIdentityTipObservationWorkspace partialObservationWorkspace;
     public final int[] observedIndexScratch;
     public final int[] missingIndexScratch;
@@ -84,6 +92,16 @@ public final class BranchGradientWorkspace {
         this.siblingProduct = traversal == null ? null : traversal.siblingProduct;
         this.downwardParentState = traversal == null ? null : traversal.downwardParentState;
         this.gaussianWorkspace = traversal == null ? null : traversal.gaussianWorkspace;
+        this.diagonalObserved = traversal == null ? null : traversal.diagonalObserved;
+        this.diagonalOneMinusActualization =
+                traversal == null ? null : traversal.diagonalOneMinusActualization;
+        this.diagonalBranchCovariance = traversal == null ? null : traversal.diagonalBranchCovariance;
+        this.diagonalBranchCovarianceScratch =
+                traversal == null ? null : traversal.diagonalBranchCovarianceScratch;
+        this.diagonalBranchCholeskyScratch =
+                traversal == null ? null : traversal.diagonalBranchCholeskyScratch;
+        this.diagonalBranchLowerInverseScratch =
+                traversal == null ? null : traversal.diagonalBranchLowerInverseScratch;
         this.observationWorkspace      = traversal == null ? null : traversal.observationWorkspace;
         this.tipParentMessageWorkspace = traversal == null ? null : traversal.tipParentMessageWorkspace;
 
@@ -94,6 +112,7 @@ public final class BranchGradientWorkspace {
         this.transitionAdjointWorkspace = adjoint == null ? null : adjoint.transitionAdjointWorkspace;
         this.contribution = adjoint == null ? null : adjoint.contribution;
         this.adjoints = adjoint == null ? null : adjoint.adjoints;
+        this.branchMessages = adjoint == null ? null : new BranchGradientMessageBundle();
         this.partialObservationWorkspace = adjoint == null ? null : adjoint.partialObservationWorkspace;
         this.observedIndexScratch = adjoint == null ? null : adjoint.observedIndexScratch;
         this.missingIndexScratch = adjoint == null ? null : adjoint.missingIndexScratch;
@@ -131,6 +150,15 @@ public final class BranchGradientWorkspace {
     public void validate(final int dim) {
         if (hasCapability(WorkspaceCapability.TRAVERSAL)) {
             requireLength(traitCovariance, dim * dim, "traitCovariance");
+            requireLength(diagonalObserved, dim, "diagonalObserved");
+            requireLength(diagonalOneMinusActualization, dim, "diagonalOneMinusActualization");
+            requireLength(diagonalBranchCovariance, dim * dim, "diagonalBranchCovariance");
+            requireLength(diagonalBranchCovarianceScratch, dim * dim,
+                    "diagonalBranchCovarianceScratch");
+            requireLength(diagonalBranchCholeskyScratch, dim * dim,
+                    "diagonalBranchCholeskyScratch");
+            requireLength(diagonalBranchLowerInverseScratch, dim * dim,
+                    "diagonalBranchLowerInverseScratch");
         }
         if (hasCapability(WorkspaceCapability.ADJOINTS)) {
             requireLength(covariance, dim * dim, "covariance");

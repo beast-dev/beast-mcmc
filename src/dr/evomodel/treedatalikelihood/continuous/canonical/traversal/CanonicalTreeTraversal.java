@@ -37,6 +37,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.CanonicalTraversalTimer;
 
@@ -156,6 +157,32 @@ public final class CanonicalTreeTraversal {
         CanonicalGaussianMessageOps.copyState(stateStore.branchAboveParent[rootIndex], out);
     }
 
+    public boolean postorderNativeMessagesCoverTraversal(
+            final CanonicalNativeBranchMessageProvider nativeMessageProvider,
+            final CanonicalTreeStateStore stateStore) {
+        if (nativeMessageProvider == null
+                || !nativeMessageProvider.hasNativeBranchMessages()
+                || !nativeMessageProvider.supportsPostorderInternalMessage()) {
+            return false;
+        }
+        final int rootIndex = tree.getRoot().getNumber();
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            if (i == rootIndex) {
+                continue;
+            }
+            if (tree.isExternal(tree.getNode(i))) {
+                final CanonicalTipObservationModel observationModel =
+                        stateStore.tipObservationModels[i];
+                if (observationModel == null
+                        || !nativeMessageProvider.supportsPostorderTipMessage(
+                                observationModel.getMode())) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private void fillPostOrderTipBottomState(final int tipIndex,
                                              final CanonicalTreeStateStore stateStore,
                                              final BranchGradientWorkspace workspace,
@@ -267,7 +294,8 @@ public final class CanonicalTreeTraversal {
 
         final CanonicalNativeBranchMessageProvider nativeMessageProvider =
                 nativeMessageProvider(transitionProvider);
-        if (nativeMessageProvider != null) {
+        if (nativeMessageProvider != null
+                && nativeMessageProvider.supportsPreorderForwardMessage()) {
             timingStart = CanonicalTraversalTimer.start();
             if (nativeMessageProvider.fillForwardMessage(
                     nodeIndex,
@@ -337,12 +365,15 @@ public final class CanonicalTreeTraversal {
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel =
                     stateStore.tipObservationModels[childIndex];
-            if (nativeMessageProvider != null) {
+            if (nativeMessageProvider != null
+                    && nativeMessageProvider.supportsPostorderTipMessage(observationModel.getMode())) {
+                final CanonicalTipBranchMessageProvider tipBranchMessageProvider =
+                        nativeMessageProvider;
                 final long messageTimingStart = CanonicalTraversalTimer.start();
-                if (nativeMessageProvider.fillBackwardMessageForTip(
+                if (observationModel.fillParentMessage(
+                        tipBranchMessageProvider,
                         childIndex,
-                        observationModel,
-                        workspace,
+                        workspace.tipParentMessageWorkspace,
                         out)) {
                     if (postorder) {
                         CanonicalTraversalTimer.recordPostorderTipMessage(messageTimingStart);
@@ -370,7 +401,8 @@ public final class CanonicalTreeTraversal {
                 CanonicalTraversalTimer.recordPostorderTipMessage(messageTimingStart);
             }
         } else {
-            if (nativeMessageProvider != null) {
+            if (nativeMessageProvider != null
+                    && nativeMessageProvider.supportsPostorderInternalMessage()) {
                 final long messageTimingStart = CanonicalTraversalTimer.start();
                 if (nativeMessageProvider.fillBackwardMessageForState(
                         childIndex,

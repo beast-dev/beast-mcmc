@@ -1,9 +1,12 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.message;
 
+import dr.evomodel.continuous.ou.math.PositiveDefiniteMatrixInversionOptions;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog;
+
 /**
  * Numerical policy knobs for canonical Gaussian/OU code.
  */
-public final class CanonicalNumericsOptions {
+public final class CanonicalNumericsOptions implements PositiveDefiniteMatrixInversionOptions {
 
     private static final String OU_SPD_DEBUG_DUMP_PROPERTY =
             "beast.debug.ou.spdDump";
@@ -82,8 +85,25 @@ public final class CanonicalNumericsOptions {
         return pivotFloorDebugEnabled;
     }
 
+    @Override
     public double jitterBase(final double maxAbsDiagonal) {
         return Math.max(absoluteJitter, relativeJitter * Math.max(1.0, maxAbsDiagonal));
+    }
+
+    @Override
+    public void reportPivotFloor(final int clippedPivotCount,
+                                 final int dimension,
+                                 final double minPivotBeforeFloor,
+                                 final double pivotFloor,
+                                 final double maxAbsDiagonal) {
+        if (pivotFloorDebugEnabled && clippedPivotCount > 0) {
+            CanonicalDiagnosticsLog.warning(
+                    "pdPivotFloorDebug clipped=" + clippedPivotCount
+                            + " dim=" + dimension
+                            + " minPivotBeforeFloor=" + minPivotBeforeFloor
+                            + " pivotFloor=" + pivotFloor
+                            + " maxAbsDiagonal=" + maxAbsDiagonal);
+        }
     }
 
     // -----------------------------------------------------------------------

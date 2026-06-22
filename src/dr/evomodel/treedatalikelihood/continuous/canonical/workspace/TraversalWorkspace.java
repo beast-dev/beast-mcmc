@@ -13,12 +13,6 @@ public final class TraversalWorkspace {
     public final CanonicalGaussianState siblingProduct;
     public final CanonicalGaussianState downwardParentState;
     public final CanonicalGaussianMessageOps.Workspace gaussianWorkspace;
-    public final double[] diagonalObserved;
-    public final double[] diagonalOneMinusActualization;
-    public final double[] diagonalBranchCovariance;
-    public final double[] diagonalBranchCovarianceScratch;
-    public final double[] diagonalBranchCholeskyScratch;
-    public final double[] diagonalBranchLowerInverseScratch;
 
     /** Scratch workspace for computing the upward parent message at every tip. */
     public final TipParentMessageWorkspace tipParentMessageWorkspace;
@@ -36,12 +30,6 @@ public final class TraversalWorkspace {
         this.siblingProduct            = new CanonicalGaussianState(dim);
         this.downwardParentState       = new CanonicalGaussianState(dim);
         this.gaussianWorkspace         = new CanonicalGaussianMessageOps.Workspace(dim);
-        this.diagonalObserved          = new double[dim];
-        this.diagonalOneMinusActualization = new double[dim];
-        this.diagonalBranchCovariance  = new double[dim * dim];
-        this.diagonalBranchCovarianceScratch = new double[dim * dim];
-        this.diagonalBranchCholeskyScratch = new double[dim * dim];
-        this.diagonalBranchLowerInverseScratch = new double[dim * dim];
         this.tipParentMessageWorkspace = new TipParentMessageWorkspace(dim);
         this.observationWorkspace      = tipParentMessageWorkspace.observationModelWorkspace;
     }

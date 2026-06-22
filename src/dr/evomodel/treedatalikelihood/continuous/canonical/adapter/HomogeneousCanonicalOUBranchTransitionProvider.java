@@ -39,24 +39,19 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionPreloader;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.inference.model.AbstractModel;
-import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
 import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
 import dr.util.TaskPool;
 
@@ -71,9 +66,6 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         CanonicalTransitionPreloader,
         CanonicalNativeBranchMessageProvider {
 
-    private static final String USE_NATIVE_DIAGONAL_MESSAGES_PROPERTY =
-            "beast.experimental.canonicalUseNativeDiagonalOUMessages";
-
     private final int dimension;
     private final MultivariateDiffusionModel diffusionModel;
     private final MultivariateElasticModel elasticModel;
@@ -84,7 +76,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     private final CanonicalBranchLengthSnapshot branchLengths;
     private final OUProcessModel processModel;
     private final CanonicalTransitionCache transitionCache;
-    private final DiagonalBranchMessageCacheEntry[] diagonalMessageCache;
+    private final CanonicalNativeBranchMessageProvider nativeBranchMessageProvider;
 
     private boolean dirty = false;
     private CanonicalTransitionCacheInvalidationReason dirtyReason =
@@ -143,11 +135,20 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                 CanonicalPreparedTransitionSupport.create(processModel),
                 this::getEffectiveBranchLength,
                 CanonicalTransitionCacheOptions.fromSystemProperties());
-        this.diagonalMessageCache = driftMatrix instanceof DiagonalMatrix
-                ? new DiagonalBranchMessageCacheEntry[tree.getNodeCount()]
-                : null;
+        this.nativeBranchMessageProvider = createNativeBranchMessageProvider(tree.getNodeCount());
 
         refreshSnapshot();
+    }
+
+    private CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(final int nodeCount) {
+        final SelectionMatrixParameterization selection =
+                processModel.getSelectionMatrixParameterization();
+        return CanonicalNativeBranchMessageAdapterFactory.create(
+                selection,
+                nodeCount,
+                diffusionCovariance,
+                stationaryMean,
+                branchLengths);
     }
 
     @Override
@@ -171,9 +172,6 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public void preloadCanonicalTransitions(final int rootNodeIndex,
                                             final TaskPool taskPool,
                                             final int chunkSize) {
-        if (nativeDiagonalMessagesEnabled()) {
-            return;
-        }
         ensureCurrentSnapshot();
         transitionCache.preloadTransitions(rootNodeIndex, taskPool, chunkSize);
     }
@@ -261,53 +259,29 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                                                final CanonicalGaussianState childState,
                                                final BranchGradientWorkspace workspace,
                                                final CanonicalGaussianState out) {
-        final DiagonalBranchMessageCacheEntry entry = diagonalMessageEntry(childNodeIndex, workspace);
-        if (entry == null) {
+        if (nativeBranchMessageProvider == null) {
             return false;
         }
-        CanonicalGaussianMessageOps.pushBackwardDiagonalTransition(
+        ensureCurrentSnapshot();
+        return nativeBranchMessageProvider.fillBackwardMessageForState(
+                childNodeIndex,
                 childState,
-                entry.actualizationDiagonal,
-                entry.displacement,
-                entry.precision,
-                entry.logNormalizer,
-                workspace.gaussianWorkspace,
+                workspace,
                 out);
-        return true;
     }
 
     @Override
-    public boolean fillBackwardMessageForTip(final int childNodeIndex,
-                                             final CanonicalTipObservationModel observationModel,
-                                             final BranchGradientWorkspace workspace,
-                                             final CanonicalGaussianState out) {
-        if (!(observationModel instanceof IdentityCanonicalTipObservationModel)) {
+    public boolean fillBackwardMessageForObservedTip(final int childNodeIndex,
+                                                     final double[] observedValue,
+                                                     final CanonicalGaussianState out) {
+        if (nativeBranchMessageProvider == null) {
             return false;
         }
-        if (observationModel.getMode() == TipObservationMode.MISSING) {
-            CanonicalGaussianMessageOps.clearState(out);
-            return true;
-        }
-        if (observationModel.getMode() != TipObservationMode.EXACT_IDENTITY) {
-            return false;
-        }
-        final DiagonalBranchMessageCacheEntry entry = diagonalMessageEntry(childNodeIndex, workspace);
-        if (entry == null) {
-            return false;
-        }
-        final IdentityCanonicalTipObservationModel identity =
-                (IdentityCanonicalTipObservationModel) observationModel;
-        for (int i = 0; i < dimension; ++i) {
-            workspace.diagonalObserved[i] = identity.valueAt(i);
-        }
-        CanonicalGaussianMessageOps.conditionOnObservedSecondBlockDiagonalTransition(
-                entry.actualizationDiagonal,
-                entry.displacement,
-                entry.precision,
-                entry.logNormalizer,
-                workspace.diagonalObserved,
+        ensureCurrentSnapshot();
+        return nativeBranchMessageProvider.fillBackwardMessageForObservedTip(
+                childNodeIndex,
+                observedValue,
                 out);
-        return true;
     }
 
     @Override
@@ -315,28 +289,49 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
                                       final CanonicalGaussianState parentState,
                                       final BranchGradientWorkspace workspace,
                                       final CanonicalGaussianState out) {
-        final DiagonalBranchMessageCacheEntry entry = diagonalMessageEntry(childNodeIndex, workspace);
-        if (entry == null) {
+        if (nativeBranchMessageProvider == null) {
             return false;
         }
-        CanonicalGaussianMessageOps.pushForwardDiagonalTransition(
+        ensureCurrentSnapshot();
+        return nativeBranchMessageProvider.fillForwardMessage(
+                childNodeIndex,
                 parentState,
-                entry.actualizationDiagonal,
-                entry.displacement,
-                entry.precision,
-                entry.logNormalizer,
-                workspace.gaussianWorkspace,
+                workspace,
                 out);
-        return true;
     }
 
     @Override
-    public boolean bypassCanonicalTransitionPreload() {
-        return nativeDiagonalMessagesEnabled();
+    public boolean hasNativeBranchMessages() {
+        return nativeBranchMessageProvider != null
+                && nativeBranchMessageProvider.hasNativeBranchMessages();
     }
 
-    public boolean usesNativeDiagonalBranchMessages() {
-        return nativeDiagonalMessagesEnabled();
+    @Override
+    public boolean supportsPostorderInternalMessage() {
+        return nativeBranchMessageProvider != null
+                && nativeBranchMessageProvider.supportsPostorderInternalMessage();
+    }
+
+    @Override
+    public boolean supportsPostorderTipMessage(final TipObservationMode mode) {
+        return nativeBranchMessageProvider != null
+                && nativeBranchMessageProvider.supportsPostorderTipMessage(mode);
+    }
+
+    @Override
+    public boolean supportsPreorderForwardMessage() {
+        return nativeBranchMessageProvider != null
+                && nativeBranchMessageProvider.supportsPreorderForwardMessage();
+    }
+
+    @Override
+    public boolean supportsFixedRootForwardMessage() {
+        return nativeBranchMessageProvider != null
+                && nativeBranchMessageProvider.supportsFixedRootForwardMessage();
+    }
+
+    public boolean usesNativeBranchMessages() {
+        return hasNativeBranchMessages();
     }
 
     private void ensureCurrentSnapshot() {
@@ -346,7 +341,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         refreshSnapshot();
         dirty = false;
         transitionCache.clear(dirtyReason);
-        clearDiagonalMessageCache();
+        clearNativeBranchMessageCache();
         dirtyReason = CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED;
     }
 
@@ -407,7 +402,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
     public void restoreState() {
         transitionCache.recordRestore();
         transitionCache.clear(CanonicalTransitionCacheInvalidationReason.RESTORE_STATE);
-        clearDiagonalMessageCache();
+        clearNativeBranchMessageCache();
         dirty = true;
         dirtyReason = CanonicalTransitionCacheInvalidationReason.RESTORE_STATE;
     }
@@ -446,132 +441,9 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         return transitionCache.getClearCount(reason);
     }
 
-    private boolean nativeDiagonalMessagesEnabled() {
-        return diagonalMessageCache != null
-                && Boolean.parseBoolean(System.getProperty(USE_NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true"));
-    }
-
-    private DiagonalBranchMessageCacheEntry diagonalMessageEntry(final int childNodeIndex,
-                                                                final BranchGradientWorkspace workspace) {
-        if (!nativeDiagonalMessagesEnabled()) {
-            return null;
-        }
-        ensureCurrentSnapshot();
-        final double branchLength = getEffectiveBranchLength(childNodeIndex);
-        if (!(branchLength > 0.0) || !Double.isFinite(branchLength)) {
-            return null;
-        }
-        DiagonalBranchMessageCacheEntry entry = diagonalMessageCache[childNodeIndex];
-        if (entry == null) {
-            entry = new DiagonalBranchMessageCacheEntry(dimension);
-            diagonalMessageCache[childNodeIndex] = entry;
-        }
-        if (!entry.isCurrent(branchLength)) {
-            rebuildDiagonalMessageEntry(branchLength, entry, workspace);
-        }
-        return entry;
-    }
-
-    private void rebuildDiagonalMessageEntry(final double branchLength,
-                                             final DiagonalBranchMessageCacheEntry entry,
-                                             final BranchGradientWorkspace workspace) {
-        diffusionSnapshot.fillCovarianceFlat(workspace.diagonalBranchCovarianceScratch);
-        final double[] oneMinusActualization = workspace.diagonalOneMinusActualization;
-        for (int i = 0; i < dimension; ++i) {
-            final double alpha = driftMatrix.getParameterValue(i, i);
-            final double scaled = -alpha * branchLength;
-            entry.actualizationDiagonal[i] = Math.exp(scaled);
-            oneMinusActualization[i] = -Math.expm1(scaled);
-            entry.displacement[i] = oneMinusActualization[i] * stationaryMeanValue(i);
-        }
-
-        for (int i = 0; i < dimension; ++i) {
-            final double alphaI = driftMatrix.getParameterValue(i, i);
-            final int iOff = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                final double alphaJ = driftMatrix.getParameterValue(j, j);
-                final double denominator = alphaI + alphaJ;
-                final double diffusionCovariance =
-                        workspace.diagonalBranchCovarianceScratch[iOff + j];
-                final double covariance;
-                if (denominator == 0.0) {
-                    covariance = branchLength * diffusionCovariance;
-                } else {
-                    final double factor = oneMinusActualization[i]
-                            + oneMinusActualization[j]
-                            - oneMinusActualization[i] * oneMinusActualization[j];
-                    covariance = diffusionCovariance * factor / denominator;
-                }
-                workspace.diagonalBranchCovariance[iOff + j] = covariance;
-            }
-        }
-
-        final double logDet = CanonicalNumerics.copyAndInvertPositiveDefiniteFlat(
-                workspace.diagonalBranchCovariance,
-                dimension,
-                workspace.diagonalBranchCovarianceScratch,
-                entry.precision,
-                workspace.diagonalBranchCholeskyScratch,
-                workspace.diagonalBranchLowerInverseScratch,
-                CanonicalNumericsOptions.OU_TREE);
-        entry.logNormalizer = 0.5 * (dimension * MultivariateElasticModel.LOG2PI
-                + logDet
-                + quadratic(entry.precision, entry.displacement));
-        entry.effectiveBranchLength = branchLength;
-        entry.valid = true;
-    }
-
-    private double stationaryMeanValue(final int index) {
-        return stationaryMean.getDimension() == 1
-                ? stationaryMean.getParameterValue(0)
-                : stationaryMean.getParameterValue(index);
-    }
-
-    private double quadratic(final double[] precision, final double[] value) {
-        double out = 0.0;
-        for (int i = 0; i < dimension; ++i) {
-            double row = 0.0;
-            final int iOff = i * dimension;
-            for (int j = 0; j < dimension; ++j) {
-                row += precision[iOff + j] * value[j];
-            }
-            out += value[i] * row;
-        }
-        return out;
-    }
-
-    private void clearDiagonalMessageCache() {
-        if (diagonalMessageCache == null) {
-            return;
-        }
-        for (DiagonalBranchMessageCacheEntry entry : diagonalMessageCache) {
-            if (entry != null) {
-                entry.valid = false;
-            }
-        }
-    }
-
-    private static final class DiagonalBranchMessageCacheEntry {
-        private final double[] actualizationDiagonal;
-        private final double[] displacement;
-        private final double[] precision;
-        private double effectiveBranchLength;
-        private double logNormalizer;
-        private boolean valid;
-
-        private DiagonalBranchMessageCacheEntry(final int dimension) {
-            this.actualizationDiagonal = new double[dimension];
-            this.displacement = new double[dimension];
-            this.precision = new double[dimension * dimension];
-            this.effectiveBranchLength = Double.NaN;
-            this.logNormalizer = Double.NaN;
-            this.valid = false;
-        }
-
-        private boolean isCurrent(final double branchLength) {
-            return valid
-                    && Double.doubleToLongBits(effectiveBranchLength)
-                    == Double.doubleToLongBits(branchLength);
+    private void clearNativeBranchMessageCache() {
+        if (nativeBranchMessageProvider != null) {
+            nativeBranchMessageProvider.clearBranchMessageCache();
         }
     }
 }

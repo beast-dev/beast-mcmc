@@ -30,12 +30,6 @@ public final class BranchGradientWorkspace {
     public final CanonicalGaussianState parentPosterior;
     public final CanonicalGaussianState pairState;
     public final CanonicalGaussianMessageOps.Workspace gaussianWorkspace;
-    public final double[] diagonalObserved;
-    public final double[] diagonalOneMinusActualization;
-    public final double[] diagonalBranchCovariance;
-    public final double[] diagonalBranchCovarianceScratch;
-    public final double[] diagonalBranchCholeskyScratch;
-    public final double[] diagonalBranchLowerInverseScratch;
     public final TipObservationModelWorkspace observationWorkspace;
     public final TipParentMessageWorkspace tipParentMessageWorkspace;
     public final CanonicalBranchMessageContributionUtils.Workspace contributionWorkspace;
@@ -92,16 +86,6 @@ public final class BranchGradientWorkspace {
         this.siblingProduct = traversal == null ? null : traversal.siblingProduct;
         this.downwardParentState = traversal == null ? null : traversal.downwardParentState;
         this.gaussianWorkspace = traversal == null ? null : traversal.gaussianWorkspace;
-        this.diagonalObserved = traversal == null ? null : traversal.diagonalObserved;
-        this.diagonalOneMinusActualization =
-                traversal == null ? null : traversal.diagonalOneMinusActualization;
-        this.diagonalBranchCovariance = traversal == null ? null : traversal.diagonalBranchCovariance;
-        this.diagonalBranchCovarianceScratch =
-                traversal == null ? null : traversal.diagonalBranchCovarianceScratch;
-        this.diagonalBranchCholeskyScratch =
-                traversal == null ? null : traversal.diagonalBranchCholeskyScratch;
-        this.diagonalBranchLowerInverseScratch =
-                traversal == null ? null : traversal.diagonalBranchLowerInverseScratch;
         this.observationWorkspace      = traversal == null ? null : traversal.observationWorkspace;
         this.tipParentMessageWorkspace = traversal == null ? null : traversal.tipParentMessageWorkspace;
 
@@ -150,15 +134,6 @@ public final class BranchGradientWorkspace {
     public void validate(final int dim) {
         if (hasCapability(WorkspaceCapability.TRAVERSAL)) {
             requireLength(traitCovariance, dim * dim, "traitCovariance");
-            requireLength(diagonalObserved, dim, "diagonalObserved");
-            requireLength(diagonalOneMinusActualization, dim, "diagonalOneMinusActualization");
-            requireLength(diagonalBranchCovariance, dim * dim, "diagonalBranchCovariance");
-            requireLength(diagonalBranchCovarianceScratch, dim * dim,
-                    "diagonalBranchCovarianceScratch");
-            requireLength(diagonalBranchCholeskyScratch, dim * dim,
-                    "diagonalBranchCholeskyScratch");
-            requireLength(diagonalBranchLowerInverseScratch, dim * dim,
-                    "diagonalBranchLowerInverseScratch");
         }
         if (hasCapability(WorkspaceCapability.ADJOINTS)) {
             requireLength(covariance, dim * dim, "covariance");

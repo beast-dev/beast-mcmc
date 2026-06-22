@@ -157,7 +157,7 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
                     final OUSetup nativeSetup =
                             buildDiagonalOUSetup("focusedDiagonalNative", buildFullyObservedTips());
                     assertTrue("diagonal provider advertises native branch messages",
-                            nativeSetup.provider.usesNativeDiagonalBranchMessages());
+                            nativeSetup.provider.usesNativeBranchMessages());
                     final double nativeLogLikelihood =
                             nativeSetup.passer.computePostOrderLogLikelihood(
                                     nativeSetup.provider,
@@ -176,7 +176,7 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
                     final OUSetup fallbackSetup =
                             buildDiagonalOUSetup("focusedDiagonalFallback", buildFullyObservedTips());
                     assertFalse("fallback disables native branch messages",
-                            fallbackSetup.provider.usesNativeDiagonalBranchMessages());
+                            fallbackSetup.provider.usesNativeBranchMessages());
                     final double fallbackLogLikelihood =
                             fallbackSetup.passer.computePostOrderLogLikelihood(
                                     fallbackSetup.provider,
@@ -430,7 +430,7 @@ public class CanonicalOUFocusedParityAndCacheTest extends CanonicalOUMessagePass
         System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, Boolean.toString(nativeMessages));
         final OUSetup setup = buildDiagonalOUSetup(tag, tips);
         assertEquals("diagonal native message setting",
-                nativeMessages, setup.provider.usesNativeDiagonalBranchMessages());
+                nativeMessages, setup.provider.usesNativeBranchMessages());
         refreshMessages(setup);
 
         final int denseSelectionGradientDimension = dimTrait * dimTrait;

@@ -60,10 +60,14 @@ final class CanonicalTraversalRunner {
 
     private void preloadTransitions(final CanonicalBranchTransitionProvider transitionProvider) {
         if (!(transitionProvider instanceof CanonicalTransitionPreloader)
-                || transitionProvider instanceof CanonicalNativeBranchMessageProvider
-                && ((CanonicalNativeBranchMessageProvider) transitionProvider).bypassCanonicalTransitionPreload()
                 || transitionPreloadTaskPool == null
                 || transitionPreloadTaskPool.getNumThreads() <= 1) {
+            return;
+        }
+        if (transitionProvider instanceof CanonicalNativeBranchMessageProvider
+                && treeTraversal.postorderNativeMessagesCoverTraversal(
+                        (CanonicalNativeBranchMessageProvider) transitionProvider,
+                        stateStore)) {
             return;
         }
         final long timingStart = CanonicalTraversalTimer.start();

@@ -97,7 +97,7 @@ public final class CanonicalOUMessageProviderTest extends CanonicalOUMessagePass
                             nativeSetup.provider,
                             nativeSetup.rootPrior);
             assertTrue("native diagonal messages enabled",
-                    nativeSetup.provider.usesNativeDiagonalBranchMessages());
+                    nativeSetup.provider.usesNativeBranchMessages());
 
             final StateSnapshot[] nativePostTop = allocateSnapshots(treeModel.getNodeCount());
             final StateSnapshot[] nativePreTop = allocateSnapshots(treeModel.getNodeCount());
@@ -113,7 +113,7 @@ public final class CanonicalOUMessageProviderTest extends CanonicalOUMessagePass
                             fallbackSetup.provider,
                             fallbackSetup.rootPrior);
             assertFalse("full-transition fallback enabled",
-                    fallbackSetup.provider.usesNativeDiagonalBranchMessages());
+                    fallbackSetup.provider.usesNativeBranchMessages());
 
             final CanonicalGaussianState state = new CanonicalGaussianState(dimTrait);
             for (int nodeIndex = 0; nodeIndex < treeModel.getNodeCount(); ++nodeIndex) {

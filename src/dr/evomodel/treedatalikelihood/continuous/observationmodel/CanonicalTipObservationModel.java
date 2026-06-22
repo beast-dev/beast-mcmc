@@ -43,6 +43,13 @@ public interface CanonicalTipObservationModel {
                            CanonicalGaussianMessageOps.Workspace gaussianWorkspace,
                            CanonicalGaussianState out);
 
+    default boolean fillParentMessage(final CanonicalTipBranchMessageProvider branchMessageProvider,
+                                      final int childNodeIndex,
+                                      final TipParentMessageWorkspace workspace,
+                                      final CanonicalGaussianState out) {
+        return false;
+    }
+
     /**
      * Fills {@code out} with the canonical-form factor for the latent child state induced by
      * this observation model.

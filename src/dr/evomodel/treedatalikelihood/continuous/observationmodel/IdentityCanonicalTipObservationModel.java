@@ -123,6 +123,30 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
     }
 
     @Override
+    public boolean fillParentMessage(final CanonicalTipBranchMessageProvider branchMessageProvider,
+                                     final int childNodeIndex,
+                                     final TipParentMessageWorkspace workspace,
+                                     final CanonicalGaussianState out) {
+        if (branchMessageProvider == null) {
+            return false;
+        }
+        switch (getMode()) {
+            case MISSING:
+                CanonicalGaussianMessageOps.clearState(out);
+                return true;
+            case EXACT_IDENTITY:
+                return branchMessageProvider.fillBackwardMessageForObservedTip(
+                        childNodeIndex,
+                        values,
+                        out);
+            case PARTIAL_EXACT_IDENTITY:
+                return false;
+            default:
+                throw new IllegalStateException("Unsupported identity observation mode: " + getMode());
+        }
+    }
+
+    @Override
     public void fillChildCanonicalState(final CanonicalGaussianState out,
                                         final TipObservationModelWorkspace workspace) {
         throw new UnsupportedOperationException(

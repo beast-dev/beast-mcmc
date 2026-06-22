@@ -1,7 +1,7 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
+import dr.evomodel.continuous.ou.math.OUPositiveDefiniteMatrixInversionOptions;
+import dr.evomodel.continuous.ou.math.PositiveDefiniteMatrixOps;
 import org.ejml.data.DenseMatrix64F;
 
 /**
@@ -9,7 +9,8 @@ import org.ejml.data.DenseMatrix64F;
  */
 final class BlockDiagonalPositiveDefiniteInverter {
 
-    private static final CanonicalNumericsOptions OPTIONS = CanonicalNumericsOptions.ORTHOGONAL_BLOCK;
+    private static final OUPositiveDefiniteMatrixInversionOptions OPTIONS =
+            OUPositiveDefiniteMatrixInversionOptions.ORTHOGONAL_BLOCK;
 
     private BlockDiagonalPositiveDefiniteInverter() { }
 
@@ -18,7 +19,7 @@ final class BlockDiagonalPositiveDefiniteInverter {
                                     final double[] inverseOut,
                                     final double[] choleskyScratch,
                                     final double[] lowerInverseScratch) {
-        return CanonicalNumerics.copyAndInvertPositiveDefiniteFlat(
+        return PositiveDefiniteMatrixOps.copyAndInvertPositiveDefiniteFlat(
                 source, matrixOut, inverseOut, choleskyScratch, lowerInverseScratch, OPTIONS);
     }
 }

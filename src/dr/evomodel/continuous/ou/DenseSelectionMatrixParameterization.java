@@ -5,37 +5,20 @@ import dr.inference.model.MatrixParameterInterface;
 /**
  * Default dense selection-matrix parametrization.
  */
-public class DenseSelectionMatrixParameterization implements SelectionMatrixParameterization {
+public class DenseSelectionMatrixParameterization extends AbstractSelectionMatrixParameterization {
 
-    private final MatrixParameterInterface matrixParameter;
-    private final int dimension;
     private final ThreadLocal<Workspace> workspaceLocal;
 
     public DenseSelectionMatrixParameterization(final MatrixParameterInterface matrixParameter) {
-        if (matrixParameter == null) {
-            throw new IllegalArgumentException("matrixParameter must not be null");
-        }
-        if (matrixParameter.getRowDimension() != matrixParameter.getColumnDimension()) {
-            throw new IllegalArgumentException("selection matrix must be square");
-        }
-        this.matrixParameter = matrixParameter;
-        this.dimension = matrixParameter.getRowDimension();
-        this.workspaceLocal = ThreadLocal.withInitial(() -> new Workspace(dimension));
-    }
-
-    @Override
-    public MatrixParameterInterface getMatrixParameter() {
-        return matrixParameter;
-    }
-
-    @Override
-    public int getDimension() {
-        return dimension;
+        super(matrixParameter);
+        this.workspaceLocal = ThreadLocal.withInitial(() -> new Workspace(getDimension()));
     }
 
     @Override
     public void fillSelectionMatrixFlat(final double[] out) {
         checkFlatSquare(out, "selection matrix");
+        final MatrixParameterInterface matrixParameter = getMatrixParameter();
+        final int dimension = getDimension();
         for (int i = 0; i < dimension; ++i) {
             final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
@@ -49,7 +32,7 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
         checkFlatSquare(out, "transition matrix");
         final Workspace workspace = workspace();
         fillScaledNegativeSelectionMatrix(dt, workspace.minusAdt);
-        MatrixExponentialUtils.expmFlat(workspace.minusAdt, out, dimension);
+        MatrixExponentialUtils.expmFlat(workspace.minusAdt, out, getDimension());
     }
 
     @Override
@@ -59,7 +42,11 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
                                                      final double[] dLogL_df,
                                                      final double[] gradientAccumulator) {
         checkFlatSquare(dLogL_dF, "transition adjoint");
+        checkVector(stationaryMean, "stationary mean");
+        checkVector(dLogL_df, "transition offset adjoint");
+        checkFlatSquare(gradientAccumulator, "selection gradient accumulator");
         final Workspace workspace = workspace();
+        final int dimension = getDimension();
 
         fillScaledNegativeSelectionMatrix(dt, workspace.minusAdt);
         for (int i = 0; i < dimension; ++i) {
@@ -85,6 +72,8 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
     }
 
     protected final void fillScaledNegativeSelectionMatrix(final double dt, final double[] out) {
+        final MatrixParameterInterface matrixParameter = getMatrixParameter();
+        final int dimension = getDimension();
         for (int i = 0; i < dimension; ++i) {
             final int rowOffset = i * dimension;
             for (int j = 0; j < dimension; ++j) {
@@ -95,14 +84,6 @@ public class DenseSelectionMatrixParameterization implements SelectionMatrixPara
 
     private Workspace workspace() {
         return workspaceLocal.get();
-    }
-
-    private void checkFlatSquare(final double[] matrix, final String label) {
-        if (matrix == null || matrix.length != dimension * dimension) {
-            throw new IllegalArgumentException(
-                    label + " must have length " + (dimension * dimension)
-                            + " for a " + dimension + "x" + dimension + " matrix");
-        }
     }
 
     private static final class Workspace {

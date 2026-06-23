@@ -38,6 +38,7 @@ public final class PartialIdentityTipProjection {
     }
 
     public void projectObservedChildToParent(final IdentityCanonicalTipObservationModel tipObservation,
+                                             final int childNodeIndex,
                                              final CanonicalTransitionMomentProvider transitionMomentProvider,
                                              final double branchLength,
                                              final CanonicalGaussianState out) {
@@ -48,6 +49,7 @@ public final class PartialIdentityTipProjection {
         }
 
         transitionMomentProvider.fillTransitionMomentsFlat(
+                childNodeIndex,
                 branchLength,
                 transitionMatrixFlat,
                 transitionOffset,

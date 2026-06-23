@@ -392,6 +392,7 @@ public final class CanonicalTreeTraversal {
             final long messageTimingStart = CanonicalTraversalTimer.start();
             observationModel.fillParentMessage(
                     transition,
+                    childIndex,
                     momentProvider,
                     branchLength,
                     workspace.tipParentMessageWorkspace,

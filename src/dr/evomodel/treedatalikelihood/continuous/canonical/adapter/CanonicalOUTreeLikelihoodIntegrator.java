@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchProcessSpecification;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
@@ -127,6 +128,27 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 stationaryMean,
                 rateModel,
                 rateTransformation,
+                null,
+                dataModel);
+    }
+
+    public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
+                                               final CanonicalOUBranchProcessSpecification branchProcessSpecification,
+                                               final MultivariateDiffusionModel diffusionModel,
+                                               final ContinuousTraitPartialsProvider dataModel,
+                                               final ConjugateRootTraitPrior conjugatePrior,
+                                               final Parameter stationaryMean,
+                                               final BranchRateModel rateModel,
+                                               final ContinuousRateTransformation rateTransformation) {
+        this(tree,
+                branchProcessSpecification.getElasticModel(0),
+                diffusionModel,
+                allocateCanonicalTipObservations(tree.getExternalNodeCount(), diffusionModel.getDimension()),
+                conjugatePrior,
+                stationaryMean,
+                rateModel,
+                rateTransformation,
+                branchProcessSpecification,
                 dataModel);
     }
 
@@ -142,7 +164,27 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                final BranchRateModel rateModel,
                                                final ContinuousRateTransformation rateTransformation) {
         this(tree, elasticModel, diffusionModel, tipObservations, conjugatePrior, stationaryMean, rateModel,
-                rateTransformation, null);
+                rateTransformation, null, null);
+    }
+
+    public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
+                                               final CanonicalOUBranchProcessSpecification branchProcessSpecification,
+                                               final MultivariateDiffusionModel diffusionModel,
+                                               final CanonicalTipObservation[] tipObservations,
+                                               final ConjugateRootTraitPrior conjugatePrior,
+                                               final Parameter stationaryMean,
+                                               final BranchRateModel rateModel,
+                                               final ContinuousRateTransformation rateTransformation) {
+        this(tree,
+                branchProcessSpecification.getElasticModel(0),
+                diffusionModel,
+                tipObservations,
+                conjugatePrior,
+                stationaryMean,
+                rateModel,
+                rateTransformation,
+                branchProcessSpecification,
+                null);
     }
 
     private CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
@@ -153,10 +195,19 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                 final Parameter stationaryMean,
                                                 final BranchRateModel rateModel,
                                                 final ContinuousRateTransformation rateTransformation,
+                                                final CanonicalOUBranchProcessSpecification branchProcessSpecification,
                                                 final ContinuousTraitPartialsProvider dataModel) {
         final int dim = diffusionModel.getDimension();
-        this.transitionProvider = new HomogeneousCanonicalOUBranchTransitionProvider(
-                tree, elasticModel, diffusionModel, stationaryMean, rateModel, rateTransformation);
+        this.transitionProvider = branchProcessSpecification == null
+                ? new HomogeneousCanonicalOUBranchTransitionProvider(
+                        tree, elasticModel, diffusionModel, stationaryMean, rateModel, rateTransformation)
+                : new HomogeneousCanonicalOUBranchTransitionProvider(
+                        tree,
+                        branchProcessSpecification,
+                        diffusionModel,
+                        stationaryMean,
+                        rateModel,
+                        rateTransformation);
         this.rootPrior = new CanonicalConjugateRootPriorAdapter(conjugatePrior, dim);
         this.passer = new SequentialCanonicalOUMessagePasser(tree, dim);
         this.scratchTraitCovariance = new double[dim * dim];

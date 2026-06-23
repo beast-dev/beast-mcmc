@@ -35,9 +35,27 @@ public interface CanonicalTransitionMomentProvider {
 
     void fillTransitionMatrixFlat(double branchLength, double[] out);
 
+    default void fillTransitionMatrixFlat(final int childNodeIndex,
+                                          final double branchLength,
+                                          final double[] out) {
+        fillTransitionMatrixFlat(branchLength, out);
+    }
+
     void fillTransitionOffset(double branchLength, double[] out);
 
+    default void fillTransitionOffset(final int childNodeIndex,
+                                      final double branchLength,
+                                      final double[] out) {
+        fillTransitionOffset(branchLength, out);
+    }
+
     void fillTransitionCovarianceFlat(double branchLength, double[] out);
+
+    default void fillTransitionCovarianceFlat(final int childNodeIndex,
+                                              final double branchLength,
+                                              final double[] out) {
+        fillTransitionCovarianceFlat(branchLength, out);
+    }
 
     default void fillTransitionMomentsFlat(double branchLength,
                                            double[] transitionMatrixOut,
@@ -46,5 +64,15 @@ public interface CanonicalTransitionMomentProvider {
         fillTransitionMatrixFlat(branchLength, transitionMatrixOut);
         fillTransitionOffset(branchLength, transitionOffsetOut);
         fillTransitionCovarianceFlat(branchLength, transitionCovarianceOut);
+    }
+
+    default void fillTransitionMomentsFlat(final int childNodeIndex,
+                                           final double branchLength,
+                                           final double[] transitionMatrixOut,
+                                           final double[] transitionOffsetOut,
+                                           final double[] transitionCovarianceOut) {
+        fillTransitionMatrixFlat(childNodeIndex, branchLength, transitionMatrixOut);
+        fillTransitionOffset(childNodeIndex, branchLength, transitionOffsetOut);
+        fillTransitionCovarianceFlat(childNodeIndex, branchLength, transitionCovarianceOut);
     }
 }

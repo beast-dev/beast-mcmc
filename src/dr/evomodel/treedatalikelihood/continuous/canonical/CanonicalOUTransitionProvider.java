@@ -59,4 +59,10 @@ public interface CanonicalOUTransitionProvider extends CanonicalBranchTransition
     }
 
     void fillCanonicalTransitionForLength(double branchLength, CanonicalGaussianTransition out);
+
+    default void fillCanonicalTransitionForBranchLength(final int childNodeIndex,
+                                                        final double branchLength,
+                                                        final CanonicalGaussianTransition out) {
+        fillCanonicalTransitionForLength(branchLength, out);
+    }
 }

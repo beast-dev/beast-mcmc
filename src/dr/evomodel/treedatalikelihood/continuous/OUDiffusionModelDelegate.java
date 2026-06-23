@@ -69,6 +69,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     // Here, branchRateModels represents optimal values
 
     private MultivariateElasticModel elasticModel;
+    private final CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification;
     private final GaussianBranchTransitionProvider branchTransitionProvider;
     private final OUCanonicalBranchGradientBridge canonicalBranchGradientBridge;
 
@@ -76,16 +77,30 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                     MultivariateDiffusionModel diffusionModel,
                                     List<BranchRateModel> branchRateModels,
                                     MultivariateElasticModel elasticModel) {
-        this(tree, diffusionModel, branchRateModels, elasticModel, 0);
+        this(tree, diffusionModel, branchRateModels, elasticModel, null, 0);
+    }
+
+    public OUDiffusionModelDelegate(Tree tree,
+                                    MultivariateDiffusionModel diffusionModel,
+                                    List<BranchRateModel> branchRateModels,
+                                    CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification) {
+        this(tree,
+                diffusionModel,
+                branchRateModels,
+                canonicalBranchProcessSpecification.getElasticModel(0),
+                canonicalBranchProcessSpecification,
+                0);
     }
 
     private OUDiffusionModelDelegate(Tree tree,
                                      MultivariateDiffusionModel diffusionModel,
                                      List<BranchRateModel> branchRateModels,
                                      MultivariateElasticModel elasticModel,
+                                     CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification,
                                      int partitionNumber) {
         super(tree, diffusionModel, branchRateModels, partitionNumber);
         this.elasticModel = elasticModel;
+        this.canonicalBranchProcessSpecification = canonicalBranchProcessSpecification;
         this.branchTransitionProvider =
                 new OUGaussianBranchTransitionProvider(elasticModel, diffusionModel);
         this.canonicalBranchGradientBridge =
@@ -157,6 +172,10 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     public MultivariateElasticModel getElasticModel() {
         return elasticModel;
+    }
+
+    public CanonicalOUBranchProcessSpecification getCanonicalBranchProcessSpecification() {
+        return canonicalBranchProcessSpecification;
     }
 
     public Parameter getCanonicalStationaryMeanParameter() {

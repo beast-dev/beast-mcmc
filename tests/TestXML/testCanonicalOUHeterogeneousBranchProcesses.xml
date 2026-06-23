@@ -1,0 +1,100 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">11 12</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">1 2</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">3 3</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:1,B:1):1,C:2);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="precision.col1" value="1.00 0.25"/>
+                <parameter id="precision.col2" value="0.25 1.50"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <traitDataLikelihood id="canonicalHeterogeneousOULikelihood" traitName="X"
+                         implementation="canonical-message" reconstructTraits="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <optimalTraits>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="heterogeneous.optimum.1" value="1.0"/>
+                </rate>
+            </strictClockBranchRates>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="heterogeneous.optimum.2" value="2.0"/>
+                </rate>
+            </strictClockBranchRates>
+        </optimalTraits>
+        <canonicalOUBranchProcesses>
+            <branchProcessIndex>
+                <parameter id="heterogeneous.branch.process.index" value="0 1 0 1 0"/>
+            </branchProcessIndex>
+            <process>
+                <strengthOfSelectionMatrix>
+                    <diagonalMatrix id="heterogeneous.selection.0">
+                        <parameter id="heterogeneous.selection.diagonal.0"
+                                   value="1.0 1.5" lower="0.0 0.0"/>
+                    </diagonalMatrix>
+                </strengthOfSelectionMatrix>
+            </process>
+            <process>
+                <strengthOfSelectionMatrix>
+                    <diagonalMatrix id="heterogeneous.selection.1">
+                        <parameter id="heterogeneous.selection.diagonal.1"
+                                   value="2.0 0.7" lower="0.0 0.0"/>
+                    </diagonalMatrix>
+                </strengthOfSelectionMatrix>
+            </process>
+        </canonicalOUBranchProcesses>
+    </traitDataLikelihood>
+
+    <report>
+        Canonical-message heterogeneous OU likelihood =
+        <traitDataLikelihood idref="canonicalHeterogeneousOULikelihood"/>
+    </report>
+
+</beast>

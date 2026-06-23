@@ -97,6 +97,7 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
 
     @Override
     public void fillParentMessage(final CanonicalGaussianTransition transition,
+                                  final int childNodeIndex,
                                   final CanonicalTransitionMomentProvider momentProvider,
                                   final double branchLength,
                                   final TipParentMessageWorkspace workspace,
@@ -115,7 +116,7 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
                             "Partial exact identity observations require a CanonicalTransitionMomentProvider.");
                 }
                 workspace.partialIdentityProjection.projectObservedChildToParent(
-                        this, momentProvider, branchLength, out);
+                        this, childNodeIndex, momentProvider, branchLength, out);
                 return;
             default:
                 throw new IllegalStateException("Unsupported identity observation mode: " + getMode());

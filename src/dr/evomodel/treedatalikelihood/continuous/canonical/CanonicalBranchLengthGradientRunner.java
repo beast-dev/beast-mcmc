@@ -133,7 +133,7 @@ final class CanonicalBranchLengthGradientRunner {
     private double evaluateFrozenLocalLogFactor(final int childIndex,
                                                 final CanonicalOUTransitionProvider provider,
                                                 final double branchLength) {
-        provider.fillCanonicalTransitionForLength(branchLength, workspace.transition);
+        provider.fillCanonicalTransitionForBranchLength(childIndex, branchLength, workspace.transition);
         if (tree.isExternal(tree.getNode(childIndex))) {
             final CanonicalTipObservationModel observationModel = stateStore.tipObservationModels[childIndex];
             final CanonicalTransitionMomentProvider momentProvider =
@@ -142,6 +142,7 @@ final class CanonicalBranchLengthGradientRunner {
                             : null;
             observationModel.fillParentMessage(
                     workspace.transition,
+                    childIndex,
                     momentProvider,
                     branchLength,
                     workspace.tipParentMessageWorkspace,

@@ -27,6 +27,7 @@ public interface CanonicalTipObservationModel {
      * allocated for the correct dimension and is not concurrently in use.
      *
      * @param transition       canonical branch transition (child → parent block form)
+     * @param childNodeIndex   child node whose branch produced {@code transition}
      * @param momentProvider   moment-form transition provider; only needed for
      *                         {@link TipObservationMode#PARTIAL_EXACT_IDENTITY} — may be
      *                         {@code null} for all other modes
@@ -37,6 +38,7 @@ public interface CanonicalTipObservationModel {
      * @param out              output parent-side canonical state (overwritten)
      */
     void fillParentMessage(CanonicalGaussianTransition transition,
+                           int childNodeIndex,
                            CanonicalTransitionMomentProvider momentProvider,
                            double branchLength,
                            TipParentMessageWorkspace workspace,

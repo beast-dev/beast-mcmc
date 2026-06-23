@@ -819,6 +819,19 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     CanonicalOUIntegrator createCanonicalOUIntegrator(final OUDiffusionModelDelegate ouDelegate) {
+        final CanonicalOUBranchProcessSpecification branchProcessSpecification =
+                ouDelegate.getCanonicalBranchProcessSpecification();
+        if (branchProcessSpecification != null) {
+            return new CanonicalOUTreeLikelihoodIntegrator(
+                    tree,
+                    branchProcessSpecification,
+                    getDiffusionModel(),
+                    dataModel,
+                    rootPrior,
+                    ouDelegate.getCanonicalStationaryMeanParameter(),
+                    rateModel,
+                    rateTransformation);
+        }
         return new CanonicalOUTreeLikelihoodIntegrator(
                 tree,
                 ouDelegate.getElasticModel(),

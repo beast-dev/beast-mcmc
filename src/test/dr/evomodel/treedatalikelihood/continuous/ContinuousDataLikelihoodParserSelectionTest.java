@@ -49,6 +49,16 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertSelectedEngine(delegate, CANONICAL_OU_ENGINE);
     }
 
+    public void testParserCanonicalMessageOUBranchProcessesSelectsCanonicalMessageBackend() throws Exception {
+        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(heterogeneousOuXml("canonical-message"));
+
+        assertTrue("heterogeneous OU branch processes should select canonical OU",
+                delegate.usesCanonicalOULikelihood());
+        assertFalse("heterogeneous OU branch processes should not select CDI BM",
+                delegate.usesCdiBMLikelihood());
+        assertSelectedEngine(delegate, CANONICAL_OU_ENGINE);
+    }
+
     public void testParserRejectsCanonicalMessageForBM() {
         assertParseFails(
                 bmXml("canonical-message"),
@@ -65,6 +75,12 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertParseFails(
                 bmXml("natural-canonical-bm"),
                 "experimental natural-parameter BM backend");
+    }
+
+    public void testParserRejectsOUBranchProcessesForLegacyBackend() {
+        assertParseFails(
+                heterogeneousOuXml("legacy"),
+                "requires implementation=\"canonical-message\" or implementation=\"canonical\"");
     }
 
     private static ContinuousDataLikelihoodDelegate parseDelegate(final String xml) throws Exception {
@@ -143,6 +159,33 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
                         + "                <parameter id=\"alpha.diag\" value=\"1.0 1.5\" lower=\"0.0 0.0\"/>"
                         + "            </diagonalMatrix>"
                         + "        </strengthOfSelectionMatrix>");
+    }
+
+    private static String heterogeneousOuXml(final String implementation) {
+        return xml(implementation,
+                "        <optimalTraits>"
+                        + "            <strictClockBranchRates><rate><parameter id=\"het.opt.1\" value=\"1.0\"/></rate></strictClockBranchRates>"
+                        + "            <strictClockBranchRates><rate><parameter id=\"het.opt.2\" value=\"2.0\"/></rate></strictClockBranchRates>"
+                        + "        </optimalTraits>"
+                        + "        <canonicalOUBranchProcesses>"
+                        + "            <branchProcessIndex>"
+                        + "                <parameter id=\"branch.process.index\" value=\"0 1 0 1 0\"/>"
+                        + "            </branchProcessIndex>"
+                        + "            <process>"
+                        + "                <strengthOfSelectionMatrix>"
+                        + "                    <diagonalMatrix id=\"selection.het.0\">"
+                        + "                        <parameter id=\"alpha.het.0\" value=\"1.0 1.5\" lower=\"0.0 0.0\"/>"
+                        + "                    </diagonalMatrix>"
+                        + "                </strengthOfSelectionMatrix>"
+                        + "            </process>"
+                        + "            <process>"
+                        + "                <strengthOfSelectionMatrix>"
+                        + "                    <diagonalMatrix id=\"selection.het.1\">"
+                        + "                        <parameter id=\"alpha.het.1\" value=\"2.0 0.7\" lower=\"0.0 0.0\"/>"
+                        + "                    </diagonalMatrix>"
+                        + "                </strengthOfSelectionMatrix>"
+                        + "            </process>"
+                        + "        </canonicalOUBranchProcesses>");
     }
 
     private static String xml(final String implementation, final String processBlock) {

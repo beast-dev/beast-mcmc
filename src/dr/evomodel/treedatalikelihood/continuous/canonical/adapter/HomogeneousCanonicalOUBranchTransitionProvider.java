@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchProcessSpecification;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalNativeBranchMessageProvider;
@@ -94,9 +95,25 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
                 rateTransformation));
     }
 
-    private HomogeneousCanonicalOUBranchTransitionProvider(
+    public HomogeneousCanonicalOUBranchTransitionProvider(
+            final Tree tree,
+            final CanonicalOUBranchProcessSpecification branchProcessSpecification,
+            final MultivariateDiffusionModel diffusionModel,
+            final Parameter stationaryMean,
+            final BranchRateModel rateModel,
+            final ContinuousRateTransformation rateTransformation) {
+        this(new HeterogeneousCanonicalOUBranchProcessProvider(
+                tree,
+                branchProcessSpecification,
+                diffusionModel,
+                stationaryMean,
+                rateModel,
+                rateTransformation));
+    }
+
+    HomogeneousCanonicalOUBranchTransitionProvider(
             final CanonicalOUBranchProcessProvider branchProcess) {
-        super("homogeneousCanonicalOUTransitionProvider");
+        super("canonicalOUTransitionProvider");
         this.branchProcess = branchProcess;
         this.branchProcess.registerWith(this);
         this.dimension = branchProcess.getDimension();
@@ -146,9 +163,25 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
     }
 
     @Override
+    public void fillCanonicalTransitionForBranchLength(final int childNodeIndex,
+                                                       final double branchLength,
+                                                       final CanonicalGaussianTransition out) {
+        ensureCurrentSnapshot();
+        branchProcess.fillCanonicalTransitionForBranchLength(childNodeIndex, branchLength, out);
+    }
+
+    @Override
     public void fillTransitionMatrixFlat(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
         branchProcess.fillTransitionMatrixFlat(branchLength, out);
+    }
+
+    @Override
+    public void fillTransitionMatrixFlat(final int childNodeIndex,
+                                         final double branchLength,
+                                         final double[] out) {
+        ensureCurrentSnapshot();
+        branchProcess.fillTransitionMatrixFlatForBranchLength(childNodeIndex, branchLength, out);
     }
 
     @Override
@@ -158,9 +191,25 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
     }
 
     @Override
+    public void fillTransitionOffset(final int childNodeIndex,
+                                     final double branchLength,
+                                     final double[] out) {
+        ensureCurrentSnapshot();
+        branchProcess.fillTransitionOffsetForBranchLength(childNodeIndex, branchLength, out);
+    }
+
+    @Override
     public void fillTransitionCovarianceFlat(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
         branchProcess.fillTransitionCovarianceFlat(branchLength, out);
+    }
+
+    @Override
+    public void fillTransitionCovarianceFlat(final int childNodeIndex,
+                                             final double branchLength,
+                                             final double[] out) {
+        ensureCurrentSnapshot();
+        branchProcess.fillTransitionCovarianceFlatForBranchLength(childNodeIndex, branchLength, out);
     }
 
     @Override
@@ -170,6 +219,21 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
                                           final double[] transitionCovarianceOut) {
         ensureCurrentSnapshot();
         branchProcess.fillTransitionMomentsFlat(
+                branchLength,
+                transitionMatrixOut,
+                transitionOffsetOut,
+                transitionCovarianceOut);
+    }
+
+    @Override
+    public void fillTransitionMomentsFlat(final int childNodeIndex,
+                                          final double branchLength,
+                                          final double[] transitionMatrixOut,
+                                          final double[] transitionOffsetOut,
+                                          final double[] transitionCovarianceOut) {
+        ensureCurrentSnapshot();
+        branchProcess.fillTransitionMomentsFlatForBranchLength(
+                childNodeIndex,
                 branchLength,
                 transitionMatrixOut,
                 transitionOffsetOut,

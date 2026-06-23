@@ -43,16 +43,52 @@ interface CanonicalOUBranchProcessProvider {
 
     void fillCanonicalTransitionForLength(double branchLength, CanonicalGaussianTransition out);
 
+    default void fillCanonicalTransitionForBranchLength(final int childNodeIndex,
+                                                        final double branchLength,
+                                                        final CanonicalGaussianTransition out) {
+        fillCanonicalTransitionForLength(branchLength, out);
+    }
+
     void fillTransitionMatrixFlat(double branchLength, double[] out);
+
+    default void fillTransitionMatrixFlatForBranchLength(final int childNodeIndex,
+                                                         final double branchLength,
+                                                         final double[] out) {
+        fillTransitionMatrixFlat(branchLength, out);
+    }
 
     void fillTransitionOffset(double branchLength, double[] out);
 
+    default void fillTransitionOffsetForBranchLength(final int childNodeIndex,
+                                                     final double branchLength,
+                                                     final double[] out) {
+        fillTransitionOffset(branchLength, out);
+    }
+
     void fillTransitionCovarianceFlat(double branchLength, double[] out);
+
+    default void fillTransitionCovarianceFlatForBranchLength(final int childNodeIndex,
+                                                             final double branchLength,
+                                                             final double[] out) {
+        fillTransitionCovarianceFlat(branchLength, out);
+    }
 
     void fillTransitionMomentsFlat(double branchLength,
                                    double[] transitionMatrixOut,
                                    double[] transitionOffsetOut,
                                    double[] transitionCovarianceOut);
+
+    default void fillTransitionMomentsFlatForBranchLength(final int childNodeIndex,
+                                                          final double branchLength,
+                                                          final double[] transitionMatrixOut,
+                                                          final double[] transitionOffsetOut,
+                                                          final double[] transitionCovarianceOut) {
+        fillTransitionMomentsFlat(
+                branchLength,
+                transitionMatrixOut,
+                transitionOffsetOut,
+                transitionCovarianceOut);
+    }
 
     CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(int nodeCount);
 

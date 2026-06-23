@@ -43,9 +43,11 @@ import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -86,6 +88,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String IMPLEMENTATION_BM_NATURAL_CANONICAL = "bm-natural-canonical";
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
+    private static final String CANONICAL_OU_BRANCH_PROCESSES = "canonicalOUBranchProcesses";
+    private static final String BRANCH_PROCESS_INDEX = "branchProcessIndex";
+    private static final String PROCESS = "process";
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -179,9 +184,21 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
             }
         }
-        OUSelectionChartParserHelper.validateSelectionChart(xo,
-                elasticModel == null ? null : elasticModel.getStrengthOfSelectionMatrixParameter(),
-                CONTINUOUS_DATA_LIKELIHOOD);
+        final CanonicalOUBranchProcessSpecification branchProcessSpecification =
+                parseCanonicalOUBranchProcesses(xo);
+        if (branchProcessSpecification != null) {
+            if (elasticModel != null) {
+                throw new XMLParseException(CONTINUOUS_DATA_LIKELIHOOD + " cannot combine "
+                        + "<" + STRENGTH_OF_SELECTION_MATRIX + "> with <"
+                        + CANONICAL_OU_BRANCH_PROCESSES + ">.");
+            }
+            validateBranchProcessSelectionCharts(xo, branchProcessSpecification);
+            elasticModel = branchProcessSpecification.getElasticModel(0);
+        } else {
+            OUSelectionChartParserHelper.validateSelectionChart(xo,
+                    elasticModel == null ? null : elasticModel.getStrengthOfSelectionMatrixParameter(),
+                    CONTINUOUS_DATA_LIKELIHOOD);
+        }
 
 
         DiffusionProcessDelegate diffusionProcessDelegate;
@@ -233,10 +250,26 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         }
 
         boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
+        if (branchProcessSpecification != null) {
+            if (implementationMode == ImplementationMode.LEGACY) {
+                throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                        + "> requires implementation=\"canonical-message\" or implementation=\"canonical\".");
+            }
+            if (integratedProcess) {
+                throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                        + "> is not yet supported for integrated-process OU trait data.");
+            }
+        }
 
         if (delegateProvider == DelegateProvider.OU) {
             if (!integratedProcess) {
-                diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+                diffusionProcessDelegate = branchProcessSpecification == null
+                        ? new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel)
+                        : new OUDiffusionModelDelegate(
+                                treeModel,
+                                diffusionModel,
+                                optimalTraitsModels,
+                                branchProcessSpecification);
             } else {
                 diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             }
@@ -409,6 +442,75 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 + "\"" + IMPLEMENTATION_BM_NATURAL_CANONICAL + "\"";
     }
 
+    private static CanonicalOUBranchProcessSpecification parseCanonicalOUBranchProcesses(
+            final XMLObject xo) throws XMLParseException {
+        if (!xo.hasChildNamed(CANONICAL_OU_BRANCH_PROCESSES)) {
+            return null;
+        }
+
+        final XMLObject cxo = xo.getChild(CANONICAL_OU_BRANCH_PROCESSES);
+        if (!cxo.hasChildNamed(BRANCH_PROCESS_INDEX)) {
+            throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                    + "> requires a <" + BRANCH_PROCESS_INDEX + "> child.");
+        }
+
+        final XMLObject branchProcessIndexXO = cxo.getChild(BRANCH_PROCESS_INDEX);
+        final Parameter branchProcessIndex =
+                (Parameter) branchProcessIndexXO.getChild(Parameter.class);
+        if (branchProcessIndex == null) {
+            throw new XMLParseException("<" + BRANCH_PROCESS_INDEX
+                    + "> must contain a branch-process index parameter.");
+        }
+
+        final List<MultivariateElasticModel> elasticModels =
+                new ArrayList<MultivariateElasticModel>();
+        for (int i = 0; i < cxo.getChildCount(); ++i) {
+            final Object child = cxo.getChild(i);
+            if (!(child instanceof XMLObject)) {
+                continue;
+            }
+            final XMLObject processXO = (XMLObject) child;
+            if (!PROCESS.equals(processXO.getName())) {
+                continue;
+            }
+            elasticModels.add(parseBranchProcessElasticModel(processXO));
+        }
+        if (elasticModels.isEmpty()) {
+            throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                    + "> requires at least one <" + PROCESS + "> child.");
+        }
+        return new CanonicalOUBranchProcessSpecification(elasticModels, branchProcessIndex);
+    }
+
+    private static MultivariateElasticModel parseBranchProcessElasticModel(
+            final XMLObject processXO) throws XMLParseException {
+        if (!processXO.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
+            throw new XMLParseException("<" + PROCESS + "> inside <"
+                    + CANONICAL_OU_BRANCH_PROCESSES + "> requires <"
+                    + STRENGTH_OF_SELECTION_MATRIX + ">.");
+        }
+        final XMLObject selectionXO = processXO.getChild(STRENGTH_OF_SELECTION_MATRIX);
+        final MatrixParameterInterface strengthOfSelectionMatrix =
+                (MatrixParameterInterface) selectionXO.getChild(MatrixParameterInterface.class);
+        if (strengthOfSelectionMatrix == null) {
+            throw new XMLParseException("<" + STRENGTH_OF_SELECTION_MATRIX
+                    + "> inside <" + PROCESS + "> must contain a matrix parameter.");
+        }
+        return new MultivariateElasticModel(strengthOfSelectionMatrix);
+    }
+
+    private static void validateBranchProcessSelectionCharts(
+            final XMLObject xo,
+            final CanonicalOUBranchProcessSpecification specification) throws XMLParseException {
+        for (int process = 0; process < specification.getProcessCount(); ++process) {
+            OUSelectionChartParserHelper.validateSelectionChart(
+                    xo,
+                    specification.getElasticModel(process).getStrengthOfSelectionMatrixParameter(),
+                    CONTINUOUS_DATA_LIKELIHOOD + " " + CANONICAL_OU_BRANCH_PROCESSES
+                            + " process " + process);
+        }
+    }
+
     public static final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
             new ElementRule(MultivariateDiffusionModel.class),
@@ -426,6 +528,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             }, true),
             new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}, true),
+            new ElementRule(CANONICAL_OU_BRANCH_PROCESSES, new XMLSyntaxRule[]{
+                    new ElementRule(BRANCH_PROCESS_INDEX,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(PROCESS, new XMLSyntaxRule[]{
+                            new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
+                                    new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)})
+                    }, 1, Integer.MAX_VALUE)
+            }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),

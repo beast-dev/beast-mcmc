@@ -109,6 +109,7 @@ public final class GaussianCanonicalTipObservation implements CanonicalTipObserv
 
     @Override
     public void fillParentMessage(final CanonicalGaussianTransition transition,
+                                  final int childNodeIndex,
                                   final CanonicalTransitionMomentProvider momentProvider,
                                   final double branchLength,
                                   final TipParentMessageWorkspace workspace,

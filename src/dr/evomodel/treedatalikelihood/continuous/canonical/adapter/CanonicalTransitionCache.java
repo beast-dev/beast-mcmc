@@ -37,44 +37,72 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.util.TaskPool;
 
 /**
- * Per-branch canonical transition cache for homogeneous OU providers.
+ * Per-branch canonical transition cache for OU providers.
+ *
+ * <p>The common homogeneous case is detected once at construction and keeps the
+ * original one-kernel, one-prepared-transition hot path. The branch-process path
+ * supports branch-specific process selection for one-segment branches; multi-segment
+ * composition is intentionally rejected until transition composition is added with
+ * dedicated tests.
  */
 final class CanonicalTransitionCache {
 
-    interface BranchLengthProvider {
-        double getEffectiveBranchLength(int childNodeIndex);
-    }
-
     private final int dimension;
-    private final OUProcessModel processModel;
-    private final CanonicalOUKernel kernel;
-    private final BranchLengthProvider branchLengthProvider;
+    private final CanonicalOUBranchProcessProvider branchProcess;
+    private final boolean homogeneousFastPath;
+    private final CanonicalOUKernel homogeneousKernel;
+    private final CanonicalPreparedTransitionSupport homogeneousPreparedTransition;
+    private final double[] homogeneousStationaryMeanScratch;
+    private final OUProcessModel[] processModels;
+    private final CanonicalPreparedTransitionSupport[] preparedTransitions;
+    private final double[][] stationaryMeanScratchByProcess;
+    private final boolean[] stationaryMeanSnapshotValidByProcess;
     private final CanonicalTransitionCacheEntry[] entries;
-    private final CanonicalPreparedTransitionSupport preparedTransition;
-    private final double[] stationaryMeanScratch;
     private final CanonicalTransitionCacheDiagnosticsRecorder diagnostics;
     private final CanonicalTransitionCacheEpoch epoch;
-    private volatile boolean stationaryMeanSnapshotValid;
+    private volatile boolean homogeneousStationaryMeanSnapshotValid;
 
-    CanonicalTransitionCache(final int dimension,
-                             final int nodeCount,
-                             final OUProcessModel processModel,
-                             final CanonicalPreparedTransitionSupport preparedTransition,
-                             final BranchLengthProvider branchLengthProvider,
+    CanonicalTransitionCache(final CanonicalOUBranchProcessProvider branchProcess,
                              final CanonicalTransitionCacheOptions options) {
-        this.dimension = dimension;
-        this.processModel = processModel;
-        this.kernel = processModel.getCanonicalKernel();
-        this.branchLengthProvider = branchLengthProvider;
+        this.branchProcess = branchProcess;
+        this.dimension = branchProcess.getDimension();
+        final int nodeCount = branchProcess.getNodeCount();
+        this.homogeneousFastPath = isHomogeneousSingleSegment(branchProcess);
         this.entries = new CanonicalTransitionCacheEntry[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
             this.entries[i] = new CanonicalTransitionCacheEntry();
         }
-        this.preparedTransition = preparedTransition;
-        this.stationaryMeanScratch = preparedTransition == null ? null : new double[dimension];
+        if (homogeneousFastPath) {
+            final OUProcessModel processModel = branchProcess.getProcessModel(0);
+            this.homogeneousKernel = processModel.getCanonicalKernel();
+            this.homogeneousPreparedTransition =
+                    CanonicalPreparedTransitionSupport.create(processModel);
+            this.homogeneousStationaryMeanScratch =
+                    homogeneousPreparedTransition == null ? null : new double[dimension];
+            this.processModels = null;
+            this.preparedTransitions = null;
+            this.stationaryMeanScratchByProcess = null;
+            this.stationaryMeanSnapshotValidByProcess = null;
+        } else {
+            this.homogeneousKernel = null;
+            this.homogeneousPreparedTransition = null;
+            this.homogeneousStationaryMeanScratch = null;
+            final int processCount = branchProcess.getProcessModelCount();
+            this.processModels = new OUProcessModel[processCount];
+            this.preparedTransitions = new CanonicalPreparedTransitionSupport[processCount];
+            this.stationaryMeanScratchByProcess = new double[processCount][];
+            this.stationaryMeanSnapshotValidByProcess = new boolean[processCount];
+            for (int i = 0; i < processCount; ++i) {
+                final OUProcessModel processModel = branchProcess.getProcessModel(i);
+                processModels[i] = processModel;
+                preparedTransitions[i] = CanonicalPreparedTransitionSupport.create(processModel);
+                stationaryMeanScratchByProcess[i] =
+                        preparedTransitions[i] == null ? null : new double[dimension];
+            }
+        }
         this.diagnostics = new CanonicalTransitionCacheDiagnosticsRecorder(options.isDiagnosticsEnabled());
         this.epoch = new CanonicalTransitionCacheEpoch();
-        this.stationaryMeanSnapshotValid = false;
+        this.homogeneousStationaryMeanSnapshotValid = false;
     }
 
     void fillTransition(final int childNodeIndex, final CanonicalGaussianTransition out) {
@@ -91,8 +119,8 @@ final class CanonicalTransitionCache {
         if (taskPool == null || taskPool.getNumThreads() <= 1) {
             return;
         }
-        if (preparedTransition != null) {
-            ensureStationaryMeanSnapshot();
+        if (homogeneousPreparedTransition != null) {
+            ensureHomogeneousStationaryMeanSnapshot();
         }
         taskPool.forkDynamic(
                 entries.length,
@@ -123,7 +151,7 @@ final class CanonicalTransitionCache {
         diagnostics.recordClear(reason);
         epoch.advance(reason);
         if (reason != CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED) {
-            stationaryMeanSnapshotValid = false;
+            clearStationaryMeanSnapshots();
         }
         for (int i = 0; i < entries.length; i++) {
             if (entries[i].invalidate(reason)) {
@@ -183,7 +211,7 @@ final class CanonicalTransitionCache {
     private CanonicalGaussianTransition ensureTransition(final int childNodeIndex) {
         recordRequest();
         final CanonicalTransitionCacheEntry entry = entries[childNodeIndex];
-        final double effectiveBranchLength = branchLengthProvider.getEffectiveBranchLength(childNodeIndex);
+        final double effectiveBranchLength = branchProcess.getEffectiveBranchLength(childNodeIndex);
         if (!entry.isTransitionCurrent(effectiveBranchLength, epoch)) {
             recordMiss();
             diagnostics.recordTransitionRebuild();
@@ -198,7 +226,7 @@ final class CanonicalTransitionCache {
                 entry.preparedBasisValid = false;
             }
             final CanonicalPreparedBranchHandle prepared =
-                    fillCachedTransition(entry, effectiveBranchLength);
+                    fillCachedTransition(childNodeIndex, entry, effectiveBranchLength);
             entry.updateSnapshot(childNodeIndex, effectiveBranchLength, entry.transition, prepared);
             entry.markTransitionCurrent(effectiveBranchLength, epoch);
         } else {
@@ -207,36 +235,131 @@ final class CanonicalTransitionCache {
         return entry.transition;
     }
 
-    private CanonicalPreparedBranchHandle fillCachedTransition(final CanonicalTransitionCacheEntry entry,
+    private CanonicalPreparedBranchHandle fillCachedTransition(final int childNodeIndex,
+                                                               final CanonicalTransitionCacheEntry entry,
                                                                final double effectiveBranchLength) {
-        if (preparedTransition == null) {
-            kernel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
+        if (homogeneousFastPath) {
+            return fillCachedHomogeneousTransition(entry, effectiveBranchLength);
+        }
+        return fillCachedBranchProcessTransition(childNodeIndex, entry);
+    }
+
+    private CanonicalPreparedBranchHandle fillCachedHomogeneousTransition(
+            final CanonicalTransitionCacheEntry entry,
+            final double effectiveBranchLength) {
+        if (homogeneousPreparedTransition == null) {
+            homogeneousKernel.fillCanonicalTransition(effectiveBranchLength, entry.transition);
+            entry.processIndex = 0;
             return null;
         }
 
         CanonicalPreparedBranchHandle prepared =
                 entry.preparedBranchHandle;
         if (prepared == null) {
+            prepared = homogeneousPreparedTransition.createPreparedBranchHandle();
+            entry.preparedBranchHandle = prepared;
+            entry.preparedBasisValid = false;
+        }
+        ensureHomogeneousStationaryMeanSnapshot();
+        if (!entry.isPreparedBasisCurrent(epoch)) {
+            diagnostics.recordPreparedBasisRebuild();
+            homogeneousPreparedTransition.prepareBranch(
+                    effectiveBranchLength,
+                    homogeneousStationaryMeanScratch,
+                    prepared);
+            entry.markPreparedBasisCurrent(epoch);
+        }
+        homogeneousPreparedTransition.fillCanonicalTransitionPrepared(prepared, entry.transition);
+        entry.processIndex = 0;
+        return prepared;
+    }
+
+    private CanonicalPreparedBranchHandle fillCachedBranchProcessTransition(
+            final int childNodeIndex,
+            final CanonicalTransitionCacheEntry entry) {
+        final int segmentCount = branchProcess.getSegmentCount(childNodeIndex);
+        if (segmentCount != 1) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU transition cache currently supports one branch segment; node "
+                            + childNodeIndex + " has " + segmentCount + " segments.");
+        }
+        final int processIndex = branchProcess.getSegmentProcessIndex(childNodeIndex, 0);
+        final double effectiveTime = branchProcess.getSegmentEffectiveTime(childNodeIndex, 0);
+        final CanonicalPreparedTransitionSupport preparedTransition =
+                preparedTransitions[processIndex];
+        if (entry.processIndex != processIndex) {
+            entry.preparedBranchHandle = null;
+            entry.preparedBasisValid = false;
+            entry.processIndex = processIndex;
+        }
+        if (preparedTransition == null) {
+            processModels[processIndex].getCanonicalKernel().fillCanonicalTransition(
+                    effectiveTime,
+                    entry.transition);
+            return null;
+        }
+        CanonicalPreparedBranchHandle prepared = entry.preparedBranchHandle;
+        if (prepared == null) {
             prepared = preparedTransition.createPreparedBranchHandle();
             entry.preparedBranchHandle = prepared;
             entry.preparedBasisValid = false;
         }
-        ensureStationaryMeanSnapshot();
+        ensureStationaryMeanSnapshot(processIndex);
         if (!entry.isPreparedBasisCurrent(epoch)) {
             diagnostics.recordPreparedBasisRebuild();
-            preparedTransition.prepareBranch(effectiveBranchLength, stationaryMeanScratch, prepared);
+            preparedTransition.prepareBranch(
+                    effectiveTime,
+                    stationaryMeanScratchByProcess[processIndex],
+                    prepared);
             entry.markPreparedBasisCurrent(epoch);
         }
         preparedTransition.fillCanonicalTransitionPrepared(prepared, entry.transition);
         return prepared;
     }
 
-    private synchronized void ensureStationaryMeanSnapshot() {
-        if (stationaryMeanSnapshotValid) {
+    private synchronized void ensureHomogeneousStationaryMeanSnapshot() {
+        if (homogeneousStationaryMeanScratch == null
+                || homogeneousStationaryMeanSnapshotValid) {
             return;
         }
-        kernel.getInitialMean(stationaryMeanScratch);
-        stationaryMeanSnapshotValid = true;
+        homogeneousKernel.getInitialMean(homogeneousStationaryMeanScratch);
+        homogeneousStationaryMeanSnapshotValid = true;
+    }
+
+    private synchronized void ensureStationaryMeanSnapshot(final int processIndex) {
+        if (stationaryMeanSnapshotValidByProcess[processIndex]) {
+            return;
+        }
+        processModels[processIndex].getCanonicalKernel()
+                .getInitialMean(stationaryMeanScratchByProcess[processIndex]);
+        stationaryMeanSnapshotValidByProcess[processIndex] = true;
+    }
+
+    private void clearStationaryMeanSnapshots() {
+        homogeneousStationaryMeanSnapshotValid = false;
+        if (stationaryMeanSnapshotValidByProcess != null) {
+            for (int i = 0; i < stationaryMeanSnapshotValidByProcess.length; ++i) {
+                stationaryMeanSnapshotValidByProcess[i] = false;
+            }
+        }
+    }
+
+    private static boolean isHomogeneousSingleSegment(
+            final CanonicalOUBranchProcessProvider branchProcess) {
+        if (branchProcess.getProcessModelCount() != 1) {
+            return false;
+        }
+        for (int childNodeIndex = 0; childNodeIndex < branchProcess.getNodeCount(); ++childNodeIndex) {
+            final int segmentCount = branchProcess.getSegmentCount(childNodeIndex);
+            if (segmentCount == 0) {
+                continue;
+            }
+            if (segmentCount != 1
+                    || branchProcess.getSegmentProcessIndex(childNodeIndex, 0) != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void recordRequest() {

@@ -40,6 +40,7 @@ final class CanonicalTransitionCacheEntry {
     CanonicalPreparedBranchSnapshot snapshot;
     CanonicalPreparedBranchHandle preparedBranchHandle;
     double effectiveBranchLength;
+    int processIndex = -1;
     boolean preparedBasisValid;
 
     private boolean valid;

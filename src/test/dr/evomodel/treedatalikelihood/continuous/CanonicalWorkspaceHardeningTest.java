@@ -202,6 +202,19 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         assertFalse(source.contains("new OUProcessModel"));
     }
 
+    public void testCanonicalTransitionCacheIsBranchProcessAwareWithFastPath() throws Exception {
+        final File cache = sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                + "CanonicalTransitionCache.java");
+        final String source = read(cache);
+        assertTrue(source.contains("CanonicalOUBranchProcessProvider"));
+        assertTrue(source.contains("homogeneousFastPath"));
+        assertTrue(source.contains("isHomogeneousSingleSegment"));
+        assertTrue(source.contains("getSegmentProcessIndex"));
+        assertTrue(source.contains("getSegmentEffectiveTime"));
+        assertFalse(source.contains("interface BranchLengthProvider"));
+    }
+
     public void testNativeMessageAdapterFactoryUsesKernelCapabilities() throws Exception {
         final File factory = sourceFile(
                 "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"

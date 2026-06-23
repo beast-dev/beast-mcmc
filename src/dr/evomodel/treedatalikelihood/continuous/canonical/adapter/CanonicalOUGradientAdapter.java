@@ -102,6 +102,12 @@ public final class CanonicalOUGradientAdapter {
         return gradient;
     }
 
+    public double[] getEffectiveBranchTimeGradient(final int nodeCount) {
+        final double[] gradient = new double[nodeCount];
+        integrator.computeGradientBranchLengths(gradient);
+        return gradient;
+    }
+
     private static void addInPlace(final double[] accumulator, final double[] increment) {
         for (int i = 0; i < accumulator.length; i++) {
             accumulator[i] += increment[i];

@@ -31,8 +31,11 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalOUNodeHeightGradient;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalTipObservationAdapter;
@@ -197,7 +200,80 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
         }
     }
 
+    public void testCanonicalDelegateBranchRateGradientMatchesFiniteDifference() {
+        final Parameter clockRate = new Parameter.Default("clockRate.xmlCanonBranchRate", new double[]{1.0});
+        final StrictClockBranchRates strictClock = new StrictClockBranchRates(clockRate);
+        final XmlStyleCanonicalOUSetup setup =
+                buildCanonicalSetup("xmlCanonBranchRate", strictClock, rateTransformation);
+        final CanonicalOUBranchRateGradient gradientProvider =
+                new CanonicalOUBranchRateGradient(
+                        setup.treeDataLikelihood,
+                        setup.delegate,
+                        clockRate);
+
+        final double[] analytic = gradientProvider.getGradientLogDensity();
+        final double original = clockRate.getParameterValue(0);
+
+        clockRate.setParameterValue(0, original + FD_DELTA);
+        setup.treeDataLikelihood.makeDirty();
+        final double plus = setup.treeDataLikelihood.getLogLikelihood();
+
+        clockRate.setParameterValue(0, original - FD_DELTA);
+        setup.treeDataLikelihood.makeDirty();
+        final double minus = setup.treeDataLikelihood.getLogLikelihood();
+
+        clockRate.setParameterValue(0, original);
+        setup.treeDataLikelihood.makeDirty();
+        final double numeric = (plus - minus) / (2.0 * FD_DELTA);
+
+        assertEquals("canonical XML-style branch-rate gradient",
+                numeric, analytic[0], 2.0e-3);
+    }
+
+    public void testCanonicalDelegateNodeHeightGradientMatchesFiniteDifferenceWithTreeLengthNormalization() {
+        final ContinuousRateTransformation treeLengthNormalization =
+                new ContinuousRateTransformation.Default(treeModel, true, true);
+        final XmlStyleCanonicalOUSetup setup =
+                buildCanonicalSetup("xmlCanonNodeHeight", rateModel, treeLengthNormalization);
+        final CanonicalOUNodeHeightGradient gradientProvider =
+                new CanonicalOUNodeHeightGradient(setup.treeDataLikelihood, setup.delegate);
+
+        final double[] analytic = gradientProvider.getGradientLogDensity();
+        final double[] numeric = new double[gradientProvider.getDimension()];
+        final Parameter nodeHeights = gradientProvider.getParameter();
+
+        for (int i = 0; i < numeric.length; i++) {
+            final double original = nodeHeights.getParameterValue(i);
+
+            nodeHeights.setParameterValueQuietly(i, original + FD_DELTA);
+            nodeHeights.fireParameterChangedEvent();
+            setup.treeDataLikelihood.makeDirty();
+            final double plus = setup.treeDataLikelihood.getLogLikelihood();
+
+            nodeHeights.setParameterValueQuietly(i, original - FD_DELTA);
+            nodeHeights.fireParameterChangedEvent();
+            setup.treeDataLikelihood.makeDirty();
+            final double minus = setup.treeDataLikelihood.getLogLikelihood();
+
+            nodeHeights.setParameterValueQuietly(i, original);
+            nodeHeights.fireParameterChangedEvent();
+            numeric[i] = (plus - minus) / (2.0 * FD_DELTA);
+        }
+        setup.treeDataLikelihood.makeDirty();
+
+        for (int i = 0; i < numeric.length; i++) {
+            assertEquals("canonical XML-style node-height gradient[" + i + "]",
+                    numeric[i], analytic[i], 5.0e-3);
+        }
+    }
+
     private XmlStyleCanonicalOUSetup buildCanonicalSetup(final String tag) {
+        return buildCanonicalSetup(tag, rateModel, rateTransformation);
+    }
+
+    private XmlStyleCanonicalOUSetup buildCanonicalSetup(final String tag,
+                                                        final BranchRateModel branchRateModel,
+                                                        final ContinuousRateTransformation rateTransformation) {
         final Parameter angles = new Parameter.Default("angles." + tag, ORTHOGONAL_ANGLES.clone());
         final GivensRotationMatrixParameter rotation =
                 new GivensRotationMatrixParameter("rotation." + tag, dimTrait, angles);
@@ -235,13 +311,13 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                         dataModel,
                         rootPrior,
                         rateTransformation,
-                        rateModel,
+                        branchRateModel,
                         false,
                         false);
         delegate.enableCanonicalOULikelihood();
 
         final TreeDataLikelihood treeDataLikelihood =
-                new TreeDataLikelihood(delegate, treeModel, rateModel);
+                new TreeDataLikelihood(delegate, treeModel, branchRateModel);
 
         final CanonicalTipObservation[] tipObservations =
                 allocateCanonicalTipObservations(treeModel.getExternalNodeCount(), dimTrait);
@@ -254,7 +330,7 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                         tipObservations,
                         rootPrior,
                         diffusionDelegate.getCanonicalStationaryMeanParameter(),
-                        rateModel,
+                        branchRateModel,
                         rateTransformation);
 
         return new XmlStyleCanonicalOUSetup(

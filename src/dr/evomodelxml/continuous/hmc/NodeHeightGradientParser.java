@@ -32,9 +32,11 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.CanonicalOUNodeHeightGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -67,10 +69,17 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
         if (delegate instanceof ContinuousDataLikelihoodDelegate) {
 
-//                ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-//                return new NodeHeightGradient(traitName, treeDataLikelihood, continuousData, branchRates);
+            ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+            if (continuousData.usesCanonicalOULikelihood()) {
+                if (!CanonicalOUNodeHeightGradient.supportsBranchRateModel(branchRateModel)) {
+                    throw new XMLParseException(
+                            "Canonical OU nodeHeightGradient requires branch rates that do not depend on node heights.");
+                }
+                return new CanonicalOUNodeHeightGradient(treeDataLikelihood, continuousData);
+            }
 
-            throw new XMLParseException("Not yet implemented! ");
+            throw new XMLParseException(
+                    "Continuous-trait nodeHeightGradient is implemented only for canonical OU likelihoods.");
         } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
             BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
@@ -101,6 +110,6 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return NodeHeightGradientForDiscreteTrait.class;
+        return GradientWrtParameterProvider.class;
     }
 }

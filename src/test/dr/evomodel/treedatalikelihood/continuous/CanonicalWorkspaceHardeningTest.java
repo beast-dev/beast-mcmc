@@ -190,6 +190,18 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         assertFalse(source.contains("DiagonalMatrix"));
     }
 
+    public void testHomogeneousOuProviderDelegatesBranchProcessDetails() throws Exception {
+        final File provider = sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                + "HomogeneousCanonicalOUBranchTransitionProvider.java");
+        final String source = read(provider);
+        assertTrue(source.contains("CanonicalOUBranchProcessProvider"));
+        assertFalse(source.contains("CanonicalOUDiffusionSnapshot"));
+        assertFalse(source.contains("CanonicalBranchLengthSnapshot"));
+        assertFalse(source.contains("CanonicalNativeBranchMessageAdapterFactory"));
+        assertFalse(source.contains("new OUProcessModel"));
+    }
+
     public void testNativeMessageAdapterFactoryUsesKernelCapabilities() throws Exception {
         final File factory = sourceFile(
                 "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"

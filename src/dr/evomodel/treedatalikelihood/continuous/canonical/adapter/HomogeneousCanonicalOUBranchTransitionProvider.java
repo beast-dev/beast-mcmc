@@ -39,12 +39,9 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBran
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionPreloader;
-import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionSupport;
 import dr.inference.model.AbstractModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -67,14 +64,7 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
         CanonicalNativeBranchMessageProvider {
 
     private final int dimension;
-    private final MultivariateDiffusionModel diffusionModel;
-    private final MultivariateElasticModel elasticModel;
-    private final MatrixParameterInterface driftMatrix;
-    private final Parameter stationaryMean;
-    private final MatrixParameter diffusionCovariance;
-    private final CanonicalOUDiffusionSnapshot diffusionSnapshot;
-    private final CanonicalBranchLengthSnapshot branchLengths;
-    private final OUProcessModel processModel;
+    private final CanonicalOUBranchProcessProvider branchProcess;
     private final CanonicalTransitionCache transitionCache;
     private final CanonicalNativeBranchMessageProvider nativeBranchMessageProvider;
 
@@ -96,59 +86,36 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
                                                           final Parameter stationaryMean,
                                                           final BranchRateModel rateModel,
                                                           final ContinuousRateTransformation rateTransformation) {
-        super("homogeneousCanonicalOUTransitionProvider");
-        this.elasticModel = elasticModel;
-        this.diffusionModel = diffusionModel;
-        addModel(diffusionModel);
-
-        this.driftMatrix = elasticModel.getStrengthOfSelectionMatrixParameter();
-        this.stationaryMean = stationaryMean;
-        addVariable(driftMatrix);
-        addVariable(stationaryMean);
-        this.dimension = driftMatrix.getRowDimension();
-        this.diffusionCovariance = new MatrixParameter("canonicalOuProvider.diffusion", dimension, dimension);
-        this.diffusionSnapshot = new CanonicalOUDiffusionSnapshot(
-                dimension,
-                diffusionModel,
-                diffusionCovariance);
-        this.branchLengths = new CanonicalBranchLengthSnapshot(
+        this(new HomogeneousCanonicalOUBranchProcessProvider(
                 tree,
-                rateModel,
-                rateTransformation);
-
-        final MatrixParameter initialCovariance = new MatrixParameter("canonicalOuProvider.initial", dimension, dimension);
-        setIdentity(initialCovariance);
-
-        this.processModel = new OUProcessModel(
-                "canonicalOuProvider.process",
-                dimension,
-                driftMatrix,
-                diffusionCovariance,
+                elasticModel,
+                diffusionModel,
                 stationaryMean,
-                initialCovariance);
-        addModel(processModel);
+                rateModel,
+                rateTransformation));
+    }
+
+    private HomogeneousCanonicalOUBranchTransitionProvider(
+            final CanonicalOUBranchProcessProvider branchProcess) {
+        super("homogeneousCanonicalOUTransitionProvider");
+        this.branchProcess = branchProcess;
+        this.branchProcess.registerWith(this);
+        this.dimension = branchProcess.getDimension();
 
         this.transitionCache = new CanonicalTransitionCache(
                 dimension,
-                tree.getNodeCount(),
-                processModel,
-                CanonicalPreparedTransitionSupport.create(processModel),
+                branchProcess.getNodeCount(),
+                branchProcess.getProcessModel(),
+                CanonicalPreparedTransitionSupport.create(branchProcess.getProcessModel()),
                 this::getEffectiveBranchLength,
                 CanonicalTransitionCacheOptions.fromSystemProperties());
-        this.nativeBranchMessageProvider = createNativeBranchMessageProvider(tree.getNodeCount());
+        this.nativeBranchMessageProvider = createNativeBranchMessageProvider(branchProcess.getNodeCount());
 
         refreshSnapshot();
     }
 
     protected CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(final int nodeCount) {
-        final SelectionMatrixParameterization selection =
-                processModel.getSelectionMatrixParameterization();
-        return CanonicalNativeBranchMessageAdapterFactory.create(
-                selection,
-                nodeCount,
-                diffusionCovariance,
-                stationaryMean,
-                branchLengths);
+        return branchProcess.createNativeBranchMessageProvider(nodeCount);
     }
 
     @Override
@@ -180,25 +147,25 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
     public void fillCanonicalTransitionForLength(final double branchLength,
                                                  final CanonicalGaussianTransition out) {
         ensureCurrentSnapshot();
-        processModel.fillCanonicalTransition(branchLength, out);
+        branchProcess.fillCanonicalTransitionForLength(branchLength, out);
     }
 
     @Override
     public void fillTransitionMatrixFlat(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
-        processModel.fillTransitionMatrixFlat(branchLength, out);
+        branchProcess.fillTransitionMatrixFlat(branchLength, out);
     }
 
     @Override
     public void fillTransitionOffset(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
-        processModel.fillTransitionOffset(branchLength, out);
+        branchProcess.fillTransitionOffset(branchLength, out);
     }
 
     @Override
     public void fillTransitionCovarianceFlat(final double branchLength, final double[] out) {
         ensureCurrentSnapshot();
-        processModel.fillTransitionCovarianceFlat(branchLength, out);
+        branchProcess.fillTransitionCovarianceFlat(branchLength, out);
     }
 
     @Override
@@ -207,7 +174,7 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
                                           final double[] transitionOffsetOut,
                                           final double[] transitionCovarianceOut) {
         ensureCurrentSnapshot();
-        processModel.fillTransitionMomentsFlat(
+        branchProcess.fillTransitionMomentsFlat(
                 branchLength,
                 transitionMatrixOut,
                 transitionOffsetOut,
@@ -228,30 +195,30 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
     @Override
     public String pushDiagnosticPhase(final String phase) {
         ensureCurrentSnapshot();
-        branchLengths.beginPhase();
+        branchProcess.beginPhase();
         return transitionCache.pushDiagnosticPhase(phase);
     }
 
     @Override
     public void popDiagnosticPhase(final String previous) {
         transitionCache.popDiagnosticPhase(previous);
-        branchLengths.endPhase();
+        branchProcess.endPhase();
     }
 
     @Override
     public double getEffectiveBranchLength(final int childNodeIndex) {
-        return branchLengths.getEffectiveBranchLength(childNodeIndex);
+        return branchProcess.getEffectiveBranchLength(childNodeIndex);
     }
 
     @Override
     public void fillTraitCovarianceFlat(final double[] out) {
         ensureCurrentSnapshot();
-        diffusionSnapshot.fillCovarianceFlat(out);
+        branchProcess.fillTraitCovarianceFlat(out);
     }
 
     public OUProcessModel getProcessModel() {
         ensureCurrentSnapshot();
-        return processModel;
+        return branchProcess.getProcessModel();
     }
 
     @Override
@@ -347,41 +314,19 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
 
     private void refreshSnapshot() {
         transitionCache.recordSnapshotRefresh();
-        diffusionSnapshot.refresh();
-        processModel.fireModelChanged();
-    }
-
-    private static void setIdentity(final MatrixParameter matrix) {
-        for (int i = 0; i < matrix.getRowDimension(); i++) {
-            for (int j = 0; j < matrix.getColumnDimension(); j++) {
-                matrix.setParameterValueQuietly(i, j, i == j ? 1.0 : 0.0);
-            }
-        }
-        matrix.fireParameterChangedEvent();
+        branchProcess.refreshSnapshot();
     }
 
     @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
-        if (model == diffusionModel) {
-            markDirty(CanonicalTransitionCacheInvalidationReason.DIFFUSION_CHANGED);
-        } else if (model == elasticModel) {
-            markDirty(CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED);
-        } else {
-            markDirty(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
-        }
+        markDirty(branchProcess.classifyModelChange(model));
     }
 
     @Override
     protected void handleVariableChangedEvent(final Variable variable,
                                               final int index,
                                               final Parameter.ChangeType type) {
-        if (variable == driftMatrix) {
-            markDirty(CanonicalTransitionCacheInvalidationReason.SELECTION_CHANGED);
-        } else if (variable == stationaryMean) {
-            markDirty(CanonicalTransitionCacheInvalidationReason.STATIONARY_MEAN_CHANGED);
-        } else {
-            markDirty(CanonicalTransitionCacheInvalidationReason.MODEL_CHANGED);
-        }
+        markDirty(branchProcess.classifyVariableChange(variable, type));
     }
 
     private void markDirty(final CanonicalTransitionCacheInvalidationReason reason) {

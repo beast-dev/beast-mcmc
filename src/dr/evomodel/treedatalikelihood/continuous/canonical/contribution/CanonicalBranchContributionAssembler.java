@@ -90,17 +90,18 @@ public final class CanonicalBranchContributionAssembler {
             return false;
         }
 
-        final OUProcessModel processModel =
-                ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
-        if (!(processModel.getSelectionMatrixParameterization()
-                instanceof CanonicalPreparedTransitionCapability)) {
-            return false;
-        }
-
         final CanonicalPreparedBranchSnapshot snapshot =
                 ((CanonicalPreparedBranchSnapshotProvider) transitionProvider)
                         .getPreparedBranchSnapshot(childIndex);
         if (snapshot == null || snapshot.getPreparedBranchHandle() == null) {
+            return false;
+        }
+
+        final OUProcessModel processModel =
+                ((CanonicalOUTransitionProvider) transitionProvider)
+                        .getProcessModel(snapshot.getProcessIndex());
+        if (!(processModel.getSelectionMatrixParameterization()
+                instanceof CanonicalPreparedTransitionCapability)) {
             return false;
         }
 

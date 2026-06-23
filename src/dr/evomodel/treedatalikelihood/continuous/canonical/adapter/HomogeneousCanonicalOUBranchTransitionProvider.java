@@ -217,6 +217,33 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
     }
 
     @Override
+    public int getProcessModelCount() {
+        ensureCurrentSnapshot();
+        return branchProcess.getProcessModelCount();
+    }
+
+    @Override
+    public OUProcessModel getProcessModel(final int processIndex) {
+        ensureCurrentSnapshot();
+        return branchProcess.getProcessModel(processIndex);
+    }
+
+    @Override
+    public int getBranchProcessIndex(final int childNodeIndex) {
+        ensureCurrentSnapshot();
+        final int segmentCount = branchProcess.getSegmentCount(childNodeIndex);
+        if (segmentCount == 0) {
+            return 0;
+        }
+        if (segmentCount != 1) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU gradients currently support one process segment per branch; node "
+                            + childNodeIndex + " has " + segmentCount + " segments.");
+        }
+        return branchProcess.getSegmentProcessIndex(childNodeIndex, 0);
+    }
+
+    @Override
     public boolean fillBackwardMessageForState(final int childNodeIndex,
                                                final CanonicalGaussianState childState,
                                                final BranchGradientWorkspace workspace,

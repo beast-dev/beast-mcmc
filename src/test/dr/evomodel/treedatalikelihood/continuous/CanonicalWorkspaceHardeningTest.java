@@ -215,6 +215,30 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         assertFalse(source.contains("interface BranchLengthProvider"));
     }
 
+    public void testGradientInputsCarryBranchProcessIdentity() throws Exception {
+        final String inputs = read(sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                + "BranchGradientInputs.java"));
+        assertTrue(inputs.contains("activeProcessIndices"));
+        assertTrue(inputs.contains("getProcessIndex"));
+
+        final String preparer = read(sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                + "CanonicalBranchAdjointPreparer.java"));
+        assertFalse(preparer.contains("getProcessModel()"));
+
+        final String treeGradient = read(sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                + "CanonicalTreeGradientEngine.java"));
+        assertTrue(treeGradient.contains("inputs.getProcessIndex"));
+        assertTrue(treeGradient.contains("validateSharedGradientTarget"));
+
+        final String branchLengthGradient = read(sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                + "CanonicalBranchLengthGradientEngine.java"));
+        assertTrue(branchLengthGradient.contains("inputs.getProcessIndex"));
+    }
+
     public void testNativeMessageAdapterFactoryUsesKernelCapabilities() throws Exception {
         final File factory = sourceFile(
                 "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"

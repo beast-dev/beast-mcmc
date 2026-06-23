@@ -549,7 +549,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
 
         final OUProcessModel processModel =
-                ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel();
+                ((CanonicalOUTransitionProvider) transitionProvider).getProcessModel(0);
         final SelectionMatrixParameterization parameterization =
                 processModel.getSelectionMatrixParameterization();
         if (parameterization instanceof CanonicalGradientPackingCapability) {

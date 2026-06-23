@@ -28,6 +28,8 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
+import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
@@ -87,21 +89,25 @@ public final class CanonicalTreeGradientEngine {
 
         final CanonicalOUTransitionProvider ouProvider =
                 CanonicalOUProviderSupport.requireOUProvider(transitionProvider);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
+        final OUProcessModel processModel =
+                selectGradientProcessModel(ouProvider, inputs);
+        final OUProcessModel homogeneousProcessModel =
+                ouProvider.getProcessModelCount() == 1 ? processModel : null;
         final CanonicalSelectionGradientPullback selectionPullback =
                 CanonicalSelectionGradientPullbacks.create(processModel, dimension, gradA, mainWorkspace);
         if (workspaces.length <= 1 || inputs.getActiveBranchCount() <= 1) {
             CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), 1, false);
-            computeSequential(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
+            computeSequential(inputs, ouProvider, homogeneousProcessModel, selectionPullback, gradA, gradQ, gradMu);
             return;
         }
 
         CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), taskPool.getNumThreads(), true);
-        computeParallel(inputs, processModel, selectionPullback, gradA, gradQ, gradMu);
+        computeParallel(inputs, ouProvider, homogeneousProcessModel, selectionPullback, gradA, gradQ, gradMu);
     }
 
     private void computeSequential(final BranchGradientInputs inputs,
-                                   final OUProcessModel processModel,
+                                   final CanonicalOUTransitionProvider ouProvider,
+                                   final OUProcessModel homogeneousProcessModel,
                                    final CanonicalSelectionGradientPullback selectionPullback,
                                    final double[] gradA,
                                    final double[] gradQ,
@@ -111,6 +117,8 @@ public final class CanonicalTreeGradientEngine {
 
         long timingStart = CanonicalPhaseTimer.start();
         for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
+            final OUProcessModel processModel =
+                    processModelFor(ouProvider, homogeneousProcessModel, inputs, activeIndex);
             selectionPullback.accumulateForBranch(
                     processModel,
                     inputs,
@@ -129,7 +137,8 @@ public final class CanonicalTreeGradientEngine {
     }
 
     private void computeParallel(final BranchGradientInputs inputs,
-                                 final OUProcessModel processModel,
+                                 final CanonicalOUTransitionProvider ouProvider,
+                                 final OUProcessModel homogeneousProcessModel,
                                  final CanonicalSelectionGradientPullback selectionPullback,
                                  final double[] gradA,
                                  final double[] gradQ,
@@ -150,6 +159,8 @@ public final class CanonicalTreeGradientEngine {
                 branchGradientJointChunkSize(inputs.getActiveBranchCount()),
                 (activeIndex, thread) -> {
                     final BranchGradientWorkspace workspace = workspaces[thread];
+                    final OUProcessModel processModel =
+                            processModelFor(ouProvider, homogeneousProcessModel, inputs, activeIndex);
 
                     selectionPullback.accumulateForBranch(
                             processModel,
@@ -197,6 +208,61 @@ public final class CanonicalTreeGradientEngine {
 
     private int branchGradientJointChunkSize(final int taskLimit) {
         return chunkSizeStrategy.chunkSize(taskLimit);
+    }
+
+    private OUProcessModel selectGradientProcessModel(final CanonicalOUTransitionProvider ouProvider,
+                                                      final BranchGradientInputs inputs) {
+        final int activeBranchCount = inputs.getActiveBranchCount();
+        if (activeBranchCount == 0) {
+            return ouProvider.getProcessModel(0);
+        }
+        final int firstProcessIndex = inputs.getProcessIndex(0);
+        final OUProcessModel baseProcessModel = ouProvider.getProcessModel(firstProcessIndex);
+        for (int activeIndex = 1; activeIndex < activeBranchCount; ++activeIndex) {
+            final int processIndex = inputs.getProcessIndex(activeIndex);
+            validateSharedGradientTarget(
+                    baseProcessModel,
+                    ouProvider.getProcessModel(processIndex),
+                    processIndex);
+        }
+        return baseProcessModel;
+    }
+
+    private OUProcessModel processModelFor(final CanonicalOUTransitionProvider ouProvider,
+                                           final OUProcessModel homogeneousProcessModel,
+                                           final BranchGradientInputs inputs,
+                                           final int activeIndex) {
+        return homogeneousProcessModel == null
+                ? ouProvider.getProcessModel(inputs.getProcessIndex(activeIndex))
+                : homogeneousProcessModel;
+    }
+
+    private static void validateSharedGradientTarget(final OUProcessModel baseProcessModel,
+                                                     final OUProcessModel candidateProcessModel,
+                                                     final int processIndex) {
+        if (candidateProcessModel == baseProcessModel) {
+            return;
+        }
+        final SelectionMatrixParameterization baseSelection =
+                baseProcessModel.getSelectionMatrixParameterization();
+        final SelectionMatrixParameterization candidateSelection =
+                candidateProcessModel.getSelectionMatrixParameterization();
+        if (baseSelection.getClass() != candidateSelection.getClass()
+                || baseSelection.getMatrixParameter() != candidateSelection.getMatrixParameter()
+                || baseProcessModel.getDiffusionMatrix() != candidateProcessModel.getDiffusionMatrix()
+                || baseProcessModel.getStationaryMeanParameter()
+                != candidateProcessModel.getStationaryMeanParameter()) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU gradients for heterogeneous processes require active branch processes "
+                            + "to share selection, diffusion, and stationary-mean parameters; process "
+                            + processIndex + " does not match the first active process.");
+        }
+        if (baseSelection instanceof SpecializedCanonicalSelectionParameterization
+                && baseSelection != candidateSelection) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU specialized selection gradients for heterogeneous processes require "
+                            + "the same specialized selection parameterization instance for all active branches.");
+        }
     }
 
     private void accumulateRootDiffusionGradient(final CanonicalGaussianState rootPreOrder,

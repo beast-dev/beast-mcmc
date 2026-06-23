@@ -38,5 +38,25 @@ public interface CanonicalOUTransitionProvider extends CanonicalBranchTransition
 
     OUProcessModel getProcessModel();
 
+    default int getProcessModelCount() {
+        return 1;
+    }
+
+    default OUProcessModel getProcessModel(final int processIndex) {
+        if (processIndex != 0) {
+            throw new IndexOutOfBoundsException(
+                    "Homogeneous OU provider has only process 0, requested " + processIndex + ".");
+        }
+        return getProcessModel();
+    }
+
+    default int getBranchProcessIndex(final int childNodeIndex) {
+        return 0;
+    }
+
+    default OUProcessModel getBranchProcessModel(final int childNodeIndex) {
+        return getProcessModel(getBranchProcessIndex(childNodeIndex));
+    }
+
     void fillCanonicalTransitionForLength(double branchLength, CanonicalGaussianTransition out);
 }

@@ -16,10 +16,12 @@ public final class BranchGradientInputs {
     private final int capacity;
     private final int nodeSlotCount;
     private final int[] activeChildIndices;
+    private final int[] activeProcessIndices;
     private final double[] activeBranchLengths;
     private final CanonicalLocalTransitionAdjoints[] activeAdjoints;
     private final CanonicalPreparedBranchHandle[] activePreparedBranchHandles;
     private final boolean[] stagedActiveByChild;
+    private final int[] stagedProcessIndicesByChild;
     private final double[] stagedBranchLengthsByChild;
     private final CanonicalLocalTransitionAdjoints[] stagedAdjointsByChild;
     private final CanonicalPreparedBranchHandle[] stagedPreparedBranchHandlesByChild;
@@ -34,10 +36,12 @@ public final class BranchGradientInputs {
         this.capacity = capacity;
         this.nodeSlotCount = capacity + 1;
         this.activeChildIndices = new int[capacity];
+        this.activeProcessIndices = new int[capacity];
         this.activeBranchLengths = new double[capacity];
         this.activeAdjoints = new CanonicalLocalTransitionAdjoints[capacity];
         this.activePreparedBranchHandles = new CanonicalPreparedBranchHandle[capacity];
         this.stagedActiveByChild = new boolean[nodeSlotCount];
+        this.stagedProcessIndicesByChild = new int[nodeSlotCount];
         this.stagedBranchLengthsByChild = new double[nodeSlotCount];
         this.stagedAdjointsByChild = new CanonicalLocalTransitionAdjoints[nodeSlotCount];
         this.stagedPreparedBranchHandlesByChild = new CanonicalPreparedBranchHandle[nodeSlotCount];
@@ -65,6 +69,11 @@ public final class BranchGradientInputs {
     public int getActiveChildIndex(final int activeIndex) {
         checkActiveIndex(activeIndex);
         return activeChildIndices[activeIndex];
+    }
+
+    public int getProcessIndex(final int activeIndex) {
+        checkActiveIndex(activeIndex);
+        return activeProcessIndices[activeIndex];
     }
 
     public double getBranchLength(final int activeIndex) {
@@ -95,6 +104,11 @@ public final class BranchGradientInputs {
 
     public boolean hasPreparedBranchHandles() {
         return hasPreparedBranchHandles;
+    }
+
+    public boolean hasPreparedBranchHandle(final int activeIndex) {
+        checkActiveIndex(activeIndex);
+        return activePreparedBranchHandles[activeIndex] != null;
     }
 
     public CanonicalGaussianState getRootPreOrderState() {
@@ -132,6 +146,14 @@ public final class BranchGradientInputs {
                    final double branchLength,
                    final CanonicalLocalTransitionAdjoints source,
                    final CanonicalPreparedBranchHandle preparedBranchHandle) {
+        addBranch(childIndex, 0, branchLength, source, preparedBranchHandle);
+    }
+
+    void addBranch(final int childIndex,
+                   final int processIndex,
+                   final double branchLength,
+                   final CanonicalLocalTransitionAdjoints source,
+                   final CanonicalPreparedBranchHandle preparedBranchHandle) {
         if (activeBranchCount >= capacity) {
             throw new IllegalStateException("BranchGradientInputs capacity exceeded.");
         }
@@ -140,6 +162,7 @@ public final class BranchGradientInputs {
             hasPreparedBranchHandles = true;
         }
         activeChildIndices[activeBranchCount] = childIndex;
+        activeProcessIndices[activeBranchCount] = processIndex;
         activeBranchLengths[activeBranchCount] = branchLength;
         copyAdjoints(source, activeAdjoints[activeBranchCount]);
         activeBranchCount++;
@@ -149,6 +172,7 @@ public final class BranchGradientInputs {
                    final CanonicalLocalTransitionAdjoints source) {
         addBranch(
                 snapshot.getChildNodeIndex(),
+                snapshot.getProcessIndex(),
                 snapshot.getEffectiveBranchLength(),
                 source,
                 snapshot.getPreparedBranchHandle());
@@ -158,6 +182,7 @@ public final class BranchGradientInputs {
                      final CanonicalLocalTransitionAdjoints source) {
         final int childIndex = snapshot.getChildNodeIndex();
         checkChildIndex(childIndex);
+        stagedProcessIndicesByChild[childIndex] = snapshot.getProcessIndex();
         stagedBranchLengthsByChild[childIndex] = snapshot.getEffectiveBranchLength();
         copyAdjoints(source, stagedAdjointsByChild[childIndex]);
         stagedPreparedBranchHandlesByChild[childIndex] = snapshot.getPreparedBranchHandle();
@@ -182,6 +207,7 @@ public final class BranchGradientInputs {
                 throw new IllegalStateException("BranchGradientInputs capacity exceeded during compaction.");
             }
             activeChildIndices[activeBranchCount] = childIndex;
+            activeProcessIndices[activeBranchCount] = stagedProcessIndicesByChild[childIndex];
             activeBranchLengths[activeBranchCount] = stagedBranchLengthsByChild[childIndex];
             activeAdjoints[activeBranchCount] = stagedAdjointsByChild[childIndex];
             activePreparedBranchHandles[activeBranchCount] =

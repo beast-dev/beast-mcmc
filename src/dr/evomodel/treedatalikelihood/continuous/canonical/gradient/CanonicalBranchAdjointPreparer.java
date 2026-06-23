@@ -28,12 +28,8 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
-import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUProviderSupport;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.ChunkSizeStrategy;
@@ -87,15 +83,6 @@ public final class CanonicalBranchAdjointPreparer {
         out.checkCompatible(Math.max(0, nodeCount - 1), dimension);
         out.clear();
 
-        final CanonicalOUTransitionProvider ouProvider =
-                CanonicalOUProviderSupport.requireCapability(transitionProvider, CanonicalOUTransitionProvider.class);
-        final OUProcessModel processModel = ouProvider.getProcessModel();
-        final SelectionMatrixParameterization parameterization =
-                processModel.getSelectionMatrixParameterization();
-        final CanonicalPreparedTransitionCapability preparedTransition =
-                parameterization instanceof CanonicalPreparedTransitionCapability
-                        ? (CanonicalPreparedTransitionCapability) parameterization
-                        : null;
         final CanonicalPreparedBranchSnapshotProvider snapshotProvider =
                 requirePreparedBranchSnapshotProvider(transitionProvider);
         final int rootIndex = tree.getRoot().getNumber();
@@ -131,7 +118,7 @@ public final class CanonicalBranchAdjointPreparer {
                                 requireSnapshot(snapshotProvider, childIndex),
                                 workspace.adjoints);
                     });
-            out.compactStagedBranches(rootIndex, preparedTransition != null);
+            out.compactStagedBranches(rootIndex, true);
         }
         messageProvider.fillRootMessages(out);
     }

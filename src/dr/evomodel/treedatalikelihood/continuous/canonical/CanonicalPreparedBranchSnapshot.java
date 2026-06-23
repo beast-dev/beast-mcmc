@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 public final class CanonicalPreparedBranchSnapshot {
 
     private int childNodeIndex;
+    private int processIndex;
     private double effectiveBranchLength;
     private CanonicalGaussianTransition transition;
     private CanonicalPreparedBranchHandle preparedBranchHandle;
@@ -44,7 +45,16 @@ public final class CanonicalPreparedBranchSnapshot {
                                            final double effectiveBranchLength,
                                            final CanonicalGaussianTransition transition,
                                            final CanonicalPreparedBranchHandle preparedBranchHandle) {
+        this(childNodeIndex, 0, effectiveBranchLength, transition, preparedBranchHandle);
+    }
+
+    public CanonicalPreparedBranchSnapshot(final int childNodeIndex,
+                                           final int processIndex,
+                                           final double effectiveBranchLength,
+                                           final CanonicalGaussianTransition transition,
+                                           final CanonicalPreparedBranchHandle preparedBranchHandle) {
         this.childNodeIndex = childNodeIndex;
+        this.processIndex = processIndex;
         this.effectiveBranchLength = effectiveBranchLength;
         this.transition = transition;
         this.preparedBranchHandle = preparedBranchHandle;
@@ -54,7 +64,16 @@ public final class CanonicalPreparedBranchSnapshot {
                       final double effectiveBranchLength,
                       final CanonicalGaussianTransition transition,
                       final CanonicalPreparedBranchHandle preparedBranchHandle) {
+        reset(childNodeIndex, 0, effectiveBranchLength, transition, preparedBranchHandle);
+    }
+
+    public void reset(final int childNodeIndex,
+                      final int processIndex,
+                      final double effectiveBranchLength,
+                      final CanonicalGaussianTransition transition,
+                      final CanonicalPreparedBranchHandle preparedBranchHandle) {
         this.childNodeIndex = childNodeIndex;
+        this.processIndex = processIndex;
         this.effectiveBranchLength = effectiveBranchLength;
         this.transition = transition;
         this.preparedBranchHandle = preparedBranchHandle;
@@ -62,6 +81,10 @@ public final class CanonicalPreparedBranchSnapshot {
 
     public int getChildNodeIndex() {
         return childNodeIndex;
+    }
+
+    public int getProcessIndex() {
+        return processIndex;
     }
 
     public double getEffectiveBranchLength() {

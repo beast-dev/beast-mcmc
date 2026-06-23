@@ -95,7 +95,7 @@ final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectio
         if (gradient.hasTransitionMatrix(branchLength)) {
             return;
         }
-        if (preparedTransition != null && inputs.hasPreparedBranchHandles()) {
+        if (preparedTransition != null && inputs.hasPreparedBranchHandle(activeIndex)) {
             preparedTransition.fillTransitionMatrixPreparedFlat(
                     inputs.getPreparedBranchHandle(activeIndex),
                     workspace.ensureSpecializedBranchWorkspace(preparedTransition),

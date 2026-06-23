@@ -115,12 +115,14 @@ final class CanonicalTransitionCacheEntry {
         if (snapshot == null) {
             snapshot = new CanonicalPreparedBranchSnapshot(
                     childNodeIndex,
+                    processIndex,
                     effectiveBranchLength,
                     transition,
                     preparedBranchHandle);
         } else {
             snapshot.reset(
                     childNodeIndex,
+                    processIndex,
                     effectiveBranchLength,
                     transition,
                     preparedBranchHandle);

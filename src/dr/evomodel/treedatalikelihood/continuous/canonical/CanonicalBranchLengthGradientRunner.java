@@ -88,7 +88,7 @@ final class CanonicalBranchLengthGradientRunner {
                                  final BranchGradientInputs inputs,
                                  final double[] gradT) {
         branchLengthGradientEngine.compute(
-                ouProvider.getProcessModel(),
+                ouProvider,
                 inputs,
                 gradT);
     }

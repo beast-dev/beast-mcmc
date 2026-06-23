@@ -224,6 +224,12 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         assertTrue(adapterSource.contains("supportsPostorderTipMessage"));
     }
 
+    public void testNativeDiagonalMessagesAreNotControlledBySystemProperty() throws Exception {
+        final File continuousDir = sourceFile(
+                "src/dr/evomodel/treedatalikelihood/continuous");
+        assertNoForbiddenText(continuousDir, "canonicalUseNativeDiagonalOUMessages");
+    }
+
     private static Object newInstance(final Class<?> clazz,
                                       final Class<?> parameterType,
                                       final Object argument) throws Exception {

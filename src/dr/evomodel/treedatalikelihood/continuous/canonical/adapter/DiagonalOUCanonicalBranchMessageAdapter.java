@@ -14,9 +14,6 @@ import dr.inference.model.Parameter;
 
 final class DiagonalOUCanonicalBranchMessageAdapter implements CanonicalNativeBranchMessageProvider {
 
-    private static final String USE_NATIVE_DIAGONAL_MESSAGES_PROPERTY =
-            "beast.experimental.canonicalUseNativeDiagonalOUMessages";
-
     private final DiagonalOUBranchTransformKernel kernel;
     private final int dimension;
     private final MatrixParameterInterface diffusionMatrix;
@@ -111,24 +108,23 @@ final class DiagonalOUCanonicalBranchMessageAdapter implements CanonicalNativeBr
 
     @Override
     public boolean hasNativeBranchMessages() {
-        return enabled();
+        return true;
     }
 
     @Override
     public boolean supportsPostorderInternalMessage() {
-        return enabled();
+        return true;
     }
 
     @Override
     public boolean supportsPostorderTipMessage(final TipObservationMode mode) {
-        return enabled()
-                && (mode == TipObservationMode.EXACT_IDENTITY
-                    || mode == TipObservationMode.MISSING);
+        return mode == TipObservationMode.EXACT_IDENTITY
+                || mode == TipObservationMode.MISSING;
     }
 
     @Override
     public boolean supportsPreorderForwardMessage() {
-        return enabled();
+        return true;
     }
 
     @Override
@@ -141,9 +137,6 @@ final class DiagonalOUCanonicalBranchMessageAdapter implements CanonicalNativeBr
     }
 
     private OUPreparedBranch entry(final int childNodeIndex) {
-        if (!enabled()) {
-            return null;
-        }
         final double branchLength = branchTimeModel.getEffectiveBranchTime(childNodeIndex);
         if (!(branchLength > 0.0) || !Double.isFinite(branchLength)) {
             return null;
@@ -178,10 +171,6 @@ final class DiagonalOUCanonicalBranchMessageAdapter implements CanonicalNativeBr
         for (int i = 0; i < dimension; ++i) {
             out[i] = stationaryMean.getParameterValue(i);
         }
-    }
-
-    private boolean enabled() {
-        return Boolean.parseBoolean(System.getProperty(USE_NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true"));
     }
 
     private static final class Workspace {

@@ -37,8 +37,6 @@ import java.util.List;
 
 public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUMessagePasserTestSupport {
 
-    private static final String NATIVE_DIAGONAL_MESSAGES_PROPERTY =
-            "beast.experimental.canonicalUseNativeDiagonalOUMessages";
     private static final String TRANSITION_CACHE_DIAGNOSTICS_PROPERTY =
             "beast.debug.canonicalTransitionCache";
     private static final int SMALL_WARMUP_ITERS = 1_000;
@@ -99,14 +97,13 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
                             final int warmupIterations,
                             final int measureIterations,
                             final int changingBranchIterations) {
-        final String previous = System.getProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
         final String previousDiagnostics = System.getProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY);
         try {
             System.setProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY, "true");
-            System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true");
             final OUSetup nativeSetup = buildDiagonalOUSetup(
                     "benchmarkNative." + label,
-                    tips);
+                    tips,
+                    true);
             final double nativeNs = timePostorder(nativeSetup, warmupIterations, measureIterations);
             final double nativeChangingBranchNs = timePostorderWithChangingBranches(
                     nativeSetup,
@@ -115,10 +112,10 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
             final double nativeLog =
                     nativeSetup.passer.computePostOrderLogLikelihood(nativeSetup.provider, nativeSetup.rootPrior);
 
-            System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "false");
             final OUSetup fallbackSetup = buildDiagonalOUSetup(
                     "benchmarkFallback." + label,
-                    copyTips(tips));
+                    copyTips(tips),
+                    false);
             final double fallbackNs = timePostorder(fallbackSetup, warmupIterations, measureIterations);
             final double fallbackChangingBranchNs = timePostorderWithChangingBranches(
                     fallbackSetup,
@@ -147,11 +144,6 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
             appendCacheLine(sb, "fallback", fallbackSetup);
             sb.append('\n');
         } finally {
-            if (previous == null) {
-                System.clearProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
-            } else {
-                System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, previous);
-            }
             if (previousDiagnostics == null) {
                 System.clearProperty(TRANSITION_CACHE_DIAGNOSTICS_PROPERTY);
             } else {
@@ -295,70 +287,60 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
     private void appendSafeMultivariateComparisonCase(final StringBuilder sb,
                                                       final String label,
                                                       final CanonicalTipObservation[] tips) {
-        final String previous = System.getProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
-        try {
-            System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true");
-            final TreeLikelihoodSetup canonicalSetup =
-                    buildTreeLikelihoodSetup("treeCanonical." + label, copyTips(tips), true);
-            final TreeLikelihoodSetup legacySetup =
-                    buildTreeLikelihoodSetup("treeLegacy." + label, copyTips(tips), false);
+        final TreeLikelihoodSetup canonicalSetup =
+                buildTreeLikelihoodSetup("treeCanonical." + label, copyTips(tips), true);
+        final TreeLikelihoodSetup legacySetup =
+                buildTreeLikelihoodSetup("treeLegacy." + label, copyTips(tips), false);
 
-            assertTrue("legacy diagonal OU benchmark should use SafeMultivariateDiagonalActualizedWithDriftIntegrator",
-                    legacySetup.delegate.getIntegrator()
-                            instanceof SafeMultivariateDiagonalActualizedWithDriftIntegrator);
-            assertTrue("canonical OU benchmark should enable canonical OU",
-                    canonicalSetup.delegate.usesCanonicalOULikelihood());
-            assertFalse("legacy diagonal OU benchmark should not enable canonical OU",
-                    legacySetup.delegate.usesCanonicalOULikelihood());
+        assertTrue("legacy diagonal OU benchmark should use SafeMultivariateDiagonalActualizedWithDriftIntegrator",
+                legacySetup.delegate.getIntegrator()
+                        instanceof SafeMultivariateDiagonalActualizedWithDriftIntegrator);
+        assertTrue("canonical OU benchmark should enable canonical OU",
+                canonicalSetup.delegate.usesCanonicalOULikelihood());
+        assertFalse("legacy diagonal OU benchmark should not enable canonical OU",
+                legacySetup.delegate.usesCanonicalOULikelihood());
 
-            final double canonicalLog = forceLogLikelihood(canonicalSetup);
-            final double legacyLog = forceLogLikelihood(legacySetup);
-            assertEquals("canonical diagonal OU vs legacy diagonal CDI log-likelihood (" + label + ")",
-                    legacyLog,
-                    canonicalLog,
-                    1.0e-7);
+        final double canonicalLog = forceLogLikelihood(canonicalSetup);
+        final double legacyLog = forceLogLikelihood(legacySetup);
+        assertEquals("canonical diagonal OU vs legacy diagonal CDI log-likelihood (" + label + ")",
+                legacyLog,
+                canonicalLog,
+                1.0e-7);
 
-            final double canonicalNs = timeTreeLikelihood(
-                    canonicalSetup,
-                    LEGACY_WARMUP_ITERS,
-                    LEGACY_MEASURE_ITERS);
-            final double legacyNs = timeTreeLikelihood(
-                    legacySetup,
-                    LEGACY_WARMUP_ITERS,
-                    LEGACY_MEASURE_ITERS);
-            final double canonicalChangingBranchNs = timeTreeLikelihoodWithChangingBranches(
-                    canonicalSetup,
-                    LEGACY_WARMUP_ITERS,
-                    LEGACY_CHANGING_BRANCH_MEASURE_ITERS);
-            final double legacyChangingBranchNs = timeTreeLikelihoodWithChangingBranches(
-                    legacySetup,
-                    LEGACY_WARMUP_ITERS,
-                    LEGACY_CHANGING_BRANCH_MEASURE_ITERS);
+        final double canonicalNs = timeTreeLikelihood(
+                canonicalSetup,
+                LEGACY_WARMUP_ITERS,
+                LEGACY_MEASURE_ITERS);
+        final double legacyNs = timeTreeLikelihood(
+                legacySetup,
+                LEGACY_WARMUP_ITERS,
+                LEGACY_MEASURE_ITERS);
+        final double canonicalChangingBranchNs = timeTreeLikelihoodWithChangingBranches(
+                canonicalSetup,
+                LEGACY_WARMUP_ITERS,
+                LEGACY_CHANGING_BRANCH_MEASURE_ITERS);
+        final double legacyChangingBranchNs = timeTreeLikelihoodWithChangingBranches(
+                legacySetup,
+                LEGACY_WARMUP_ITERS,
+                LEGACY_CHANGING_BRANCH_MEASURE_ITERS);
 
-            sb.append("SafeMultivariate comparison ").append(label).append('\n');
-            sb.append(String.format("  log likelihood: canonical=%.12f legacy=%.12f%n",
-                    canonicalLog,
-                    legacyLog));
-            sb.append("  steady full TreeDataLikelihood\n");
-            sb.append(String.format("    canonical native diagonal OU: %.1f ns%n", canonicalNs));
-            sb.append(String.format("    legacy %s: %.1f ns%n",
-                    legacySetup.delegate.getIntegrator().getClass().getSimpleName(),
-                    legacyNs));
-            sb.append(String.format("    legacy/canonical: %.2fx%n", legacyNs / canonicalNs));
-            sb.append("  changing branch times\n");
-            sb.append(String.format("    canonical native diagonal OU: %.1f ns%n", canonicalChangingBranchNs));
-            sb.append(String.format("    legacy %s: %.1f ns%n",
-                    legacySetup.delegate.getIntegrator().getClass().getSimpleName(),
-                    legacyChangingBranchNs));
-            sb.append(String.format("    legacy/canonical: %.2fx%n%n",
-                    legacyChangingBranchNs / canonicalChangingBranchNs));
-        } finally {
-            if (previous == null) {
-                System.clearProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
-            } else {
-                System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, previous);
-            }
-        }
+        sb.append("SafeMultivariate comparison ").append(label).append('\n');
+        sb.append(String.format("  log likelihood: canonical=%.12f legacy=%.12f%n",
+                canonicalLog,
+                legacyLog));
+        sb.append("  steady full TreeDataLikelihood\n");
+        sb.append(String.format("    canonical native diagonal OU: %.1f ns%n", canonicalNs));
+        sb.append(String.format("    legacy %s: %.1f ns%n",
+                legacySetup.delegate.getIntegrator().getClass().getSimpleName(),
+                legacyNs));
+        sb.append(String.format("    legacy/canonical: %.2fx%n", legacyNs / canonicalNs));
+        sb.append("  changing branch times\n");
+        sb.append(String.format("    canonical native diagonal OU: %.1f ns%n", canonicalChangingBranchNs));
+        sb.append(String.format("    legacy %s: %.1f ns%n",
+                legacySetup.delegate.getIntegrator().getClass().getSimpleName(),
+                legacyChangingBranchNs));
+        sb.append(String.format("    legacy/canonical: %.2fx%n%n",
+                legacyChangingBranchNs / canonicalChangingBranchNs));
     }
 
     private TreeLikelihoodSetup buildTreeLikelihoodSetup(final String tag,

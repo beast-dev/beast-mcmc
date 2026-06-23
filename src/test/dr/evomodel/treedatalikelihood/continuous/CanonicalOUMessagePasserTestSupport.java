@@ -34,6 +34,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalConjugateRootPriorAdapter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalNativeBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
@@ -409,6 +410,23 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
                                                    final MatrixParameter aMatrix,
                                                    final double[] muValues,
                                                    final dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior rootPrior) {
+        return buildOUSetupFromElasticModel(
+                tag,
+                tips,
+                elasticModel,
+                aMatrix,
+                muValues,
+                rootPrior,
+                true);
+    }
+
+    private OUSetup buildOUSetupFromElasticModel(final String tag,
+                                                 final CanonicalTipObservation[] tips,
+                                                 final MultivariateElasticModel elasticModel,
+                                                 final MatrixParameter aMatrix,
+                                                 final double[] muValues,
+                                                 final dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior rootPrior,
+                                                 final boolean nativeBranchMessages) {
         final int d = dimTrait;
         final int d2 = d * d;
 
@@ -439,8 +457,12 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         final ScaledBranchRateModel scaledRateModel = new ScaledBranchRateModel(branchScale);
 
         final HomogeneousCanonicalOUBranchTransitionProvider provider =
-                new HomogeneousCanonicalOUBranchTransitionProvider(
-                        treeModel, elasticModel, diffusionModel, muParam, scaledRateModel);
+                buildHomogeneousOUProvider(
+                        elasticModel,
+                        diffusionModel,
+                        muParam,
+                        scaledRateModel,
+                        nativeBranchMessages);
         final SequentialCanonicalOUMessagePasser passer =
                 new SequentialCanonicalOUMessagePasser(treeModel, dimTrait);
 
@@ -455,6 +477,12 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
 
     protected OUSetup buildDiagonalOUSetup(final String tag,
                                            final CanonicalTipObservation[] tips) {
+        return buildDiagonalOUSetup(tag, tips, true);
+    }
+
+    protected OUSetup buildDiagonalOUSetup(final String tag,
+                                           final CanonicalTipObservation[] tips,
+                                           final boolean nativeBranchMessages) {
         final Parameter attenuation =
                 new Parameter.Default("A.diagonal.values." + tag, new double[]{2.0, 3.0, 1.5});
         final DiagonalMatrix diagonalMatrix = new DiagonalMatrix(attenuation);
@@ -463,7 +491,29 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
                 tips,
                 new MultivariateElasticModel(diagonalMatrix),
                 diagonalMatrix,
-                MU_VALUES.clone());
+                MU_VALUES.clone(),
+                this.rootPrior,
+                nativeBranchMessages);
+    }
+
+    private HomogeneousCanonicalOUBranchTransitionProvider buildHomogeneousOUProvider(
+            final MultivariateElasticModel elasticModel,
+            final MultivariateDiffusionModel diffusionModel,
+            final Parameter muParam,
+            final ScaledBranchRateModel scaledRateModel,
+            final boolean nativeBranchMessages) {
+        if (nativeBranchMessages) {
+            return new HomogeneousCanonicalOUBranchTransitionProvider(
+                    treeModel, elasticModel, diffusionModel, muParam, scaledRateModel);
+        }
+        return new HomogeneousCanonicalOUBranchTransitionProvider(
+                treeModel, elasticModel, diffusionModel, muParam, scaledRateModel) {
+
+            @Override
+            protected CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(final int nodeCount) {
+                return null;
+            }
+        };
     }
 
     protected OrthogonalBlockOUSetup buildOrthogonalBlockOUSetup(final String tag,

@@ -58,7 +58,7 @@ import dr.util.TaskPool;
 /**
  * Homogeneous OU branch-transition provider for the canonical tree pathway.
  */
-public final class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractModel
+public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractModel
         implements CanonicalBranchTransitionProvider,
         CanonicalOUTransitionProvider,
         CanonicalPreparedBranchSnapshotProvider,
@@ -140,7 +140,7 @@ public final class HomogeneousCanonicalOUBranchTransitionProvider extends Abstra
         refreshSnapshot();
     }
 
-    private CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(final int nodeCount) {
+    protected CanonicalNativeBranchMessageProvider createNativeBranchMessageProvider(final int nodeCount) {
         final SelectionMatrixParameterization selection =
                 processModel.getSelectionMatrixParameterization();
         return CanonicalNativeBranchMessageAdapterFactory.create(

@@ -35,9 +35,6 @@ import dr.evomodel.treedatalikelihood.continuous.message.ContinuousCanonicalPreO
 
 public final class CanonicalOUMessageProviderTest extends CanonicalOUMessagePasserTestSupport {
 
-    private static final String NATIVE_DIAGONAL_MESSAGES_PROPERTY =
-            "beast.experimental.canonicalUseNativeDiagonalOUMessages";
-
     public CanonicalOUMessageProviderTest(final String name) {
         super(name);
     }
@@ -86,59 +83,48 @@ public final class CanonicalOUMessageProviderTest extends CanonicalOUMessagePass
     public void testDiagonalNativeProviderMessagesMatchFullTransitionFallback() {
         System.out.println("\nTest: native diagonal provider messages match full-transition fallback");
 
-        final String previous = System.getProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
-        try {
-            System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "true");
-            final OUSetup nativeSetup =
-                    buildDiagonalOUSetup("messageProviderDiagonalNative", buildFullyObservedTips());
-            final CanonicalOUTreeLikelihoodIntegrator nativeIntegrator =
-                    new CanonicalOUTreeLikelihoodIntegrator(
-                            nativeSetup.passer,
-                            nativeSetup.provider,
-                            nativeSetup.rootPrior);
-            assertTrue("native diagonal messages enabled",
-                    nativeSetup.provider.usesNativeBranchMessages());
+        final OUSetup nativeSetup =
+                buildDiagonalOUSetup("messageProviderDiagonalNative", buildFullyObservedTips(), true);
+        final CanonicalOUTreeLikelihoodIntegrator nativeIntegrator =
+                new CanonicalOUTreeLikelihoodIntegrator(
+                        nativeSetup.passer,
+                        nativeSetup.provider,
+                        nativeSetup.rootPrior);
+        assertTrue("native diagonal messages enabled",
+                nativeSetup.provider.usesNativeBranchMessages());
 
-            final StateSnapshot[] nativePostTop = allocateSnapshots(treeModel.getNodeCount());
-            final StateSnapshot[] nativePreTop = allocateSnapshots(treeModel.getNodeCount());
-            final StateSnapshot[] nativePreBottom = allocateSnapshots(treeModel.getNodeCount());
-            snapshotProviderMessages(nativeIntegrator, nativePostTop, nativePreTop, nativePreBottom);
+        final StateSnapshot[] nativePostTop = allocateSnapshots(treeModel.getNodeCount());
+        final StateSnapshot[] nativePreTop = allocateSnapshots(treeModel.getNodeCount());
+        final StateSnapshot[] nativePreBottom = allocateSnapshots(treeModel.getNodeCount());
+        snapshotProviderMessages(nativeIntegrator, nativePostTop, nativePreTop, nativePreBottom);
 
-            System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, "false");
-            final OUSetup fallbackSetup =
-                    buildDiagonalOUSetup("messageProviderDiagonalFallback", buildFullyObservedTips());
-            final CanonicalOUTreeLikelihoodIntegrator fallbackIntegrator =
-                    new CanonicalOUTreeLikelihoodIntegrator(
-                            fallbackSetup.passer,
-                            fallbackSetup.provider,
-                            fallbackSetup.rootPrior);
-            assertFalse("full-transition fallback enabled",
-                    fallbackSetup.provider.usesNativeBranchMessages());
+        final OUSetup fallbackSetup =
+                buildDiagonalOUSetup("messageProviderDiagonalFallback", buildFullyObservedTips(), false);
+        final CanonicalOUTreeLikelihoodIntegrator fallbackIntegrator =
+                new CanonicalOUTreeLikelihoodIntegrator(
+                        fallbackSetup.passer,
+                        fallbackSetup.provider,
+                        fallbackSetup.rootPrior);
+        assertFalse("full-transition fallback enabled",
+                fallbackSetup.provider.usesNativeBranchMessages());
 
-            final CanonicalGaussianState state = new CanonicalGaussianState(dimTrait);
-            for (int nodeIndex = 0; nodeIndex < treeModel.getNodeCount(); ++nodeIndex) {
-                if (nodeIndex == treeModel.getRoot().getNumber()) {
-                    continue;
-                }
-
-                fallbackIntegrator.fillPostOrderBranchTop(nodeIndex, state);
-                nativePostTop[nodeIndex].assertMatches(
-                        "diagonal post-order branch top[" + nodeIndex + "]", state, 1.0e-9);
-
-                fallbackIntegrator.fillPreOrderBranchTop(nodeIndex, state);
-                nativePreTop[nodeIndex].assertMatches(
-                        "diagonal pre-order branch top[" + nodeIndex + "]", state, 1.0e-9);
-
-                fallbackIntegrator.fillPreOrderBranchBottom(nodeIndex, state);
-                nativePreBottom[nodeIndex].assertMatches(
-                        "diagonal pre-order branch bottom[" + nodeIndex + "]", state, 1.0e-9);
+        final CanonicalGaussianState state = new CanonicalGaussianState(dimTrait);
+        for (int nodeIndex = 0; nodeIndex < treeModel.getNodeCount(); ++nodeIndex) {
+            if (nodeIndex == treeModel.getRoot().getNumber()) {
+                continue;
             }
-        } finally {
-            if (previous == null) {
-                System.clearProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY);
-            } else {
-                System.setProperty(NATIVE_DIAGONAL_MESSAGES_PROPERTY, previous);
-            }
+
+            fallbackIntegrator.fillPostOrderBranchTop(nodeIndex, state);
+            nativePostTop[nodeIndex].assertMatches(
+                    "diagonal post-order branch top[" + nodeIndex + "]", state, 1.0e-9);
+
+            fallbackIntegrator.fillPreOrderBranchTop(nodeIndex, state);
+            nativePreTop[nodeIndex].assertMatches(
+                    "diagonal pre-order branch top[" + nodeIndex + "]", state, 1.0e-9);
+
+            fallbackIntegrator.fillPreOrderBranchBottom(nodeIndex, state);
+            nativePreBottom[nodeIndex].assertMatches(
+                    "diagonal pre-order branch bottom[" + nodeIndex + "]", state, 1.0e-9);
         }
     }
 

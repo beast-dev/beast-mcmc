@@ -81,6 +81,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String IMPLEMENTATION_CDI_MOMENT = "cdi-moment";
     private static final String IMPLEMENTATION_BM_CDI = "bm-cdi";
     private static final String IMPLEMENTATION_BM_CDI_MOMENT = "bm-cdi-moment";
+    private static final String IMPLEMENTATION_BM_MOMENT = "bm-moment";
+    private static final String IMPLEMENTATION_NATIVE_MOMENT_BM = "native-moment-bm";
     private static final String IMPLEMENTATION_CANONICAL_MESSAGE = "canonical-message";
     private static final String IMPLEMENTATION_OU_CANONICAL = "ou-canonical";
     private static final String IMPLEMENTATION_OU_CANONICAL_MESSAGE = "ou-canonical-message";
@@ -108,6 +110,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         LEGACY,
         CANONICAL_COMPATIBILITY,
         CDI_MOMENT_BM,
+        MOMENT_BM,
         CANONICAL_MESSAGE_OU,
         NATURAL_CANONICAL_BM;
 
@@ -124,6 +127,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                     || IMPLEMENTATION_BM_CDI.equals(implementation)
                     || IMPLEMENTATION_BM_CDI_MOMENT.equals(implementation)) {
                 return CDI_MOMENT_BM;
+            }
+            if (IMPLEMENTATION_BM_MOMENT.equals(implementation)
+                    || IMPLEMENTATION_NATIVE_MOMENT_BM.equals(implementation)) {
+                return MOMENT_BM;
             }
             if (IMPLEMENTATION_CANONICAL_MESSAGE.equals(implementation)
                     || IMPLEMENTATION_OU_CANONICAL.equals(implementation)
@@ -304,8 +311,10 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
         boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
         final boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
+        final boolean initializeLegacyCdi = implementationMode != ImplementationMode.MOMENT_BM;
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, forceCompletelyObserved, allowSingular);
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
+                forceCompletelyObserved, allowSingular, initializeLegacyCdi);
 
         applyImplementationMode(
                 implementationMode,
@@ -402,6 +411,16 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                     }
                     delegate.enableCdiBMLikelihood();
                     return;
+                case MOMENT_BM:
+                    if (delegateProvider != DelegateProvider.HOMOGENOUS) {
+                        throw new XMLParseException(
+                                "traitDataLikelihood implementation=\"" + implementation
+                                        + "\" is the native moment-form BM backend and supports only homogeneous BM. "
+                                        + "Use implementation=\"legacy\" for legacy CDI OU/drift models or "
+                                        + "implementation=\"canonical-message\" for canonical-message OU.");
+                    }
+                    delegate.enableMomentBMLikelihood();
+                    return;
                 case CANONICAL_MESSAGE_OU:
                     if (delegateProvider != DelegateProvider.OU) {
                         throw new XMLParseException(
@@ -435,6 +454,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 + "\"" + IMPLEMENTATION_CDI_MOMENT + "\", "
                 + "\"" + IMPLEMENTATION_BM_CDI + "\", "
                 + "\"" + IMPLEMENTATION_BM_CDI_MOMENT + "\", "
+                + "\"" + IMPLEMENTATION_BM_MOMENT + "\", "
+                + "\"" + IMPLEMENTATION_NATIVE_MOMENT_BM + "\", "
                 + "\"" + IMPLEMENTATION_CANONICAL_MESSAGE + "\", "
                 + "\"" + IMPLEMENTATION_OU_CANONICAL + "\", "
                 + "\"" + IMPLEMENTATION_OU_CANONICAL_MESSAGE + "\", "

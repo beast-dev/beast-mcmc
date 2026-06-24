@@ -16,6 +16,8 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
 
     private static final String CDI_BM_ENGINE =
             "dr.evomodel.treedatalikelihood.continuous.CdiBMContinuousTreeLikelihoodEngine";
+    private static final String MOMENT_BM_ENGINE =
+            "dr.evomodel.treedatalikelihood.continuous.MomentBMContinuousTreeLikelihoodEngine";
     private static final String CANONICAL_OU_ENGINE =
             "dr.evomodel.treedatalikelihood.continuous.CanonicalOUContinuousTreeLikelihoodEngine";
 
@@ -31,8 +33,23 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         final ContinuousDataLikelihoodDelegate delegate = parseDelegate(bmXml("cdi-moment"));
 
         assertTrue("explicit CDI/moment BM spelling should select CDI BM", delegate.usesCdiBMLikelihood());
+        assertFalse("explicit CDI/moment BM should not select native BM", delegate.usesMomentBMLikelihood());
         assertFalse("BM should not select canonical OU", delegate.usesCanonicalOULikelihood());
         assertSelectedEngine(delegate, CDI_BM_ENGINE);
+    }
+
+    public void testParserExplicitNativeMomentBMSelectsMomentBackendAndMatchesCdi() throws Exception {
+        final TreeDataLikelihood cdiLikelihood = parseLikelihood(bmXml("cdi-moment"));
+        final TreeDataLikelihood momentLikelihood = parseLikelihood(bmXml("bm-moment"));
+        final ContinuousDataLikelihoodDelegate momentDelegate =
+                (ContinuousDataLikelihoodDelegate) momentLikelihood.getDataLikelihoodDelegate();
+
+        assertTrue("explicit native moment BM should select native BM", momentDelegate.usesMomentBMLikelihood());
+        assertFalse("explicit native moment BM should not select CDI BM", momentDelegate.usesCdiBMLikelihood());
+        assertFalse("BM should not select canonical OU", momentDelegate.usesCanonicalOULikelihood());
+        assertSelectedEngine(momentDelegate, MOMENT_BM_ENGINE);
+        assertEquals("native moment BM should match CDI/moment BM",
+                cdiLikelihood.getLogLikelihood(), momentLikelihood.getLogLikelihood(), 1.0e-10);
     }
 
     public void testParserCanonicalCompatibilityOUSelectsCanonicalMessageBackend() throws Exception {
@@ -71,6 +88,12 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertParseFails(
                 ouXml("cdi-moment"),
                 "CDI/moment-form BM production backend and supports only homogeneous BM");
+    }
+
+    public void testParserRejectsNativeMomentBMForOU() {
+        assertParseFails(
+                ouXml("bm-moment"),
+                "native moment-form BM backend and supports only homogeneous BM");
     }
 
     public void testParserRejectsNaturalCanonicalBMProductionSelection() {
@@ -134,8 +157,12 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     private static ContinuousDataLikelihoodDelegate parseDelegate(final String xml) throws Exception {
-        final TreeDataLikelihood likelihood = (TreeDataLikelihood) parseNativeObject(xml, "likelihood");
+        final TreeDataLikelihood likelihood = parseLikelihood(xml);
         return (ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate();
+    }
+
+    private static TreeDataLikelihood parseLikelihood(final String xml) throws Exception {
+        return (TreeDataLikelihood) parseNativeObject(xml, "likelihood");
     }
 
     private static Object parseNativeObject(final String xml, final String id) throws Exception {

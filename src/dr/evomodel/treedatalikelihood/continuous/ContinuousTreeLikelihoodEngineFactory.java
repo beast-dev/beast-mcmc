@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
 import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 
 /**
  * Centralizes the light engine-selection policy for continuous trait tree likelihoods.
@@ -43,6 +44,7 @@ final class ContinuousTreeLikelihoodEngineFactory {
                 new LegacyCdiContinuousTreeLikelihoodEngine(delegate),
                 null,
                 null,
+                false,
                 false,
                 false);
     }
@@ -71,6 +73,27 @@ final class ContinuousTreeLikelihoodEngineFactory {
                 null,
                 null,
                 true,
+                false,
+                false);
+    }
+
+    static Selection momentBM(final ContinuousDataLikelihoodDelegate delegate) {
+        validateSingleTrait(delegate, "Native moment-form BM likelihood");
+        if (!(delegate.getDiffusionProcessDelegate() instanceof HomogeneousDiffusionModelDelegate)) {
+            throw new UnsupportedOperationException(
+                    "Native moment-form BM likelihood is the native moment-form BM backend and supports only homogeneous BM.");
+        }
+        if (delegate.getPrecisionType() != PrecisionType.SCALAR) {
+            throw new UnsupportedOperationException(
+                    "Native moment-form BM likelihood currently supports only scalar tip precision.");
+        }
+
+        return new Selection(
+                new MomentBMContinuousTreeLikelihoodEngine(delegate),
+                null,
+                null,
+                false,
+                true,
                 false);
     }
 
@@ -88,6 +111,7 @@ final class ContinuousTreeLikelihoodEngineFactory {
                 integrator,
                 new CanonicalOUGradientAdapter(integrator, delegate.getTraitDim()),
                 false,
+                false,
                 true);
     }
 
@@ -104,17 +128,20 @@ final class ContinuousTreeLikelihoodEngineFactory {
         private final CanonicalOUIntegrator canonicalOUIntegrator;
         private final CanonicalOUGradientAdapter canonicalOUGradientAdapter;
         private final boolean useCdiBMLikelihood;
+        private final boolean useMomentBMLikelihood;
         private final boolean useCanonicalOULikelihood;
 
         private Selection(final ContinuousTreeLikelihoodEngine engine,
                           final CanonicalOUIntegrator canonicalOUIntegrator,
                           final CanonicalOUGradientAdapter canonicalOUGradientAdapter,
                           final boolean useCdiBMLikelihood,
+                          final boolean useMomentBMLikelihood,
                           final boolean useCanonicalOULikelihood) {
             this.engine = engine;
             this.canonicalOUIntegrator = canonicalOUIntegrator;
             this.canonicalOUGradientAdapter = canonicalOUGradientAdapter;
             this.useCdiBMLikelihood = useCdiBMLikelihood;
+            this.useMomentBMLikelihood = useMomentBMLikelihood;
             this.useCanonicalOULikelihood = useCanonicalOULikelihood;
         }
 
@@ -132,6 +159,10 @@ final class ContinuousTreeLikelihoodEngineFactory {
 
         boolean usesCdiBMLikelihood() {
             return useCdiBMLikelihood;
+        }
+
+        boolean usesMomentBMLikelihood() {
+            return useMomentBMLikelihood;
         }
 
         boolean usesCanonicalOULikelihood() {

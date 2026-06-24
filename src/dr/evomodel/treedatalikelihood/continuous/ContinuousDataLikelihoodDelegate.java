@@ -959,13 +959,26 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         if (updateTipData.getFirst() == -1) {
-            loadAllMomentBMTipData(engine);
+            setAllMomentBMTipData(engine, flip);
             updateTipData.clear();
             return;
         }
 
         while (!updateTipData.isEmpty()) {
             final int tipIndex = updateTipData.removeFirst();
+            if (flip) {
+                partialBufferHelper.flipOffset(tipIndex);
+            }
+            engine.setTipPartial(tipIndex, dataModel.getTipPartial(tipIndex, forceCompletelyObserved));
+        }
+    }
+
+    private void setAllMomentBMTipData(final MomentBMContinuousTreeLikelihoodEngine engine,
+                                       final boolean flip) {
+        for (int tipIndex = 0; tipIndex < tipCount; tipIndex++) {
+            if (flip) {
+                partialBufferHelper.flipOffset(tipIndex);
+            }
             engine.setTipPartial(tipIndex, dataModel.getTipPartial(tipIndex, forceCompletelyObserved));
         }
     }
@@ -984,6 +997,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
         updateDiffusionModel = false;
         return true;
+    }
+
+    void flipMomentBMNodeBuffers(final List<NodeOperation> nodeOperations) {
+        if (flip) {
+            for (NodeOperation op : nodeOperations) {
+                partialBufferHelper.flipOffset(op.getNodeNumber());
+            }
+        }
     }
 
     boolean isComputingWishartStatistics() {

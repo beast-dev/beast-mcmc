@@ -52,22 +52,28 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
     private final int tipCount;
     private final int dim;
     private final int dim2;
+    private final int partialDim;
+    private final int partialBufferCount;
     private final double halfDim;
     private final double dimLogSqrtTwoPi;
-    private final double[] means;
-    private final double[] storedMeans;
-    private final double[] precisionScalars;
-    private final double[] storedPrecisionScalars;
+    private final double[] partials;
     private final double[] remainders;
-    private final double[] storedRemainders;
     private final double[] branchTimes;
     private final double[] storedBranchTimes;
+    private final int[] storedBranchTimeIndices;
+    private final int[] branchTimeStoreEpochs;
     private final double[] traitPrecision;
+    private final double[] storedTraitPrecision;
     private final double[] difference;
 
     private double logDetTraitPrecision;
+    private double storedLogDetTraitPrecision;
     private double logPrecisionConstant;
+    private double storedLogPrecisionConstant;
     private boolean precisionDirty = true;
+    private boolean storedPrecisionDirty = true;
+    private int storedBranchTimeCount = 0;
+    private int branchTimeStoreEpoch = 1;
 
     MomentBMContinuousTreeLikelihoodEngine(final ContinuousDataLikelihoodDelegate delegate) {
         this.delegate = delegate;
@@ -77,17 +83,18 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
         this.tipCount = delegate.getTipCount();
         this.dim = delegate.getTraitDim();
         this.dim2 = dim * dim;
+        this.partialDim = dim + 1;
+        this.partialBufferCount = delegate.getPartialBufferCount();
         this.halfDim = 0.5 * dim;
         this.dimLogSqrtTwoPi = dim * LOG_SQRT_2_PI;
-        this.means = new double[nodeCount * dim];
-        this.storedMeans = new double[nodeCount * dim];
-        this.precisionScalars = new double[nodeCount];
-        this.storedPrecisionScalars = new double[nodeCount];
-        this.remainders = new double[nodeCount];
-        this.storedRemainders = new double[nodeCount];
+        this.partials = new double[partialBufferCount * partialDim];
+        this.remainders = new double[partialBufferCount];
         this.branchTimes = new double[nodeCount];
         this.storedBranchTimes = new double[nodeCount];
+        this.storedBranchTimeIndices = new int[nodeCount];
+        this.branchTimeStoreEpochs = new int[nodeCount];
         this.traitPrecision = new double[dim2];
+        this.storedTraitPrecision = new double[dim2];
         this.difference = new double[dim];
 
         delegate.loadAllMomentBMTipData(this);
@@ -110,9 +117,10 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
         delegate.updateMomentBMBranchNormalization();
         for (BranchOperation operation : branchOperations) {
             final int branchNumber = operation.getBranchNumber();
-            branchTimes[branchNumber] = delegate.getEffectiveBranchTime(operation);
+            setBranchTime(branchNumber, delegate.getEffectiveBranchTime(operation));
         }
 
+        delegate.flipMomentBMNodeBuffers(nodeOperations);
         for (NodeOperation operation : nodeOperations) {
             updateNode(operation.getNodeNumber(), operation.getLeftChild(), operation.getRightChild());
         }
@@ -121,31 +129,42 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
     }
 
     void setTipPartial(final int tipIndex, final double[] tipPartial) {
-        final int meanOffset = tipIndex * dim;
-        System.arraycopy(tipPartial, 0, means, meanOffset, dim);
-        precisionScalars[tipIndex] = tipPartial[dim];
-        remainders[tipIndex] = 0.0;
+        final int tipBuffer = delegate.getActiveNodeIndex(tipIndex);
+        final int partialOffset = tipBuffer * partialDim;
+        System.arraycopy(tipPartial, 0, partials, partialOffset, dim);
+        partials[partialOffset + dim] = tipPartial[dim];
+        remainders[tipBuffer] = 0.0;
     }
 
     @Override
     public void storeState() {
-        System.arraycopy(means, 0, storedMeans, 0, means.length);
-        System.arraycopy(precisionScalars, 0, storedPrecisionScalars, 0, precisionScalars.length);
-        System.arraycopy(remainders, 0, storedRemainders, 0, remainders.length);
-        System.arraycopy(branchTimes, 0, storedBranchTimes, 0, branchTimes.length);
+        storedBranchTimeCount = 0;
+        branchTimeStoreEpoch++;
+        if (branchTimeStoreEpoch == Integer.MAX_VALUE) {
+            Arrays.fill(branchTimeStoreEpochs, 0);
+            branchTimeStoreEpoch = 1;
+        }
+        System.arraycopy(traitPrecision, 0, storedTraitPrecision, 0, traitPrecision.length);
+        storedLogDetTraitPrecision = logDetTraitPrecision;
+        storedLogPrecisionConstant = logPrecisionConstant;
+        storedPrecisionDirty = precisionDirty;
     }
 
     @Override
     public void restoreState() {
-        System.arraycopy(storedMeans, 0, means, 0, means.length);
-        System.arraycopy(storedPrecisionScalars, 0, precisionScalars, 0, precisionScalars.length);
-        System.arraycopy(storedRemainders, 0, remainders, 0, remainders.length);
-        System.arraycopy(storedBranchTimes, 0, branchTimes, 0, branchTimes.length);
-        precisionDirty = true;
+        for (int i = 0; i < storedBranchTimeCount; i++) {
+            branchTimes[storedBranchTimeIndices[i]] = storedBranchTimes[i];
+        }
+        storedBranchTimeCount = 0;
+        System.arraycopy(storedTraitPrecision, 0, traitPrecision, 0, traitPrecision.length);
+        logDetTraitPrecision = storedLogDetTraitPrecision;
+        logPrecisionConstant = storedLogPrecisionConstant;
+        precisionDirty = storedPrecisionDirty;
     }
 
     @Override
     public void acceptState() {
+        storedBranchTimeCount = 0;
     }
 
     private void refreshPrecision() {
@@ -156,21 +175,34 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
         precisionDirty = false;
     }
 
-    private void updateNode(final int nodeNumber, final int leftChild, final int rightChild) {
-        final int parentOffset = nodeNumber * dim;
-        final int leftOffset = leftChild * dim;
-        final int rightOffset = rightChild * dim;
+    private void setBranchTime(final int branchNumber, final double branchTime) {
+        if (branchTimeStoreEpochs[branchNumber] != branchTimeStoreEpoch) {
+            branchTimeStoreEpochs[branchNumber] = branchTimeStoreEpoch;
+            storedBranchTimeIndices[storedBranchTimeCount] = branchNumber;
+            storedBranchTimes[storedBranchTimeCount] = branchTimes[branchNumber];
+            storedBranchTimeCount++;
+        }
+        branchTimes[branchNumber] = branchTime;
+    }
 
-        final double leftPrecision = precisionScalars[leftChild];
-        final double rightPrecision = precisionScalars[rightChild];
+    private void updateNode(final int nodeNumber, final int leftChild, final int rightChild) {
+        final int parentBuffer = delegate.getActiveNodeIndex(nodeNumber);
+        final int leftBuffer = delegate.getActiveNodeIndex(leftChild);
+        final int rightBuffer = delegate.getActiveNodeIndex(rightChild);
+        final int parentOffset = parentBuffer * partialDim;
+        final int leftOffset = leftBuffer * partialDim;
+        final int rightOffset = rightBuffer * partialDim;
+
+        final double leftPrecision = partials[leftOffset + dim];
+        final double rightPrecision = partials[rightOffset + dim];
         final double leftBranchPrecision = branchPrecision(leftPrecision, branchTimes[leftChild]);
         final double rightBranchPrecision = branchPrecision(rightPrecision, branchTimes[rightChild]);
 
         final double parentPrecision = leftBranchPrecision + rightBranchPrecision;
-        precisionScalars[nodeNumber] = parentPrecision;
+        partials[parentOffset + dim] = parentPrecision;
         if (parentPrecision == 0.0) {
-            Arrays.fill(means, parentOffset, parentOffset + dim, 0.0);
-            remainders[nodeNumber] = remainders[leftChild] + remainders[rightChild];
+            Arrays.fill(partials, parentOffset, parentOffset + dim, 0.0);
+            remainders[parentBuffer] = remainders[leftBuffer] + remainders[rightBuffer];
             return;
         }
 
@@ -178,11 +210,11 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
         final double rightWeight = rightBranchPrecision / parentPrecision;
 
         for (int d = 0; d < dim; d++) {
-            means[parentOffset + d] = leftWeight * means[leftOffset + d]
-                    + rightWeight * means[rightOffset + d];
+            partials[parentOffset + d] = leftWeight * partials[leftOffset + d]
+                    + rightWeight * partials[rightOffset + d];
         }
 
-        double remainder = remainders[leftChild] + remainders[rightChild];
+        double remainder = remainders[leftBuffer] + remainders[rightBuffer];
         if (leftPrecision != 0.0 && rightPrecision != 0.0) {
             final double remainderPrecision =
                     leftBranchPrecision * rightBranchPrecision / parentPrecision;
@@ -191,7 +223,7 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
                     + halfDim * Math.log(remainderPrecision)
                     - 0.5 * remainderPrecision * ss;
         }
-        remainders[nodeNumber] = remainder;
+        remainders[parentBuffer] = remainder;
     }
 
     private double branchPrecision(final double nodePrecision, final double branchTime) {
@@ -202,28 +234,30 @@ final class MomentBMContinuousTreeLikelihoodEngine implements ContinuousTreeLike
 
     private double calculateRootLogLikelihood(final int rootNodeNumber) {
         final double priorPrecision = rootPrior.getPseudoObservations();
-        double rootPrecision = precisionScalars[rootNodeNumber];
+        final int rootBuffer = delegate.getActiveNodeIndex(rootNodeNumber);
+        final int rootOffset = rootBuffer * partialDim;
+        double rootPrecision = partials[rootOffset + dim];
         if (!Double.isInfinite(priorPrecision)) {
             rootPrecision = rootPrecision * priorPrecision / (rootPrecision + priorPrecision);
         }
 
-        final double ss = rootQuadraticDifference(rootNodeNumber * dim);
+        final double ss = rootQuadraticDifference(rootOffset);
         return logPrecisionConstant
                 + halfDim * Math.log(rootPrecision)
                 - 0.5 * rootPrecision * ss
-                + remainders[rootNodeNumber];
+                + remainders[rootBuffer];
     }
 
     private double quadraticDifference(final int leftOffset, final int rightOffset) {
         for (int d = 0; d < dim; d++) {
-            difference[d] = means[leftOffset + d] - means[rightOffset + d];
+            difference[d] = partials[leftOffset + d] - partials[rightOffset + d];
         }
         return quadraticDifference();
     }
 
     private double rootQuadraticDifference(final int meanOffset) {
         for (int d = 0; d < dim; d++) {
-            difference[d] = means[meanOffset + d] - rootPrior.getMeanParameter().getParameterValue(d);
+            difference[d] = partials[meanOffset + d] - rootPrior.getMeanParameter().getParameterValue(d);
         }
         return quadraticDifference();
     }

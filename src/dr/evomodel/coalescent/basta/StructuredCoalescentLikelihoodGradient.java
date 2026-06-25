@@ -179,6 +179,11 @@ public class StructuredCoalescentLikelihoodGradient implements
                     return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
                 } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
                     return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof AnchoredExponentialGrowthPopulationSizeModel) {
+                    return ((AnchoredExponentialGrowthPopulationSizeModel) popModel).getLogPopSizesParameter();
+                } else if (popModel instanceof SharedAncestralExponentialGrowthPopulationSizeModel) {
+                    throw new UnsupportedOperationException("Analytic population-size gradient is not implemented for the " +
+                            "shared-ancestral (divergence-anchored) exponential model; run without the population-size gradient.");
                 }
                 throw new RuntimeException("Unknown population size model type");
             }
@@ -213,6 +218,11 @@ public class StructuredCoalescentLikelihoodGradient implements
                     return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
                 } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
                     return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof AnchoredExponentialGrowthPopulationSizeModel) {
+                    return ((AnchoredExponentialGrowthPopulationSizeModel) popModel).getLogPopSizesParameter();
+                } else if (popModel instanceof SharedAncestralExponentialGrowthPopulationSizeModel) {
+                    throw new UnsupportedOperationException("Analytic population-size gradient is not implemented for the " +
+                            "shared-ancestral (divergence-anchored) exponential model; run without the population-size gradient.");
                 }
                 throw new RuntimeException("Unknown population size model type");
             }

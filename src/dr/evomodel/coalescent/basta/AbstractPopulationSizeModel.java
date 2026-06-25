@@ -92,7 +92,9 @@ public abstract class AbstractPopulationSizeModel extends AbstractModel {
     public enum PopulationSizeModelType {
         CONSTANT(0),
         EXPONENTIAL_GROWTH(1),
-        PIECEWISE_CONSTANT(2);
+        PIECEWISE_CONSTANT(2),
+        ROOT_ANCHORED_EXPONENTIAL(3),
+        SHARED_ANCESTRAL_EXPONENTIAL(4);
 
         private final int typeIndex;
 

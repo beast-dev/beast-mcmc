@@ -30,8 +30,9 @@ public abstract class IntervalSpecificPopulationSizeModel extends AbstractPopula
                                                        double intervalLength);
 
     protected void getBaseSizes(double[] baseSizes) {
+        boolean shared = populationSizeParameter.getDimension() == 1;
         for (int k = 0; k < stateCount; ++k) {
-            baseSizes[k] = populationSizeParameter.getParameterValue(k);
+            baseSizes[k] = populationSizeParameter.getParameterValue(shared ? 0 : k);
         }
     }
 

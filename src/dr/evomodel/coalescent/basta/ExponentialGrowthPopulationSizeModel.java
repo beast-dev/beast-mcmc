@@ -33,9 +33,10 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
                                                   double time,
                                                   double intervalStartTime,
                                                   double intervalEndTime) {
-        int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
-        double N0 = populationSizeParameter.getParameterValue(j);
-        double r = growthRateParameter.getParameterValue(j);
+        int jPop = populationSizeParameter.getDimension() == 1 ? 0 : state;
+        int jR = growthRateParameter.getDimension() == 1 ? 0 : state;
+        double N0 = populationSizeParameter.getParameterValue(jPop);
+        double r = growthRateParameter.getParameterValue(jR);
         
         if (N0 <= 0.0) {
             throw new RuntimeException("Population size must be positive, got N0=" + N0);
@@ -49,9 +50,10 @@ public class ExponentialGrowthPopulationSizeModel extends IntervalSpecificPopula
     protected double calculateIntervalIntegral(int state, int interval,
                                               double intervalStartTime,
                                               double intervalLength) {
-        int j = populationSizeParameter.getDimension() == 1 ? 0 : state;
-        double N0 = populationSizeParameter.getParameterValue(j);
-        double r = growthRateParameter.getParameterValue(j);
+        int jPop = populationSizeParameter.getDimension() == 1 ? 0 : state;
+        int jR = growthRateParameter.getDimension() == 1 ? 0 : state;
+        double N0 = populationSizeParameter.getParameterValue(jPop);
+        double r = growthRateParameter.getParameterValue(jR);
         double intervalEndTime = intervalStartTime + intervalLength;
         
         if (Math.abs(r) > 1e-10) {

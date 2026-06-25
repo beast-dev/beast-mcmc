@@ -6,18 +6,14 @@ import java.util.List;
 
 public class TwoPathogenModel extends CompartmentalModel {
 
-    // did i put this in here?
-    // private final DynamicalSystem rateModifiers;
-
-    protected Parameter originTwo;
     protected Parameter originTimeNumSS;
+    // keep track of introduction of "younger" pathogen
+    private boolean secondPathogenIntroduced = false;
 
-    // To start, just coped code from SIRCompartmentalModel
-    // Everything needs to be changed
     public TwoPathogenModel(
             List<Parameter> rateParams,
             List<Parameter> compartmentCounts,
-            Parameter origin,
+            Parameter originOne,
             Parameter originTwo,
             Parameter originTimeNumSS,
             int numReactionChannels,
@@ -29,18 +25,12 @@ public class TwoPathogenModel extends CompartmentalModel {
         for(int i = 0; i < rateParameters.size(); i++) {
             addVariable(rateParameters.get(i));
         }
-
-        //this.rateModifiers = rateModifiers;
-        //for(int i = 0; i < rateModifiers.size(); i++) {
-        //    addVariable(rateModifiers.get(i));
-        //}
-
         this.compartmentCounts = compartmentCounts;
         for(int i = 0; i < compartmentCounts.size(); i++) {
             addVariable(compartmentCounts.get(i));
         }
-        this.origin = origin;
-        addVariable(origin);
+        this.originOne = originOne;
+        addVariable(originOne);
         this.originTwo = originTwo;
         addVariable(originTwo);
         this.originTimeNumSS = originTimeNumSS;
@@ -50,52 +40,12 @@ public class TwoPathogenModel extends CompartmentalModel {
         this.numReactionChannels = numReactionChannels;
         this.numSpecies = compartmentCounts.size();
         this.vMatrix = getVMatrix();
-        //this.originTimeNumS = originTimeNumS;
-        //addVariable(originTimeNumS);
     }
-
-    /*
-    protected void setOriginTimeCompartmentCounts(int index){
-        // initial SS value
-        compartmentCounts.get(0).setParameterValue(index, 1000);
-        // initial SI value
-        compartmentCounts.get(1).setParameterValue(index, 1);
-        // initial SC value
-        compartmentCounts.get(2).setParameterValue(index, 0);
-        // initial SR value
-        compartmentCounts.get(3).setParameterValue(index, 0);
-        // initial IS value
-        compartmentCounts.get(4).setParameterValue(index, 0);
-        // initial II value
-        compartmentCounts.get(5).setParameterValue(index, 0);
-        // initial IC value
-        compartmentCounts.get(6).setParameterValue(index, 0);
-        // initial IR value
-        compartmentCounts.get(7).setParameterValue(index, 0);
-        // initial CS value
-        compartmentCounts.get(8).setParameterValue(index, 0);
-        // initial CI value
-        compartmentCounts.get(9).setParameterValue(index, 0);
-        // initial CC value
-        compartmentCounts.get(10).setParameterValue(index, 0);
-        // initial CR value
-        compartmentCounts.get(11).setParameterValue(index, 0);
-        // initial RS value
-        compartmentCounts.get(12).setParameterValue(index, 0);
-        // initial RI value
-        compartmentCounts.get(13).setParameterValue(index, 0);
-        // initial RC value
-        compartmentCounts.get(14).setParameterValue(index, 0);
-        // initial RR value
-        compartmentCounts.get(15).setParameterValue(index, 0);
-    }
-
-     */
 
     protected void setOriginTimeCompartmentCounts(int index){
 
-        double origin1 = origin.getParameterValue(0);
-        double origin2 = originTwo.getParameterValue(0);
+        double origOne = originOne.getParameterValue(0);
+        double origTwo = originTwo.getParameterValue(0);
         double originTimeSS = originTimeNumSS.getParameterValue(0);
 
         // initialize everything to 0
@@ -106,14 +56,12 @@ public class TwoPathogenModel extends CompartmentalModel {
         // SS = originTimeSS
         compartmentCounts.get(0).setParameterValue(index, originTimeSS);
 
-        if (origin1 > origin2) {
+        if (origOne > origTwo) {
             // pathogen 1 is older, start in IS
             compartmentCounts.get(4).setParameterValue(index, 1);
-
-        } else if (origin2 > origin1) {
+        } else if (origTwo > origOne) {
             // pathogen 2 is older, start in SI
             compartmentCounts.get(1).setParameterValue(index, 1);
-
         } else {
             // origins equal
             // choose whichever convention you want
@@ -123,28 +71,13 @@ public class TwoPathogenModel extends CompartmentalModel {
         }
     }
 
-    /*
-    protected void setDefaultCompartmentCounts(int index){
-        // default S value
-        compartmentCounts.get(0).setParameterValue(index, 999);
-        // default I value
-        compartmentCounts.get(1).setParameterValue(index, 0);
-        // default R value
-        compartmentCounts.get(2).setParameterValue(index, 0);
-    }
-
-     */
-
     protected void setDefaultCompartmentCounts(int index){
         // initialize everything to 0
         for (int i = 0; i < compartmentCounts.size(); i++) {
             compartmentCounts.get(i).setParameterValue(index, 0);
         }
-
         // default SS value
-        compartmentCounts.get(0).setParameterValue(index, 999);
-
-
+        compartmentCounts.get(0).setParameterValue(index, originTimeNumSS.getParameterValue(0)+1);
     }
 
     protected int[] getHighestOrdersOfReactions(){
@@ -261,29 +194,14 @@ public class TwoPathogenModel extends CompartmentalModel {
         // currentCounts[13] has number of RI
         // currentCounts[14] has number of RC
         // currentCounts[15] has number of RR
-        //
-        // transmissionRate[0] is transmission rate of pathogen 1
-        // transmissionRate[1] is transmission rate of pathogen 2
-        // same logic for recoveryRate, crossProtection and resusceptibilityRate
-        // define crossProtection as I -> C and recoveryRate as C -> R and resusceptibilityRate as R _> S
-        // look up how Chen et al defined each rate
-        //
-        // should the rates be rateParameters?
-        // rateParameters: 0, 1 are transmissionRate 1 and 2; 2,3 are crossProtection 1 and 2; 4, 5 are recoveryRate 1 and 2
-        //
-        // rateModifiers[0] = alpha, modifies transmission during infection
-        // rateModifiers[1] = chi, modifies transmission during cross protection
-        // rateModifiers[2] = sigma, modifies recovery to cross protection during dual infection
-        // one dimensional parameters
-        // add crossProtection to parser and xml and 2 Two PathogenModel class
-        // add rate modifiers as one dimensional parameters
+
         double transmissionRateOne = rateParameters.get(0).getParameterValue(0);
-        double transmissionRateTwo = rateParameters.get(5).getParameterValue(0);
-        double recoveryRateOne = rateParameters.get(1).getParameterValue(0);
-        double recoveryRateTwo = rateParameters.get(6).getParameterValue(0);
-        double crossProtectionRateOne = rateParameters.get(2).getParameterValue(0);
-        double crossProtectionRateTwo = rateParameters.get(7).getParameterValue(0);
+        double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
+        double moveToRRateOne = rateParameters.get(2).getParameterValue(0);
         double resusRateOne = rateParameters.get(4).getParameterValue(0);
+        double transmissionRateTwo = rateParameters.get(5).getParameterValue(0);
+        double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
+        double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
         double resusRateTwo = rateParameters.get(9).getParameterValue(0);
         double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
         double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
@@ -313,7 +231,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         // SI + IR -> II + IR
         rVec[11] = infectionRateModulationI*transmissionRateOne*currentCounts[1]*currentCounts[7];
         // SI -> SC
-        rVec[12] = crossProtectionRateTwo*currentCounts[1];
+        rVec[12] = moveToCRateTwo *currentCounts[1];
         // SC + IS -> IC + IS
         rVec[13] = infectionRateModulationC*transmissionRateOne*currentCounts[2]*currentCounts[4];
         // SC + II -> IC + II
@@ -323,7 +241,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         // SC + IR -> IC + IR
         rVec[16] = infectionRateModulationC*transmissionRateOne*currentCounts[2]*currentCounts[7];
         // SC -> SR
-        rVec[17] = recoveryRateTwo*currentCounts[2];
+        rVec[17] = moveToRRateTwo *currentCounts[2];
         // SR + IS -> IR + IS
         rVec[18] = transmissionRateOne*currentCounts[3]*currentCounts[4];
         // SR + II -> IR + II
@@ -335,7 +253,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         // SR -> SS
         rVec[22] = resusRateTwo*currentCounts[3];
         // IS -> CS
-        rVec[23] = crossProtectionRateOne*currentCounts[4];
+        rVec[23] = moveToCRateOne*currentCounts[4];
         // IS + SI -> II + SI
         rVec[24] = infectionRateModulationI*transmissionRateTwo*currentCounts[4]*currentCounts[1];
         // IS + II -> 2II
@@ -345,19 +263,19 @@ public class TwoPathogenModel extends CompartmentalModel {
         // IS + RI -> II + RI
         rVec[27] = infectionRateModulationI*transmissionRateTwo*currentCounts[4]*currentCounts[13];
         // II -> CI
-        rVec[28] = recoveryRateModulation*crossProtectionRateOne*currentCounts[5];
+        rVec[28] = recoveryRateModulation*moveToCRateOne*currentCounts[5];
         // II -> IC
-        rVec[29] = recoveryRateModulation*crossProtectionRateTwo*currentCounts[5];
+        rVec[29] = recoveryRateModulation* moveToCRateTwo *currentCounts[5];
         // IC -> CC
-        rVec[30] = crossProtectionRateOne*currentCounts[5];
+        rVec[30] = moveToCRateOne*currentCounts[5];
         // IC -> IR
-        rVec[31] = recoveryRateTwo*currentCounts[5];
+        rVec[31] = moveToRRateTwo *currentCounts[5];
         // IR -> CR
-        rVec[32] = crossProtectionRateOne*currentCounts[7];
+        rVec[32] = moveToCRateOne*currentCounts[7];
         // IR -> IS
         rVec[33] = resusRateTwo*currentCounts[7];
         // CS -> RS
-        rVec[34] = recoveryRateOne*currentCounts[8];
+        rVec[34] = moveToRRateOne *currentCounts[8];
         // CS + SI -> CI + SI
         rVec[35] = infectionRateModulationC*transmissionRateTwo*currentCounts[8]*currentCounts[1];
         // CS + II -> CI + II
@@ -367,15 +285,15 @@ public class TwoPathogenModel extends CompartmentalModel {
         // CS + RI -> CI + RI
         rVec[38] = infectionRateModulationC*transmissionRateTwo*currentCounts[8]*currentCounts[13];
         // CI -> RI
-        rVec[39] = recoveryRateOne*currentCounts[9];
+        rVec[39] = moveToRRateOne *currentCounts[9];
         // CI -> CC
-        rVec[40] = crossProtectionRateTwo*currentCounts[9];
+        rVec[40] = moveToCRateTwo *currentCounts[9];
         // CC -> RC
-        rVec[41] = recoveryRateOne*currentCounts[10];
+        rVec[41] = moveToRRateOne *currentCounts[10];
         // CC -> CR
-        rVec[42] = recoveryRateTwo*currentCounts[10];
+        rVec[42] = moveToRRateTwo *currentCounts[10];
         // CR -> RR
-        rVec[43] = recoveryRateOne*currentCounts[11];
+        rVec[43] = moveToRRateOne *currentCounts[11];
         // CR -> CS
         rVec[44] = resusRateTwo*currentCounts[11];
         // RS -> SS
@@ -391,11 +309,11 @@ public class TwoPathogenModel extends CompartmentalModel {
         // RI -> SI
         rVec[50] = resusRateOne*currentCounts[13];
         // RI -> RC
-        rVec[51] = crossProtectionRateTwo*currentCounts[13];
+        rVec[51] = moveToCRateTwo *currentCounts[13];
         // RC -> SC
         rVec[52] = resusRateOne*currentCounts[14];
         // RC -> RR
-        rVec[53] = recoveryRateTwo*currentCounts[14];
+        rVec[53] = moveToRRateTwo *currentCounts[14];
         // RR -> SR
         rVec[54] = resusRateOne*currentCounts[15];
         // RR -> RS
@@ -422,49 +340,53 @@ public class TwoPathogenModel extends CompartmentalModel {
         double RI = currentCounts[13];
         double RC = currentCounts[14];
         double RR = currentCounts[15];
+
         double transRateOne = rateParameters.get(0).getParameterValue(0);
-        double recovRateOne = rateParameters.get(1).getParameterValue(0);
-        double crossProtectionOne = rateParameters.get(2).getParameterValue(0);
+        double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
+        double moveToRRateOne = rateParameters.get(2).getParameterValue(0);
         double resusRateOne = rateParameters.get(4).getParameterValue(0);
         double transRateTwo = rateParameters.get(5).getParameterValue(0);
-        double recovRateTwo = rateParameters.get(6).getParameterValue(0);
-        double crossProtectionTwo = rateParameters.get(7).getParameterValue(0);
+        double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
+        double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
         double resusRateTwo = rateParameters.get(9).getParameterValue(0);
+        // change alpha, chi and sigma to names that are consistent with what we used before,
+        // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
         double alpha = rateParameters.get(10).getParameterValue(0);
         double chi = rateParameters.get(11).getParameterValue(0);
         double sigma = rateParameters.get(12).getParameterValue(0);
+
         // SS
         returnVec[0] = -transRateOne*SS*(IS + II + IR + IC) - transRateTwo*SS*(SI + II + CI + RI) + resusRateOne*RS + resusRateTwo*SR;
         // SI
-        returnVec[1] = -alpha*transRateOne*SI*(IS + II + IC + IR) + resusRateOne*RI + transRateTwo*SS*(SI + II + CI + RI) - crossProtectionTwo*SI;
+        returnVec[1] = -alpha*transRateOne*SI*(IS + II + IC + IR) + resusRateOne*RI + transRateTwo*SS*(SI + II + CI + RI) - moveToCRateTwo*SI;
         // SC
-        returnVec[2] = -chi*transRateOne*SC*(IS + II + IC + IR) + resusRateOne*RC + crossProtectionTwo*SI - recovRateTwo*SC;
+        returnVec[2] = -chi*transRateOne*SC*(IS + II + IC + IR) + resusRateOne*RC + moveToCRateTwo*SI - moveToRRateTwo*SC;
         // SR
-        returnVec[3] = -transRateOne*SR*(IS + II + IC + IR) + resusRateOne*RR - resusRateTwo*SR + recovRateTwo;
+        returnVec[3] = -transRateOne*SR*(IS + II + IC + IR) + resusRateOne*RR - resusRateTwo*SR + moveToRRateTwo;
         // IS
-        returnVec[4] = -alpha*transRateTwo*IS*(SI + II + CI + RI) + resusRateTwo*IR + transRateOne*SS*(IS + II + IC + IR) - crossProtectionOne;
+        returnVec[4] = -alpha*transRateTwo*IS*(SI + II + CI + RI) + resusRateTwo*IR + transRateOne*SS*(IS + II + IC + IR) - moveToCRateOne;
         // II
-        returnVec[5] = alpha*transRateOne*SI*(IS + II + CI + RI) - sigma*crossProtectionOne*II + alpha*transRateTwo*IS*(SI + II + CI + RI) - sigma*crossProtectionTwo*II;
+        returnVec[5] = alpha*transRateOne*SI*(IS + II + CI + RI) - sigma* moveToCRateOne*II + alpha*transRateTwo*IS*(SI + II + CI + RI) - sigma*moveToCRateTwo*II;
         // IC
-        returnVec[6] = chi*transRateTwo*SC*(IS + II + IC + IR) - crossProtectionOne*IC + sigma*crossProtectionTwo*II - recovRateTwo*IC;
+        returnVec[6] = chi*transRateTwo*SC*(IS + II + IC + IR) - moveToCRateOne*IC + sigma* moveToCRateTwo*II - moveToRRateTwo*IC;
         // IR
-        returnVec[7] = transRateOne*SR*(IS + II + IC + IR) - crossProtectionOne*IR + recovRateTwo*IC - resusRateTwo*IR;
+        returnVec[7] = transRateOne*SR*(IS + II + IC + IR) - moveToCRateOne*IR + moveToRRateTwo*IC - resusRateTwo*IR;
         // CS
-        returnVec[8] = -chi*transRateTwo*CS*(SI + II + CI + RI) + resusRateTwo*CR + crossProtectionOne*IS - recovRateOne*CS;
+        returnVec[8] = -chi*transRateTwo*CS*(SI + II + CI + RI) + resusRateTwo*CR + moveToCRateOne*IS - moveToRRateOne*CS;
         // CI
-        returnVec[9] = chi*transRateTwo*CS*(SI + II + CI + RI) - crossProtectionTwo*CI + sigma*crossProtectionOne*II - recovRateOne*CI;
+        returnVec[9] = chi*transRateTwo*CS*(SI + II + CI + RI) - moveToCRateTwo*CI + sigma*moveToCRateOne*II - moveToRRateOne*CI;
         // CC
-        returnVec[10] = crossProtectionOne*IC - recovRateOne*CC + crossProtectionTwo*CI - recovRateTwo*CC;
+        returnVec[10] = moveToCRateOne*IC - moveToRRateOne*CC + moveToCRateTwo*CI - moveToRRateTwo*CC;
         // CR
-        returnVec[11] = crossProtectionOne*IR - recovRateOne*CR + recovRateTwo*CC - resusRateTwo*CR;
+        returnVec[11] = moveToCRateOne*IR - moveToRRateOne*CR + moveToRRateTwo*CC - resusRateTwo*CR;
         // RS
-        returnVec[12] = -transRateTwo*RS*(SI + II + CI + RI) + resusRateTwo*RR - resusRateOne*RS + recovRateOne*CS;
+        returnVec[12] = -transRateTwo*RS*(SI + II + CI + RI) + resusRateTwo*RR - resusRateOne*RS + moveToRRateOne*CS;
         // RI
-        returnVec[13] = transRateTwo*RS*(SI + II + CI + RI) - crossProtectionTwo*RI + recovRateOne*CI - resusRateOne*RI;
+        returnVec[13] = transRateTwo*RS*(SI + II + CI + RI) - moveToCRateTwo*RI + moveToRRateOne*CI - resusRateOne*RI;
         // RC
-        returnVec[14] = crossProtectionTwo*RI - recovRateTwo*RC + recovRateOne*CC - resusRateOne*RC;
+        returnVec[14] = moveToCRateTwo*RI - moveToRRateTwo*RC + moveToRRateOne*CC - resusRateOne*RC;
         // RR
-        returnVec[15] = recovRateOne*CR - resusRateOne*RR + recovRateTwo*RC - resusRateTwo*RR;
+        returnVec[15] = moveToRRateOne*CR - resusRateOne*RR + moveToRRateTwo*RC - resusRateTwo*RR;
         return returnVec;
     }
 
@@ -483,7 +405,6 @@ public class TwoPathogenModel extends CompartmentalModel {
         return returnVal;
     }
     // getSALPoissonIntensities should have dimension 56
-
 
     // countsNew has each rxn
     protected double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew){
@@ -523,44 +444,43 @@ public class TwoPathogenModel extends CompartmentalModel {
         return updatedCounts;
     }
 
-    // add step to introduce 2nd pathogen
-    private boolean secondPathogenIntroduced = false;
-
-    // used AI for help debugging this. I added introduceSecondPathogen to compartmentalModel too but it doesn't do anything unless it is a 2 path model. I don't know if this is the right way to do it.
+    protected double getOldestOrigin() {
+        if(originOne.getParameterValue(0) >= originTwo.getParameterValue(0)){
+            return originOne.getParameterValue(0);
+        }else{
+            return originTwo.getParameterValue(0);
+        }
+    }
 
     @Override
     public double[] introduceSecondPathogen(
-            double previousTime,
-            double currentTime,
+            //double previousTime,
+            double simulationTime,
             double[] currentCounts) {
 
-        double origin1 = origin.getParameterValue(0);
-        double origin2 = originTwo.getParameterValue(0);
+        // check if second pathogen has not yet been introduced
+        if(!secondPathogenIntroduced) {
+            double origOne = originOne.getParameterValue(0);
+            double origTwo = originTwo.getParameterValue(0);
+            // forward time of simulation start time is 0.0, corresponds to backward time of oldest origin
+            // in forward time, time of younger origin is origTimeDif
+            double origTimeDiff = Math.abs(origOne - origTwo);
+            // if check if time of younger origin (in forward time) is <= simulationTime
+            if(origTimeDiff <= simulationTime){
 
-        double youngestOrigin = Math.min(origin1, origin2);
+                currentCounts[0] = currentCounts[0] - 1; // SS
 
-        if (!secondPathogenIntroduced &&
-                // this should ensure that it only happens once
-                previousTime > youngestOrigin &&
-                currentTime <= youngestOrigin) {
-
-            currentCounts[0] = currentCounts[0] - 1; // SS
-
-            if (origin1 < origin2) {
-                // pathogen 1 is younger, introduce pathogen 1
-                currentCounts[4] = currentCounts[4] + 1; // IS
-            } else {
-                // pathogen 2 is younger, introduce pathogen 2
-                currentCounts[1] = currentCounts[1] + 1; // SI
+                if (origOne < origTwo) {
+                    // pathogen 1 is younger, introduce pathogen 1
+                    currentCounts[4] = currentCounts[4] + 1; // IS
+                } else {
+                    // pathogen 2 is younger, introduce pathogen 2
+                    currentCounts[1] = currentCounts[1] + 1; // SI
+                }
+                secondPathogenIntroduced = true;
+                System.out.println("Both pathogens now active");
             }
-
-            secondPathogenIntroduced = true;
-            System.out.println("Both pathogens now active");
         }
-
         return currentCounts;
     }
-
-
-
 }

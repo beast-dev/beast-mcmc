@@ -11,7 +11,8 @@ public abstract class CompartmentalModel extends AbstractModel {
 
     protected List<Parameter> rateParameters;
     protected List<Parameter> compartmentCounts;
-    protected Parameter origin;
+    protected Parameter originOne;
+    protected Parameter originTwo;
     protected int numGridPoints;
     protected double cutOff;
     protected int numReactionChannels;
@@ -49,6 +50,17 @@ public abstract class CompartmentalModel extends AbstractModel {
         return true;
     }
 
+    protected double getOldestOrigin() {
+        return originOne.getParameterValue(0);
+    }
+
+    public double[] introduceSecondPathogen(
+            //double previousTime,
+            double simulationTime,
+            double[] currentCounts) {
+        return currentCounts;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // no intermediates need to be recalculated...
     }
@@ -65,14 +77,4 @@ public abstract class CompartmentalModel extends AbstractModel {
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // CompartmentalModel.java
-    public double[] introduceSecondPathogen(
-            double previousTime,
-            double currentTime,
-            double[] currentCounts) {
-
-        return currentCounts;
-    }
-
 }

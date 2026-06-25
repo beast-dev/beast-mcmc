@@ -16,21 +16,20 @@ public class TauLeapingSimulator extends StochasticSimulator {
         this.criticalNumber = criticalNumber;
     }
 
-    // don't use List<Integer>
-    // Implements tau-leaping algorithm with step size selection as outlined by Cao et al. (2006)
+    // Implements hybrid tau-leaping/SSA algorithm with step size selection as outlined by Cao et al. (2006)
     public void simulateTrajectory() {
 
-        System.out.println("Simulating a stochastic trajectory");
         // set up time interval vector
         // duration for which we need to simulate trajectory
-        double T = compartmentalModel.origin.getParameterValue(0);
+        //double T = compartmentalModel.originOne.getParameterValue(0);
+        double T = compartmentalModel.getOldestOrigin();
 
         // next index of compartmentalModel compartmentCounts parameter that needs to be set
         // start with last index, furthest into past and proceed until we reach index 0
         // which corresponds to most recent sampling time
         int nextRecordIndex = numGridPoints - 1;
         // set default compartment counts for time intervals that completely precede origin
-        // each interval has width cutOff/numGridPoints
+        // each interval has width of cutOff/numGridPoints
         // last interval goes from ((numGridPoints-1)/numGridPoints)*cutOff to cutOff
         while (nextRecordIndex * intervalWidth >= T) {
             compartmentalModel.setDefaultCompartmentCounts(nextRecordIndex);
@@ -57,7 +56,6 @@ public class TauLeapingSimulator extends StochasticSimulator {
             currentCounts[s] = compartmentalModel.compartmentCounts.get(s).getParameterValue(nextRecordIndex);
         }
         nextRecordIndex--;
-
 
         List<Integer> critical = new ArrayList<>(numReactionChannels);
         List<Integer> noncritical = new ArrayList<>(numReactionChannels);
@@ -125,14 +123,13 @@ public class TauLeapingSimulator extends StochasticSimulator {
                         int sampledReactionChannel = sampleReactionChannel(reactionInt, r0);
 
                         //update simulationTime and current compartment counts
-                        double previousSimulationTime = simulationTime;
+                        //double previousSimulationTime = simulationTime;
                         simulationTime = simulationTime + timeToReaction;
 
                         currentCounts = compartmentalModel.introduceSecondPathogen(
-                                previousSimulationTime,
+                                //previousSimulationTime,
                                 simulationTime,
-                                currentCounts
-                        );
+                                currentCounts);
 
                         for (int s = 0; s < numSpecies; s++) {
                             currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
@@ -259,7 +256,6 @@ public class TauLeapingSimulator extends StochasticSimulator {
                     updatedCounts = compartmentalModel.getUpdatedCompartmentCounts(currentCounts, numFirings);
 
                     // Do we need to check for anything beyond negative counts?
-                    // if, for example, there is less than 1 count in I?
                     hasMinimalCounts = compartmentalModel.hasMinimalCounts(updatedCounts);
 
                     // Step 6
@@ -297,14 +293,13 @@ public class TauLeapingSimulator extends StochasticSimulator {
                             int sampledReactionChannel = sampleReactionChannel(reactionInt, r0);
 
                             //update simulationTime and current compartment counts
-                            double previousSimulationTime = simulationTime;
+                            //double previousSimulationTime = simulationTime;
                             simulationTime = simulationTime + timeToReaction;
 
                             currentCounts = compartmentalModel.introduceSecondPathogen(
-                                    previousSimulationTime,
+                                    //previousSimulationTime,
                                     simulationTime,
-                                    currentCounts
-                            );
+                                    currentCounts);
 
                             for (int s = 0; s < numSpecies; s++) {
                                 currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
@@ -333,14 +328,13 @@ public class TauLeapingSimulator extends StochasticSimulator {
                 }
 
                 // We can proceed and update the currentCounts and simulationTime and other parameters as necessary
-                double previousSimulationTime = simulationTime;
+                //double previousSimulationTime = simulationTime;
                 simulationTime = simulationTime + tau;
 
                 currentCounts = compartmentalModel.introduceSecondPathogen(
-                        previousSimulationTime,
+                        //previousSimulationTime,
                         simulationTime,
-                        currentCounts
-                );
+                        currentCounts);
 
                 // if next reaction occurs after nextIntervalStartTime, record current compartment counts for next interval
                 while ((simulationTime > nextIntervalStartTime) && nextRecordIndex >= 0) {

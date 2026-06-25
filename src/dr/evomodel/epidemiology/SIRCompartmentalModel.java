@@ -5,29 +5,6 @@ import java.util.List;
 
 public class SIRCompartmentalModel extends CompartmentalModel {
 
-    // Eventually move these variables to CompartmentalModel
-
-    //Parameter transmissionRate;
-    //Parameter recoveryRate;
-    //Parameter samplingProportion;
-    //Parameter resusRate; // re-susceptibility rate
-    //List<Parameter> rateParameters;
-    //List<Parameter> compartmentCounts;
-    //Parameter numS;
-    //Parameter numI;
-    //Parameter numR;
-    //Parameter origin;
-    //Parameter tauStep;
-    //int numGridPoints;
-    //double cutOff;
-    //Parameter epsilon;
-    //int numReactionChannels;
-    // number of different kinds of species/particle types
-    //int numSpecies;
-    // v matrix describes how count vector changes with reaction
-    // row corresponds to species/particle type, column corresponds to reaction channel
-    //int[][] vMatrix;
-
     protected Parameter originTimeNumS;
 
     public SIRCompartmentalModel(
@@ -49,8 +26,8 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         for(int i = 0; i < compartmentCounts.size(); i++) {
             addVariable(compartmentCounts.get(i));
         }
-        this.origin = origin;
-        addVariable(origin);
+        this.originOne = origin;
+        addVariable(originOne);
         this.numGridPoints = numGridPoints;
         this.cutOff = cutOff;
         this.numReactionChannels = numReactionChannels;

@@ -297,6 +297,14 @@ public abstract class ModelOptions implements Serializable {
                 .partitionOptions(options).build());
     }
 
+    public Operator createHamiltonianMonteCarloOperator(String key, String name, String description,
+                                                        Parameter parameter, double weight) {
+        return operators.put(key, new Operator.Builder(name, description, parameter,
+                OperatorType.HAMILTONIAN_MONTE_CARLO_OPERATOR, 0.0, weight).build());
+
+    }
+
+
     public Operator createDuplicate(String name, String description, Parameter parameter, Operator source) {
         return new Operator.Builder(name, description, parameter, source.getOperatorType(), source.getTuning(), source.getWeight()).build(operators);
     }

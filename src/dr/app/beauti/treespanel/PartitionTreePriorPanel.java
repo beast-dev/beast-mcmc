@@ -72,6 +72,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private final JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
 
+    // EBDS
+
     private final JCheckBox doublingTimeCheckBox = new JCheckBox("Log the Doubling Time calculated from the Growth Rate");
     private final JCheckBox growthRateCheckBox = new JCheckBox("Log the Growth Rate calculated from the Doubling Time");
     private final JCheckBox r0CheckBox = new JCheckBox("Log R0 from the Growth Rate");
@@ -383,6 +385,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 citation = calYule;
                 break;
 
+            case EPISODIC_BIRTH_DEATH_SAMPLING:
+                citation = "TBC";
+                break;
+
             case BIRTH_DEATH:
                 citation = Gernhard08BirthDeathModelParser.getCitation();
                 break;
@@ -570,7 +576,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         }
 
-        if (BeautiOptions.getInstance().needCoalescentModel.get(this.partitionTreePrior.getName())) {
+        if (BeautiOptions.getInstance().needCoalescentModel.getOrDefault(this.partitionTreePrior.getName(), true)) {
             //if FIT model, then remove the SET_BY_BIT option / TreePriorType
             treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
             treePriorCombo.setEnabled(true);

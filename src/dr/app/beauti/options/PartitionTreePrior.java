@@ -30,6 +30,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evolution.util.Taxa;
 import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodelxml.birthdeath.EpisodicBirthDeathSamplingModelParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.birthdeath.BirthDeathEpidemiologyModelParser;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
@@ -191,6 +192,35 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior("skygrid.cutOff", "GMRF Bayesian SkyGrid cut-off time",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 
+        // ====================================
+        // Episodic birth death sampling model
+        // =====================================
+        createParameterLognormalPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.BIRTH_RATE,
+                "Birth-Death birth rate",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
+        createParameterLognormalPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.DEATH_RATE,
+                "Birth-Death death rate",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
+        createParameterLognormalPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE,
+                "Birth-Death rate of sampling cases through time",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
+        createParameterLognormalPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.ORIGIN,
+                "Birth-Death the time the lineage originated (must > root height)",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
+        /* not currently a variable parameter, but initial value can be set */
+        createParameterBetaDistributionPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY,
+                "Probability of treatment after sampling",
+                0.5, 1.0, 1.0, 0.0);
+        createParameterBetaDistributionPrior(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                        + EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY,
+                "Probability of sampling an infected individual",
+                0.5, 1.0, 1.0, 0.0);
+
 //        createNonNegativeParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
 //                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 //        createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
@@ -289,6 +319,32 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperatorUsing2Parameters("gmrfSkyGridHMCOperator", "Multiple", "HMC transition kernel for Bayesian SkyGrid", "skygrid.logPopSize",
                 GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_HMC_OPERATOR, -1, 2);
 
+        // ====================================
+        // Episodic birth death sampling model
+        // =====================================
+        createScaleOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.BIRTH_RATE, demoTuning, 1);
+        createScaleOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.DEATH_RATE, demoTuning, 1);
+        createScaleOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE, demoTuning, 1);
+        createScaleOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.TREATMENT_PROBABILITY, demoTuning, 1);
+        createScaleOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY, demoTuning, 1);
+        createOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.ORIGIN, OperatorType.RANDOM_WALK, demoTuning, 1);
+        createHamiltonianMonteCarloOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".hmc",
+                        "HMC(" + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ")",
+                "Hamiltonian Monte Carlo Operator on the Episodic Birth Death Sampling model",
+                null, 1);
+        // 		<hamiltonianMonteCarloOperator weight="1" nSteps="15" stepSize="0.01" mode="vanilla"
+        //									   drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"
+        //									   gradientCheckCount="0"
+        //									   preconditioningUpdateFrequency="3" preconditioningDelay="0">
+        createOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                + EpisodicBirthDeathSamplingModelParser.ORIGIN, OperatorType.RANDOM_WALK, demoTuning, 1);
+
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
         createScaleOperator(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
@@ -373,6 +429,24 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
+        } else if (nodeHeightPrior == TreePriorType.EPISODIC_BIRTH_DEATH_SAMPLING) {
+//            params.add(getParameter(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+//                    + EpisodicBirthDeathSamplingModelParser.BIRTH_RATE));
+//            params.add(getParameter(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+//                    + EpisodicBirthDeathSamplingModelParser.DEATH_RATE));
+//            params.add(getParameter(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+//                    + EpisodicBirthDeathSamplingModelParser.SAMPLING_RATE));
+            params.add(getParameter(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "."
+                    + EpisodicBirthDeathSamplingModelParser.ORIGIN));
+//            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
+
+//        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
+//            params.add(getParameter(BirthDeathEpidemiologyModelParser.ORIGIN));
+//            params.add(getParameter(BirthDeathEpidemiologyModelParser.R0));
+//            params.add(getParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
+//            params.add(getParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
+
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             params.add(getParameter(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             params.add(getParameter(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
@@ -457,6 +531,11 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("gmrfSkyGridHMCOperator"));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             ops.add(getOperator("yule.birthRate"));
+        } else if (nodeHeightPrior == TreePriorType.EPISODIC_BIRTH_DEATH_SAMPLING) {
+            // todo allow non hmc operators?
+            ops.add(getOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".hmc"));
+            ops.add(getOperator(EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." +
+                    EpisodicBirthDeathSamplingModelParser.ORIGIN));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             ops.add(getOperator(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             ops.add(getOperator(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));

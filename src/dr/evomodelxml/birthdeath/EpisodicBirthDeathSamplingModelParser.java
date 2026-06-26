@@ -113,7 +113,7 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
             }
             if (xo.getChild(S).hasAttribute(GRADIENT_FLAG)) {
                 gradientFlags[2] = xo.getChild(S).getAttribute(GRADIENT_FLAG, true);
-        }
+            }
         }
 
         treatmentProbabilityParameter = (Parameter) xo.getChild(TREATMENT_PROBABILITY).getChild(Parameter.class);
@@ -134,11 +134,12 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
             model = EpisodicBirthDeathSamplingModel.createWithCompoundParameters(
                     R0Parameter, DParameter, SParameter,
                     treatmentProbabilityParameter, samplingProbabilityParameter, originParameter,
-                    condition, (int)numGridPoints.getParameterValue(0), 
+                    condition, (int)numGridPoints.getParameterValue(0),
                     cutoff.getParameterValue(0), units);
         } else {
-            model = new EpisodicBirthDeathSamplingModel(birthRateParameter, deathRateParameter, samplingRateParameter, treatmentProbabilityParameter, samplingProbabilityParameter, originParameter,
-                    condition, (int)(numGridPoints.getParameterValue(0)), 
+            model = new EpisodicBirthDeathSamplingModel(birthRateParameter, deathRateParameter, samplingRateParameter,
+                    treatmentProbabilityParameter, samplingProbabilityParameter, originParameter,
+                    condition, (int)(numGridPoints.getParameterValue(0)),
                     cutoff.getParameterValue(0), units);
         }
 
@@ -173,21 +174,21 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
             new XORRule(
                     new ElementRule(BIRTH_RATE,
                             new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class),
-                                AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                                    new ElementRule(Parameter.class),
+                                    AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
                             }),
                     new ElementRule(R0,
                             new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
             ),
             new ElementRule(DEATH_RATE,
                     new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
-                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                            new ElementRule(Parameter.class),
+                            AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
                     }, true),
             new ElementRule(SAMPLING_RATE,
                     new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
-                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                            new ElementRule(Parameter.class),
+                            AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
                     }, true),
             new ElementRule(D,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
@@ -195,13 +196,13 @@ public class EpisodicBirthDeathSamplingModelParser extends AbstractXMLObjectPars
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(TREATMENT_PROBABILITY,
                     new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
-                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                            new ElementRule(Parameter.class),
+                            AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
                     }),
             new ElementRule(SAMPLING_PROBABILITY,
                     new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
-                        AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
+                            new ElementRule(Parameter.class),
+                            AttributeRule.newBooleanRule(GRADIENT_FLAG, true)
                     }),
             new ElementRule(ORIGIN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

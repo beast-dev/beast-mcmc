@@ -63,6 +63,8 @@ public class TwoPathogenModel extends CompartmentalModel {
             // pathogen 2 is older, start in SI
             compartmentCounts.get(1).setParameterValue(index, 1);
         } else {
+            // no need to "introduce" second pathogen while doing forward time simulation
+            secondPathogenIntroduced = true;
             // origins equal
             // choose whichever convention you want
             compartmentCounts.get(1).setParameterValue(index, 1); // SI
@@ -320,7 +322,6 @@ public class TwoPathogenModel extends CompartmentalModel {
         rVec[55] = resusRateTwo*currentCounts[15];
         return rVec;
     }
-
 
     protected double[] getTimeDerivatives(double[] currentCounts){
         double[] returnVec = new double[numReactionChannels];

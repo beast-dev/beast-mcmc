@@ -12,7 +12,8 @@ public class ExactSimulator extends StochasticSimulator {
 
         // set up time interval vector
         // duration for which we need to simulate trajectory
-        double T = compartmentalModel.origin.getParameterValue(0);
+        //double T = compartmentalModel.origin.getParameterValue(0);
+        double T = compartmentalModel.getOldestOrigin();
 
         // next index of compartmentalModel compartmentCounts parameter that needs to be set
         // start with last index, furthest into past and proceed until we reach index 0
@@ -36,7 +37,7 @@ public class ExactSimulator extends StochasticSimulator {
         // start time (in forward time) of next interval that needs to have compartment counts set
         // index of this interval will correspond to nextRecordIndex
         // set compartment counts for this interval to whatever simulated values are at nextIntervalStartTime
-        double nextIntervalStartTime = T - nextRecordIndex * intervalWidth;
+        double nextIntervalStartTime = T - nextRecordIndex*intervalWidth;
         // from now on, increase nextIntervalStartTime by simply adding intervalWidth
 
         // keep track of current compartment counts (needed for simulation)
@@ -79,6 +80,8 @@ public class ExactSimulator extends StochasticSimulator {
 
             //update simulationTime, current compartment counts and reaction intensities
             simulationTime = simulationTime + timeToReaction;
+
+            currentCounts = compartmentalModel.introduceSecondPathogen(simulationTime, currentCounts);
 
             for (int s = 0; s < numSpecies; s++) {
                 currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];

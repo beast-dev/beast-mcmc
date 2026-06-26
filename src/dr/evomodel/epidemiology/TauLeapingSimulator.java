@@ -65,9 +65,9 @@ public class TauLeapingSimulator extends StochasticSimulator {
         while (nextRecordIndex >= 0) {
 
             int[] g = compartmentalModel.getHighestOrdersOfReactions();
-            double[] e = new double[numReactionChannels];
-            for (int c = 0; c < numReactionChannels; c++) {
-                e[c] = epsilon / g[c];
+            double[] e = new double[numSpecies];
+            for (int s = 0; s < numSpecies; s++) {
+                e[s] = epsilon/g[s];
             }
 
             // Step 1

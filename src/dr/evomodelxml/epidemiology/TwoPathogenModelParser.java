@@ -196,7 +196,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         //16 or 56? was originally 3
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
-                originOne, originTwo, originTimeNumSS,16, (int)(numGridPoints.getParameterValue(0)),
+                originOne, originTwo, originTimeNumSS,56, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0));
 
         return twoPathogenModel;

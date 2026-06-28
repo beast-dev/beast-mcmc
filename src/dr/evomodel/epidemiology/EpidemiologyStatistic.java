@@ -163,10 +163,7 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
 
         if (statisticType == StatisticType.DOUBLING_TIME) {
             // doubling time in days
-            double dt = Math.log(2) / r;
-            // clip to zero?
-//            return Math.max(0.0, dt);
-            return dt;
+            return Math.max(0.0, Math.log(2) / r);
         } else if (statisticType == StatisticType.GROWTH_RATE) {
             // growth rate in original units
             return gr;

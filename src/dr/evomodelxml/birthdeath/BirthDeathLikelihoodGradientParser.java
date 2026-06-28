@@ -37,7 +37,8 @@ import dr.xml.*;
  */
 public class BirthDeathLikelihoodGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "birthDeathLikelihoodGradient";
+    public static final String BIRTH_DEATH_LIKELIHOOD_GRADIENT = "birthDeathLikelihoodGradient";
+
     private static final String WRT_PARAMETER = "wrtParameter";
     private static final String USE_NEW_LOOP = "useNewLoop";
 
@@ -86,6 +87,6 @@ public class BirthDeathLikelihoodGradientParser extends AbstractXMLObjectParser 
 
     @Override
     public String getParserName() {
-        return NAME;
+        return BIRTH_DEATH_LIKELIHOOD_GRADIENT;
     }
 }

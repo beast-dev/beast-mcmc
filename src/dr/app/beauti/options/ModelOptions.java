@@ -300,7 +300,7 @@ public abstract class ModelOptions implements Serializable {
     public Operator createHamiltonianMonteCarloOperator(String key, String name, String description,
                                                         Parameter parameter, double weight) {
         return operators.put(key, new Operator.Builder(name, description, parameter,
-                OperatorType.HAMILTONIAN_MONTE_CARLO_OPERATOR, 0.0, weight).build());
+                OperatorType.EBDS_HMC_OPERATOR, 0.0, weight).build());
 
     }
 

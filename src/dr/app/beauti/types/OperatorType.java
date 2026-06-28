@@ -74,7 +74,7 @@ public enum OperatorType {
     RELAXED_CLOCK_HMC_SCALE_OPERATOR("relaxedClockHMCScaleOperator"),
     SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
     SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator"),
-    HAMILTONIAN_MONTE_CARLO_OPERATOR("ebdsHMCOperator");
+    EBDS_HMC_OPERATOR("ebdsHMCOperator");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

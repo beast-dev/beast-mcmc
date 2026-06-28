@@ -40,7 +40,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodelxml.birthdeath.EpisodicBirthDeathSamplingModelParser;
+import dr.evomodelxml.birthdeath.*;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -51,9 +51,9 @@ import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.coalescent.demographicmodel.LogisticGrowthModelParser;
 import dr.evomodelxml.epidemiology.EpidemiologyStatisticParser;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
-import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.TaxaParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.GammaDistributionModelParser;
@@ -299,6 +299,141 @@ public class TreePriorGenerator extends Generator {
 
                 writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL);
 
+                writer.writeOpenTag(
+                        BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD,
+                        new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID,
+                                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".likelihood"),
+                                new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(units)),
+                                new Attribute.Default<>("useNewLoop", true)
+                        });
+
+                writer.writeOpenTag("model");
+                writer.writeIDref(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME);
+                writer.writeCloseTag("model");
+                writer.writeOpenTag("tree");
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL,
+                        prefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeCloseTag("tree");
+
+                writer.writeCloseTag(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD);
+
+                writer.writeOpenTag(
+                        PriorParsers.LOG_NORMAL_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID,
+                                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".birthRatePrior"),
+                                new Attribute.Default<>("mu", "2.928936"),
+                                new Attribute.Default<>("sigma", "1.17481"),
+                                new Attribute.Default<>("offset", "0.0")
+                        });
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "birthRate");
+                writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
+
+                writer.writeOpenTag(
+                        PriorParsers.LOG_NORMAL_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID,
+                                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".deathRatePrior"),
+                                new Attribute.Default<>("mu", "3.362995"),
+                                new Attribute.Default<>("sigma", "0.1198989"),
+                                new Attribute.Default<>("offset", "0.0")
+                        });
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "deathRate");
+                writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
+
+                writer.writeOpenTag(
+                        PriorParsers.LOG_NORMAL_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID,
+                                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".samplingRatePrior"),
+                                new Attribute.Default<>("mu", "-3.137794"),
+                                new Attribute.Default<>("sigma", "0.587405"),
+                                new Attribute.Default<>("offset", "0.0")
+                        });
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "samplingRate");
+                writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
+
+                writer.writeOpenTag(
+                        CompoundGradientParser.COMPOUND_GRADIENT,
+                        new Attribute.Default<>(XMLParser.ID,
+                                prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".prior"));
+
+                writer.writeOpenTag("gradient");
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".birthRatePrior");
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "birthRate");
+                writer.writeCloseTag("gradient");
+
+                writer.writeOpenTag("gradient");
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".deathRatePrior");
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "deathRate");
+                writer.writeCloseTag("gradient");
+
+                writer.writeOpenTag("gradient");
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".samplingRatePrior");
+                writer.writeIDref(ParameterParser.PARAMETER,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "samplingRate");
+                writer.writeCloseTag("gradient");
+
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+
+                writer.writeOpenTag(
+                        CompoundGradientParser.COMPOUND_GRADIENT,
+                        new Attribute.Default<>(XMLParser.ID,
+                                prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".likelihood"));
+
+                writer.writeOpenTag(
+                        BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT, new Attribute[]{
+                                new Attribute.Default<>("wrtParameter", "birthRate"),
+                                new Attribute.Default<>("useNewLoop", true)
+                        });
+                writer.writeIDref(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".likelihood");
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL,
+                        prefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeCloseTag(BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT);
+
+                writer.writeOpenTag(
+                        BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT, new Attribute[]{
+                                new Attribute.Default<>("wrtParameter", "deathRate"),
+                                new Attribute.Default<>("useNewLoop", true)
+                        });
+                writer.writeIDref(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".likelihood");
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL,
+                        prefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeCloseTag(BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT);
+
+                writer.writeOpenTag(
+                        BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT, new Attribute[]{
+                                new Attribute.Default<>("wrtParameter", "samplingRate"),
+                                new Attribute.Default<>("useNewLoop", true)
+                        });
+                writer.writeIDref(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".likelihood");
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL,
+                        prefix + DefaultTreeModel.TREE_MODEL);
+                writer.writeCloseTag(BirthDeathLikelihoodGradientParser.BIRTH_DEATH_LIKELIHOOD_GRADIENT);
+
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+
+                writer.writeOpenTag(
+                        BirthDeathCompoundParameterLoggerParser.BDSS_COMPOUND_PARAMETER, new Attribute[]{
+                                new Attribute.Default<>(XMLParser.ID, prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME + ".Re"),
+                                new Attribute.Default<>("compoundParameterType", "effectiveReproductiveNumber")
+                        });
+                writer.writeIDref(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL,
+                        prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME);
+                writer.writeCloseTag(BirthDeathCompoundParameterLoggerParser.BDSS_COMPOUND_PARAMETER);
                 break;
 
             case BIRTH_DEATH_SERIAL_SAMPLING:
@@ -974,7 +1109,7 @@ public class TreePriorGenerator extends Generator {
 
                 writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID,  "full.skygrid.gradient")
+                                new Attribute.Default<String>(XMLParser.ID, "full.skygrid.gradient")
                         }
                 );
                 writer.writeIDref(JointGradientParser.JOINT_GRADIENT, "joint.skygrid.precision");
@@ -1165,6 +1300,13 @@ public class TreePriorGenerator extends Generator {
 //                writer.writeIDref(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skyline");
 //                writer.writeIDref(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL, prefix + "eml1");
 //                break;
+            case EPISODIC_BIRTH_DEATH_SAMPLING:
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.birthRatePrior");
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.deathRatePrior");
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.sampleRatePrior");
+                need to add the origin prior
+                writer.writeIDref(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD, prefix + "ebds.likelihood");
+                break;
             case GMRF_SKYRIDE:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, prefix + "skyride");
                 break;

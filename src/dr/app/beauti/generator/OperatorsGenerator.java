@@ -71,6 +71,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.inferencexml.distribution.PriorParsers.GAMMA_PRIOR;
+import static dr.util.TransformParsers.COMPOUND_MULTIVARIATE;
+import static dr.util.TransformParsers.TRANSFORM;
 
 /**
  * @author Alexei Drummond
@@ -111,7 +113,7 @@ public class OperatorsGenerator extends Generator {
             }
         }
 
-        operatorAttributes = new Attribute[] {
+        operatorAttributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, "operators"),
                 new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE,
                         (shouldLogCool ?
@@ -240,14 +242,17 @@ public class OperatorsGenerator extends Generator {
             case SKY_GRID_HMC_OPERATOR:
                 writeSkyGridHMCOperator(operator, prefix, writer);
                 break;
+            case EBDS_HMC_OPERATOR:
+                writeEBMDSHamiltonianOperator(operator, prefix, writer);
+                break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
                 break;
             case RELAXED_CLOCK_HMC_RATE_OPERATOR:
-                writeRelaxedClockHMCRateOperator(operator, prefix,writer);
+                writeRelaxedClockHMCRateOperator(operator, prefix, writer);
                 break;
             case RELAXED_CLOCK_HMC_SCALE_OPERATOR:
-                writeRelaxedClockHMCScaleOperator(operator, prefix,writer);
+                writeRelaxedClockHMCScaleOperator(operator, prefix, writer);
                 break;
             case SHRINKAGE_CLOCK_HMC_OPERATOR:
                 writeShrinkageClockHMCOperator(operator, prefix, writer);
@@ -521,7 +526,7 @@ public class OperatorsGenerator extends Generator {
     private void writeSkyGridBlockUpdateOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
-                new Attribute[] {
+                new Attribute[]{
                         new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
@@ -563,6 +568,69 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, treePriorPrefix + "skygrid.parameters");
         writer.writeCloseTag(SignTransformParser.NAME);
+        writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
+    }
+
+//    		<hamiltonianMonteCarloOperator
+//    		weight="1" nSteps="15" stepSize="0.01" mode="vanilla"
+//    drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.7"
+//    gradientCheckCount="0"
+//    preconditioningUpdateFrequency="3" preconditioningDelay="0">
+//			<jointGradient>
+//				<compoundGradient idref="grad.bdss.prior"/>
+//                <compoundGradient idref="grad.bdss.likelihood"/>
+//			</jointGradient>
+//			<multivariateCompoundTransform>
+//					<transform type="log" dim="3"/>
+//			</multivariateCompoundTransform>
+//		</hamiltonianMonteCarloOperator>
+
+    private void writeEBMDSHamiltonianOperator(Operator operator,
+                                               String prefix,
+                                               XMLWriter writer
+    ) {
+        int nSteps = 15;
+        double stepSize = 0.01;
+        String mode = "vanilla";
+        double drawVariance = 1.0;
+        boolean autoOptimize = true;
+        int gradientCheckCount = 0;
+//        double gradientCheckTolerance = 0.0;
+//        String preconditioning,
+        int preconditioningUpdateFrequency = 3;
+        int preconditioningDelay = 0;
+
+        String compoundGradientPriorID = prefix + "grad.ebds.prior";
+        String compoundGradientLikelihoodID = prefix + "grad.ebds.likelihood";
+
+        writer.writeOpenTag(
+                HamiltonianMonteCarloOperatorParser.HMC_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.N_STEPS, nSteps),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.STEP_SIZE, stepSize),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.MODE, mode),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.DRAW_VARIANCE, drawVariance),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_COUNT, gradientCheckCount),
+//                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE, gradientCheckTolerance),
+//                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING, preconditioning),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_UPDATE_FREQUENCY, preconditioningUpdateFrequency),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_DELAY, preconditioningDelay),
+                        new Attribute.Default<>(AdaptableMCMCOperator.AUTO_OPTIMIZE, "true"),
+                        new Attribute.Default<>(HamiltonianMonteCarloOperatorParser.TARGET_ACCEPTANCE_PROBABILITY, "0.7")
+                }
+        );
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT);
+        writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, compoundGradientPriorID);
+        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, compoundGradientLikelihoodID);
+        writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+
+        writer.writeOpenTag(TransformParsers.COMPOUND_MULTIVARIATE);
+        writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{
+                new Attribute.Default<>("type", "log"),
+                new Attribute.Default<>("dim", "3")}, true);
+        writer.writeCloseTag(TransformParsers.COMPOUND_MULTIVARIATE);
+
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 

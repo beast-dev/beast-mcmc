@@ -57,13 +57,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     public final static String PRECONDITIONING_DELAY = "preconditioningDelay";
 
-    private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
-    private final static String PRECONDITIONER = "preconditioner";
-    private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
-    private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
-    private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
-    private final static String INSTABILITY_HANDLER = "instabilityHandler";
-    private final static String MASK = "mask";
+    public final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
+    public final static String PRECONDITIONER = "preconditioner";
+    public final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
+    public final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
+    public final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
+    public final static String INSTABILITY_HANDLER = "instabilityHandler";
+    public final static String MASK = "mask";
 
     @Override
     public String getParserName() {

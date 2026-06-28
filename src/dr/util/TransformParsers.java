@@ -359,5 +359,5 @@ public class TransformParsers {
     private static final String INNER = "inner";
     private static final String COMPOUND = "compoundTransform";
     private static final String DIM = "dim";
-    private static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
+    public static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
 }

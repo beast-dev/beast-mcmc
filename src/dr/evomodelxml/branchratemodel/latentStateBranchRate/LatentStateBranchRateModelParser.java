@@ -25,9 +25,10 @@
  *
  */
 
-package dr.evomodelxml.branchratemodel;
+package dr.evomodelxml.branchratemodel.latentStateBranchRate;
 
 import dr.evomodel.branchratemodel.*;
+import dr.evomodel.branchratemodel.latentStateBranchRate.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -40,6 +41,9 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_RATE = "latentTransitionRate";
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
+    public static final String LATENT_STATE_INDICATORS = "latentStateIndicators";
+    public static final String EPSILON = "epsilon";
+    public static final String EXCLUDE_ROOT = "excludeRoot";
 
 
     public String getParserName() {
@@ -51,24 +55,30 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         Parameter latentTransitionRateParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_RATE);
         Parameter latentTransitionFrequencyParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_FREQUENCY);
+        boolean excludeRoot = xo.getAttribute("excludeRoot", false);
 
         CountableBranchCategoryProvider branchCategoryProvider = (CountableBranchCategoryProvider)xo.getChild(CountableBranchCategoryProvider.class);
 
         Parameter latentStateProportionParameter = null;
+        
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
         }
-
+        Parameter latentStateIndicatorParameter = null;
+        if (xo.hasChildNamed(LATENT_STATE_INDICATORS)) {
+            latentStateIndicatorParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_INDICATORS);
+        }
+        double epsilon = xo.getAttribute(EPSILON, 1E-10);
         Logger.getLogger("dr.evomodel").info("\nCreating a latent state branch rate model");
 
-        return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
-                tree, nonLatentRateModel,
-                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter, branchCategoryProvider);
-//        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
-//                tree, nonLatentRateModel,
-//                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-//                latentStateProportionParameter, branchCategoryProvider);
+        // return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+        //         tree, nonLatentRateModel,
+        //         latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
+        //         latentStateProportionParameter, branchCategoryProvider);
+       return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+               tree, nonLatentRateModel,
+               latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
+               latentStateProportionParameter,latentStateIndicatorParameter, branchCategoryProvider,epsilon,excludeRoot);
     }
 
     //************************************************************************

@@ -25,15 +25,17 @@
  *
  */
 
-package dr.evomodel.branchratemodel;
+package dr.evomodel.branchratemodel.latentStateBranchRate;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovjumps.MarkovReward;
-import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
+import dr.inference.markovjumps.TwoStateSericolaSeriesMarkovReward;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -72,6 +74,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private final Parameter latentTransitionRateParameter;
     private final Parameter latentTransitionFrequencyParameter;
     private final TreeParameterModel latentStateProportions;
+    private final TreeParameterModel latentStateIndicators;
     private final Parameter latentStateProportionParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
 
@@ -79,8 +82,10 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private MarkovReward storedSeries;
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown;
+    private boolean excludeRoot;
     private double logLikelihood;
     private double storedLogLikelihood;
+    private double epsilon;
 
     private double[] branchLikelihoods;
     private double[] storedbranchLikelihoods;
@@ -97,11 +102,16 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
                                               Parameter latentTransitionRateParameter,
                                               Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter,
-                                              CountableBranchCategoryProvider branchCategoryProvider) {
+                                              Parameter latentStateIndicatorParameter,
+                                              CountableBranchCategoryProvider branchCategoryProvider,
+                                              double epsilon,
+                                              boolean excludeRoot) {
         super(name);
 
         this.tree = treeModel;
         addModel(tree);
+        
+        this.excludeRoot = excludeRoot;
 
         this.nonLatentRateModel = nonLatentRateModel;
         addModel(nonLatentRateModel);
@@ -114,12 +124,15 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         if (branchCategoryProvider ==  null) {
             this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
+            this.latentStateIndicators = new TreeParameterModel(tree, latentStateIndicatorParameter, false, Intent.BRANCH);
             addModel(latentStateProportions);
+            addModel(latentStateIndicators);
 
             this.latentStateProportionParameter = null;
             this.branchCategoryProvider = null;
         } else {
             this.latentStateProportions = null;
+            this.latentStateIndicators = null;
             this.branchCategoryProvider = branchCategoryProvider;
             this.latentStateProportionParameter = latentStateProportionParameter;
             this.latentStateProportionParameter.setDimension(branchCategoryProvider.getCategoryCount());
@@ -141,8 +154,19 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
             setUpdateAllBranches();
         }
+        this.epsilon=epsilon;
     }
 
+    public SericolaLatentStateBranchRateModel(String name,
+    TreeModel treeModel,
+    BranchRateModel nonLatentRateModel,
+    Parameter latentTransitionRateParameter,
+    Parameter latentTransitionFrequencyParameter,
+    Parameter latentStateProportionParameter,
+    Parameter latentStateIndicatorParameter,
+    CountableBranchCategoryProvider branchCategoryProvider){
+        this(name, treeModel, nonLatentRateModel, latentTransitionRateParameter, latentTransitionFrequencyParameter, latentStateProportionParameter, latentStateIndicatorParameter,branchCategoryProvider, 1E-10,false);
+    }
     public SericolaLatentStateBranchRateModel(Parameter rate, Parameter prop) {
         super(LATENT_STATE_BRANCH_RATE_MODEL);
         tree = null;
@@ -151,6 +175,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         latentTransitionFrequencyParameter = prop;
         latentStateProportions = null;
         this.latentStateProportionParameter = null;
+        this.latentStateIndicators = null;
         this.branchCategoryProvider = null;
     }
 
@@ -172,7 +197,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private MarkovReward createSeries() {
 //        MarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
 //                createReward(), 2);
-        MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
+        // MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
+        MarkovReward series = new TwoStateSericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),createReward(),2,epsilon);
         return series;
     }
 
@@ -188,7 +214,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     public double getLatentProportion(Tree tree, NodeRef node) {
 
         if (latentStateProportions != null) {
-            return latentStateProportions.getNodeValue(tree, node);
+            return latentStateProportions.getNodeValue(tree, node)*latentStateIndicators.getNodeValue(tree,node);
         } else {
             return latentStateProportionParameter.getParameterValue(branchCategoryProvider.getBranchCategory(tree, node));
         }
@@ -211,7 +237,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         } else if (model == nonLatentRateModel) {
             // rates will change but the latent proportions haven't so the density is unchanged
-        } else if (model == latentStateProportions) {
+        } else if (model == latentStateProportions || model ==latentStateIndicators) {
             likelihoodKnown = false; // argument of density has changed
 
             if (index == -1) {
@@ -348,24 +374,36 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         double logLike = 0.0;
 
-        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
                 if (updateNeededForNode(tree, node)) {
+                    if(excludeRoot && tree.getParent(node)== tree.getRoot()){
+                        if(getLatentProportion(tree,node)>0){
+                        //  branchLikelihoods[node.getNumber()]=Double.NEGATIVE_INFINITY; // reject we don't allow latency on these branches
+                        return Double.NEGATIVE_INFINITY;
+                        }
+                        branchLikelihoods[node.getNumber()]=0.0; // if it is zero we don't get credit for it since it couldn't be otherwise
+                    }else{
                     double branchLength = tree.getBranchLength(node);
                     double latentProportion = getLatentProportion(tree, node);
 
                     assert(latentProportion < 1.0);
 
+
                     double reward = branchLength * latentProportion;
                     double density = getBranchRewardDensity(reward, branchLength);
+                    if(latentProportion>0){
+                        density *=branchLength;// jacobian for sampling on 0,1
+                    }
                     branchLikelihoods[node.getNumber()] = Math.log(density);
                 }
+            }
                 logLike += branchLikelihoods[node.getNumber()];
                 // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.
                 // TODO This is easy to test and we should do it when sampling appears to work.
-            }
         }
+    }
 
         clearUpdateAllBranches();
         clearAllCategories();
@@ -390,7 +428,27 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
 //        double joint = series.computePdf(reward, branchLength)[state];
-        double joint = series.computePdf(reward, branchLength, 0, 0);
+        double rate = latentTransitionRateParameter.getParameterValue(0);
+        double prop = latentTransitionFrequencyParameter.getParameterValue(0);
+        double noJump = Math.exp(-1 * rate * prop * branchLength); // no jump
+
+        double joint;
+
+        if (reward == 0) {
+            // joint = series.computeCdf(reward, branchLength, 0, 0);
+            // no jump.
+            joint = noJump;
+            // series.computeCdf(reward, branchLength, 0, 0)- is no jumps using the series
+            // machinery
+            assert Math.abs(series.computeCdf(reward, branchLength, 0, 0) - joint) < epsilon
+                    : "0 jumps not calculated correctly: "
+                            + Math.abs(series.computeCdf(reward, branchLength, 0, 0) - joint) + "epsilon: " + epsilon
+                            + " rate: " + rate + " prop: " + prop + " bl: " + branchLength;
+            // System.out.println(joint + " = " + noJump);
+        } else {
+            joint = series.computePdf(reward, branchLength, 0, 0);
+        }
+        
         double marg = series.computeConditionalProbability(branchLength, 0, 0);
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
@@ -420,7 +478,10 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
             return this;
         } else if (latentStateProportions != null && key.equals(latentStateProportions.getTraitName())) {
             return latentStateProportions;
-        } else if (branchCategoryProvider != null && key.equals(branchCategoryProvider.getTraitName())) {
+        }else if(latentStateIndicators!=null && key.equals(latentStateIndicators.getTraitName())){
+            return latentStateIndicators;
+        }
+        else if (branchCategoryProvider != null && key.equals(branchCategoryProvider.getTraitName())) {
             return branchCategoryProvider;
         } else {
             throw new IllegalArgumentException("Unrecognised Tree Trait key, " + key);

@@ -145,8 +145,18 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         double w = 0.0;
 
         final int N = getNfromC() - 1;
+
+        // moving these caluculations out of the loop
+        final double premultFactor = (Math.log(lambda) + Math.log(time));
+        final int h = 1;
+        final double factor = lambda / (r[h] - r[h - 1]);
+        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+
         for (int n = 0; n <= N; ++n) {
-            w += accumulatePdf(x, n, time, uv);
+            final double premult = Math.exp(
+                    -lambda * time + n * premultFactor - getLnGamma(n + 1.0)
+            );
+            w += accumulatePdf(x, n, time, uv,premult,xh,factor);
         }
 
 //        if (DEBUG2) {
@@ -257,32 +267,45 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         }
     }
 
-    private double accumulatePdf(double x, int n, double time, int uv) {
+    
+    private double accumulatePdf(double x, int n, double time, int uv, double premult, double xh,double factor) {
 
         double w = 0.0;
 
-        final double premult = Math.exp(
-                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
-        );
+        // final double premult = Math.exp(
+        //         // -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
+        //         -lambda * time + n * (Math.log(lambda) + Math.log(time)) - getLnGamma(n + 1.0)
+        // );
 
         // TODO Make factorial/choose static look-up tables
 
 //         for (int t = 0; t < X.length; ++t) { // For each time point
         int h = 1;
 
-        final double factor = lambda / (r[h] - r[h - 1]);
+        // final double factor = lambda / (r[h] - r[h - 1]);
 
-        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+        // double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
 
 //        final int dim2 = dim * dim;
 //        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
         double inc = 0.0;
+        double xhPow = 1.0;
+        double oneMinusXhPow = Math.pow(1.0 - xh, n);
         for (int k = 0; k <= n; k++) {
-            final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
-//                 for (int uv = 0; uv < dim2; ++uv) {
-            inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
-//                 }
+            double binomialCoef = choose(n, k) * xhPow * oneMinusXhPow;
+              inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+            // update powers for next iteration
+            xhPow *= xh;
+            oneMinusXhPow /= (1.0 - xh);
         }
+
+
+//         for (int k = 0; k <= n; k++) {
+//             final double binomialCoef = choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+// //                 for (int uv = 0; uv < dim2; ++uv) {
+//             inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+// //                 }
+//         }
 
 //             for (int uv = 0; uv < dim2; ++uv) {
         w += factor * premult * inc;
@@ -471,7 +494,7 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         while (Math.abs(sum2 - tolerance2) > epsilon && sum2 < 1.0) {
 //        while (sum2 < tolerance2) {
             i++;
-            double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(i + 1);
+            double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) -getLnGamma(i + 1);
             sum2 += Math.exp(logDensity);
 //            sum2 = LogTricks.logSum(sum2, logDensity);
             if (DEBUG2) {
@@ -485,6 +508,25 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
 //        System.exit(-1);
 
         return i;
+    }
+
+    private double choose(int n, int k){
+        if (k < 0 || k > n) return 0;
+		double lchoose = getLnGamma(n + 1.0) -
+		getLnGamma(k + 1.0) - getLnGamma(n - k + 1.0);
+
+		return Math.floor(Math.exp(lchoose) + 0.5);
+    }
+    // should be the same as calling GammaFunction.lnGamma
+    private double getLnGamma(double n){
+        n = Math.floor(n + 0.5);
+        if (lnGamma == null || lnGamma.length <= n ) { // fill it up!
+            lnGamma = new double[(int) (n+50)];
+            for (int i = 0; i < (n+50); ++i) {
+                lnGamma[i] = GammaFunction.lnGamma(i);
+            }
+        }
+        return lnGamma[(int) n];
     }
 
     public String toString() {
@@ -527,6 +569,9 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
     private final int phi;
     private final int dim;
     private final double epsilon;
+
+    private double[][] binomialCoefficients;
+    private double[] lnGamma;
 
     private final EigenSystem eigenSystem;
 

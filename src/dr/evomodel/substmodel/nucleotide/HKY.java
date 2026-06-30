@@ -286,15 +286,7 @@ public class HKY extends BaseSubstitutionModel implements Citable,
         double[] probs = new double[16];
         hky.getTransitionProbabilities(time,probs);
         System.out.println("new probs = "+new Vector(probs));
-
-        // check against old implementation
-        dr.oldevomodel.substmodel.FrequencyModel oldFreq = new dr.oldevomodel.substmodel.FrequencyModel(Nucleotides.INSTANCE,pi);
-        dr.oldevomodel.substmodel.HKY oldHKY = new dr.oldevomodel.substmodel.HKY(kappa,oldFreq);
-        oldHKY.setKappa(kappa);
-
-        oldHKY.getTransitionProbabilities(time,probs);
-        System.out.println("old probs = "+new Vector(probs));
-
+        
     }
 
     /**

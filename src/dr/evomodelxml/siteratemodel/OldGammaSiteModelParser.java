@@ -30,10 +30,11 @@ package dr.evomodelxml.siteratemodel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.SiteModel;
 import dr.xml.*;
 
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
 
 /**
  * @author Andrew Rambaut
@@ -41,7 +42,6 @@ import java.util.logging.Logger;
  */
 public class OldGammaSiteModelParser extends AbstractXMLObjectParser {
 
-    public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String SUBSTITUTION_RATE = "substitutionRate";

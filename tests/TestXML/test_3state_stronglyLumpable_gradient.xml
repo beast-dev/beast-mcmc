@@ -484,7 +484,7 @@
 
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="15" autoOptimize="true">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">

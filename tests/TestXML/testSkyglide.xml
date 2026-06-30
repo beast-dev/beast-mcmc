@@ -3129,7 +3129,7 @@
         <tree idref="treeModel"/>
     </nodeHeightProxyParameter>
     <!-- 	diagonal hessian wrt node height is very unstable -->
-    <skyGlideGradient id="skyGlideGradient.nodeHeight" gradientCheckTolerance="0.1">
+    <skyGlideGradient id="skyGlideGradient.nodeHeight" gradientCheckTolerance="0.1" numericStepSize="small">
         <skyGlideLikelihood idref="skyGlideLikelihood"/>
         <nodeHeightProxyParameter idref="nodeHeightWithRootProxyParameter"/>
     </skyGlideGradient>

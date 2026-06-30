@@ -56,6 +56,8 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWr
 
     private final double tolerance;
 
+    private double numericGradientStepSize = StepSizeLevel.MEDIUM.getStepSizeRatio();
+
     private int treeIndex = -1;
 
     public SkyGlideGradient(SkyGlideLikelihood likelihood,
@@ -98,6 +100,16 @@ public class SkyGlideGradient implements GradientWrtParameterProvider, HessianWr
     @Override
     public int getDimension() {
         return parameter.getDimension();
+    }
+
+    @Override
+    public double getNumericGradientStepSize() {
+        return numericGradientStepSize;
+    }
+
+    @Override
+    public void setNumericGradientStepSize(double ratio) {
+        numericGradientStepSize = ratio;
     }
 
     @Override

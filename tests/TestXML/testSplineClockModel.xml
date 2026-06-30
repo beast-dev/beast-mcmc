@@ -70,103 +70,87 @@
 		</substitutionModel>
 	</siteModel>
 
-	<IntegratedTransformedSplines id="splines1" degree ="2" knots="0 1 2 3" transform="squared">
+	<IntegratedTransformedSplines id="splines1" degree ="2" knots="0 1 2 3" transform="squared" lowerBoundary="-1"
+												upperBoundary="4">
 		<coefficients>
-			<parameter id="coefficients" dimension="4" value="1"/>
+			<parameter id="coefficients" dimension="6" value="1"/>
 		</coefficients>
 		<intercept>
 			<parameter id="intercept" value="1"/>
 		</intercept>
 	</IntegratedTransformedSplines>
 
-	<nonparametricRates2 id="dummyRatesQuadratic">
+	<splineClockModel id="dummyRatesQuadratic">
 		<treeModel idref="dummyTreeModel"/>
-		<IntegratedSquaredSplines idref ="splines1"/>
-	</nonparametricRates2>
+		<IntegratedTransformedSplines idref ="splines1"/>
+	</splineClockModel>
 
 	<treeDataLikelihood id="dummyTreeLikelihoodQuadratic" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="dummyPatterns"/>
 		<treeModel idref="dummyTreeModel"/>
 		<siteModel idref="dummySiteModel"/>
-		<nonParametricRates2 idref="dummyRatesQuadratic"/>
+		<splineClockModel idref="dummyRatesQuadratic"/>
 	</treeDataLikelihood>
 
 
 	<report>
-		<nonParametricRates2 idref="dummyRatesQuadratic"/>
+		<splineClockModel idref="dummyRatesQuadratic"/>
 	</report>
 
 
-	<branchRateGradient id="dummyGradientQuadratic" traitName="Sequence" useHessian="false">
-		<treeDataLikelihood idref="dummyTreeLikelihoodQuadratic"/>
-	</branchRateGradient>
-
-	<report>
-		<branchRateGradient idref="dummyGradientQuadratic"/>
-	</report>
-
-	<IntegratedTransformedSplines id="splines2" degree ="3" knots="0 1 2 3" transform="squared">
+	<IntegratedTransformedSplines id="splines2" degree ="3" knots="0 1 2 3" transform="squared" lowerBoundary="-1"
+								  				upperBoundary="4">
 		<coefficients>
-			<parameter id="coefficients2" dimension="5" value="1"/>
+			<parameter id="coefficients2" dimension="7" value="1"/>
 		</coefficients>
 		<intercept>
 			<parameter id="intercept2" value="1"/>
 		</intercept>
 	</IntegratedTransformedSplines>
 
-	<nonparametricRates2 id="dummyRatesCubic">
+	<splineClockModel id="dummyRatesCubic">
 		<treeModel idref="dummyTreeModel"/>
 		<IntegratedSquaredSplines idref="splines2"/>
-	</nonparametricRates2>
+	</splineClockModel>
 
 	<treeDataLikelihood id="dummyTreeLikelihoodCubic" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="dummyPatterns"/>
 		<treeModel idref="dummyTreeModel"/>
 		<siteModel idref="dummySiteModel"/>
-		<nonParametricRates2 idref="dummyRatesCubic"/>
+		<splineClockModel idref="dummyRatesCubic"/>
 	</treeDataLikelihood>
-
-
+	
 	<report>
-		<nonParametricRates2 idref="dummyRatesCubic"/>
+		<splineClockModel idref="dummyRatesCubic"/>
 	</report>
 
 
-	<branchRateGradient id="dummyGradientCubic" traitName="Sequence" useHessian="false">
-		<treeDataLikelihood idref="dummyTreeLikelihoodCubic"/>
-	</branchRateGradient>
-
-	<report>
-		<branchRateGradient idref="dummyGradientCubic"/>
-	</report>
-
-	<IntegratedTransformedSplines id="splines3" degree ="3" knots="0 1 2 3" transform="exponential">
+	<IntegratedTransformedSplines id="splines3" degree ="3" knots="0 1 2 3" transform="exponential" lowerBoundary="-1"
+								  				upperBoundary="4">
 		<coefficients>
-			<parameter id="coefficients3" dimension="5" value="1"/>
+			<parameter id="coefficients3" dimension="7" value="1"/>
 		</coefficients>
 		<intercept>
 			<parameter id="intercept3" value="1"/>
 		</intercept>
 	</IntegratedTransformedSplines>
 
-	<nonparametricRates2 id="dummyRatesExp">
+	<splineClockModel id="dummyRatesExp">
 		<treeModel idref="dummyTreeModel"/>
 		<IntegratedSquaredSplines idref="splines3"/>
-	</nonparametricRates2>
+	</splineClockModel>
 
 	<treeDataLikelihood id="dummyTreeLikelihoodExp" useAmbiguities="false" usePreOrder="true">
 		<patterns idref="dummyPatterns"/>
 		<treeModel idref="dummyTreeModel"/>
 		<siteModel idref="dummySiteModel"/>
-		<nonParametricRates2 idref="dummyRatesExp"/>
+		<splineClockModel idref="dummyRatesExp"/>
 	</treeDataLikelihood>
 
 
 	<report>
-		<nonParametricRates2 idref="dummyRatesExp"/>
+		<splineClockModel idref="dummyRatesExp"/>
 	</report>
-
-
 
 
 </beast>

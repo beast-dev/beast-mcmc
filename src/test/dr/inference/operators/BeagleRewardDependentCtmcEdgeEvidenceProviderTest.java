@@ -55,6 +55,10 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.BeagleRewardDependentCtmcEdgeEvidenceProvider;
 import test.dr.math.MathTestCase;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+
 /**
  * Regression tests for the BEAGLE preorder edge-evidence path used by the
  * reward-mixture indicator operator.
@@ -73,6 +77,95 @@ public class BeagleRewardDependentCtmcEdgeEvidenceProviderTest extends MathTestC
     public void testInternalEdgeEvidenceRatioMatchesFullLikelihoodRatio() {
         final Fixture fixture = createFixture();
         assertLocalEdgeEvidenceRatioMatchesFullLikelihoodRatio(fixture, firstInternalNonRoot(fixture.tree));
+    }
+
+    public void testDiagnosticDumpComparesManualExactAndBeagleWhenAvailable() throws Exception {
+        final Fixture fixture = createFixture();
+        final NodeRef branch = fixture.tree.getExternalNode(0);
+        final int branchNodeNumber = branch.getNumber();
+        final int branchParameterIndex = fixture.branchRateModel.getParameterIndexFromNode(branch);
+
+        final File diagnosticFile = File.createTempFile("dependent_ctmc_edge_evidence", ".tsv");
+        diagnosticFile.deleteOnExit();
+
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics diagnostics =
+                BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.create(
+                        true,
+                        diagnosticFile.getAbsolutePath(),
+                        true,
+                        true,
+                        Integer.MAX_VALUE,
+                        8
+                );
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider provider =
+                new BeagleRewardDependentCtmcEdgeEvidenceProvider(fixture.treeDataLikelihood, diagnostics);
+
+        final double rawReward1 = 0.35;
+        final double rawReward2 = 1.10;
+
+        fixture.ctsRewards.setParameterValue(branchParameterIndex, rawReward1);
+        fixture.treeDataLikelihood.makeDirty();
+
+        provider.prepare();
+        assertFinite(provider.logEvidence(branchNodeNumber, rawReward2));
+
+        final DiagnosticRow row = readFirstDiagnosticRow(diagnosticFile);
+        assertEquals(branchNodeNumber, Integer.parseInt(row.get("branchNode")));
+        assertEquals("continuous", row.get("candidateKind"));
+        assertFinite(Double.parseDouble(row.get("manualLogEvidence")));
+        assertFinite(Double.parseDouble(row.get("exactLogLikelihood")));
+        assertEquals(0.0, Double.parseDouble(row.get("manualMinusExactDelta")), 1.0e-7);
+        assertTrue("Diagnostic row must include post partials",
+                row.get("postPartials").startsWith("["));
+        assertTrue("Diagnostic row must include manual top partials",
+                row.get("manualTopPartials").startsWith("["));
+        assertTrue("Diagnostic row must include candidate transition matrices",
+                row.get("candidateTransitionMatrices").startsWith("["));
+
+        if ("available".equals(row.get("beaglePreorderStatus"))) {
+            assertFinite(Double.parseDouble(row.get("beagleLogEvidence")));
+            assertTrue("Diagnostic row must include BEAGLE top partials",
+                    row.get("beagleTopPartials").startsWith("["));
+            assertEquals(0.0, Double.parseDouble(row.get("beagleMinusExactDelta")), 1.0e-7);
+        }
+    }
+
+    public void testBeaglePreorderEvidenceMatchesManualEvidenceOnAllBranches() {
+        final Fixture fixture = createFixture();
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider manualProvider =
+                new BeagleRewardDependentCtmcEdgeEvidenceProvider(fixture.treeDataLikelihood);
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics beagleDiagnostics =
+                BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.create(
+                        false,
+                        null,
+                        false,
+                        false,
+                        true,
+                        Integer.MAX_VALUE,
+                        Long.MAX_VALUE
+                );
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider beagleProvider =
+                new BeagleRewardDependentCtmcEdgeEvidenceProvider(fixture.treeDataLikelihood, beagleDiagnostics);
+
+        fixture.treeDataLikelihood.makeDirty();
+        manualProvider.prepare();
+        beagleProvider.prepare();
+
+        final double[] candidates = new double[]{0.25, 0.70, 1.10, 1.75};
+        for (int i = 0; i < fixture.tree.getNodeCount(); i++) {
+            final NodeRef node = fixture.tree.getNode(i);
+            if (fixture.tree.isRoot(node)) {
+                continue;
+            }
+            for (double rawReward : candidates) {
+                final double manual = manualProvider.logEvidence(node.getNumber(), rawReward);
+                final double beagle = beagleProvider.logEvidence(node.getNumber(), rawReward);
+                assertFinite(manual);
+                assertFinite(beagle);
+                assertEquals("BEAGLE preorder evidence must match manual evidence on branch " +
+                        node.getNumber() + " for reward " + rawReward, manual, beagle, TOL);
+            }
+        }
     }
 
     private static void assertLocalEdgeEvidenceRatioMatchesFullLikelihoodRatio(final Fixture fixture,
@@ -210,6 +303,38 @@ public class BeagleRewardDependentCtmcEdgeEvidenceProviderTest extends MathTestC
     private static void assertFinite(final double value) {
         assertTrue("Expected finite value but found " + value,
                 !Double.isNaN(value) && !Double.isInfinite(value));
+    }
+
+    private static DiagnosticRow readFirstDiagnosticRow(final File diagnosticFile) throws Exception {
+        final BufferedReader reader = new BufferedReader(new FileReader(diagnosticFile));
+        try {
+            final String header = reader.readLine();
+            final String row = reader.readLine();
+            assertTrue("Diagnostic file must contain a header", header != null && header.length() > 0);
+            assertTrue("Diagnostic file must contain at least one row", row != null && row.length() > 0);
+            return new DiagnosticRow(header.split("\t"), row.split("\t", -1));
+        } finally {
+            reader.close();
+        }
+    }
+
+    private static final class DiagnosticRow {
+        final String[] header;
+        final String[] values;
+
+        private DiagnosticRow(final String[] header, final String[] values) {
+            this.header = header;
+            this.values = values;
+        }
+
+        private String get(final String column) {
+            for (int i = 0; i < header.length; i++) {
+                if (column.equals(header[i])) {
+                    return values[i];
+                }
+            }
+            throw new IllegalArgumentException("Missing diagnostic column " + column);
+        }
     }
 
     private static final class Fixture {

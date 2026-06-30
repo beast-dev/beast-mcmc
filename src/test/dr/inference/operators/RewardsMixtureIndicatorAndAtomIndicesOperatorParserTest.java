@@ -118,16 +118,17 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParserTest extends Mat
 
     private static Fixture createFixture() {
         final TreeModel tree = createThreeTipTree();
-        final SitePatterns patterns = createSitePatterns();
+        final SitePatterns independentPatterns = createSitePatterns("A", "C", "G");
+        final SitePatterns dependentPatterns = createSitePatterns("ACGT", "TGCA", "CAGT");
         final SubstitutionModel substitutionModel = createNucleotideSubstitutionModel();
         final GammaSiteRateModel independentSiteRateModel = new GammaSiteRateModel("independentRewardRateModel");
         final GammaSiteRateModel dependentSiteRateModel = new GammaSiteRateModel("dependentRewardRateModel");
 
-        final Parameter ctsRewards = new Parameter.Default("rewardCts", new double[]{0.25, 0.45, 0.65, 0.85});
+        final Parameter ctsRewards = new Parameter.Default("rewardCts", new double[]{0.50, 0.50, 0.50, 0.50});
         final Parameter indicator = new Parameter.Default("rewardIndicator", new double[]{0.0, 0.0, 0.0, 0.0});
         final Parameter atomIndices = new Parameter.Default("rewardAtomIndices", new double[]{0.0, 1.0, 2.0, 3.0});
         final RewardRates rewardRates = new RewardRates(
-                new Parameter.Default("rewardRates", new double[]{0.10, 0.35, 0.65, 0.90}),
+                new Parameter.Default("rewardRates", new double[]{0.20, 0.40, 0.60, 0.80}),
                 null,
                 new Parameter.Default("rewardRatesInternal", new double[0]),
                 new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0, 2.0, 3.0})
@@ -154,7 +155,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParserTest extends Mat
 
         final DiscreteDataLikelihoodDelegate independentDelegate = new DiscreteDataLikelihoodDelegate(
                 tree,
-                patterns,
+                independentPatterns,
                 rewardsAwareBranchModel,
                 independentSiteRateModel,
                 false,
@@ -173,7 +174,7 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParserTest extends Mat
 
         final BeagleDataLikelihoodDelegate dependentDelegate = new BeagleDataLikelihoodDelegate(
                 tree,
-                patterns,
+                dependentPatterns,
                 new HomogeneousBranchModel(substitutionModel),
                 dependentSiteRateModel,
                 false,
@@ -188,13 +189,13 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParserTest extends Mat
         return new Fixture(rewardsAwareBranchModel, independentLikelihood, dependentLikelihood, indicator, atomIndices);
     }
 
-    private static SitePatterns createSitePatterns() {
+    private static SitePatterns createSitePatterns(final String a, final String b, final String c) {
         final DataType dataType = Nucleotides.INSTANCE;
         final SimpleAlignment alignment = new SimpleAlignment();
         alignment.setDataType(dataType);
-        alignment.addSequence(sequence("a", "ACGT", dataType));
-        alignment.addSequence(sequence("b", "TGCA", dataType));
-        alignment.addSequence(sequence("c", "CAGT", dataType));
+        alignment.addSequence(sequence("a", a, dataType));
+        alignment.addSequence(sequence("b", b, dataType));
+        alignment.addSequence(sequence("c", c, dataType));
         return new SitePatterns(alignment, null, 0, -1, 1, true);
     }
 

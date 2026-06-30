@@ -38,6 +38,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
     private final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods;
     private final DiscreteDataLikelihoodDelegate discreteDelegate;
     private final RewardDependentEdgeEvidenceProvider[] dependentEvidenceProviders;
+    private final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics dependentCtmcDiagnostics;
 
     private final Tree tree;
     private final int nstates;
@@ -79,36 +80,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 useClusterMoves,
                 clusterSize,
                 clusterBorderBias,
-                weight
-        );
-    }
-
-    public RewardsMixtureIndicatorAndAtomIndicesOperator(
-            final Parameter indicatorZ,
-            final Parameter atomIndex,
-            final RewardsAwareBranchModel rewardsAwareBranchModel,
-            final TreeDataLikelihood treeDataLikelihood,
-            final TreeDataLikelihood[] dependentTreeDataLikelihoods,
-            final double updateProportion,
-            final boolean adaptUpdateProportion,
-            final boolean useClusterMoves,
-            final int clusterSize,
-            final double clusterBorderBias,
-            final double weight
-    ) {
-        this(
-                indicatorZ,
-                atomIndex,
-                rewardsAwareBranchModel,
-                treeDataLikelihood,
-                dependentTreeDataLikelihoods,
-                null,
-                updateProportion,
-                adaptUpdateProportion,
-                useClusterMoves,
-                clusterSize,
-                clusterBorderBias,
-                weight
+                weight,
+                BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.fromSystemProperties()
         );
     }
 
@@ -124,7 +97,8 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
             final boolean useClusterMoves,
             final int clusterSize,
             final double clusterBorderBias,
-            final double weight
+            final double weight,
+            final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics dependentCtmcDiagnostics
     ) {
         super(adaptUpdateProportion ? AdaptationMode.ADAPTATION_ON : ADAPTATION_OFF);
 
@@ -145,6 +119,9 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         this.atomIndex = atomIndex;
         this.rewardsAwareBranchModel = rewardsAwareBranchModel;
         this.treeDataLikelihood = treeDataLikelihood;
+        this.dependentCtmcDiagnostics = dependentCtmcDiagnostics == null
+                ? BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.disabled()
+                : dependentCtmcDiagnostics;
         this.dependentTreeDataLikelihoods = dependentTreeDataLikelihoods == null
                 ? new TreeDataLikelihood[0]
                 : Arrays.copyOf(dependentTreeDataLikelihoods, dependentTreeDataLikelihoods.length);
@@ -184,7 +161,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 );
             }
             this.dependentEvidenceProviders[i] =
-                    new BeagleRewardDependentCtmcEdgeEvidenceProvider(dependent);
+                    new BeagleRewardDependentCtmcEdgeEvidenceProvider(dependent, this.dependentCtmcDiagnostics);
         }
         for (int i = 0; i < this.dependentContinuousTreeDataLikelihoods.length; i++) {
             final TreeDataLikelihood dependent = this.dependentContinuousTreeDataLikelihoods[i];
@@ -273,6 +250,66 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
                 : null;
 
         setWeight(weight);
+    }
+
+    public RewardsMixtureIndicatorAndAtomIndicesOperator(
+            final Parameter indicatorZ,
+            final Parameter atomIndex,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final TreeDataLikelihood[] dependentTreeDataLikelihoods,
+            final double updateProportion,
+            final boolean adaptUpdateProportion,
+            final boolean useClusterMoves,
+            final int clusterSize,
+            final double clusterBorderBias,
+            final double weight
+    ) {
+        this(
+                indicatorZ,
+                atomIndex,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                dependentTreeDataLikelihoods,
+                null,
+                updateProportion,
+                adaptUpdateProportion,
+                useClusterMoves,
+                clusterSize,
+                clusterBorderBias,
+                weight
+        );
+    }
+
+    public RewardsMixtureIndicatorAndAtomIndicesOperator(
+            final Parameter indicatorZ,
+            final Parameter atomIndex,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final TreeDataLikelihood[] dependentTreeDataLikelihoods,
+            final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods,
+            final double updateProportion,
+            final boolean adaptUpdateProportion,
+            final boolean useClusterMoves,
+            final int clusterSize,
+            final double clusterBorderBias,
+            final double weight
+    ) {
+        this(
+                indicatorZ,
+                atomIndex,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                dependentTreeDataLikelihoods,
+                dependentContinuousTreeDataLikelihoods,
+                updateProportion,
+                adaptUpdateProportion,
+                useClusterMoves,
+                clusterSize,
+                clusterBorderBias,
+                weight,
+                BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.fromSystemProperties()
+        );
     }
 
     @Override

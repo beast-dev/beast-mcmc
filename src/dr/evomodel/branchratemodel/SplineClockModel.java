@@ -49,7 +49,7 @@ import java.util.Map;
  * @author Marc A. Suchard
  */
 
-public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
+public class SplineClockModel extends AbstractBranchRateModel
         implements DifferentiableBranchRates, Citable {
 
     private final Tree tree;
@@ -69,7 +69,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
     private boolean splineParametersChanged;
 
-    public NonParametricBranchRateModel2(String name,
+    public SplineClockModel(String name,
                                          Tree tree,
                                          IntegratedTransformedSplines splines) {
         super(name);
@@ -99,8 +99,8 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
 
         if (!nodeRatesKnown) {
 
-            NonParametricBranchRateModel2.TreeTraversal func =
-                    new NonParametricBranchRateModel2.TreeTraversal.Rate(
+            SplineClockModel.TreeTraversal func =
+                    new SplineClockModel.TreeTraversal.Rate(
                             nodeRates, splines, integralCache);
 
             calculateNodeGeneric(func);
@@ -177,7 +177,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
         }
     }
 
-    private void calculateNodeGeneric(NonParametricBranchRateModel2.TreeTraversal generic) {
+    private void calculateNodeGeneric(SplineClockModel.TreeTraversal generic) {
 
         NodeRef root = tree.getRoot();
         double rootHeight = tree.getNodeHeight(root);
@@ -187,7 +187,7 @@ public class NonParametricBranchRateModel2 extends AbstractBranchRateModel
     }
 
     private void traverseTreeByBranchGeneric(double currentHeight, NodeRef child,
-                                             NonParametricBranchRateModel2.TreeTraversal generic) {
+                                             SplineClockModel.TreeTraversal generic) {
 
         final double childHeight = tree.getNodeHeight(child);
         final int childIndex = getParameterIndexFromNode(child);

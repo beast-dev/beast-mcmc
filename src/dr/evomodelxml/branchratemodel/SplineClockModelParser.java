@@ -1,7 +1,7 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.NonParametricBranchRateModel2;
+import dr.evomodel.branchratemodel.SplineClockModel;
 import dr.evomodel.tree.TreeModel;
 import dr.math.IntegratedTransformedSplines;
 import dr.inference.model.Parameter;
@@ -9,9 +9,9 @@ import dr.xml.*;
 
 
 
-public class NonParametricBranchRateModelParser2 extends AbstractXMLObjectParser {
+public class SplineClockModelParser extends AbstractXMLObjectParser {
 
-    public static final String PARSER_NAME = "nonparametricRates2";
+    public static final String PARSER_NAME = "splineClockModel";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -21,7 +21,7 @@ public class NonParametricBranchRateModelParser2 extends AbstractXMLObjectParser
                 (IntegratedTransformedSplines) xo.getChild(IntegratedTransformedSplines.class);
         String id = xo.hasId() ? xo.getId() : PARSER_NAME;
 
-        return new NonParametricBranchRateModel2(id, tree, splines);
+        return new SplineClockModel(id, tree, splines);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class NonParametricBranchRateModelParser2 extends AbstractXMLObjectParser
 
     @Override
     public Class getReturnType() {
-        return NonParametricBranchRateModelParser2.class;
+        return SplineClockModelParser.class;
     }
 
     @Override

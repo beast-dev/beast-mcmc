@@ -51,12 +51,12 @@
          dim = interior_knots.length + degree = 2 + 3 = 5 coefficients
     ============================================================ -->
 
-    <IntegratedTransformedSplines id="splineRates"
+    <squaredCachedSplines id="splineRates"
                                   degree="3"
                                   knots="0.5 1.0"
                                   lowerBoundary="0.0"
                                   upperBoundary="2.0"
-                                  transform="squared">
+                                  >
         <coefficients>
             <parameter id="spline.coefficients"
                        value="0.30 -0.10 0.20 0.05 -0.15"/>
@@ -64,7 +64,7 @@
         <intercept>
             <parameter id="spline.intercept" value="0.40"/>
         </intercept>
-    </IntegratedTransformedSplines>
+    </squaredCachedSplines>
 
     <!-- ============================================================
          Coalescent likelihood
@@ -83,7 +83,7 @@
     <squaredSplineCoalescentLikelihood id="coalescentLikelihood">
         <treeModel idref="treeModel"/>
         <splines>
-            <IntegratedTransformedSplines idref="splineRates"/>
+            <squaredCachedSplines idref="splineRates"/>
         </splines>
         <rateParameter>
             <compoundParameter idref="squaredSplineRate"/>

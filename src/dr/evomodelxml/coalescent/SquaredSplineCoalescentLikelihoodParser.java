@@ -30,7 +30,6 @@ import dr.evomodel.coalescent.SquaredSplineCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.math.IntegratedTransformedSplines;
 import dr.math.SquaredCachedSplines;
 import dr.xml.*;
 
@@ -94,23 +93,9 @@ public class SquaredSplineCoalescentLikelihoodParser extends AbstractXMLObjectPa
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         // --- splines ---
-        // IntegratedTransformedSplinesParser creates a SquaredCachedSplines at runtime when
-        // transform="squared"; scan children via instanceof (the declared return type of that
-        // parser is IntegratedTransformedSplines, so we can't use xo.getChild(Class) directly).
         XMLObject splinesXO = xo.getChild(SPLINES);
-        SquaredCachedSplines splines = null;
-        for (int i = 0; i < splinesXO.getChildCount(); i++) {
-            Object child = splinesXO.getChild(i);
-            if (child instanceof SquaredCachedSplines) {
-                splines = (SquaredCachedSplines) child;
-                break;
-            }
-        }
-        if (splines == null) {
-            throw new XMLParseException(
-                    PARSER_NAME + ": <splines> must contain an IntegratedTransformedSplines " +
-                    "with transform=\"squared\"");
-        }
+        SquaredCachedSplines splines =
+                (SquaredCachedSplines) splinesXO.getChild(SquaredCachedSplines.class);
 
         // --- rateParameter: the shared compound [coefficients, intercept] ---
         // Must be defined in XML and passed here so the same object is used by
@@ -178,7 +163,7 @@ public class SquaredSplineCoalescentLikelihoodParser extends AbstractXMLObjectPa
                     new ElementRule(BigFastTreeIntervals.class, 1, Integer.MAX_VALUE)
             ),
             new ElementRule(SPLINES, new XMLSyntaxRule[]{
-                    new ElementRule(Object.class)
+                    new ElementRule(SquaredCachedSplines.class)
             }),
             new ElementRule(RATE_PARAM, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)

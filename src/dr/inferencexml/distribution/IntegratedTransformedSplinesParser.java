@@ -2,7 +2,6 @@ package dr.inferencexml.distribution;
 
 import dr.inference.model.Parameter;
 import dr.math.IntegratedTransformedSplines;
-import dr.math.SquaredCachedSplines;
 import dr.xml.*;
 
 
@@ -29,9 +28,6 @@ public class IntegratedTransformedSplinesParser extends AbstractXMLObjectParser 
         int degree = xo.getIntegerAttribute(DEGREE);
         String transform = xo.getStringAttribute(TRANSFORM);
 
-        if (IntegratedTransformedSplines.TRANSFORM_SQUARED.equals(transform)) {
-            return new SquaredCachedSplines(coefficients, intercept, knots, lowerBoundary, upperBoundary, degree);
-        }
         return new IntegratedTransformedSplines(coefficients, intercept, knots, lowerBoundary, upperBoundary, degree, transform);
     }
 

@@ -204,6 +204,26 @@ public class SquaredSplineCoalescentLikelihood extends ExactTimeVaryingCoalescen
     }
 
     /**
+     * On reject: clear gram matrix cache.
+     *
+     * When a tree proposal is rejected, BigFastTreeIntervals silently restores the
+     * old interval endpoints.  The indexed gram cache still holds matrices computed
+     * for the proposed (now-invalid) endpoints.  If BEAST's state-correctness check
+     * forces a likelihood recomputation after restore, getMatrixByIndex() would
+     * return the stale matrices for the wrong intervals, producing a false discrepancy.
+     *
+     * Clearing the cache here is cheap: the entries are just null-assigned, and
+     * they are only recomputed if a forced recomputation actually occurs.
+     * likelihoodKnown is left true by super.restoreState(), so normal MCMC
+     * (without the correctness check) returns the stored value without touching the cache.
+     */
+    @Override
+    protected void restoreState() {
+        super.restoreState();
+        splines.clearGramCache();
+    }
+
+    /**
      * After every accepted proposal, enforce the canonical sign convention:
      * find the component of u = [coefficients, intercept] with the largest absolute
      * value (the anchor); if it is negative, flip all signs.

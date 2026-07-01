@@ -1,0 +1,117 @@
+<?xml version="1.0" standalone="yes"?>
+<!--
+  testSquaredSplineCoalescentGradient.xml
+
+  Gradient check for SquaredSplineCoalescentLikelihood.
+  No sequence data or BEAGLE required.
+
+  Tests that the analytic gradient of the coalescent log-likelihood
+    d/d_u log L   where u = [theta_0,...,theta_{p-1}, intercept]
+  matches the numerical gradient (central finite differences).
+
+  The model:
+    - 5-tip isochronous tree, root height ~1.5
+    - Cubic B-splines, 2 interior knots, domain [0.0, 2.0], dim = 5
+    - epsilon = 1e-4 (positivity floor)
+    - rateParameter u has 6 components: [5 coefficients, 1 intercept]
+-->
+<beast>
+
+    <!-- ============================================================
+         Tree
+    ============================================================ -->
+
+    <taxa id="taxa">
+        <taxon id="t1"/>
+        <taxon id="t2"/>
+        <taxon id="t3"/>
+        <taxon id="t4"/>
+        <taxon id="t5"/>
+    </taxa>
+
+    <newick id="startingTree" rescaleHeight="0.001">
+        ((t1:0.5,t2:0.5):1.0,(t3:0.8,(t4:0.3,t5:0.3):0.5):0.7);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- ============================================================
+         Spline rate function
+         dim = interior_knots.length + degree = 2 + 3 = 5 coefficients
+    ============================================================ -->
+
+    <IntegratedTransformedSplines id="splineRates"
+                                  degree="3"
+                                  knots="0.5 1.0"
+                                  lowerBoundary="0.0"
+                                  upperBoundary="2.0"
+                                  transform="squared">
+        <coefficients>
+            <parameter id="spline.coefficients"
+                       value="0.30 -0.10 0.20 0.05 -0.15"/>
+        </coefficients>
+        <intercept>
+            <parameter id="spline.intercept" value="0.40"/>
+        </intercept>
+    </IntegratedTransformedSplines>
+
+    <!-- ============================================================
+         Coalescent likelihood
+         rateParameter = [spline.coefficients, spline.intercept]  (dim 6)
+    ============================================================ -->
+
+    <!--
+      Rate parameter: the single compound [coefficients, intercept] object shared
+      by the likelihood, HMC operator, and any prior gradient wrapper.
+    -->
+    <compoundParameter id="squaredSplineRate">
+        <parameter idref="spline.coefficients"/>
+        <parameter idref="spline.intercept"/>
+    </compoundParameter>
+
+    <squaredSplineCoalescentLikelihood id="coalescentLikelihood">
+        <treeModel idref="treeModel"/>
+        <splines>
+            <IntegratedTransformedSplines idref="splineRates"/>
+        </splines>
+        <rateParameter>
+            <compoundParameter idref="squaredSplineRate"/>
+        </rateParameter>
+        <epsilon>
+            <parameter id="epsilon" value="1e-4" lower="0.0"/>
+        </epsilon>
+    </squaredSplineCoalescentLikelihood>
+
+    <!-- report calls getReport() which produces analytic/numeric gradient lines -->
+    <report id="gradientReport">
+        <squaredSplineCoalescentLikelihood idref="coalescentLikelihood"/>
+    </report>
+
+    <!-- ============================================================
+         Gradient check: analytic must match numeric
+    ============================================================ -->
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check squared-spline coalescent gradient w.r.t. [coefficients, intercept]
+        </message>
+        <actual regex="analytic: (.*?)\n">
+            <report idref="gradientReport"/>
+        </actual>
+        <expected regex="numeric : (.*?)\n">
+            <report idref="gradientReport"/>
+        </expected>
+    </assertEqual>
+
+</beast>

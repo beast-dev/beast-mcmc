@@ -33,23 +33,20 @@ import java.util.List;
 /**
  * Standalone squared B-spline model for the skyspline coalescent.
  *
- * Rate function: λ(t) = ε + f(t)²,   f(t) = intercept + θ'b(t)
+ * Rate function:  λ(t) = ε + f(t)²,    f(t) = intercept + θ'b(t)
+ * Augmented parameter:  u = [intercept, θ_0, ..., θ_{p-1}]
+ * Augmented basis:      φ(t) = [1, b_0(t), ..., b_{p-1}(t)]
+ * Squared integral:     ∫_a^b f(t)² dt  =  u' M(a,b) u
  *
- * Integrated hazard (exact):
- *   ∫_a^b f(t)² dt  =  u' M(a,b) u
- * where u = [intercept, θ_0, ..., θ_{p-1}] and M(a,b) is the Gram matrix
- * cached by BSplineGramMatrix (theta-independent; invalidated only on tree changes).
+ * This class owns the B-spline setup and exposes the three primitives needed
+ * by ExactTimeVaryingCoalescentLikelihood:
  *
- * This class is intentionally independent of IntegratedTransformedSplines.
- * It owns its own B-spline setup and provides only the methods needed by
- * SquaredSplineCoalescentLikelihood:
- *   - evaluateSpline(t)               for log λ(t)
- *   - evaluateAugmentedBasisInPlace()  for ∇ log λ(t)
- *   - getIntegralForInterval()         for ∫ λ dt  (indexed cache, zero alloc)
- *   - addGradientWrtParametersInPlace() for ∇ ∫ λ dt (indexed cache, zero alloc)
- *   - clearGramCache() / initIndexedGramCache()  for tree-change invalidation
+ *   addScaledGramMatrix(start, end, weight, G)  — accumulate weight*M(a,b) into G
+ *   evaluateSpline(t)                           — f(t) for log λ(t)
+ *   evaluateAugmentedBasisInPlace(t, out)       — φ(t) for ∇ log λ(t)
  *
- * All hot-path methods are zero-allocation on a cache hit.
+ * The aggregate weighted Gram matrix G = Σ_r A_r M_r is managed by the
+ * coalescent likelihood, not here.
  *
  * @author Filippo Monti
  * @author Marc A. Suchard
@@ -66,7 +63,7 @@ public class SquaredCachedSplines {
     private final BSplineGramMatrix gramMatrix;
 
     // -------------------------------------------------------------------------
-    // Hot-path buffers (allocated once at construction)
+    // Buffers (allocated once)
     // -------------------------------------------------------------------------
 
     /** [intercept, θ_0, ..., θ_{p-1}] — filled by getCombinedParamBuffer(). */
@@ -76,40 +73,31 @@ public class SquaredCachedSplines {
     private final double[] augmentedBasisBuffer;
 
     /**
-     * Pre-allocated piece arrays for the assembled f(t) = intercept + θ'b(t).
+     * Pre-allocated polynomial piece arrays for the assembled f(t).
      * BSpline.PPoly does NOT clone pieces, so splineFunction.pieces == mutablePieces.
-     * refreshSplineFunction() fills these in-place; evaluate() sees updates immediately.
+     * refreshSplineFunction() fills these in-place; evaluate() sees the update immediately.
      */
     private final double[][] mutablePieces;
 
-    /** PPoly wrapping mutablePieces — pre-built once, never reassigned. */
+    /** PPoly wrapping mutablePieces — pre-built at construction, never reassigned. */
     private final BSpline.PPoly splineFunction;
 
-    /** Snapshot of [intercept, θ...] at the last cache miss. */
+    /** Snapshot of [intercept, θ...] at the last refresh miss. */
     private double[] cachedValues;
 
     // -------------------------------------------------------------------------
     // Construction
     // -------------------------------------------------------------------------
 
-    /**
-     * @param coefficient  spline coefficients θ (length = knots.length + degree)
-     * @param intercept    scalar intercept parameter
-     * @param knots        interior knot positions, sorted, in (lowerBoundary, upperBoundary)
-     * @param lowerBoundary left end of the spline domain
-     * @param upperBoundary right end; constant extension (f = f(upperBoundary)) beyond this
-     * @param degree       B-spline polynomial degree (typically 3 = cubic)
-     */
     public SquaredCachedSplines(Parameter coefficient,
                                  Parameter intercept,
                                  double[] knots,
                                  double lowerBoundary,
                                  double upperBoundary,
                                  int degree) {
-        if (coefficient.getDimension() != knots.length + degree) {
+        if (coefficient.getDimension() != knots.length + degree)
             throw new IllegalArgumentException(
                     "Coefficient dimension must equal knots.length + degree");
-        }
 
         this.intercept     = intercept;
         this.coefficient   = coefficient;
@@ -137,31 +125,9 @@ public class SquaredCachedSplines {
             ek[i] = lower;
             ek[degree + knots.length + i + 1] = upper;
         }
-        for (int i = 0; i < knots.length; i++) {
+        for (int i = 0; i < knots.length; i++)
             ek[degree + i + 1] = knots[i];
-        }
         return ek;
-    }
-
-    // -------------------------------------------------------------------------
-    // Cache management
-    // -------------------------------------------------------------------------
-
-    /**
-     * Activates the index-based Gram matrix cache for {@code totalIntervals} slots.
-     * Call once after the tree intervals are known (interval count is fixed for a given dataset).
-     * Subsequent clearGramCache() calls reset entries to null without reallocation.
-     */
-    public void initIndexedGramCache(int totalIntervals) {
-        gramMatrix.initIndexedCache(totalIntervals);
-    }
-
-    /**
-     * Invalidates all cached Gram matrices.  Call on every tree topology or node-time change.
-     * No-op when only θ or ε change — M(a,b) is theta-independent.
-     */
-    public void clearGramCache() {
-        gramMatrix.clearCache();
     }
 
     // -------------------------------------------------------------------------
@@ -174,37 +140,22 @@ public class SquaredCachedSplines {
     public BSplineGramMatrix getBSplineGramMatrix() { return gramMatrix; }
 
     // -------------------------------------------------------------------------
-    // General-purpose integral and gradient (hash-cache path)
-    // -------------------------------------------------------------------------
-
-    /** Returns u' M(start,end) u = ∫_start^end f(t)² dt via the hash-keyed gram matrix. */
-    public double getIntegral(double start, double end) {
-        return !(end > start) ? 0.0 :
-                gramMatrix.quadraticForm(start, end, getCombinedParamBuffer());
-    }
-
-    /** Returns d/d_intercept ∫_start^end f² dt = 2 M(start,end) u at row 0. */
-    public double getGradientWrtIntercept(double start, double end) {
-        if (!(end > start)) return 0.0;
-        return gramMatrix.gradient(start, end, getCombinedParamBuffer())[0];
-    }
-
-    /** Returns d/d_theta_i ∫_start^end f² dt = 2 M(start,end) u at row i+1. */
-    public double getGradientWrtCoefficient(double start, double end, int i) {
-        if (i < 0 || i >= coefficient.getDimension())
-            throw new IllegalArgumentException("Coefficient index out of bounds: " + i);
-        if (!(end > start)) return 0.0;
-        return gramMatrix.gradient(start, end, getCombinedParamBuffer())[i + 1];
-    }
-
-    // -------------------------------------------------------------------------
-    // Hot-path evaluation methods (called per coalescent event / interval)
+    // Core hot-path primitives (called by the coalescent likelihood)
     // -------------------------------------------------------------------------
 
     /**
-     * Evaluates f(t) = intercept + θ'b(t).
-     * Used by SquaredSplineCoalescentLikelihood.logHazard() to compute log(ε + f²).
-     * Zero-allocation on a cache hit (parameters unchanged since last call).
+     * Accumulates weight * M(start, end) into G in-place.
+     * Called once per interval per tree change (when building G = Σ_r A_r M_r).
+     * G must be (dim+1)×(dim+1) and zeroed before the first call.
+     */
+    public void addScaledGramMatrix(double start, double end, double weight, double[][] G) {
+        gramMatrix.addScaledToMatrix(start, end, weight, G);
+    }
+
+    /**
+     * Returns f(t) = intercept + θ'b(t).
+     * Used by the coalescent to evaluate log(ε + f²) at event times.
+     * Zero-allocation on a cache hit (parameters unchanged).
      */
     public double evaluateSpline(double t) {
         refreshSplineFunction();
@@ -212,64 +163,72 @@ public class SquaredCachedSplines {
     }
 
     /**
-     * Fills out[0..dim] with φ(t) = [1, b_0(t), ..., b_{p-1}(t)] in-place.
-     * Used by addLogHazardGradient() to compute ∇ log(ε + f²) = (2f/(ε+f²)) · φ(t).
+     * Fills out[0..dim] with φ(t) = [1, b_0(t), ..., b_{dim-1}(t)] in-place.
+     * Used by the coalescent gradient: ∇ log(ε + f²) = (2f/(ε+f²)) · φ(t).
      * out must have length >= getCoefficientDim() + 1.  No allocation.
      */
     public void evaluateAugmentedBasisInPlace(double t, double[] out) {
         out[0] = 1.0;
-        for (int i = 0; i < coefficient.getDimension(); i++) {
+        for (int i = 0; i < coefficient.getDimension(); i++)
             out[i + 1] = basis.get(i + 1).evaluate(t);
-        }
     }
 
     /**
-     * Returns u' M(globalIdx, start, end) u — the squared-spline integral ∫_start^end f² dt.
-     * Looks up M by global interval index: no IntervalKey allocation on a cache hit.
-     * Requires initIndexedGramCache() to have been called.
+     * Returns the current u = [intercept, θ_0, ..., θ_{dim-1}] buffer.
+     * Zero-allocation.  Contract: callers must not retain the reference across
+     * any operation that could modify the spline parameters.
      */
-    public double getIntegralForInterval(int globalIdx, double start, double end) {
-        return !(end > start) ? 0.0 :
-                gramMatrix.quadraticFormByIndex(globalIdx, start, end, getCombinedParamBuffer());
-    }
-
-    /**
-     * Adds coef * 2 M(globalIdx, start, end) u into grad in rateParameter layout.
-     * grad layout: [d/d_θ_0, ..., d/d_θ_{p-1}, d/d_intercept].
-     * Zero-allocation on a cache hit.  Requires initIndexedGramCache() to have been called.
-     */
-    public void addGradientWrtParametersInPlace(int globalIdx, double start, double end,
-                                                 double coef, double[] grad) {
-        if (!(end > start)) return;
-        gramMatrix.addScaledGradientReorderedByIndex(
-                globalIdx, start, end, getCombinedParamBuffer(), coef, grad,
-                coefficient.getDimension());
-    }
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Fills combinedParamBuffer with [intercept, θ_0, ..., θ_{p-1}] and returns it.
-     * Zero-allocation.  Contract: callers must not retain the reference across parameter changes.
-     */
-    private double[] getCombinedParamBuffer() {
+    public double[] getCombinedParamBuffer() {
         combinedParamBuffer[0] = intercept.getParameterValue(0);
-        for (int i = 0; i < coefficient.getDimension(); i++) {
+        for (int i = 0; i < coefficient.getDimension(); i++)
             combinedParamBuffer[i + 1] = coefficient.getParameterValue(i);
-        }
         return combinedParamBuffer;
     }
 
+    // -------------------------------------------------------------------------
+    // Utility methods (not in the HMC hot path; useful for debugging / tests)
+    // -------------------------------------------------------------------------
+
+    /** u' M(start,end) u — the squared-spline integral over [start,end]. */
+    public double getIntegral(double start, double end) {
+        return gramMatrix.quadraticForm(start, end, getCombinedParamBuffer());
+    }
+
+    /** d/d_intercept ∫ f² dt over [start,end]. */
+    public double getGradientWrtIntercept(double start, double end) {
+        if (!(end > start)) return 0.0;
+        return gramMatrix.quadraticForm(start, end, getCombinedParamBuffer()) > 0 ?
+                buildGradientFromMatrix(start, end)[0] : 0.0;
+    }
+
+    /** d/d_theta_i ∫ f² dt over [start,end]. */
+    public double getGradientWrtCoefficient(double start, double end, int i) {
+        if (i < 0 || i >= coefficient.getDimension())
+            throw new IllegalArgumentException("Coefficient index out of bounds: " + i);
+        if (!(end > start)) return 0.0;
+        return buildGradientFromMatrix(start, end)[i + 1];
+    }
+
+    private double[] buildGradientFromMatrix(double start, double end) {
+        double[][] M = gramMatrix.computeMatrix(start, end);
+        double[]   u = getCombinedParamBuffer();
+        double[]   g = new double[u.length];
+        BSplineGramMatrix.addMatVecReordered(M, u, 2.0, g);
+        // reorder back to u-layout for the caller
+        double[] result = new double[u.length];
+        result[0] = g[u.length - 1];           // intercept
+        System.arraycopy(g, 0, result, 1, u.length - 1);
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // Private: zero-allocation spline function refresh
+    // -------------------------------------------------------------------------
+
     /**
      * Fills mutablePieces[k][j] in-place when parameters have changed.
-     *
-     * f_k(t) = intercept + Σ θ_i b_{i,k}(t)  on knot span k.
-     *
-     * splineFunction wraps mutablePieces (PPoly doesn't clone pieces), so evaluate()
-     * sees the updated coefficients immediately — no PPoly rebuild, no allocation on hits.
-     * One clone per miss to store a stable cachedValues snapshot.
+     * splineFunction wraps mutablePieces so evaluate() sees updates immediately.
+     * One clone per miss; zero allocation on a cache hit.
      */
     private void refreshSplineFunction() {
         double[] current = getCombinedParamBuffer();

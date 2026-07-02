@@ -28,6 +28,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.hmc.MassPreconditionScheduler;
@@ -96,11 +97,23 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
         MassPreconditioner preconditioner;
 
         if (xo.hasChildNamed(PRECONDITIONER)) {
-            PriorPreconditioningProvider priorPreconditioningProvider = (PriorPreconditioningProvider) xo.getChild(PRECONDITIONER).getChild(PriorPreconditioningProvider.class);
-            if (priorPreconditioningProvider !=  null) {
-                preconditioner = new MassPreconditioner.PriorPreconditioner(priorPreconditioningProvider, transform);
+            XMLObject precXO = xo.getChild(PRECONDITIONER);
+            HessianWrtParameterProvider hessianProvider =
+                    (HessianWrtParameterProvider) precXO.getChild(HessianWrtParameterProvider.class);
+            if (hessianProvider != null) {
+                // Analytic diagonal Hessian from the provided likelihood (e.g. coalescent).
+                // Use Type.DIAGONAL.factory() so the package-private constructor is accessible.
+                preconditioner = MassPreconditioner.Type.DIAGONAL.factory(
+                        hessianProvider, transform, preconditioningOptions);
             } else {
-                throw new XMLParseException("Unknown preconditioner specified");
+                PriorPreconditioningProvider priorPreconditioningProvider =
+                        (PriorPreconditioningProvider) precXO.getChild(PriorPreconditioningProvider.class);
+                if (priorPreconditioningProvider != null) {
+                    preconditioner = new MassPreconditioner.PriorPreconditioner(priorPreconditioningProvider, transform);
+                } else {
+                    throw new XMLParseException("Unknown preconditioner specified. " +
+                            "Expected HessianWrtParameterProvider or PriorPreconditioningProvider.");
+                }
             }
         } else {
             preconditioner = preconditioningType.factory(derivative, transform, preconditioningOptions);

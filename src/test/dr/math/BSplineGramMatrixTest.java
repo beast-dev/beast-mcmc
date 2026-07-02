@@ -91,32 +91,31 @@ public class BSplineGramMatrixTest extends TestCase {
     // Cache behaviour
     // -----------------------------------------------------------------------
 
-    public void testGradientIsZeroForEmptyInterval() {
+    public void testQuadraticFormIsZeroForEmptyInterval() {
         BSplineGramMatrix gram = buildGramMatrix();
-        double[] grad = gram.gradient(0.5, 0.3, U);   // end < start
-        for (double v : grad) {
-            assertEquals(0.0, v, 0.0);
-        }
+        double q = gram.quadraticForm(0.5, 0.3, U);   // end < start
+        assertEquals("quadraticForm with end < start should be 0", 0.0, q, 0.0);
     }
 
-    public void testMatrixIsCachedAcrossCalls() {
+    public void testComputeMatrixIsDeterministic() {
         BSplineGramMatrix gram = buildGramMatrix();
-        double[][] m1 = gram.getMatrix(0.1, 0.9);
-        double[][] m2 = gram.getMatrix(0.1, 0.9);
-        assertSame("Same interval should return cached object", m1, m2);
+        double[][] m1 = gram.computeMatrix(0.1, 0.9);
+        double[][] m2 = gram.computeMatrix(0.1, 0.9);
+        assertNotSame("computeMatrix should return a fresh array each call", m1, m2);
+        for (int i = 0; i < m1.length; i++)
+            for (int j = 0; j < m1[i].length; j++)
+                assertEquals("Values must be identical", m1[i][j], m2[i][j], 0.0);
     }
 
-    public void testClearCacheReturnsFreshMatrixWithSameValues() {
+    public void testAddScaledToMatrixAccumulates() {
         BSplineGramMatrix gram = buildGramMatrix();
-        double[][] m1 = gram.getMatrix(0.1, 0.9);
-        gram.clearCache();
-        double[][] m2 = gram.getMatrix(0.1, 0.9);
-        assertNotSame("After clearCache a new object should be allocated", m1, m2);
-        for (int i = 0; i < m1.length; i++) {
-            for (int j = 0; j < m1[i].length; j++) {
-                assertEquals(m1[i][j], m2[i][j], 0.0);
-            }
-        }
+        int n = U.length;
+        double[][] G  = new double[n][n];
+        double[][] M  = gram.computeMatrix(0.1, 0.9);
+        gram.addScaledToMatrix(0.1, 0.9, 2.0, G);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                assertEquals("G[i][j] should be 2*M[i][j]", 2.0 * M[i][j], G[i][j], TOLERANCE);
     }
 
     // -----------------------------------------------------------------------
@@ -147,11 +146,16 @@ public class BSplineGramMatrixTest extends TestCase {
 
     private void checkGradientMatchesFiniteDifference(double start, double end) {
         BSplineGramMatrix gram = buildGramMatrix();
+        double[] u = U.clone();
 
-        double[] u        = U.clone();
-        double[] analytic = gram.gradient(start, end, u);
-        double[] numeric  = finiteDifferenceGradient(gram, start, end, u);
+        // Analytic gradient of u'Mu w.r.t. u = 2Mu
+        double[][] M      = gram.computeMatrix(start, end);
+        double[]   analytic = new double[u.length];
+        for (int i = 0; i < u.length; i++) {
+            for (int j = 0; j < u.length; j++) analytic[i] += 2.0 * M[i][j] * u[j];
+        }
 
+        double[] numeric = finiteDifferenceGradient(gram, start, end, u);
         assertEquals("Gradient size", numeric.length, analytic.length);
         for (int i = 0; i < analytic.length; i++) {
             assertEquals("Gradient[" + i + "] [" + start + "," + end + "]",

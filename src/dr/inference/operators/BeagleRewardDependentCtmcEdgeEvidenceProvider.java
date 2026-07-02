@@ -8,6 +8,8 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
+import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRates;
 import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
@@ -20,6 +22,7 @@ import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.Comple
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.RealKernelUtils;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
+import dr.inference.hmc.EmbeddedOrdinalParameter;
 import dr.inference.model.Parameter;
 
 import java.io.File;
@@ -50,7 +53,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     private final BeagleDataLikelihoodDelegate likelihoodDelegate;
     private final Tree tree;
     private final BranchModel branchModel;
-    private final RewardsAwareMixtureBranchRates rewardBranchRates;
+    private final RewardMixtureBranchRateModel rewardBranchRates;
+    private final RewardStateAdapter rewardStateAdapter;
     private final SiteRateModel siteRateModel;
     private final BeaglePreOrderDelegate preOrderTopDelegate;
     private final ProcessSimulation preOrderTopSimulation;
@@ -74,9 +78,7 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     private final double[][] beagleTopPartialsByNode;
     private final double[][] beagleBottomPartialsByNode;
     private final double[] diagnosticMatrix;
-    private final double[] baselineIndicators;
-    private final double[] baselineAtomIndices;
-    private final double[] baselineCtsRewards;
+    private RewardStateSnapshot baselineRewardState;
 
     private EigenDecomposition[] eigenDecompositions;
     private boolean[] allRealEigen;
@@ -115,13 +117,14 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         this.siteRateModel = likelihoodDelegate.getSiteRateModel();
 
         final BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
-        if (!(branchRateModel instanceof RewardsAwareMixtureBranchRates)) {
+        if (!(branchRateModel instanceof RewardMixtureBranchRateModel)) {
             throw new IllegalArgumentException(
-                    "Dependent CTMC reward evidence requires RewardsAwareMixtureBranchRates, found " +
+                    "Dependent CTMC reward evidence requires a RewardMixtureBranchRateModel, found " +
                             branchRateModel.getClass().getName()
             );
         }
-        this.rewardBranchRates = (RewardsAwareMixtureBranchRates) branchRateModel;
+        this.rewardBranchRates = (RewardMixtureBranchRateModel) branchRateModel;
+        this.rewardStateAdapter = createRewardStateAdapter(rewardBranchRates);
 
         if (!likelihoodDelegate.isUsePreOrder()) {
             throw new IllegalArgumentException(
@@ -153,10 +156,6 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         this.beagleTopPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
         this.beagleBottomPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
         this.diagnosticMatrix = new double[stateCount * stateCount * categoryCount];
-        final int rewardParameterCount = rewardBranchRates.getRateParameter().getDimension();
-        this.baselineIndicators = new double[rewardParameterCount];
-        this.baselineAtomIndices = new double[rewardParameterCount];
-        this.baselineCtsRewards = new double[rewardParameterCount];
 
         final String providerName =
                 treeDataLikelihood.getId() == null ? "dependentRewardEvidence" : treeDataLikelihood.getId();
@@ -179,7 +178,7 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     @Override
     public void prepare() {
         baselineLogLikelihood = treeDataLikelihood.getLogLikelihood();
-        snapshotRewardState(baselineIndicators, baselineAtomIndices, baselineCtsRewards);
+        baselineRewardState = rewardStateAdapter.snapshot();
         refreshSpectralStructures();
         fillPostPartialsForAllNodes();
         fillPostTopPartialsForAllNodes();
@@ -684,20 +683,14 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         final int parameterIndex = rewardBranchRates.getParameterIndexFromNode(node);
         final int atomState = matchingAtomState(rawReward);
 
-        final FullParameterSnapshot current = new FullParameterSnapshot(rewardBranchRates);
+        final RewardStateSnapshot current = rewardStateAdapter.snapshot();
         try {
-            restoreRewardState(baselineIndicators, baselineAtomIndices, baselineCtsRewards);
-            if (atomState >= 0) {
-                rewardBranchRates.getAtomIndices().setParameterValue(parameterIndex, atomState);
-                rewardBranchRates.getIndicator().setParameterValue(parameterIndex, 1.0);
-            } else {
-                rewardBranchRates.getRateParameter().setParameterValue(parameterIndex, rawReward);
-                rewardBranchRates.getIndicator().setParameterValue(parameterIndex, 0.0);
-            }
+            baselineRewardState.restore();
+            rewardStateAdapter.setCandidate(parameterIndex, rawReward, atomState);
             treeDataLikelihood.makeDirty();
             return treeDataLikelihood.getLogLikelihood();
         } finally {
-            current.restore(rewardBranchRates);
+            current.restore();
             treeDataLikelihood.makeDirty();
             treeDataLikelihood.getLogLikelihood();
         }
@@ -706,42 +699,11 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     private double currentRawReward(final int branchNodeNumber) {
         final NodeRef node = tree.getNode(branchNodeNumber);
         final int parameterIndex = rewardBranchRates.getParameterIndexFromNode(node);
-        final double indicator = baselineIndicators[parameterIndex];
-        if (Math.abs(indicator - 1.0) <= 1.0e-9) {
-            final int atomState = (int) Math.round(baselineAtomIndices[parameterIndex]);
-            return rewardBranchRates.getRawRewardForAtomState(atomState);
-        }
-        return baselineCtsRewards[parameterIndex];
-    }
-
-    private void snapshotRewardState(final double[] indicators,
-                                     final double[] atomIndices,
-                                     final double[] ctsRewards) {
-        final Parameter indicator = rewardBranchRates.getIndicator();
-        final Parameter atoms = rewardBranchRates.getAtomIndices();
-        final Parameter cts = rewardBranchRates.getRateParameter();
-        for (int i = 0; i < indicators.length; i++) {
-            indicators[i] = indicator.getParameterValue(i);
-            atomIndices[i] = atoms.getParameterValue(i);
-            ctsRewards[i] = cts.getParameterValue(i);
-        }
-    }
-
-    private void restoreRewardState(final double[] indicators,
-                                    final double[] atomIndices,
-                                    final double[] ctsRewards) {
-        final Parameter indicator = rewardBranchRates.getIndicator();
-        final Parameter atoms = rewardBranchRates.getAtomIndices();
-        final Parameter cts = rewardBranchRates.getRateParameter();
-        for (int i = 0; i < indicators.length; i++) {
-            cts.setParameterValue(i, ctsRewards[i]);
-            atoms.setParameterValue(i, atomIndices[i]);
-            indicator.setParameterValue(i, indicators[i]);
-        }
+        return baselineRewardState.rawRewardForParameterIndex(parameterIndex);
     }
 
     private int matchingAtomState(final double rawReward) {
-        final int stateCount = rewardBranchRates.getRewardRatesMapping().getDimension();
+        final int stateCount = rewardBranchRates.getRewardRates().getStateIndices().getDimension();
         for (int state = 0; state < stateCount; state++) {
             final double atomReward = rewardBranchRates.getRawRewardForAtomState(state);
             if (Math.abs(atomReward - rawReward) <= ATOM_MATCH_TOLERANCE) {
@@ -974,12 +936,61 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         }
     }
 
-    private static final class FullParameterSnapshot {
+    private static RewardStateAdapter createRewardStateAdapter(final RewardMixtureBranchRateModel branchRates) {
+        if (branchRates instanceof RewardsAwareMixtureBranchRates) {
+            return new LegacyRewardStateAdapter((RewardsAwareMixtureBranchRates) branchRates);
+        }
+        if (branchRates instanceof RewardsAwareCategoricalMixtureBranchRates) {
+            return new CategoricalRewardStateAdapter((RewardsAwareCategoricalMixtureBranchRates) branchRates);
+        }
+        throw new IllegalArgumentException(
+                "Unsupported reward-mixture branch-rate state class: " + branchRates.getClass().getName());
+    }
+
+    private interface RewardStateAdapter {
+        RewardStateSnapshot snapshot();
+
+        void setCandidate(int parameterIndex, double rawReward, int atomState);
+    }
+
+    private interface RewardStateSnapshot {
+        void restore();
+
+        double rawRewardForParameterIndex(int parameterIndex);
+    }
+
+    private static final class LegacyRewardStateAdapter implements RewardStateAdapter {
+        private final RewardsAwareMixtureBranchRates branchRates;
+
+        private LegacyRewardStateAdapter(final RewardsAwareMixtureBranchRates branchRates) {
+            this.branchRates = branchRates;
+        }
+
+        @Override
+        public RewardStateSnapshot snapshot() {
+            return new LegacyRewardStateSnapshot(branchRates);
+        }
+
+        @Override
+        public void setCandidate(final int parameterIndex, final double rawReward, final int atomState) {
+            if (atomState >= 0) {
+                branchRates.getAtomIndices().setParameterValue(parameterIndex, atomState);
+                branchRates.getIndicator().setParameterValue(parameterIndex, 1.0);
+            } else {
+                branchRates.getRateParameter().setParameterValue(parameterIndex, rawReward);
+                branchRates.getIndicator().setParameterValue(parameterIndex, 0.0);
+            }
+        }
+    }
+
+    private static final class LegacyRewardStateSnapshot implements RewardStateSnapshot {
+        private final RewardsAwareMixtureBranchRates branchRates;
         final double[] indicators;
         final double[] atomIndices;
         final double[] ctsRewards;
 
-        private FullParameterSnapshot(final RewardsAwareMixtureBranchRates branchRates) {
+        private LegacyRewardStateSnapshot(final RewardsAwareMixtureBranchRates branchRates) {
+            this.branchRates = branchRates;
             final int dim = branchRates.getRateParameter().getDimension();
             this.indicators = new double[dim];
             this.atomIndices = new double[dim];
@@ -994,7 +1005,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
             }
         }
 
-        private void restore(final RewardsAwareMixtureBranchRates branchRates) {
+        @Override
+        public void restore() {
             final Parameter indicator = branchRates.getIndicator();
             final Parameter atoms = branchRates.getAtomIndices();
             final Parameter cts = branchRates.getRateParameter();
@@ -1003,6 +1015,95 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
                 atoms.setParameterValue(i, atomIndices[i]);
                 indicator.setParameterValue(i, indicators[i]);
             }
+        }
+
+        @Override
+        public double rawRewardForParameterIndex(final int parameterIndex) {
+            final double indicator = indicators[parameterIndex];
+            if (Math.abs(indicator - 1.0) <= 1.0e-9) {
+                return branchRates.getRawRewardForAtomState((int) Math.round(atomIndices[parameterIndex]));
+            }
+            return ctsRewards[parameterIndex];
+        }
+    }
+
+    private static final class CategoricalRewardStateAdapter implements RewardStateAdapter {
+        private final RewardsAwareCategoricalMixtureBranchRates branchRates;
+
+        private CategoricalRewardStateAdapter(final RewardsAwareCategoricalMixtureBranchRates branchRates) {
+            this.branchRates = branchRates;
+        }
+
+        @Override
+        public RewardStateSnapshot snapshot() {
+            return new CategoricalRewardStateSnapshot(branchRates);
+        }
+
+        @Override
+        public void setCandidate(final int parameterIndex, final double rawReward, final int atomState) {
+            if (atomState >= 0) {
+                branchRates.getCategoryParameter().setParameterValue(
+                        parameterIndex,
+                        representativeValueForCategory(atomState + 1));
+            } else {
+                branchRates.getRateParameter().setParameterValue(parameterIndex, rawReward);
+                branchRates.getCategoryParameter().setParameterValue(
+                        parameterIndex,
+                        representativeValueForCategory(0));
+            }
+        }
+
+        private double representativeValueForCategory(final int category) {
+            final Parameter cuts = branchRates.getCategoryCutParameter();
+            if (category < 0 || category + 1 >= cuts.getDimension()) {
+                throw new IllegalArgumentException("Reward category out of range: " + category);
+            }
+            final double lower = cuts.getParameterValue(category);
+            final double upper = cuts.getParameterValue(category + 1);
+            if (Double.isFinite(lower) && Double.isFinite(upper)) {
+                return lower + 0.5 * (upper - lower);
+            }
+            if (Double.isFinite(lower)) {
+                return lower + 1.0;
+            }
+            if (Double.isFinite(upper)) {
+                return upper - 1.0;
+            }
+            return category;
+        }
+    }
+
+    private static final class CategoricalRewardStateSnapshot implements RewardStateSnapshot {
+        private final RewardsAwareCategoricalMixtureBranchRates branchRates;
+        private final double[] categoryState;
+        private final double[] ctsRewards;
+        private final double[] categoryCuts;
+
+        private CategoricalRewardStateSnapshot(final RewardsAwareCategoricalMixtureBranchRates branchRates) {
+            this.branchRates = branchRates;
+            this.categoryState = branchRates.getCategoryParameter().getParameterValues();
+            this.ctsRewards = branchRates.getRateParameter().getParameterValues();
+            this.categoryCuts = branchRates.getCategoryCutParameter().getParameterValues();
+        }
+
+        @Override
+        public void restore() {
+            final Parameter category = branchRates.getCategoryParameter();
+            final Parameter cts = branchRates.getRateParameter();
+            for (int i = 0; i < categoryState.length; i++) {
+                category.setParameterValue(i, categoryState[i]);
+                cts.setParameterValue(i, ctsRewards[i]);
+            }
+        }
+
+        @Override
+        public double rawRewardForParameterIndex(final int parameterIndex) {
+            final int category = new EmbeddedOrdinalParameter(categoryCuts).getStateIndex(
+                    categoryState[parameterIndex]);
+            if (category == 0) {
+                return ctsRewards[parameterIndex];
+            }
+            return branchRates.getRawRewardForAtomState(category - 1);
         }
     }
 

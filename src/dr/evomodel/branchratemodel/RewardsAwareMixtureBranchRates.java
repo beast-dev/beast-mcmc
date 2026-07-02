@@ -20,7 +20,8 @@ import dr.inference.model.Variable;
 /*
  * @author Filippo Monti
  */
-public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
+public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates
+        implements RewardMixtureBranchRateModel {
 
     public static final String ID = "rewardsAwareMixtureBranchRates";
 
@@ -144,6 +145,11 @@ public final class RewardsAwareMixtureBranchRates extends ArbitraryBranchRates {
 
     public double getBranchRateForRawReward(final Tree tree, final NodeRef node, final double rawReward) {
         return getTransform().transform(rawReward, tree, node);
+    }
+
+    @Override
+    public double getContinuousRawReward(final Tree tree, final NodeRef node) {
+        return super.getUntransformedBranchRate(tree, node);
     }
 
     public double getRawRewardForAtomState(final int stateIndex) {

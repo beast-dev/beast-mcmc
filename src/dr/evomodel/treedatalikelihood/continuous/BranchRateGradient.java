@@ -29,17 +29,13 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.*;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
@@ -58,18 +54,11 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 /**
  * @author Marc A. Suchard
  */
-public class BranchRateGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+public class BranchRateGradient extends AbstractContinuousBranchRateGradient
+        implements HessianWrtParameterProvider, Reportable, Loggable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
-    private final Tree tree;
-    private final int nTraits;
-    private final Parameter rateParameter;
-    private final DifferentiableBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
-    protected Double numericGradientStepSize = null;
 
-    private static final double ZERO_BRANCH_LENGTH_TOLERANCE = 1.0e-12;
     private static int debugCount = 0;
 
     public BranchRateGradient(String traitName,
@@ -77,32 +66,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
                               Parameter rateParameter) {
 
-        assert (treeDataLikelihood != null);
+        super("BM branch-rate gradient (branch-time derivative)",
+                traitName,
+                treeDataLikelihood,
+                likelihoodDelegate,
+                rateParameter);
 
-        this.treeDataLikelihood = treeDataLikelihood;
-        this.tree = treeDataLikelihood.getTree();
-        this.rateParameter = rateParameter;
-
-        BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
-
-        // TODO Move into different constructor / parser
-        String bcdName = BranchConditionalDistributionDelegate.getName(traitName);
-        if (treeDataLikelihood.getTreeTrait(bcdName) == null) {
-            likelihoodDelegate.addBranchConditionalDensityTrait(traitName);
-        }
-
-        @SuppressWarnings("unchecked")
-        TreeTrait<List<BranchSufficientStatistics>> unchecked = treeDataLikelihood.getTreeTrait(bcdName);
-        treeTraitProvider = unchecked;
-
-        assert (treeTraitProvider != null);
-
-        nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-        if (nTraits != 1) {
-            throw new RuntimeException("Not yet implemented for >1 traits");
-        }
-        final int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+        final int dim = likelihoodDelegate.getTraitDim();
 
         if (likelihoodDelegate.getDiffusionModel() instanceof SparseBandedMultivariateDiffusionModel) {
             branchProvider = new ContinuousTraitGradientForBranch.Sparse(dim);
@@ -111,81 +81,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         }
     }
 
-    public double getNumericGradientStepSize() {
-        if (numericGradientStepSize == null) {
-            return StepSizeLevel.SMALL.getStepSizeRatio();
-        } else {
-            return numericGradientStepSize.doubleValue();
+    @Override
+    protected double getGradientWrtBranchTime(BranchSufficientStatistics statistics, NodeRef node) {
+        final double scaledTime = getScaledBranchTime(node);
+        if (scaledTime == 0.0) {
+            return 0.0;
         }
-    }
-
-    public void setNumericGradientStepSize(double stepSize) {
-        numericGradientStepSize = stepSize;
-    }
-
-    @Override
-    public Likelihood getLikelihood() {
-        return treeDataLikelihood;
-    }
-
-    @Override
-    public Parameter getParameter() {
-        return rateParameter;
-    }
-
-    @Override
-    public int getDimension() {
-        return getParameter().getDimension();
-    }
-
-    @Override
-    public double[] getGradientLogDensity() {
-
-        treeDataLikelihood.makeDirty(); // TODO Remove after we figure out why this is necessary
-
-        double[] result = new double[rateParameter.getDimension()];
-
-        // TODO Do single call to traitProvider with node == null (get full tree)
-//        List<BranchSufficientStatistics> statisticsForTree = (List<BranchSufficientStatistics>)
-//                treeTraitProvider.getTrait(tree, null);
-
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            final NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node);
-                assert (destinationIndex != -1);
-
-                if (isZeroLengthBranch(node)) {
-                    continue;
-                }
-
-                List<BranchSufficientStatistics> statisticsForNode = treeTraitProvider.getTrait(tree, node);
-
-                assert (statisticsForNode.size() == nTraits);
-
-                final double rate = branchRateModel.getBranchRate(tree, node);
-                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
-                final double scaling = differential / rate;
-
-                double gradient = 0.0;
-                for (int trait = 0; trait < nTraits; ++trait) {
-                    gradient += branchProvider.getGradientForBranch(statisticsForNode.get(trait), scaling);
-                }
-
-                result[destinationIndex] = gradient;
-            }
-        }
-
-        return result;
-    }
-
-    private int getParameterIndexFromNode(NodeRef node) {
-        return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
-    }
-
-    private boolean isZeroLengthBranch(NodeRef node) {
-        return Math.abs(tree.getBranchLength(node)) <= ZERO_BRANCH_LENGTH_TOLERANCE;
+        return branchProvider.getGradientForBranch(statistics, 1.0 / scaledTime);
     }
 
     @Override

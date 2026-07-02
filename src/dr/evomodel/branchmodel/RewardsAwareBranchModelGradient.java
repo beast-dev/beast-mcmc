@@ -3,6 +3,7 @@ package dr.evomodel.branchmodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoder;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -38,6 +39,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
     private final Parameter parameter;
     private final Parameter indicator;
+    private final RewardMixtureCategoryDecoder categoryDecoder;
 
     private final Double tolerance;
     private final boolean useHessian;
@@ -76,6 +78,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
         this.parameter = totalRewardsBranchRates.getRateParameter();
         this.indicator = indicator;
+        this.categoryDecoder = rewardsAwareBranchModel.getCategoryDecoder();
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof DiscreteDataLikelihoodDelegate)) {
@@ -154,7 +157,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
     private int collectActiveContinuousBranchContexts() {
         int activeCount = 0;
         for (int b = 0; b < parameter.getDimension(); b++) {
-            if (indicator != null && indicator.getParameterValue(b) == indicatorOnBase) {
+            if (isAtomicBranch(b)) {
                 continue;
             }
 
@@ -181,6 +184,13 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
         }
 
         return activeCount;
+    }
+
+    private boolean isAtomicBranch(final int parameterIndex) {
+        if (categoryDecoder != null) {
+            return categoryDecoder.isAtomic(parameterIndex);
+        }
+        return indicator != null && indicator.getParameterValue(parameterIndex) == indicatorOnBase;
     }
 
     @Override

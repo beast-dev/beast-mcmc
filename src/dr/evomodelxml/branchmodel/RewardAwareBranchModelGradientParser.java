@@ -55,7 +55,13 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
                 (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
 
-        final Parameter indicator = (Parameter) xo.getElementFirstChild(INDICATOR);
+        final Parameter indicator = xo.hasChildNamed(INDICATOR)
+                ? (Parameter) xo.getElementFirstChild(INDICATOR)
+                : null;
+        if (indicator == null && rewardsAwareBranchModel.getCategoryDecoder() == null) {
+            throw new XMLParseException("Legacy reward-aware branch-model gradients require an <" +
+                    INDICATOR + "> block; categorical branch models may omit it.");
+        }
 
             return new RewardsAwareBranchModelGradient(
                     treeDataLikelihood,
@@ -84,7 +90,7 @@ public class RewardAwareBranchModelGradientParser extends AbstractXMLObjectParse
             new ElementRule(ArbitraryBranchRates.class),
             new ElementRule(INDICATOR, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
-            }),
+            }, true),
     };
 
 

@@ -30,6 +30,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
+import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoder;
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
@@ -68,6 +70,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
     private final Parameter indicator;                  // 0/1, same indexing as rewardProportion
+    private final RewardMixtureCategoryDecoder categoryDecoder;
 
     private final int nstates;
     private final int dim2;
@@ -129,6 +132,30 @@ public class RewardsAwareBranchModel extends AbstractModel
                                    ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
                                    Parameter atomIndices,
                                    boolean conditional) {
+        this(tree, underlyingSubstitutionModel, rewardRates, indicator, branchRateModel,
+                atomIndices, null, null, conditional);
+    }
+
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   RewardRates rewardRates,
+                                   Parameter categoryParameter,
+                                   Parameter categoryCuts,
+                                   ArbitraryBranchRates branchRateModel,
+                                   boolean conditional) {
+        this(tree, underlyingSubstitutionModel, rewardRates, null, branchRateModel,
+                null, categoryParameter, categoryCuts, conditional);
+    }
+
+    private RewardsAwareBranchModel(TreeModel tree,
+                                    SubstitutionModel underlyingSubstitutionModel,
+                                    RewardRates rewardRates,
+                                    Parameter indicator,
+                                    ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                    Parameter atomIndices,
+                                    Parameter categoryParameter,
+                                    Parameter categoryCuts,
+                                    boolean conditional) {
 
         super(REWARDS_AWARE_BRANCH_MODEL);
         if (tree == null) throw new IllegalArgumentException("tree must be non-null");
@@ -137,8 +164,18 @@ public class RewardsAwareBranchModel extends AbstractModel
         }
         if (rewardRates == null) throw new IllegalArgumentException("rewardRates must be non-null");
         if (branchRateModel == null) throw new IllegalArgumentException("branchRateModel must be non-null");
-        if (indicator == null) throw new IllegalArgumentException("indicator must be non-null");
-        if (atomIndices == null) throw new IllegalArgumentException("atomIndices must be non-null");
+        final boolean useCategoricalState = categoryParameter != null || categoryCuts != null;
+        if (useCategoricalState) {
+            if (categoryParameter == null) throw new IllegalArgumentException("categoryParameter must be non-null");
+            if (categoryCuts == null) throw new IllegalArgumentException("categoryCuts must be non-null");
+            if (indicator != null || atomIndices != null) {
+                throw new IllegalArgumentException(
+                        "Provide either categorical mixture state or indicator/atomIndices, not both");
+            }
+        } else {
+            if (indicator == null) throw new IllegalArgumentException("indicator must be non-null");
+            if (atomIndices == null) throw new IllegalArgumentException("atomIndices must be non-null");
+        }
 
         this.tree = tree;
         this.underlyingSubstitutionModel = underlyingSubstitutionModel;
@@ -149,12 +186,20 @@ public class RewardsAwareBranchModel extends AbstractModel
         this.rewardRates = rewardRates;
 
         final int dim = branchRateModel.getRateParameter().getDimension();
-        if (indicator.getDimension() != dim) {
-            throw new IllegalArgumentException("indicator dimension must equal rewardProportion dimension (branchRateModel rate parameter).");
+        if (!useCategoricalState) {
+            if (indicator.getDimension() != dim) {
+                throw new IllegalArgumentException("indicator dimension must equal rewardProportion dimension (branchRateModel rate parameter).");
+            }
+            if (atomIndices.getDimension() != dim) {
+                throw new IllegalArgumentException("atomIndices dimension must equal rewardProportion dimension (branchRateModel rate parameter).");
+            }
         }
 
         this.nstates = underlyingSubstitutionModel.getDataType().getStateCount();
         this.dim2 = nstates * nstates;
+        this.categoryDecoder = useCategoricalState
+                ? new RewardMixtureCategoryDecoder(categoryParameter, categoryCuts, nstates, dim)
+                : null;
 
         final int nodeCount = tree.getNodeCount();
         final int branchCount = nodeCount - 1; // all non-root nodes
@@ -186,8 +231,13 @@ public class RewardsAwareBranchModel extends AbstractModel
         addModel(tree);
         addModel(branchRateModel);
         addModel(sericola);
-        addVariable(indicator);
-        addVariable(atomIndices);
+        if (categoryDecoder == null) {
+            addVariable(indicator);
+            addVariable(atomIndices);
+        } else {
+            addVariable(categoryDecoder.getCategoryParameter());
+            addVariable(categoryDecoder.getCutParameter());
+        }
 
         final int nNodes = tree.getNodeCount();
         final int nBranches = nNodes - 1;
@@ -220,6 +270,8 @@ public class RewardsAwareBranchModel extends AbstractModel
     }
     public Parameter getIndicator() { return indicator; }
 
+    public RewardMixtureCategoryDecoder getCategoryDecoder() { return categoryDecoder; }
+
     // -------------------- Basic accessors --------------------
 
     public FrequencyModel getRootFrequencyModel() { return underlyingSubstitutionModel.getFrequencyModel(); }
@@ -245,6 +297,9 @@ public class RewardsAwareBranchModel extends AbstractModel
         final NodeRef node = tree.getNode(branchNodeNumber);
         if (tree.isRoot(node)) {
             throw new IllegalArgumentException("Root node has no branch: " + branchNodeNumber);
+        }
+        if (branchRateModel instanceof RewardMixtureBranchRateModel) {
+            return ((RewardMixtureBranchRateModel) branchRateModel).getContinuousRawReward(tree, node);
         }
         return branchRateModel.getUntransformedBranchRate(tree, node);
     }
@@ -282,7 +337,7 @@ public class RewardsAwareBranchModel extends AbstractModel
             return W[nodeNr];
         }
         final int p = getParameterIndexForNode(nodeNr);
-        final boolean atomicOn = isOne(indicator.getParameterValue(p));
+        final boolean atomicOn = isAtomicForParameterIndex(p);
         if (atomicOn) {
             return getTransitionMatrixAtomic(nodeNr);
         } else {
@@ -320,6 +375,10 @@ public class RewardsAwareBranchModel extends AbstractModel
 
             final int nodeNr = node.getNumber();
             final int paramIndex = getParameterIndexForNode(nodeNr);
+            if (!isAtomicForParameterIndex(paramIndex)) {
+                atomicScale[nodeNr] = 0.0;
+                continue;
+            }
             final int atomState = getAtomStateForParameterIndex(paramIndex);
             final double t = tree.getBranchLength(node);
             atomicScale[nodeNr] = Math.exp(stateNoJumpLogRate[atomState] * t);
@@ -368,7 +427,7 @@ public class RewardsAwareBranchModel extends AbstractModel
 
             final int nodeNr = node.getNumber();
             final double t = tree.getBranchLength(node);
-            final double rate = branchRateModel.getBranchRate(tree, node);
+            final double rate = getContinuousBranchRate(tree, node);
 
             if (t < 0.0) {
                 throw new IllegalArgumentException("Negative branch length for node " + nodeNr + ": " + t);
@@ -418,7 +477,7 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public boolean isAtomicBranch(int branchNodeNumber) {
         final int paramIndex = getParameterIndexForNode(branchNodeNumber);
-        return isOne(indicator.getParameterValue(paramIndex));
+        return isAtomicForParameterIndex(paramIndex);
     }
 
     public int getAtomicBranchState(int branchNodeNumber) {
@@ -467,6 +526,9 @@ public class RewardsAwareBranchModel extends AbstractModel
     }
 
     private int getAtomStateForParameterIndex(int paramIndex) {
+        if (categoryDecoder != null) {
+            return categoryDecoder.getAtomicState(paramIndex);
+        }
         final double raw = atomIndices.getParameterValue(paramIndex);
         final int state = (int) Math.round(raw);
         if (Math.abs(raw - state) > 1.0e-9 || state < 0 || state >= nstates) {
@@ -475,6 +537,25 @@ public class RewardsAwareBranchModel extends AbstractModel
                             "], found " + raw + " at parameter index " + paramIndex);
         }
         return state;
+    }
+
+    private boolean isAtomicForParameterIndex(final int paramIndex) {
+        if (categoryDecoder != null) {
+            return categoryDecoder.isAtomic(paramIndex);
+        }
+        return isOne(indicator.getParameterValue(paramIndex));
+    }
+
+    private double getContinuousBranchRate(final TreeModel tree, final NodeRef node) {
+        if (branchRateModel instanceof RewardMixtureBranchRateModel) {
+            final RewardMixtureBranchRateModel rewardMixtureRates =
+                    (RewardMixtureBranchRateModel) branchRateModel;
+            return rewardMixtureRates.getBranchRateForRawReward(
+                    tree,
+                    node,
+                    rewardMixtureRates.getContinuousRawReward(tree, node));
+        }
+        return branchRateModel.getBranchRate(tree, node);
     }
 
     // -------------------- Branch model mapping --------------------
@@ -526,6 +607,11 @@ public class RewardsAwareBranchModel extends AbstractModel
         if (variable == atomIndices) {
             invalidateAtomicScales();
 //            invalidateCtsMatrices(); // safe, even if a bit conservative
+        } else if (categoryDecoder != null && variable == categoryDecoder.getCategoryParameter()) {
+            invalidateAtomicScales();
+        } else if (categoryDecoder != null && variable == categoryDecoder.getCutParameter()) {
+            categoryDecoder.refreshEmbedding();
+            invalidateAtomicScales();
         }
         fireModelChanged();
     }
@@ -571,6 +657,9 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     @Override
     protected void restoreState() {
+        if (categoryDecoder != null) {
+            categoryDecoder.refreshEmbedding();
+        }
         // If continuous inputs were touched during the rejected proposal,
         // the cached W arrays may contain proposal values, so force recomputation.
         ctsMatricesDirty = storedCtsMatricesDirty || ctsMatricesDirtyDuringProposal;

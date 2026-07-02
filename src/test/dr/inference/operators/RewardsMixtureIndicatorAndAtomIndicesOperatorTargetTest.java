@@ -87,6 +87,59 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorTargetTest extends Mat
         assertSingleBranchWeightsMatchFullTarget(fixture, firstCherryExternalNode(fixture.tree));
     }
 
+    public void testBeaglePreorderOperatorWeightsMatchManualWeightsOnAllBranches() throws Exception {
+        final Fixture fixture = createFixture(1);
+        final double[] oldIndicators = copyParameterValues(fixture.indicator);
+        final double[] oldAtoms = copyParameterValues(fixture.atomIndices);
+
+        try {
+            final RewardsMixtureIndicatorAndAtomIndicesOperator manualOperator =
+                    createOperator(fixture, BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.disabled());
+            final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics beagleDiagnostics =
+                    BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.create(
+                            false,
+                            null,
+                            false,
+                            false,
+                            true,
+                            Integer.MAX_VALUE,
+                            Long.MAX_VALUE
+                    );
+            final RewardsMixtureIndicatorAndAtomIndicesOperator beagleOperator =
+                    createOperator(fixture, beagleDiagnostics);
+
+            for (int i = 0; i < fixture.tree.getNodeCount(); i++) {
+                final NodeRef branch = fixture.tree.getNode(i);
+                if (fixture.tree.isRoot(branch)) {
+                    continue;
+                }
+                final int branchNodeNumber = branch.getNumber();
+                final int branchIndex = fixture.rewardsAwareBranchModel.getParameterIndexForNode(branchNodeNumber);
+                setBranchContinuous(fixture, branchIndex);
+                markLikelihoodsDirty(fixture);
+
+                final RewardsMixtureBranchResamplingHelper.BranchWeights manual =
+                        computeBranchWeights(fixture, manualOperator, branchNodeNumber);
+                final RewardsMixtureBranchResamplingHelper.BranchWeights beagle =
+                        computeBranchWeights(fixture, beagleOperator, branchNodeNumber);
+
+                assertLogEquals("BEAGLE cts weight must match manual weight on branch " + branchNodeNumber,
+                        manual.logCtsWeight, beagle.logCtsWeight);
+                assertLogEquals("BEAGLE atomic total must match manual weight on branch " + branchNodeNumber,
+                        manual.logAtomicTotalWeight, beagle.logAtomicTotalWeight);
+                for (int state = 0; state < manual.logAtomicWeights.length; state++) {
+                    assertLogEquals("BEAGLE atomic weight must match manual weight on branch " +
+                                    branchNodeNumber + " state " + state,
+                            manual.logAtomicWeights[state], beagle.logAtomicWeights[state]);
+                }
+            }
+        } finally {
+            restoreParameterValues(fixture.indicator, oldIndicators);
+            restoreParameterValues(fixture.atomIndices, oldAtoms);
+            markLikelihoodsDirty(fixture);
+        }
+    }
+
     public void testClusterProposalTargetsMatchFullLikelihoodWithDependentCtmc() {
         MathUtils.setSeed(20260611);
 
@@ -214,6 +267,27 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorTargetTest extends Mat
         return (RewardsMixtureBranchResamplingHelper.BranchWeights) compute.invoke(operator, branchNodeNumber);
     }
 
+    private static RewardsMixtureIndicatorAndAtomIndicesOperator createOperator(
+            final Fixture fixture,
+            final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics dependentCtmcDiagnostics
+    ) {
+        return new RewardsMixtureIndicatorAndAtomIndicesOperator(
+                fixture.indicator,
+                fixture.atomIndices,
+                fixture.rewardsAwareBranchModel,
+                fixture.independentLikelihood,
+                fixture.dependentLikelihoods,
+                null,
+                1.0,
+                false,
+                false,
+                1,
+                0.5,
+                1.0,
+                dependentCtmcDiagnostics
+        );
+    }
+
     private static Fixture createFixture(final int dependentCount) {
         final TreeModel tree = createThreeTipTree();
         final SubstitutionModel independentSubstitutionModel =
@@ -293,8 +367,8 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorTargetTest extends Mat
                                                                 final RewardsAwareMixtureBranchRates rewardBranchRates,
                                                                 final int index) {
         final String[] taxonStates = index % 2 == 0
-                ? new String[]{"A", "C", "G"}
-                : new String[]{"T", "A", "C"};
+                ? new String[]{"ACGT", "TGCA", "CAGT"}
+                : new String[]{"TACG", "CATG", "GTAC"};
         final double kappa = index % 2 == 0 ? 3.0 : 1.7;
         final SubstitutionModel substitutionModel =
                 createNucleotideSubstitutionModel("rewardMixtureDependentKappa" + index, kappa);

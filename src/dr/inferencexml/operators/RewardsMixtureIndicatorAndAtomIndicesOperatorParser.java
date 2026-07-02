@@ -28,6 +28,7 @@ import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.BeagleRewardDependentCtmcEdgeEvidenceProvider;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RewardsMixtureIndicatorAndAtomIndicesOperator;
 import dr.xml.*;
@@ -47,6 +48,14 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
     private static final String CLUSTER_BORDER_BIAS = "clusterBorderBias";
     private static final String DEPENDENT_CTMC_LIKELIHOODS = "dependentCtmcLikelihoods";
     private static final String DEPENDENT_CONTINUOUS_LIKELIHOODS = "dependentContinuousLikelihoods";
+    private static final String DEPENDENT_CTMC_DIAGNOSTICS = "dependentCtmcDiagnostics";
+    private static final String DEPENDENT_CTMC_DIAGNOSTIC_FILE = "dependentCtmcDiagnosticFile";
+    private static final String DEPENDENT_CTMC_COMPARE_BEAGLE_PREORDER = "dependentCtmcCompareBeaglePreorder";
+    private static final String DEPENDENT_CTMC_COMPARE_EXACT = "dependentCtmcCompareExact";
+    private static final String DEPENDENT_CTMC_USE_BEAGLE_PREORDER_EVIDENCE =
+            "dependentCtmcUseBeaglePreorderEvidence";
+    private static final String DEPENDENT_CTMC_DIAGNOSTIC_MAX_BRANCHES = "dependentCtmcDiagnosticMaxBranches";
+    private static final String DEPENDENT_CTMC_DIAGNOSTIC_MAX_ROWS = "dependentCtmcDiagnosticMaxRows";
 
     @Override
     public String getParserName() {
@@ -90,6 +99,8 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 parseDependentTreeDataLikelihoods(xo);
         final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods =
                 parseDependentContinuousTreeDataLikelihoods(xo);
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics dependentCtmcDiagnostics =
+                parseDependentCtmcDiagnostics(xo);
 
         return new RewardsMixtureIndicatorAndAtomIndicesOperator(
                 indicatorZ,
@@ -103,7 +114,8 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
                 useClusterMoves,
                 clusterSize,
                 clusterBorderBias,
-                weight
+                weight,
+                dependentCtmcDiagnostics
         );
     }
 
@@ -141,6 +153,39 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
         return likelihoods.toArray(new TreeDataLikelihood[likelihoods.size()]);
     }
 
+    private BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics parseDependentCtmcDiagnostics(
+            final XMLObject xo) throws XMLParseException {
+        if (!xo.hasAttribute(DEPENDENT_CTMC_DIAGNOSTICS) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_DIAGNOSTIC_FILE) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_COMPARE_BEAGLE_PREORDER) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_COMPARE_EXACT) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_USE_BEAGLE_PREORDER_EVIDENCE) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_DIAGNOSTIC_MAX_BRANCHES) &&
+                !xo.hasAttribute(DEPENDENT_CTMC_DIAGNOSTIC_MAX_ROWS)) {
+            return BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.fromSystemProperties();
+        }
+
+        final boolean enabled = xo.getBooleanAttribute(DEPENDENT_CTMC_DIAGNOSTICS, false);
+        final String fileName = xo.hasAttribute(DEPENDENT_CTMC_DIAGNOSTIC_FILE) ?
+                xo.getStringAttribute(DEPENDENT_CTMC_DIAGNOSTIC_FILE) : null;
+        final boolean compareBeagle = xo.getBooleanAttribute(DEPENDENT_CTMC_COMPARE_BEAGLE_PREORDER, true);
+        final boolean compareExact = xo.getBooleanAttribute(DEPENDENT_CTMC_COMPARE_EXACT, true);
+        final boolean useBeagleEvidence =
+                xo.getBooleanAttribute(DEPENDENT_CTMC_USE_BEAGLE_PREORDER_EVIDENCE, false);
+        final int maxBranches = xo.getIntegerAttribute(DEPENDENT_CTMC_DIAGNOSTIC_MAX_BRANCHES, Integer.MAX_VALUE);
+        final int maxRows = xo.getIntegerAttribute(DEPENDENT_CTMC_DIAGNOSTIC_MAX_ROWS, Integer.MAX_VALUE);
+
+        return BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.create(
+                enabled,
+                fileName,
+                compareBeagle,
+                compareExact,
+                useBeagleEvidence,
+                maxBranches,
+                maxRows
+        );
+    }
+
     @Override
     public String getParserDescription() {
         return "Gibbs operator updating per-branch mixture indicator z_b selecting atomic vs continuous reward model transition matrices.";
@@ -163,6 +208,13 @@ public class RewardsMixtureIndicatorAndAtomIndicesOperatorParser extends Abstrac
             AttributeRule.newBooleanRule(USE_CLUSTER_MOVES, true),
             AttributeRule.newIntegerRule(CLUSTER_SIZE, true),
             AttributeRule.newDoubleRule(CLUSTER_BORDER_BIAS, true),
+            AttributeRule.newBooleanRule(DEPENDENT_CTMC_DIAGNOSTICS, true),
+            AttributeRule.newStringRule(DEPENDENT_CTMC_DIAGNOSTIC_FILE, true),
+            AttributeRule.newBooleanRule(DEPENDENT_CTMC_COMPARE_BEAGLE_PREORDER, true),
+            AttributeRule.newBooleanRule(DEPENDENT_CTMC_COMPARE_EXACT, true),
+            AttributeRule.newBooleanRule(DEPENDENT_CTMC_USE_BEAGLE_PREORDER_EVIDENCE, true),
+            AttributeRule.newIntegerRule(DEPENDENT_CTMC_DIAGNOSTIC_MAX_BRANCHES, true),
+            AttributeRule.newIntegerRule(DEPENDENT_CTMC_DIAGNOSTIC_MAX_ROWS, true),
 
             new ElementRule(RewardsAwareBranchModel.class, false),
             new ElementRule(TreeDataLikelihood.class, false),

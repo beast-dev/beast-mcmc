@@ -6,6 +6,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.branchratemodel.RewardsAwareCategoricalMixtureBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RewardsAwareMixtureBranchRatesParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -24,9 +25,6 @@ public class RewardsAwareBranchModelParser extends AbstractXMLObjectParser {
 
         SubstitutionModel underlyingSubstitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-        Parameter indicator = (Parameter) xo.getElementFirstChild(INDICATOR);
-
-        Parameter atomIndices = (Parameter) xo.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES);
         ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(BranchRateModel.class);
         TreeModel tree = (TreeModel) branchRateModel.getTree();
 
@@ -43,6 +41,44 @@ public class RewardsAwareBranchModelParser extends AbstractXMLObjectParser {
 
         boolean conditional = xo.getAttribute( "conditional", false);
 
+        final boolean hasLegacyState = xo.hasChildNamed(INDICATOR) ||
+                xo.hasChildNamed(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES);
+        final boolean hasCategoricalState = xo.hasChildNamed(
+                RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE) ||
+                xo.hasChildNamed(RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS);
+
+        if (hasLegacyState == hasCategoricalState) {
+            throw new XMLParseException("Provide exactly one reward-mixture state representation: either <" +
+                    INDICATOR + "> plus <" + RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES + "> or <" +
+                    RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE + "> plus <" +
+                    RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS + ">.");
+        }
+
+        if (hasCategoricalState) {
+            if (!xo.hasChildNamed(RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE) ||
+                    !xo.hasChildNamed(RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS)) {
+                throw new XMLParseException("Categorical reward-mixture state requires both <" +
+                        RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE + "> and <" +
+                        RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS + ">.");
+            }
+            final Parameter categoryState = (Parameter) xo.getElementFirstChild(
+                    RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE);
+            final Parameter categoryCuts = (Parameter) xo.getElementFirstChild(
+                    RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS);
+
+            return new RewardsAwareBranchModel(tree, underlyingSubstitutionModel,
+                    rewardRates, categoryState, categoryCuts, branchRateModel, conditional);
+        }
+
+        if (!xo.hasChildNamed(INDICATOR) ||
+                !xo.hasChildNamed(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES)) {
+            throw new XMLParseException("Legacy reward-mixture state requires both <" +
+                    INDICATOR + "> and <" + RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES + ">.");
+        }
+        Parameter indicator = (Parameter) xo.getElementFirstChild(INDICATOR);
+
+        Parameter atomIndices = (Parameter) xo.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES);
+
         return new RewardsAwareBranchModel(tree, underlyingSubstitutionModel,
                 rewardRates, indicator, branchRateModel, atomIndices, conditional);
     }
@@ -53,11 +89,17 @@ public class RewardsAwareBranchModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule("conditional", true),
             new ElementRule(BranchRateModel.class),
             new ElementRule(SubstitutionModel.class),
-            new ElementRule(INDICATOR, Parameter.class),
+            new ElementRule(INDICATOR, Parameter.class, "Legacy 0/1 continuous-vs-atomic indicator.", true),
 
             new ElementRule(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class)
-            }),
+            }, true),
+            new ElementRule(RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_STATE, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class)
+            }, "Embedded categorical branch-state coordinate.", true),
+            new ElementRule(RewardsAwareCategoricalMixtureBranchRatesParser.CATEGORY_CUTS, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class)
+            }, "Cut points defining continuous and atomic reward categories.", true),
             new ElementRule(RewardRates.class)
     };
 

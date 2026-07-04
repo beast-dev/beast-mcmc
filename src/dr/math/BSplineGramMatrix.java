@@ -25,6 +25,9 @@
 
 package dr.math;
 
+import dr.math.matrix.SymmetricMatrixAccumulator;
+
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -174,6 +177,105 @@ public class BSplineGramMatrix {
             double bj = boundaryBasis[j];
             for (int i = 0; i <= j; i++)
                 M[i][j] += length * boundaryBasis[i] * bj;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Accumulator overloads — write into SymmetricMatrixAccumulator instead of double[][]
+    // -------------------------------------------------------------------------
+
+    /**
+     * Accumulates weight * M(a,b) into G (full (dim+1)×(dim+1) augmented block,
+     * intercept at index 0).  Only the lower triangle is written; the accumulator
+     * handles symmetry.
+     */
+    public void addScaledToAccumulator(double a, double b, double weight,
+                                       SymmetricMatrixAccumulator G) {
+        if (!(b > a) || weight == 0.0) return;
+        double[][] M = computeMatrix(a, b);
+        int n = M.length;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j <= i; j++) {
+                G.add(i, j, weight * M[i][j]);
+            }
+        }
+    }
+
+    /**
+     * Accumulates weight * M_base(a,b) into G — the dim×dim no-intercept block
+     * (rows/cols 1..dim of the augmented matrix, re-indexed to 0..dim-1).
+     */
+    public void addScaledToAccumulatorNoIntercept(double a, double b, double weight,
+                                                   SymmetricMatrixAccumulator G) {
+        if (!(b > a) || weight == 0.0) return;
+        double[][] M = computeMatrix(a, b);
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j <= i; j++) {
+                G.add(i, j, weight * M[i + 1][j + 1]);
+            }
+        }
+    }
+
+    /**
+     * Fills out[0..dim] with integral_a^b phi_i(t) dt where phi_0 = 1, phi_{i+1} = b_i(t).
+     * out must have length >= dim + 1.
+     */
+    public void integrateAugmentedBasisInPlace(double a, double b, double[] out) {
+        Arrays.fill(out, 0, dim + 1, 0.0);
+        out[0] = b - a;
+        double onEnd = Math.min(b, upperBoundary);
+        if (a < onEnd) {
+            for (int k = 0; k < expandedKnots.length - 1; k++) {
+                double left  = expandedKnots[k];
+                double right = expandedKnots[k + 1];
+                if (right <= a || left >= onEnd) continue;
+                double L = Math.max(a, left);
+                double R = Math.min(onEnd, right);
+                if (L >= R) continue;
+                for (int j = 0; j < dim; j++) {
+                    out[j + 1] += BSpline.polyIntegral(basis.get(j + 1).pieces[k], L, R);
+                }
+            }
+        }
+        if (b > upperBoundary) {
+            double tailStart  = Math.max(a, upperBoundary);
+            double tailLength = b - tailStart;
+            if (tailLength > 0.0) {
+                for (int j = 0; j < dim; j++) {
+                    out[j + 1] += boundaryBasis[j + 1] * tailLength;
+                }
+            }
+        }
+    }
+
+    /**
+     * Fills out[0..dim-1] with integral_a^b b_i(t) dt (no intercept term).
+     * out must have length >= dim.
+     */
+    public void integrateBasisInPlace(double a, double b, double[] out) {
+        Arrays.fill(out, 0, dim, 0.0);
+        double onEnd = Math.min(b, upperBoundary);
+        if (a < onEnd) {
+            for (int k = 0; k < expandedKnots.length - 1; k++) {
+                double left  = expandedKnots[k];
+                double right = expandedKnots[k + 1];
+                if (right <= a || left >= onEnd) continue;
+                double L = Math.max(a, left);
+                double R = Math.min(onEnd, right);
+                if (L >= R) continue;
+                for (int j = 0; j < dim; j++) {
+                    out[j] += BSpline.polyIntegral(basis.get(j + 1).pieces[k], L, R);
+                }
+            }
+        }
+        if (b > upperBoundary) {
+            double tailStart  = Math.max(a, upperBoundary);
+            double tailLength = b - tailStart;
+            if (tailLength > 0.0) {
+                for (int j = 0; j < dim; j++) {
+                    out[j] += boundaryBasis[j + 1] * tailLength;
+                }
+            }
         }
     }
 

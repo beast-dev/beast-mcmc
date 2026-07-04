@@ -26,6 +26,7 @@
 package dr.math;
 
 import dr.inference.model.Parameter;
+import dr.math.matrix.SymmetricMatrixAccumulator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -150,6 +151,49 @@ public class SquaredCachedSplines {
      */
     public void addScaledGramMatrix(double start, double end, double weight, double[][] G) {
         gramMatrix.addScaledToMatrix(start, end, weight, G);
+    }
+
+    /**
+     * Accumulates weight * M(start, end) into G (SymmetricMatrixAccumulator, augmented dim+1).
+     * Intercept is at index 0; coefficient indices are 1..dim.
+     */
+    public void addScaledGramMatrix(double start, double end, double weight,
+                                    SymmetricMatrixAccumulator G) {
+        gramMatrix.addScaledToAccumulator(start, end, weight, G);
+    }
+
+    /**
+     * Accumulates weight * M_base(start, end) into G (dim×dim, no intercept).
+     */
+    public void addScaledGramMatrixNoIntercept(double start, double end, double weight,
+                                               SymmetricMatrixAccumulator G) {
+        gramMatrix.addScaledToAccumulatorNoIntercept(start, end, weight, G);
+    }
+
+    /**
+     * Fills out[0..dim-1] with [b_0(t), ..., b_{dim-1}(t)] (no intercept term).
+     * out must have length >= getCoefficientDim().  No allocation.
+     */
+    public void evaluateBasisInPlace(double t, double[] out) {
+        for (int i = 0; i < coefficient.getDimension(); i++) {
+            out[i] = basis.get(i + 1).evaluate(t);
+        }
+    }
+
+    /**
+     * Fills out[0..dim] with [end-start, integral_start^end b_0 dt, ..., integral b_{dim-1} dt].
+     * out must have length >= getCoefficientDim() + 1.
+     */
+    public void integrateAugmentedBasisInPlace(double start, double end, double[] out) {
+        gramMatrix.integrateAugmentedBasisInPlace(start, end, out);
+    }
+
+    /**
+     * Fills out[0..dim-1] with [integral_start^end b_0 dt, ..., integral b_{dim-1} dt].
+     * out must have length >= getCoefficientDim().
+     */
+    public void integrateBasisInPlace(double start, double end, double[] out) {
+        gramMatrix.integrateBasisInPlace(start, end, out);
     }
 
     /**

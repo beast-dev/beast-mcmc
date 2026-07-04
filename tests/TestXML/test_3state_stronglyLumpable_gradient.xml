@@ -210,6 +210,14 @@
 		</lump>
 	</stronglyLumpableCtmcRates>
 
+	<compoundParameter id="all.lumpable">
+		<parameter idref="lump.across.rates"/>
+		<parameter idref="Cafornia.l2.proportions"/>
+		<parameter idref="L2.within.rates"/>
+		<parameter idref="Michigan.l1.proportions"/>
+		<parameter idref="Texas.l1.proportions"/>
+	</compoundParameter>
+
 	<!-- Data pattern for discrete trait, 'state'                                -->
 	<attributePatterns id="state.pattern" attribute="state">
 		<taxa idref="taxa"/>
@@ -384,6 +392,7 @@
     <approximateLogCtmcRateGradient id="gradient" traitName="state">
 		<treeDataLikelihood idref="state.treeLikelihood"/>
 		<logRateSubstitutionModel idref="state.model"/>
+		<compoundParameter idref="all.lumpable"/>
     </approximateLogCtmcRateGradient>
 
     <report>
@@ -652,9 +661,6 @@
                 <!-- START Ancestral state reconstruction                                    -->
 			<trait name="states" tag="bat_deletetx5275">
 				<ancestralTreeLikelihood idref="treeLikelihood"/>
-			</trait>
-			<trait name="state.states" tag="state">
-				<ancestralTreeLikelihood idref="state.treeLikelihood"/>
 			</trait>
 
 			<!-- END Ancestral state reconstruction                                      -->

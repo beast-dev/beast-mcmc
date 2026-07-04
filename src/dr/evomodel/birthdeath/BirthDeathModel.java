@@ -31,7 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.CalibrationPoints;
-import dr.inference.model.AbstractModel;
+import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -42,14 +42,14 @@ import java.util.Set;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public abstract class BirthDeathModel extends AbstractModel implements Units {
+public abstract class BirthDeathModel extends SpeciationModel implements Units {
     /**
      * Units in which population size is measured.
      */
     private Type units;
 
     public BirthDeathModel(String name, Type units) {
-        super(name);
+        super(name, units);
         setUnits(units);
     }
 

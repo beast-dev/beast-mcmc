@@ -7,6 +7,6 @@ grep -q 'set(BEAGLE_OPTIMIZE_FOR_NATIVE_ARCH false)' CMakeLists.txt
 mkdir build
 cd build
 echo $PWD
-cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF ..
+cmake -DBUILD_CUDA=OFF -DBUILD_OPENCL=OFF -DCMAKE_CXX_FLAGS="-msse4.1" ..
 make DESTDIR=${GITHUB_WORKSPACE}/${BEAGLE_DIR} install
 #export LD_LIBRARY_PATH=${BEAGLE_LIB}

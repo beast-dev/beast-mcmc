@@ -67,6 +67,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     private final Parameter rateParameter;
     private final DifferentiableBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
+    protected Double numericGradientStepSize = null;
 
     private static int debugCount = 0;
 
@@ -107,6 +108,18 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         } else {
             branchProvider = new ContinuousTraitGradientForBranch.Dense(dim);
         }
+    }
+
+    public double getNumericGradientStepSize() {
+        if (numericGradientStepSize == null) {
+            return StepSizeLevel.SMALL.getStepSizeRatio();
+        } else {
+            return numericGradientStepSize.doubleValue();
+        }
+    }
+
+    public void setNumericGradientStepSize(double stepSize) {
+        numericGradientStepSize = stepSize;
     }
 
     @Override

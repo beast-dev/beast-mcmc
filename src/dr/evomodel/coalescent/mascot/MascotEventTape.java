@@ -17,9 +17,11 @@ import dr.inference.model.Parameter;
 public final class MascotEventTape {
 
     private final MascotCore.Event[] events;
+    private final MascotCore.PreparedEvents preparedEvents;
 
     private MascotEventTape(MascotCore.Event[] events) {
         this.events = events;
+        this.preparedEvents = MascotCore.prepareEvents(events);
     }
 
     public static MascotEventTape fromTree(TreeModel tree, Parameter tipStates, int stateCount) {
@@ -63,5 +65,13 @@ public final class MascotEventTape {
 
     public MascotCore.Event[] getEvents() {
         return events.clone();
+    }
+
+    /**
+     * Already sorted and validated; safe to reuse across many evaluations of the
+     * same fixed tree without re-cloning or re-sorting.
+     */
+    public MascotCore.PreparedEvents getPreparedEvents() {
+        return preparedEvents;
     }
 }

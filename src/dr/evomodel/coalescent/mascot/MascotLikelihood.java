@@ -72,7 +72,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (!likelihoodKnown) {
             ensureEventTape();
             ensureCore();
-            logLikelihood = core.evaluate(eventTape.getEvents(), dynamics.getThetaValues(), false, checkProbabilities).logLikelihood;
+            logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), false, checkProbabilities).logLikelihood;
             likelihoodKnown = true;
         }
         return logLikelihood;
@@ -81,7 +81,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     public double[] getGradientLogDensity() {
         ensureEventTape();
         ensureCore();
-        MascotCore.Result result = core.evaluate(eventTape.getEvents(), dynamics.getThetaValues(), true, checkProbabilities);
+        MascotCore.Result result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), true, checkProbabilities);
         logLikelihood = result.logLikelihood;
         likelihoodKnown = true;
         return result.gradient;

@@ -52,6 +52,8 @@ public final class MascotCore {
 
     private final Workspace workspace = new Workspace();
     private final EpochRates[] epochRates;
+    private final ActiveState activeState = new ActiveState();
+    private int epochCursor;
 
     public MascotCore(int stateCount, double[] boundaries, double maxStep) {
         if (stateCount < 2) {
@@ -142,10 +144,23 @@ public final class MascotCore {
     }
 
     public Result evaluate(Event[] events, double[] theta, boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepareEvents(events), theta, computeGradient, checkProbabilities);
+        return evaluate(prepareEvents(events), theta, computeGradient, checkProbabilities, true);
     }
 
     public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient, boolean checkProbabilities) {
+        return evaluate(prepared, theta, computeGradient, checkProbabilities, true);
+    }
+
+    /**
+     * Same as {@link #evaluate(PreparedEvents, double[], boolean, boolean)}, but
+     * skips copying the final root probabilities and active-lineage ids into the
+     * returned {@link Result} when {@code copyFinalState} is false. Callers that
+     * only need {@code logLikelihood}/{@code gradient} (the normal BEAST
+     * likelihood and gradient-provider paths) should use {@code false} to avoid
+     * two allocations and copies per call that nobody reads.
+     */
+    public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient,
+                           boolean checkProbabilities, boolean copyFinalState) {
         if (prepared == null) {
             throw new IllegalArgumentException("prepared events must not be null");
         }
@@ -159,9 +174,16 @@ public final class MascotCore {
         }
 
         Event[] sortedEvents = prepared.sortedEvents;
-        ActiveState state = new ActiveState(sortedEvents.length, stateCount, prepared.maxLineageId);
+        ActiveState state = activeState;
+        state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
+        epochCursor = 0;
         double currentTime = 0.0;
-        List<OperationTape> operations = computeGradient ? new ArrayList<OperationTape>() : null;
+        // One tape entry per event, plus at most one IntervalTape per epoch transition
+        // between events; the list still grows past this if needed, this only avoids
+        // the common case of repeated doubling.
+        List<OperationTape> operations = computeGradient
+                ? new ArrayList<OperationTape>(sortedEvents.length + epochCount)
+                : null;
 
         for (Event event : sortedEvents) {
             if (event.time < currentTime - TIME_TOLERANCE) {
@@ -200,7 +222,9 @@ public final class MascotCore {
             gradient = reverse(operations, state.activeCount);
         }
 
-        return new Result(state.logLikelihood, gradient, state.copyProbabilities(), state.copyActiveIds());
+        double[] rootProbabilities = copyFinalState ? state.copyProbabilities() : null;
+        int[] activeLineages = copyFinalState ? state.copyActiveIds() : null;
+        return new Result(state.logLikelihood, gradient, rootProbabilities, activeLineages);
     }
 
     // ------------------------------------------------------------------
@@ -301,31 +325,32 @@ public final class MascotCore {
         int K = stateCount;
         int stateSize = activeCount * K;
 
+        w.sums = ensure(w.sums, K);
+        w.sumsSquares = ensure(w.sumsSquares, K);
+        Arrays.fill(w.sums, 0, K, 0.0);
+        Arrays.fill(w.sumsSquares, 0, K, 0.0);
+
+        // sums/sumsSquares accumulation is fused into the migration loop below
+        // (same lineage-outer traversal, reusing the already-loaded p0/p values)
+        // rather than a separate pass over activeCount * K. The migration loop's
+        // own zero-fill-avoidance ("=" for source 0, "+=" for source 1..K-1 into
+        // out) is preserved unchanged.
         for (int lineage = 0; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             double p0 = y[offset];
+            w.sums[0] += p0;
+            w.sumsSquares[0] += p0 * p0;
             for (int sink = 0; sink < K; sink++) {
                 out[offset + sink] = p0 * rates.migrationMatrix[sink];
             }
             for (int source = 1; source < K; source++) {
                 double p = y[offset + source];
+                w.sums[source] += p;
+                w.sumsSquares[source] += p * p;
                 int row = source * K;
                 for (int sink = 0; sink < K; sink++) {
                     out[offset + sink] += p * rates.migrationMatrix[row + sink];
                 }
-            }
-        }
-
-        w.sums = ensure(w.sums, K);
-        w.sumsSquares = ensure(w.sumsSquares, K);
-        Arrays.fill(w.sums, 0, K, 0.0);
-        Arrays.fill(w.sumsSquares, 0, K, 0.0);
-        for (int lineage = 0; lineage < activeCount; lineage++) {
-            int offset = lineage * K;
-            for (int state = 0; state < K; state++) {
-                double p = y[offset + state];
-                w.sums[state] += p;
-                w.sumsSquares[state] += p * p;
             }
         }
 
@@ -358,26 +383,61 @@ public final class MascotCore {
     private double[] reverse(List<OperationTape> operations, int finalActiveCount) {
         double[] gradient = new double[parameterCount];
         int dim = finalActiveCount * stateCount + 1;
-        double[] adjointAfter = new double[dim];
-        adjointAfter[dim - 1] = 1.0;
+
+        // Ping-pong between two reusable buffers across the whole reverse traversal
+        // (operations included) instead of allocating a fresh adjoint array at every
+        // sample/coalescent/interval boundary. Dimension changes by +/- stateCount at
+        // sample/coalescent events, so each buffer is grown (never shrunk) to the
+        // largest dimension it is ever asked to hold. These are distinct from
+        // Workspace.reverseCursorA/B, which reverseIntervalInto uses internally for
+        // its own per-RK4-step ping-pong (same dimension throughout one interval, so
+        // that inner loop does not need to touch these outer, operation-level buffers).
+        workspace.reverseOperationA = ensure(workspace.reverseOperationA, dim);
+        double[] cursor = workspace.reverseOperationA;
+        Arrays.fill(cursor, 0, dim, 0.0);
+        cursor[dim - 1] = 1.0;
+        boolean cursorIsA = true;
 
         for (int opIndex = operations.size() - 1; opIndex >= 0; opIndex--) {
             OperationTape operation = operations.get(opIndex);
+            int nextDim;
             if (operation instanceof IntervalTape) {
-                adjointAfter = reverseInterval((IntervalTape) operation, adjointAfter, gradient);
+                nextDim = dim;
             } else if (operation instanceof CoalescentTape) {
-                adjointAfter = reverseCoalescent((CoalescentTape) operation, adjointAfter, gradient);
+                nextDim = dim + stateCount;
             } else if (operation instanceof SampleTape) {
-                adjointAfter = reverseSample((SampleTape) operation, adjointAfter);
+                nextDim = dim - stateCount;
             } else {
                 throw new IllegalArgumentException("unknown tape operation: " + operation.getClass());
             }
+
+            double[] next;
+            if (cursorIsA) {
+                workspace.reverseOperationB = ensure(workspace.reverseOperationB, nextDim);
+                next = workspace.reverseOperationB;
+            } else {
+                workspace.reverseOperationA = ensure(workspace.reverseOperationA, nextDim);
+                next = workspace.reverseOperationA;
+            }
+
+            if (operation instanceof IntervalTape) {
+                reverseIntervalInto((IntervalTape) operation, cursor, next, gradient);
+            } else if (operation instanceof CoalescentTape) {
+                reverseCoalescentInto((CoalescentTape) operation, cursor, dim, next, gradient);
+            } else {
+                reverseSampleInto((SampleTape) operation, cursor, dim, next);
+            }
+
+            cursor = next;
+            cursorIsA = !cursorIsA;
+            dim = nextDim;
         }
 
         return gradient;
     }
 
-    private double[] reverseInterval(IntervalTape tape, double[] adjointAfter, double[] gradient) {
+    private void reverseIntervalInto(IntervalTape tape, double[] adjointAfter, double[] adjointBeforeOut,
+                                     double[] gradient) {
         int dim = tape.stateDimension;
         EpochRates rates = epochRates[tape.epoch];
 
@@ -395,9 +455,7 @@ public final class MascotCore {
             next = swap;
         }
 
-        double[] result = new double[dim];
-        System.arraycopy(cursor, 0, result, 0, dim);
-        return result;
+        System.arraycopy(cursor, 0, adjointBeforeOut, 0, dim);
     }
 
     private void reverseStepInto(IntervalTape tape, int offset, EpochRates rates, double[] adjointAfter,
@@ -419,33 +477,35 @@ public final class MascotCore {
         w.adjointK4 = ensure(w.adjointK4, dim);
         scaleInto(adjointAfter, h / 6.0, w.adjointK4, dim);
 
-        w.tapeSlice = ensure(w.tapeSlice, dim);
         w.vjpY = ensure(w.vjpY, dim);
 
-        System.arraycopy(tape.y4, offset, w.tapeSlice, 0, dim);
-        rhsVjpInto(w.tapeSlice, activeCount, rates, epoch, w.adjointK4, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y4, offset, activeCount, rates, epoch, w.adjointK4, w.vjpY, gradient, w);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK3, w.vjpY, h, dim);
 
-        System.arraycopy(tape.y3, offset, w.tapeSlice, 0, dim);
-        rhsVjpInto(w.tapeSlice, activeCount, rates, epoch, w.adjointK3, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y3, offset, activeCount, rates, epoch, w.adjointK3, w.vjpY, gradient, w);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK2, w.vjpY, 0.5 * h, dim);
 
-        System.arraycopy(tape.y2, offset, w.tapeSlice, 0, dim);
-        rhsVjpInto(w.tapeSlice, activeCount, rates, epoch, w.adjointK2, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y2, offset, activeCount, rates, epoch, w.adjointK2, w.vjpY, gradient, w);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK1, w.vjpY, 0.5 * h, dim);
 
-        System.arraycopy(tape.y0, offset, w.tapeSlice, 0, dim);
-        rhsVjpInto(w.tapeSlice, activeCount, rates, epoch, w.adjointK1, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y0, offset, activeCount, rates, epoch, w.adjointK1, w.vjpY, gradient, w);
         addInPlace(w.adjointY0, w.vjpY, dim);
 
         System.arraycopy(w.adjointY0, 0, adjointBeforeOut, 0, dim);
     }
 
-    private void rhsVjpInto(double[] y, int activeCount, EpochRates rates, int epoch, double[] adjointRhs,
-                            double[] adjointYOut, double[] gradient, Workspace w) {
+    /**
+     * {@code y} is read at {@code yOffset + ...} throughout, so callers can pass a
+     * taped stage array (e.g. {@code tape.y4}) directly at the right per-step
+     * offset instead of copying that step's slice into a scratch buffer first.
+     * {@code adjointRhs}, {@code adjointYOut}, and {@code gradient} are always
+     * 0-based (they are per-call workspace/output buffers, not taped arrays).
+     */
+    private void rhsVjpInto(double[] y, int yOffset, int activeCount, EpochRates rates, int epoch,
+                            double[] adjointRhs, double[] adjointYOut, double[] gradient, Workspace w) {
         int K = stateCount;
         int stateSize = activeCount * K;
         // adjointYOut[stateSize] (the VJP component for the input's log-likelihood
@@ -453,13 +513,38 @@ public final class MascotCore {
         // reads y[stateSize], so nothing below ever writes this index again.
         adjointYOut[stateSize] = 0.0;
 
+        // migrationGram[source*K+sink] = sum_lineage y[.,source] * adjointRhs[.,sink].
+        // The theta-gradient contribution for migration rate (source -> sink) is
+        // sum_lineage y[.,source] * (adjointRhs[.,sink] - adjointRhs[.,source]), which
+        // is exactly migrationGram[source,sink] - migrationGram[source,source]: the
+        // diagonal entries are precisely the term the old two-separate-loops version
+        // recomputed redundantly (K-1 times per source, once per sink). Building this
+        // matrix inside the same lineage-outer pass as the y-adjoint below removes
+        // that redundancy and turns the old (source,sink)-outer / lineage-inner
+        // stride-K loop into one extra accumulation per already-visited element.
+        w.migrationGram = ensure(w.migrationGram, K * K);
+        Arrays.fill(w.migrationGram, 0, K * K, 0.0);
+        w.sums = ensure(w.sums, K);
+        w.sumsSquares = ensure(w.sumsSquares, K);
+        Arrays.fill(w.sums, 0, K, 0.0);
+        Arrays.fill(w.sumsSquares, 0, K, 0.0);
+
+        // sums/sumsSquares accumulation is fused in here too (same lineage-outer
+        // pass, reusing ySource); both are already unconditionally zeroed above
+        // (a cheap O(K) fill), so this fusion has none of the zero-init hazard the
+        // "out"/"adjointYOut" writes elsewhere in this file need to avoid.
         for (int lineage = 0; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             for (int source = 0; source < K; source++) {
+                double ySource = y[yOffset + offset + source];
+                w.sums[source] += ySource;
+                w.sumsSquares[source] += ySource * ySource;
                 double v = 0.0;
                 int row = source * K;
                 for (int sink = 0; sink < K; sink++) {
-                    v += adjointRhs[offset + sink] * rates.migrationMatrix[row + sink];
+                    double adjSink = adjointRhs[offset + sink];
+                    v += adjSink * rates.migrationMatrix[row + sink];
+                    w.migrationGram[row + sink] += ySource * adjSink;
                 }
                 adjointYOut[offset + source] = v;
             }
@@ -468,31 +553,16 @@ public final class MascotCore {
         int thetaOffset = epoch * parametersPerEpoch;
         int rateIndex = 0;
         for (int source = 0; source < K; source++) {
+            int row = source * K;
+            double diagonal = w.migrationGram[row + source];
             for (int sink = 0; sink < K; sink++) {
                 if (source == sink) {
                     continue;
                 }
                 double rate = rates.migrationRates[rateIndex];
-                double contribution = 0.0;
-                for (int lineage = 0; lineage < activeCount; lineage++) {
-                    int offset = lineage * K;
-                    contribution += y[offset + source] * (adjointRhs[offset + sink] - adjointRhs[offset + source]);
-                }
+                double contribution = w.migrationGram[row + sink] - diagonal;
                 gradient[thetaOffset + rateIndex] += rate * contribution;
                 rateIndex++;
-            }
-        }
-
-        w.sums = ensure(w.sums, K);
-        w.sumsSquares = ensure(w.sumsSquares, K);
-        Arrays.fill(w.sums, 0, K, 0.0);
-        Arrays.fill(w.sumsSquares, 0, K, 0.0);
-        for (int lineage = 0; lineage < activeCount; lineage++) {
-            int offset = lineage * K;
-            for (int state = 0; state < K; state++) {
-                double p = y[offset + state];
-                w.sums[state] += p;
-                w.sumsSquares[state] += p * p;
             }
         }
 
@@ -502,9 +572,9 @@ public final class MascotCore {
             int offset = lineage * K;
             double r = 0.0;
             for (int state = 0; state < K; state++) {
-                double h = (w.sums[state] - y[offset + state]) * rates.inversePopulation[state];
+                double h = (w.sums[state] - y[yOffset + offset + state]) * rates.inversePopulation[state];
                 w.hValues[offset + state] = h;
-                r += y[offset + state] * h;
+                r += y[yOffset + offset + state] * h;
             }
             w.rValues[lineage] = r;
         }
@@ -514,7 +584,7 @@ public final class MascotCore {
             int offset = lineage * K;
             double b = 0.0;
             for (int state = 0; state < K; state++) {
-                b += adjointRhs[offset + state] * y[offset + state];
+                b += adjointRhs[offset + state] * y[yOffset + offset + state];
             }
             w.bValues[lineage] = b;
         }
@@ -529,7 +599,7 @@ public final class MascotCore {
                 double upstream = adjointRhs[offset + state];
                 adjointYOut[offset + state] += upstream * (w.rValues[lineage] - w.hValues[offset + state]) +
                         b * w.hValues[offset + state];
-                double c = y[offset + state] * (b - upstream);
+                double c = y[yOffset + offset + state] * (b - upstream);
                 w.cValues[offset + state] = c;
                 w.cSums[state] += c;
             }
@@ -542,7 +612,7 @@ public final class MascotCore {
             for (int state = 0; state < K; state++) {
                 double c = w.cValues[offset + state];
                 adjointYOut[offset + state] += rates.inversePopulation[state] * (w.cSums[state] - c);
-                w.gradQ[state] += c * (w.sums[state] - y[offset + state]);
+                w.gradQ[state] += c * (w.sums[state] - y[yOffset + offset + state]);
             }
         }
 
@@ -576,11 +646,10 @@ public final class MascotCore {
             throw new IllegalArgumentException("lineage " + event.lineage + " is already active");
         }
 
-        double[] probabilities = normalizedSampleProbabilities(event);
         int index = state.activeCount;
         state.ensureCapacity(index + 1);
+        writeNormalizedSampleProbabilities(event, state.probabilities, index * stateCount);
         state.activeIds[index] = event.lineage;
-        System.arraycopy(probabilities, 0, state.probabilities, index * stateCount, stateCount);
         state.setActiveIndex(event.lineage, index);
         state.activeCount++;
 
@@ -636,8 +705,12 @@ public final class MascotCore {
 
         int beforeCount = state.activeCount;
         int afterCount = beforeCount - 1;
-        int[] keepBeforeIndices = recordTape ? new int[afterCount - 1] : null;
 
+        // The before-index for a given after-index is fully determined by
+        // (first, second, beforeCount) alone -- it is whichever before-index this
+        // same skip-first-and-second enumeration reaches after `afterIndex` prior
+        // non-skipped positions -- so it does not need to be recorded on the tape;
+        // reverseCoalescent() reconstructs it by repeating this same enumeration.
         int out = 0;
         for (int i = 0; i < beforeCount; i++) {
             if (i == first || i == second) {
@@ -648,9 +721,6 @@ public final class MascotCore {
                 System.arraycopy(state.probabilities, i * stateCount, state.probabilities, out * stateCount, stateCount);
             }
             state.setActiveIndex(state.activeIds[out], out);
-            if (recordTape) {
-                keepBeforeIndices[out] = i;
-            }
             out++;
         }
 
@@ -665,19 +735,24 @@ public final class MascotCore {
         state.logLikelihood += Math.log(lambda);
 
         if (operations != null) {
-            operations.add(new CoalescentTape(epoch, first, second, parentIndexAfter, keepBeforeIndices,
+            operations.add(new CoalescentTape(epoch, first, second, parentIndexAfter,
                     p1.clone(), p2.clone(), parentProbabilities, lambda));
         }
     }
 
-    private double[] normalizedSampleProbabilities(Event event) {
-        double[] probabilities = new double[stateCount];
+    /**
+     * Writes the normalized sample-state probability vector directly into {@code
+     * out} at {@code offset}, avoiding the per-sample-event {@code double[]}
+     * allocation an intermediate array would cost.
+     */
+    private void writeNormalizedSampleProbabilities(Event event, double[] out, int offset) {
         if (event.stateProbabilities == null) {
             if (event.state < 0 || event.state >= stateCount) {
                 throw new IllegalArgumentException("sample state out of range: " + event.state);
             }
-            probabilities[event.state] = 1.0;
-            return probabilities;
+            Arrays.fill(out, offset, offset + stateCount, 0.0);
+            out[offset + event.state] = 1.0;
+            return;
         }
         if (event.stateProbabilities.length != stateCount) {
             throw new IllegalArgumentException("sample probability dimension mismatch");
@@ -693,37 +768,45 @@ public final class MascotCore {
             throw new IllegalArgumentException("sample probabilities must have positive sum");
         }
         for (int s = 0; s < stateCount; s++) {
-            probabilities[s] = event.stateProbabilities[s] / sum;
+            out[offset + s] = event.stateProbabilities[s] / sum;
         }
-        return probabilities;
     }
 
-    private double[] reverseSample(SampleTape tape, double[] adjointAfter) {
-        int afterCount = (adjointAfter.length - 1) / stateCount;
-        int beforeCount = afterCount - 1;
-        double[] adjointBefore = new double[beforeCount * stateCount + 1];
+    /**
+     * {@code afterDim} is the logical size of (i.e. number of meaningful leading
+     * elements in) {@code adjointAfter} -- it cannot be read off {@code
+     * adjointAfter.length}, since that array is a reused, growth-only buffer from
+     * {@link #reverse}'s operation-level ping-pong and may be physically larger
+     * than the current logical dimension.
+     */
+    private void reverseSampleInto(SampleTape tape, double[] adjointAfter, int afterDim, double[] adjointBeforeOut) {
+        int afterCount = (afterDim - 1) / stateCount;
 
         int out = 0;
         for (int i = 0; i < afterCount; i++) {
             if (i == tape.sampleIndexAfter) {
                 continue;
             }
-            System.arraycopy(adjointAfter, i * stateCount, adjointBefore, out * stateCount, stateCount);
+            System.arraycopy(adjointAfter, i * stateCount, adjointBeforeOut, out * stateCount, stateCount);
             out++;
         }
-        adjointBefore[adjointBefore.length - 1] = adjointAfter[adjointAfter.length - 1];
-        return adjointBefore;
+        adjointBeforeOut[afterDim - stateCount - 1] = adjointAfter[afterDim - 1];
     }
 
-    private double[] reverseCoalescent(CoalescentTape tape, double[] adjointAfter, double[] gradient) {
-        int afterCount = (adjointAfter.length - 1) / stateCount;
-        int beforeCount = afterCount + 1;
-        double[] adjointBefore = new double[beforeCount * stateCount + 1];
+    /** See {@link #reverseSampleInto}'s doc comment regarding {@code afterDim}. */
+    private void reverseCoalescentInto(CoalescentTape tape, double[] adjointAfter, int afterDim,
+                                       double[] adjointBeforeOut, double[] gradient) {
+        int beforeDim = afterDim + stateCount;
+        int beforeCount = (beforeDim - 1) / stateCount;
 
-        for (int afterIndex = 0; afterIndex < tape.keepBeforeIndices.length; afterIndex++) {
-            int beforeIndex = tape.keepBeforeIndices[afterIndex];
+        int afterIndex = 0;
+        for (int beforeIndex = 0; beforeIndex < beforeCount; beforeIndex++) {
+            if (beforeIndex == tape.child1Index || beforeIndex == tape.child2Index) {
+                continue;
+            }
             System.arraycopy(adjointAfter, afterIndex * stateCount,
-                    adjointBefore, beforeIndex * stateCount, stateCount);
+                    adjointBeforeOut, beforeIndex * stateCount, stateCount);
+            afterIndex++;
         }
 
         int parentOffset = tape.parentIndexAfter * stateCount;
@@ -733,24 +816,28 @@ public final class MascotCore {
         }
 
         int thetaOffset = tape.epoch * parametersPerEpoch + migrationParametersPerEpoch;
-        double ellAdjoint = adjointAfter[adjointAfter.length - 1];
+        double ellAdjoint = adjointAfter[afterDim - 1];
         for (int s = 0; s < stateCount; s++) {
             double p1 = Math.max(tape.p1[s], EPS);
             double p2 = Math.max(tape.p2[s], EPS);
             double centered = adjointAfter[parentOffset + s] - dot;
             double bar = tape.parentProbabilities[s] * centered;
 
-            adjointBefore[tape.child1Index * stateCount + s] += bar / p1;
-            adjointBefore[tape.child2Index * stateCount + s] += bar / p2;
+            // First write to each child slot must assign (=), not accumulate (+=):
+            // reverseCoalescentInto may write into a reused buffer (see reverse()'s
+            // operation-level ping-pong) whose child1Index/child2Index positions the
+            // compaction loop above never touches, so they can hold stale data from an
+            // earlier reverse-pass operation.
+            adjointBeforeOut[tape.child1Index * stateCount + s] = bar / p1;
+            adjointBeforeOut[tape.child2Index * stateCount + s] = bar / p2;
             gradient[thetaOffset + s] += -bar;
 
-            adjointBefore[tape.child1Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p1;
-            adjointBefore[tape.child2Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p2;
+            adjointBeforeOut[tape.child1Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p1;
+            adjointBeforeOut[tape.child2Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p2;
             gradient[thetaOffset + s] += -ellAdjoint * tape.parentProbabilities[s];
         }
 
-        adjointBefore[adjointBefore.length - 1] = ellAdjoint;
-        return adjointBefore;
+        adjointBeforeOut[beforeDim - 1] = ellAdjoint;
     }
 
     // ------------------------------------------------------------------
@@ -786,22 +873,35 @@ public final class MascotCore {
     // Epoch/time bookkeeping
     // ------------------------------------------------------------------
 
+    /**
+     * Both {@link #epochAt} and {@link #nextBoundaryAfter} scan {@code
+     * boundaries} starting from {@link #epochCursor} instead of from the
+     * beginning: {@code evaluate(...)} only ever queries these with a
+     * nondecreasing sequence of times (both {@code currentTime} and {@code
+     * event.time} only increase over one evaluate() call), so {@code
+     * boundaries[epochCursor] <= any time queried so far} is an invariant, and
+     * every boundary at or before {@code epochCursor} is therefore already known
+     * to fail both methods' "is this boundary after the query time" tests. This
+     * changes only the scan's starting point, not either method's comparison
+     * expressions (still using the exact same TIME_TOLERANCE arithmetic), so it
+     * cannot change which epoch/boundary is returned for a given time -- only how
+     * many array entries are checked to find it.
+     */
     private int epochAt(double t) {
         if (t < -TIME_TOLERANCE) {
             throw new IllegalArgumentException("time is before zero: " + t);
         }
-        int epoch = 0;
-        while (epoch + 1 < boundaries.length && t >= boundaries[epoch + 1] - TIME_TOLERANCE) {
-            epoch++;
+        while (epochCursor + 1 < boundaries.length && t >= boundaries[epochCursor + 1] - TIME_TOLERANCE) {
+            epochCursor++;
         }
-        if (epoch >= epochCount) {
+        if (epochCursor >= epochCount) {
             return epochCount - 1;
         }
-        return epoch;
+        return epochCursor;
     }
 
     private double nextBoundaryAfter(double start, double stop) {
-        for (int i = 1; i < boundaries.length; i++) {
+        for (int i = epochCursor + 1; i < boundaries.length; i++) {
             double boundary = boundaries[i];
             if (boundary > start + TIME_TOLERANCE) {
                 if (boundary <= stop + TIME_TOLERANCE) {
@@ -1007,22 +1107,52 @@ public final class MascotCore {
         }
     }
 
+    /**
+     * Reused across {@link #evaluate} calls (growth-only, like {@link Workspace})
+     * rather than allocated fresh every call. Active/inactive status is tracked
+     * with a generation stamp instead of a {@code -1}-filled map: {@link #reset}
+     * bumps {@link #currentGeneration} instead of re-filling {@code
+     * lineageGeneration}, so resetting costs O(1) instead of O(maxLineageId).
+     */
     private static final class ActiveState {
         private int[] activeIds;
         private double[] probabilities;
         private int activeCount;
         private double logLikelihood;
-        private final int stateCount;
+        private int stateCount;
         private int[] lineageToActiveIndex;
+        private int[] lineageGeneration;
+        private int currentGeneration;
 
-        private ActiveState(int capacity, int stateCount, int maxLineageId) {
+        private ActiveState() {
+            this.activeIds = new int[1];
+            this.probabilities = new double[1];
+            this.lineageToActiveIndex = new int[1];
+            this.lineageGeneration = new int[1];
+            this.currentGeneration = 1;
+        }
+
+        private void reset(int stateCount, int capacity, int maxLineageId) {
             this.stateCount = stateCount;
-            this.activeIds = new int[Math.max(1, capacity)];
-            this.probabilities = new double[Math.max(1, capacity * stateCount)];
-            this.activeCount = 0;
-            this.logLikelihood = 0.0;
-            this.lineageToActiveIndex = new int[Math.max(1, maxLineageId + 1)];
-            Arrays.fill(this.lineageToActiveIndex, -1);
+            if (activeIds.length < capacity) {
+                activeIds = new int[capacity];
+            }
+            int probabilityCapacity = capacity * stateCount;
+            if (probabilities.length < probabilityCapacity) {
+                probabilities = new double[probabilityCapacity];
+            }
+            int lineageCapacity = maxLineageId + 1;
+            if (lineageGeneration.length < lineageCapacity) {
+                lineageToActiveIndex = new int[lineageCapacity];
+                lineageGeneration = new int[lineageCapacity];
+            }
+            activeCount = 0;
+            logLikelihood = 0.0;
+            currentGeneration++;
+            if (currentGeneration == Integer.MAX_VALUE) {
+                Arrays.fill(lineageGeneration, 0);
+                currentGeneration = 1;
+            }
         }
 
         private void ensureCapacity(int capacity) {
@@ -1036,22 +1166,26 @@ public final class MascotCore {
         }
 
         private boolean isActive(int lineageId) {
-            return lineageId >= 0 && lineageId < lineageToActiveIndex.length && lineageToActiveIndex[lineageId] >= 0;
+            return lineageId >= 0 && lineageId < lineageGeneration.length
+                    && lineageGeneration[lineageId] == currentGeneration;
         }
 
         private int activeIndexOf(int lineageId) {
-            if (lineageId < 0 || lineageId >= lineageToActiveIndex.length) {
+            if (!isActive(lineageId)) {
                 return -1;
             }
             return lineageToActiveIndex[lineageId];
         }
 
         private void setActiveIndex(int lineageId, int index) {
+            lineageGeneration[lineageId] = currentGeneration;
             lineageToActiveIndex[lineageId] = index;
         }
 
         private void clearActiveIndex(int lineageId) {
-            lineageToActiveIndex[lineageId] = -1;
+            if (lineageId >= 0 && lineageId < lineageGeneration.length) {
+                lineageGeneration[lineageId] = 0;
+            }
         }
 
         private double[] copyProbabilities() {
@@ -1094,17 +1228,22 @@ public final class MascotCore {
         double[] cValues;
         double[] cSums;
         double[] gradQ;
+        /** K*K accumulator; see the doc comment at its use site in rhsVjpInto. */
+        double[] migrationGram;
 
         double[] adjointY0;
         double[] adjointK1;
         double[] adjointK2;
         double[] adjointK3;
         double[] adjointK4;
-        double[] tapeSlice;
         double[] vjpY;
 
         double[] reverseCursorA;
         double[] reverseCursorB;
+
+        /** Operation-level ping-pong buffers for reverse(); see the comment there. */
+        double[] reverseOperationA;
+        double[] reverseOperationB;
 
         double[] coalP1;
         double[] coalP2;
@@ -1172,7 +1311,6 @@ public final class MascotCore {
         private final int child1Index;
         private final int child2Index;
         private final int parentIndexAfter;
-        private final int[] keepBeforeIndices;
         private final double[] p1;
         private final double[] p2;
         private final double[] parentProbabilities;
@@ -1180,13 +1318,12 @@ public final class MascotCore {
         private final double lambda;
 
         private CoalescentTape(int epoch, int child1Index, int child2Index, int parentIndexAfter,
-                               int[] keepBeforeIndices, double[] p1, double[] p2,
+                               double[] p1, double[] p2,
                                double[] parentProbabilities, double lambda) {
             this.epoch = epoch;
             this.child1Index = child1Index;
             this.child2Index = child2Index;
             this.parentIndexAfter = parentIndexAfter;
-            this.keepBeforeIndices = keepBeforeIndices;
             this.p1 = p1;
             this.p2 = p2;
             this.parentProbabilities = parentProbabilities;

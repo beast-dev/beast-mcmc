@@ -31,9 +31,28 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     private boolean eventTapeKnown;
     private boolean coreKnown;
     private boolean likelihoodKnown;
+    private boolean gradientKnown;
 
     private double logLikelihood;
+    private double[] gradient;
+
+    // Snapshots taken by storeState() and restored by restoreState() on a
+    // rejected proposal. Restoring the actual eventTape/core references (rather
+    // than just invalidating eventTapeKnown/coreKnown, as an earlier version of
+    // this class did) means a rejected proposal that never touched the tree or
+    // epoch times does not force a full event-tape/core rebuild on the next
+    // evaluation. Both MascotEventTape and MascotCore are effectively immutable
+    // from this wrapper's point of view once built (MascotCore's internal
+    // per-epoch rate cache is fully recomputed from theta at the start of every
+    // evaluate() call regardless), so sharing the stored reference back in is safe.
+    private MascotEventTape storedEventTape;
+    private MascotCore storedCore;
+    private boolean storedEventTapeKnown;
+    private boolean storedCoreKnown;
+    private boolean storedLikelihoodKnown;
+    private boolean storedGradientKnown;
     private double storedLogLikelihood;
+    private double[] storedGradient;
 
     public MascotLikelihood(String name,
                             TreeModel treeModel,
@@ -60,6 +79,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         this.eventTapeKnown = false;
         this.coreKnown = false;
         this.likelihoodKnown = false;
+        this.gradientKnown = false;
     }
 
     @Override
@@ -72,19 +92,26 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (!likelihoodKnown) {
             ensureEventTape();
             ensureCore();
-            logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), false, checkProbabilities).logLikelihood;
+            logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), false, checkProbabilities, false).logLikelihood;
             likelihoodKnown = true;
         }
         return logLikelihood;
     }
 
     public double[] getGradientLogDensity() {
-        ensureEventTape();
-        ensureCore();
-        MascotCore.Result result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), true, checkProbabilities);
-        logLikelihood = result.logLikelihood;
-        likelihoodKnown = true;
-        return result.gradient;
+        if (!gradientKnown) {
+            ensureEventTape();
+            ensureCore();
+            MascotCore.Result result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), true, checkProbabilities, false);
+            logLikelihood = result.logLikelihood;
+            gradient = result.gradient;
+            likelihoodKnown = true;
+            gradientKnown = true;
+        }
+        // Clone on every return, not just on a cache hit: the stored gradient array
+        // is reused across calls, so a caller that mutated the returned array in
+        // place would otherwise silently corrupt the cache for the next caller.
+        return gradient.clone();
     }
 
     public Parameter getTheta() {
@@ -108,6 +135,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         eventTapeKnown = false;
         coreKnown = false;
         likelihoodKnown = false;
+        gradientKnown = false;
     }
 
     @Override
@@ -118,6 +146,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
             coreKnown = false;
         }
         likelihoodKnown = false;
+        gradientKnown = false;
         fireModelChanged();
     }
 
@@ -126,7 +155,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (variable == tipStates) {
             eventTapeKnown = false;
         } else if (variable == dynamics.getTheta()) {
-            // The event tape is still valid; only the numeric likelihood changes.
+            // The event tape is still valid; only the numeric likelihood and gradient change.
         } else if (variable == dynamics.getEpochTimes()) {
             coreKnown = false;
         } else {
@@ -134,25 +163,37 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
             coreKnown = false;
         }
         likelihoodKnown = false;
+        gradientKnown = false;
         fireModelChanged();
     }
 
     @Override
     protected void storeState() {
         storedLogLikelihood = logLikelihood;
+        storedGradient = gradient;
+        storedEventTape = eventTape;
+        storedCore = core;
+        storedEventTapeKnown = eventTapeKnown;
+        storedCoreKnown = coreKnown;
+        storedLikelihoodKnown = likelihoodKnown;
+        storedGradientKnown = gradientKnown;
     }
 
     @Override
     protected void restoreState() {
         logLikelihood = storedLogLikelihood;
-        likelihoodKnown = true;
-        eventTapeKnown = false;
-        coreKnown = false;
+        gradient = storedGradient;
+        eventTape = storedEventTape;
+        core = storedCore;
+        eventTapeKnown = storedEventTapeKnown;
+        coreKnown = storedCoreKnown;
+        likelihoodKnown = storedLikelihoodKnown;
+        gradientKnown = storedGradientKnown;
     }
 
     @Override
     protected void acceptState() {
-        // Nothing to do.
+        // Nothing to do: current fields already reflect the accepted state.
     }
 
     @Override

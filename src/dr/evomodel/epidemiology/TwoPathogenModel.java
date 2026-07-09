@@ -53,6 +53,7 @@ public class TwoPathogenModel extends CompartmentalModel {
             compartmentCounts.get(i).setParameterValue(index, 0);
         }
 
+        // total compartment counts should be originTimeSS + 1 for the the infected individual?
         // SS = originTimeSS
         compartmentCounts.get(0).setParameterValue(index, originTimeSS);
 
@@ -269,9 +270,9 @@ public class TwoPathogenModel extends CompartmentalModel {
         // II -> IC
         rVec[29] = recoveryRateModulation* moveToCRateTwo *currentCounts[5];
         // IC -> CC
-        rVec[30] = moveToCRateOne*currentCounts[5];
+        rVec[30] = moveToCRateOne*currentCounts[6];
         // IC -> IR
-        rVec[31] = moveToRRateTwo *currentCounts[5];
+        rVec[31] = moveToRRateTwo *currentCounts[6];
         // IR -> CR
         rVec[32] = moveToCRateOne*currentCounts[7];
         // IR -> IS
@@ -322,6 +323,10 @@ public class TwoPathogenModel extends CompartmentalModel {
         rVec[55] = resusRateTwo*currentCounts[15];
         return rVec;
     }
+
+    /*
+
+    Original getTimeDerivatives
 
     protected double[] getTimeDerivatives(double[] currentCounts){
         double[] returnVec = new double[numReactionChannels];
@@ -391,6 +396,224 @@ public class TwoPathogenModel extends CompartmentalModel {
         return returnVec;
     }
 
+     */
+
+    protected double[] getCompartmentDerivatives(double[] currentCounts){
+        double[] returnVec = new double[numReactionChannels];
+        double SS = currentCounts[0];
+        double SI = currentCounts[1];
+        double SC = currentCounts[2];
+        double SR = currentCounts[3];
+        double IS = currentCounts[4];
+        double II = currentCounts[5];
+        double IC = currentCounts[6];
+        double IR = currentCounts[7];
+        double CS = currentCounts[8];
+        double CI = currentCounts[9];
+        double CC = currentCounts[10];
+        double CR = currentCounts[11];
+        double RS = currentCounts[12];
+        double RI = currentCounts[13];
+        double RC = currentCounts[14];
+        double RR = currentCounts[15];
+
+        double transRateOne = rateParameters.get(0).getParameterValue(0);
+        double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
+        double moveToRRateOne = rateParameters.get(2).getParameterValue(0);
+        double resusRateOne = rateParameters.get(4).getParameterValue(0);
+        double transRateTwo = rateParameters.get(5).getParameterValue(0);
+        double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
+        double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
+        double resusRateTwo = rateParameters.get(9).getParameterValue(0);
+        // change alpha, chi and sigma to names that are consistent with what we used before,
+        // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
+        double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
+        double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
+        double recoveryRateModulation = rateParameters.get(12).getParameterValue(0);
+
+        // SS
+        returnVec[0] = -transRateOne*SS*(IS + II + IR + IC) - transRateTwo*SS*(SI + II + CI + RI) + resusRateOne*RS + resusRateTwo*SR;
+        // SI
+        returnVec[1] = -infectionRateModulationI*transRateOne*SI*(IS + II + IC + IR) + resusRateOne*RI + transRateTwo*SS*(SI + II + CI + RI) - moveToCRateTwo*SI;
+        // SC
+        returnVec[2] = -infectionRateModulationC*transRateOne*SC*(IS + II + IC + IR) + resusRateOne*RC + moveToCRateTwo*SI - moveToRRateTwo*SC;
+        // SR
+        returnVec[3] = -transRateOne*SR*(IS + II + IC + IR) + resusRateOne*RR - resusRateTwo*SR + moveToRRateTwo;
+        // IS
+        returnVec[4] = -infectionRateModulationI*transRateTwo*IS*(SI + II + CI + RI) + resusRateTwo*IR + transRateOne*SS*(IS + II + IC + IR) - moveToCRateOne;
+        // II
+        returnVec[5] = infectionRateModulationI*transRateOne*SI*(IS + II + CI + RI) - recoveryRateModulation* moveToCRateOne*II + infectionRateModulationI*transRateTwo*IS*(SI + II + CI + RI) - recoveryRateModulation*moveToCRateTwo*II;
+        // IC
+        returnVec[6] = infectionRateModulationC*transRateTwo*SC*(IS + II + IC + IR) - moveToCRateOne*IC + recoveryRateModulation* moveToCRateTwo*II - moveToRRateTwo*IC;
+        // IR
+        returnVec[7] = transRateOne*SR*(IS + II + IC + IR) - moveToCRateOne*IR + moveToRRateTwo*IC - resusRateTwo*IR;
+        // CS
+        returnVec[8] = -infectionRateModulationC*transRateTwo*CS*(SI + II + CI + RI) + resusRateTwo*CR + moveToCRateOne*IS - moveToRRateOne*CS;
+        // CI
+        returnVec[9] = infectionRateModulationC*transRateTwo*CS*(SI + II + CI + RI) - moveToCRateTwo*CI + recoveryRateModulation*moveToCRateOne*II - moveToRRateOne*CI;
+        // CC
+        returnVec[10] = moveToCRateOne*IC - moveToRRateOne*CC + moveToCRateTwo*CI - moveToRRateTwo*CC;
+        // CR
+        returnVec[11] = moveToCRateOne*IR - moveToRRateOne*CR + moveToRRateTwo*CC - resusRateTwo*CR;
+        // RS
+        returnVec[12] = -transRateTwo*RS*(SI + II + CI + RI) + resusRateTwo*RR - resusRateOne*RS + moveToRRateOne*CS;
+        // RI
+        returnVec[13] = transRateTwo*RS*(SI + II + CI + RI) - moveToCRateTwo*RI + moveToRRateOne*CI - resusRateOne*RI;
+        // RC
+        returnVec[14] = moveToCRateTwo*RI - moveToRRateTwo*RC + moveToRRateOne*CC - resusRateOne*RC;
+        // RR
+        returnVec[15] = moveToRRateOne*CR - resusRateOne*RR + moveToRRateTwo*RC - resusRateTwo*RR;
+        return returnVec;
+    }
+
+    protected double[] getTimeDerivatives(double[] currentCounts){
+        double[] returnVec = new double[numReactionChannels];
+
+        double[] timeDerivatives = getCompartmentDerivatives(currentCounts);
+        // compartment derivatives
+        double dSS = timeDerivatives[0];
+        double dSI = timeDerivatives[1];
+        double dSC = timeDerivatives[2];
+        double dSR = timeDerivatives[3];
+        double dIS = timeDerivatives[4];
+        double dII = timeDerivatives[5];
+        double dIC = timeDerivatives[6];
+        double dIR = timeDerivatives[7];
+        double dCS = timeDerivatives[8];
+        double dCI = timeDerivatives[9];
+        double dCC = timeDerivatives[10];
+        double dCR = timeDerivatives[11];
+        double dRS = timeDerivatives[12];
+        double dRI = timeDerivatives[13];
+        double dRC = timeDerivatives[14];
+        double dRR = timeDerivatives[15];
+
+        // compartment counts
+        double SS = currentCounts[0];
+        double SI = currentCounts[1];
+        double SC = currentCounts[2];
+        double SR = currentCounts[3];
+        double IS = currentCounts[4];
+        double II = currentCounts[5];
+        double IC = currentCounts[6];
+        double IR = currentCounts[7];
+        double CS = currentCounts[8];
+        double CI = currentCounts[9];
+        double CC = currentCounts[10];
+        double CR = currentCounts[11];
+        double RS = currentCounts[12];
+        double RI = currentCounts[13];
+        double RC = currentCounts[14];
+        double RR = currentCounts[15];
+
+        double transRateOne = rateParameters.get(0).getParameterValue(0);
+        double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
+        double moveToRRateOne = rateParameters.get(2).getParameterValue(0);
+        double resusRateOne = rateParameters.get(4).getParameterValue(0);
+        double transRateTwo = rateParameters.get(5).getParameterValue(0);
+        double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
+        double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
+        double resusRateTwo = rateParameters.get(9).getParameterValue(0);
+        // change alpha, chi and sigma to names that are consistent with what we used before,
+        // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
+        double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
+        double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
+        double recoveryRateModulation = rateParameters.get(12).getParameterValue(0);
+
+        // SS to IS
+        returnVec[0] = transRateOne*dSS*IS + transRateOne*SS*dIS;
+        returnVec[1] = transRateOne*dSS*II + transRateOne*SS*dII;
+        returnVec[2] = transRateOne*dSS*IC + transRateOne*SS*dIC;
+        returnVec[3] = transRateOne*dSS*IR + transRateOne*SS*dIR;
+        // SS to SI
+        returnVec[4] = transRateTwo*dSS*SI + transRateTwo*SS*dSI;
+        returnVec[5] = transRateTwo*dSS*II + transRateTwo*SS*dII;
+        returnVec[6] = transRateTwo*dSS*CI + transRateTwo*SS*dCI;
+        returnVec[7] = transRateTwo*dSS*RI + transRateTwo*SS*dRI;
+        // SI to II
+        returnVec[8] = infectionRateModulationI*transRateOne*dSI*IS + infectionRateModulationI*transRateOne*SI*dIS;
+        returnVec[9] = infectionRateModulationI*transRateOne*dSI*II + infectionRateModulationI*transRateOne*SI*dII;
+        returnVec[10] = infectionRateModulationI*transRateOne*dSI*IC + infectionRateModulationI*transRateOne*SI*dIC;
+        returnVec[11] = infectionRateModulationI*transRateOne*dSI*IR + infectionRateModulationI*transRateOne*SI*dIR;
+        // SI to SC
+        returnVec[12] = moveToCRateTwo*dSI;
+        // SC to IC
+        returnVec[13] = infectionRateModulationC*transRateOne*dSC*IS + infectionRateModulationC*transRateOne*SC*dIS;
+        returnVec[14] = infectionRateModulationC*transRateOne*dSC*II + infectionRateModulationC*transRateOne*SC*dII;
+        returnVec[15] = infectionRateModulationC*transRateOne*dSC*IC + infectionRateModulationC*transRateOne*SC*dIC;
+        returnVec[16] = infectionRateModulationC*transRateOne*dSC*IR + infectionRateModulationC*transRateOne*SC*dIR;
+        // SC to SR
+        returnVec[17] = moveToRRateTwo*dSC;
+        // SR to IR
+        returnVec[18] = transRateOne*dSR*IS + transRateOne*SR*dIS;
+        returnVec[19] = transRateOne*dSR*II + transRateOne*SR*dII;
+        returnVec[20] = transRateOne*dSR*IC + transRateOne*SR*dIC;
+        returnVec[21] = transRateOne*dSR*IR + transRateOne*SR*dIR;
+        // SR to SS
+        returnVec[22] = resusRateTwo*dSR;
+        // IS to CS
+        returnVec[23] = moveToCRateOne*dIS;
+        // IS to II
+        returnVec[24] = infectionRateModulationI*transRateTwo*dIS*SI + infectionRateModulationI*transRateTwo*IS*dSI;
+        returnVec[25] = infectionRateModulationI*transRateTwo*dIS*II + infectionRateModulationI*transRateTwo*IS*dII;
+        returnVec[26] = infectionRateModulationI*transRateTwo*dIS*CI + infectionRateModulationI*transRateTwo*IS*dCI;
+        returnVec[27] = infectionRateModulationI*transRateTwo*dIS*RI + infectionRateModulationI*transRateTwo*IS*dRI;
+        // II to CI
+        returnVec[28] = recoveryRateModulation*moveToCRateOne*dII;
+        // II to IC
+        returnVec[29] = recoveryRateModulation*moveToCRateTwo*dII;
+        // IC to CC
+        returnVec[30] = moveToCRateOne*dIC;
+        // IC to IR
+        returnVec[31] = moveToRRateTwo*dIC;
+        // IR to CR
+        returnVec[32] = moveToCRateOne*dIR;
+        // IR to IS
+        returnVec[33] = resusRateTwo*dIR;
+        // CS to RS
+        returnVec[34] = moveToRRateOne*dCS;
+        // CS to CI
+        returnVec[35] = infectionRateModulationC*transRateTwo*dCS*SI + infectionRateModulationC*transRateTwo*CS*dSI;
+        returnVec[36] = infectionRateModulationC*transRateTwo*dCS*II + infectionRateModulationC*transRateTwo*CS*dII;
+        returnVec[37] = infectionRateModulationC*transRateTwo*dCS*CI + infectionRateModulationC*transRateTwo*CS*dCI;
+        returnVec[38] = infectionRateModulationC*transRateTwo*dCS*RI + infectionRateModulationC*transRateTwo*CS*dRI;
+        // CI to RI
+        returnVec[39] = moveToRRateOne*dCI;
+        // CI to CC
+        returnVec[40] = moveToCRateTwo*dCI;
+        // CC to RC
+        returnVec[41] = moveToRRateOne*dCC;
+        // CC to CR
+        returnVec[42] = moveToRRateTwo*dCC;
+        // CR to RR
+        returnVec[43] = moveToRRateOne*dCR;
+        // CR to CS
+        returnVec[44] = resusRateTwo*dCR;
+        // RS to SS
+        returnVec[45] = resusRateOne*dRS;
+        // RS to RI
+        returnVec[46] = transRateTwo*dRS*SI + transRateTwo*RS*dSI;
+        returnVec[47] = transRateTwo*dRS*II + transRateTwo*RS*dII;
+        returnVec[48] = transRateTwo*dRS*CI + transRateTwo*RS*dCI;
+        returnVec[49] = transRateTwo*dRS*RI + transRateTwo*RS*dRI;
+        // RI to SI
+        returnVec[50] = resusRateOne*dRI;
+        // RI to RC
+        returnVec[51] = moveToCRateTwo*dRI;
+        // RC to SC
+        returnVec[52] = resusRateOne*dRC;
+        // RC to RR
+        returnVec[53] = moveToRRateTwo*dRC;
+        // RR to SR
+        returnVec[54] = resusRateOne*dRR;
+        // RR to RS
+        returnVec[55] = resusRateTwo*dRR;
+
+        return returnVec;
+    }
+
+    // new code to fix getTimeDerivatives issue
+
 
     protected double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau){
         double[] returnVal = new double[numReactionChannels];
@@ -409,11 +632,14 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     // countsNew has each rxn
     protected double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew){
+        throw new RuntimeException("getUpdatedCompartmentCounts is definitely being called");
+
+        /*
         double[] updatedCounts = new double[numSpecies];
         // SS(t+tau) = SS(t) - rxn0 - rxn1 - rxn2 - rxn3 - rxn4 - rxn5 - rxn6 - rxn7 + rxn22 + rxn45
         updatedCounts[0] = currentCounts[0] - countsNew[0] - countsNew[1] - countsNew[2] - countsNew[3] - countsNew[4] - countsNew[5] - countsNew[6] - countsNew[7] + countsNew[22] + countsNew[45];
-        // SI(t+tau) = SI(t) - rxn8 - rxn9 - rxn10 - rxn11 - rxn12 + rxn4 + rxn50
-        updatedCounts[1] = currentCounts[1] - countsNew[8] - countsNew[9] - countsNew[10] - countsNew[11] - countsNew[12] + countsNew[4] + countsNew[50];
+        // SI(t+tau) = SI(t) - rxn8 - rxn9 - rxn10 - rxn11 - rxn12 + rxn4 + rxn5 + rxn6 + rxn7 + rxn50
+        updatedCounts[1] = currentCounts[1] - countsNew[8] - countsNew[9] - countsNew[10] - countsNew[11] - countsNew[12] + countsNew[4] + countsNew[5] + countsNew[6] + countsNew[7] + countsNew[50];
         // SC(t+tau) = SC(t) - rxn13 - rxn14 - rxn15 - rxn16 - rxn17 + rxn12 + rxn52
         updatedCounts[2] = currentCounts[2] - countsNew[13] - countsNew[14] - countsNew[15] - countsNew[16] - countsNew[17] + countsNew[12] + countsNew[52];
         // SR(t+tau) = SR(t) - rxn18 - rxn19 - rxn20 -  rxn21 - rxn22 + rxn17 + rxn54
@@ -442,8 +668,51 @@ public class TwoPathogenModel extends CompartmentalModel {
         updatedCounts[14] = currentCounts[14] - countsNew[52] - countsNew[53] + countsNew[41] + countsNew[51];
         // RR(t+tau) = RR(t) - rxn54 - rxn55 + rxn43 + rxn53
         updatedCounts[15] = currentCounts[15] - countsNew[54] - countsNew[55] + countsNew[43] + countsNew[53];
+        //return updatedCounts;
+
+        // ===== DEBUG BLOCK START =====
+
+        System.out.println("----------------------------------------");
+        System.out.println("Entering getUpdatedCompartmentCounts()");
+
+        double totalBefore = 0.0;
+        double totalAfter = 0.0;
+
+        for (int i = 0; i < currentCounts.length; i++) {
+            totalBefore += currentCounts[i];
+            totalAfter += updatedCounts[i];
+        }
+
+        System.out.println("totalBefore = " + totalBefore);
+        System.out.println("totalAfter  = " + totalAfter);
+
+        System.out.println("Current counts:");
+        for (int i = 0; i < currentCounts.length; i++) {
+            System.out.printf("%2d : %8.1f%n", i, currentCounts[i]);
+        }
+
+        System.out.println("Reaction firings:");
+        for (int j = 0; j < countsNew.length; j++) {
+            if (countsNew[j] != 0.0) {
+                System.err.printf("rxn%2d : %8.1f%n", j, countsNew[j]);
+            }
+        }
+
+        System.out.println("Updated counts:");
+        for (int i = 0; i < updatedCounts.length; i++) {
+            System.out.printf("%2d : %8.1f%n", i, updatedCounts[i]);
+        }
+
+        System.out.println("----------------------------------------");
+
+        // ===== DEBUG BLOCK END =====
+
         return updatedCounts;
+
+         */
     }
+
+
 
     protected double getOldestOrigin() {
         if(originOne.getParameterValue(0) >= originTwo.getParameterValue(0)){

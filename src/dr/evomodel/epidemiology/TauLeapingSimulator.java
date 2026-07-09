@@ -131,6 +131,18 @@ public class TauLeapingSimulator extends StochasticSimulator {
                                 simulationTime,
                                 currentCounts);
 
+                        // DEBUGGING
+                        /*
+                        double before = 0.0;
+                        for (int s = 0; s < numSpecies; s++) {
+                            before += currentCounts[s];
+                        }
+
+                        System.out.println("SSA reaction = " + sampledReactionChannel);
+                        System.out.println("SSA total before = " + before);
+                        */
+                        // END DEBUGGING
+
                         for (int s = 0; s < numSpecies; s++) {
                             currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
                         }
@@ -139,6 +151,17 @@ public class TauLeapingSimulator extends StochasticSimulator {
                         for (int c = 0; c < numReactionChannels; c++) {
                             r0 = r0 + reactionInt[c];
                         }
+
+                        // DEBUGGING
+
+                        double after = 0.0;
+                        for (int s = 0; s < numSpecies; s++) {
+                            after += currentCounts[s];
+                        }
+
+                        System.out.println("SSA total after = " + after);
+
+                        // END DEBUGGING
                     }
                     // end of 100 SSA steps
 
@@ -301,9 +324,31 @@ public class TauLeapingSimulator extends StochasticSimulator {
                                     simulationTime,
                                     currentCounts);
 
+                            // DEBUGGING
+                            double before = 0.0;
+                            for (int s = 0; s < numSpecies; s++) {
+                                before += currentCounts[s];
+                            }
+
+                            System.out.println("SSA reaction = " + sampledReactionChannel);
+                            System.out.println("SSA total before = " + before);
+                            // END DEBUGGING
+
                             for (int s = 0; s < numSpecies; s++) {
                                 currentCounts[s] = currentCounts[s] + vMatrix[s][sampledReactionChannel];
                             }
+
+                            // DEBUGGING
+                            /*
+                            double after = 0.0;
+                            for (int s = 0; s < numSpecies; s++) {
+                                after += currentCounts[s];
+                            }
+
+                            System.out.println("SSA total after = " + after);
+
+                             */
+                            // END DEBUGGING
 
                             reactionInt = compartmentalModel.getReactionIntensities(currentCounts);
                         }

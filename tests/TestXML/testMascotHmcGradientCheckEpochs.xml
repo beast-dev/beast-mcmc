@@ -1,0 +1,126 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!--
+        Multi-epoch variant of testMascotHmcGradientCheck.xml: same fixed 6-tip,
+        2-deme tree, but theta now has TWO epochs (piecewise-constant migration
+        rates/population sizes), wired via the optional epochTimes child of
+        mascotLikelihood. epochTimes has one boundary (dimension = epochCount-1),
+        splitting the tree height (root at 3.0) into a recent epoch [0,1.5) and an
+        ancestral epoch [1.5,inf). theta is laid out epoch-major:
+        [epoch0: log m(0->1), log m(1->0), log N0, log N1,
+         epoch1: log m(0->1), log m(1->0), log N0, log N1] (8 dims total),
+        matching MascotDynamics/MascotCore's thetaOffset = epoch*parametersPerEpoch
+        convention. Same jointGradient/normalPrior/gradientCheckCount pattern as the
+        single-epoch test.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+        <taxon id="D"/>
+        <taxon id="E"/>
+        <taxon id="F"/>
+    </taxa>
+
+    <newick id="startingTree">
+        (((A:1.0,B:1.0):1.0,(C:1.0,D:1.0):1.0):1.0,(E:2.0,F:2.0):1.0);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F -->
+    <parameter id="tipStates" value="0 1 0 1 0 1"/>
+
+    <!-- single epoch boundary at height 1.5 (root height is 3.0, so both epochs are exercised) -->
+    <parameter id="epochTimes" value="1.5"/>
+
+    <!-- epoch-major flat log-parameter vector:
+         [e0: log m(0->1), log m(1->0), log N0, log N1,
+          e1: log m(0->1), log m(1->0), log N0, log N1] -->
+    <parameter id="theta" value="-1.0 -1.2 0.4 0.6 -0.5 -0.8 0.2 0.3"/>
+
+    <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
+        <treeModel idref="treeModel"/>
+        <tipStates>
+            <parameter idref="tipStates"/>
+        </tipStates>
+        <theta>
+            <parameter idref="theta"/>
+        </theta>
+        <epochTimes>
+            <parameter idref="epochTimes"/>
+        </epochTimes>
+    </mascotLikelihood>
+
+    <mascotGradient id="likelihood.grad">
+        <mascotLikelihood idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <normalPrior id="theta.prior" mean="0.0" stdev="1.0">
+        <parameter idref="theta"/>
+    </normalPrior>
+
+    <gradient id="prior.grad">
+        <normalPrior idref="theta.prior"/>
+        <parameter idref="theta"/>
+    </gradient>
+
+    <jointGradient id="posterior.grad">
+        <mascotGradient idref="likelihood.grad"/>
+        <gradient idref="prior.grad"/>
+    </jointGradient>
+
+    <report>
+        <jointGradient idref="posterior.grad"/>
+    </report>
+
+    <operators id="operators" optimizationSchedule="log">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
+                                       gradientCheckCount="10" gradientCheckTolerance="1e-3">
+            <jointGradient idref="posterior.grad"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
+        <joint id="joint">
+            <prior id="prior">
+                <normalPrior idref="theta.prior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <mascotLikelihood idref="mascotLikelihood"/>
+            </likelihood>
+        </joint>
+
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="100">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="joint"/>
+            </column>
+            <column label="theta" dp="4" width="12">
+                <parameter idref="theta"/>
+            </column>
+        </log>
+
+        <log id="fileLog" logEvery="10" fileName="testMascotHmcGradientCheckEpochs.log">
+            <posterior idref="joint"/>
+            <parameter idref="theta"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis id="traceAnalysis" fileName="testMascotHmcGradientCheckEpochs.log" stdError="true"/>
+
+</beast>

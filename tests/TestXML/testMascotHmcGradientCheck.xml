@@ -1,0 +1,121 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!--
+        Minimal end-to-end smoke test: a fixed 6-tip, 2-deme, single-epoch MASCOT
+        likelihood sampled with Hamiltonian Monte Carlo over its flat log-parameter
+        vector (2 log-migration-rates + 2 log-population-sizes), with BEAST's
+        built-in analytic-vs-numeric gradient check enabled
+        (gradientCheckCount/gradientCheckTolerance). The tree itself is fixed: no
+        tree operators are used, only the HMC operator on "theta".
+
+        theta has a weakly informative normal prior in log-space (standard
+        practice for log-rates/log-sizes); its gradient is combined with the
+        MASCOT likelihood's gradient via jointGradient so HMC samples the actual
+        posterior and gradientCheckCount (which differentiates joint.getLogLikelihood(),
+        i.e. prior + likelihood) has something to check against on both sides.
+        A flat prior let early, unadapted HMC steps wander to numerically extreme
+        theta and crash the ODE integrator; this is what fixed it.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+        <taxon id="D"/>
+        <taxon id="E"/>
+        <taxon id="F"/>
+    </taxa>
+
+    <newick id="startingTree">
+        (((A:1.0,B:1.0):1.0,(C:1.0,D:1.0):1.0):1.0,(E:2.0,F:2.0):1.0);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F -->
+    <parameter id="tipStates" value="0 1 0 1 0 1"/>
+
+    <!-- flat log-parameter vector: [log m(0->1), log m(1->0), log N0, log N1] -->
+    <parameter id="theta" value="-1.6094379124341003 -1.2039728043259361 0.4054651081081644 0.5877866649021191"/>
+
+    <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
+        <treeModel idref="treeModel"/>
+        <tipStates>
+            <parameter idref="tipStates"/>
+        </tipStates>
+        <theta>
+            <parameter idref="theta"/>
+        </theta>
+    </mascotLikelihood>
+
+    <mascotGradient id="likelihood.grad">
+        <mascotLikelihood idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <normalPrior id="theta.prior" mean="0.0" stdev="1.0">
+        <parameter idref="theta"/>
+    </normalPrior>
+
+    <gradient id="prior.grad">
+        <normalPrior idref="theta.prior"/>
+        <parameter idref="theta"/>
+    </gradient>
+
+    <jointGradient id="posterior.grad">
+        <mascotGradient idref="likelihood.grad"/>
+        <gradient idref="prior.grad"/>
+    </jointGradient>
+
+    <report>
+        <jointGradient idref="posterior.grad"/>
+    </report>
+
+    <operators id="operators" optimizationSchedule="log">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
+                                       gradientCheckCount="10" gradientCheckTolerance="1e-3">
+            <jointGradient idref="posterior.grad"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
+        <joint id="joint">
+            <prior id="prior">
+                <normalPrior idref="theta.prior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <mascotLikelihood idref="mascotLikelihood"/>
+            </likelihood>
+        </joint>
+
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="100">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="joint"/>
+            </column>
+            <column label="theta" dp="4" width="12">
+                <parameter idref="theta"/>
+            </column>
+        </log>
+
+        <log id="fileLog" logEvery="10" fileName="testMascotHmcGradientCheck.log">
+            <posterior idref="joint"/>
+            <parameter idref="theta"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis id="traceAnalysis" fileName="testMascotHmcGradientCheck.log" stdError="true"/>
+
+</beast>

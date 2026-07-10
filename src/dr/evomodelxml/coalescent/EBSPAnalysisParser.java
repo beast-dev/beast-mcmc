@@ -39,6 +39,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 
 /**
+ * @deprecated
  */
 public class EBSPAnalysisParser extends AbstractXMLObjectParser {
 

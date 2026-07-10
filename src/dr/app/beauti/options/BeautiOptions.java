@@ -1248,7 +1248,7 @@ public class BeautiOptions extends ModelOptions {
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
-    public boolean operatorAnalysis = true;
+    public boolean operatorAnalysis = false;
     public String operatorAnalysisFileName = null;
 
     public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);

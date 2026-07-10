@@ -109,7 +109,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
     enum HeightsSummary {
         MEAN_HEIGHTS("Mean heights"),
-        MEDIAN_HEIGHTS("Median heights");
+        MEDIAN_HEIGHTS("Median heights"),
+        KEEP_HEIGHTS("Keep target heights");
 
         String desc;
 
@@ -130,7 +131,6 @@ public class TreeAnnotator extends BaseTreeTool {
                          final long burninStates,
                          final HeightsSummary heightsOption,
                          final double posteriorLimit,
-                         final int minCladeCount,
                          final int countLimit,
                          final double[] hpd2D,
                          final boolean computeESS,
@@ -207,12 +207,12 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, false, minCladeCount);
+                targetTree = getHIPSTRTree(cladeSystem, false);
                 break;
             }
             case MRHIPSTR: {
                 progressStream.println("Finding majority rule highest independent posterior subtree reconstruction (MrHIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, true, minCladeCount);
+                targetTree = getHIPSTRTree(cladeSystem, true);
                 break;
             }
             case MAJORITY_RULE: {
@@ -224,9 +224,8 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
 
-        CladeSystem targetCladeSystem = new CladeSystem(targetTree);
-
         if (referenceTreeFileName != null) {
+            CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 
@@ -612,14 +611,9 @@ public class TreeAnnotator extends BaseTreeTool {
         return tree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule, int minCladeCount) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule) {
 
         long startTime = System.currentTimeMillis();
-
-        if (minCladeCount > 0) {
-            Embiggulator embiggulator = new Embiggulator(cladeSystem);
-            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
-        }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, majorityRule);
@@ -978,7 +972,6 @@ public class TreeAnnotator extends BaseTreeTool {
                         heightsOption,
                         posteriorLimit,
                         0,
-                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -1008,8 +1001,6 @@ public class TreeAnnotator extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", "t", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
-                        new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
-                        new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
@@ -1051,6 +1042,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 heights = HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
+            } else if (value.equalsIgnoreCase("keep")) {
+                heights = HeightsSummary.KEEP_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
                 printUsage(arguments);
@@ -1110,17 +1103,15 @@ public class TreeAnnotator extends BaseTreeTool {
             }
         }
 
-        int minCladeCount = 0; // ccd0 off
-        if (arguments.hasOption("ccd0")) {
-            minCladeCount = 1; // ccd0 on
-        }
-        if (arguments.hasOption("minCount")) {
-            minCladeCount = arguments.getIntegerOption("minCount");
-        }
-
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
+        }
+
+        if (target != Target.MAX_CLADE_CREDIBILITY && target != Target.USER_TARGET_TREE && heights == HeightsSummary.KEEP_HEIGHTS) {
+            progressStream.println("Keep original heights is only valid for MCC or user target trees");
+            printUsage(arguments);
+            System.exit(1);
         }
 
         if (arguments.hasOption("reference")) {
@@ -1158,7 +1149,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninStates,
                 heights,
                 posteriorLimit,
-                minCladeCount,
                 countLimit,
                 hpd2D,
                 computeESS,
@@ -1185,10 +1175,6 @@ public class TreeAnnotator extends BaseTreeTool {
 //            progressStream.println("Loaded user target tree.");
         } else {
             throw new IllegalArgumentException("Unknown target option: " + target);
-        }
-        if (minCladeCount > 0) {
-            progressStream.println("  with CCD0-MAP expansion to unobserved subtrees  - citation:");
-            progressStream.println(Embiggulator.CITATION.toString());
         }
 
         System.exit(0);

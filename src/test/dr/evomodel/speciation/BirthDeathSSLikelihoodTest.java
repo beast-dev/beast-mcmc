@@ -31,7 +31,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathSerialSamplingModel;
+import dr.evomodel.birthdeath.BirthDeathSerialSamplingModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.model.Likelihood;

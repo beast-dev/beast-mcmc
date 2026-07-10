@@ -110,11 +110,11 @@ public class NumericalDerivative
 	 * @param x argument vector
 	 * @param grad vector for gradient
 	 */
-	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
-	{	
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad, double stepSizeRatio)
+	{
 		for (int i = 0; i < f.getNumArguments(); i++)
 		{
-			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
+			double h = stepSizeRatio * Math.max(Math.abs(x[i]), 1.0);
 		
 			double oldx = x[i];
 			x[i] = oldx + h;
@@ -126,6 +126,11 @@ public class NumericalDerivative
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
 		}
+	}
+
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
+	{
+		gradient(f, x, grad, Math.pow(MachineAccuracy.EPSILON, 0.333));
 	}
 
 	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {

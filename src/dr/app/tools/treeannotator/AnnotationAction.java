@@ -217,7 +217,7 @@ public class AnnotationAction implements CladeAction {
                                         }
                                     }
                                 } else {
-                                    annotateModeAttribute(tree, node, attributeName, hashMap);
+                                        annotateModeAttribute(tree, node, attributeName, hashMap);
                                     annotateFrequencyAttribute(tree, node, attributeName, hashMap);
                                 }
                                 if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {

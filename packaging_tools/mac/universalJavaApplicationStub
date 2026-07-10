@@ -107,6 +107,7 @@ InfoPlistFile="${AppPackageFolder}"/Contents/Info.plist
 # set the default JVM Version to a null string
 JVMVersion=""
 JVMMaxVersion=""
+JVMRuntime=""
 
 
 
@@ -238,6 +239,9 @@ if [ $exitcode -eq 0 ]; then
 	# read the Java version we want to find
 	JVMVersion=$(plist_get_java ':JVMVersion' | xargs)
 	# post processing of the version string follows below...
+
+	# read the bundled JVM runtime name (directory name within Contents/PlugIns/)
+	JVMRuntime=$(plist_get_java ':JVMRuntime' 2>/dev/null | xargs 2>/dev/null)
 
 
 # read 'Info.plist' file in Oracle style
@@ -574,9 +578,26 @@ oracle_jre_plugin="/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/H
 oracle_jre_version=$(get_java_version_from_cmd "${oracle_jre_plugin}")
 
 
+# check for a bundled JVM specified by JVMRuntime in Info.plist (highest priority).
+# The JDK must live at: Contents/PlugIns/<JVMRuntime>/Contents/Home/
+stub_logger '[JavaSearch] Checking for bundled JVM via JVMRuntime plist key ...'
+if [ ! -z "${JVMRuntime}" ]; then
+	stub_logger "[JavaSearch] ... JVMRuntime is set: ${JVMRuntime}"
+	BUNDLED_JVM="${AppPackageFolder}/Contents/PlugIns/${JVMRuntime}/Contents/Home/bin/java"
+	if [ -x "${BUNDLED_JVM}" ]; then
+		stub_logger "[JavaSearch] ... using bundled JDK at '${BUNDLED_JVM}'"
+		JAVACMD="${BUNDLED_JVM}"
+		JAVACMD_version=$(get_comparable_java_version $(get_java_version_from_cmd "${JAVACMD}"))
+	else
+		stub_logger "[JavaSearch] ... bundled JDK not found at '${BUNDLED_JVM}', falling back to system JVM"
+	fi
+fi
+
+
 # first check system variable "$JAVA_HOME" -> has precedence over any other System JVM
+# (bundled JVM via JVMRuntime, if present and executable, still takes priority)
 stub_logger '[JavaSearch] Checking for $JAVA_HOME ...'
-if [ -n "$JAVA_HOME" ] ; then
+if [ -z "${JAVACMD}" ] && [ -n "$JAVA_HOME" ] ; then
 	stub_logger "[JavaSearch] ... found JAVA_HOME with value $JAVA_HOME"
 
 	# PR 26: Allow specifying "$JAVA_HOME" relative to "$AppPackageFolder"

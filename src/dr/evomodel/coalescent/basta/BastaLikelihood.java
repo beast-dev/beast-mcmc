@@ -1,7 +1,7 @@
 /*
  * BastaLikelihood.java
  *
- * Copyright (c) 2002-2023 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2026 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,14 +29,20 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
+import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.TipStateAccessor;
+import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
 import dr.evomodel.treelikelihood.AncestralStateTraitProvider;
 import dr.inference.model.*;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
@@ -46,6 +52,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate.NAME_SUFFIX;
 
 /**
  * @author Guy Baele
@@ -54,7 +61,8 @@ import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*
  */
 
 public class BastaLikelihood extends AbstractModelLikelihood implements
-        TreeTraitProvider, AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor {
+        TreeTraitProvider, AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
+        ProcessAlongTree, DiscreteProcessAlongTree {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
 
@@ -88,18 +96,11 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     // State reconstruction settings
     private final boolean useMAP;
-    private final boolean returnMarginalLogLikelihood;
-    private final boolean conditionalProbabilitiesInLogSpace;
-    private final boolean useOriginalDrawChoice;
 
-    private int[][] reconstructedStates;
-    private int[][] storedReconstructedStates;
+    private final int[][] reconstructedStates;
     private int[][] subIntervalStates;  // [interval][nodeNumber][pattern]
-    private Map<Integer, List<Integer>> nodeIntervalMap = new HashMap<>();
-    protected boolean areStatesRedrawn = false;
-    protected boolean storedAreStatesRedrawn = false;
-    protected double jointLogLikelihood;
-    private double storedJointLogLikelihood;
+    private final Map<Integer, List<Integer>> nodeIntervalMap = new HashMap<>();
+    protected boolean ancestralStatesKnown;
 
     public BastaLikelihood(String name,
                            Tree treeModel,
@@ -110,11 +111,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                            BranchRateModel branchRateModel,
                            BastaLikelihoodDelegate likelihoodDelegate,
                            int numberSubIntervals,
-                           boolean useAmbiguities) {
+                           boolean useAmbiguities,
+                           boolean useMAP) {
         this(name, treeModel, patternList, substitutionModel, popSizeParameter,
                 growthRateParameter, branchRateModel, likelihoodDelegate,
                 numberSubIntervals, useAmbiguities,
-                substitutionModel.getDataType(), "states", false, true, false);
+                substitutionModel.getDataType(), "states", useMAP);
     }
 
     public BastaLikelihood(String name,
@@ -129,9 +131,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                            boolean useAmbiguities,
                            DataType dataType,
                            String tag,
-                           boolean useMAP,
-                           boolean returnMarginalLogLikelihood,
-                           boolean conditionalProbabilitiesInLogSpace) {
+                           boolean useMAP) {
 
         super(name);
 
@@ -187,13 +187,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         this.dataType = dataType;
         this.tag = tag;
         this.useMAP = useMAP;
-        this.returnMarginalLogLikelihood = returnMarginalLogLikelihood;
-        this.conditionalProbabilitiesInLogSpace = conditionalProbabilitiesInLogSpace;
-        this.useOriginalDrawChoice = true;
 
         // Initialize state storage arrays
         reconstructedStates = new int[treeModel.getNodeCount()][patternList.getPatternCount()];
-        storedReconstructedStates = new int[treeModel.getNodeCount()][patternList.getPatternCount()];
 
         // Initialize sub-interval states
         initializeSubIntervalStates(treeIntervals, numberSubIntervals);
@@ -207,9 +203,20 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         setTipData();
 
         likelihoodKnown = false;
+        ancestralStatesKnown = false;
         populationSizesKnown = false;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
+
+        traitDelegate = new AbstractRealizedDiscreteTraitDelegate.Bit(tag + NAME_SUFFIX, this, useMAP);
+        TreeTraitProvider ttp = new ProcessSimulation(this, traitDelegate);
+        treeTraits.addTraits(ttp.getTreeTraits());
+    }
+
+    private final AbstractRealizedDiscreteTraitDelegate traitDelegate;
+
+    public AbstractRealizedDiscreteTraitDelegate getRealizedTraitDelegate() {
+        return traitDelegate;
     }
 
     /**
@@ -235,7 +242,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private void setupTraits() {
         TreeTrait<int[]> ancestralStateTrait = new TreeTrait.IA() {
             public String getTraitName() {
-                return tag;
+                return tag + "_old";
             }
 
             public Intent getIntent() {
@@ -298,6 +305,22 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         return this;
     }
 
+    @Override
+    public Tree getTree() {
+        return tree;
+    }
+
+    @Override
+    public BranchRateModel getBranchRateModel() {
+        return branchRateModel;
+    }
+
+    @Override
+    public void calculatePostOrderStatistics() {
+        makeDirty();
+        getLogLikelihood();
+    }
+
     @Override @SuppressWarnings("Duplicates")
     public double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS) totalGetLogLikelihoodCount++;
@@ -319,16 +342,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             likelihoodKnown = true;
         }
 
-        if (returnMarginalLogLikelihood) {
-            return logLikelihood;
-        }
-
-        // Redraw states and return joint density for ancestral state reconstruction
-        if (!areStatesRedrawn) {
-            redrawAncestralStates();
-        }
-
-        return jointLogLikelihood;
+        return logLikelihood;
     }
 
 
@@ -345,7 +359,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
 
         likelihoodKnown = false;
-        areStatesRedrawn = false;
+        ancestralStatesKnown = false;
     }
 
     @Override
@@ -378,8 +392,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         treeIntervalsKnown = false;
         populationSizesKnown = false;
         transitionMatricesKnown = false;
-        areStatesRedrawn = false;
 
+        ancestralStatesKnown = false;
         likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
@@ -387,13 +401,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == popSizeParameter) {
             populationSizesKnown = false;
-            likelihoodKnown = false;
         } else if (variable == growthRateParameter) {
             populationSizesKnown = false;
-            likelihoodKnown = false;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
+
+        likelihoodKnown = false;
+        ancestralStatesKnown = false;
+        fireModelChanged();
     }
 
     @Override
@@ -402,8 +418,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         if (model == treeIntervals) {
             treeIntervalsKnown = false;
             transitionMatricesKnown = false;
-            areStatesRedrawn = false;
-            nodeIntervalMap.clear();
         } else if (model == branchRateModel) {
             treeIntervalsKnown = false; // TODO should not be necessary
             transitionMatricesKnown = false;
@@ -415,6 +429,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
 
+        ancestralStatesKnown = false;
         likelihoodKnown = false;
         fireModelChanged();
     }
@@ -428,14 +443,14 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         storedLogLikelihood = logLikelihood;
 
         // Store ancestral state reconstruction information
-        if (areStatesRedrawn) {
-            for (int i = 0; i < reconstructedStates.length; i++) {
-                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
-            }
-        }
-
-        storedAreStatesRedrawn = areStatesRedrawn;
-        storedJointLogLikelihood = jointLogLikelihood;
+//        if (ancestralStatesKnown) {
+//            for (int i = 0; i < reconstructedStates.length; i++) {
+//                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
+//            }
+//        }
+//
+//        storedAncestralStatesKnown = ancestralStatesKnown;
+//        storedJointLogLikelihood = jointLogLikelihood;
     }
 
     @Override
@@ -449,12 +464,13 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         transitionMatricesKnown = false;
 
         // Restore ancestral state reconstruction information
-        int[][] temp = reconstructedStates;
-        reconstructedStates = storedReconstructedStates;
-        storedReconstructedStates = temp;
-
-        areStatesRedrawn = storedAreStatesRedrawn;
-        jointLogLikelihood = storedJointLogLikelihood;
+//        int[][] temp = reconstructedStates;
+//        reconstructedStates = storedReconstructedStates;
+//        storedReconstructedStates = temp;
+//
+//        ancestralStatesKnown = storedAncestralStatesKnown;
+        ancestralStatesKnown = false;
+//        jointLogLikelihood = storedJointLogLikelihood;
     }
 
     @Override
@@ -643,12 +659,11 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             throw new RuntimeException("Can only reconstruct states on tree given to constructor");
         }
 
-        if (!likelihoodKnown) {
+        if (!ancestralStatesKnown) {
+            makeDirty();
             getLogLikelihood();
-        }
-
-        if (!areStatesRedrawn) {
             redrawAncestralStates();
+            ancestralStatesKnown = true;
         }
         return reconstructedStates[node.getNumber()];
     }
@@ -685,28 +700,57 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
+    @Override
+    public EvolutionaryProcessDelegate getEvolutionaryProcessDelegate() {
+        if (evolutionaryProcessDelegate == null) {
+            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree,
+                    new HomogeneousBranchModel(substitutionModel, null)
+            );
+        }
+        return evolutionaryProcessDelegate;
+    }
 
-    public void redrawAncestralStates(int traversalMethod) {
-        jointLogLikelihood = 0;
+    @Override
+    public SiteRateModel getSiteRateModel() {
+        if (siteRateModel == null) {
+            siteRateModel = new DiscretizedSiteRateModel("siteModel",
+                    null, 1.0, new HomogeneousRateDelegate("HomogeneousRateDelegate"));
+        }
 
-        if (traversalMethod == 0) {
+        return siteRateModel;
+    }
+
+    private SiteRateModel siteRateModel = null;
+    private EvolutionaryProcessDelegate evolutionaryProcessDelegate = null;
+
+    @Override
+    public PatternList getPatternList() {
+        return patternList;
+    }
+
+    enum AncestralTraversalMethod {
+        LEVEL_ORDER,
+        PRE_ORDER
+    }
+
+    public void redrawAncestralStates(AncestralTraversalMethod traversalMethod) {
+
+        if (traversalMethod == AncestralTraversalMethod.LEVEL_ORDER) {
             mapNodeToSubIntervals();
             traverseSampleByCoalescentIntervals();
-        } else if (traversalMethod == 1) {
+        } else if (traversalMethod == AncestralTraversalMethod.PRE_ORDER) {
             traverseSampleByNodes();
         } else {
             throw new IllegalArgumentException("Invalid traversal method: " + traversalMethod);
         }
-
-        areStatesRedrawn = true;
     }
-
 
     public void redrawAncestralStates() {
-        redrawAncestralStates(1); // Use original method by default
+        if (MAS_DEBUG) {
+            MathUtils.setSeed(666);
+        }
+        redrawAncestralStates(AncestralTraversalMethod.PRE_ORDER); // Use original method by default
     }
-
-
 
     private void traverseSampleByCoalescentIntervals() {
 
@@ -842,7 +886,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         }
     }
 
-
     private void sampleRootState(NodeRef root, int rootBuffer, boolean copyToIntervals) {
         int nodeNum = root.getNumber();
 
@@ -854,11 +897,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         for (int j = 0; j < getPatternCount(); j++) {
             for (int i = 0; i < stateCount; i++) {
-                if (conditionalProbabilitiesInLogSpace) {
-                    conditionalProbabilities[i] = Math.log(partials[i]) + Math.log(frequencies[i]);
-                } else {
-                    conditionalProbabilities[i] = partials[i] * frequencies[i];
-                }
+                conditionalProbabilities[i] = partials[i] * frequencies[i];
             }
 
             reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
@@ -866,13 +905,8 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             if (copyToIntervals) {
                     subIntervalStates[nodeNum][j] = reconstructedStates[nodeNum][j];
             }
-
-            if (!returnMarginalLogLikelihood) {
-                jointLogLikelihood += Math.log(frequencies[reconstructedStates[nodeNum][j]]);
-            }
         }
     }
-
 
     private void sampleStateForSubInterval(NodeRef node, int nodeNumber,
                                            int bufferIndex, double[] transitionMatrix) {
@@ -901,20 +935,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         for (int j = 0; j < patternCount; j++) {
             int parentIndex = parentState[j];
             for (int i = 0; i < stateCount; i++) {
-                if (conditionalProbabilitiesInLogSpace) {
-                    conditionalProbabilities[i] = Math.log(transitionMatrix[i * stateCount + parentIndex]) +
-                            Math.log(nodeLikelihoods[i]);
-                } else {
-                    conditionalProbabilities[i] = transitionMatrix[i * stateCount + parentIndex] *
-                            nodeLikelihoods[i];
-                }
+                conditionalProbabilities[i] = transitionMatrix[i * stateCount + parentIndex] * nodeLikelihoods[i];
             }
 
             subIntervalStates[nodeNumber][j] = drawChoice(conditionalProbabilities);
-            if (!returnMarginalLogLikelihood) {
-                double contrib = transitionMatrix[subIntervalStates[nodeNumber][j] * stateCount + parentIndex];
-                jointLogLikelihood += Math.log(contrib);
-            }
         }
     }
 
@@ -929,7 +953,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         );
     }
 
-
     private void traverseSampleByNodes() {
         CoalescentIntervalTraversal traversal = getTraversalDelegate();
         traversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
@@ -939,7 +962,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         int maxNumCoalescentIntervals = 0;
         BastaLikelihoodDelegate delegate = likelihoodDelegate;
         maxNumCoalescentIntervals = delegate.getMaxNumberOfCoalescentIntervals();
-
 
         BranchIntervalOperation.initializeMap(tree, maxNumCoalescentIntervals);
         Map<Integer, Integer> nodeToBufferMap = new HashMap<>();
@@ -965,7 +987,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             }
 
         }
-
 
         NodeRef rootNode = tree.getRoot();
         int rootBuffer = nodeToBufferMap.getOrDefault(rootNode.getNumber(), rootNode.getNumber());
@@ -1003,32 +1024,38 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
                     isAmbiguous = (statesWithProbability != 1);
 
+                    double[] conditionalProbabilities = new double[stateCount];
                     if (isAmbiguous) {
                         int parentState = reconstructedStates[parentNum][j];
                         int parentIndex = parentState;
-                        double branchLength = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+                        double branchTime = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+                        double branchLength = branchRateModel.getBranchRate(tree, child) * branchTime;
                         double[] transitionMatrix = new double[stateCount * stateCount];
                         substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
 
-                        double[] conditionalProbabilities = new double[stateCount];
                         for (int k = 0; k < stateCount; k++) {
-                            if (conditionalProbabilitiesInLogSpace) {
-                                conditionalProbabilities[k] = Math.log(transitionMatrix[k * stateCount + parentIndex]) +
-                                        Math.log(partials[k] > 0 ? partials[k] : Double.MIN_VALUE);
-                            } else {
-                                conditionalProbabilities[k] = transitionMatrix[k * stateCount + parentIndex] * partials[k];
-                            }
+                            conditionalProbabilities[k] = transitionMatrix[k * stateCount + parentIndex] * partials[k];
                         }
                         reconstructedStates[childNum][j] = drawChoice(conditionalProbabilities);
 
                     } else {
                         reconstructedStates[childNum][j] = unambiguousState;
                     }
+
+                    if (MAS_DEBUG) {
+                        String id = node.getNumber() + "->" + child.getNumber() + " ";
+                        if (isAmbiguous) {
+                            System.err.println("old: " + id + new WrappedVector.Raw(conditionalProbabilities));
+                        } else {
+                            System.err.println("old: " + id + unambiguousState);
+                        }
+                    }
                 }
                 continue;
             }
 
-            double branchLength = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+            double branchTime = tree.getNodeHeight(node) - tree.getNodeHeight(child);
+            double branchLength = branchRateModel.getBranchRate(tree, child) * branchTime;
             double[] transitionMatrix = new double[stateCount * stateCount];
             substitutionModel.getTransitionProbabilities(branchLength, transitionMatrix);
 
@@ -1060,23 +1087,33 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                 double transProb = transitionMatrix[i * stateCount + parentIndex];
                 double likelihood = childPartials[i];
 
-                conditionalProbabilities[i] = conditionalProbabilitiesInLogSpace ?
-                        Math.log(transProb) + Math.log(likelihood) :
-                        transProb * likelihood;
+                conditionalProbabilities[i] = transProb * likelihood;
+            }
+
+            if (MAS_DEBUG) {
+                String id = parent.getNumber() + "->" + child.getNumber() + " ";
+                System.err.println("old: " + id + new WrappedVector.Raw(conditionalProbabilities));
+                System.err.println("old: " + id + new WrappedVector.Raw(transitionMatrix));
+                if (MAS_KILL) {
+                    if (count > 10) {
+                        System.exit(-1);
+                    }
+                }
+                ++count;
             }
 
             reconstructedStates[childNumber][j] = drawChoice(conditionalProbabilities);
-
-            if (!returnMarginalLogLikelihood) {
-                double contrib = transitionMatrix[reconstructedStates[childNumber][j] * stateCount + parentIndex];
-                jointLogLikelihood += Math.log(contrib);
-            }
         }
     }
 
+    private static final boolean MAS_KILL = false;
+    private static final boolean MAS_DEBUG = false;
+    private int count = 0;
+
+    private static final boolean USE_ORIGINAL_DRAW_CHOICE = true;
 
     private int drawChoice(double[] measure) {
-        if (useOriginalDrawChoice) {
+        if (USE_ORIGINAL_DRAW_CHOICE) {
             if (useMAP) {
                 // Use Maximum A Posteriori
                 double max = measure[0];
@@ -1089,15 +1126,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                 }
                 return choice;
             } else {
-                if (conditionalProbabilitiesInLogSpace) {
-                    return MathUtils.randomChoiceLogPDF(measure);
-                }
                 return MathUtils.randomChoicePDF(measure);
             }
         } else {
             double sum = 0.0;
-            for (int i = 0; i < measure.length; i++) {
-                sum += measure[i];
+            for (double v : measure) {
+                sum += v;
             }
 
             if (sum < 0.0000000001) {
@@ -1132,7 +1166,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     private static String formattedState(int[] state, CodeFormatter formatter) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("\"");
         formatter.reset();
         for (int i : state) {
@@ -1143,7 +1177,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
 
-    private class CodeFormatter {
+    private static class CodeFormatter {
         private final DataType dataType;
         private final Function<String, String> appender;
         private final Function<Integer, String> getter;

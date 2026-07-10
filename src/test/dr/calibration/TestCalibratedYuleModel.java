@@ -40,7 +40,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.*;
@@ -169,8 +169,8 @@ public class TestCalibratedYuleModel {
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model("yule", brParameter, null, null,
-                BirthDeathGernhard08Model.TreeType.UNSCALED, Units.Type.SUBSTITUTIONS, false);
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel("yule", brParameter, null, null,
+                Gernhard08BirthDeathModel.TreeType.UNSCALED, Units.Type.SUBSTITUTIONS, false);
         Likelihood speciationLikelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         Taxa halfTaxa = new Taxa();

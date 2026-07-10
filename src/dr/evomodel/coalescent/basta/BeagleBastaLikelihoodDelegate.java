@@ -371,7 +371,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         }
 
         if (transpose) {
-            decomposition = decomposition.transpose();
+            decomposition = decomposition.copy().transpose();
         }
 
         beagle.setEigenDecomposition(

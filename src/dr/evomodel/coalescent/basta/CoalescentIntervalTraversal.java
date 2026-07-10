@@ -65,6 +65,46 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     private int kIndexOffsetPat = SLAB_DUMP_K_INDEX_OFFSET_PAT_DEFAULT;
 
+    private int[] denseVal;
+    private int[] denseGen;
+    private int denseGenCounter = 0;
+    private int denseUsed;
+    private int denseTipCount;
+
+    private void resetBufferDensification() {
+        denseTipCount = treeModel.getExternalNodeCount();
+        denseUsed = denseTipCount;
+        denseGenCounter++;
+        if (denseVal == null) {
+            int initial = Math.max(1024, treeModel.getNodeCount() * 4);
+            denseVal = new int[initial];
+            denseGen = new int[initial];
+        }
+    }
+
+    private int densifyBuffer(int raw) {
+        if (raw < denseTipCount) {
+            return raw;
+        }
+        if (raw >= denseVal.length) {
+            int n = denseVal.length;
+            while (n <= raw) {
+                n <<= 1;
+            }
+            denseVal = Arrays.copyOf(denseVal, n);
+            denseGen = Arrays.copyOf(denseGen, n);
+        }
+        if (denseGen[raw] != denseGenCounter) {
+            denseGen[raw] = denseGenCounter;
+            denseVal[raw] = denseUsed++;
+        }
+        return denseVal[raw];
+    }
+
+    private int mapBuffer(int raw) {
+        return slabMetadataRecording ? densifyBuffer(raw) : raw;
+    }
+
     private static boolean isEnvFlagSet(String name) {
         try {
             String v = System.getenv(name);
@@ -129,6 +169,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                     treeModel.getExternalNodeCount(),
                     treeModel.getExternalNodeCount(),
                     kIndexOffsetPat);
+            resetBufferDensification();
         }
 
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
@@ -141,6 +182,24 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
     public void setSlabMetadataRecording(boolean enabled) {
         this.slabMetadataRecording = enabled;
+    }
+
+    public boolean isSlabMetadataRecording() {
+        return slabMetadataRecording;
+    }
+
+    public int bufferForNode(int nodeNumber) {
+        if (!slabMetadataRecording) {
+            return nodeNumber;
+        }
+        if (nodeNumber < denseTipCount) {
+            return nodeNumber;
+        }
+        if (denseVal != null && nodeNumber >= 0 && nodeNumber < denseVal.length
+                && denseGen[nodeNumber] == denseGenCounter) {
+            return denseVal[nodeNumber];
+        }
+        return -1;
     }
 
     public int[] buildAndPackSlabMetadata(int slabOpsPerBlock) {
@@ -424,9 +483,9 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     private void propagateTransmissionProbabilities(int subInterval, NodeRef node, double length,
                                                     ActiveNodesForInterval activeNodesForInterval) {
 
-        final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(node);
+        final int inputBuffer1 = mapBuffer(activeNodesForInterval.getActiveBuffer(node));
         activeNodesForInterval.incrementActiveBuffer(node);
-        final int outputBuffer = activeNodesForInterval.getActiveBuffer(node);
+        final int outputBuffer = mapBuffer(activeNodesForInterval.getActiveBuffer(node));
         final int executionOrder = activeNodesForInterval.getExecutionOrder(node) + 1;
 
         final int inputMatrix1 = computeTransmissionProbabilities(subInterval, node, length);
@@ -455,13 +514,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                                                       NodeRef leftChild, NodeRef rightChild, double length,
                                                       ActiveNodesForInterval activeNodesForInterval) {
         
-        final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(leftChild);
-        final int inputBuffer2 = activeNodesForInterval.getActiveBuffer(rightChild);
+        final int inputBuffer1 = mapBuffer(activeNodesForInterval.getActiveBuffer(leftChild));
+        final int inputBuffer2 = mapBuffer(activeNodesForInterval.getActiveBuffer(rightChild));
 
-        final int extraBuffer1 = activeNodesForInterval.getAccumulationBuffer(leftChild);
-        final int extraBuffer2 = activeNodesForInterval.getAccumulationBuffer(rightChild);
+        final int extraBuffer1 = mapBuffer(activeNodesForInterval.getAccumulationBuffer(leftChild));
+        final int extraBuffer2 = mapBuffer(activeNodesForInterval.getAccumulationBuffer(rightChild));
 
-        final int outputBuffer = activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval);
+        final int outputBuffer = mapBuffer(activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval));
         final int executionOrder = Math.max(
                 activeNodesForInterval.getExecutionOrder(leftChild),
                 activeNodesForInterval.getExecutionOrder(rightChild)) + 1;

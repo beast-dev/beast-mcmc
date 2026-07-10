@@ -29,6 +29,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -37,6 +38,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -50,7 +52,8 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
-public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements Citable, Loggable {
+public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel
+        implements ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel, Citable, Loggable {
 
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
@@ -67,6 +70,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
     private boolean birthDeathModel;
     private boolean geometricRates;
+
+    private final Parameter relativeWeights;
 
     private final SiteRateModel gammaRateModel;
 
@@ -102,6 +107,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
+        this.relativeWeights = relativeWeights;
 
         if (switchingRates.getDimension() != 2 * (numBaseModel - 1)
                 && switchingRates.getDimension() != numBaseModel * (numBaseModel - 1)
@@ -398,6 +404,117 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
 
         return columns.toArray(new LogColumn[0]);
+    }
+
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        List<SubstitutionModel> newBaseModels = new ArrayList<>();
+        Parameter switchingRatesParameter = oldParameters.contains(switchingRates) ? newParameters.get(oldParameters.indexOf(switchingRates)) : switchingRates;
+        Parameter rateScalarParameter = oldParameters.contains(rateScalar) ? newParameters.get(oldParameters.indexOf(rateScalar)) : rateScalar;
+
+        for (int i = 0; i < baseModels.size(); i++) {
+            ParameterReplaceableSubstitutionModel substitutionModel = (ParameterReplaceableSubstitutionModel) baseModels.get(i);
+            newBaseModels.add(substitutionModel.factory(oldParameters, newParameters));
+        }
+
+        return new MarkovModulatedSubstitutionModel(getModelName(), newBaseModels, switchingRatesParameter, dataType, null, rateScalarParameter, geometricRates, gammaRateModel, relativeWeights);
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        BaseWrtParameter baseWrtParameter = (BaseWrtParameter) wrt;
+        WrappedMatrix baseDifferentialMatrix = ((DifferentiableSubstitutionModel) baseModels.get(baseWrtParameter.getBaseModelIndex())).getInfinitesimalDifferentialMatrix(baseWrtParameter.getBaseWrtParameter());
+
+        double[][] differentialMassMatrix = new double[baseStateCount * numBaseModel][baseStateCount * numBaseModel];
+        for (int i = 0; i < numBaseModel; i++) {
+            if (i == baseWrtParameter.getBaseModelIndex()) {
+                for (int j = 0; j < baseStateCount; j++) {
+                    for (int k = 0; k < baseStateCount; k++) {
+                        differentialMassMatrix[i * baseStateCount + j][i * baseStateCount + k] = baseDifferentialMatrix.get(j, k);
+                    }
+                }
+            } else {
+                for (int j = 0; j < baseStateCount; j++) {
+                    Arrays.fill(differentialMassMatrix[i * baseStateCount + j], 0);
+                }
+            }
+        }
+
+        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        for (int i = 0; i < numBaseModel; i ++) {
+            DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) baseModels.get(i);
+            try{
+                WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
+                return new BaseWrtParameter(parameter, dim, wrtParameter, i);
+            } catch (RuntimeException e) {
+
+            }
+        }
+        throw new RuntimeException("Parameter not found in any base model");
+    }
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    class BaseWrtParameter implements WrtParameter {
+
+        Parameter parameter;
+        int parameterDim;
+        int baseModelIndex;
+
+        WrtParameter baseWrtParameter;
+
+
+        public BaseWrtParameter(Parameter parameter, int parameterDim, WrtParameter baseWrtParameter, int baseModelIndex) {
+            this.parameter = parameter;
+            this.parameterDim = parameterDim;
+            this.baseModelIndex = baseModelIndex;
+            this.baseWrtParameter = baseWrtParameter;
+        }
+
+        public int getBaseModelIndex() {
+            return baseModelIndex;
+        }
+
+        public WrtParameter getBaseWrtParameter() {
+            return baseWrtParameter;
+        }
+
+        @Override
+        public double getRate(int switchCase) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double getNormalizationDifferential() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            throw new RuntimeException("Not yet implemented!");
+        }
     }
 
     private class RateColumn extends NumberColumn {

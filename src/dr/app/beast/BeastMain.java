@@ -83,8 +83,9 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                thread.interrupt();
                 //noinspection removal
-                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+//                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
 
@@ -183,6 +184,7 @@ public class BeastMain {
             if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.LOAD_STATE_FILE, null) != null ||
                     System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
                 System.setProperty(CHKPT_OVERRULE, "true");
             }
@@ -376,7 +378,7 @@ public class BeastMain {
 
                         new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("strict", "s", "Fail on non-conforming BEAST XML file"),
+                        new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
                         new Arguments.Option("window", "w", "Provide a console window"),
                         new Arguments.Option("options", "o", "Display an options dialog"),
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
@@ -409,9 +411,13 @@ public class BeastMain {
                         new Arguments.Option("beagle_CPU", "bc", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "bg", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", null, "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_tensor_core", null, "BEAGLE: use tensor cores on GPU if available"),
                         new Arguments.Option("beagle_SSE_off", null, "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", null, "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.StringOption("beagle_threading", null, new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
                         new Arguments.IntegerOption("beagle_threads", "bt", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_basta_threading_off", null, "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_basta_threads", null, 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_cuda", null, "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", null, "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
@@ -441,6 +447,7 @@ public class BeastMain {
                         new Arguments.StringOption("save_state", null, "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", null, "Use hex-encoded doubles in checkpoint files"),
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
+                        new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
                         new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
                         new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
@@ -617,6 +624,9 @@ public class BeastMain {
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
         }
+        if(arguments.hasOption("beagle_tensor_core")) {
+            beagleFlags |= BeagleFlag.VECTOR_TENSOR.getMask();
+        }
         if (arguments.hasOption("beagle_cuda")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();
         }
@@ -637,9 +647,15 @@ public class BeastMain {
         if (arguments.hasOption("beagle_threading_off")) {
             System.setProperty("beagle.thread.count", Integer.toString(1));
         }
-//        if (arguments.hasOption("beagle_double")) {
-//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//        }
+        if (arguments.hasOption("beagle_threading")) {
+            System.setProperty("beagle.threading.type", arguments.getStringOption("beagle_threading"));
+        }
+        if (arguments.hasOption("beagle_basta_threading_off")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_basta_threads")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(arguments.getIntegerOption("beagle_basta_threads")));
+        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
         } else {
@@ -713,7 +729,6 @@ public class BeastMain {
 
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
-            System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(seed));
             if (seed <= 0) {
                 printTitle();
                 System.err.println("The random number seed should be > 0");
@@ -782,6 +797,11 @@ public class BeastMain {
 
             if (arguments.hasOption("force_resume")) {
                 System.setProperty("force.resume", Boolean.TRUE.toString());
+            }
+
+            if (arguments.hasOption("checkpoint_seed")) {
+                long checkpointSeed = arguments.getLongOption("checkpoint_seed");
+                System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(checkpointSeed));
             }
 
             if (arguments.hasOption("citations_file")) {
@@ -958,7 +978,7 @@ public class BeastMain {
             }
         }
 
-        if (inputFile != null && inputFile.getParent() != null && working) {
+        if (inputFile != null && inputFile.getParent() != null && (working || options)) {
             System.setProperty("user.dir", inputFile.getParent());
         }
 

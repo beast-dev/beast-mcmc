@@ -26,10 +26,12 @@
  */
 
 package dr.evomodel.siteratemodel;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.evomodel.substmodel.SubstitutionModel;
-import java.util.Arrays;
-import java.util.Comparator;
+
+import java.util.*;
 
 /**
  * DiscretizedSiteRateModel - A SiteModel that has a discrete categories of rates across sites.
@@ -37,7 +39,7 @@ import java.util.Comparator;
  * @author Andrew Rambaut
  */
 
-public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel {
+public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel, Loggable {
 
     /**
      * Constructor for a rate homogenous (single category) SiteRateModel.
@@ -78,13 +80,14 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         addStatistic(muStatistic);
         addStatistic(ratesStatistic);
         addStatistic(weightsStatistic);
+        addStatistic(ratesTimesWeightsStatistic);
 
         this.delegate = delegate;
         addModel(delegate);
 
         categoryRates = new double[delegate.getCategoryCount()];
         categoryProportions = new double[delegate.getCategoryCount()];
-        orderedCategories = new double[delegate.getCategoryCount()][2]; // for storing ordered rate/weight pairs
+        orderedRates = new double[delegate.getCategoryCount()][2]; // for storing ordered rate/weight pairs
 
         ratesKnown = false;
         orderedRatesKnown = false;
@@ -163,16 +166,16 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         ratesKnown = true;
-
         orderedRatesKnown = false;
+
     }
 
     private void calculateOrderedCategories() {
         for (int i = 0; i < categoryRates.length; i++) {
-            orderedCategories[i][0] = categoryRates[i];
-            orderedCategories[i][1] = categoryProportions[i];
+            orderedRates[i][0] = categoryRates[i];
+            orderedRates[i][1] = categoryProportions[i];
         }
-        Arrays.sort(orderedCategories, Comparator.comparingDouble(a -> a[1]));
+        Arrays.sort(orderedRates, Comparator.comparingDouble(a -> a[0]));
         orderedRatesKnown = true;
     }
     // *****************************************************************
@@ -187,7 +190,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        if (variable == nuParameter) {
-            ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
+        ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
 //        } else {
 //            throw new RuntimeException("Unknown variable in DiscretizedSiteRateModel.handleVariableChangedEvent");
 //        }
@@ -236,10 +239,12 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         public double getStatisticValue(int dim) {
-            if (!orderedRatesKnown) {
-                calculateOrderedCategories();
+            if(!ratesKnown){
+                calculateCategoryRates();
             }
-            return orderedCategories[dim][0];
+            calculateOrderedCategories();
+
+            return orderedRates[dim][0];
         }
     };
 
@@ -254,10 +259,33 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
         public double getStatisticValue(int dim) {
-            if (!orderedRatesKnown) {
-                calculateOrderedCategories();
+            if(!ratesKnown){
+                calculateCategoryRates();
             }
-            return orderedCategories[dim][1];
+            calculateOrderedCategories();
+
+            return orderedRates[dim][1];
+        }
+
+    };
+
+    private final Statistic ratesTimesWeightsStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "rates_x_weights";
+        }
+
+        public int getDimension() {
+            return getCategoryCount();
+        }
+
+        public double getStatisticValue(int dim) {
+            if(!ratesKnown){
+                calculateCategoryRates();
+            }
+            calculateOrderedCategories();
+
+            return orderedRates[dim][1]* orderedRates[dim][0];
         }
 
     };
@@ -272,7 +300,7 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
     private boolean ratesKnown, orderedRatesKnown;
 
     private final double[] categoryRates;
-    private final double[][] orderedCategories;
+    private final double[][] orderedRates;
 
     private final double[] categoryProportions;
 
@@ -291,4 +319,27 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
     private SubstitutionModel substitutionModel;
 
+    @Override
+    public LogColumn[] getColumns() {
+
+        if (!ratesKnown) {
+            calculateCategoryRates();
+        }
+
+        if (!orderedRatesKnown) {
+            calculateOrderedCategories();
+        }
+
+
+        ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
+
+        // Columns sorted in order of increasing rate.
+
+
+        Collections.addAll(columns, ratesStatistic.getColumns());
+        Collections.addAll(columns, weightsStatistic.getColumns());
+        Collections.addAll(columns, ratesTimesWeightsStatistic.getColumns());
+
+        return columns.toArray(new LogColumn[columns.size()]);
+    }
 }

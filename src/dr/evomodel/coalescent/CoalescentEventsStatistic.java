@@ -27,7 +27,6 @@
 
 package dr.evomodel.coalescent;
 
-//import dr.evolution.coalescent.IntervalType;
 import dr.inference.model.Statistic;
 
 /**

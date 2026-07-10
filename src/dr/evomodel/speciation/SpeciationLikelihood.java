@@ -30,6 +30,7 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -165,14 +166,14 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
     }
 
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
-    public SpeciationModelGradientProvider getGradientProvider() {
+    public BirthDeathModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {
             gradientProvider = speciationModel.getProvider();
         }
         return gradientProvider;
     }
 
-    private SpeciationModelGradientProvider gradientProvider = null;
+    private BirthDeathModelGradientProvider gradientProvider = null;
 
     // **************************************************************
     // Loggable IMPLEMENTATION

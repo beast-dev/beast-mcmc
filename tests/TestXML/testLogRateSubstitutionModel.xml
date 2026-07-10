@@ -133,11 +133,10 @@
     </gaussianProcessPrediction>
 
     <report>
-        <randomField idref="test.field"/>
+        <randomField idref="test.field"/> <!---6.956778379787981-->
         <randomFieldGradient idref="test.gradient"/>
         <gaussianProcessPrediction idref="test.prediction"/>
     </report>
-
 
     <logRateSubstitutionModel id="loc.model" normalize="true">
         <generalDataType idref="loc.dataType"/>
@@ -239,23 +238,8 @@
         </expected>
     </assertEqual>
 
-
     <report id = "report.prediction">
         <gaussianProcessPrediction idref="test.prediction"/>
     </report>
-
-
-    <!--    &lt;!&ndash;    check value log-likelihood&ndash;&gt;-->
-    <!--    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">-->
-    <!--        <message>-->
-    <!--            Check GP prior values (for an MCMC chain of length 0)-->
-    <!--        </message>-->
-    <!--        <actual regex="likelihood:(.*?)\n">-->
-    <!--            <prior idref="prior"/>-->
-    <!--        </actual>-->
-    <!--        <expected>-->
-    <!--            -6.956778-->
-    <!--        </expected>-->
-    <!--    </assertEqual>-->
 
 </beast>

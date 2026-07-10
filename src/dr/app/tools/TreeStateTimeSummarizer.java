@@ -93,7 +93,14 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         StateHistory history = traversePostOrder(tree, root, treeId);
 
         checkEqual(rootState, history.state);
-        Row row = new Row(treeId, history.state, history.duration);
+        Row row = new Row(
+                treeId,
+                history.state,
+                history.duration,
+                tree.getNodeHeight(root),
+                history.endHeight,
+                history.branchCount
+        );
         ps.println(row);
 
     }
@@ -101,10 +108,14 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
     private class StateHistory {
         String state;
         double duration;
+        double endHeight;   // youngest boundary of this subtree segment
+        int branchCount;
 
-        StateHistory(String state, double duration) {
+        StateHistory(String state, double duration, double endHeight, int branchCount) {
             this.state = state;
             this.duration = duration;
+            this.endHeight = endHeight;
+            this.branchCount = branchCount;
         }
     }
 
@@ -121,14 +132,25 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
 
         // If the node is internal, update the partial likelihoods.
         if (tree.isExternal(node)) {
-            history = new StateHistory((String) tree.getNodeAttribute(node, nodeStateAnnotation), 0.0);
+            history = new StateHistory(
+                    (String) tree.getNodeAttribute(node, nodeStateAnnotation),
+                    0.0,
+                    tree.getNodeHeight(node),
+                    0
+            );
+
         } else {
             StateHistory history0 = traversePostOrder(tree, tree.getChild(node, 0), treeId);
             StateHistory history1 = traversePostOrder(tree, tree.getChild(node, 1), treeId);
 
             checkEqual(history0.state, history1.state);
 
-            history = new StateHistory(history0.state, history0.duration + history1.duration);
+            history = new StateHistory(
+                    history0.state,
+                    history0.duration + history1.duration,
+                    Math.min(history0.endHeight, history1.endHeight),
+                    history0.branchCount + history1.branchCount + 1
+            );
         }
 
         if (!tree.isRoot(node)) {
@@ -144,13 +166,25 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
 
                     double jumpTime = (Double) jump[0];
 
-                    history.duration += clippedDuration(jumpTime, currentTime); //(jumpTime - currentTime);
+                    history.duration += clippedDuration(jumpTime, currentTime);
 
-                    Row row = new Row(treeId, history.state, history.duration);
+                    Row row = new Row(
+                            treeId,
+                            history.state,
+                            history.duration,
+                            jumpTime,           // start of this subtree segment in this state
+                            history.endHeight,   // youngest end already tracked from below
+                            history.branchCount
+                    );
                     ps.println(row);
 
                     currentTime = jumpTime;
-                    history = new StateHistory((String) jump[1], 0.0);
+                    history = new StateHistory(
+                            (String) jump[1],
+                            0.0,
+                            jumpTime,            // the new state segment now ends, so far, at this jump
+                            0
+                    );
 
                 }
             }
@@ -189,28 +223,36 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         String treeId;
         String state;
         double time;
+        double startHeight;
+        double endHeight;
+        int branchCount;
 
         private static final String DELIMITER = ",";
 
-        private Row(String treeId,
-                    String state,
-                    double time) {
+        private Row(String treeId, String state, double time, double startHeight, double endHeight, int branchCount) {
             this.treeId = treeId;
             this.state = state;
             this.time = time;
+            this.startHeight = startHeight;
+            this.endHeight = endHeight;
+            this.branchCount =  branchCount;
         }
 
         public String toString() {
             return treeId + DELIMITER
                     + state + DELIMITER
-                    + time;
+                    + time + DELIMITER
+                    + startHeight + DELIMITER
+                    + endHeight + DELIMITER
+                    + branchCount;
         }
     }
 
     protected PrintStream openOutputFile(String outputFileName) {
 
         PrintStream ps = super.openOutputFile(outputFileName);
-        ps.println("treeId,state,time");
+//        ps.println("treeId,state,time");
+        ps.println("treeId,state,time,startHeight,endHeight,branchingEvents");
         return ps;
     }
 

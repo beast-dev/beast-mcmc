@@ -222,14 +222,15 @@ public class LogGaussianProcessModel extends LogLinearModel
     @Override
     public double[] getXBeta() {
         // compute the mean and then exponentiate
-        final int fieldDim = dependentParam.getDimension();
-        double[] rates = new double[fieldDim];
-
-        // here we just exponentiate the log-mean rate into the actual mean rates
-        for (int i = 0; i < fieldDim; i++) {
-            rates[i] = Math.exp(dependentParam.getParameterValue(i));
-        }
-        return rates;
+//        final int fieldDim = dependentParam.getDimension();
+//        double[] rates = new double[fieldDim];
+//
+//        // here we just exponentiate the log-mean rate into the actual mean rates
+//        for (int i = 0; i < fieldDim; i++) {
+//            rates[i] = Math.exp(dependentParam.getParameterValue(i));
+//        }
+//        return rates;
+        return dependentParam.getParameterValues();
     }
 
 }

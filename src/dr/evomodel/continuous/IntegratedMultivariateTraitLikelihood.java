@@ -338,7 +338,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
 
         double logLikelihood = 0;
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+        double[][] traitPrecision = diffusionModel.getPrecisionMatrix();
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] conditionalRootMean = tmp2;
 
@@ -977,7 +977,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     public void redrawAncestralStates() {
 
-        double[][] treePrecision = diffusionModel.getPrecisionmatrix();
+        double[][] treePrecision = diffusionModel.getPrecisionMatrix();
         double[][] treeVariance = new SymmetricMatrix(treePrecision).inverse().toComponents();
 
         preOrderTraverseSample(treeModel, treeModel.getRoot(), 0, treePrecision, treeVariance);

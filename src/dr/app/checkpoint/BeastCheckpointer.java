@@ -28,14 +28,14 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.CheckpointableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.state.*;
@@ -298,12 +298,22 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     out.print(parameter.getParameterName());
                     out.print("\t");
                     out.print(parameter.getDimension());
-                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        out.print("\t");
-                        out.print(parameter.getParameterUntransformedValue(dim));
+                    if(parameter instanceof TransformedMultivariateParameter){
+                        for (int dim = 0; dim < ((TransformedMultivariateParameter) parameter).getUntransformedDimension(); dim++) {
+                            out.print("\t");
+                            out.print(parameter.getParameterUntransformedValue(dim));
+                        }
+                    } else {
+                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            out.print("\t");
+                            out.print(parameter.getParameterUntransformedValue(dim));
+                        }
                     }
+
                     out.print("\n");
                 }
+//                if (parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")) {
+//                }
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -322,6 +332,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     out.print(((AdaptableMCMCOperator)operator).getAdaptationCount());
                 }
                 out.println();
+                if (operator instanceof CheckpointableMCMCOperator) {
+                    writeCheckpointableOperatorState(out, operator, (CheckpointableMCMCOperator) operator);
+                }
             }
 
             //check up front if there are any TreeParameterModel objects
@@ -336,7 +349,14 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
 
-                if (model instanceof TreeModel) {
+                if (model instanceof EmpiricalTreeDistributionModel) {
+                    out.print("empirical tree");
+                    out.print("\t");
+                    out.print(model.getModelName());
+                    out.print("\t");
+                    out.println(((EmpiricalTreeDistributionModel)model).getCurrentTreeIndex());
+
+                } else if (model instanceof TreeModel) {
                     out.print("tree");
                     out.print("\t");
                     out.println(model.getModelName());
@@ -415,6 +435,38 @@ public class BeastCheckpointer implements StateLoaderSaver {
         return true;
     }
 
+    private void writeCheckpointableOperatorState(PrintStream out, MCMCOperator operator,
+                                                  CheckpointableMCMCOperator checkpointableOperator) {
+        out.print("operator_state");
+        out.print("\t");
+        out.print(operator.getOperatorName());
+        out.print("\t");
+        out.print(checkpointableOperator.getCheckpointStateType());
+        checkpointableOperator.writeCheckpointState(new CheckpointableMCMCOperator.CheckpointStateWriter(out));
+        out.println();
+    }
+
+    private void addSavedFields(Map<String, Deque<String[]>> savedFields, String key, String[] fields) {
+        Deque<String[]> values = savedFields.get(key);
+        if (values == null) {
+            values = new ArrayDeque<String[]>();
+            savedFields.put(key, values);
+        }
+        values.addLast(fields);
+    }
+
+    private String[] removeSavedFields(Map<String, Deque<String[]>> savedFields, String key) {
+        Deque<String[]> values = savedFields.get(key);
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        return values.removeFirst();
+    }
+
+    private String getParameterCheckpointName(Parameter parameter) {
+        return parameter.getParameterName() == null ? "null" : parameter.getParameterName();
+    }
+
     protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
 
         DoubleParser parser = useFullPrecision ? DoubleParser.HEX : DoubleParser.TEXT;
@@ -471,26 +523,32 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
+            Map<String, Deque<String[]>> savedParameters = new LinkedHashMap<String, Deque<String[]>>();
+            line = in.readLine();
+            while (line != null) {
+                fields = line.split("\t");
+                if (!fields[0].equals("parameter")) {
+                    break;
+                }
+                addSavedFields(savedParameters, fields[1], fields);
+                line = in.readLine();
+            }
+
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
 
                 if (!parameter.isImmutable()) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    //if (!fields[0].equals(parameter.getParameterName())) {
-                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                    //}
+                    fields = removeSavedFields(savedParameters, getParameterCheckpointName(parameter));
+                    if (fields == null) {
+                        throw new RuntimeException("Unable to match state parameter: " + parameter.getParameterName());
+                    }
                     int dimension = Integer.parseInt(fields[2]);
 
                     if (dimension != parameter.getDimension()) {
-                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                        System.err.print("Read from file: ");
-                        for (int i = 0; i < fields.length; i++) {
-                            System.err.print(fields[i] + "\t");
-                        }
-                        System.err.println();
+                        throw new RuntimeException("Unable to match state parameter dimension: " + dimension +
+                                ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
                     }
 
-                    if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
+                    if (fields[1].endsWith(".rootNodeNumber")) {
                         // System.out.println("eek");
                         double value = parser.parseDouble(fields[3]);
                         parameter.setParameterValue(0, value);
@@ -502,6 +560,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             System.out.print("restoring " + fields[1] + " with values ");
                         }
                         for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
+
                             try {
                                 parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
                             } catch (RuntimeException rte) {
@@ -519,28 +579,62 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 }
             }
 
-            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
-                //TODO we can no longer assume these are in the right order
-                //TODO best parse all the "operator" lines and store them so we can mix and match within this for loop
-                //TODO does not only apply to the operators but also to the parameters
-                //TODO test using additional tip-date sampling compared to previous run
-                MCMCOperator operator = operatorSchedule.getOperator(i);
-                line = in.readLine();
+            Map<String, Deque<String[]>> savedOperators = new LinkedHashMap<String, Deque<String[]>>();
+            Map<String, Deque<String[]>> savedOperatorStates = new LinkedHashMap<String, Deque<String[]>>();
+            while (line != null) {
                 fields = line.split("\t");
-                if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match " + operator.getOperatorName() + " operator: " + fields[1]);
+                if (fields[0].equals("operator")) {
+                    addSavedFields(savedOperators, fields[1], fields);
+                } else if (fields[0].equals("operator_state")) {
+                    addSavedFields(savedOperatorStates, fields[1], fields);
+                } else {
+                    break;
+                }
+                line = in.readLine();
+            }
+
+            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                MCMCOperator operator = operatorSchedule.getOperator(i);
+                fields = removeSavedFields(savedOperators, operator.getOperatorName());
+                if (fields == null) {
+                    throw new RuntimeException("Unable to match operator: " + operator.getOperatorName());
                 }
                 if (fields.length < 4) {
                     throw new RuntimeException("Operator missing values: " + fields[1]);
                 }
-                operator.setAcceptCount(Integer.parseInt(fields[2]));
-                operator.setRejectCount(Integer.parseInt(fields[3]));
+                operator.setAcceptCount(Long.parseLong(fields[2]));
+                operator.setRejectCount(Long.parseLong(fields[3]));
                 if (operator instanceof AdaptableMCMCOperator) {
                     if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
                     ((AdaptableMCMCOperator)operator).setAdaptableParameter(parser.parseDouble(fields[4]));
                     ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
+                }
+                if (operator instanceof CheckpointableMCMCOperator) {
+                    String[] operatorState = removeSavedFields(savedOperatorStates, operator.getOperatorName());
+                    CheckpointableMCMCOperator checkpointableOperator = (CheckpointableMCMCOperator) operator;
+                    if (operatorState == null) {
+                        throw new RuntimeException("Missing " + checkpointableOperator.getCheckpointStateType() +
+                                " operator state for checkpointable operator: " + operator.getOperatorName());
+                    }
+                    if (operatorState.length < 3 ||
+                            !operatorState[2].equals(checkpointableOperator.getCheckpointStateType())) {
+                        throw new RuntimeException("Malformed " + checkpointableOperator.getCheckpointStateType() +
+                                " operator state for checkpointable operator: " + operator.getOperatorName());
+                    }
+                    checkpointableOperator.readCheckpointState(
+                            new CheckpointableMCMCOperator.CheckpointStateReader(
+                                    operatorState,
+                                    3,
+                                    checkpointableOperator.getCheckpointStateType(),
+                                    operator.getOperatorName(),
+                                    new CheckpointableMCMCOperator.CheckpointStateReader.DoubleParser() {
+                                        @Override
+                                        public double parseDouble(String string) {
+                                            return parser.parseDouble(string);
+                                        }
+                                    }));
                 }
             }
 
@@ -550,8 +644,26 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             //store list of TreeModels for debugging purposes
             ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+            
+            boolean hasTreeModel = false;
 
             for (Model model : Model.CONNECTED_MODEL_SET) {
+
+                if (model instanceof  EmpiricalTreeDistributionModel) {
+                    if (DEBUG) {
+                        System.out.println("model = " + model.getModelName());
+                    }
+
+                    if (line == null || !line.startsWith("empirical tree\t")) {
+                        line = in.readLine();
+                    }
+                    fields = line.split("\t");
+
+                    EmpiricalTreeDistributionModel empiricalTreeDistributionModel = (EmpiricalTreeDistributionModel) model;
+                    int currentTreeIndex = Integer.parseInt(fields[2]);
+                    empiricalTreeDistributionModel.setTree(currentTreeIndex);
+                    line = null;
+                } else
 
                 if (model instanceof TreeModel) {
                     if (DEBUG) {
@@ -566,6 +678,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
                         System.out.println();
                     }
+
+                    hasTreeModel = true;
                 } else {
                     if (DEBUG) {
                         System.out.println("Not a TreeModel: " + model.getModelName());
@@ -601,126 +715,131 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 linkedModels.put(name, tpmList);
             }
 
-            line = in.readLine();
-            fields = line.split("\t");
-            // Read in all (possibly more than one) trees
-            while (fields[0].equals("tree")) {
+            if (hasTreeModel) {
 
-                if (DEBUG) {
-                    System.out.println("\ntree: " + fields[1]);
+                if (line == null) {
+                    line = in.readLine();
                 }
+                fields = line.split("\t");
+                // Read in all (possibly more than one) trees
+                while (fields[0].equals("tree")) {
 
-                for (Model model : Model.CONNECTED_MODEL_SET) {
-                    if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
-                        line = in.readLine();
-                        line = in.readLine();
-                        fields = line.split("\t");
-                        //read number of nodes
-                        int nodeCount = Integer.parseInt(fields[0]);
-                        double[] nodeHeights = new double[nodeCount];
-                        String[] taxaNames = new String[(nodeCount+1)/2];
+                    if (DEBUG) {
+                        System.out.println("\ntree: " + fields[1]);
+                    }
 
-                        for (int i = 0; i < nodeCount; i++) {
+                    for (Model model : Model.CONNECTED_MODEL_SET) {
+                        if (model instanceof TreeModel && fields[1].equals(model.getModelName())) {
+                            line = in.readLine();
                             line = in.readLine();
                             fields = line.split("\t");
-                            nodeHeights[i] = parser.parseDouble(fields[1]);
-                            if (i < taxaNames.length) {
-                                taxaNames[i] = fields[2];
-                            }
-                        }
+                            //read number of nodes
+                            int nodeCount = Integer.parseInt(fields[0]);
+                            double[] nodeHeights = new double[nodeCount];
+                            String[] taxaNames = new String[(nodeCount + 1) / 2];
 
-                        //on to reading edge information
-                        line = in.readLine();
-                        line = in.readLine();
-                        line = in.readLine();
-                        fields = line.split("\t");
-
-                        int edgeCount = Integer.parseInt(fields[0]);
-                        if (DEBUG) {
-                            System.out.println("edge count = " + edgeCount);
-                            System.out.println("model: " + model.getId());
-                            System.out.println("linkedModels size = " + linkedModels.size());
-                            System.out.println(linkedModels.get(model.getId()));
-                        }
-
-                        //create data matrix of doubles to store information from list of TreeParameterModels
-                        //size of matrix depends on the number of TreeParameterModels assigned to a TreeModel
-                        double[][] traitValues = new double[linkedModels.get(model.getId()).size()][edgeCount];
-
-                        //create array to store whether a node is left or right child of its parent
-                        //can be important for certain tree transition kernels
-                        int[] childOrder = new int[edgeCount];
-                        for (int i = 0; i < childOrder.length; i++) {
-                            childOrder[i] = -1;
-                        }
-
-                        int[] parents = new int[edgeCount];
-                        for (int i = 0; i < edgeCount; i++){
-                            parents[i] = -1;
-                        }
-                        for (int i = 0; i < edgeCount-1; i++) {
-                            line = in.readLine();
-                            if (line != null) {
-                                if (DEBUG) {
-                                    System.out.println("DEBUG: " + line);
-                                }
+                            for (int i = 0; i < nodeCount; i++) {
+                                line = in.readLine();
                                 fields = line.split("\t");
-                                parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                                // childOrder[i] = Integer.parseInt(fields[2]);
-                                childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
-                                for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                    //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
-                                    traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3+j]);
+                                nodeHeights[i] = parser.parseDouble(fields[1]);
+                                if (i < taxaNames.length) {
+                                    taxaNames[i] = fields[2];
                                 }
                             }
+
+                            //on to reading edge information
+                            line = in.readLine();
+                            line = in.readLine();
+                            line = in.readLine();
+                            fields = line.split("\t");
+
+                            int edgeCount = Integer.parseInt(fields[0]);
+                            if (DEBUG) {
+                                System.out.println("edge count = " + edgeCount);
+                                System.out.println("model: " + model.getId());
+                                System.out.println("linkedModels size = " + linkedModels.size());
+                                System.out.println(linkedModels.get(model.getId()));
+                            }
+
+                            //create data matrix of doubles to store information from list of TreeParameterModels
+                            //size of matrix depends on the number of TreeParameterModels assigned to a TreeModel
+                            double[][] traitValues = new double[linkedModels.get(model.getId()).size()][edgeCount];
+
+                            //create array to store whether a node is left or right child of its parent
+                            //can be important for certain tree transition kernels
+                            int[] childOrder = new int[edgeCount];
+                            for (int i = 0; i < childOrder.length; i++) {
+                                childOrder[i] = -1;
+                            }
+
+                            int[] parents = new int[edgeCount];
+                            for (int i = 0; i < edgeCount; i++) {
+                                parents[i] = -1;
+                            }
+                            for (int i = 0; i < edgeCount - 1; i++) {
+                                line = in.readLine();
+                                if (line != null) {
+                                    if (DEBUG) {
+                                        System.out.println("DEBUG: " + line);
+                                    }
+                                    fields = line.split("\t");
+                                    parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
+                                    // childOrder[i] = Integer.parseInt(fields[2]);
+                                    childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
+                                    for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
+                                        //   traitValues[j][i] = parser.parseDouble(fields[3+j]);
+                                        traitValues[j][Integer.parseInt(fields[0])] = parser.parseDouble(fields[3 + j]);
+                                    }
+                                }
+                            }
+
+                            //perform magic with the acquired information
+                            if (DEBUG) {
+                                System.out.println("adopting tree structure");
+                            }
+
+                            //adopt the loaded tree structure
+                            ((TreeModel) model).beginTreeEdit();
+                            ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                            if (traitModels.size() > 0) {
+                                System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel) model).getId());
+                                ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                            }
+                            ((TreeModel) model).endTreeEdit();
+
+                            expectedTreeModelNames.remove(model.getModelName());
+
                         }
 
-                        //perform magic with the acquired information
-                        if (DEBUG) {
-                            System.out.println("adopting tree structure");
-                        }
+                    }
 
-                        //adopt the loaded tree structure
-                        ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
-                        if (traitModels.size() > 0) {
-                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
-                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
-                        }
-                        ((TreeModel) model).endTreeEdit();
-
-                        expectedTreeModelNames.remove(model.getModelName());
-
+                    line = in.readLine();
+                    if (line != null) {
+                        fields = line.split("\t");
                     }
 
                 }
 
-                line = in.readLine();
-                if (line != null) {
-                    fields = line.split("\t");
-                }
-
-            }
-
-            if (expectedTreeModelNames.size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (String notFoundName : expectedTreeModelNames) {
-                    sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
-                }
-                throw new RuntimeException("\n" + sb.toString());
-            }
-
-            if (DEBUG) {
-                System.out.println("\nDouble checking:");
-                for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                    if (parameter.getParameterName() != null && parameter.getParameterName().equals("branchRates.categories.rootNodeNumber")) {
-                        System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
+                if (expectedTreeModelNames.size() > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (String notFoundName : expectedTreeModelNames) {
+                        sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
                     }
+                    throw new RuntimeException("\n" + sb.toString());
                 }
-                System.out.println("\nPrinting trees:");
-                for (TreeModel tm : treeModelList) {
-                    System.out.println(tm.getId() + ": ");
-                    System.out.println(tm.getNewick());
+
+                if (DEBUG) {
+                    System.out.println("\nDouble checking:");
+                    for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+                        if (parameter.getParameterName() != null && parameter.getParameterName().endsWith(".rootNodeNumber")) {
+                            System.out.println(parameter.getParameterName() + ": " + parameter.getParameterValue(0));
+                        }
+                    }
+                    System.out.println("\nPrinting trees:");
+                    for (TreeModel tm : treeModelList) {
+                        System.out.println(tm.getId() + ": ");
+                        System.out.println(tm.getNewick());
+                    }
                 }
             }
 

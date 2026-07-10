@@ -240,17 +240,22 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985-3995.
+    public static Citation TAO_LUMPING_2025 = new Citation(
+            new Author[]{
+                    new Author("X", "Tao"),
+                    new Author("NS", "Trovao"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
-//    public static Citation LEMEY_2012 = new Citation(
-//            new Author[]{
-//                    new Author("P", "Lemey"),
-//                    new Author("T", "Bedford"),
-//                    new Author("A", "Rambaut"),
-//                    new Author("MA", "Suchard"),
-//            },
-//            Citation.Status.IN_PREPARATION
-//    );
+    public static Citation MONTI_GENERIC_RATES_2024 = new Citation(
+            new Author[]{
+                    new Author("F", "Monti"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
     public static Citation LEMEY_MIXTURE_2012 = new Citation(
             new Author[]{
@@ -271,17 +276,6 @@ public class CommonCitations {
             "eLife",
             2,
             "e00631"
-    );
-
-
-//    Gong LI, Suchard MA, Bloom JD. Stability-mediated epistasis constrains the evolution of an influenza protein. eLife, 2, e00631, 2013.
-
-    public static Citation SUCHARD_2012_LATENT = new Citation(
-            new Author[]{
-                    new Author("MA", "Suchard"),
-                    new Author("J", "Felsenstein"),
-            },
-            Citation.Status.IN_PREPARATION
     );
 
     public static Citation SUCHARD_GENERIC = new Citation(

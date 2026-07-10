@@ -30,6 +30,7 @@ package dr.evomodel.coalescent.basta;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import dr.evolution.tree.Tree;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
 
@@ -160,13 +161,46 @@ public interface ProcessOnCoalescentIntervalDelegate {
                     accBuffer1 + " + " + accBuffer2 + "] @ " + executionOrder;
         }
 
-        public final int outputBuffer;
-        public final int inputBuffer1;
-        public final int inputBuffer2;
+        private static int tipCount;
+        private static int used;
+        private static int[] map;
+
+        public static void initializeMap(Tree tree, int maxNumCoalescentIntervals) {
+            tipCount = tree.getExternalNodeCount();
+            if (map == null) {
+                map = new int[maxNumCoalescentIntervals * (tree.getNodeCount() + 1)];
+            }
+            Arrays.fill(map, -1);
+            used = tipCount;
+        }
+
+        private int mapFunc(int buffer) {
+            if (buffer < tipCount) {
+                return buffer;
+            } else {
+                if (map[buffer] == -1) {
+                    map[buffer] = used;
+                    ++used;
+                }
+                return map[buffer];
+            }
+        }
+
+        public void transform() {
+            this.outputBuffer = mapFunc(this.outputBuffer);
+            this.inputBuffer1 = mapFunc(this.inputBuffer1);
+            this.inputBuffer2 = mapFunc(this.inputBuffer2);
+            this.accBuffer1 = mapFunc(this.accBuffer1);
+            this.accBuffer2 = mapFunc(this.accBuffer2);
+        }
+
+        public int outputBuffer;
+        public int inputBuffer1;
+        public int inputBuffer2;
         public final int inputMatrix1;
         public final int inputMatrix2;
-        public final int accBuffer1;
-        public final int accBuffer2;
+        public int accBuffer1;
+        public int accBuffer2;
         public final double intervalLength;
         public final int executionOrder;
         public final int intervalNumber;

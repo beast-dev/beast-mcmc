@@ -58,6 +58,10 @@ public class BranchSufficientStatistics {
         return below.toVectorizedString() + " / " + branch.toVectorizedString() + " / " + above.toVectorizedString();
     }
 
+    public boolean isDense() {
+        return below.getPrecision() instanceof PreOrderPrecision.Dense;
+    }
+
     public int[] getMissing() {
         PermutationIndices indices = new PermutationIndices(getBelow().getRawPrecision());
         return indices.getZeroIndices();

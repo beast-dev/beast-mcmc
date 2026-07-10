@@ -60,7 +60,7 @@ public class MultivariateTraitUtils {
 
     public static double[][] computeTreeTraitPrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treePrecision = computeTreePrecision(trait, conditionOnRoot);
-        double[][] traitPrecision = trait.getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = trait.getDiffusionModel().getPrecisionMatrix();
         return productKronecker(treePrecision, traitPrecision);
     }
 
@@ -259,7 +259,7 @@ public class MultivariateTraitUtils {
     public static double[][] computeTreeTraitVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treeVariance = computeTreeVariance(trait, conditionOnRoot);
         double[][] traitVariance =
-                new SymmetricMatrix(trait.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+                new SymmetricMatrix(trait.getDiffusionModel().getPrecisionMatrix()).inverse().toComponents();
         return productKronecker(treeVariance, traitVariance);
     }
 

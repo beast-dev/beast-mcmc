@@ -1,7 +1,7 @@
 /*
  * TipGradientViaFullConditionalDelegate.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -31,13 +31,13 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.matrix.SparseCompressedMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 
 /**
  * @author Marc A. Suchard
@@ -47,7 +47,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
     private final int offset;
     private final int dimGradient;
 
-    private final int[] subInds;
+    private final int[] subIndices;
 
     private final boolean doSubset;
 
@@ -64,16 +64,12 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         this.offset = offset;
         this.dimGradient = dimGradient;
 
-        subInds = new int[dimGradient];
+        subIndices = new int[dimGradient];
         for (int i = 0; i < dimGradient; i++) {
-            subInds[i] = i + offset;
+            subIndices[i] = i + offset;
         }
 
-        if (offset != 0 || dimGradient != dimTrait) {
-            doSubset = true;
-        } else {
-            doSubset = false;
-        }
+        doSubset = offset != 0 || dimGradient != dimTrait;
     }
 
     public static String getName(String name) {
@@ -104,9 +100,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         final double[] postOrderPartial = new double[dimPartial * numTraits];
         cdi.getPostOrderPartial(likelihoodDelegate.getActiveNodeIndex(node.getNumber()), postOrderPartial);
 
-        final MatrixParameterInterface precision = diffusionModel.getPrecisionParameter();
-
-        final double[] gradient = new double[dimTrait * numTraits];
+        final double[] gradient;
 
         if (numTraits > 1) {
             throw new RuntimeException("Not yet implemented");
@@ -114,16 +108,36 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
 
         final double scale = fullConditionalPartial[dimTrait];
 
-        for (int i = 0; i < dimTrait; ++i) {
+        // TODO delegate to DiffusionRepresentation
+        if (diffusionRepresentation instanceof DiffusionRepresentation.Sparse) {
+            // TODO (much higher up in call-change) only execute when tip involved in mask
 
-            double sum = 0.0;
-            for (int j = 0; j < dimTrait; ++j) {
-                sum += (fullConditionalPartial[j] - postOrderPartial[j]) * scale *
-                        precision.getParameterValue(i, j);
-//                        precision.getParameterValue(i * dimTrait + j);
+            PreOrderPrecision.Sparse precision =
+                    (PreOrderPrecision.Sparse) diffusionRepresentation.getPrecision(0);
+
+            SparseCompressedMatrix matrix = precision.getPrecision();
+            double matrixScalar = precision.getScalar();
+
+            gradient = matrix.multiplyMatrixVectorDifference(
+                    fullConditionalPartial, 0,
+                    postOrderPartial, 0,
+                    scale * matrixScalar);
+
+        } else {
+
+            gradient = new double[dimTrait * numTraits];
+            final MatrixParameterInterface precision = diffusionModel.getPrecisionParameter();
+
+            for (int i = 0; i < dimTrait; ++i) {
+
+                double sum = 0.0;
+                for (int j = 0; j < dimTrait; ++j) {
+                    sum += (fullConditionalPartial[j] - postOrderPartial[j]) * scale *
+                            precision.getParameterValue(i, j);
+                }
+
+                gradient[i] = sum;
             }
-
-            gradient[i] = sum;
         }
 
         return gradient;
@@ -137,7 +151,11 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
 
         // Pre stats
         final double[] fullConditionalPartial = super.getTraitForNode(node);
-        NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait, Pd, likelihoodDelegate.getPrecisionType());
+        NormalSufficientStatistics statPre = new NormalSufficientStatistics(fullConditionalPartial, 0, dimTrait,
+                diffusionRepresentation.getPrecision(0),
+//                Pd,
+//                choleskyPrecision,
+                likelihoodDelegate.getPrecisionType());
         DenseMatrix64F precisionPre = statPre.getRawPrecisionCopy();
         DenseMatrix64F meanPre = statPre.getRawMeanCopy();
 
@@ -148,15 +166,15 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
         DenseMatrix64F meanPost = MissingOps.wrap(postOrderPartial, 0, dimTrait, 1);
 
         if (doSubset) {
-            precisionPre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
-            meanPre = MissingOps.gatherRowsAndColumns(meanPre, subInds, new int[]{0});
-            meanPost = MissingOps.gatherRowsAndColumns(meanPost, subInds, new int[]{0});
+            precisionPre = MissingOps.gatherRowsAndColumns(precisionPre, subIndices, subIndices);
+            meanPre = MissingOps.gatherRowsAndColumns(meanPre, subIndices, new int[]{0});
+            meanPost = MissingOps.gatherRowsAndColumns(meanPost, subIndices, new int[]{0});
         }
 
         if (dataModel.needToUpdateTipDataGradient(offset, dimGradient)) {
             DenseMatrix64F variancePre = statPre.getRawVarianceCopy();
             if (doSubset) {
-                variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subInds, subInds);
+                variancePre = MissingOps.gatherRowsAndColumns(precisionPre, subIndices, subIndices);
             }
 
             dataModel.updateTipDataGradient(precisionPre, variancePre, node, offset, dimGradient);

@@ -70,8 +70,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private static final boolean TIMING = false;
 
     @Override
-    public void getBranchPrecision(int bufferIndex, int precisionIndex, double[] precision) {
-        getBranchPrecision(bufferIndex, precision);
+    public void getBranchPrecision(int bufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+        getBranchPrecision(bufferIndex, ((DiffusionRepresentation.Dense) precision).matrix);
     }
 
     public void getBranchPrecision(int bufferIndex, double[] precision) {
@@ -106,8 +106,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void getRootPrecision(int priorBufferIndex, int precisionIndex, double[] precision) {
-        getRootPrecision(priorBufferIndex, precision);
+    public void getRootPrecision(int priorBufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+        getRootPrecision(priorBufferIndex, ((DiffusionRepresentation.Dense) precision).matrix);
     }
 
     private void getRootPrecision(int priorBufferIndex, double[] precision) {

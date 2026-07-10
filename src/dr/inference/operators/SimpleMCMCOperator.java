@@ -247,5 +247,5 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private long sumEvaluationTime = 0;
     private long sumCalculationCount = 0;
 
-    private Deque<Integer> windowAcceptance = new ArrayDeque<>();
+    private final Deque<Integer> windowAcceptance = new ArrayDeque<>();
 }

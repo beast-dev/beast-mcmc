@@ -200,10 +200,12 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * @param matrix   an array to store the matrix
      */
     public void getTransitionProbabilities(double distance, double[] matrix) {
+        getTransitionProbabilities(distance, matrix, getEigenDecomposition());
+    }
+
+    public void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+
         double temp;
-
-        EigenDecomposition eigen = getEigenDecomposition();
-
         if (eigen == null) {
             Arrays.fill(matrix, 0.0);
             return;
@@ -278,7 +280,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         updateMatrix = false;
     }
 
-    protected double setupMatrix() {
+    public double setupMatrix() {
         setupRelativeRates(relativeRates);
         double[] pi = getPi();
         setupQMatrix(relativeRates, pi, q);

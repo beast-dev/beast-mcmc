@@ -28,7 +28,6 @@
 package dr.evomodel.coalescent;
 
 import dr.inference.model.Statistic;
-import dr.math.Binomial;
 
 
 public class CoalescentIntervalStatistic extends Statistic.Abstract {

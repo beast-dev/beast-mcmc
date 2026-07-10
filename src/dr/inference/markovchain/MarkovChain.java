@@ -97,7 +97,8 @@ public final class MarkovChain implements Serializable {
 
         for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
             if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
-                System.err.println("WARNING: Likelihood component, " + l.getId() + ", created but not used in the MCMC");
+
+                System.err.println("WARNING: Likelihood component, " + l.prettyName() + " (id: " + l.getId() + "), created but not used in the MCMC");
             }
         }
 
@@ -181,7 +182,6 @@ public final class MarkovChain implements Serializable {
         Map<String, Double> diagnosticDensities = null;
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
-
             // periodically log states
             fireCurrentModel(currentState, currentModel);
 

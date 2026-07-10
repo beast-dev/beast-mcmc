@@ -42,6 +42,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -65,6 +67,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
     protected final List<Integer> crossProductAccumulationMap;
+    protected final boolean scaleRatesByFrequencies;
 
     private final ApproximationMode mode;
 
@@ -157,8 +160,6 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         }
     }
 
-    private static final ApproximationMode DEFAULT_MODE = ApproximationMode.FIRST_ORDER;
-    
     public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
                                                         TreeDataLikelihood treeDataLikelihood,
                                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
@@ -168,6 +169,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.tree = treeDataLikelihood.getTree();
         this.branchModel = likelihoodDelegate.getBranchModel();
         this.substitutionModel = substitutionModel;
+        this.scaleRatesByFrequencies = substitutionModel.getScaleRatesByFrequencies();
         this.stateCount = substitutionModel.getDataType().getStateCount();
         this.crossProductAccumulationMap = createCrossProductAccumulationMap(likelihoodDelegate.getBranchModel(),
                 substitutionModel);
@@ -196,11 +198,42 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                 "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
     }
 
-    protected abstract double preProcessNormalization(double[] differentials, double[] generator, boolean normalize);
+    protected int[][] makeAsymmetricMap() {
+        int[][] map = new int[stateCount * (stateCount - 1)][];
 
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+                map[k++] = new int[]{i, j};
+            }
+        }
+
+        return map;
+    }
+
+    protected double preProcessNormalization(double[] differentials, double[] generator,
+                                             boolean normalize) {
+        double total = 0.0;
+        if (normalize) {
+            for (int i = 0; i < stateCount; ++i) {
+                for (int j = 0; j < stateCount; ++j) {
+                    final int ij = i * stateCount + j;
+                    total += differentials[ij] * generator[ij];
+                }
+            }
+        }
+        return total;
+    }
     abstract double processSingleGradientDimension(int dim,
                                                    double[] differentials, double[] generator, double[] pi,
-                                                   boolean normalize, double normalizationConstant);
+                                                   boolean normalize, double normalizationConstant, double rateScalar,
+                                                   Transform transform, boolean scaleByFrequencies);
 
     @Override
     public double[] getGradientLogDensity() {
@@ -218,15 +251,20 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         substitutionModel.getInfinitesimalMatrix(generator);
 
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+        boolean normalize = substitutionModel.getNormalization();
+
+        double rateScalar = normalize ? 1 / substitutionModel.setupMatrix() : 0.0;
 
         double normalizationConstant = preProcessNormalization(crossProducts, generator,
                 substitutionModel.getNormalization());
 
+        Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?
+                ((LogRateSubstitutionModel) substitutionModel).getTransform() : null;
+
         final double[] gradient = new double[getParameter().getDimension()];
         for (int i = 0; i < getParameter().getDimension(); ++i) {
             gradient[i] = processSingleGradientDimension(i, crossProducts, generator, pi,
-                    substitutionModel.getNormalization(),
-                    normalizationConstant);
+                    normalize, normalizationConstant, rateScalar, transform, scaleRatesByFrequencies);
         }
 
         if (COUNT_TOTAL_OPERATIONS) {
@@ -387,6 +425,11 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             map.clear();
             qQPlus = null;
         }
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     private final CorrectionTermCache correctionTermCache;

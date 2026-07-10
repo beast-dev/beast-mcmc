@@ -39,8 +39,10 @@ import dr.math.MathUtils;
 import dr.inference.model.Statistic;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -94,6 +96,8 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         currentTree = trees.get(index);
         fireModelChanged();
     }
+
+    public int getCurrentTreeIndex() { return currentTreeIndex; }
 
     protected void storeState() {
         storedCurrentTree = currentTree;
@@ -296,6 +300,19 @@ public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements 
         }
         return columns;
     }
+
+//    public TreeModel getCurrentTreeModel() {
+//
+//        if (treeModelCache.containsKey(currentTree)) {
+//            return treeModelCache.get(currentTree);
+//        } else {
+//            TreeModel treeModel = new DefaultTreeModel(currentTree);
+//            treeModelCache.put(currentTree, treeModel);
+//            return treeModel;
+//        }
+//    }
+//
+//    Map<Tree, TreeModel> treeModelCache = new HashMap<>();
 
     private LogColumn[] columns;
 

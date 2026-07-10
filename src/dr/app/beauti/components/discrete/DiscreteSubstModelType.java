@@ -1,7 +1,7 @@
 /*
  * DiscreteSubstModelType.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -28,21 +28,18 @@
 package dr.app.beauti.components.discrete;
 
 /**
- * @author Alexei Drummond
- * @author Walter Xie
+ * @author Guy Baele
  */
 public enum DiscreteSubstModelType {
-    SYM_SUBST("Symmetric substitution model"),
-    ASYM_SUBST("Asymmetric substitution model"),
-    GLM_SUBST("Generalized Linear Model");
+    FIT("Forward-in-time CTMC"),
+    BIT("Backward-in-time CTMC");
 
-    DiscreteSubstModelType(String name) {
-        this.name = name;
-    }
+    DiscreteSubstModelType(String name) {this.name = name;}
 
     public String toString() {
         return name;
     }
 
     private final String name;
+
 }

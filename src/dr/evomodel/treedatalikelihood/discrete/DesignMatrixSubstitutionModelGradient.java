@@ -34,6 +34,7 @@ import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
@@ -83,7 +84,7 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     Double getReportTolerance() {
-        return 0.01; // TODO Change back to null
+        return null;
     }
 
     @Override
@@ -96,24 +97,10 @@ public class DesignMatrixSubstitutionModelGradient extends AbstractGlmSubstituti
     }
 
     @Override
-    protected double preProcessNormalization(double[] differentials, double[] generator,
-                                             boolean normalize) {
-        // TODO Code duplication with RandomEffectsGlmSubstitutionModel
-        double total = 0.0;
-        if (normalize) {
-            for (int i = 0; i < stateCount; ++i) {
-                for (int j = 0; j < stateCount; ++j) {
-                    total += differentials[index(i, j)] * generator[index(i, j)];
-                }
-            }
-        }
-        return total;
-    }
-
-    @Override
     double processSingleGradientDimension(int k,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         int whichCoefficient = indexK(k);
 

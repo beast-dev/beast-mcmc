@@ -97,7 +97,7 @@ public class LKJCorrelationDistribution extends AbstractLKJDistribution {
 
     private static double[] gradLogPdf(SymmetricMatrix R, double shape) {
 
-        double[] gradient = extractUpperTriangular((SymmetricMatrix) R.inverse());
+        double[] gradient = extractUpperTriangular(R.inverse());
         for (int i = 0; i < gradient.length; ++i) {
             gradient[i] = 2 * (shape - 1) * gradient[i];
         }

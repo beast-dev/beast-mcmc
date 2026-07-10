@@ -269,19 +269,11 @@ public class TreePriorGenerator extends Generator {
                         new Attribute[]{
                                 new Attribute.Default<>(XMLParser.ID, prefix + EpisodicBirthDeathSamplingModelParser.SHORT_NAME),
                                 new Attribute.Default<>("units", Units.Utils.getDefaultUnitName(units)),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CONDITION, false),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS, false),
-                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CUT_OFF, false)
+//                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.HAS_FINAL_SAMPLE, false),
+                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CONDITION, false)
+//                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS, 1),
+//                                new Attribute.Default<>(EpisodicBirthDeathSamplingModelParser.CUT_OFF, false)
                         }
-//                public static final String CONDITION = "conditionOnSurvival";
-//                public static final String NUM_GRID_POINTS = "numGridPoints";
-//                public static final String CUT_OFF = "cutOff";
-//                public static final String R0 = "R0";
-//                public static final String D = "D";
-//                public static final String S = "S";
-//                public static final String GRADIENT_FLAG = "gradientFlag";
-//                public static final String GRIDS = "grids";
-
                 );
 
                 writeParameter(EpisodicBirthDeathSamplingModelParser.BIRTH_RATE,
@@ -296,6 +288,15 @@ public class TreePriorGenerator extends Generator {
                         EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.SAMPLING_PROBABILITY, prior, writer);
                 writeParameter(EpisodicBirthDeathSamplingModelParser.ORIGIN,
                         EpisodicBirthDeathSamplingModelParser.SHORT_NAME + "." + EpisodicBirthDeathSamplingModelParser.ORIGIN, prior, writer);
+
+//                if (options...gridPointCount > 1) {
+//                writer.writeOpenTag(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS);
+//                writer.writeTag("parameter", new Attribute.Default<>("value", "1"), true);
+//                writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.NUM_GRID_POINTS);
+//                writer.writeOpenTag(EpisodicBirthDeathSamplingModelParser.CUT_OFF);
+//                writer.writeTag("parameter", new Attribute.Default<>("value", "0.35"), true);
+//                writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.CUT_OFF);
+//                }
 
                 writer.writeCloseTag(EpisodicBirthDeathSamplingModelParser.EPISODIC_BIRTH_DEATH_SAMPLING_MODEL);
 
@@ -1304,7 +1305,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.birthRatePrior");
                 writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.deathRatePrior");
                 writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, prefix + "ebds.sampleRatePrior");
-                need to add the origin prior
+                // todo need to add the origin prior
                 writer.writeIDref(BirthDeathLikelihoodParser.BIRTH_DEATH_LIKELIHOOD, prefix + "ebds.likelihood");
                 break;
             case GMRF_SKYRIDE:

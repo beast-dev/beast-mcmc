@@ -132,10 +132,12 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
             if (threadCount == 0 || threadCount == 1) {
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_OPENMP.getMask();
                 preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
             } else if (threadCount > 1) {
                 preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
-                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_OPENMP.getMask();
             }
         }
 

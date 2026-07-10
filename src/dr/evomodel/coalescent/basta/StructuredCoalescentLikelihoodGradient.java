@@ -29,6 +29,8 @@ package dr.evomodel.coalescent.basta;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.GlmSubstitutionModel;
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.loggers.LogColumn;
@@ -117,7 +119,11 @@ public class StructuredCoalescentLikelihoodGradient implements
 
         StringBuilder sb = new StringBuilder();
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 10.0);
+        final boolean glm = (wrtParameter == WrtParameter.GLM_COEFFICIENT);
+        final double lowerBound = glm ? Double.NEGATIVE_INFINITY : 0.0;
+        final double tolerance = glm ? 1e-2 : 10.0;
+
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, lowerBound, Double.POSITIVE_INFINITY, tolerance);
         sb.append(message);
 
 
@@ -139,6 +145,8 @@ public class StructuredCoalescentLikelihoodGradient implements
 
                 boolean normalize = (substitutionModel instanceof ComplexSubstitutionModel)
                         && ((ComplexSubstitutionModel) substitutionModel).getNormalization();
+                boolean scaleRatesByFrequencies = !(substitutionModel instanceof ComplexSubstitutionModel)
+                        || ((ComplexSubstitutionModel) substitutionModel).getScaleRatesByFrequencies();
                 double norm = 1.0;
                 double C = 0.0;
 
@@ -158,7 +166,7 @@ public class StructuredCoalescentLikelihoodGradient implements
                 int k = 0;
                 for (int i = 0; i < dim; ++i) {
                     for (int j = i + 1; j < dim; ++j) {
-                        double piJ = parameter.getParameterValue(j);
+                        double piJ = scaleRatesByFrequencies ? parameter.getParameterValue(j) : 1.0;
                         double piI = parameter.getParameterValue(i);
                         chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i] - C * piI) * piJ / norm;
                         ++k;
@@ -167,7 +175,7 @@ public class StructuredCoalescentLikelihoodGradient implements
 
                 for (int j = 0; j < dim; ++j) {
                     for (int i = j + 1; i < dim; ++i) {
-                        double piJ = parameter.getParameterValue(j);
+                        double piJ = scaleRatesByFrequencies ? parameter.getParameterValue(j) : 1.0;
                         double piI = parameter.getParameterValue(i);
                         chainedGradient[k] = (gradient[i * dim + j] - gradient[i * dim + i] - C * piI) * piJ / norm;
                         ++k;
@@ -236,6 +244,78 @@ public class StructuredCoalescentLikelihoodGradient implements
                                                    SubstitutionModel substitutionModel) {
                 return structuredCoalescentLikelihood.getPopSizes();
             }
+        },
+
+        GLM_COEFFICIENT("glmCoefficients") {
+            @Override
+            Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
+                GeneralizedLinearModel glm = getGlm(substitutionModel);
+                checkNoIndicators(glm);
+                final int numEffects = glm.getNumberOfFixedEffects();
+                if (numEffects == 1) {
+                    return glm.getFixedEffect(0);
+                }
+                CompoundParameter compound = new CompoundParameter("glmCoefficients");
+                for (int i = 0; i < numEffects; ++i) {
+                    compound.addParameter(glm.getFixedEffect(i));
+                }
+                return compound;
+            }
+
+            @Override
+            double[] chainRule(double[] gradient, Parameter parameter, SubstitutionModel substitutionModel) {
+                double[] dLdRate = MIGRATION_RATE.chainRule(gradient, parameter, substitutionModel);
+
+                GeneralizedLinearModel glm = getGlm(substitutionModel);
+                checkNoIndicators(glm);
+                double[] rates = ((GlmSubstitutionModel) substitutionModel).getRateProvider().getRates();
+
+                final int rateCount = dLdRate.length;
+                if (rates.length != rateCount) {
+                    throw new RuntimeException("BASTA GLM gradient: relative-rate vector length "
+                            + rates.length + " != rate-gradient length " + rateCount);
+                }
+
+                int totalDim = 0;
+                for (int b = 0; b < glm.getNumberOfFixedEffects(); ++b) {
+                    totalDim += glm.getFixedEffect(b).getDimension();
+                }
+
+                double[] dLdBeta = new double[totalDim];
+                int out = 0;
+                for (int b = 0; b < glm.getNumberOfFixedEffects(); ++b) {
+                    final int blockDim = glm.getFixedEffect(b).getDimension();
+                    for (int c = 0; c < blockDim; ++c) {
+                        double[] covariate = glm.getDesignMatrix(b).getColumnValues(c);
+                        if (covariate.length != rateCount) {
+                            throw new RuntimeException("BASTA GLM gradient: covariate column length "
+                                    + covariate.length + " != relative-rate count " + rateCount);
+                        }
+                        double sum = 0.0;
+                        for (int k = 0; k < rateCount; ++k) {
+                            sum += dLdRate[k] * covariate[k] * rates[k];
+                        }
+                        dLdBeta[out++] = sum;
+                    }
+                }
+                return dLdBeta;
+            }
+
+            @Override
+            int getIntermediateGradientDimension(int stateCount) {
+                return stateCount * stateCount;
+            }
+
+            @Override
+            boolean requiresTransitionMatrices() {
+                return true;
+            }
+
+            @Override
+            public Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
+                                                   SubstitutionModel substitutionModel) {
+                return substitutionModel.getFrequencyModel().getFrequencyParameter();
+            }
         };
 
         WrtParameter(String name) {
@@ -263,5 +343,23 @@ public class StructuredCoalescentLikelihoodGradient implements
 
         public abstract Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
                                                         SubstitutionModel substitutionModel);
+
+        private static GeneralizedLinearModel getGlm(SubstitutionModel substitutionModel) {
+            if (!(substitutionModel instanceof GlmSubstitutionModel)) {
+                throw new IllegalArgumentException(
+                        "wrtParameter=\"glmCoefficients\" requires a glmSubstitutionModel; got "
+                                + (substitutionModel == null ? "null" : substitutionModel.getClass().getSimpleName()));
+            }
+            return ((GlmSubstitutionModel) substitutionModel).getGeneralizedLinearModel();
+        }
+
+        private static void checkNoIndicators(GeneralizedLinearModel glm) {
+            for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+                if (glm.getFixedEffectIndicator(i) != null) {
+                    throw new IllegalArgumentException(
+                            "BASTA GLM coefficient gradient does not yet support indicator (BSSVS) variables");
+                }
+            }
+        }
     }
 }

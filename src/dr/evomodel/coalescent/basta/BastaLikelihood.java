@@ -485,6 +485,18 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     @Override
     protected void acceptState() { } // nothing to do
 
+    public long computeTreeStructureSignature() {
+        long h = 1125899906842597L;
+        final int nodeCount = tree.getNodeCount();
+        for (int i = 0; i < nodeCount; ++i) {
+            final NodeRef node = tree.getNode(i);
+            h = 31L * h + Double.doubleToLongBits(tree.getNodeHeight(node));
+            final NodeRef parent = tree.getParent(node);
+            h = 31L * h + (parent == null ? -1L : parent.getNumber());
+        }
+        return h;
+    }
+
     private double calculateLogLikelihood() {
 
         if (!transitionMatricesKnown) {

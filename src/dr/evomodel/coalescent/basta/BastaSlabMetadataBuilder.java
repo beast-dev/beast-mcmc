@@ -46,12 +46,9 @@ public final class BastaSlabMetadataBuilder {
     private int coalSnapArenaLen;
 
     private long[] forwardBufBitset;
-    private int forwardBufMaxIdx;
 
     private int[] opReduce;
     private int operationCountRecorded;
-    private int builderTipCount;
-    private int builderTipPartialsBufferCount;
     private int builderIndexOffsetPat;
     private int nodeCount;
 
@@ -85,8 +82,6 @@ public final class BastaSlabMetadataBuilder {
                                int tipPartialsBufferCount,
                                int kIndexOffsetPat) {
         this.nodeCount = nodeCount;
-        this.builderTipCount = tipCount;
-        this.builderTipPartialsBufferCount = tipPartialsBufferCount;
         this.builderIndexOffsetPat = kIndexOffsetPat;
 
         if (nodeTail == null || nodeTail.length < nodeCount) {
@@ -123,7 +118,6 @@ public final class BastaSlabMetadataBuilder {
         } else {
             Arrays.fill(forwardBufBitset, 0L);
         }
-        forwardBufMaxIdx = -1;
 
         if (opReduce == null) {
             opReduce = new int[5 * INITIAL_HISTORY_CAP];
@@ -395,9 +389,6 @@ public final class BastaSlabMetadataBuilder {
             forwardBufBitset = Arrays.copyOf(forwardBufBitset, newLen);
         }
         forwardBufBitset[word] |= 1L << (buf & 63);
-        if (buf > forwardBufMaxIdx) {
-            forwardBufMaxIdx = buf;
-        }
     }
 
     public int[] buildAndPackDirect(int slabOpsPerBlock) {

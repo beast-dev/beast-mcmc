@@ -252,13 +252,17 @@ public final class MascotCore {
         if (operations == null) {
             for (int i = 0; i < steps; i++) {
                 rk4StepInto(y, activeCount, rates, h, yOut, workspace);
-                System.arraycopy(yOut, 0, y, 0, dim);
+                double[] swap = y;
+                y = yOut;
+                yOut = swap;
             }
         } else {
             IntervalTape tape = new IntervalTape(steps, activeCount, dim, epoch, h);
             for (int i = 0; i < steps; i++) {
                 rk4StepWithTapeInto(y, activeCount, rates, h, yOut, workspace, tape, i);
-                System.arraycopy(yOut, 0, y, 0, dim);
+                double[] swap = y;
+                y = yOut;
+                yOut = swap;
             }
             operations.add(tape);
         }
@@ -411,6 +415,12 @@ public final class MascotCore {
                 throw new IllegalArgumentException("unknown tape operation: " + operation.getClass());
             }
 
+            if (operation instanceof SampleTape) {
+                reverseSampleInPlace((SampleTape) operation, cursor, dim);
+                dim = nextDim;
+                continue;
+            }
+
             double[] next;
             if (cursorIsA) {
                 workspace.reverseOperationB = ensure(workspace.reverseOperationB, nextDim);
@@ -424,8 +434,6 @@ public final class MascotCore {
                 reverseIntervalInto((IntervalTape) operation, cursor, next, gradient);
             } else if (operation instanceof CoalescentTape) {
                 reverseCoalescentInto((CoalescentTape) operation, cursor, dim, next, gradient);
-            } else {
-                reverseSampleInto((SampleTape) operation, cursor, dim, next);
             }
 
             cursor = next;
@@ -705,26 +713,25 @@ public final class MascotCore {
 
         int beforeCount = state.activeCount;
         int afterCount = beforeCount - 1;
+        int lastBefore = beforeCount - 1;
+        int parentIndexAfter = first == lastBefore ? second : first;
+        int removedIndex = parentIndexAfter == first ? second : first;
+        int movedFromIndexBefore = -1;
+        int movedToIndexAfter = -1;
 
-        // The before-index for a given after-index is fully determined by
-        // (first, second, beforeCount) alone -- it is whichever before-index this
-        // same skip-first-and-second enumeration reaches after `afterIndex` prior
-        // non-skipped positions -- so it does not need to be recorded on the tape;
-        // reverseCoalescent() reconstructs it by repeating this same enumeration.
-        int out = 0;
-        for (int i = 0; i < beforeCount; i++) {
-            if (i == first || i == second) {
-                continue;
-            }
-            if (out != i) {
-                state.activeIds[out] = state.activeIds[i];
-                System.arraycopy(state.probabilities, i * stateCount, state.probabilities, out * stateCount, stateCount);
-            }
-            state.setActiveIndex(state.activeIds[out], out);
-            out++;
+        // Active-lineage order carries no probability meaning. Keep the parent in
+        // one removed child slot and fill only the other hole with the old last
+        // lineage when needed.
+        if (removedIndex != lastBefore) {
+            movedFromIndexBefore = lastBefore;
+            movedToIndexAfter = removedIndex;
+            int movedLineage = state.activeIds[lastBefore];
+            state.activeIds[movedToIndexAfter] = movedLineage;
+            System.arraycopy(state.probabilities, lastBefore * stateCount,
+                    state.probabilities, movedToIndexAfter * stateCount, stateCount);
+            state.setActiveIndex(movedLineage, movedToIndexAfter);
         }
 
-        int parentIndexAfter = out;
         state.activeIds[parentIndexAfter] = event.parent;
         System.arraycopy(parentProbabilities, 0, state.probabilities, parentIndexAfter * stateCount, stateCount);
         state.setActiveIndex(event.parent, parentIndexAfter);
@@ -736,6 +743,7 @@ public final class MascotCore {
 
         if (operations != null) {
             operations.add(new CoalescentTape(epoch, first, second, parentIndexAfter,
+                    movedFromIndexBefore, movedToIndexAfter,
                     p1.clone(), p2.clone(), parentProbabilities, lambda));
         }
     }
@@ -772,6 +780,16 @@ public final class MascotCore {
         }
     }
 
+    private void reverseSampleInPlace(SampleTape tape, double[] adjointAfter, int afterDim) {
+        int afterCount = (afterDim - 1) / stateCount;
+        int beforeCount = afterCount - 1;
+        if (tape.sampleIndexAfter != beforeCount) {
+            throw new IllegalStateException("sample was not appended at the final active slot");
+        }
+        int beforeDim = beforeCount * stateCount + 1;
+        adjointAfter[beforeDim - 1] = adjointAfter[afterDim - 1];
+    }
+
     /**
      * {@code afterDim} is the logical size of (i.e. number of meaningful leading
      * elements in) {@code adjointAfter} -- it cannot be read off {@code
@@ -779,34 +797,18 @@ public final class MascotCore {
      * {@link #reverse}'s operation-level ping-pong and may be physically larger
      * than the current logical dimension.
      */
-    private void reverseSampleInto(SampleTape tape, double[] adjointAfter, int afterDim, double[] adjointBeforeOut) {
-        int afterCount = (afterDim - 1) / stateCount;
-
-        int out = 0;
-        for (int i = 0; i < afterCount; i++) {
-            if (i == tape.sampleIndexAfter) {
-                continue;
-            }
-            System.arraycopy(adjointAfter, i * stateCount, adjointBeforeOut, out * stateCount, stateCount);
-            out++;
-        }
-        adjointBeforeOut[afterDim - stateCount - 1] = adjointAfter[afterDim - 1];
-    }
-
-    /** See {@link #reverseSampleInto}'s doc comment regarding {@code afterDim}. */
     private void reverseCoalescentInto(CoalescentTape tape, double[] adjointAfter, int afterDim,
                                        double[] adjointBeforeOut, double[] gradient) {
         int beforeDim = afterDim + stateCount;
         int beforeCount = (beforeDim - 1) / stateCount;
 
-        int afterIndex = 0;
         for (int beforeIndex = 0; beforeIndex < beforeCount; beforeIndex++) {
             if (beforeIndex == tape.child1Index || beforeIndex == tape.child2Index) {
                 continue;
             }
+            int afterIndex = beforeIndex == tape.movedFromIndexBefore ? tape.movedToIndexAfter : beforeIndex;
             System.arraycopy(adjointAfter, afterIndex * stateCount,
                     adjointBeforeOut, beforeIndex * stateCount, stateCount);
-            afterIndex++;
         }
 
         int parentOffset = tape.parentIndexAfter * stateCount;
@@ -1311,6 +1313,8 @@ public final class MascotCore {
         private final int child1Index;
         private final int child2Index;
         private final int parentIndexAfter;
+        private final int movedFromIndexBefore;
+        private final int movedToIndexAfter;
         private final double[] p1;
         private final double[] p2;
         private final double[] parentProbabilities;
@@ -1318,12 +1322,15 @@ public final class MascotCore {
         private final double lambda;
 
         private CoalescentTape(int epoch, int child1Index, int child2Index, int parentIndexAfter,
+                               int movedFromIndexBefore, int movedToIndexAfter,
                                double[] p1, double[] p2,
                                double[] parentProbabilities, double lambda) {
             this.epoch = epoch;
             this.child1Index = child1Index;
             this.child2Index = child2Index;
             this.parentIndexAfter = parentIndexAfter;
+            this.movedFromIndexBefore = movedFromIndexBefore;
+            this.movedToIndexAfter = movedToIndexAfter;
             this.p1 = p1;
             this.p2 = p2;
             this.parentProbabilities = parentProbabilities;

@@ -92,7 +92,15 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (!likelihoodKnown) {
             ensureEventTape();
             ensureCore();
-            logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), false, checkProbabilities, false).logLikelihood;
+            try {
+                logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
+                        false, checkProbabilities, false).logLikelihood;
+                if (!Double.isFinite(logLikelihood)) {
+                    logLikelihood = Double.NEGATIVE_INFINITY;
+                }
+            } catch (MascotCore.NumericalException e) {
+                logLikelihood = Double.NEGATIVE_INFINITY;
+            }
             likelihoodKnown = true;
         }
         return logLikelihood;
@@ -102,7 +110,19 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (!gradientKnown) {
             ensureEventTape();
             ensureCore();
-            MascotCore.Result result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(), true, checkProbabilities, false);
+            MascotCore.Result result;
+            try {
+                result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
+                        true, checkProbabilities, false);
+            } catch (MascotCore.NumericalException e) {
+                throw new IllegalStateException("MASCOT gradient cannot be evaluated for the current " +
+                        "parameter values: " + e.getMessage(), e);
+            }
+            if (!Double.isFinite(result.logLikelihood)) {
+                throw new IllegalStateException("MASCOT gradient cannot be evaluated because the current " +
+                        "log likelihood is " + result.logLikelihood);
+            }
+            validateGradient(result.gradient);
             logLikelihood = result.logLikelihood;
             gradient = result.gradient;
             likelihoodKnown = true;
@@ -212,6 +232,18 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (!coreKnown) {
             core = new MascotCore(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
             coreKnown = true;
+        }
+    }
+
+    private static void validateGradient(double[] gradient) {
+        if (gradient == null) {
+            throw new IllegalStateException("MASCOT gradient evaluation returned no gradient");
+        }
+        for (int i = 0; i < gradient.length; i++) {
+            if (!Double.isFinite(gradient[i])) {
+                throw new IllegalStateException("MASCOT gradient contains a non-finite entry at index " +
+                        i + ": " + gradient[i]);
+            }
         }
     }
 }

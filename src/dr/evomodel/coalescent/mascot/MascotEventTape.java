@@ -16,6 +16,8 @@ import dr.inference.model.Parameter;
  */
 public final class MascotEventTape {
 
+    private static final double TIP_STATE_INTEGER_TOLERANCE = 1.0e-9;
+
     private final MascotCore.Event[] events;
     private final MascotCore.PreparedEvents preparedEvents;
 
@@ -36,9 +38,11 @@ public final class MascotEventTape {
         int index = 0;
         for (int i = 0; i < tipCount; i++) {
             NodeRef node = tree.getExternalNode(i);
-            int state = (int) Math.round(tipStates.getParameterValue(i));
+            int state = parseTipState(tree, node, i, tipStates.getParameterValue(i));
             if (state < 0 || state >= stateCount) {
-                throw new IllegalArgumentException("tip state out of range for external node " + i + ": " + state);
+                throw new IllegalArgumentException("tip state out of range for " +
+                        tipDescription(tree, node, i) + ": " + state +
+                        " (stateCount=" + stateCount + ")");
             }
             events[index++] = MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), state);
         }
@@ -61,6 +65,32 @@ public final class MascotEventTape {
         }
 
         return new MascotEventTape(events);
+    }
+
+    private static int parseTipState(TreeModel tree, NodeRef node, int externalNodeIndex, double rawState) {
+        if (!Double.isFinite(rawState)) {
+            throw new IllegalArgumentException("tip state must be finite for " +
+                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
+        }
+        long rounded = Math.round(rawState);
+        if (Math.abs(rawState - rounded) > TIP_STATE_INTEGER_TOLERANCE) {
+            throw new IllegalArgumentException("tip state must be an integer for " +
+                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
+        }
+        if (rounded < Integer.MIN_VALUE || rounded > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("tip state is outside integer range for " +
+                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
+        }
+        return (int) rounded;
+    }
+
+    private static String tipDescription(TreeModel tree, NodeRef node, int externalNodeIndex) {
+        String taxonId = tree.getTaxonId(externalNodeIndex);
+        if (taxonId == null) {
+            return "external node " + externalNodeIndex + " (node " + node.getNumber() + ")";
+        }
+        return "external node " + externalNodeIndex + " (node " + node.getNumber() +
+                ", taxon " + taxonId + ")";
     }
 
     public MascotCore.Event[] getEvents() {

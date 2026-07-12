@@ -131,6 +131,7 @@ public final class MascotCore {
         }
         Event[] sorted = events.clone();
         Arrays.sort(sorted, EVENT_COMPARATOR);
+        validateSameTimeCoalescentBlocks(sorted);
 
         int maxLineageId = 0;
         for (Event event : events) {
@@ -141,6 +142,46 @@ public final class MascotCore {
         }
 
         return new PreparedEvents(sorted, maxLineageId);
+    }
+
+    private static void validateSameTimeCoalescentBlocks(Event[] sortedEvents) {
+        int start = 0;
+        while (start < sortedEvents.length) {
+            int end = start + 1;
+            while (end < sortedEvents.length && sameEventTime(sortedEvents[start].time, sortedEvents[end].time)) {
+                end++;
+            }
+            validateSameTimeCoalescentBlock(sortedEvents, start, end);
+            start = end;
+        }
+    }
+
+    private static void validateSameTimeCoalescentBlock(Event[] sortedEvents, int start, int end) {
+        for (int i = start; i < end; i++) {
+            Event parentEvent = sortedEvents[i];
+            if (parentEvent.type != EventType.COALESCENCE) {
+                continue;
+            }
+            for (int j = start; j < end; j++) {
+                if (i == j) {
+                    continue;
+                }
+                Event childEvent = sortedEvents[j];
+                if (childEvent.type != EventType.COALESCENCE) {
+                    continue;
+                }
+                if (childEvent.child1 == parentEvent.parent || childEvent.child2 == parentEvent.parent) {
+                    throw new IllegalArgumentException("dependent coalescent events at the same time are not " +
+                            "currently supported: parent lineage " + parentEvent.parent +
+                            " is used as a child at time " + parentEvent.time +
+                            ". Add a positive internal branch length or implement topological ordering.");
+                }
+            }
+        }
+    }
+
+    private static boolean sameEventTime(double first, double second) {
+        return Math.abs(first - second) <= TIME_TOLERANCE;
     }
 
     public Result evaluate(Event[] events, double[] theta, boolean computeGradient, boolean checkProbabilities) {
@@ -705,7 +746,7 @@ public final class MascotCore {
             lambda += parentProbabilities[s];
         }
         if (!(lambda > 0.0) || !Double.isFinite(lambda)) {
-            throw new IllegalArgumentException("invalid coalescent rate: " + lambda);
+            throw new NumericalException("invalid coalescent rate: " + lambda);
         }
         for (int s = 0; s < stateCount; s++) {
             parentProbabilities[s] /= lambda;
@@ -856,10 +897,19 @@ public final class MascotCore {
                 if (source == sink) {
                     continue;
                 }
-                double rate = Math.exp(theta[thetaOffset + index]);
+                double logRate = theta[thetaOffset + index];
+                double rate = Math.exp(logRate);
+                if (!Double.isFinite(logRate) || !Double.isFinite(rate)) {
+                    throw new NumericalException("invalid migration log-rate for epoch " + epoch +
+                            ", source " + source + ", sink " + sink + ": " + logRate);
+                }
                 rates.migrationRates[index] = rate;
                 rates.migrationMatrix[row + sink] = rate;
                 rowSum += rate;
+                if (!Double.isFinite(rowSum)) {
+                    throw new NumericalException("invalid migration row sum for epoch " + epoch +
+                            ", source " + source + ": " + rowSum);
+                }
                 index++;
             }
             rates.migrationMatrix[row + source] = -rowSum;
@@ -867,7 +917,13 @@ public final class MascotCore {
 
         int etaOffset = thetaOffset + migrationParametersPerEpoch;
         for (int state = 0; state < stateCount; state++) {
-            rates.inversePopulation[state] = Math.exp(-theta[etaOffset + state]);
+            double logPopulation = theta[etaOffset + state];
+            double inversePopulation = Math.exp(-logPopulation);
+            if (!Double.isFinite(logPopulation) || !Double.isFinite(inversePopulation)) {
+                throw new NumericalException("invalid log population size for epoch " + epoch +
+                        ", state " + state + ": " + logPopulation);
+            }
+            rates.inversePopulation[state] = inversePopulation;
         }
     }
 
@@ -967,13 +1023,13 @@ public final class MascotCore {
             for (int s = 0; s < stateCount; s++) {
                 double p = state.probabilities[offset + s];
                 if (p < -1.0e-8 || !Double.isFinite(p)) {
-                    throw new IllegalStateException("invalid probability for lineage " +
+                    throw new NumericalException("invalid probability for lineage " +
                             state.activeIds[lineage] + ": " + p);
                 }
                 sum += p;
             }
             if (Math.abs(sum - 1.0) > 1.0e-6) {
-                throw new IllegalStateException("lineage probabilities do not sum to one for lineage " +
+                throw new NumericalException("lineage probabilities do not sum to one for lineage " +
                         state.activeIds[lineage] + ": " + sum);
             }
         }
@@ -1106,6 +1162,18 @@ public final class MascotCore {
             this.gradient = gradient;
             this.rootProbabilities = rootProbabilities;
             this.activeLineages = activeLineages;
+        }
+    }
+
+    /**
+     * Numerical failures caused by the current parameter proposal rather than by
+     * malformed tree/event structure. BEAST likelihood wrappers may translate
+     * this to {@code -Infinity}; gradient callers should fail loudly instead of
+     * returning synthetic derivatives.
+     */
+    public static final class NumericalException extends RuntimeException {
+        public NumericalException(String message) {
+            super(message);
         }
     }
 

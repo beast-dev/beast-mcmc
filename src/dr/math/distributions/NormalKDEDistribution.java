@@ -41,24 +41,34 @@ import java.util.Random;
 public class NormalKDEDistribution extends KernelDensityEstimatorDistribution implements GradientProvider {
 
     public static final int MINIMUM_GRID_SIZE = 512;
+    public static final double DEFAULT_CUT = 3.0;
     public static final boolean DEBUG = false;
+
+    public NormalKDEDistribution(double[] sample) {
+        super(sample, null, null, null);
+        setup(DEFAULT_CUT, MINIMUM_GRID_SIZE);
+    }
 
     public NormalKDEDistribution(Double[] sample) {
         this(sample, null, null, null);
     }
 
     public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
-        this(sample, lowerBound, upperBound, bandWidth, 3.0, MINIMUM_GRID_SIZE);
+        this(sample, lowerBound, upperBound, bandWidth, DEFAULT_CUT, MINIMUM_GRID_SIZE);
     }
 
     public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
                                  int n) {
-        this(sample, lowerBound, upperBound, bandWidth, 3.0, n);
+        this(sample, lowerBound, upperBound, bandWidth, DEFAULT_CUT, n);
     }
 
     public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
                                  double cut, int n) {
         super(sample, lowerBound, upperBound, bandWidth);
+        setup(cut, n);
+    }
+
+    private void setup(double cut, int n) {
         this.gridSize = Math.max(n, MINIMUM_GRID_SIZE);
         if (this.gridSize > MINIMUM_GRID_SIZE) {
             this.gridSize = (int) Math.pow(2, Math.ceil(Math.log(this.gridSize) / Math.log(2.0)));

@@ -153,7 +153,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
         collectionAction = new CollectionAction();
 
-        collectionAction.addAttributeName("height");
+        // height is collected automatically and differently
+//        collectionAction.addAttributeName("height");
         collectionAction.addAttributeName("length");
 
         heightsAnnotationAction = new HeightsAnnotationAction(heightsOption, hpdIntervals, hpdLimit, kdeIntervals, kdeCount, kdeLimit, posteriorLimit, countLimit);

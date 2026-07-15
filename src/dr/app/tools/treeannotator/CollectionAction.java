@@ -59,11 +59,10 @@ class CollectionAction implements CladeAction {
         int i = 0;
         Object[] values = new Object[attributeNames.size()];
         for (String attributeName : attributeNames) {
+            assert(!attributeName.equals("height")) : "'height' should not be added as an attributeName";
+
             Object value;
-            if (attributeName.equals("height")) {
-                value = tree.getNodeHeight(node);
-                ((BiClade)clade).addHeightValue((Double)value);
-            } else if (attributeName.equals("length")) {
+            if (attributeName.equals("length")) {
                 value = tree.getBranchLength(node);
             } else {
                 value = tree.getNodeAttribute(node, attributeName);
@@ -76,5 +75,6 @@ class CollectionAction implements CladeAction {
             i++;
         }
         clade.addAttributeValues(values);
+        ((BiClade)clade).addHeightValue(tree.getNodeHeight(node));
     }
 }

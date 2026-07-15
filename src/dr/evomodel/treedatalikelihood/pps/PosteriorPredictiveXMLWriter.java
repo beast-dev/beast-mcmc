@@ -44,10 +44,7 @@ import dr.xml.XMLParser;
 import java.io.StringWriter;
 
 /**
- * Builds the XML fragments that make up a posterior-predictive-simulation log file:
- * a wrapping root element, one-time taxa/dataType preambles, and one alignment block
- * per logged state. Has no dependency on Logger/MCMC/BEAGLE machinery, so each write*
- * method can be exercised directly against real evolution objects.
+ * Writer and utils for XML-formatted PPS alignments.
  */
 public class PosteriorPredictiveXMLWriter {
 

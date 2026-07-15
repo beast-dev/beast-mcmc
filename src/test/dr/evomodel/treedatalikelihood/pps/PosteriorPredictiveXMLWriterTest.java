@@ -146,9 +146,6 @@ public class PosteriorPredictiveXMLWriterTest extends TestCase {
         alignment.addSequence(sequence);
     }
 
-    // GeneralDataType with multi-character state codes is delimited, and BeagleSequenceSimulator
-    // represents delimited output with a case-preserving DelimitedSequence (see Utils.intArray2Sequence)
-    // rather than the case-folding base Sequence.
     private static void addDelimitedSequence(SimpleAlignment alignment, DataType dataType,
                                               String taxonId, String sequenceString) {
         Sequence sequence = new DelimitedSequence(new Taxon(taxonId), sequenceString, dataType);

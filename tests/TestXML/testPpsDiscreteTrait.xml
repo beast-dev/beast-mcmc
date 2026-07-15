@@ -3,23 +3,23 @@
 
     <taxa id="taxa">
         <taxon id="taxon_1">
-            <attr name="loc">A</attr>
+            <attr name="loc">locationA</attr>
         </taxon>
         <taxon id="taxon_2">
-            <attr name="loc">B</attr>
+            <attr name="loc">locationB</attr>
         </taxon>
         <taxon id="taxon_3">
-            <attr name="loc">C</attr>
+            <attr name="loc">locationC</attr>
         </taxon>
         <taxon id="taxon_4">
-            <attr name="loc">A</attr>
+            <attr name="loc">locationA</attr>
         </taxon>
     </taxa>
 
     <generalDataType id="loc.dataType">
-        <state code="A"/>
-        <state code="B"/>
-        <state code="C"/>
+        <state code="locationA"/>
+        <state code="locationB"/>
+        <state code="locationC"/>
     </generalDataType>
 
     <attributePatterns id="loc.pattern" attribute="loc">
@@ -93,17 +93,23 @@
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="treeModel.rootHeight"/>
         </scaleOperator>
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="loc.clock.rate"/>
+        </scaleOperator>
         <uniformOperator weight="1">
             <parameter idref="treeModel.internalNodeHeights"/>
         </uniformOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="4">
+    <mcmc id="mcmc" chainLength="100">
         <joint id="joint">
             <prior id="prior">
                 <normalPrior mean="0.0" stdev="1.0">
                     <parameter idref="loc.coefficients"/>
                 </normalPrior>
+                <exponentialPrior mean="1.0">
+                    <parameter idref="loc.clock.rate"/>
+                </exponentialPrior>
             </prior>
             <likelihood id="likelihood">
                 <treeDataLikelihood idref="treeLikelihood"/>
@@ -115,7 +121,7 @@
             <joint idref="joint"/>
         </log>
 
-        <logPosteriorPredictive id="pps" logEvery="2" fileName="__PPS_OUTPUT__">
+        <logPosteriorPredictive id="pps" logEvery="25" fileName="pps_test_discreteTrait_aln.xml">
             <predictiveBeagleSequenceSimulator id="ppsGenerator">
                 <patterns idref="loc.pattern"/>
                 <treeDataLikelihood idref="treeLikelihood"/>

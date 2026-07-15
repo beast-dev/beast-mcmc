@@ -93,12 +93,15 @@
         </uniformOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="4">
+    <mcmc id="mcmc" chainLength="100">
         <joint id="joint">
             <prior id="prior">
                 <logNormalPrior mean="1.0" stdev="1.0">
                     <parameter idref="hky.kappa"/>
                 </logNormalPrior>
+                <exponentialPrior mean="1.0">
+                    <parameter idref="clock.rate"/>
+                </exponentialPrior>
             </prior>
             <likelihood id="likelihood">
                 <treeDataLikelihood idref="treeLikelihood"/>
@@ -110,7 +113,7 @@
             <joint idref="joint"/>
         </log>
 
-        <logPosteriorPredictive id="pps" logEvery="2" fileName="nuc_pps_alns.xml">
+        <logPosteriorPredictive id="pps" logEvery="25" fileName="pps_test_nucleotide_aln.xml">
             <predictiveBeagleSequenceSimulator id="ppsGenerator">
                 <patterns idref="patterns"/>
                 <treeDataLikelihood idref="treeLikelihood"/>

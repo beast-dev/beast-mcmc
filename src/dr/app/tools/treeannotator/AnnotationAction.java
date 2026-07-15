@@ -1,4 +1,4 @@
-/*
+/**
  * AnnotationAction.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
@@ -43,7 +43,6 @@ public class AnnotationAction implements CladeAction {
 
     private static final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
 
-    private final TreeAnnotator.HeightsSummary heightsOption;
     private double posteriorLimit;
     private double countLimit;
     double[] hpd2D = {0.80};
@@ -57,13 +56,11 @@ public class AnnotationAction implements CladeAction {
 
     private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
-    AnnotationAction(TreeAnnotator.HeightsSummary heightsOption,
-                     double posteriorLimit,
+    AnnotationAction(double posteriorLimit,
                      int countLimit,
                      double[] hpd2D,
                      boolean computeESS,
                      boolean forceIntegerToDiscrete) {
-        this.heightsOption = heightsOption;
         this.posteriorLimit = posteriorLimit;
         this.countLimit = countLimit;
         this.hpd2D = hpd2D;
@@ -103,27 +100,9 @@ public class AnnotationAction implements CladeAction {
 
         int i = 0;
         for (String attributeName : attributeNames) {
-            if (attributeName.equals("height")) {
-                if (!filter) {
-                    tree.setNodeAttribute(node, "height_mean", ((BiClade) clade).getMeanHeight());
-                    tree.setNodeAttribute(node, "height_median", ((BiClade) clade).getMedianHeight());
-                    if (((BiClade) clade).getHeightHPDs() != null){
-                        tree.setNodeAttribute(node, "height_95%_HPD", ((BiClade) clade).getHeightHPDs());
-                    }
-                    if (((BiClade) clade).getHeightRange() != null){
-                        tree.setNodeAttribute(node, "height_range", ((BiClade) clade).getHeightRange());
-                    }
-                }
-                if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS) {
-                    tree.setNodeHeight(node, ((BiClade) clade).getMeanHeight());
-                } else if (heightsOption == TreeAnnotator.HeightsSummary.MEDIAN_HEIGHTS) {
-                    tree.setNodeHeight(node, ((BiClade) clade).getMedianHeight());
-                } else {
-                    // keep the existing height
-                }
-//                assert tree.isExternal(node) || (tree.getNodeHeight(node) - tree.getNodeHeight(tree.getChild(node, 0))) >= 0.0;
-//                assert tree.isExternal(node) || (tree.getNodeHeight(node) - tree.getNodeHeight(tree.getChild(node, 1))) >= 0.0;
-            } else {
+            if (!attributeName.equals("height")) {
+                // skip heights as that is dealt with in HeightsAnnotationAction
+
                 if (clade.getAttributeValues() != null && !clade.getAttributeValues().isEmpty()) {
                     double[] values = new double[clade.getAttributeValues().size()];
 
@@ -217,7 +196,7 @@ public class AnnotationAction implements CladeAction {
                                         }
                                     }
                                 } else {
-                                        annotateModeAttribute(tree, node, attributeName, hashMap);
+                                    annotateModeAttribute(tree, node, attributeName, hashMap);
                                     annotateFrequencyAttribute(tree, node, attributeName, hashMap);
                                 }
                                 if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {

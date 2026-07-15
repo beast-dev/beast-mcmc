@@ -80,6 +80,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final boolean extendedMetrics = false;
 
     private final CollectionAction collectionAction;
+    private final HeightsAnnotationAction heightsAnnotationAction;
     private final AnnotationAction annotationAction;
     private final int threadCount;
 
@@ -129,6 +130,11 @@ public class TreeAnnotator extends BaseTreeTool {
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
                          final HeightsSummary heightsOption,
+                         final double[] hpdIntervals,
+                         final int hpdLimit,
+                         final double[] kdeIntervals,
+                         final int kdeCount,
+                         final int kdeLimit,
                          final double posteriorLimit,
                          final int minCladeCount,
                          final int countLimit,
@@ -150,10 +156,8 @@ public class TreeAnnotator extends BaseTreeTool {
         collectionAction.addAttributeName("height");
         collectionAction.addAttributeName("length");
 
-        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, countLimit, hpd2D, computeESS, true);
-
-        annotationAction.addAttributeName("height");
-        annotationAction.addAttributeName("length");
+        heightsAnnotationAction = new HeightsAnnotationAction(heightsOption, hpdIntervals, hpdLimit, kdeIntervals, kdeCount, kdeLimit, posteriorLimit, countLimit);
+        annotationAction = new AnnotationAction(posteriorLimit, countLimit, hpd2D, computeESS, true);
 
         int burnin = -1;
 
@@ -241,7 +245,9 @@ public class TreeAnnotator extends BaseTreeTool {
 
         collectNodeAttributes(cladeSystem, inputFileName, burnin);
 
-        annotateTargetTree(cladeSystem, heightsOption, countLimit, targetTree);
+        cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
+
+        annotateTargetTree(cladeSystem, targetTree);
 
         writeAnnotatedTree(outputFileName, targetTree);
 
@@ -799,12 +805,11 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, int countLimit, MutableTree targetTree) {
+    private void annotateTargetTree(CladeSystem cladeSystem, MutableTree targetTree) {
         progressStream.println("Annotating target tree...");
 
         try {
-            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
-
+            cladeSystem.traverseTree(targetTree, heightsAnnotationAction);
             cladeSystem.traverseTree(targetTree, annotationAction);
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
@@ -976,6 +981,11 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
+                        new double[] { 0.95 },
+                        10,
+                        new double[] { 0.95 },
+                        200,
+                        100,
                         posteriorLimit,
                         0,
                         0,
@@ -1008,14 +1018,19 @@ public class TreeAnnotator extends BaseTreeTool {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("type", "t", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
-                        new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
-                        new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
+                        // new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
+                        // new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        new Arguments.LongOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "l", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.IntegerOption("limitCount", "lc", "the minimum sample count for a node to be annotated (default 5)"),
+                        new Arguments.RealArrayOption("hpd", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
+                        new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
+                        new Arguments.RealArrayOption("kde", "ki", -1, 0.0, 1.0, "the kernal density estimate (KDE) interval (default 0.95)"),
+                        new Arguments.IntegerOption("kdeCount", "kc", 3, Integer.MAX_VALUE, "the kernal density estimate (KDE) curve value count (default 100)"),
+                        new Arguments.IntegerOption("kdeLimit", "kl", 1, Integer.MAX_VALUE, "the kernal density estimate (KDE) minimum number of height values (default 200)"),
+                        new Arguments.LongOption("burnin", "b", 0, Integer.MAX_VALUE, "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "bt", 0, Integer.MAX_VALUE, "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.RealOption("limitFrequency", "lf", 0.0, 1.0, "the minimum posterior probability for a node to be annotated (default 0.0)"),
+                        new Arguments.IntegerOption("limitCount", "lc", 0, Integer.MAX_VALUE, "the minimum sample count for a node to be annotated (default 1)"),
                         new Arguments.StringOption("target", "tt", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
                         new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
@@ -1075,14 +1090,34 @@ public class TreeAnnotator extends BaseTreeTool {
                 throw new RuntimeException("Specify burnin as states to use 'ess' option.");
             }
         }
-
-        double posteriorLimit = 0.0;
-        if (arguments.hasOption("limit")) {
-            posteriorLimit = arguments.getRealOption("limit");
+        double[] hpdIntervals = new double[] { 0.95 };
+        if (arguments.hasOption("hpd")) {
+            hpdIntervals = arguments.getRealArrayOption("hpd");
+        }
+        int hpdLimit = 10;
+        if (arguments.hasOption("hpdLimit")) {
+            hpdLimit = arguments.getIntegerOption("hpdLimit");
+        }
+        double[] kdeIntervals = new double[] { 0.95 };
+        if (arguments.hasOption("kde")) {
+            kdeIntervals = arguments.getRealArrayOption("kde");
+        }
+        int kdeCount = 100;
+        if (arguments.hasOption("kdeCount")) {
+            kdeCount = arguments.getIntegerOption("kdeCount");
+        }
+        int kdeLimit = 200;
+        if (arguments.hasOption("kdeLimit")) {
+            kdeLimit = arguments.getIntegerOption("kdeLimit");
         }
 
+        double posteriorLimit = 0.0;
         if (arguments.hasOption("limitFrequency")) {
             posteriorLimit = arguments.getRealOption("limitFrequency");
+        }
+        if (arguments.hasOption("limit")) {
+            // legacy
+            posteriorLimit = arguments.getRealOption("limit");
         }
 
         int countLimit = 0;
@@ -1157,6 +1192,11 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninTrees,
                 burninStates,
                 heights,
+                hpdIntervals,
+                hpdLimit,
+                kdeIntervals,
+                kdeCount,
+                kdeLimit,
                 posteriorLimit,
                 minCladeCount,
                 countLimit,

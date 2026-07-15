@@ -27,7 +27,6 @@
 
 package dr.app.tools.treeannotator;
 
-import dr.app.gui.chart.KDENumericalDensityPlot;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -38,6 +37,8 @@ import dr.util.HeapSort;
 import java.util.*;
 
 public class SetHeightsAction implements CladeAction {
+    private static final boolean DEBUG_NEGATIVE = true;
+
     private static final boolean TIP_HEIGHT_HPDS = true;
 
     // the smallest a height range can be before we consider it a single value
@@ -83,6 +84,13 @@ public class SetHeightsAction implements CladeAction {
             return;
         }
         double[] values = heights.stream().mapToDouble(Double::doubleValue).toArray();
+
+        if (DEBUG_NEGATIVE) {
+            if (clade.bestLeft != null && clade.bestLeft.getMeanHeight() > clade.getMeanHeight() ||
+                    clade.bestRight != null && clade.bestRight.getMeanHeight() > clade.getMeanHeight()) {
+                System.out.println("Negative branch length detected: " + clade.getMeanHeight() + " < " + clade.bestLeft.getMeanHeight() + " or " + clade.getMeanHeight() + " < " + clade.bestRight.getMeanHeight());
+            }
+        }
 
         int[] indices = new int[values.length];
         HeapSort.sort(values, indices);

@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.pps.PredictiveBeagleSequenceSimulatorGenerator;
 import dr.evomodel.treedatalikelihood.pps.PredictiveDataGenerator;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -43,6 +44,7 @@ import dr.xml.XMLSyntaxRule;
 public class PredictiveBeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
     public static final String PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR = "predictiveBeagleSequenceSimulator";
+    public static final String OUTPUT_ANCESTRAL_SEQUENCES = "outputAncestralSequences";
 
     public String getParserName() {
         return PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR;
@@ -53,8 +55,13 @@ public class PredictiveBeagleSequenceSimulatorParser extends AbstractXMLObjectPa
         PatternList patterns = (PatternList) xo.getChild(PatternList.class);
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
+        boolean outputAncestralSequences = false;
+        if (xo.hasAttribute(OUTPUT_ANCESTRAL_SEQUENCES)) {
+            outputAncestralSequences = xo.getBooleanAttribute(OUTPUT_ANCESTRAL_SEQUENCES);
+        }
+
         try {
-            return new PredictiveBeagleSequenceSimulatorGenerator(patterns, treeDataLikelihood);
+            return new PredictiveBeagleSequenceSimulatorGenerator(patterns, treeDataLikelihood, outputAncestralSequences);
         } catch (RuntimeException e) {
             throw new XMLParseException("Error constructing " + PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR +
                     " element '" + (xo.hasId() ? xo.getId() : "<no id>") + "': " + e.getMessage());
@@ -71,7 +78,8 @@ public class PredictiveBeagleSequenceSimulatorParser extends AbstractXMLObjectPa
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(PatternList.class, false),
-            new ElementRule(TreeDataLikelihood.class, false)
+            new ElementRule(TreeDataLikelihood.class, false),
+            AttributeRule.newBooleanRule(OUTPUT_ANCESTRAL_SEQUENCES, true)
     };
 
     public String getParserDescription() {

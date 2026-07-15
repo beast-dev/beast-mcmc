@@ -32,8 +32,6 @@ import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -61,22 +59,17 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
     private final FrequencyModel freqModel;
     private final PatternList patternList;
     private final DataType dataType;
+    private final boolean outputAncestralSequences;
 
-    public PredictiveBeagleSequenceSimulatorGenerator(PatternList realDataPatterns, TreeDataLikelihood treeDataLikelihood) {
+    public PredictiveBeagleSequenceSimulatorGenerator(PatternList realDataPatterns, TreeDataLikelihood treeDataLikelihood,
+                                                       boolean outputAncestralSequences) {
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
-            throw new RuntimeException("predictiveBeagleSequenceSimulator requires a treeDataLikelihood " +
-                    "backed by a BeagleDataLikelihoodDelegate, but found " +
-                    (delegate == null ? "null" : delegate.getClass().getName()));
+            throw new RuntimeException("predictiveBeagleSequenceSimulator requires a BeagleDataLikelihoodDelegate");
         }
         BeagleDataLikelihoodDelegate beagleDelegate = (BeagleDataLikelihoodDelegate) delegate;
 
-        // TreeDataLikelihoodParser always wraps the supplied PatternList in a fresh, id-less
-        // dr.evolution.alignment.Patterns copy before constructing the BeagleDataLikelihoodDelegate
-        // (see TreeDataLikelihoodParser.java: "new Patterns(partitionPatterns, j, bic, ...)"), even for
-        // the default single-BEAGLE-instance case, so reference identity can never hold here. Check
-        // structural equivalence (same taxa, same pattern count) instead.
         PatternList delegatePatterns = beagleDelegate.getPatternList();
         if (realDataPatterns.getPatternCount() != delegatePatterns.getPatternCount() ||
                 !realDataPatterns.asList().containsAll(delegatePatterns.asList()) ||
@@ -95,19 +88,8 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
         }
         this.siteRateModel = (GammaSiteRateModel) resolvedSiteRateModel;
 
-        // Keep the caller-supplied, id-bearing patterns as the metadata source (getParentId(), getTaxa()) -
-        // beagleDelegate.getPatternList() is the id-less wrapped copy from above, not suitable for that.
         this.patternList = realDataPatterns;
-        DataType resolvedDataType = patternList.getDataType();
-        if (!(resolvedDataType instanceof Nucleotides) && !(resolvedDataType instanceof GeneralDataType)) {
-            throw new RuntimeException("predictiveBeagleSequenceSimulator only supports nucleotide or " +
-                    "general (discrete-trait) data, but found " + resolvedDataType.getClass().getName());
-        }
-        if (resolvedDataType instanceof GeneralDataType && resolvedDataType.getStateCount() <= 0) {
-            throw new RuntimeException("predictiveBeagleSequenceSimulator requires a GeneralDataType with " +
-                    "a positive number of states, but found " + resolvedDataType.getStateCount());
-        }
-        this.dataType = resolvedDataType;
+        this.dataType = patternList.getDataType();
 
         this.branchModel = beagleDelegate.getBranchModel();
         this.freqModel = branchModel.getRootFrequencyModel();
@@ -119,6 +101,7 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
                     "tree to be a TreeModel, but found " + tree.getClass().getName());
         }
         this.treeModel = (TreeModel) tree;
+        this.outputAncestralSequences = outputAncestralSequences;
     }
 
     @Override
@@ -132,7 +115,7 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
         ArrayList<Partition> partitions = new ArrayList<Partition>();
         partitions.add(partition);
         BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitions);
-        SimpleAlignment alignment = simulator.simulate(false, false);
+        SimpleAlignment alignment = simulator.simulate(false, outputAncestralSequences);
 
         validate(alignment, siteCount);
 

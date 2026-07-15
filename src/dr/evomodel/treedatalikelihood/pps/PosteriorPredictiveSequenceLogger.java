@@ -34,14 +34,11 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 
 /**
- * Logs posterior predictive sequence datasets, simulated from the current model state at each
- * logged MCMC state, as a single growing native-BEAST-XML file. Mirrors the
- * open-once/write-one-block-per-state/close-once shape of {@link dr.evomodel.tree.TreeLogger}.
+ * Logs posterior predictive sequence datasets
  */
 public class PosteriorPredictiveSequenceLogger extends MCLogger {
 
     public static final String TAXA_ID = "taxa";
-    public static final String ALIGNMENT_ID_PREFIX = "alignment_";
 
     private final PredictiveDataGenerator generator;
     private final PosteriorPredictiveXMLWriter xmlWriter;
@@ -67,14 +64,12 @@ public class PosteriorPredictiveSequenceLogger extends MCLogger {
 
     @Override
     public void log(long state) {
-        if (logEvery > 0 && (state % logEvery == 0)) {
-            SimpleAlignment alignment = generator.simulate();
+        SimpleAlignment alignment = generator.simulate();
 
-            replicateCount++;
-            String id = ALIGNMENT_ID_PREFIX + replicateCount;
+        replicateCount++;
+        String id = generator.getParentId() + "_" + replicateCount;
 
-            writeBlock(xmlWriter.writeAlignmentBlock(alignment, id, state, generator.getParentId()));
-        }
+        writeBlock(xmlWriter.writeAlignmentBlock(alignment, id, state, generator.getParentId()));
     }
 
     @Override

@@ -125,7 +125,7 @@ public class PredictiveBeagleSequenceSimulatorGeneratorTest extends TestCase {
         TreeDataLikelihood treeDataLikelihood = createTreeDataLikelihood(patterns, singleCategorySiteRateModel);
 
         PredictiveBeagleSequenceSimulatorGenerator generator =
-                new PredictiveBeagleSequenceSimulatorGenerator(patterns, treeDataLikelihood);
+                new PredictiveBeagleSequenceSimulatorGenerator(patterns, treeDataLikelihood, false);
 
         SimpleAlignment simulated = generator.simulate();
 
@@ -155,7 +155,7 @@ public class PredictiveBeagleSequenceSimulatorGeneratorTest extends TestCase {
         TreeDataLikelihood treeDataLikelihood = createTreeDataLikelihood(biggerPatterns, singleCategorySiteRateModel);
 
         PredictiveBeagleSequenceSimulatorGenerator generator =
-                new PredictiveBeagleSequenceSimulatorGenerator(biggerPatterns, treeDataLikelihood);
+                new PredictiveBeagleSequenceSimulatorGenerator(biggerPatterns, treeDataLikelihood, false);
 
         try {
             generator.simulate();

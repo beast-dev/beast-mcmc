@@ -81,8 +81,7 @@ public class PosteriorPredictiveSequenceLoggerParser extends LoggerParser {
     };
 
     public String getParserDescription() {
-        return "Logs posterior predictive sequence datasets, simulated from the current model state, " +
-                "as a single growing native-BEAST-XML file.";
+        return "Logs posterior predictive sequence datasets.";
     }
 
     public Class getReturnType() {

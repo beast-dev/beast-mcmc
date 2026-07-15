@@ -1,5 +1,5 @@
 /*
- * PredictiveBeagleSequenceSimulatorParser.java
+ * PosteriorPredictiveSequenceLoggerParser.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,38 +27,41 @@
 
 package dr.evomodelxml.treedatalikelihood.pps;
 
-import dr.evolution.alignment.PatternList;
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.pps.PredictiveBeagleSequenceSimulatorGenerator;
+import dr.evomodel.treedatalikelihood.pps.PosteriorPredictiveSequenceLogger;
 import dr.evomodel.treedatalikelihood.pps.PredictiveDataGenerator;
-import dr.xml.AbstractXMLObjectParser;
+import dr.inference.loggers.LogFormatter;
+import dr.inference.loggers.TabDelimitedFormatter;
+import dr.inferencexml.loggers.LoggerParser;
+import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
+import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-/**
- * Parses a predictiveBeagleSequenceSimulator element
- */
-public class PredictiveBeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
+import java.io.PrintWriter;
 
-    public static final String PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR = "predictiveBeagleSequenceSimulator";
+/**
+ * Parses a logPosteriorPredictive element.
+ */
+public class PosteriorPredictiveSequenceLoggerParser extends LoggerParser {
+
+    public static final String LOG_POSTERIOR_PREDICTIVE = "logPosteriorPredictive";
 
     public String getParserName() {
-        return PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR;
+        return LOG_POSTERIOR_PREDICTIVE;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        PatternList patterns = (PatternList) xo.getChild(PatternList.class);
-        TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final long logEvery = xo.getLongIntegerAttribute(LOG_EVERY);
 
-        try {
-            return new PredictiveBeagleSequenceSimulatorGenerator(patterns, treeDataLikelihood);
-        } catch (RuntimeException e) {
-            throw new XMLParseException("Error constructing " + PREDICTIVE_BEAGLE_SEQUENCE_SIMULATOR +
-                    " element '" + (xo.hasId() ? xo.getId() : "<no id>") + "': " + e.getMessage());
-        }
+        final PrintWriter pw = getLogFile(xo, getParserName());
+        final LogFormatter formatter = new TabDelimitedFormatter(pw);
+
+        final PredictiveDataGenerator generator = (PredictiveDataGenerator) xo.getChild(PredictiveDataGenerator.class);
+
+        return new PosteriorPredictiveSequenceLogger(generator, formatter, logEvery);
     }
 
     //************************************************************************
@@ -70,15 +73,19 @@ public class PredictiveBeagleSequenceSimulatorParser extends AbstractXMLObjectPa
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PatternList.class, false),
-            new ElementRule(TreeDataLikelihood.class, false)
+            AttributeRule.newLongIntegerRule(LOG_EVERY),
+            AttributeRule.newBooleanRule(ALLOW_OVERWRITE_LOG, true),
+            new StringAttributeRule(FILE_NAME,
+                    "The name of the file to log posterior predictive datasets to", true),
+            new ElementRule(PredictiveDataGenerator.class)
     };
 
     public String getParserDescription() {
-        return "For use in posteriorPredictiveLogger. Wraps model information and data.";
+        return "Logs posterior predictive sequence datasets, simulated from the current model state, " +
+                "as a single growing native-BEAST-XML file.";
     }
 
     public Class getReturnType() {
-        return PredictiveDataGenerator.class;
+        return PosteriorPredictiveSequenceLogger.class;
     }
 }

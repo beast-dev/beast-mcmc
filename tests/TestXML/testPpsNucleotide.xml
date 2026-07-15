@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            ACGTAC
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            ACGAAC
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            ACGCAG
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree">
+        ((A:1.0,B:1.0):1.0,C:2.0);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <hkyModel id="hky">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="hky.frequencies" dimension="4" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="hky.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <hkyModel idref="hky"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="treeLikelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <operators id="operators">
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="hky.kappa"/>
+        </scaleOperator>
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="clock.rate"/>
+        </scaleOperator>
+        <subtreeSlide size="1.0" gaussian="true" weight="1">
+            <treeModel idref="treeModel"/>
+        </subtreeSlide>
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="treeModel.rootHeight"/>
+        </scaleOperator>
+        <uniformOperator weight="1">
+            <parameter idref="treeModel.internalNodeHeights"/>
+        </uniformOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="4">
+        <joint id="joint">
+            <prior id="prior">
+                <logNormalPrior mean="1.0" stdev="1.0">
+                    <parameter idref="hky.kappa"/>
+                </logNormalPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="2">
+            <joint idref="joint"/>
+        </log>
+
+        <logPosteriorPredictive id="pps" logEvery="2" fileName="nuc_pps_alns.xml">
+            <predictiveBeagleSequenceSimulator id="ppsGenerator">
+                <patterns idref="patterns"/>
+                <treeDataLikelihood idref="treeLikelihood"/>
+            </predictiveBeagleSequenceSimulator>
+        </logPosteriorPredictive>
+    </mcmc>
+
+</beast>

@@ -72,11 +72,18 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
         }
         BeagleDataLikelihoodDelegate beagleDelegate = (BeagleDataLikelihoodDelegate) delegate;
 
-        if (realDataPatterns != beagleDelegate.getPatternList()) {
+        // TreeDataLikelihoodParser always wraps the supplied PatternList in a fresh, id-less
+        // dr.evolution.alignment.Patterns copy before constructing the BeagleDataLikelihoodDelegate
+        // (see TreeDataLikelihoodParser.java: "new Patterns(partitionPatterns, j, bic, ...)"), even for
+        // the default single-BEAGLE-instance case, so reference identity can never hold here. Check
+        // structural equivalence (same taxa, same pattern count) instead.
+        PatternList delegatePatterns = beagleDelegate.getPatternList();
+        if (realDataPatterns.getPatternCount() != delegatePatterns.getPatternCount() ||
+                !realDataPatterns.asList().containsAll(delegatePatterns.asList()) ||
+                !delegatePatterns.asList().containsAll(realDataPatterns.asList())) {
             throw new RuntimeException("predictiveBeagleSequenceSimulator's supplied patterns '" +
-                    realDataPatterns.getId() + "' is not the same patterns object used by the " +
-                    "treeDataLikelihood's BeagleDataLikelihoodDelegate ('" +
-                    beagleDelegate.getPatternList().getId() + "')");
+                    realDataPatterns.getId() + "' is not consistent with the patterns used by the " +
+                    "treeDataLikelihood's BeagleDataLikelihoodDelegate (different taxa or pattern count)");
         }
 
         SiteRateModel resolvedSiteRateModel = beagleDelegate.getSiteRateModel();
@@ -88,7 +95,9 @@ public class PredictiveBeagleSequenceSimulatorGenerator implements PredictiveDat
         }
         this.siteRateModel = (GammaSiteRateModel) resolvedSiteRateModel;
 
-        this.patternList = beagleDelegate.getPatternList();
+        // Keep the caller-supplied, id-bearing patterns as the metadata source (getParentId(), getTaxa()) -
+        // beagleDelegate.getPatternList() is the id-less wrapped copy from above, not suitable for that.
+        this.patternList = realDataPatterns;
         DataType resolvedDataType = patternList.getDataType();
         if (!(resolvedDataType instanceof Nucleotides) && !(resolvedDataType instanceof GeneralDataType)) {
             throw new RuntimeException("predictiveBeagleSequenceSimulator only supports nucleotide or " +

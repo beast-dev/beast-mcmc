@@ -48,11 +48,21 @@ public interface Clade extends Comparable<Clade> {
     Taxon getTaxon();
 
     int getIndex();
+
     Clade getBestLeft();
 
     Clade getBestRight();
 
     Object getKey();
+
+    void addHeightValue(double height);
+
+    List<Double> getHeightValues();
+
+    // todo - implement key based attribute lists
+//    void addAttributeValue(String key, Object value);
+
+//    List<Object> getAttributeValues(String key);
 
     void addAttributeValues(Object[] values);
 
@@ -60,6 +70,7 @@ public interface Clade extends Comparable<Clade> {
 
     /**
      * Comparable to sort by ascending size
+     *
      * @param o the object to be compared.
      */
     @Override

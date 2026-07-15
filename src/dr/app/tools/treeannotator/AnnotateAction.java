@@ -37,7 +37,7 @@ import dr.util.HeapSort;
 
 import java.util.*;
 
-public class AnnotationAction implements CladeAction {
+public class AnnotateAction implements CladeAction {
     private static final boolean USE_R = false;
 
     private static final List<TreeAnnotationPlugin> plugins = new ArrayList<>();
@@ -55,11 +55,11 @@ public class AnnotationAction implements CladeAction {
 
     private final static boolean PROCESS_BIVARIATE_ATTRIBUTES = true;
 
-    AnnotationAction(double posteriorLimit,
-                     int countLimit,
-                     double[] hpd2D,
-                     boolean computeESS,
-                     boolean forceIntegerToDiscrete) {
+    AnnotateAction(double posteriorLimit,
+                   int countLimit,
+                   double[] hpd2D,
+                   boolean computeESS,
+                   boolean forceIntegerToDiscrete) {
         this.posteriorLimit = posteriorLimit;
         this.countLimit = countLimit;
         this.hpd2D = hpd2D;

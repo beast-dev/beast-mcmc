@@ -70,6 +70,9 @@ class CollectionAction implements CladeAction {
                 }
             }
 
+            // todo switch to using a keyed map of lists...
+//            clade.addAttributeValues(attributeName, values);
+
             values[i] = value;
             i++;
         }

@@ -286,10 +286,10 @@ public final class CladeSystem {
             BiClade clade = (BiClade)getClade(key);
 
             if (clade.getBestLeft() == child1 && clade.getBestRight() == child2) {
-                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
+//                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
                 clade.addHeightValue(tree.getNodeHeight(node));
             } else if (clade.getBestLeft() == child2 && clade.getBestRight() == child1) {
-                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 1)), tree.getNodeHeight(tree.getChild(node, 0)));
+//                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 1)), tree.getNodeHeight(tree.getChild(node, 0)));
                 clade.addHeightValue(tree.getNodeHeight(node));
             } else {
                 clade.addHeightValue(tree.getNodeHeight(node));

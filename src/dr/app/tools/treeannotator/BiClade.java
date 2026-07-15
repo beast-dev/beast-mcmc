@@ -157,58 +157,29 @@ class BiClade implements Clade {
         return attributeValues;
     }
 
+    @Override
     public void addHeightValue(double height) {
         synchronized (heightValues) {
             heightValues.add(height);
         }
     }
 
+    @Override
     public List<Double> getHeightValues() {
         return heightValues;
     }
-    public void addChildHeightValues(double leftHeight, double rightHeight) {
-        leftHeightValues.add(leftHeight);
-        rightHeightValues.add(rightHeight);
-    }
 
-    public List<Double> getLeftHeightValues() {
-        return leftHeightValues;
-    }
-    public List<Double> getRightHeightValues() {
-        return rightHeightValues;
-    }
-
-    public void setMeanHeight(double meanHeight) {
-        this.meanHeight = meanHeight;
-    }
-
-    public void setMedianHeight(double medianHeight) {
-        this.medianHeight = medianHeight;
-    }
-
-    public void setHeightRange(Double[] range) {
-        this.heightRange = range;
-    }
-
-    public void setHeightHPD(Double[] HPDs) {
-        this.heightHPDs = HPDs;
-    }
-
-    public double getMeanHeight() {
-        return meanHeight;
-    }
-
-    public double getMedianHeight() {
-        return medianHeight;
-    }
-
-    public Double[] getHeightRange() {
-        return heightRange;
-    }
-
-    public Double[] getHeightHPDs() {
-        return heightHPDs;
-    }
+//    public void addChildHeightValues(double leftHeight, double rightHeight) {
+//        leftHeightValues.add(leftHeight);
+//        rightHeightValues.add(rightHeight);
+//    }
+//
+//    public List<Double> getLeftHeightValues() {
+//        return leftHeightValues;
+//    }
+//    public List<Double> getRightHeightValues() {
+//        return rightHeightValues;
+//    }
 
     @Override
     public int getSize() {
@@ -298,13 +269,8 @@ class BiClade implements Clade {
 
     private final List<Object[]> attributeValues = new ArrayList<>();
     private final List<Double> heightValues = new ArrayList<>();
-    private final List<Double> leftHeightValues = new ArrayList<>();
-    private final List<Double> rightHeightValues = new ArrayList<>();
-
-    private double meanHeight;
-    private double medianHeight;
-    private Double[] heightRange;
-    private Double[] heightHPDs ;
+//    private final List<Double> leftHeightValues = new ArrayList<>();
+//    private final List<Double> rightHeightValues = new ArrayList<>();
 
     static {
         if (USE_BITSET_CLADE_KEYS) {

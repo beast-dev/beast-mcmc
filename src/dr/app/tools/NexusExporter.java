@@ -55,10 +55,11 @@ public class NexusExporter implements TreeExporter {
     private NumberFormat formatter = null;
     private String treePrefix = DEFAULT_TREE_PREFIX;
     private boolean sorted = false;
-    private AttributeType writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
+    private final boolean useNumericalTaxa;
+    private final AttributeType writeAttributesAs;
     public static final String DEFAULT_TREE_PREFIX = "TREE";
     public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
-    
+
     public enum AttributeType {
         NODE_ATTRIBUTES,
         BRANCH_ATTRIBUTES
@@ -70,16 +71,25 @@ public class NexusExporter implements TreeExporter {
 //    public NexusExporter() {
 //        this.out = null;
 //    }
-    
+
     public NexusExporter(PrintStream out) {
-        this.out = out;
-        this.writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
+        this(out, AttributeType.NODE_ATTRIBUTES, true);
+    }
+
+    public NexusExporter(PrintStream out, boolean useNumericalTaxa) {
+        this(out, AttributeType.NODE_ATTRIBUTES, useNumericalTaxa);
     }
 
     public NexusExporter(PrintStream out, AttributeType writeAttributesAs) {
+        this(out, writeAttributesAs, true);
+    }
+
+    public NexusExporter(PrintStream out, AttributeType writeAttributesAs, boolean useNumericalTaxa) {
         this.out = out;
         this.writeAttributesAs = writeAttributesAs;
+        this.useNumericalTaxa = useNumericalTaxa;
     }
+
 
     /**
      * Sets the name to use for each tree (will be suffixed by tree number)
@@ -112,16 +122,15 @@ public class NexusExporter implements TreeExporter {
      * @param treeNames  Names of the trees
      */
     public void exportTrees(List<Tree> trees, boolean attributes, List<String> treeNames) {
-        if(!(treeNames==null) && trees.size() != treeNames.size()) {
+        if (!(treeNames == null) && trees.size() != treeNames.size()) {
             throw new RuntimeException("Number of trees and number of tree names is not the same");
         }
-        Map<String, Integer> idMap = writeNexusHeader(trees.get(0));
+        Map<String, Integer> idMap = writeNexusHeader(trees.get(0), true, true);
         out.println("\t\t;");
         for (int i = 0; i < trees.size(); i++) {
-            if(treeNames==null) {
+            if (treeNames == null) {
                 writeNexusTree(trees.get(i), treePrefix + i, attributes, idMap);
-            }
-            else {
+            } else {
                 writeNexusTree(trees.get(i), treeNames.get(i), attributes, idMap);
             }
         }
@@ -143,8 +152,18 @@ public class NexusExporter implements TreeExporter {
      * @param tree the tree to export.
      */
     public void exportTree(Tree tree) {
-        Map<String, Integer> idMap = writeNexusHeader(tree);
-        out.println("\t\t;");
+        exportTree(tree, true, true);
+    }
+
+    /**
+     * Export a tree with all its attributes.
+     *
+     * @param tree the tree to export.
+     */
+    public void exportTree(Tree tree, boolean includeTaxaBlock, boolean includeTranslateTable) {
+        Map<String, Integer> idMap = null;
+        idMap = writeNexusHeader(tree, includeTaxaBlock, includeTranslateTable);
+
         String name = treePrefix + 1;
         if (tree.getId() != null) {
             name = tree.getId();
@@ -159,35 +178,33 @@ public class NexusExporter implements TreeExporter {
 
         // Place tree level attributes in tree comment
         StringBuilder treeComment = null;
-        {
-            Iterator<String> iter = tree.getAttributeNames();
-            if (iter != null) {
-                while (iter.hasNext()) {
-                    final String name = iter.next();
-                    final String value = tree.getAttribute(name).toString();
 
-                    if( name.equals("weight") ) {
-                        treeAttributes = treeAttributes + "[&W " + value + " ] ";
-                    }
-                    else {
-                        if( treeComment == null ) {
-                            treeComment = new StringBuilder(" [&");
-                        } else if( treeComment.length() > 2 ) {
-                            treeComment.append(", ");
-                        }
+        Iterator<String> iter = tree.getAttributeNames();
+        if (iter != null) {
+            while (iter.hasNext()) {
+                final String name = iter.next();
+                final String value = tree.getAttribute(name).toString();
 
-                        treeComment.append(name).append("=").append(value);
+                if (name.equals("weight")) {
+                    treeAttributes = treeAttributes + "[&W " + value + " ] ";
+                } else {
+                    if (treeComment == null) {
+                        treeComment = new StringBuilder(" [&");
+                    } else if (treeComment.length() > 2) {
+                        treeComment.append(", ");
                     }
+
+                    treeComment.append(name).append("=").append(value);
                 }
-                if( treeComment != null ) {
-                    treeComment.append("]");
-                }
+            }
+            if (treeComment != null) {
+                treeComment.append("]");
             }
         }
 
         out.print("tree " + s + ((treeComment != null) ? treeComment.toString() : "")
                 + " = " + treeAttributes);
-        
+
         writeNode(tree, tree.getRoot(), attributes, idMap);
         out.println(";");
     }
@@ -207,53 +224,70 @@ public class NexusExporter implements TreeExporter {
     }
 
     public Map<String, Integer> writeNexusHeader(Tree tree) {
+        return writeNexusHeader(tree, true, true);
+    }
+
+    public Map<String, Integer> writeNexusHeader(Tree tree, boolean includeTaxaBlock, boolean includeTranslateTable) {
+        out.println("#NEXUS");
+        out.println();
+
         int taxonCount = getTaxonCount(tree);
         List<String> names = getTaxonNames(tree);
 
         if (sorted) Collections.sort(names);
 
-        out.println("#NEXUS");
-        out.println();
-        out.println("Begin taxa;");
-        out.println("\tDimensions ntax=" + taxonCount + ";");
-        out.println("\tTaxlabels");
-        for (String name : names) {
-            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
-                name = "'" + name + "'";
+        if (includeTaxaBlock) {
+            out.println("Begin taxa;");
+            out.println("\tDimensions ntax=" + taxonCount + ";");
+            out.println("\tTaxlabels");
+            for (String name : names) {
+                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                    name = "'" + name + "'";
+                }
+                out.println("\t\t" + name);
             }
-            out.println("\t\t" + name);
+            out.println("\t\t;");
+            out.println("End;");
+            out.println("");
         }
-        out.println("\t\t;");
-        out.println("End;");
-        out.println("");
         out.println("Begin trees;");
 
-        // This is needed if the trees use numerical taxon labels
-        out.println("\tTranslate");
-        Map<String, Integer> idMap = new HashMap<String, Integer>();
+        if (includeTranslateTable) {
+            // This is needed if the trees use numerical taxon labels
+            out.println("\tTranslate");
+            Map<String, Integer> idMap = new HashMap<String, Integer>();
 
-        int k = 1;
-        for (String name : names) {
-            idMap.put(name, k);
-            if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
-                name = "'" + name + "'";
+            int k = 1;
+            for (String name : names) {
+                idMap.put(name, k);
+                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                    name = "'" + name + "'";
+                }
+                if (k < names.size()) {
+                    out.println("\t\t" + k + " " + name + ",");
+                } else {
+                    out.println("\t\t" + k + " " + name);
+                }
+                k += 1;
             }
-            if (k < names.size()) {
-                out.println("\t\t" + k + " " + name + ",");
-            } else {
-                out.println("\t\t" + k + " " + name);
-            }
-            k += 1;
+            out.println("\t\t;");
+            return idMap;
         }
-        return idMap;
+        return null;
     }
 
     private void writeNode(Tree tree, NodeRef node, boolean attributes, Map<String, Integer> idMap) {
         if (tree.isExternal(node)) {
             int k = node.getNumber() + 1;
-            if (idMap != null) k = idMap.get(tree.getTaxonId(k - 1));
+            if (useNumericalTaxa) {
+                if (idMap != null) {
+                    k = idMap.get(tree.getTaxonId(k - 1));
+                }
+                out.print(k);
+            } else {
+                out.print(tree.getTaxonId(k - 1));
+            }
 
-            out.print(k);
         } else {
             out.print("(");
             writeNode(tree, tree.getChild(node, 0), attributes, idMap);
@@ -321,81 +355,82 @@ public class NexusExporter implements TreeExporter {
         }
     }
 
-	public String exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
+    public String exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
 
         StringBuilder buffer = new StringBuilder();
-		
-		DataType dataType = null;
-		int seqLength = 0;
-		
-		for (int i = 0; i < alignment.getSequenceCount(); i++) {
 
-			Sequence sequence = alignment.getSequence(i);
+        DataType dataType = null;
+        int seqLength = 0;
 
-			if (sequence.getLength() > seqLength) {
-				seqLength = sequence.getLength();
-			}
+        for (int i = 0; i < alignment.getSequenceCount(); i++) {
 
-			if (dataType == null) {
-				dataType = sequence.getDataType();
-			} else if (dataType != sequence.getDataType()) {
-				throw new RuntimeException(
-						"Sequences must have the same data type.");
-			}// END: dataType check
+            Sequence sequence = alignment.getSequence(i);
 
-		}// END: sequences loop
+            if (sequence.getLength() > seqLength) {
+                seqLength = sequence.getLength();
+            }
 
-		buffer.append("#NEXUS\n");
-		buffer.append("begin data;\n");
-		buffer.append("\tdimensions" + " " + "ntax=" + alignment.getTaxonCount() + " " + "nchar=" + seqLength + ";\n");
-		buffer.append("\tformat datatype=" + dataType.getDescription()
-				+ " missing=" + DataType.UNKNOWN_CHARACTER + " gap="
-				+ DataType.GAP_CHARACTER + ";\n");
-		buffer.append("\tmatrix\n");
-		
-		int maxRowLength = seqLength;
-		for (int n = 0; n < Math.ceil((double) seqLength / maxRowLength); n++) {
-			for (int i = 0; i < alignment.getSequenceCount(); i++) {
+            if (dataType == null) {
+                dataType = sequence.getDataType();
+            } else if (dataType != sequence.getDataType()) {
+                throw new RuntimeException(
+                        "Sequences must have the same data type.");
+            }// END: dataType check
 
-				Sequence sequence = alignment.getSequence(i);
+        }// END: sequences loop
 
-				StringBuilder builder = new StringBuilder("\t");
+        buffer.append("#NEXUS\n");
+        buffer.append("begin data;\n");
+        buffer.append("\tdimensions" + " " + "ntax=" + alignment.getTaxonCount() + " " + "nchar=" + seqLength + ";\n");
+        buffer.append("\tformat datatype=" + dataType.getDescription()
+                + " missing=" + DataType.UNKNOWN_CHARACTER + " gap="
+                + DataType.GAP_CHARACTER + ";\n");
+        buffer.append("\tmatrix\n");
 
-				appendTaxonName(sequence.getTaxon(), builder);
+        int maxRowLength = seqLength;
+        for (int n = 0; n < Math.ceil((double) seqLength / maxRowLength); n++) {
+            for (int i = 0; i < alignment.getSequenceCount(); i++) {
 
-				String sequenceString = sequence.getSequenceString();
+                Sequence sequence = alignment.getSequence(i);
 
-				builder.append("\t").append(
-						sequenceString.subSequence(
-								n * maxRowLength,
-								Math.min((n + 1) * maxRowLength,
-										sequenceString.length())));
-				int shortBy = Math.min(Math.min(n * maxRowLength, seqLength)
-						- sequence.getLength(), maxRowLength);
-				
-				if (shortBy > 0) {
-					for (int j = 0; j < shortBy; j++) {
-						builder.append(DataType.GAP_CHARACTER);
-					}
-				}
-				
-				buffer.append(builder + "\n");
-			}// END: sequences loop
-		}
-		buffer.append(";\nend;");
-		
-		return buffer.toString();
-	}// END: exportAlignment
+                StringBuilder builder = new StringBuilder("\t");
+
+                appendTaxonName(sequence.getTaxon(), builder);
+
+                String sequenceString = sequence.getSequenceString();
+
+                builder.append("\t").append(
+                        sequenceString.subSequence(
+                                n * maxRowLength,
+                                Math.min((n + 1) * maxRowLength,
+                                        sequenceString.length())));
+                int shortBy = Math.min(Math.min(n * maxRowLength, seqLength)
+                        - sequence.getLength(), maxRowLength);
+
+                if (shortBy > 0) {
+                    for (int j = 0; j < shortBy; j++) {
+                        builder.append(DataType.GAP_CHARACTER);
+                    }
+                }
+
+                buffer.append(builder + "\n");
+            }// END: sequences loop
+        }
+        buffer.append(";\nend;");
+
+        return buffer.toString();
+    }// END: exportAlignment
 
     /**
      * name suitable for printing - quotes if necessary
+     *
      * @param taxon
      * @param builder
      * @return
      */
     private StringBuilder appendTaxonName(Taxon taxon, StringBuilder builder) {
-        
-    	String name = taxon.getId();
+
+        String name = taxon.getId();
         if (!name.matches(SPECIAL_CHARACTERS_REGEX)) {
             // JEBL way of quoting the quote character
             name = name.replace("\'", "\'\'");
@@ -404,5 +439,5 @@ public class NexusExporter implements TreeExporter {
         }
         return builder.append(name);
     }
-	
+
 }// END: class

@@ -16,6 +16,11 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 - Added option to write doubling time in days to the log file when using a coalescent model with an exponential growth parameter.
 - Added an option to write the epidemiological reproduction number (R0) to the log file when using a coalescent model with an exponential growth parameter. This requires an estimate of the mean and standard deviation of the generation time distribution to be specified in BEAUti.
 
+#### TreeAnnotator
+
+- Can specify multiple HPD intervals e.g., using `--hpd 0.95,0.90,0.5'
+- Can generate a KDE curve of the distribution of height values for visualisation in PearTree
+
 ### Bug fixes
 
 #### TreeAnnotator

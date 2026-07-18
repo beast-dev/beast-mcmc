@@ -1031,7 +1031,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         new Arguments.RealArrayOption("hpd", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
                         new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
                         new Arguments.Option("kde", "k", "construct kernal density estimates (KDE) of node heights (default off)"),
-                        new Arguments.RealArrayOption("kdeIntervals", "ki", -1, 0.0, 1.0, "the kernal density estimate (KDE) interval (default 0.95)"),
+//                        new Arguments.RealArrayOption("kdeIntervals", "ki", -1, 0.0, 1.0, "the kernal density estimate (KDE) interval (default 0.95)"),
                         new Arguments.IntegerOption("kdeCount", "kc", 3, Integer.MAX_VALUE, "the kernal density estimate (KDE) curve value count (default 100)"),
                         new Arguments.IntegerOption("kdeLimit", "kl", 1, Integer.MAX_VALUE, "the kernal density estimate (KDE) minimum number of height values (default 200)"),
                         new Arguments.LongOption("burnin", "b", 0, Integer.MAX_VALUE, "the number of states to be considered as 'burn-in'"),

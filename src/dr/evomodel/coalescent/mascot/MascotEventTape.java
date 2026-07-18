@@ -6,17 +6,17 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 
 /**
- * Builds a compact backward-time event list from a BEAST-X TreeModel and a
- * parameter of integer tip states ordered by external node index.
+ * Builds a compact backward-time event list from a BEAST-X TreeModel and an
+ * attributePatterns-style PatternList of tip states, resolved by taxon name
+ * (not by tree traversal order — see {@link #fromTree}).
  */
 public final class MascotEventTape {
-
-    private static final double TIP_STATE_INTEGER_TOLERANCE = 1.0e-9;
 
     private final MascotCore.Event[] events;
     private final MascotCore.PreparedEvents preparedEvents;
@@ -26,19 +26,30 @@ public final class MascotEventTape {
         this.preparedEvents = MascotCore.prepareEvents(events);
     }
 
-    public static MascotEventTape fromTree(TreeModel tree, Parameter tipStates, int stateCount) {
+    public static MascotEventTape fromTree(TreeModel tree, PatternList tipPatterns, int stateCount) {
         int tipCount = tree.getExternalNodeCount();
         int internalCount = tree.getInternalNodeCount();
-        if (tipStates.getDimension() != tipCount) {
-            throw new IllegalArgumentException("tipStates dimension " + tipStates.getDimension() +
-                    " does not match external node count " + tipCount);
+        if (tipPatterns.getPatternCount() != 1) {
+            throw new IllegalArgumentException("tip-state attributePatterns must contain exactly one pattern, found " +
+                    tipPatterns.getPatternCount());
+        }
+        if (tipPatterns.getStateCount() != stateCount) {
+            throw new IllegalArgumentException("tip-state attributePatterns dataType has " +
+                    tipPatterns.getStateCount() + " states, which does not match mascotLikelihood's stateCount=" +
+                    stateCount);
         }
 
         MascotCore.Event[] events = new MascotCore.Event[tipCount + internalCount];
         int index = 0;
         for (int i = 0; i < tipCount; i++) {
             NodeRef node = tree.getExternalNode(i);
-            int state = parseTipState(tree, node, i, tipStates.getParameterValue(i));
+            String taxonId = tree.getTaxonId(i);
+            int taxonIndex = tipPatterns.getTaxonIndex(taxonId);
+            if (taxonIndex < 0) {
+                throw new IllegalArgumentException("tip-state attributePatterns has no entry for " +
+                        tipDescription(tree, node, i));
+            }
+            int state = tipPatterns.getPatternState(taxonIndex, 0);
             if (state < 0 || state >= stateCount) {
                 throw new IllegalArgumentException("tip state out of range for " +
                         tipDescription(tree, node, i) + ": " + state +
@@ -67,23 +78,6 @@ public final class MascotEventTape {
         return new MascotEventTape(events);
     }
 
-    private static int parseTipState(TreeModel tree, NodeRef node, int externalNodeIndex, double rawState) {
-        if (!Double.isFinite(rawState)) {
-            throw new IllegalArgumentException("tip state must be finite for " +
-                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
-        }
-        long rounded = Math.round(rawState);
-        if (Math.abs(rawState - rounded) > TIP_STATE_INTEGER_TOLERANCE) {
-            throw new IllegalArgumentException("tip state must be an integer for " +
-                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
-        }
-        if (rounded < Integer.MIN_VALUE || rounded > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("tip state is outside integer range for " +
-                    tipDescription(tree, node, externalNodeIndex) + ": " + rawState);
-        }
-        return (int) rounded;
-    }
-
     private static String tipDescription(TreeModel tree, NodeRef node, int externalNodeIndex) {
         String taxonId = tree.getTaxonId(externalNodeIndex);
         if (taxonId == null) {
@@ -91,6 +85,28 @@ public final class MascotEventTape {
         }
         return "external node " + externalNodeIndex + " (node " + node.getNumber() +
                 ", taxon " + taxonId + ")";
+    }
+
+    /**
+     * Builds a {@code MascotCore}-compatible {@code branchRates} array (indexed
+     * by lineage id, i.e. {@code NodeRef.getNumber()} -- see {@link #fromTree}),
+     * from any {@link BranchRateModel}. The root's slot is left {@code 0.0} and
+     * is never read by {@code MascotCore} (the root is never an active lineage).
+     * Rebuilt fresh on every call, deliberately uncached, matching {@link
+     * MascotDynamics#getThetaValues()}'s existing always-rebuild pattern: this is
+     * an O(nodeCount) traversal with no allocation beyond the returned array, so
+     * caching would only add an invalidation-tracking axis (tree topology change
+     * vs. clock-parameter change) for no real benefit.
+     */
+    public static double[] buildBranchRates(TreeModel tree, BranchRateModel branchRateModel) {
+        double[] rates = new double[tree.getNodeCount()];
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                rates[node.getNumber()] = branchRateModel.getBranchRate(tree, node);
+            }
+        }
+        return rates;
     }
 
     public MascotCore.Event[] getEvents() {

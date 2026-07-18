@@ -6,6 +6,8 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evolution.alignment.PatternList;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -21,10 +23,14 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
     private final TreeModel treeModel;
-    private final Parameter tipStates;
+    private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
     private final double maxStep;
     private final boolean checkProbabilities;
+    // Nullable: null means no clock scaling (branchRates=null passed into
+    // MascotCore.evaluate(...), the exact same code path as before this field
+    // existed -- see MascotCore's own null-branchRates documentation).
+    private final BranchRateModel branchRateModel;
 
     private MascotEventTape eventTape;
     private MascotCore core;
@@ -35,7 +41,11 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     private boolean gradientPrimedLikelihood;
 
     private double logLikelihood;
-    private double[] gradient;
+    // The combined, MascotCore-native flat gradient (epoch-major [migration, popSizes]).
+    // MascotGradient slices this per-part; callers outside this package never see it directly.
+    private double[] combinedGradient;
+    // d(logLikelihood)/d(branchRate[lineageId]); null unless branchRateModel != null.
+    private double[] clockGradient;
 
     // Snapshots taken by storeState() and restored by restoreState() on a
     // rejected proposal. Restoring the actual eventTape/core references (rather
@@ -53,28 +63,51 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     private boolean storedLikelihoodKnown;
     private boolean storedGradientKnown;
     private double storedLogLikelihood;
-    private double[] storedGradient;
+    private double[] storedCombinedGradient;
+    private double[] storedClockGradient;
 
     public MascotLikelihood(String name,
                             TreeModel treeModel,
-                            Parameter tipStates,
-                            Parameter theta,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            Parameter popSizes,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities) {
+        this(name, treeModel, tipPatterns, migrationRates, popSizes, epochTimes, stateCount, maxStep,
+                checkProbabilities, null);
+    }
+
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            Parameter popSizes,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities,
+                            BranchRateModel branchRateModel) {
         super(name == null ? MASCOT_LIKELIHOOD : name);
         this.treeModel = treeModel;
-        this.tipStates = tipStates;
-        this.dynamics = new MascotDynamics(stateCount, theta, epochTimes);
+        this.tipPatterns = tipPatterns;
+        this.dynamics = new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes);
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
+        this.branchRateModel = branchRateModel;
 
         addModel(treeModel);
-        addVariable(tipStates);
-        addVariable(theta);
+        // tipPatterns is fixed input data (like a sequence alignment), not an
+        // estimated model variable, so it is not registered as a listened
+        // variable here -- it never changes over the course of an analysis.
+        addVariable(migrationRates);
+        addVariable(popSizes);
         if (epochTimes != null) {
             addVariable(epochTimes);
+        }
+        if (branchRateModel != null) {
+            addModel(branchRateModel);
         }
 
         this.eventTapeKnown = false;
@@ -100,6 +133,11 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         return logLikelihood;
     }
 
+    /**
+     * MascotCore's own combined flat gradient (epoch-major [migration, popSizes]).
+     * Most callers want {@link #getMigrationGradientLogDensity()} or
+     * {@link #getPopSizeGradientLogDensity()} instead (see {@link MascotGradient}).
+     */
     public double[] getGradientLogDensity() {
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
@@ -107,15 +145,47 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         // Clone on every return, not just on a cache hit: the stored gradient array
         // is reused across calls, so a caller that mutated the returned array in
         // place would otherwise silently corrupt the cache for the next caller.
-        return gradient.clone();
+        return combinedGradient.clone();
     }
 
-    public Parameter getTheta() {
-        return dynamics.getTheta();
+    public double[] getMigrationGradientLogDensity() {
+        return dynamics.extractMigrationGradient(getGradientLogDensity());
+    }
+
+    public double[] getPopSizeGradientLogDensity() {
+        return dynamics.extractPopSizeGradient(getGradientLogDensity());
+    }
+
+    /**
+     * d(logLikelihood)/d(branchRate[lineageId]), indexed by tree node number (see
+     * {@link MascotEventTape#buildBranchRates}). Only valid when {@link
+     * #getBranchRateModel()} is non-null.
+     */
+    public double[] getClockGradientLogDensity() {
+        if (!gradientKnown) {
+            evaluateLikelihoodAndGradient(true);
+        }
+        return clockGradient == null ? null : clockGradient.clone();
+    }
+
+    public Parameter getMigrationRates() {
+        return dynamics.getMigrationRates();
+    }
+
+    public Parameter getPopSizes() {
+        return dynamics.getPopSizes();
     }
 
     public MascotDynamics getDynamics() {
         return dynamics;
+    }
+
+    public BranchRateModel getBranchRateModel() {
+        return branchRateModel;
+    }
+
+    public TreeModel getTreeModel() {
+        return treeModel;
     }
 
     public int getStateCount() {
@@ -142,6 +212,14 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeModel) {
             eventTapeKnown = false;
+        } else if (model == branchRateModel) {
+            // A clock-rate parameter changed. The event tape and MascotCore's
+            // per-epoch rate cache are both keyed on the tree/theta, neither of
+            // which changed here -- only the numeric likelihood/gradient are
+            // stale. Falling through to the generic "else" below would set
+            // coreKnown=false and force a full MascotCore/tape rebuild on every
+            // HMC step touching the clock rate, defeating the tape-reuse design
+            // (see MascotCore's OperationTapeStore doc comment).
         } else {
             coreKnown = false;
         }
@@ -152,9 +230,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == tipStates) {
-            eventTapeKnown = false;
-        } else if (variable == dynamics.getTheta()) {
+        if (variable == dynamics.getMigrationRates() || variable == dynamics.getPopSizes()) {
             // The event tape is still valid; only the numeric likelihood and gradient change.
         } else if (variable == dynamics.getEpochTimes()) {
             coreKnown = false;
@@ -170,7 +246,8 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     @Override
     protected void storeState() {
         storedLogLikelihood = logLikelihood;
-        storedGradient = gradient;
+        storedCombinedGradient = combinedGradient;
+        storedClockGradient = clockGradient;
         storedEventTape = eventTape;
         storedCore = core;
         storedEventTapeKnown = eventTapeKnown;
@@ -182,7 +259,8 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     @Override
     protected void restoreState() {
         logLikelihood = storedLogLikelihood;
-        gradient = storedGradient;
+        combinedGradient = storedCombinedGradient;
+        clockGradient = storedClockGradient;
         eventTape = storedEventTape;
         core = storedCore;
         eventTapeKnown = storedEventTapeKnown;
@@ -203,7 +281,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
 
     private void ensureEventTape() {
         if (!eventTapeKnown) {
-            eventTape = MascotEventTape.fromTree(treeModel, tipStates, dynamics.getStateCount());
+            eventTape = MascotEventTape.fromTree(treeModel, tipPatterns, dynamics.getStateCount());
             eventTapeKnown = true;
         }
     }
@@ -215,12 +293,16 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         }
     }
 
+    private double[] branchRatesOrNull() {
+        return branchRateModel == null ? null : MascotEventTape.buildBranchRates(treeModel, branchRateModel);
+    }
+
     private void evaluateLikelihoodOnly() {
         ensureEventTape();
         ensureCore();
         try {
             logLikelihood = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
-                    false, checkProbabilities, false).logLikelihood;
+                    branchRatesOrNull(), false, checkProbabilities, false).logLikelihood;
             if (!Double.isFinite(logLikelihood)) {
                 logLikelihood = Double.NEGATIVE_INFINITY;
             }
@@ -236,7 +318,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         MascotCore.Result result;
         try {
             result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
-                    true, checkProbabilities, false);
+                    branchRatesOrNull(), true, checkProbabilities, false);
         } catch (MascotCore.NumericalException e) {
             if (failOnGradientFailure) {
                 throw new IllegalStateException("MASCOT gradient cannot be evaluated for the current " +
@@ -266,7 +348,8 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
             return;
         }
         logLikelihood = result.logLikelihood;
-        gradient = result.gradient;
+        combinedGradient = result.gradient;
+        clockGradient = result.clockGradient;
         likelihoodKnown = true;
         gradientKnown = true;
     }

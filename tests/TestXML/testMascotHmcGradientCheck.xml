@@ -3,29 +3,50 @@
 
     <!--
         Minimal end-to-end smoke test: a fixed 6-tip, 2-deme, single-epoch MASCOT
-        likelihood sampled with Hamiltonian Monte Carlo over its flat log-parameter
-        vector (2 log-migration-rates + 2 log-population-sizes), with BEAST's
-        built-in analytic-vs-numeric gradient check enabled
-        (gradientCheckCount/gradientCheckTolerance). The tree itself is fixed: no
-        tree operators are used, only the HMC operator on "theta".
+        likelihood sampled with Hamiltonian Monte Carlo over its migration-rate and
+        population-size parameters, with BEAST's built-in analytic-vs-numeric
+        gradient check enabled (gradientCheckCount/gradientCheckTolerance). The
+        tree itself is fixed: no tree operators are used, only the HMC operator on
+        "theta"/"popSizes".
 
-        theta has a weakly informative normal prior in log-space (standard
-        practice for log-rates/log-sizes); its gradient is combined with the
-        MASCOT likelihood's gradient via jointGradient so HMC samples the actual
-        posterior and gradientCheckCount (which differentiates joint.getLogLikelihood(),
-        i.e. prior + likelihood) has something to check against on both sides.
-        A flat prior let early, unadapted HMC steps wander to numerically extreme
-        theta and crash the ODE integrator; this is what fixed it.
+        Migration rates ("theta") and population sizes ("popSizes") are declared as
+        two separate elements (matching BASTA's <popSizes> convention), and tip
+        states are declared via <attributePatterns>, resolved by taxon name, not
+        a raw, tree-traversal-ordered <tipStates> parameter.
+
+        theta/popSizes each have a weakly informative normal prior in log-space
+        (standard practice for log-rates/log-sizes). mascotLikelihood exposes
+        migration rates and population sizes as two independent
+        GradientWrtParameterProviders (mascotGradient part="migration"/part=
+        "popSizes"): each is combined with its own prior's gradient via
+        jointGradient (likelihood + prior w.r.t. the same parameter), and the
+        two resulting posterior-gradients are concatenated via compoundGradient
+        into the one combined target the HMC operator actually moves, so
+        gradientCheckCount (which differentiates joint.getLogLikelihood(), i.e.
+        prior + likelihood) has something to check against on both sides. A flat
+        prior let early, unadapted HMC steps wander to numerically extreme theta
+        and crash the ODE integrator; this is what fixed it.
     -->
 
     <taxa id="taxa">
-        <taxon id="A"/>
-        <taxon id="B"/>
-        <taxon id="C"/>
-        <taxon id="D"/>
-        <taxon id="E"/>
-        <taxon id="F"/>
+        <taxon id="A"><attr name="state">0</attr></taxon>
+        <taxon id="B"><attr name="state">1</attr></taxon>
+        <taxon id="C"><attr name="state">0</attr></taxon>
+        <taxon id="D"><attr name="state">1</attr></taxon>
+        <taxon id="E"><attr name="state">0</attr></taxon>
+        <taxon id="F"><attr name="state">1</attr></taxon>
     </taxa>
+
+    <generalDataType id="mascot.dataType">
+        <state code="0"/>
+        <state code="1"/>
+    </generalDataType>
+
+    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F, resolved by taxon name -->
+    <attributePatterns id="tipPatterns" attribute="state">
+        <taxa idref="taxa"/>
+        <generalDataType idref="mascot.dataType"/>
+    </attributePatterns>
 
     <newick id="startingTree">
         (((A:1.0,B:1.0):1.0,(C:1.0,D:1.0):1.0):1.0,(E:2.0,F:2.0):1.0);
@@ -44,23 +65,28 @@
         </nodeHeights>
     </treeModel>
 
-    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F -->
-    <parameter id="tipStates" value="0 1 0 1 0 1"/>
+    <!-- flat log-migration-rate vector: [log m(0->1), log m(1->0)] -->
+    <parameter id="theta" value="-1.6094379124341003 -1.2039728043259361"/>
 
-    <!-- flat log-parameter vector: [log m(0->1), log m(1->0), log N0, log N1] -->
-    <parameter id="theta" value="-1.6094379124341003 -1.2039728043259361 0.4054651081081644 0.5877866649021191"/>
+    <!-- flat log-population-size vector: [log N0, log N1] -->
+    <parameter id="popSizes" value="0.4054651081081644 0.5877866649021191"/>
 
     <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
-        <tipStates>
-            <parameter idref="tipStates"/>
-        </tipStates>
+        <attributePatterns idref="tipPatterns"/>
         <theta>
             <parameter idref="theta"/>
         </theta>
+        <popSizes>
+            <parameter idref="popSizes"/>
+        </popSizes>
     </mascotLikelihood>
 
-    <mascotGradient id="likelihood.grad">
+    <mascotGradient id="likelihood.migration.grad" part="migration">
+        <mascotLikelihood idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <mascotGradient id="likelihood.popSizes.grad" part="popSizes">
         <mascotLikelihood idref="mascotLikelihood"/>
     </mascotGradient>
 
@@ -68,24 +94,43 @@
         <parameter idref="theta"/>
     </normalPrior>
 
-    <gradient id="prior.grad">
+    <gradient id="theta.prior.grad">
         <normalPrior idref="theta.prior"/>
         <parameter idref="theta"/>
     </gradient>
 
-    <jointGradient id="posterior.grad">
-        <mascotGradient idref="likelihood.grad"/>
-        <gradient idref="prior.grad"/>
+    <normalPrior id="popSizes.prior" mean="0.0" stdev="1.0">
+        <parameter idref="popSizes"/>
+    </normalPrior>
+
+    <gradient id="popSizes.prior.grad">
+        <normalPrior idref="popSizes.prior"/>
+        <parameter idref="popSizes"/>
+    </gradient>
+
+    <jointGradient id="theta.posterior.grad">
+        <mascotGradient idref="likelihood.migration.grad"/>
+        <gradient idref="theta.prior.grad"/>
     </jointGradient>
 
+    <jointGradient id="popSizes.posterior.grad">
+        <mascotGradient idref="likelihood.popSizes.grad"/>
+        <gradient idref="popSizes.prior.grad"/>
+    </jointGradient>
+
+    <compoundGradient id="posterior.grad">
+        <jointGradient idref="theta.posterior.grad"/>
+        <jointGradient idref="popSizes.posterior.grad"/>
+    </compoundGradient>
+
     <report>
-        <jointGradient idref="posterior.grad"/>
+        <compoundGradient idref="posterior.grad"/>
     </report>
 
     <operators id="operators" optimizationSchedule="log">
         <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
                                        gradientCheckCount="10" gradientCheckTolerance="1e-3">
-            <jointGradient idref="posterior.grad"/>
+            <compoundGradient idref="posterior.grad"/>
         </hamiltonianMonteCarloOperator>
     </operators>
 
@@ -93,6 +138,7 @@
         <joint id="joint">
             <prior id="prior">
                 <normalPrior idref="theta.prior"/>
+                <normalPrior idref="popSizes.prior"/>
             </prior>
             <likelihood id="likelihood">
                 <mascotLikelihood idref="mascotLikelihood"/>
@@ -108,11 +154,15 @@
             <column label="theta" dp="4" width="12">
                 <parameter idref="theta"/>
             </column>
+            <column label="popSizes" dp="4" width="12">
+                <parameter idref="popSizes"/>
+            </column>
         </log>
 
         <log id="fileLog" logEvery="10" fileName="testMascotHmcGradientCheck.log">
             <posterior idref="joint"/>
             <parameter idref="theta"/>
+            <parameter idref="popSizes"/>
         </log>
     </mcmc>
 

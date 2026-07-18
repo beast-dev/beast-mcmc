@@ -3,26 +3,49 @@
 
     <!--
         Multi-epoch variant of testMascotHmcGradientCheck.xml: same fixed 6-tip,
-        2-deme tree, but theta now has TWO epochs (piecewise-constant migration
-        rates/population sizes), wired via the optional epochTimes child of
-        mascotLikelihood. epochTimes has one boundary (dimension = epochCount-1),
+        2-deme tree, but theta/popSizes now have TWO epochs (piecewise-constant
+        migration rates/population sizes), wired via the optional epochTimes child
+        of mascotLikelihood. epochTimes has one boundary (dimension = epochCount-1),
         splitting the tree height (root at 3.0) into a recent epoch [0,1.5) and an
-        ancestral epoch [1.5,inf). theta is laid out epoch-major:
-        [epoch0: log m(0->1), log m(1->0), log N0, log N1,
-         epoch1: log m(0->1), log m(1->0), log N0, log N1] (8 dims total),
-        matching MascotDynamics/MascotCore's thetaOffset = epoch*parametersPerEpoch
-        convention. Same jointGradient/normalPrior/gradientCheckCount pattern as the
-        single-epoch test.
+        ancestral epoch [1.5,inf). theta and popSizes are each laid out epoch-major
+        within themselves:
+        theta    = [epoch0: log m(0->1), log m(1->0), epoch1: log m(0->1), log m(1->0)]
+        popSizes = [epoch0: log N0, log N1,            epoch1: log N0, log N1]
+        MascotDynamics interleaves these into MascotCore's own epoch-major
+        [migration, popSizes] layout on the way in, and de-interleaves MascotCore's
+        combined gradient back into per-parameter slices on the way out (see
+        mascotGradient part="migration"/part="popSizes" below); MascotCore's
+        actual math never changes, only this wrapper-level bookkeeping.
+
+        Because theta and popSizes stay as two independent, self-contained
+        parameters (each just concatenated across epochs within itself, no
+        cross-parameter interleaving visible at the XML level), combining their
+        priors' gradients with mascotGradient's two parts via jointGradient/
+        compoundGradient works the same way regardless of epoch count, unlike
+        an earlier version of this file (before mascotGradient exposed migration
+        and popSizes as separate parts) where a single combined synthetic theta
+        parameter's epoch-major-interleaved layout only happened to coincide with
+        compoundGradient's plain concatenation at a single epoch.
     -->
 
     <taxa id="taxa">
-        <taxon id="A"/>
-        <taxon id="B"/>
-        <taxon id="C"/>
-        <taxon id="D"/>
-        <taxon id="E"/>
-        <taxon id="F"/>
+        <taxon id="A"><attr name="state">0</attr></taxon>
+        <taxon id="B"><attr name="state">1</attr></taxon>
+        <taxon id="C"><attr name="state">0</attr></taxon>
+        <taxon id="D"><attr name="state">1</attr></taxon>
+        <taxon id="E"><attr name="state">0</attr></taxon>
+        <taxon id="F"><attr name="state">1</attr></taxon>
     </taxa>
+
+    <generalDataType id="mascot.dataType">
+        <state code="0"/>
+        <state code="1"/>
+    </generalDataType>
+
+    <attributePatterns id="tipPatterns" attribute="state">
+        <taxa idref="taxa"/>
+        <generalDataType idref="mascot.dataType"/>
+    </attributePatterns>
 
     <newick id="startingTree">
         (((A:1.0,B:1.0):1.0,(C:1.0,D:1.0):1.0):1.0,(E:2.0,F:2.0):1.0);
@@ -41,31 +64,34 @@
         </nodeHeights>
     </treeModel>
 
-    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F -->
-    <parameter id="tipStates" value="0 1 0 1 0 1"/>
-
     <!-- single epoch boundary at height 1.5 (root height is 3.0, so both epochs are exercised) -->
     <parameter id="epochTimes" value="1.5"/>
 
-    <!-- epoch-major flat log-parameter vector:
-         [e0: log m(0->1), log m(1->0), log N0, log N1,
-          e1: log m(0->1), log m(1->0), log N0, log N1] -->
-    <parameter id="theta" value="-1.0 -1.2 0.4 0.6 -0.5 -0.8 0.2 0.3"/>
+    <!-- epoch-major log-migration-rate vector: [e0: log m(0->1), log m(1->0), e1: log m(0->1), log m(1->0)] -->
+    <parameter id="theta" value="-1.0 -1.2 -0.5 -0.8"/>
+
+    <!-- epoch-major log-population-size vector: [e0: log N0, log N1, e1: log N0, log N1] -->
+    <parameter id="popSizes" value="0.4 0.6 0.2 0.3"/>
 
     <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
-        <tipStates>
-            <parameter idref="tipStates"/>
-        </tipStates>
+        <attributePatterns idref="tipPatterns"/>
         <theta>
             <parameter idref="theta"/>
         </theta>
+        <popSizes>
+            <parameter idref="popSizes"/>
+        </popSizes>
         <epochTimes>
             <parameter idref="epochTimes"/>
         </epochTimes>
     </mascotLikelihood>
 
-    <mascotGradient id="likelihood.grad">
+    <mascotGradient id="likelihood.migration.grad" part="migration">
+        <mascotLikelihood idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <mascotGradient id="likelihood.popSizes.grad" part="popSizes">
         <mascotLikelihood idref="mascotLikelihood"/>
     </mascotGradient>
 
@@ -73,24 +99,43 @@
         <parameter idref="theta"/>
     </normalPrior>
 
-    <gradient id="prior.grad">
+    <gradient id="theta.prior.grad">
         <normalPrior idref="theta.prior"/>
         <parameter idref="theta"/>
     </gradient>
 
-    <jointGradient id="posterior.grad">
-        <mascotGradient idref="likelihood.grad"/>
-        <gradient idref="prior.grad"/>
+    <normalPrior id="popSizes.prior" mean="0.0" stdev="1.0">
+        <parameter idref="popSizes"/>
+    </normalPrior>
+
+    <gradient id="popSizes.prior.grad">
+        <normalPrior idref="popSizes.prior"/>
+        <parameter idref="popSizes"/>
+    </gradient>
+
+    <jointGradient id="theta.posterior.grad">
+        <mascotGradient idref="likelihood.migration.grad"/>
+        <gradient idref="theta.prior.grad"/>
     </jointGradient>
 
+    <jointGradient id="popSizes.posterior.grad">
+        <mascotGradient idref="likelihood.popSizes.grad"/>
+        <gradient idref="popSizes.prior.grad"/>
+    </jointGradient>
+
+    <compoundGradient id="posterior.grad">
+        <jointGradient idref="theta.posterior.grad"/>
+        <jointGradient idref="popSizes.posterior.grad"/>
+    </compoundGradient>
+
     <report>
-        <jointGradient idref="posterior.grad"/>
+        <compoundGradient idref="posterior.grad"/>
     </report>
 
     <operators id="operators" optimizationSchedule="log">
         <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
                                        gradientCheckCount="10" gradientCheckTolerance="1e-3">
-            <jointGradient idref="posterior.grad"/>
+            <compoundGradient idref="posterior.grad"/>
         </hamiltonianMonteCarloOperator>
     </operators>
 
@@ -98,6 +143,7 @@
         <joint id="joint">
             <prior id="prior">
                 <normalPrior idref="theta.prior"/>
+                <normalPrior idref="popSizes.prior"/>
             </prior>
             <likelihood id="likelihood">
                 <mascotLikelihood idref="mascotLikelihood"/>
@@ -113,11 +159,15 @@
             <column label="theta" dp="4" width="12">
                 <parameter idref="theta"/>
             </column>
+            <column label="popSizes" dp="4" width="12">
+                <parameter idref="popSizes"/>
+            </column>
         </log>
 
         <log id="fileLog" logEvery="10" fileName="testMascotHmcGradientCheckEpochs.log">
             <posterior idref="joint"/>
             <parameter idref="theta"/>
+            <parameter idref="popSizes"/>
         </log>
     </mcmc>
 

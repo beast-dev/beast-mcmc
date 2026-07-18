@@ -183,11 +183,11 @@ public final class MascotCore {
     }
 
     public Result evaluate(Event[] events, double[] theta, boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepareEvents(events), theta, computeGradient, checkProbabilities, true);
+        return evaluate(prepareEvents(events), theta, null, computeGradient, checkProbabilities, true);
     }
 
     public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepared, theta, computeGradient, checkProbabilities, true);
+        return evaluate(prepared, theta, null, computeGradient, checkProbabilities, true);
     }
 
     /**
@@ -200,12 +200,44 @@ public final class MascotCore {
      */
     public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient,
                            boolean checkProbabilities, boolean copyFinalState) {
+        return evaluate(prepared, theta, null, computeGradient, checkProbabilities, copyFinalState);
+    }
+
+    /**
+     * Same as {@link #evaluate(Event[], double[], boolean, boolean)}, but with an
+     * optional branch-specific clock-rate multiplier on the migration/transition
+     * process only (never on the Ne-derived coalescent rate), matching BASTA's
+     * {@code branchRateModel.getBranchRate(tree, child) * branchTime} convention.
+     * {@code branchRates}, when non-null, must be indexed by lineage id (the same
+     * ids used in {@link Event#getLineage()}/child1/child2/parent) and sized
+     * larger than the maximum lineage id among {@code events}; the root's slot is
+     * never read. {@code branchRates == null} takes the exact same code path as
+     * the no-clock overloads above (a multiply-by-1.0 no-op in every hot loop),
+     * so every existing caller of those overloads is bit-for-bit unaffected by
+     * this parameter's existence.
+     */
+    public Result evaluate(Event[] events, double[] theta, double[] branchRates,
+                           boolean computeGradient, boolean checkProbabilities) {
+        return evaluate(prepareEvents(events), theta, branchRates, computeGradient, checkProbabilities, true);
+    }
+
+    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates,
+                           boolean computeGradient, boolean checkProbabilities) {
+        return evaluate(prepared, theta, branchRates, computeGradient, checkProbabilities, true);
+    }
+
+    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
+                           boolean checkProbabilities, boolean copyFinalState) {
         if (prepared == null) {
             throw new IllegalArgumentException("prepared events must not be null");
         }
         if (theta == null || theta.length != parameterCount) {
             throw new IllegalArgumentException("theta dimension " + (theta == null ? -1 : theta.length) +
                     " does not match expected dimension " + parameterCount);
+        }
+        if (branchRates != null && branchRates.length <= prepared.maxLineageId) {
+            throw new IllegalArgumentException("branchRates dimension " + branchRates.length +
+                    " does not cover the maximum lineage id " + prepared.maxLineageId);
         }
 
         for (int epoch = 0; epoch < epochCount; epoch++) {
@@ -239,7 +271,7 @@ public final class MascotCore {
                 }
                 double segmentEnd = nextBoundaryAfter(currentTime, event.time);
                 int epoch = epochAt(currentTime + TIME_TOLERANCE);
-                integrateSegment(state, epochRates[epoch], currentTime, segmentEnd, epoch, operations);
+                integrateSegment(state, epochRates[epoch], currentTime, segmentEnd, epoch, branchRates, operations);
                 currentTime = segmentEnd;
                 if (checkProbabilities) {
                     checkProbabilities(state);
@@ -260,13 +292,17 @@ public final class MascotCore {
         }
 
         double[] gradient = null;
+        double[] clockGradient = null;
         if (computeGradient) {
-            gradient = reverse(operations, state.activeCount);
+            if (branchRates != null) {
+                clockGradient = new double[prepared.maxLineageId + 1];
+            }
+            gradient = reverse(operations, state.activeCount, clockGradient);
         }
 
         double[] rootProbabilities = copyFinalState ? state.copyProbabilities() : null;
         int[] activeLineages = copyFinalState ? state.copyActiveIds() : null;
-        return new Result(state.logLikelihood, gradient, rootProbabilities, activeLineages);
+        return new Result(state.logLikelihood, gradient, clockGradient, rootProbabilities, activeLineages);
     }
 
     // ------------------------------------------------------------------
@@ -274,7 +310,7 @@ public final class MascotCore {
     // ------------------------------------------------------------------
 
     private void integrateSegment(ActiveState state, EpochRates rates, double start, double end, int epoch,
-                                  OperationTapeStore operations) {
+                                  double[] branchRates, OperationTapeStore operations) {
         if (!(end > start)) {
             throw new IllegalArgumentException("empty integration segment");
         }
@@ -291,17 +327,30 @@ public final class MascotCore {
         workspace.integrationOut = ensure(workspace.integrationOut, dim);
         double[] yOut = workspace.integrationOut;
 
+        // The active lineage set (hence which clock rate applies to each ODE
+        // slice) is fixed for the whole segment, so this snapshot is built once
+        // here rather than once per RK4 stage.
+        double[] activeClockRates = null;
+        if (branchRates != null) {
+            workspace.activeClockRates = ensure(workspace.activeClockRates, activeCount);
+            activeClockRates = workspace.activeClockRates;
+            for (int i = 0; i < activeCount; i++) {
+                activeClockRates[i] = branchRates[state.activeIds[i]];
+            }
+        }
+
         if (operations == null) {
             for (int i = 0; i < steps; i++) {
-                rk4StepInto(y, activeCount, rates, h, yOut, workspace);
+                rk4StepInto(y, activeCount, rates, activeClockRates, h, yOut, workspace);
                 double[] swap = y;
                 y = yOut;
                 yOut = swap;
             }
         } else {
-            IntervalTape tape = operations.addInterval(steps, activeCount, dim, epoch, h);
+            IntervalTape tape = operations.addInterval(steps, activeCount, dim, epoch, h,
+                    state.activeIds, activeClockRates);
             for (int i = 0; i < steps; i++) {
-                rk4StepWithTapeInto(y, activeCount, rates, h, yOut, workspace, tape, i);
+                rk4StepWithTapeInto(y, activeCount, rates, activeClockRates, h, yOut, workspace, tape, i);
                 double[] swap = y;
                 y = yOut;
                 yOut = swap;
@@ -311,62 +360,64 @@ public final class MascotCore {
         unpackStateFrom(y, state);
     }
 
-    private void rk4StepInto(double[] y, int activeCount, EpochRates rates, double h, double[] yOut, Workspace w) {
+    private void rk4StepInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates, double h,
+                             double[] yOut, Workspace w) {
         int dim = activeCount * stateCount + 1;
 
         w.k1 = ensure(w.k1, dim);
-        rhsInto(y, activeCount, rates, w.k1, w);
+        rhsInto(y, activeCount, rates, activeClockRates, w.k1, w);
         w.y2 = ensure(w.y2, dim);
         addScaledInto(y, w.k1, 0.5 * h, w.y2, dim);
         w.k2 = ensure(w.k2, dim);
-        rhsInto(w.y2, activeCount, rates, w.k2, w);
+        rhsInto(w.y2, activeCount, rates, activeClockRates, w.k2, w);
         w.y3 = ensure(w.y3, dim);
         addScaledInto(y, w.k2, 0.5 * h, w.y3, dim);
         w.k3 = ensure(w.k3, dim);
-        rhsInto(w.y3, activeCount, rates, w.k3, w);
+        rhsInto(w.y3, activeCount, rates, activeClockRates, w.k3, w);
         w.y4 = ensure(w.y4, dim);
         addScaledInto(y, w.k3, h, w.y4, dim);
         w.k4 = ensure(w.k4, dim);
-        rhsInto(w.y4, activeCount, rates, w.k4, w);
+        rhsInto(w.y4, activeCount, rates, activeClockRates, w.k4, w);
 
         for (int i = 0; i < dim; i++) {
             yOut[i] = y[i] + (h / 6.0) * (w.k1[i] + 2.0 * w.k2[i] + 2.0 * w.k3[i] + w.k4[i]);
         }
     }
 
-    private void rk4StepWithTapeInto(double[] y, int activeCount, EpochRates rates, double h, double[] yOut,
-                                     Workspace w, IntervalTape tape, int stepIndex) {
+    private void rk4StepWithTapeInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates,
+                                     double h, double[] yOut, Workspace w, IntervalTape tape, int stepIndex) {
         int dim = tape.stateDimension;
         int offset = stepIndex * dim;
         System.arraycopy(y, 0, tape.y0, offset, dim);
 
         w.k1 = ensure(w.k1, dim);
-        rhsInto(y, activeCount, rates, w.k1, w);
+        rhsInto(y, activeCount, rates, activeClockRates, w.k1, w);
         w.y2 = ensure(w.y2, dim);
         addScaledInto(y, w.k1, 0.5 * h, w.y2, dim);
         System.arraycopy(w.y2, 0, tape.y2, offset, dim);
 
         w.k2 = ensure(w.k2, dim);
-        rhsInto(w.y2, activeCount, rates, w.k2, w);
+        rhsInto(w.y2, activeCount, rates, activeClockRates, w.k2, w);
         w.y3 = ensure(w.y3, dim);
         addScaledInto(y, w.k2, 0.5 * h, w.y3, dim);
         System.arraycopy(w.y3, 0, tape.y3, offset, dim);
 
         w.k3 = ensure(w.k3, dim);
-        rhsInto(w.y3, activeCount, rates, w.k3, w);
+        rhsInto(w.y3, activeCount, rates, activeClockRates, w.k3, w);
         w.y4 = ensure(w.y4, dim);
         addScaledInto(y, w.k3, h, w.y4, dim);
         System.arraycopy(w.y4, 0, tape.y4, offset, dim);
 
         w.k4 = ensure(w.k4, dim);
-        rhsInto(w.y4, activeCount, rates, w.k4, w);
+        rhsInto(w.y4, activeCount, rates, activeClockRates, w.k4, w);
 
         for (int i = 0; i < dim; i++) {
             yOut[i] = y[i] + (h / 6.0) * (w.k1[i] + 2.0 * w.k2[i] + 2.0 * w.k3[i] + w.k4[i]);
         }
     }
 
-    private void rhsInto(double[] y, int activeCount, EpochRates rates, double[] out, Workspace w) {
+    private void rhsInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates,
+                         double[] out, Workspace w) {
         int K = stateCount;
         int stateSize = activeCount * K;
 
@@ -377,12 +428,16 @@ public final class MascotCore {
         // (same lineage-outer traversal, reusing the already-loaded p0/p values)
         // rather than a separate pass over activeCount * K. The migration loop's
         // own zero-fill-avoidance ("=" for source 0, "+=" for source 1..K-1 into
-        // out) is preserved unchanged.
+        // out) is preserved unchanged. sums/sumsSquares themselves are never
+        // clock-scaled: they feed the coalescent-hazard term below, which is a
+        // function of Ne only, per BASTA's convention that a branch clock scales
+        // the migration/transition process but never the Ne-derived rate.
+        double c0 = activeClockRates == null ? 1.0 : activeClockRates[0];
         double p0 = y[0];
         w.sums[0] = p0;
         w.sumsSquares[0] = p0 * p0;
         for (int sink = 0; sink < K; sink++) {
-            out[sink] = p0 * rates.migrationMatrix[sink];
+            out[sink] = c0 * p0 * rates.migrationMatrix[sink];
         }
         for (int source = 1; source < K; source++) {
             double p = y[source];
@@ -390,17 +445,18 @@ public final class MascotCore {
             w.sumsSquares[source] = p * p;
             int row = source * K;
             for (int sink = 0; sink < K; sink++) {
-                out[sink] += p * rates.migrationMatrix[row + sink];
+                out[sink] += c0 * p * rates.migrationMatrix[row + sink];
             }
         }
 
         for (int lineage = 1; lineage < activeCount; lineage++) {
             int offset = lineage * K;
+            double c = activeClockRates == null ? 1.0 : activeClockRates[lineage];
             p0 = y[offset];
             w.sums[0] += p0;
             w.sumsSquares[0] += p0 * p0;
             for (int sink = 0; sink < K; sink++) {
-                out[offset + sink] = p0 * rates.migrationMatrix[sink];
+                out[offset + sink] = c * p0 * rates.migrationMatrix[sink];
             }
             for (int source = 1; source < K; source++) {
                 double p = y[offset + source];
@@ -408,7 +464,7 @@ public final class MascotCore {
                 w.sumsSquares[source] += p * p;
                 int row = source * K;
                 for (int sink = 0; sink < K; sink++) {
-                    out[offset + sink] += p * rates.migrationMatrix[row + sink];
+                    out[offset + sink] += c * p * rates.migrationMatrix[row + sink];
                 }
             }
         }
@@ -439,7 +495,7 @@ public final class MascotCore {
     // Reverse pass
     // ------------------------------------------------------------------
 
-    private double[] reverse(OperationTapeStore operations, int finalActiveCount) {
+    private double[] reverse(OperationTapeStore operations, int finalActiveCount, double[] clockGradient) {
         double[] gradient = new double[parameterCount];
         int dim = finalActiveCount * stateCount + 1;
 
@@ -486,7 +542,7 @@ public final class MascotCore {
             }
 
             if (operation instanceof IntervalTape) {
-                reverseIntervalInto((IntervalTape) operation, cursor, next, gradient);
+                reverseIntervalInto((IntervalTape) operation, cursor, next, gradient, clockGradient);
             } else if (operation instanceof CoalescentTape) {
                 reverseCoalescentInto((CoalescentTape) operation, cursor, dim, next, gradient);
             }
@@ -500,7 +556,7 @@ public final class MascotCore {
     }
 
     private void reverseIntervalInto(IntervalTape tape, double[] adjointAfter, double[] adjointBeforeOut,
-                                     double[] gradient) {
+                                     double[] gradient, double[] clockGradient) {
         int dim = tape.stateDimension;
         EpochRates rates = epochRates[tape.epoch];
 
@@ -512,7 +568,7 @@ public final class MascotCore {
 
         for (int step = tape.steps - 1; step >= 0; step--) {
             int offset = step * dim;
-            reverseStepInto(tape, offset, rates, cursor, next, gradient, workspace);
+            reverseStepInto(tape, offset, rates, cursor, next, gradient, clockGradient, workspace);
             double[] swap = cursor;
             cursor = next;
             next = swap;
@@ -522,11 +578,13 @@ public final class MascotCore {
     }
 
     private void reverseStepInto(IntervalTape tape, int offset, EpochRates rates, double[] adjointAfter,
-                                 double[] adjointBeforeOut, double[] gradient, Workspace w) {
+                                 double[] adjointBeforeOut, double[] gradient, double[] clockGradient, Workspace w) {
         int dim = tape.stateDimension;
         int activeCount = tape.activeCount;
         int epoch = tape.epoch;
         double h = tape.h;
+        int[] activeIds = tape.activeIds;
+        double[] activeClockRates = tape.clockRates;
 
         w.adjointY0 = ensure(w.adjointY0, dim);
         System.arraycopy(adjointAfter, 0, w.adjointY0, 0, dim);
@@ -542,19 +600,23 @@ public final class MascotCore {
 
         w.vjpY = ensure(w.vjpY, dim);
 
-        rhsVjpInto(tape.y4, offset, activeCount, rates, epoch, w.adjointK4, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y4, offset, activeCount, rates, epoch, w.adjointK4, w.vjpY, gradient, w,
+                activeIds, activeClockRates, clockGradient);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK3, w.vjpY, h, dim);
 
-        rhsVjpInto(tape.y3, offset, activeCount, rates, epoch, w.adjointK3, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y3, offset, activeCount, rates, epoch, w.adjointK3, w.vjpY, gradient, w,
+                activeIds, activeClockRates, clockGradient);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK2, w.vjpY, 0.5 * h, dim);
 
-        rhsVjpInto(tape.y2, offset, activeCount, rates, epoch, w.adjointK2, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y2, offset, activeCount, rates, epoch, w.adjointK2, w.vjpY, gradient, w,
+                activeIds, activeClockRates, clockGradient);
         addInPlace(w.adjointY0, w.vjpY, dim);
         addScaledInPlace(w.adjointK1, w.vjpY, 0.5 * h, dim);
 
-        rhsVjpInto(tape.y0, offset, activeCount, rates, epoch, w.adjointK1, w.vjpY, gradient, w);
+        rhsVjpInto(tape.y0, offset, activeCount, rates, epoch, w.adjointK1, w.vjpY, gradient, w,
+                activeIds, activeClockRates, clockGradient);
         addInPlace(w.adjointY0, w.vjpY, dim);
 
         System.arraycopy(w.adjointY0, 0, adjointBeforeOut, 0, dim);
@@ -568,7 +630,8 @@ public final class MascotCore {
      * 0-based (they are per-call workspace/output buffers, not taped arrays).
      */
     private void rhsVjpInto(double[] y, int yOffset, int activeCount, EpochRates rates, int epoch,
-                            double[] adjointRhs, double[] adjointYOut, double[] gradient, Workspace w) {
+                            double[] adjointRhs, double[] adjointYOut, double[] gradient, Workspace w,
+                            int[] activeLineageIds, double[] activeClockRates, double[] clockGradient) {
         int K = stateCount;
         int stateSize = activeCount * K;
         // adjointYOut[stateSize] (the VJP component for the input's log-likelihood
@@ -576,10 +639,11 @@ public final class MascotCore {
         // reads y[stateSize], so nothing below ever writes this index again.
         adjointYOut[stateSize] = 0.0;
 
-        // migrationGram[source*K+sink] = sum_lineage y[.,source] * adjointRhs[.,sink].
-        // The theta-gradient contribution for migration rate (source -> sink) is
-        // sum_lineage y[.,source] * (adjointRhs[.,sink] - adjointRhs[.,source]), which
-        // is exactly migrationGram[source,sink] - migrationGram[source,source]: the
+        // migrationGram[source*K+sink] = sum_lineage clock[lineage] * y[.,source] * adjointRhs[.,sink]
+        // (unweighted, i.e. clock[lineage]=1, when clockGradient/activeClockRates are
+        // null). The theta-gradient contribution for migration rate (source -> sink) is
+        // sum_lineage clock[lineage] * y[.,source] * (adjointRhs[.,sink] - adjointRhs[.,source]),
+        // which is exactly migrationGram[source,sink] - migrationGram[source,source]: the
         // diagonal entries are precisely the term the old two-separate-loops version
         // recomputed redundantly (K-1 times per source, once per sink). Building this
         // matrix inside the same lineage-outer pass as the y-adjoint below removes
@@ -592,22 +656,38 @@ public final class MascotCore {
         // sums/sumsSquares accumulation is fused in here too (same lineage-outer
         // pass, reusing ySource). The first lineage assigns every scratch slot
         // that used to be zero-filled; remaining lineages accumulate into it.
-        for (int source = 0; source < K; source++) {
-            double ySource = y[yOffset + source];
-            w.sums[source] = ySource;
-            w.sumsSquares[source] = ySource * ySource;
-            double v = 0.0;
-            int row = source * K;
-            for (int sink = 0; sink < K; sink++) {
-                double adjSink = adjointRhs[sink];
-                v += adjSink * rates.migrationMatrix[row + sink];
-                w.migrationGram[row + sink] = ySource * adjSink;
+        // sums/sumsSquares are never clock-weighted (see rhsInto's matching note).
+        {
+            double c = activeClockRates == null ? 1.0 : activeClockRates[0];
+            double clockContribution = 0.0;
+            for (int source = 0; source < K; source++) {
+                double ySource = y[yOffset + source];
+                w.sums[source] = ySource;
+                w.sumsSquares[source] = ySource * ySource;
+                double v = 0.0;
+                int row = source * K;
+                for (int sink = 0; sink < K; sink++) {
+                    double adjSink = adjointRhs[sink];
+                    v += adjSink * rates.migrationMatrix[row + sink];
+                    w.migrationGram[row + sink] = c * ySource * adjSink;
+                }
+                adjointYOut[source] = c * v;
+                if (clockGradient != null) {
+                    // d(logL)/d(clock[lineage]) accumulates the *unscaled* v here
+                    // (the migration RHS value the clock would have multiplied),
+                    // per the chain rule derived for out[l,sink] = c_l * (Q^T y)[sink].
+                    clockContribution += ySource * v;
+                }
             }
-            adjointYOut[source] = v;
+            if (clockGradient != null) {
+                clockGradient[activeLineageIds[0]] += clockContribution;
+            }
         }
 
         for (int lineage = 1; lineage < activeCount; lineage++) {
             int offset = lineage * K;
+            double c = activeClockRates == null ? 1.0 : activeClockRates[lineage];
+            double clockContribution = 0.0;
             for (int source = 0; source < K; source++) {
                 double ySource = y[yOffset + offset + source];
                 w.sums[source] += ySource;
@@ -617,9 +697,15 @@ public final class MascotCore {
                 for (int sink = 0; sink < K; sink++) {
                     double adjSink = adjointRhs[offset + sink];
                     v += adjSink * rates.migrationMatrix[row + sink];
-                    w.migrationGram[row + sink] += ySource * adjSink;
+                    w.migrationGram[row + sink] += c * ySource * adjSink;
                 }
-                adjointYOut[offset + source] = v;
+                adjointYOut[offset + source] = c * v;
+                if (clockGradient != null) {
+                    clockContribution += ySource * v;
+                }
+            }
+            if (clockGradient != null) {
+                clockGradient[activeLineageIds[lineage]] += clockContribution;
             }
         }
 
@@ -1011,6 +1097,10 @@ public final class MascotCore {
         return (array == null || array.length < size) ? new double[size] : array;
     }
 
+    private static int[] ensureInt(int[] array, int size) {
+        return (array == null || array.length < size) ? new int[size] : array;
+    }
+
     private static void addScaledInto(double[] x, double[] dx, double scale, double[] out, int n) {
         for (int i = 0; i < n; i++) {
             out[i] = x[i] + scale * dx[i];
@@ -1173,12 +1263,21 @@ public final class MascotCore {
     public static final class Result {
         public final double logLikelihood;
         public final double[] gradient;
+        /**
+         * d(logLikelihood)/d(branchRate[lineageId]), indexed the same way as the
+         * {@code branchRates} array passed into {@code evaluate(...)}. Null unless
+         * both a gradient was requested and a non-null {@code branchRates} array
+         * was supplied.
+         */
+        public final double[] clockGradient;
         public final double[] rootProbabilities;
         public final int[] activeLineages;
 
-        private Result(double logLikelihood, double[] gradient, double[] rootProbabilities, int[] activeLineages) {
+        private Result(double logLikelihood, double[] gradient, double[] clockGradient,
+                       double[] rootProbabilities, int[] activeLineages) {
             this.logLikelihood = logLikelihood;
             this.gradient = gradient;
+            this.clockGradient = clockGradient;
             this.rootProbabilities = rootProbabilities;
             this.activeLineages = activeLineages;
         }
@@ -1300,6 +1399,8 @@ public final class MascotCore {
     private static final class Workspace {
         double[] integrationState;
         double[] integrationOut;
+        /** Per-active-lineage clock multiplier, rebuilt once per integrateSegment call. */
+        double[] activeClockRates;
 
         double[] k1;
         double[] k2;
@@ -1383,7 +1484,8 @@ public final class MascotCore {
             return operations[index];
         }
 
-        private IntervalTape addInterval(int steps, int activeCount, int stateDimension, int epoch, double h) {
+        private IntervalTape addInterval(int steps, int activeCount, int stateDimension, int epoch, double h,
+                                         int[] activeIds, double[] activeClockRates) {
             int index = nextIndex();
             OperationTape operation = operations[index];
             IntervalTape tape;
@@ -1393,7 +1495,7 @@ public final class MascotCore {
                 tape = new IntervalTape();
                 operations[index] = tape;
             }
-            tape.reset(steps, activeCount, stateDimension, epoch, h);
+            tape.reset(steps, activeCount, stateDimension, epoch, h, activeIds, activeClockRates);
             return tape;
         }
 
@@ -1458,8 +1560,19 @@ public final class MascotCore {
         private double[] y2;
         private double[] y3;
         private double[] y4;
+        /**
+         * Per-active-index lineage id and clock multiplier, frozen at the moment
+         * this interval was taped (the active set and branchRates are both fixed
+         * for the segment's whole duration). Both null together when no clock was
+         * supplied to evaluate(...). Snapshotted rather than read live from
+         * Workspace/branchRates because later segments overwrite that live state
+         * before reverse() replays this one.
+         */
+        private int[] activeIds;
+        private double[] clockRates;
 
-        private void reset(int steps, int activeCount, int stateDimension, int epoch, double h) {
+        private void reset(int steps, int activeCount, int stateDimension, int epoch, double h,
+                           int[] sourceActiveIds, double[] sourceClockRates) {
             this.steps = steps;
             this.activeCount = activeCount;
             this.stateDimension = stateDimension;
@@ -1470,6 +1583,18 @@ public final class MascotCore {
             y2 = ensure(y2, storageSize);
             y3 = ensure(y3, storageSize);
             y4 = ensure(y4, storageSize);
+            if (sourceActiveIds != null) {
+                activeIds = ensureInt(activeIds, activeCount);
+                System.arraycopy(sourceActiveIds, 0, activeIds, 0, activeCount);
+            } else {
+                activeIds = null;
+            }
+            if (sourceClockRates != null) {
+                clockRates = ensure(clockRates, activeCount);
+                System.arraycopy(sourceClockRates, 0, clockRates, 0, activeCount);
+            } else {
+                clockRates = null;
+            }
         }
     }
 

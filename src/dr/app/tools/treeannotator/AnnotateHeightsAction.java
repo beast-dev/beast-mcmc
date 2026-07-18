@@ -113,10 +113,10 @@ public class AnnotateHeightsAction implements CladeAction {
                  }
              }
              if (useKDEs) {
-                 if (values.length >= kdeLimit) {
+                 if (kdeIntervals != null && kdeIntervals.length > 0 && values.length >= kdeLimit) {
                      for (int i = 0; i < kdeIntervals.length; i++) {
-                         Double[] kdes = getKDEIntervals(kdeIntervals[i], values);
-                         tree.setNodeAttribute(node, "height_" + (hpdIntervals[i] * 100) + "%_KDE", kdes);
+                         Double[] kdeInterval = getKDEIntervals(kdeIntervals[i], values);
+                         tree.setNodeAttribute(node, "height_" + (hpdIntervals[i] * 100) + "%_KDE", kdeInterval);
                      }
                  }
 
@@ -152,11 +152,11 @@ public class AnnotateHeightsAction implements CladeAction {
     }
 
     private static double getMedian(double[] values, int[] indices) {
-        int pos = values.length / 2;
+        int pos = indices.length / 2;
         if (values.length % 2 == 1) {
             return values[indices[pos]];
         } else {
-            return (values[pos - 1] + values[pos]) / 2.0;
+            return (values[indices[pos - 1]] + values[indices[pos]]) / 2.0;
         }
     }
 

@@ -25,6 +25,7 @@ public final class MascotGradient implements GradientWrtParameterProvider, Repor
 
     public MascotGradient(MascotLikelihood likelihood) {
         this.likelihood = likelihood;
+        this.likelihood.enableGradientPrimedLikelihood();
     }
 
     @Override

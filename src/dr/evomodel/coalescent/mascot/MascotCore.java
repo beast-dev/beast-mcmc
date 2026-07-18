@@ -15,10 +15,8 @@
 
 package dr.evomodel.coalescent.mascot;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Allocation-light engine for a MASCOT-style marginal structured coalescent
@@ -219,12 +217,15 @@ public final class MascotCore {
         state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
         epochCursor = 0;
         double currentTime = 0.0;
-        // One tape entry per event, plus at most one IntervalTape per epoch transition
-        // between events; the list still grows past this if needed, this only avoids
-        // the common case of repeated doubling.
-        List<OperationTape> operations = computeGradient
-                ? new ArrayList<OperationTape>(sortedEvents.length + epochCount)
-                : null;
+        OperationTapeStore operations = null;
+        if (computeGradient) {
+            // One tape entry per event, plus at most one IntervalTape per epoch
+            // transition between events. The store owns reusable tape objects and
+            // stage arrays, so fixed-tree HMC overwrites the same storage instead
+            // of rebuilding the reverse tape at every parameter evaluation.
+            operations = workspace.operationTapes;
+            operations.reset(sortedEvents.length + epochCount);
+        }
 
         for (Event event : sortedEvents) {
             if (event.time < currentTime - TIME_TOLERANCE) {
@@ -273,7 +274,7 @@ public final class MascotCore {
     // ------------------------------------------------------------------
 
     private void integrateSegment(ActiveState state, EpochRates rates, double start, double end, int epoch,
-                                  List<OperationTape> operations) {
+                                  OperationTapeStore operations) {
         if (!(end > start)) {
             throw new IllegalArgumentException("empty integration segment");
         }
@@ -298,14 +299,13 @@ public final class MascotCore {
                 yOut = swap;
             }
         } else {
-            IntervalTape tape = new IntervalTape(steps, activeCount, dim, epoch, h);
+            IntervalTape tape = operations.addInterval(steps, activeCount, dim, epoch, h);
             for (int i = 0; i < steps; i++) {
                 rk4StepWithTapeInto(y, activeCount, rates, h, yOut, workspace, tape, i);
                 double[] swap = y;
                 y = yOut;
                 yOut = swap;
             }
-            operations.add(tape);
         }
 
         unpackStateFrom(y, state);
@@ -372,17 +372,31 @@ public final class MascotCore {
 
         w.sums = ensure(w.sums, K);
         w.sumsSquares = ensure(w.sumsSquares, K);
-        Arrays.fill(w.sums, 0, K, 0.0);
-        Arrays.fill(w.sumsSquares, 0, K, 0.0);
 
         // sums/sumsSquares accumulation is fused into the migration loop below
         // (same lineage-outer traversal, reusing the already-loaded p0/p values)
         // rather than a separate pass over activeCount * K. The migration loop's
         // own zero-fill-avoidance ("=" for source 0, "+=" for source 1..K-1 into
         // out) is preserved unchanged.
-        for (int lineage = 0; lineage < activeCount; lineage++) {
+        double p0 = y[0];
+        w.sums[0] = p0;
+        w.sumsSquares[0] = p0 * p0;
+        for (int sink = 0; sink < K; sink++) {
+            out[sink] = p0 * rates.migrationMatrix[sink];
+        }
+        for (int source = 1; source < K; source++) {
+            double p = y[source];
+            w.sums[source] = p;
+            w.sumsSquares[source] = p * p;
+            int row = source * K;
+            for (int sink = 0; sink < K; sink++) {
+                out[sink] += p * rates.migrationMatrix[row + sink];
+            }
+        }
+
+        for (int lineage = 1; lineage < activeCount; lineage++) {
             int offset = lineage * K;
-            double p0 = y[offset];
+            p0 = y[offset];
             w.sums[0] += p0;
             w.sumsSquares[0] += p0 * p0;
             for (int sink = 0; sink < K; sink++) {
@@ -425,7 +439,7 @@ public final class MascotCore {
     // Reverse pass
     // ------------------------------------------------------------------
 
-    private double[] reverse(List<OperationTape> operations, int finalActiveCount) {
+    private double[] reverse(OperationTapeStore operations, int finalActiveCount) {
         double[] gradient = new double[parameterCount];
         int dim = finalActiveCount * stateCount + 1;
 
@@ -572,17 +586,27 @@ public final class MascotCore {
         // that redundancy and turns the old (source,sink)-outer / lineage-inner
         // stride-K loop into one extra accumulation per already-visited element.
         w.migrationGram = ensure(w.migrationGram, K * K);
-        Arrays.fill(w.migrationGram, 0, K * K, 0.0);
         w.sums = ensure(w.sums, K);
         w.sumsSquares = ensure(w.sumsSquares, K);
-        Arrays.fill(w.sums, 0, K, 0.0);
-        Arrays.fill(w.sumsSquares, 0, K, 0.0);
 
         // sums/sumsSquares accumulation is fused in here too (same lineage-outer
-        // pass, reusing ySource); both are already unconditionally zeroed above
-        // (a cheap O(K) fill), so this fusion has none of the zero-init hazard the
-        // "out"/"adjointYOut" writes elsewhere in this file need to avoid.
-        for (int lineage = 0; lineage < activeCount; lineage++) {
+        // pass, reusing ySource). The first lineage assigns every scratch slot
+        // that used to be zero-filled; remaining lineages accumulate into it.
+        for (int source = 0; source < K; source++) {
+            double ySource = y[yOffset + source];
+            w.sums[source] = ySource;
+            w.sumsSquares[source] = ySource * ySource;
+            double v = 0.0;
+            int row = source * K;
+            for (int sink = 0; sink < K; sink++) {
+                double adjSink = adjointRhs[sink];
+                v += adjSink * rates.migrationMatrix[row + sink];
+                w.migrationGram[row + sink] = ySource * adjSink;
+            }
+            adjointYOut[source] = v;
+        }
+
+        for (int lineage = 1; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             for (int source = 0; source < K; source++) {
                 double ySource = y[yOffset + offset + source];
@@ -640,10 +664,18 @@ public final class MascotCore {
 
         w.cSums = ensure(w.cSums, K);
         w.cValues = ensure(w.cValues, stateSize);
-        Arrays.fill(w.cSums, 0, K, 0.0);
-        for (int lineage = 0; lineage < activeCount; lineage++) {
+        double b = w.bValues[0];
+        for (int state = 0; state < K; state++) {
+            double upstream = adjointRhs[state];
+            adjointYOut[state] += upstream * (w.rValues[0] - w.hValues[state]) +
+                    b * w.hValues[state];
+            double c = y[yOffset + state] * (b - upstream);
+            w.cValues[state] = c;
+            w.cSums[state] = c;
+        }
+        for (int lineage = 1; lineage < activeCount; lineage++) {
             int offset = lineage * K;
-            double b = w.bValues[lineage];
+            b = w.bValues[lineage];
             for (int state = 0; state < K; state++) {
                 double upstream = adjointRhs[offset + state];
                 adjointYOut[offset + state] += upstream * (w.rValues[lineage] - w.hValues[offset + state]) +
@@ -655,26 +687,19 @@ public final class MascotCore {
         }
 
         w.gradQ = ensure(w.gradQ, K);
-        Arrays.fill(w.gradQ, 0, K, 0.0);
+        double ellAdjoint = adjointRhs[stateSize];
+        for (int state = 0; state < K; state++) {
+            double pairSum = 0.5 * (w.sums[state] * w.sums[state] - w.sumsSquares[state]);
+            w.gradQ[state] = -ellAdjoint * pairSum;
+        }
         for (int lineage = 0; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             for (int state = 0; state < K; state++) {
                 double c = w.cValues[offset + state];
-                adjointYOut[offset + state] += rates.inversePopulation[state] * (w.cSums[state] - c);
+                adjointYOut[offset + state] += rates.inversePopulation[state] * (w.cSums[state] - c) -
+                        ellAdjoint * w.hValues[offset + state];
                 w.gradQ[state] += c * (w.sums[state] - y[yOffset + offset + state]);
             }
-        }
-
-        double ellAdjoint = adjointRhs[stateSize];
-        for (int lineage = 0; lineage < activeCount; lineage++) {
-            int offset = lineage * K;
-            for (int state = 0; state < K; state++) {
-                adjointYOut[offset + state] += -ellAdjoint * w.hValues[offset + state];
-            }
-        }
-        for (int state = 0; state < K; state++) {
-            double pairSum = 0.5 * (w.sums[state] * w.sums[state] - w.sumsSquares[state]);
-            w.gradQ[state] += -ellAdjoint * pairSum;
         }
 
         int etaOffset = thetaOffset + migrationParametersPerEpoch;
@@ -687,7 +712,7 @@ public final class MascotCore {
     // Events
     // ------------------------------------------------------------------
 
-    private void applySampleEvent(ActiveState state, Event event, List<OperationTape> operations) {
+    private void applySampleEvent(ActiveState state, Event event, OperationTapeStore operations) {
         if (event.lineage < 0) {
             throw new IllegalArgumentException("sample event has no lineage id");
         }
@@ -703,12 +728,12 @@ public final class MascotCore {
         state.activeCount++;
 
         if (operations != null) {
-            operations.add(new SampleTape(index));
+            operations.addSample(index);
         }
     }
 
     private void applyCoalescentEvent(ActiveState state, Event event, int epoch, EpochRates rates,
-                                      List<OperationTape> operations) {
+                                      OperationTapeStore operations) {
         int first = state.activeIndexOf(event.child1);
         int second = state.activeIndexOf(event.child2);
         if (first < 0 || second < 0) {
@@ -722,7 +747,6 @@ public final class MascotCore {
             throw new IllegalArgumentException("coalescent parent is already active: " + event.parent);
         }
 
-        boolean recordTape = operations != null;
         double[] q = rates.inversePopulation;
 
         workspace.coalP1 = ensure(workspace.coalP1, stateCount);
@@ -732,13 +756,8 @@ public final class MascotCore {
         System.arraycopy(state.probabilities, first * stateCount, p1, 0, stateCount);
         System.arraycopy(state.probabilities, second * stateCount, p2, 0, stateCount);
 
-        double[] parentProbabilities;
-        if (recordTape) {
-            parentProbabilities = new double[stateCount];
-        } else {
-            workspace.coalParent = ensure(workspace.coalParent, stateCount);
-            parentProbabilities = workspace.coalParent;
-        }
+        workspace.coalParent = ensure(workspace.coalParent, stateCount);
+        double[] parentProbabilities = workspace.coalParent;
 
         double lambda = 0.0;
         for (int s = 0; s < stateCount; s++) {
@@ -783,9 +802,9 @@ public final class MascotCore {
         state.logLikelihood += Math.log(lambda);
 
         if (operations != null) {
-            operations.add(new CoalescentTape(epoch, first, second, parentIndexAfter,
+            operations.addCoalescent(epoch, first, second, parentIndexAfter,
                     movedFromIndexBefore, movedToIndexAfter,
-                    p1.clone(), p2.clone(), parentProbabilities, lambda));
+                    p1, p2, parentProbabilities, lambda, stateCount);
         }
     }
 
@@ -1318,6 +1337,8 @@ public final class MascotCore {
         double[] coalP1;
         double[] coalP2;
         double[] coalParent;
+
+        final OperationTapeStore operationTapes = new OperationTapeStore();
     }
 
     /**
@@ -1341,68 +1362,155 @@ public final class MascotCore {
     }
 
     /**
+     * Reusable operation sequence for one {@link MascotCore} instance. The
+     * operation order is stable during fixed-tree HMC, so each evaluation can
+     * overwrite the previous tape objects and their grown backing arrays.
+     */
+    private static final class OperationTapeStore {
+        private OperationTape[] operations = new OperationTape[16];
+        private int operationCount;
+
+        private void reset(int expectedOperationCount) {
+            ensureOperationCapacity(expectedOperationCount);
+            operationCount = 0;
+        }
+
+        private int size() {
+            return operationCount;
+        }
+
+        private OperationTape get(int index) {
+            return operations[index];
+        }
+
+        private IntervalTape addInterval(int steps, int activeCount, int stateDimension, int epoch, double h) {
+            int index = nextIndex();
+            OperationTape operation = operations[index];
+            IntervalTape tape;
+            if (operation instanceof IntervalTape) {
+                tape = (IntervalTape) operation;
+            } else {
+                tape = new IntervalTape();
+                operations[index] = tape;
+            }
+            tape.reset(steps, activeCount, stateDimension, epoch, h);
+            return tape;
+        }
+
+        private void addSample(int sampleIndexAfter) {
+            int index = nextIndex();
+            OperationTape operation = operations[index];
+            SampleTape tape;
+            if (operation instanceof SampleTape) {
+                tape = (SampleTape) operation;
+            } else {
+                tape = new SampleTape();
+                operations[index] = tape;
+            }
+            tape.reset(sampleIndexAfter);
+        }
+
+        private void addCoalescent(int epoch, int child1Index, int child2Index, int parentIndexAfter,
+                                   int movedFromIndexBefore, int movedToIndexAfter,
+                                   double[] p1, double[] p2,
+                                   double[] parentProbabilities, double lambda, int stateCount) {
+            int index = nextIndex();
+            OperationTape operation = operations[index];
+            CoalescentTape tape;
+            if (operation instanceof CoalescentTape) {
+                tape = (CoalescentTape) operation;
+            } else {
+                tape = new CoalescentTape();
+                operations[index] = tape;
+            }
+            tape.reset(epoch, child1Index, child2Index, parentIndexAfter,
+                    movedFromIndexBefore, movedToIndexAfter,
+                    p1, p2, parentProbabilities, lambda, stateCount);
+        }
+
+        private int nextIndex() {
+            ensureOperationCapacity(operationCount + 1);
+            return operationCount++;
+        }
+
+        private void ensureOperationCapacity(int capacity) {
+            if (operations.length < capacity) {
+                int newCapacity = operations.length;
+                while (newCapacity < capacity) {
+                    newCapacity *= 2;
+                }
+                operations = Arrays.copyOf(operations, newCapacity);
+            }
+        }
+    }
+
+    /**
      * Flat, per-interval RK4 tape: one contiguous {@code steps * stateDimension}
      * array per RK4 stage rather than one small object per step.
      */
     private static final class IntervalTape implements OperationTape {
-        private final int steps;
-        private final int activeCount;
-        private final int stateDimension;
-        private final int epoch;
-        private final double h;
-        private final double[] y0;
-        private final double[] y2;
-        private final double[] y3;
-        private final double[] y4;
+        private int steps;
+        private int activeCount;
+        private int stateDimension;
+        private int epoch;
+        private double h;
+        private double[] y0;
+        private double[] y2;
+        private double[] y3;
+        private double[] y4;
 
-        private IntervalTape(int steps, int activeCount, int stateDimension, int epoch, double h) {
+        private void reset(int steps, int activeCount, int stateDimension, int epoch, double h) {
             this.steps = steps;
             this.activeCount = activeCount;
             this.stateDimension = stateDimension;
             this.epoch = epoch;
             this.h = h;
-            this.y0 = new double[steps * stateDimension];
-            this.y2 = new double[steps * stateDimension];
-            this.y3 = new double[steps * stateDimension];
-            this.y4 = new double[steps * stateDimension];
+            int storageSize = steps * stateDimension;
+            y0 = ensure(y0, storageSize);
+            y2 = ensure(y2, storageSize);
+            y3 = ensure(y3, storageSize);
+            y4 = ensure(y4, storageSize);
         }
     }
 
     private static final class SampleTape implements OperationTape {
-        private final int sampleIndexAfter;
+        private int sampleIndexAfter;
 
-        private SampleTape(int sampleIndexAfter) {
+        private void reset(int sampleIndexAfter) {
             this.sampleIndexAfter = sampleIndexAfter;
         }
     }
 
     private static final class CoalescentTape implements OperationTape {
-        private final int epoch;
-        private final int child1Index;
-        private final int child2Index;
-        private final int parentIndexAfter;
-        private final int movedFromIndexBefore;
-        private final int movedToIndexAfter;
-        private final double[] p1;
-        private final double[] p2;
-        private final double[] parentProbabilities;
+        private int epoch;
+        private int child1Index;
+        private int child2Index;
+        private int parentIndexAfter;
+        private int movedFromIndexBefore;
+        private int movedToIndexAfter;
+        private double[] p1;
+        private double[] p2;
+        private double[] parentProbabilities;
         @SuppressWarnings("unused")
-        private final double lambda;
+        private double lambda;
 
-        private CoalescentTape(int epoch, int child1Index, int child2Index, int parentIndexAfter,
-                               int movedFromIndexBefore, int movedToIndexAfter,
-                               double[] p1, double[] p2,
-                               double[] parentProbabilities, double lambda) {
+        private void reset(int epoch, int child1Index, int child2Index, int parentIndexAfter,
+                           int movedFromIndexBefore, int movedToIndexAfter,
+                           double[] p1, double[] p2,
+                           double[] parentProbabilities, double lambda, int stateCount) {
             this.epoch = epoch;
             this.child1Index = child1Index;
             this.child2Index = child2Index;
             this.parentIndexAfter = parentIndexAfter;
             this.movedFromIndexBefore = movedFromIndexBefore;
             this.movedToIndexAfter = movedToIndexAfter;
-            this.p1 = p1;
-            this.p2 = p2;
-            this.parentProbabilities = parentProbabilities;
             this.lambda = lambda;
+            this.p1 = ensure(this.p1, stateCount);
+            this.p2 = ensure(this.p2, stateCount);
+            this.parentProbabilities = ensure(this.parentProbabilities, stateCount);
+            System.arraycopy(p1, 0, this.p1, 0, stateCount);
+            System.arraycopy(p2, 0, this.p2, 0, stateCount);
+            System.arraycopy(parentProbabilities, 0, this.parentProbabilities, 0, stateCount);
         }
     }
 }

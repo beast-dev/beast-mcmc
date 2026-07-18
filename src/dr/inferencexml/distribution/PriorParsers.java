@@ -64,6 +64,8 @@ public class PriorParsers {
     public static final String BETA_PRIOR = "betaPrior";
     public static final String CAUCHY_PRIOR = "cauchyPrior";
     public static final String GUMBEL_PRIOR = "gumbelPrior";
+    public static final String LOG_EXPONENTIAL_PRIOR = "logExponentialPrior";
+    public static final String LOCATION = "location";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
@@ -1061,6 +1063,71 @@ public class PriorParsers {
         };
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a Gumbel type II distribution.";
+        }
+
+        public Class getReturnType() {
+            return DistributionLikelihood.class;
+        }
+    };
+
+    /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     * <p/>
+     * If R ~ Exponential(mean = theta), then log(R) ~ GumbelDistribution(location = log(theta), scale).
+     * <br>
+     * <br>
+     * Specify either <code>mean</code> (the mean of R, in real space) or <code>location</code>
+     * (the location of the Gumbel distribution on log(R) directly, i.e. location = log(mean)).
+     * <code>scale</code> is optional and defaults to 1, matching an untransformed Exponential.
+     */
+    public static XMLObjectParser LOG_EXPONENTIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LOG_EXPONENTIAL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final double location;
+            if (xo.hasAttribute(MEAN)) {
+                final double mean = xo.getDoubleAttribute(MEAN);
+                if (mean <= 0) {
+                    throw new XMLParseException("logExponentialPrior 'mean' should be positive (it is the mean of the Exponential in real space).");
+                }
+                location = Math.log(mean);
+            } else {
+                location = xo.getDoubleAttribute(LOCATION);
+            }
+            final double scale = xo.getAttribute(SCALE, 1.0);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new GumbelDistribution(location, scale));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new XORRule(
+                        AttributeRule.newDoubleRule(MEAN),
+                        AttributeRule.newDoubleRule(LOCATION)
+                ),
+                AttributeRule.newDoubleRule(SCALE, true),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under the distribution of log(R) " +
+                    "for R ~ Exponential (a minimum-oriented Gumbel type I distribution on the log scale).";
         }
 
         public Class getReturnType() {

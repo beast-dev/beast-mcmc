@@ -1109,8 +1109,8 @@ public class TreeAnnotator extends BaseTreeTool {
 
         boolean useKDEs = arguments.hasOption("kde");
 
-        double[] kdeIntervals = new double[] { 0.95 };
-        if (arguments.hasOption("kde")) {
+        double[] kdeIntervals = null;
+        if (arguments.hasOption("kdeIntervals")) {
             kdeIntervals = arguments.getRealArrayOption("kde");
         }
         int kdeCount = 100;

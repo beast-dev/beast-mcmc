@@ -9,9 +9,9 @@ package dr.evomodel.coalescent.mascot;
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -20,23 +20,15 @@ import dr.xml.Reportable;
 /**
  * BEAST-X model wrapper for {@link MascotCore}.
  */
-public class MascotLikelihood extends AbstractModelLikelihood implements Reportable {
+public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood implements Reportable {
 
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
     private final TreeModel treeModel;
-    // Shared with BASTA's BastaLikelihood: BigFastTreeIntervals is the single
-    // source of truth for "walk this tree's coalescent/sample events in time
-    // order," instead of MascotEventTape re-deriving that order itself.
-    private final BestSignalsFromBigFastTreeIntervals treeIntervals;
     private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
     private final double maxStep;
     private final boolean checkProbabilities;
-    // Nullable: null means no clock scaling (branchRates=null passed into
-    // MascotCore.evaluate(...), the exact same code path as before this field
-    // existed -- see MascotCore's own null-branchRates documentation).
-    private final BranchRateModel branchRateModel;
 
     private MascotEventTape eventTape;
     private MascotCore core;
@@ -137,18 +129,16 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
-        super(name == null ? MASCOT_LIKELIHOOD : name);
+        super(name == null ? MASCOT_LIKELIHOOD : name,
+                new BestSignalsFromBigFastTreeIntervals(treeModel), branchRateModel);
         this.treeModel = treeModel;
-        this.treeIntervals = new BestSignalsFromBigFastTreeIntervals(treeModel);
         this.tipPatterns = tipPatterns;
         this.dynamics = migrationRates != null ?
                 new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes) :
                 new MascotDynamics(stateCount, migrationModel, popSizes, epochTimes);
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
-        this.branchRateModel = branchRateModel;
 
-        addModel(treeIntervals);
         // tipPatterns is fixed input data (like a sequence alignment), not an
         // estimated model variable, so it is not registered as a listened
         // variable here -- it never changes over the course of an analysis.
@@ -161,19 +151,11 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         if (epochTimes != null) {
             addVariable(epochTimes);
         }
-        if (branchRateModel != null) {
-            addModel(branchRateModel);
-        }
 
         this.eventTapeKnown = false;
         this.coreKnown = false;
         this.likelihoodKnown = false;
         this.gradientKnown = false;
-    }
-
-    @Override
-    public Model getModel() {
-        return this;
     }
 
     @Override

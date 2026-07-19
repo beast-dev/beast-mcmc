@@ -8,6 +8,7 @@ package dr.evomodel.coalescent.mascot;
 
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -73,6 +74,18 @@ public final class MascotLikelihoodParser extends AbstractXMLObjectParser {
         }
         if (gridPoints != null) {
             epochTimes = gridPoints;
+        }
+        if (epochTimes != null) {
+            // Shared with BASTA's gridPoints: same "strictly increasing
+            // backward-time breakpoints" validation, previously only checked
+            // lazily (and with a raw IllegalArgumentException, not an
+            // XMLParseException) inside MascotDynamics.getBoundaries() on
+            // first evaluation.
+            try {
+                EpochBoundaries.validateSortedTimes(epochTimes, gridPoints != null ? GRID_POINTS : EPOCH_TIMES);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
         }
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 

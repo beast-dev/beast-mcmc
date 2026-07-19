@@ -252,6 +252,27 @@ public final class MascotCore {
      */
     public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
                            boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState) {
+        return evaluate(prepared, theta, branchRates, computeGradient, computeAncestralStates, checkProbabilities,
+                copyFinalState, null);
+    }
+
+    /**
+     * Test-only hook for finite-difference validation of the adjoint
+     * node-state score (see {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}
+     * Section 13). Applies a hypothetical per-state log weight {@code
+     * nodeLogWeights[nodeId * stateCount + state]} at each coalescent event's
+     * parent node before normalizing that event's state distribution; {@code
+     * nodeLogWeights == null} is exactly the production forward computation.
+     * Package-private: not part of the public/XML-facing API.
+     */
+    Result evaluateWithNodeLogWeightsForTesting(PreparedEvents prepared, double[] theta, double[] branchRates,
+                                                double[] nodeLogWeights, boolean checkProbabilities) {
+        return evaluate(prepared, theta, branchRates, false, false, checkProbabilities, false, nodeLogWeights);
+    }
+
+    private Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
+                            boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState,
+                            double[] nodeLogWeights) {
         if (prepared == null) {
             throw new IllegalArgumentException("prepared events must not be null");
         }
@@ -308,7 +329,7 @@ public final class MascotCore {
                 applySampleEvent(state, event, operations);
             } else {
                 int epoch = epochAt(event.time);
-                applyCoalescentEvent(state, event, epoch, epochRates[epoch], operations);
+                applyCoalescentEvent(state, event, epoch, epochRates[epoch], operations, nodeLogWeights);
             }
 
             if (checkProbabilities) {
@@ -856,7 +877,7 @@ public final class MascotCore {
     }
 
     private void applyCoalescentEvent(ActiveState state, Event event, int epoch, EpochRates rates,
-                                      OperationTapeStore operations) {
+                                      OperationTapeStore operations, double[] nodeLogWeights) {
         int first = state.activeIndexOf(event.child1);
         int second = state.activeIndexOf(event.child2);
         if (first < 0 || second < 0) {
@@ -883,9 +904,24 @@ public final class MascotCore {
         double[] parentProbabilities = workspace.coalParent;
 
         double lambda = 0.0;
-        for (int s = 0; s < stateCount; s++) {
-            parentProbabilities[s] = p1[s] * p2[s] * q[s];
-            lambda += parentProbabilities[s];
+        if (nodeLogWeights == null) {
+            for (int s = 0; s < stateCount; s++) {
+                parentProbabilities[s] = p1[s] * p2[s] * q[s];
+                lambda += parentProbabilities[s];
+            }
+        } else {
+            // Test-only hook (see evaluateWithNodeLogWeightsForTesting): applies a
+            // hypothetical per-state log weight at this event's parent node, for
+            // finite-difference validation of the adjoint node-state score. Never
+            // exercised by the production (XML-facing) evaluate(...) overloads,
+            // which always pass nodeLogWeights == null and take the branch above
+            // without paying for exp(0).
+            int weightOffset = event.parent * stateCount;
+            for (int s = 0; s < stateCount; s++) {
+                double weighted = p1[s] * p2[s] * q[s] * Math.exp(nodeLogWeights[weightOffset + s]);
+                parentProbabilities[s] = weighted;
+                lambda += weighted;
+            }
         }
         if (!(lambda > 0.0) || !Double.isFinite(lambda)) {
             throw new NumericalException("invalid coalescent rate: " + lambda);

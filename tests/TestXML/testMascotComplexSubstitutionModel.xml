@@ -63,7 +63,8 @@
         </rates>
     </complexSubstitutionModel>
 
-    <parameter id="popSizes" value="0.1823215567939546 0.47000362924573563 0.3364722366212129"/>
+    <!-- natural-scale population sizes: [1.2, 1.6, 1.4] -->
+    <parameter id="popSizes" value="1.2 1.6 1.4"/>
 
     <structuredCoalescent type="MASCOT" id="mascotLikelihood" stateCount="3" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>

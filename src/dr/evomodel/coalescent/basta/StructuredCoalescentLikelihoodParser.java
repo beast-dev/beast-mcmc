@@ -415,12 +415,35 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         double maxStep = xo.getDoubleAttribute(MAX_STEP);
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
 
+        AbstractPopulationSizeModel populationSizeModel =
+                parseConstantOrPiecewiseConstantPopulationSizeModel(popSizes, gridPoints, stateCount);
+
         if (migrationRates != null) {
-            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, popSizes, gridPoints,
-                    stateCount, maxStep, checkProbabilities, branchRateModel);
+            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, populationSizeModel,
+                    gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel);
         }
-        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModels, popSizes, gridPoints,
-                stateCount, maxStep, checkProbabilities, branchRateModel);
+        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModels, populationSizeModel,
+                gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel);
+    }
+
+    /**
+     * MASCOT's population size auto-detection: the same {@code gridPoints}
+     * present/absent -> piecewise/constant dispatch as BASTA's own (see the
+     * {@code populationSizeModel} block in {@link #parseBasta}) restricted to
+     * the two model types MASCOT supports (no growth models, no BASTA
+     * tree-interval-fallback multiple-of-stateCount mode).
+     */
+    private static AbstractPopulationSizeModel parseConstantOrPiecewiseConstantPopulationSizeModel(
+            Parameter popSizes, Parameter gridPoints, int stateCount) throws XMLParseException {
+        if (gridPoints != null) {
+            return new PiecewiseConstantPopulationSizeModel("piecewiseConstant", popSizes, gridPoints, stateCount, -1);
+        } else if (popSizes.getDimension() == stateCount) {
+            return new ConstantPopulationSizeModel("constant", popSizes, stateCount, -1);
+        } else {
+            throw new XMLParseException(POPULATION_SIZES + " dimension must be " + stateCount + " (constant, no " +
+                    GRID_POINTS + ") or stateCount * (numGridPoints+1) (piecewise constant, with " + GRID_POINTS +
+                    "), but got " + popSizes.getDimension());
+        }
     }
 
     //************************************************************************

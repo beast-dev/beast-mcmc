@@ -52,8 +52,8 @@
     <!-- flat positive migration-rate vector: [m(0->1), m(1->0)] -->
     <parameter id="theta" value="0.2 0.3" lower="0.0"/>
 
-    <!-- flat log-population-size vector: [log N0, log N1] -->
-    <parameter id="popSizes" value="0.4054651081081644 0.5877866649021191"/>
+    <!-- flat natural-scale population-size vector: [N0, N1] -->
+    <parameter id="popSizes" value="1.5 1.8"/>
 
     <!-- natural-scale clock rate in the model, with HMC moves made through a
          log transform below; started away from 1.0 so the gradient check
@@ -99,12 +99,14 @@
         <parameter idref="theta"/>
     </gradient>
 
-    <normalPrior id="popSizes.prior" mean="0.0" stdev="1.0">
+    <!-- log(popSizes) ~ Normal(0,1): same weakly informative prior as before,
+         now expressed directly on the natural-scale parameter. -->
+    <logNormalPrior id="popSizes.prior" meanInRealSpace="false" mean="0.0" stdev="1.0">
         <parameter idref="popSizes"/>
-    </normalPrior>
+    </logNormalPrior>
 
     <gradient id="popSizes.prior.grad">
-        <normalPrior idref="popSizes.prior"/>
+        <logNormalPrior idref="popSizes.prior"/>
         <parameter idref="popSizes"/>
     </gradient>
 
@@ -148,7 +150,7 @@
             <compoundGradient idref="posterior.grad"/>
             <multivariateCompoundTransform>
                 <transform type="log" dim="2"/>
-                <transform type="none" dim="2"/>
+                <transform type="log" dim="2"/>
                 <transform type="log" dim="1"/>
             </multivariateCompoundTransform>
         </hamiltonianMonteCarloOperator>

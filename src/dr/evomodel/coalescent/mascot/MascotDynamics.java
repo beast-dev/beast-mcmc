@@ -7,6 +7,9 @@
 package dr.evomodel.coalescent.mascot;
 
 import dr.evomodel.coalescent.EpochBoundaries;
+import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
+import dr.evomodel.coalescent.basta.ConstantPopulationSizeModel;
+import dr.evomodel.coalescent.basta.IntervalSpecificPopulationSizeModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModelGradientSupport;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -21,13 +24,20 @@ import dr.inference.model.Parameter;
  * Migration may be declared either as native positive rates in a {@link Parameter}
  * (one flat, epoch-major-concatenated array covering every epoch) or through
  * one {@link SubstitutionModel} per epoch, each supplying that epoch's
- * realized infinitesimal matrix. {@link MascotCore} still wants one flat,
- * epoch-major [migration rates, log population sizes] array per evaluation (that
- * layout is baked into its forward ODE and reverse-mode adjoint); this class
- * interleaves the two source parameters into that layout on the way in
- * ({@link #getThetaValues()}) and de-interleaves {@link MascotCore}'s
- * returned combined gradient back into per-parameter slices on the way out
- * ({@link #extractMigrationGradient}/{@link #extractPopSizeGradient}), so
+ * realized infinitesimal matrix. Population size is declared through one of
+ * BASTA's {@link AbstractPopulationSizeModel} implementations -- only
+ * {@link ConstantPopulationSizeModel} (one natural-scale value per state,
+ * shared across every epoch) and {@link dr.evomodel.coalescent.basta.PiecewiseConstantPopulationSizeModel}
+ * (one natural-scale value per state per epoch) are supported; MASCOT has no
+ * use for BASTA's continuous-growth model types. {@link MascotCore} still
+ * wants one flat, epoch-major [migration rates, log population sizes] array
+ * per evaluation (that layout is baked into its forward ODE and reverse-mode
+ * adjoint); this class interleaves the source parameters into that layout on
+ * the way in ({@link #getThetaValues()}, taking the log of the natural-scale
+ * population size) and de-interleaves {@link MascotCore}'s returned combined
+ * gradient back into per-parameter slices on the way out
+ * ({@link #extractMigrationGradient}/{@link #extractPopSizeGradient}, applying
+ * the d(logL)/dN = d(logL)/d(logN) / N chain rule for population size), so
  * migration rates and population sizes can be exposed as independent
  * {@link dr.inference.hmc.GradientWrtParameterProvider}s (see
  * {@link MascotGradient}) without MascotCore's own math changing at all.
@@ -38,7 +48,12 @@ public final class MascotDynamics {
     private final Parameter migrationRates;
     // One per epoch when migrationRates == null; null when migrationRates != null.
     private final SubstitutionModel[] migrationModels;
-    private final Parameter popSizes;
+    private final AbstractPopulationSizeModel populationSizeModel;
+    // Natural-scale, extracted once from populationSizeModel: either
+    // stateCount-dimensioned (ConstantPopulationSizeModel, one shared block
+    // read for every epoch) or (epochCount * stateCount)-dimensioned
+    // (PiecewiseConstantPopulationSizeModel, one block per epoch).
+    private final Parameter populationSizeParameter;
     private final Parameter epochTimes;
     private final int migrationRatesPerEpoch;
     private final int parametersPerEpoch;
@@ -50,37 +65,53 @@ public final class MascotDynamics {
     // wrapping a single element for no reason.
     private Parameter migrationModelRatesParameter;
 
-    public MascotDynamics(int stateCount, Parameter migrationRates, Parameter popSizes, Parameter epochTimes) {
-        this(stateCount, migrationRates, null, popSizes, epochTimes);
+    public MascotDynamics(int stateCount, Parameter migrationRates, AbstractPopulationSizeModel populationSizeModel,
+                          Parameter epochTimes) {
+        this(stateCount, migrationRates, null, populationSizeModel, epochTimes);
     }
 
-    public MascotDynamics(int stateCount, SubstitutionModel migrationModel, Parameter popSizes, Parameter epochTimes) {
-        this(stateCount, null, new SubstitutionModel[]{migrationModel}, popSizes, epochTimes);
+    public MascotDynamics(int stateCount, SubstitutionModel migrationModel, AbstractPopulationSizeModel populationSizeModel,
+                          Parameter epochTimes) {
+        this(stateCount, null, new SubstitutionModel[]{migrationModel}, populationSizeModel, epochTimes);
     }
 
-    public MascotDynamics(int stateCount, SubstitutionModel[] migrationModels, Parameter popSizes, Parameter epochTimes) {
-        this(stateCount, null, migrationModels, popSizes, epochTimes);
+    public MascotDynamics(int stateCount, SubstitutionModel[] migrationModels, AbstractPopulationSizeModel populationSizeModel,
+                          Parameter epochTimes) {
+        this(stateCount, null, migrationModels, populationSizeModel, epochTimes);
     }
 
     private MascotDynamics(int stateCount, Parameter migrationRates, SubstitutionModel[] migrationModels,
-                           Parameter popSizes, Parameter epochTimes) {
+                           AbstractPopulationSizeModel populationSizeModel, Parameter epochTimes) {
         if (stateCount < 2) {
             throw new IllegalArgumentException("stateCount must be at least 2");
         }
         if ((migrationRates == null) == (migrationModels == null)) {
             throw new IllegalArgumentException("exactly one migration-rate source is required: Parameter or SubstitutionModel(s)");
         }
-        if (popSizes == null) {
-            throw new IllegalArgumentException("popSizes parameter is required");
+        if (populationSizeModel == null) {
+            throw new IllegalArgumentException("populationSizeModel is required");
         }
         this.stateCount = stateCount;
         this.migrationRates = migrationRates;
         this.migrationModels = migrationModels;
-        this.popSizes = popSizes;
+        this.populationSizeModel = populationSizeModel;
+        this.populationSizeParameter = extractPopulationSizeParameter(populationSizeModel);
         this.epochTimes = epochTimes;
         this.migrationRatesPerEpoch = stateCount * (stateCount - 1);
         this.parametersPerEpoch = migrationRatesPerEpoch + stateCount;
         checkDimensions();
+    }
+
+    private static Parameter extractPopulationSizeParameter(AbstractPopulationSizeModel model) {
+        switch (model.getModelType()) {
+            case CONSTANT:
+                return ((ConstantPopulationSizeModel) model).getPopulationSizeParameter();
+            case PIECEWISE_CONSTANT:
+                return ((IntervalSpecificPopulationSizeModel) model).getPopulationSizeParameter();
+            default:
+                throw new IllegalArgumentException("MascotDynamics only supports CONSTANT or " +
+                        "PIECEWISE_CONSTANT population-size models, got " + model.getModelType());
+        }
     }
 
     public int getStateCount() {
@@ -95,8 +126,13 @@ public final class MascotDynamics {
         return migrationModels;
     }
 
+    /** Natural-scale population size parameter, extracted from {@link #getPopulationSizeModel()}. */
     public Parameter getPopSizes() {
-        return popSizes;
+        return populationSizeParameter;
+    }
+
+    public AbstractPopulationSizeModel getPopulationSizeModel() {
+        return populationSizeModel;
     }
 
     public Parameter getEpochTimes() {
@@ -142,9 +178,15 @@ public final class MascotDynamics {
             } else {
                 copyMigrationModelRates(theta, base, epoch);
             }
-            int popSizeBase = epoch * stateCount;
+            boolean shared = populationSizeParameter.getDimension() == stateCount;
+            int popSizeBase = shared ? 0 : epoch * stateCount;
             for (int k = 0; k < stateCount; k++) {
-                theta[base + migrationRatesPerEpoch + k] = popSizes.getParameterValue(popSizeBase + k);
+                double naturalSize = populationSizeParameter.getParameterValue(popSizeBase + k);
+                if (!(naturalSize > 0.0) || !Double.isFinite(naturalSize)) {
+                    throw new MascotCore.NumericalException("invalid population size at epoch " + epoch +
+                            ", state " + k + ": " + naturalSize);
+                }
+                theta[base + migrationRatesPerEpoch + k] = Math.log(naturalSize);
             }
         }
         return theta;
@@ -196,13 +238,25 @@ public final class MascotDynamics {
         return null;
     }
 
-    /** Same as {@link #extractMigrationGradient} but for the population-size slice. */
+    /**
+     * Same as {@link #extractMigrationGradient} but for the population-size
+     * slice, converting MascotCore's own d(logL)/d(logN) to d(logL)/dN via
+     * the chain rule (populationSizeParameter is natural-scale). When
+     * populationSizeModel is a {@link ConstantPopulationSizeModel}, the same
+     * natural-scale value is read for every epoch in {@link #getThetaValues()},
+     * so its gradient is the sum of that epoch's contribution over all epochs.
+     */
     public double[] extractPopSizeGradient(double[] combinedGradient) {
         int epochCount = getEpochCount();
-        double[] result = new double[epochCount * stateCount];
+        boolean shared = populationSizeParameter.getDimension() == stateCount;
+        double[] result = new double[populationSizeParameter.getDimension()];
         for (int epoch = 0; epoch < epochCount; epoch++) {
-            System.arraycopy(combinedGradient, epoch * parametersPerEpoch + migrationRatesPerEpoch,
-                    result, epoch * stateCount, stateCount);
+            int base = epoch * parametersPerEpoch + migrationRatesPerEpoch;
+            int resultBase = shared ? 0 : epoch * stateCount;
+            for (int k = 0; k < stateCount; k++) {
+                double naturalSize = populationSizeParameter.getParameterValue(resultBase + k);
+                result[resultBase + k] += combinedGradient[base + k] / naturalSize;
+            }
         }
         return result;
     }
@@ -234,10 +288,14 @@ public final class MascotDynamics {
                 }
             }
         }
-        int expectedPopSizes = epochCount * stateCount;
-        if (popSizes.getDimension() != expectedPopSizes) {
-            throw new IllegalArgumentException("popSizes parameter dimension " +
-                    popSizes.getDimension() + " does not match expected dimension " + expectedPopSizes);
+        int expectedShared = stateCount;
+        int expectedPerEpoch = epochCount * stateCount;
+        int actual = populationSizeParameter.getDimension();
+        if (actual != expectedShared && actual != expectedPerEpoch) {
+            throw new IllegalArgumentException("population size parameter dimension " + actual +
+                    " does not match expected dimension " + expectedShared + " (one shared block, via " +
+                    "ConstantPopulationSizeModel) or " + expectedPerEpoch + " (one block per epoch, via " +
+                    "PiecewiseConstantPopulationSizeModel)");
         }
     }
 

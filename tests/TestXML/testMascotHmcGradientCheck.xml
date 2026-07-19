@@ -10,13 +10,14 @@
         "theta"/"popSizes".
 
         Migration rates ("theta") are supplied as a positive-rate parameter inside
-        <migrationModel>, population sizes ("popSizes") are supplied separately
-        (matching BASTA's <popSizes> convention), and tip states are declared via
+        <migrationModel>, population sizes ("popSizes", natural-scale, backed by
+        BASTA's ConstantPopulationSizeModel/PiecewiseConstantPopulationSizeModel)
+        are supplied separately, and tip states are declared via
         <attributePatterns>, resolved by taxon name, not a raw,
         tree-traversal-ordered <tipStates> parameter.
 
         theta has a positive-rate exponential prior and popSizes has a weakly
-        informative normal prior in log-space. mascotLikelihood exposes
+        informative log-normal prior (log(popSizes) ~ Normal(0,1)). mascotLikelihood exposes
         migration rates and population sizes as two independent
         GradientWrtParameterProviders (mascotGradient part="migration"/part=
         "popSizes"): each is combined with its own prior's gradient via
@@ -69,8 +70,8 @@
     <!-- flat positive migration-rate vector: [m(0->1), m(1->0)] -->
     <parameter id="theta" value="0.2 0.3" lower="0.0"/>
 
-    <!-- flat log-population-size vector: [log N0, log N1] -->
-    <parameter id="popSizes" value="0.4054651081081644 0.5877866649021191"/>
+    <!-- flat natural-scale population-size vector: [N0, N1] -->
+    <parameter id="popSizes" value="1.5 1.8"/>
 
     <structuredCoalescent type="MASCOT" id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
@@ -100,12 +101,14 @@
         <parameter idref="theta"/>
     </gradient>
 
-    <normalPrior id="popSizes.prior" mean="0.0" stdev="1.0">
+    <!-- log(popSizes) ~ Normal(0,1): same weakly informative prior as before,
+         now expressed directly on the natural-scale parameter. -->
+    <logNormalPrior id="popSizes.prior" meanInRealSpace="false" mean="0.0" stdev="1.0">
         <parameter idref="popSizes"/>
-    </normalPrior>
+    </logNormalPrior>
 
     <gradient id="popSizes.prior.grad">
-        <normalPrior idref="popSizes.prior"/>
+        <logNormalPrior idref="popSizes.prior"/>
         <parameter idref="popSizes"/>
     </gradient>
 
@@ -134,7 +137,7 @@
             <compoundGradient idref="posterior.grad"/>
             <multivariateCompoundTransform>
                 <transform type="log" dim="2"/>
-                <transform type="none" dim="2"/>
+                <transform type="log" dim="2"/>
             </multivariateCompoundTransform>
         </hamiltonianMonteCarloOperator>
     </operators>

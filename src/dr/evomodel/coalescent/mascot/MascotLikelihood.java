@@ -10,6 +10,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
+import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -68,12 +69,12 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             Parameter migrationRates,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, migrationRates, popSizes, epochTimes, stateCount, maxStep,
+        this(name, treeModel, tipPatterns, migrationRates, populationSizeModel, epochTimes, stateCount, maxStep,
                 checkProbabilities, null);
     }
 
@@ -81,13 +82,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             Parameter migrationRates,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, migrationRates, null, popSizes, epochTimes, stateCount, maxStep,
+        this(name, treeModel, tipPatterns, migrationRates, null, populationSizeModel, epochTimes, stateCount, maxStep,
                 checkProbabilities, branchRateModel);
     }
 
@@ -95,12 +96,12 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             SubstitutionModel migrationModel,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, popSizes, epochTimes,
+        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, populationSizeModel, epochTimes,
                 stateCount, maxStep, checkProbabilities, null);
     }
 
@@ -108,13 +109,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             SubstitutionModel migrationModel,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, popSizes, epochTimes,
+        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, populationSizeModel, epochTimes,
                 stateCount, maxStep, checkProbabilities, branchRateModel);
     }
 
@@ -128,12 +129,12 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             SubstitutionModel[] migrationModels,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, null, migrationModels, popSizes, epochTimes, stateCount, maxStep,
+        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
                 checkProbabilities, null);
     }
 
@@ -141,13 +142,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             SubstitutionModel[] migrationModels,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, null, migrationModels, popSizes, epochTimes, stateCount, maxStep,
+        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
                 checkProbabilities, branchRateModel);
     }
 
@@ -156,7 +157,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             PatternList tipPatterns,
                             Parameter migrationRates,
                             SubstitutionModel[] migrationModels,
-                            Parameter popSizes,
+                            AbstractPopulationSizeModel populationSizeModel,
                             Parameter epochTimes,
                             int stateCount,
                             double maxStep,
@@ -167,8 +168,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         this.treeModel = treeModel;
         this.tipPatterns = tipPatterns;
         this.dynamics = migrationRates != null ?
-                new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes) :
-                new MascotDynamics(stateCount, migrationModels, popSizes, epochTimes);
+                new MascotDynamics(stateCount, migrationRates, populationSizeModel, epochTimes) :
+                new MascotDynamics(stateCount, migrationModels, populationSizeModel, epochTimes);
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
 
@@ -182,7 +183,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                 addModel(migrationModel);
             }
         }
-        addVariable(popSizes);
+        addModel(populationSizeModel);
         if (epochTimes != null) {
             addVariable(epochTimes);
         }
@@ -292,6 +293,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
             // A substitution-model-backed migration-rate change (in any
             // epoch) only changes the numeric Q matrix read into theta;
             // event tape and epoch boundaries remain valid.
+        } else if (model == dynamics.getPopulationSizeModel()) {
+            // A population-size-model value change (Constant or
+            // PiecewiseConstant) only changes the numeric logN values read
+            // into theta; event tape and epoch boundaries remain valid.
         } else if (model == branchRateModel) {
             // A clock-rate parameter changed. The event tape and MascotCore's
             // per-epoch rate cache are both keyed on the tree/theta, neither of
@@ -310,7 +315,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == dynamics.getMigrationRates() || variable == dynamics.getPopSizes()) {
+        if (variable == dynamics.getMigrationRates()) {
             // The event tape is still valid; only the numeric likelihood and gradient change.
         } else if (variable == dynamics.getEpochTimes()) {
             coreKnown = false;

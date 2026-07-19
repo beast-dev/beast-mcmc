@@ -6,15 +6,21 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 
 /**
  * Lightweight parameter layout helper for the BEAST-X MASCOT implementation.
  * <p/>
- * Migration rates and population sizes are kept as two separate parameters
- * throughout (matching BASTA's {@code <popSizes>} convention), each laid out
- * epoch-major within itself. {@link MascotCore} still wants one flat,
- * epoch-major [migration rates, population sizes] array per evaluation (that
+ * Migration rates and population sizes are kept as separate parser-facing
+ * inputs throughout (matching BASTA's {@code <popSizes>} convention).
+ * Migration may be declared either as native positive rates in a {@link Parameter}
+ * or through a BEAST substitution model whose realized infinitesimal matrix is
+ * copied into those same natural-rate coordinates at evaluation time. {@link MascotCore}
+ * still wants one flat,
+ * epoch-major [migration rates, log population sizes] array per evaluation (that
  * layout is baked into its forward ODE and reverse-mode adjoint); this class
  * interleaves the two source parameters into that layout on the way in
  * ({@link #getThetaValues()}) and de-interleaves {@link MascotCore}'s
@@ -28,23 +34,35 @@ public final class MascotDynamics {
 
     private final int stateCount;
     private final Parameter migrationRates;
+    private final SubstitutionModel migrationModel;
     private final Parameter popSizes;
     private final Parameter epochTimes;
     private final int migrationRatesPerEpoch;
     private final int parametersPerEpoch;
+    private double[] migrationModelMatrix;
 
     public MascotDynamics(int stateCount, Parameter migrationRates, Parameter popSizes, Parameter epochTimes) {
+        this(stateCount, migrationRates, null, popSizes, epochTimes);
+    }
+
+    public MascotDynamics(int stateCount, SubstitutionModel migrationModel, Parameter popSizes, Parameter epochTimes) {
+        this(stateCount, null, migrationModel, popSizes, epochTimes);
+    }
+
+    private MascotDynamics(int stateCount, Parameter migrationRates, SubstitutionModel migrationModel,
+                           Parameter popSizes, Parameter epochTimes) {
         if (stateCount < 2) {
             throw new IllegalArgumentException("stateCount must be at least 2");
         }
-        if (migrationRates == null) {
-            throw new IllegalArgumentException("migration-rate (theta) parameter is required");
+        if ((migrationRates == null) == (migrationModel == null)) {
+            throw new IllegalArgumentException("exactly one migration-rate source is required: Parameter or SubstitutionModel");
         }
         if (popSizes == null) {
             throw new IllegalArgumentException("popSizes parameter is required");
         }
         this.stateCount = stateCount;
         this.migrationRates = migrationRates;
+        this.migrationModel = migrationModel;
         this.popSizes = popSizes;
         this.epochTimes = epochTimes;
         this.migrationRatesPerEpoch = stateCount * (stateCount - 1);
@@ -57,7 +75,11 @@ public final class MascotDynamics {
     }
 
     public Parameter getMigrationRates() {
-        return migrationRates;
+        return migrationRates != null ? migrationRates : getMigrationModelRatesParameter();
+    }
+
+    public SubstitutionModel getMigrationModel() {
+        return migrationModel;
     }
 
     public Parameter getPopSizes() {
@@ -94,9 +116,18 @@ public final class MascotDynamics {
         double[] theta = new double[epochCount * parametersPerEpoch];
         for (int epoch = 0; epoch < epochCount; epoch++) {
             int base = epoch * parametersPerEpoch;
-            int migrationBase = epoch * migrationRatesPerEpoch;
-            for (int j = 0; j < migrationRatesPerEpoch; j++) {
-                theta[base + j] = migrationRates.getParameterValue(migrationBase + j);
+            if (migrationRates != null) {
+                int migrationBase = epoch * migrationRatesPerEpoch;
+                for (int j = 0; j < migrationRatesPerEpoch; j++) {
+                    double rate = migrationRates.getParameterValue(migrationBase + j);
+                    if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                        throw new MascotCore.NumericalException("invalid migration rate at index " +
+                                (migrationBase + j) + ": " + rate);
+                    }
+                    theta[base + j] = rate;
+                }
+            } else {
+                copyMigrationModelRates(theta, base);
             }
             int popSizeBase = epoch * stateCount;
             for (int k = 0; k < stateCount; k++) {
@@ -112,6 +143,9 @@ public final class MascotDynamics {
      * own (epoch-major-concatenated) layout.
      */
     public double[] extractMigrationGradient(double[] combinedGradient) {
+        if (migrationModel != null) {
+            return extractMigrationModelGradient(combinedGradient);
+        }
         int epochCount = getEpochCount();
         double[] result = new double[epochCount * migrationRatesPerEpoch];
         for (int epoch = 0; epoch < epochCount; epoch++) {
@@ -119,6 +153,24 @@ public final class MascotDynamics {
                     result, epoch * migrationRatesPerEpoch, migrationRatesPerEpoch);
         }
         return result;
+    }
+
+    public String getMigrationGradientCompatibilityError() {
+        if (migrationRates != null) {
+            return null;
+        }
+        if (!(migrationModel instanceof ComplexSubstitutionModel)) {
+            return "mascotGradient part=\"migration\" with a migrationModel currently requires " +
+                    "ComplexSubstitutionModel-compatible rate ordering";
+        }
+        if (((ComplexSubstitutionModel) migrationModel).getNormalization()) {
+            return "mascotGradient part=\"migration\" with a migrationModel requires normalized=\"false\" " +
+                    "until the normalization derivative is implemented";
+        }
+        if (getMigrationModelRatesParameter() == null) {
+            return "migrationModel does not expose a rates parameter";
+        }
+        return null;
     }
 
     /** Same as {@link #extractMigrationGradient} but for the population-size slice. */
@@ -152,15 +204,104 @@ public final class MascotDynamics {
 
     private void checkDimensions() {
         int epochCount = getEpochCount();
-        int expectedMigration = epochCount * migrationRatesPerEpoch;
-        if (migrationRates.getDimension() != expectedMigration) {
-            throw new IllegalArgumentException("migration-rate (theta) parameter dimension " +
-                    migrationRates.getDimension() + " does not match expected dimension " + expectedMigration);
+        if (migrationRates != null) {
+            int expectedMigration = epochCount * migrationRatesPerEpoch;
+            if (migrationRates.getDimension() != expectedMigration) {
+                throw new IllegalArgumentException("migration-rate (theta) parameter dimension " +
+                        migrationRates.getDimension() + " does not match expected dimension " + expectedMigration);
+            }
+        } else {
+            if (epochCount != 1) {
+                throw new IllegalArgumentException("migrationModel currently supports one migration epoch; " +
+                        "omit epochTimes or use parameter-backed migration rates for epoch-specific migration rates");
+            }
+            if (migrationModel.getDataType() == null ||
+                    migrationModel.getDataType().getStateCount() != stateCount) {
+                throw new IllegalArgumentException("migrationModel state count " +
+                        (migrationModel.getDataType() == null ? -1 : migrationModel.getDataType().getStateCount()) +
+                        " does not match mascotLikelihood stateCount " + stateCount);
+            }
         }
         int expectedPopSizes = epochCount * stateCount;
         if (popSizes.getDimension() != expectedPopSizes) {
             throw new IllegalArgumentException("popSizes parameter dimension " +
                     popSizes.getDimension() + " does not match expected dimension " + expectedPopSizes);
         }
+    }
+
+    private void copyMigrationModelRates(double[] theta, int thetaOffset) {
+        migrationModelMatrix = ensure(migrationModelMatrix, stateCount * stateCount);
+        migrationModel.getInfinitesimalMatrix(migrationModelMatrix);
+        int index = 0;
+        for (int source = 0; source < stateCount; source++) {
+            int row = source * stateCount;
+            for (int sink = 0; sink < stateCount; sink++) {
+                if (source == sink) {
+                    continue;
+                }
+                double rate = migrationModelMatrix[row + sink];
+                if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                    throw new MascotCore.NumericalException("invalid migrationModel rate for source " +
+                            source + ", sink " + sink + ": " + rate);
+                }
+                theta[thetaOffset + index] = rate;
+                index++;
+            }
+        }
+    }
+
+    private double[] extractMigrationModelGradient(double[] combinedGradient) {
+        String compatibilityError = getMigrationGradientCompatibilityError();
+        if (compatibilityError != null) {
+            throw new IllegalStateException(compatibilityError);
+        }
+        Parameter ratesParameter = getMigrationModelRatesParameter();
+        double[] result = new double[ratesParameter.getDimension()];
+        int parameterIndex = 0;
+        for (int source = 0; source < stateCount; source++) {
+            for (int sink = source + 1; sink < stateCount; sink++) {
+                result[parameterIndex] = gradientWrtModelRate(
+                        combinedGradient, ratesParameter, parameterIndex, source, sink);
+                parameterIndex++;
+            }
+        }
+        for (int sink = 0; sink < stateCount; sink++) {
+            for (int source = sink + 1; source < stateCount; source++) {
+                result[parameterIndex] = gradientWrtModelRate(
+                        combinedGradient, ratesParameter, parameterIndex, source, sink);
+                parameterIndex++;
+            }
+        }
+        return result;
+    }
+
+    private double gradientWrtModelRate(double[] combinedGradient, Parameter ratesParameter,
+                                        int parameterIndex, int source, int sink) {
+        double rawRate = ratesParameter.getParameterValue(parameterIndex);
+        if (!(rawRate > 0.0) || !Double.isFinite(rawRate)) {
+            throw new IllegalStateException("migrationModel rates parameter has a non-positive or non-finite " +
+                    "entry at index " + parameterIndex + ": " + rawRate);
+        }
+        double scale = 1.0;
+        if (((ComplexSubstitutionModel) migrationModel).getScaleRatesByFrequencies()) {
+            scale = migrationModel.getFrequencyModel().getFrequency(sink);
+        }
+        return combinedGradient[rowMajorMigrationIndex(source, sink)] * scale;
+    }
+
+    private int rowMajorMigrationIndex(int source, int sink) {
+        int index = source * (stateCount - 1) + sink;
+        return sink < source ? index : index - 1;
+    }
+
+    private Parameter getMigrationModelRatesParameter() {
+        if (migrationModel instanceof GeneralSubstitutionModel) {
+            return ((GeneralSubstitutionModel) migrationModel).getRatesParameter();
+        }
+        return null;
+    }
+
+    private static double[] ensure(double[] array, int length) {
+        return array != null && array.length >= length ? array : new double[length];
     }
 }

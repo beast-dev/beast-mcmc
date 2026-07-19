@@ -53,6 +53,12 @@ public final class MascotGradient implements GradientWrtParameterProvider, Repor
     public MascotGradient(MascotLikelihood likelihood, Part part) {
         this.likelihood = likelihood;
         this.part = part;
+        if (part == Part.MIGRATION) {
+            String error = likelihood.getMigrationGradientCompatibilityError();
+            if (error != null) {
+                throw new IllegalArgumentException(error);
+            }
+        }
         if (part == Part.CLOCK_RATE && !(likelihood.getBranchRateModel() instanceof DifferentiableBranchRates)) {
             BranchRateModel branchRateModel = likelihood.getBranchRateModel();
             throw new IllegalArgumentException("mascotGradient part=\"clockRate\" requires a branchRateModel " +

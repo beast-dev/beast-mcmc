@@ -9,7 +9,7 @@
         splitting the tree height (root at 3.0) into a recent epoch [0,1.5) and an
         ancestral epoch [1.5,inf). theta and popSizes are each laid out epoch-major
         within themselves:
-        theta    = [epoch0: log m(0->1), log m(1->0), epoch1: log m(0->1), log m(1->0)]
+        theta    = [epoch0: m(0->1), m(1->0), epoch1: m(0->1), m(1->0)]
         popSizes = [epoch0: log N0, log N1,            epoch1: log N0, log N1]
         MascotDynamics interleaves these into MascotCore's own epoch-major
         [migration, popSizes] layout on the way in, and de-interleaves MascotCore's
@@ -67,8 +67,8 @@
     <!-- single epoch boundary at height 1.5 (root height is 3.0, so both epochs are exercised) -->
     <parameter id="epochTimes" value="1.5"/>
 
-    <!-- epoch-major log-migration-rate vector: [e0: log m(0->1), log m(1->0), e1: log m(0->1), log m(1->0)] -->
-    <parameter id="theta" value="-1.0 -1.2 -0.5 -0.8"/>
+    <!-- epoch-major positive migration-rate vector: [e0: m(0->1), m(1->0), e1: m(0->1), m(1->0)] -->
+    <parameter id="theta" value="0.36787944117144233 0.30119421191220214 0.6065306597126334 0.44932896411722156" lower="0.0"/>
 
     <!-- epoch-major log-population-size vector: [e0: log N0, log N1, e1: log N0, log N1] -->
     <parameter id="popSizes" value="0.4 0.6 0.2 0.3"/>
@@ -76,9 +76,9 @@
     <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
         <attributePatterns idref="tipPatterns"/>
-        <theta>
+        <migrationModel>
             <parameter idref="theta"/>
-        </theta>
+        </migrationModel>
         <popSizes>
             <parameter idref="popSizes"/>
         </popSizes>
@@ -95,12 +95,12 @@
         <mascotLikelihood idref="mascotLikelihood"/>
     </mascotGradient>
 
-    <normalPrior id="theta.prior" mean="0.0" stdev="1.0">
+    <exponentialPrior id="theta.prior" mean="0.25">
         <parameter idref="theta"/>
-    </normalPrior>
+    </exponentialPrior>
 
     <gradient id="theta.prior.grad">
-        <normalPrior idref="theta.prior"/>
+        <exponentialPrior idref="theta.prior"/>
         <parameter idref="theta"/>
     </gradient>
 
@@ -136,13 +136,17 @@
         <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
                                        gradientCheckCount="10" gradientCheckTolerance="1e-3">
             <compoundGradient idref="posterior.grad"/>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="4"/>
+                <transform type="none" dim="4"/>
+            </multivariateCompoundTransform>
         </hamiltonianMonteCarloOperator>
     </operators>
 
     <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
         <joint id="joint">
             <prior id="prior">
-                <normalPrior idref="theta.prior"/>
+                <exponentialPrior idref="theta.prior"/>
                 <normalPrior idref="popSizes.prior"/>
             </prior>
             <likelihood id="likelihood">

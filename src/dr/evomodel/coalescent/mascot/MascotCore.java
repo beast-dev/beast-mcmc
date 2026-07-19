@@ -25,7 +25,7 @@ import java.util.Comparator;
  * The flat parameter layout is per epoch:
  *
  * <pre>
- * log m[0,1], log m[0,2], ..., log m[K-1,K-2], log N[0], ..., log N[K-1]
+ * m[0,1], m[0,2], ..., m[K-1,K-2], log N[0], ..., log N[K-1]
  * </pre>
  *
  * where rows are source states and columns are destination states.
@@ -718,9 +718,8 @@ public final class MascotCore {
                 if (source == sink) {
                     continue;
                 }
-                double rate = rates.migrationRates[rateIndex];
                 double contribution = w.migrationGram[row + sink] - diagonal;
-                gradient[thetaOffset + rateIndex] += rate * contribution;
+                gradient[thetaOffset + rateIndex] += contribution;
                 rateIndex++;
             }
         }
@@ -1002,11 +1001,10 @@ public final class MascotCore {
                 if (source == sink) {
                     continue;
                 }
-                double logRate = theta[thetaOffset + index];
-                double rate = Math.exp(logRate);
-                if (!Double.isFinite(logRate) || !Double.isFinite(rate)) {
-                    throw new NumericalException("invalid migration log-rate for epoch " + epoch +
-                            ", source " + source + ", sink " + sink + ": " + logRate);
+                double rate = theta[thetaOffset + index];
+                if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                    throw new NumericalException("invalid migration rate for epoch " + epoch +
+                            ", source " + source + ", sink " + sink + ": " + rate);
                 }
                 rates.migrationRates[index] = rate;
                 rates.migrationMatrix[row + sink] = rate;

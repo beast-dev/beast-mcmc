@@ -9,13 +9,14 @@
         tree itself is fixed: no tree operators are used, only the HMC operator on
         "theta"/"popSizes".
 
-        Migration rates ("theta") and population sizes ("popSizes") are declared as
-        two separate elements (matching BASTA's <popSizes> convention), and tip
-        states are declared via <attributePatterns>, resolved by taxon name, not
-        a raw, tree-traversal-ordered <tipStates> parameter.
+        Migration rates ("theta") are supplied as a positive-rate parameter inside
+        <migrationModel>, population sizes ("popSizes") are supplied separately
+        (matching BASTA's <popSizes> convention), and tip states are declared via
+        <attributePatterns>, resolved by taxon name, not a raw,
+        tree-traversal-ordered <tipStates> parameter.
 
-        theta/popSizes each have a weakly informative normal prior in log-space
-        (standard practice for log-rates/log-sizes). mascotLikelihood exposes
+        theta has a positive-rate exponential prior and popSizes has a weakly
+        informative normal prior in log-space. mascotLikelihood exposes
         migration rates and population sizes as two independent
         GradientWrtParameterProviders (mascotGradient part="migration"/part=
         "popSizes"): each is combined with its own prior's gradient via
@@ -65,8 +66,8 @@
         </nodeHeights>
     </treeModel>
 
-    <!-- flat log-migration-rate vector: [log m(0->1), log m(1->0)] -->
-    <parameter id="theta" value="-1.6094379124341003 -1.2039728043259361"/>
+    <!-- flat positive migration-rate vector: [m(0->1), m(1->0)] -->
+    <parameter id="theta" value="0.2 0.3" lower="0.0"/>
 
     <!-- flat log-population-size vector: [log N0, log N1] -->
     <parameter id="popSizes" value="0.4054651081081644 0.5877866649021191"/>
@@ -74,9 +75,9 @@
     <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
         <attributePatterns idref="tipPatterns"/>
-        <theta>
+        <migrationModel>
             <parameter idref="theta"/>
-        </theta>
+        </migrationModel>
         <popSizes>
             <parameter idref="popSizes"/>
         </popSizes>
@@ -90,12 +91,12 @@
         <mascotLikelihood idref="mascotLikelihood"/>
     </mascotGradient>
 
-    <normalPrior id="theta.prior" mean="0.0" stdev="1.0">
+    <exponentialPrior id="theta.prior" mean="0.25">
         <parameter idref="theta"/>
-    </normalPrior>
+    </exponentialPrior>
 
     <gradient id="theta.prior.grad">
-        <normalPrior idref="theta.prior"/>
+        <exponentialPrior idref="theta.prior"/>
         <parameter idref="theta"/>
     </gradient>
 
@@ -131,13 +132,17 @@
         <hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.005"
                                        gradientCheckCount="10" gradientCheckTolerance="1e-3">
             <compoundGradient idref="posterior.grad"/>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="2"/>
+                <transform type="none" dim="2"/>
+            </multivariateCompoundTransform>
         </hamiltonianMonteCarloOperator>
     </operators>
 
     <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
         <joint id="joint">
             <prior id="prior">
-                <normalPrior idref="theta.prior"/>
+                <exponentialPrior idref="theta.prior"/>
                 <normalPrior idref="popSizes.prior"/>
             </prior>
             <likelihood id="likelihood">

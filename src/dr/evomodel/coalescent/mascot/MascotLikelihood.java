@@ -8,6 +8,7 @@ package dr.evomodel.coalescent.mascot;
 
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -89,10 +90,54 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
+        this(name, treeModel, tipPatterns, migrationRates, null, popSizes, epochTimes, stateCount, maxStep,
+                checkProbabilities, branchRateModel);
+    }
+
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            SubstitutionModel migrationModel,
+                            Parameter popSizes,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities) {
+        this(name, treeModel, tipPatterns, null, migrationModel, popSizes, epochTimes, stateCount, maxStep,
+                checkProbabilities, null);
+    }
+
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            SubstitutionModel migrationModel,
+                            Parameter popSizes,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities,
+                            BranchRateModel branchRateModel) {
+        this(name, treeModel, tipPatterns, null, migrationModel, popSizes, epochTimes, stateCount, maxStep,
+                checkProbabilities, branchRateModel);
+    }
+
+    private MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            SubstitutionModel migrationModel,
+                            Parameter popSizes,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities,
+                            BranchRateModel branchRateModel) {
         super(name == null ? MASCOT_LIKELIHOOD : name);
         this.treeModel = treeModel;
         this.tipPatterns = tipPatterns;
-        this.dynamics = new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes);
+        this.dynamics = migrationRates != null ?
+                new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes) :
+                new MascotDynamics(stateCount, migrationModel, popSizes, epochTimes);
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
         this.branchRateModel = branchRateModel;
@@ -101,7 +146,11 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         // tipPatterns is fixed input data (like a sequence alignment), not an
         // estimated model variable, so it is not registered as a listened
         // variable here -- it never changes over the course of an analysis.
-        addVariable(migrationRates);
+        if (migrationRates != null) {
+            addVariable(migrationRates);
+        } else {
+            addModel(migrationModel);
+        }
         addVariable(popSizes);
         if (epochTimes != null) {
             addVariable(epochTimes);
@@ -172,6 +221,10 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         return dynamics.getMigrationRates();
     }
 
+    public String getMigrationGradientCompatibilityError() {
+        return dynamics.getMigrationGradientCompatibilityError();
+    }
+
     public Parameter getPopSizes() {
         return dynamics.getPopSizes();
     }
@@ -212,6 +265,10 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeModel) {
             eventTapeKnown = false;
+        } else if (model == dynamics.getMigrationModel()) {
+            // A substitution-model-backed migration-rate change only changes the
+            // numeric Q matrix read into theta; event tape and epoch boundaries
+            // remain valid.
         } else if (model == branchRateModel) {
             // A clock-rate parameter changed. The event tape and MascotCore's
             // per-epoch rate cache are both keyed on the tree/theta, neither of

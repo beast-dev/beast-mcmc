@@ -14,6 +14,7 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
+import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -30,17 +31,25 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
     /**
-     * {@link TreeTrait} name under which ancestral node-state scores (see
-     * {@link #getAncestralStateScores()}) are exposed to tree logging.
-     * Deliberately distinct from BASTA's default "states" tag: this is the
-     * coupled-adjoint marginal score, not BASTA's up-down MAP/joint
-     * reconstruction, and the two should not look interchangeable in output.
-     * Not currently configurable: {@link TreeTraitProvider.Helper} keys a
-     * trait by this name at registration time, so making it configurable
-     * would need a genuine constructor parameter (like BASTA's own
-     * immutable {@code tag} field), not a post-construction setter.
+     * {@link TreeTrait} name under which adjoint node-state scores (see
+     * {@link #getAncestralStateScores()}) are exposed to tree logging. Named
+     * {@code stateSensitivity}, not {@code states}: these are exact
+     * sensitivities of the discretized RK4 likelihood
+     * (d(logL)/d(alpha_v,s)), not a posterior ancestral-state
+     * reconstruction -- a nonnegativity survey found a converged,
+     * step-size-independent negative value under highly unequal population
+     * sizes, so this quantity is not always a valid probability
+     * distribution (see MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md's
+     * "Probability interpretation" note) and must not be presented or named
+     * as one. Also deliberately distinct from BASTA's "states" tag, which is
+     * a genuine up-down MAP/joint reconstruction -- the two should not look
+     * interchangeable in output. Not currently configurable: {@link
+     * TreeTraitProvider.Helper} keys a trait by this name at registration
+     * time, so making it configurable would need a genuine constructor
+     * parameter (like BASTA's own immutable {@code tag} field), not a
+     * post-construction setter.
      */
-    public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.states";
+    public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
     private final TreeModel treeModel;
     private final PatternList tipPatterns;
@@ -233,11 +242,20 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                 return Intent.NODE;
             }
 
-            public Class getTraitClass() {
-                return Double.class;
-            }
+            // getTraitClass() is inherited from TreeTrait.DA (double[].class);
+            // do not override it -- an earlier version incorrectly overrode it
+            // with Double.class.
 
             public double[] getTrait(Tree tree, NodeRef node) {
+                // Tip rows are intentionally left NaN by MascotCore (Section
+                // 5.3 of the design doc); generic tree-trait logging (Intent.NODE,
+                // the default ALL restriction) still requests every node's
+                // value, tips included, so return the observed/uncertain tip
+                // partial here rather than an all-NaN vector.
+                if (tree.isExternal(node)) {
+                    return StructuredTipStates.getPartials(tree, node, tipPatterns, getStateCount(), true,
+                            DEFAULT_ANCESTRAL_STATE_TAG_NAME + " tip trait");
+                }
                 double[] row = new double[getStateCount()];
                 getAncestralStateScores(node.getNumber(), row);
                 return row;
@@ -308,15 +326,18 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
      * {@code MascotCore.Result#ancestralStateScores} and
      * {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). Tip rows and any
      * unused node-number slots are {@link Double#NaN}. These are exact
-     * sensitivities of the discretized RK4 likelihood, validated (this call)
-     * to be finite and (per internal-node row) sum to one within tolerance --
-     * but not a posterior-probability interpretation: a broad nonnegativity
+     * sensitivities of the discretized RK4 likelihood -- d(logL)/d(alpha_v,s),
+     * not a posterior-probability interpretation: a broad nonnegativity
      * survey found a converged, step-size-independent negative score under
      * highly unequal population sizes, so this quantity is not always a
      * valid probability distribution (see the design document's
-     * "Probability interpretation" note under Section 19). This call throws
-     * if the current parameter values hit that failure mode (a materially
-     * negative entry) rather than silently returning an invalid result.
+     * "Probability interpretation" note under Section 19), and legitimate
+     * negative entries are permitted here, not treated as failures. This
+     * call still throws on a genuine correctness violation: a non-finite
+     * entry, a missing (never-written) internal-node row, or a row that
+     * doesn't sum to one within tolerance (an identity that holds regardless
+     * of individual entries' sign, so its violation always indicates a bug,
+     * never a valid parameter regime).
      */
     public double[] getAncestralStateScores() {
         if (!ancestralStatesKnown) {
@@ -333,6 +354,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         }
         if (!ancestralStatesKnown) {
             evaluateAncestralStates();
+        }
+        if (nodeNumber < 0 || (nodeNumber + 1) * getStateCount() > ancestralStateScores.length) {
+            throw new IllegalArgumentException("node number out of range: " + nodeNumber);
         }
         System.arraycopy(ancestralStateScores, nodeNumber * getStateCount(), destination, 0, getStateCount());
     }
@@ -596,44 +620,50 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     }
 
     /**
-     * Checks finiteness and sum-to-one for every internal-node row (tip and
-     * unused rows, entirely {@link Double#NaN} by construction, are skipped).
-     * Thresholds match MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md Section 7.6;
-     * a materially negative entry throws rather than being silently clamped,
-     * per that document's Section 6.7/16.1 -- see it before loosening this.
+     * Checks finiteness, that every internal node's row was actually
+     * written, and sum-to-one for every internal-node row. Iterates the
+     * real tree (rather than inferring tip-vs-internal from whether a row's
+     * first entry happens to be NaN) so a genuinely missing internal-node
+     * row -- e.g. from a tape/indexing bug -- is caught as a failure
+     * instead of silently treated like a tip.
+     * <p/>
+     * Deliberately does <em>not</em> reject negative entries: this quantity
+     * is a sensitivity, not a probability (see {@link #getAncestralStateScores()}),
+     * and a broad nonnegativity survey already found legitimate, converged
+     * negative values under highly unequal population sizes -- rejecting
+     * them here would mean a valid MCMC/HMC state could make tree logging
+     * throw. The sum-to-one check is still a hard failure: that identity
+     * (Section 3 of the design doc) holds regardless of individual entries'
+     * sign, so its violation always indicates a bug, never a valid regime.
      */
     private void validateAncestralStateScores(double[] scores) {
         if (scores == null) {
             throw new IllegalStateException("MASCOT ancestral-state evaluation returned no scores");
         }
         int stateCount = getStateCount();
-        int nodeCount = scores.length / stateCount;
-        for (int node = 0; node < nodeCount; node++) {
-            int offset = node * stateCount;
-            if (Double.isNaN(scores[offset])) {
-                // Tip or unused node-number slot: MascotCore writes every
-                // state of an internal-node row in one pass, so a NaN first
-                // entry means the whole row was never written.
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (treeModel.isExternal(node)) {
                 continue;
             }
+            int nodeNumber = node.getNumber();
+            int offset = nodeNumber * stateCount;
             double sum = 0.0;
-            double minValue = Double.POSITIVE_INFINITY;
             for (int s = 0; s < stateCount; s++) {
                 double v = scores[offset + s];
+                if (Double.isNaN(v)) {
+                    throw new IllegalStateException("MASCOT ancestral-state row was never written for " +
+                            "internal node " + nodeNumber + " (state " + s + " is NaN)");
+                }
                 if (!Double.isFinite(v)) {
                     throw new IllegalStateException("MASCOT ancestral-state score is non-finite at node " +
-                            node + ", state " + s + ": " + v);
+                            nodeNumber + ", state " + s + ": " + v);
                 }
                 sum += v;
-                minValue = Math.min(minValue, v);
             }
             if (Math.abs(sum - 1.0) > 1.0e-8) {
                 throw new IllegalStateException("MASCOT ancestral-state row sum " + sum +
-                        " does not equal 1 within tolerance 1e-8 at node " + node + " (maxStep=" + maxStep + ")");
-            }
-            if (minValue < -1.0e-7) {
-                throw new IllegalStateException("MASCOT ancestral-state score is materially negative at node " +
-                        node + ": " + minValue + " (row sum " + sum + ", maxStep=" + maxStep + ")");
+                        " does not equal 1 within tolerance 1e-8 at node " + nodeNumber + " (maxStep=" + maxStep + ")");
             }
         }
     }

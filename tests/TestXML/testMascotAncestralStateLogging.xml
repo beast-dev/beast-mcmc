@@ -6,9 +6,11 @@
         integration (MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md Commit 5):
         logTree references mascotLikelihood directly (it implements
         TreeTraitProvider itself, like BastaLikelihood does), and the
-        resulting tree file should carry a "mascot.states" annotation on
-        every internal node: the flat adjoint node-state score vector from
-        MascotLikelihood.getAncestralStateScores(), NaN on tips.
+        resulting tree file should carry a "mascot.stateSensitivity"
+        annotation on every internal node (the flat adjoint node-state score
+        vector from MascotLikelihood.getAncestralStateScores(): a
+        sensitivity, not a probability, hence the trait name) and the
+        observed/uncertain tip partial on every tip.
 
         Same fixed 6-tip, 3-state tree/model as
         testMascotComplexSubstitutionModel.xml; the tree itself never

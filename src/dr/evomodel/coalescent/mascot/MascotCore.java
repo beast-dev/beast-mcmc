@@ -284,6 +284,13 @@ public final class MascotCore {
             throw new IllegalArgumentException("branchRates dimension " + branchRates.length +
                     " does not cover the maximum lineage id " + prepared.maxLineageId);
         }
+        if (nodeLogWeights != null) {
+            int expectedLength = (prepared.maxLineageId + 1) * stateCount;
+            if (nodeLogWeights.length != expectedLength) {
+                throw new IllegalArgumentException("nodeLogWeights dimension " + nodeLogWeights.length +
+                        " does not match expected dimension " + expectedLength);
+            }
+        }
 
         for (int epoch = 0; epoch < epochCount; epoch++) {
             updateEpochRates(theta, epoch, epochRates[epoch]);

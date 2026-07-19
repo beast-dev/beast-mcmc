@@ -76,12 +76,12 @@
         </popSizes>
     </structuredCoalescent>
 
-    <mascotGradient id="mascotLikelihood.migration.grad" part="migration">
+    <structuredCoalescentLikelihoodGradient id="mascotLikelihood.migration.grad" wrtParameter="migrationRate">
         <structuredCoalescent idref="mascotLikelihood"/>
-    </mascotGradient>
+    </structuredCoalescentLikelihoodGradient>
 
     <report>
-        <mascotGradient idref="mascotLikelihood.migration.grad"/>
+        <structuredCoalescentLikelihoodGradient idref="mascotLikelihood.migration.grad"/>
     </report>
 
 </beast>

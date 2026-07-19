@@ -78,17 +78,17 @@
         <strictClockBranchRates idref="clockModel"/>
     </structuredCoalescent>
 
-    <mascotGradient id="likelihood.migration.grad" part="migration">
+    <structuredCoalescentLikelihoodGradient id="likelihood.migration.grad" wrtParameter="migrationRate">
         <structuredCoalescent idref="mascotLikelihood"/>
-    </mascotGradient>
+    </structuredCoalescentLikelihoodGradient>
 
-    <mascotGradient id="likelihood.popSizes.grad" part="popSizes">
+    <structuredCoalescentLikelihoodGradient id="likelihood.popSizes.grad" wrtParameter="populationSize">
         <structuredCoalescent idref="mascotLikelihood"/>
-    </mascotGradient>
+    </structuredCoalescentLikelihoodGradient>
 
-    <mascotGradient id="likelihood.clockRate.grad" part="clockRate">
+    <structuredCoalescentLikelihoodGradient id="likelihood.clockRate.grad" wrtParameter="clockRate">
         <structuredCoalescent idref="mascotLikelihood"/>
-    </mascotGradient>
+    </structuredCoalescentLikelihoodGradient>
 
     <exponentialPrior id="theta.prior" mean="0.25">
         <parameter idref="theta"/>
@@ -118,17 +118,17 @@
     </gradient>
 
     <jointGradient id="theta.posterior.grad">
-        <mascotGradient idref="likelihood.migration.grad"/>
+        <structuredCoalescentLikelihoodGradient idref="likelihood.migration.grad"/>
         <gradient idref="theta.prior.grad"/>
     </jointGradient>
 
     <jointGradient id="popSizes.posterior.grad">
-        <mascotGradient idref="likelihood.popSizes.grad"/>
+        <structuredCoalescentLikelihoodGradient idref="likelihood.popSizes.grad"/>
         <gradient idref="popSizes.prior.grad"/>
     </jointGradient>
 
     <jointGradient id="clockRate.posterior.grad">
-        <mascotGradient idref="likelihood.clockRate.grad"/>
+        <structuredCoalescentLikelihoodGradient idref="likelihood.clockRate.grad"/>
         <gradient idref="clockRate.prior.grad"/>
     </jointGradient>
 

@@ -4,28 +4,31 @@
     <!--
         Multi-epoch variant of testMascotHmcGradientCheck.xml: same fixed 6-tip,
         2-deme tree, but theta/popSizes now have TWO epochs (piecewise-constant
-        migration rates/population sizes), wired via the optional epochTimes child
-        of mascotLikelihood. epochTimes has one boundary (dimension = epochCount-1),
-        splitting the tree height (root at 3.0) into a recent epoch [0,1.5) and an
-        ancestral epoch [1.5,inf). theta and popSizes are each laid out epoch-major
-        within themselves:
+        migration rates/population sizes), wired via the optional gridPoints child
+        of structuredCoalescent type="MASCOT" (BASTA's naming for the same
+        strictly-increasing backward-time breakpoints concept). gridPoints has one
+        boundary (dimension = epochCount-1), splitting the tree height (root at
+        3.0) into a recent epoch [0,1.5) and an ancestral epoch [1.5,inf). theta
+        and popSizes are each laid out epoch-major within themselves:
         theta    = [epoch0: m(0->1), m(1->0), epoch1: m(0->1), m(1->0)]
         popSizes = [epoch0: log N0, log N1,            epoch1: log N0, log N1]
         MascotDynamics interleaves these into MascotCore's own epoch-major
         [migration, popSizes] layout on the way in, and de-interleaves MascotCore's
         combined gradient back into per-parameter slices on the way out (see
-        mascotGradient part="migration"/part="popSizes" below); MascotCore's
-        actual math never changes, only this wrapper-level bookkeeping.
+        structuredCoalescentLikelihoodGradient wrtParameter="migrationRate"/
+        "populationSize" below); MascotCore's actual math never changes, only
+        this wrapper-level bookkeeping.
 
         Because theta and popSizes stay as two independent, self-contained
         parameters (each just concatenated across epochs within itself, no
         cross-parameter interleaving visible at the XML level), combining their
-        priors' gradients with mascotGradient's two parts via jointGradient/
-        compoundGradient works the same way regardless of epoch count, unlike
-        an earlier version of this file (before mascotGradient exposed migration
-        and popSizes as separate parts) where a single combined synthetic theta
-        parameter's epoch-major-interleaved layout only happened to coincide with
-        compoundGradient's plain concatenation at a single epoch.
+        priors' gradients with the two structuredCoalescentLikelihoodGradient
+        instances via jointGradient/compoundGradient works the same way
+        regardless of epoch count, unlike an earlier version of this file (before
+        the gradient exposed migration and popSizes as separate parts) where a
+        single combined synthetic theta parameter's epoch-major-interleaved
+        layout only happened to coincide with compoundGradient's plain
+        concatenation at a single epoch.
     -->
 
     <taxa id="taxa">
@@ -82,9 +85,9 @@
         <popSizes>
             <parameter idref="popSizes"/>
         </popSizes>
-        <epochTimes>
+        <gridPoints>
             <parameter idref="epochTimes"/>
-        </epochTimes>
+        </gridPoints>
     </structuredCoalescent>
 
     <structuredCoalescentLikelihoodGradient id="likelihood.migration.grad" wrtParameter="migrationRate">

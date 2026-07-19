@@ -10,7 +10,7 @@
         (dimension 9 total).
 
         Exercises: EpochBoundaries.validateSortedTimes' monotonicity check on
-        gridPoints (shared with MASCOT's epochTimes), and
+        gridPoints (shared with MASCOT's own gridPoints), and
         StructuredCoalescentLikelihoodParser's popSizes-dimension-naming loop,
         which previously indexed stateDataType.getCode(i) directly by the full
         popSizes index (correct only when popSizes.getDimension() == stateCount)

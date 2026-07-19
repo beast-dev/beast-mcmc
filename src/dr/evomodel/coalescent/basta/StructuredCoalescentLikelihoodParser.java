@@ -94,7 +94,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String MAX_STEP = "maxStep";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
-    public static final String EPOCH_TIMES = "epochTimes";
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -158,9 +157,9 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         Parameter anchorProportion = xo.hasChildNamed(ANCHOR_PROPORTION) ? (Parameter) xo.getElementFirstChild(ANCHOR_PROPORTION) : null;
         Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ? (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
         if (gridPoints != null) {
-            // Shared with MASCOT's epochTimes/gridPoints: same "strictly
-            // increasing backward-time breakpoints" validation, previously
-            // only checked by dimension here (not monotonicity).
+            // Shared with MASCOT's gridPoints: same "strictly increasing
+            // backward-time breakpoints" validation, previously only checked
+            // by dimension here (not monotonicity).
             try {
                 EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
             } catch (IllegalArgumentException e) {
@@ -388,22 +387,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         }
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
-        Parameter epochTimes = xo.hasChildNamed(EPOCH_TIMES) ?
-                (Parameter) xo.getElementFirstChild(EPOCH_TIMES) : null;
         Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ?
                 (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
-        if (epochTimes != null && gridPoints != null) {
-            throw new XMLParseException("Cannot specify both " + EPOCH_TIMES + " and " + GRID_POINTS +
-                    " (" + GRID_POINTS + " is an alias for " + EPOCH_TIMES + ")");
-        }
         if (gridPoints != null) {
-            epochTimes = gridPoints;
-        }
-        if (epochTimes != null) {
             // Shared with BASTA's gridPoints: same "strictly increasing
             // backward-time breakpoints" validation.
             try {
-                EpochBoundaries.validateSortedTimes(epochTimes, gridPoints != null ? GRID_POINTS : EPOCH_TIMES);
+                EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
             } catch (IllegalArgumentException e) {
                 throw new XMLParseException(e.getMessage());
             }
@@ -415,10 +405,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
 
         if (migrationRates != null) {
-            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, popSizes, epochTimes,
+            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, popSizes, gridPoints,
                     stateCount, maxStep, checkProbabilities, branchRateModel);
         }
-        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModel, popSizes, epochTimes,
+        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModel, popSizes, gridPoints,
                 stateCount, maxStep, checkProbabilities, branchRateModel);
     }
 
@@ -485,8 +475,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     new XORRule(
                             new ElementRule(Parameter.class),
                             new ElementRule(SubstitutionModel.class))}, true),
-            new ElementRule(EPOCH_TIMES,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };
 
 }

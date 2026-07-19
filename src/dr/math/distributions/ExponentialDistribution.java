@@ -27,6 +27,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 
 /**
@@ -40,7 +41,7 @@ import dr.math.UnivariateFunction;
  * @author Alexei Drummond
  * @author Korbinian Strimmer
  */
-public class ExponentialDistribution implements Distribution {
+public class ExponentialDistribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -130,6 +131,21 @@ public class ExponentialDistribution implements Distribution {
         if (x < 0) return Double.NEGATIVE_INFINITY;
 
         return -lambda;
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = gradLogPdf(x[i]);
+        }
+        return result;
     }
 
     public static double hessianLogPdf(double x, double lambda) {

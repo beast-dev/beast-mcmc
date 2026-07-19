@@ -7,6 +7,10 @@
 package dr.evomodel.coalescent.mascot;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
@@ -21,9 +25,22 @@ import dr.xml.Reportable;
 /**
  * BEAST-X model wrapper for {@link MascotCore}.
  */
-public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood implements Reportable {
+public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood implements Reportable, TreeTraitProvider {
 
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
+
+    /**
+     * {@link TreeTrait} name under which ancestral node-state scores (see
+     * {@link #getAncestralStateScores()}) are exposed to tree logging.
+     * Deliberately distinct from BASTA's default "states" tag: this is the
+     * coupled-adjoint marginal score, not BASTA's up-down MAP/joint
+     * reconstruction, and the two should not look interchangeable in output.
+     * Not currently configurable: {@link TreeTraitProvider.Helper} keys a
+     * trait by this name at registration time, so making it configurable
+     * would need a genuine constructor parameter (like BASTA's own
+     * immutable {@code tag} field), not a post-construction setter.
+     */
+    public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.states";
 
     private final TreeModel treeModel;
     private final PatternList tipPatterns;
@@ -49,6 +66,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     // Flat, node-major adjoint node-state scores (see MascotCore.Result#ancestralStateScores);
     // null until getAncestralStateScores() is first called.
     private double[] ancestralStateScores;
+
+    private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
     // Snapshots taken by storeState() and restored by restoreState() on a
     // rejected proposal. Restoring the actual eventTape/core references (rather
@@ -198,6 +217,42 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         this.coreKnown = false;
         this.likelihoodKnown = false;
         this.gradientKnown = false;
+
+        // TreeTraitProvider.Helper keys a trait by its getTraitName() at
+        // registration time (not read live afterward), so the tag name is
+        // fixed to DEFAULT_ANCESTRAL_STATE_TAG_NAME for now rather than
+        // configurable post-construction; making it a genuine constructor
+        // parameter (like BASTA's own immutable "tag" field) is a
+        // straightforward follow-up if a configurable name is needed.
+        treeTraits.addTrait(new TreeTrait.DA() {
+            public String getTraitName() {
+                return DEFAULT_ANCESTRAL_STATE_TAG_NAME;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Class getTraitClass() {
+                return Double.class;
+            }
+
+            public double[] getTrait(Tree tree, NodeRef node) {
+                double[] row = new double[getStateCount()];
+                getAncestralStateScores(node.getNumber(), row);
+                return row;
+            }
+        });
+    }
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
     }
 
     @Override

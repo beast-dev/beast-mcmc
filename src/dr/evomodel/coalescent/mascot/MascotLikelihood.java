@@ -31,9 +31,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
     /**
-     * {@link TreeTrait} name under which adjoint node-state scores (see
-     * {@link #getAncestralStateScores()}) are exposed to tree logging. Named
-     * {@code stateSensitivity}, not {@code states}: these are exact
+     * Default {@link TreeTrait} name under which adjoint node-state scores
+     * (see {@link #getAncestralStateScores()}) are exposed to tree logging,
+     * used when no explicit tag name is given to the constructor (see
+     * {@code stateTagName} in {@code StructuredCoalescentLikelihoodParser}).
+     * Named {@code stateSensitivity}, not {@code states}: these are exact
      * sensitivities of the discretized RK4 likelihood
      * (d(logL)/d(alpha_v,s)), not a posterior ancestral-state
      * reconstruction -- a nonnegativity survey found a converged,
@@ -43,11 +45,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
      * "Probability interpretation" note) and must not be presented or named
      * as one. Also deliberately distinct from BASTA's "states" tag, which is
      * a genuine up-down MAP/joint reconstruction -- the two should not look
-     * interchangeable in output. Not currently configurable: {@link
-     * TreeTraitProvider.Helper} keys a trait by this name at registration
-     * time, so making it configurable would need a genuine constructor
-     * parameter (like BASTA's own immutable {@code tag} field), not a
-     * post-construction setter.
+     * interchangeable in output by default.
      */
     public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
@@ -56,6 +54,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     private final MascotDynamics dynamics;
     private final double maxStep;
     private final boolean checkProbabilities;
+    private final String ancestralStateTagName;
 
     private MascotEventTape eventTape;
     private MascotCore core;
@@ -122,8 +121,23 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             double maxStep,
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
+        this(name, treeModel, tipPatterns, migrationRates, populationSizeModel, epochTimes, stateCount, maxStep,
+                checkProbabilities, branchRateModel, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
+    }
+
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            AbstractPopulationSizeModel populationSizeModel,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities,
+                            BranchRateModel branchRateModel,
+                            String ancestralStateTagName) {
         this(name, treeModel, tipPatterns, migrationRates, null, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel);
+                checkProbabilities, branchRateModel, ancestralStateTagName);
     }
 
     public MascotLikelihood(String name,
@@ -169,7 +183,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             double maxStep,
                             boolean checkProbabilities) {
         this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, null);
+                checkProbabilities, null, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
     }
 
     public MascotLikelihood(String name,
@@ -183,7 +197,22 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             boolean checkProbabilities,
                             BranchRateModel branchRateModel) {
         this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel);
+                checkProbabilities, branchRateModel, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
+    }
+
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            SubstitutionModel[] migrationModels,
+                            AbstractPopulationSizeModel populationSizeModel,
+                            Parameter epochTimes,
+                            int stateCount,
+                            double maxStep,
+                            boolean checkProbabilities,
+                            BranchRateModel branchRateModel,
+                            String ancestralStateTagName) {
+        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
+                checkProbabilities, branchRateModel, ancestralStateTagName);
     }
 
     private MascotLikelihood(String name,
@@ -196,7 +225,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                             int stateCount,
                             double maxStep,
                             boolean checkProbabilities,
-                            BranchRateModel branchRateModel) {
+                            BranchRateModel branchRateModel,
+                            String ancestralStateTagName) {
         super(name == null ? MASCOT_LIKELIHOOD : name,
                 new BestSignalsFromBigFastTreeIntervals(treeModel), branchRateModel);
         this.treeModel = treeModel;
@@ -206,6 +236,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                 new MascotDynamics(stateCount, migrationModels, populationSizeModel, epochTimes);
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
+        this.ancestralStateTagName = ancestralStateTagName;
 
         // tipPatterns is fixed input data (like a sequence alignment), not an
         // estimated model variable, so it is not registered as a listened
@@ -229,13 +260,12 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
 
         // TreeTraitProvider.Helper keys a trait by its getTraitName() at
         // registration time (not read live afterward), so the tag name is
-        // fixed to DEFAULT_ANCESTRAL_STATE_TAG_NAME for now rather than
-        // configurable post-construction; making it a genuine constructor
-        // parameter (like BASTA's own immutable "tag" field) is a
-        // straightforward follow-up if a configurable name is needed.
+        // captured once here from the immutable ancestralStateTagName
+        // constructor parameter (like BASTA's own immutable "tag" field),
+        // not a post-construction setter.
         treeTraits.addTrait(new TreeTrait.DA() {
             public String getTraitName() {
-                return DEFAULT_ANCESTRAL_STATE_TAG_NAME;
+                return ancestralStateTagName;
             }
 
             public Intent getIntent() {
@@ -254,7 +284,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
                 // partial here rather than an all-NaN vector.
                 if (tree.isExternal(node)) {
                     return StructuredTipStates.getPartials(tree, node, tipPatterns, getStateCount(), true,
-                            DEFAULT_ANCESTRAL_STATE_TAG_NAME + " tip trait");
+                            ancestralStateTagName + " tip trait");
                 }
                 double[] row = new double[getStateCount()];
                 getAncestralStateScores(node.getNumber(), row);

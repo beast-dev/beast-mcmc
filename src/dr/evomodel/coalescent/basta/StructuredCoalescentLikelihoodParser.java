@@ -366,16 +366,17 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         int stateCount = xo.getIntegerAttribute(STATE_COUNT);
         double maxStep = xo.getDoubleAttribute(MAX_STEP);
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
+        String tagName = xo.getAttribute(RECONSTRUCTION_TAG_NAME, MascotLikelihood.DEFAULT_ANCESTRAL_STATE_TAG_NAME);
 
         AbstractPopulationSizeModel populationSizeModel =
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
         if (migrationRates != null) {
             return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, populationSizeModel,
-                    gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel);
+                    gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
         }
         return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModels, populationSizeModel,
-                gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel);
+                gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
     }
 
     private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {
@@ -475,11 +476,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TYPE, true),
+            // Shared by both types: the ancestral/ancestral-sensitivity tree-trait
+            // tag name (BASTA's genuine reconstruction, MASCOT's adjoint
+            // sensitivity -- see MascotLikelihood.DEFAULT_ANCESTRAL_STATE_TAG_NAME).
+            AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             // BASTA-only attributes.
             AttributeRule.newIntegerRule(SUB_INTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
-            AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             // MASCOT-only attributes. Declared optional here (rather than
             // type-conditionally required, which the syntax-rule system can't

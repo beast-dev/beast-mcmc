@@ -1,0 +1,87 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!--
+        Parser/gradient smoke test for using a complexSubstitutionModel as the
+        MASCOT migration-rate source. The rates parameter is in
+        ComplexSubstitutionModel order (upper triangle, then lower triangle),
+        while MascotCore receives source-major positive rates internally.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="A"><attr name="state">0</attr></taxon>
+        <taxon id="B"><attr name="state">1</attr></taxon>
+        <taxon id="C"><attr name="state">2</attr></taxon>
+        <taxon id="D"><attr name="state">0</attr></taxon>
+        <taxon id="E"><attr name="state">1</attr></taxon>
+        <taxon id="F"><attr name="state">2</attr></taxon>
+    </taxa>
+
+    <generalDataType id="mascot.dataType">
+        <state code="0"/>
+        <state code="1"/>
+        <state code="2"/>
+    </generalDataType>
+
+    <attributePatterns id="tipPatterns" attribute="state">
+        <taxa idref="taxa"/>
+        <generalDataType idref="mascot.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree">
+        (((A:1.0,B:1.0):1.0,(C:1.0,D:1.0):1.0):1.0,(E:2.0,F:2.0):1.0);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <complexSubstitutionModel id="location.model" randomizeIndicator="false"
+                              normalized="false" scaleRatesByFrequencies="false"
+                              checkConditioning="false">
+        <generalDataType idref="mascot.dataType"/>
+        <frequencies>
+            <frequencyModel id="location.frequencyModel" normalize="true">
+                <generalDataType idref="mascot.dataType"/>
+                <frequencies>
+                    <parameter id="location.frequencies" value="1.0 1.0 1.0" dimension="3"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="location.rates" value="0.11 0.23 0.17 0.31 0.29 0.37"
+                       dimension="6" lower="0.0"/>
+        </rates>
+    </complexSubstitutionModel>
+
+    <parameter id="popSizes" value="0.1823215567939546 0.47000362924573563 0.3364722366212129"/>
+
+    <structuredCoalescent type="MASCOT" id="mascotLikelihood" stateCount="3" maxStep="0.005" checkProbabilities="false">
+        <treeModel idref="treeModel"/>
+        <attributePatterns idref="tipPatterns"/>
+        <migrationModel>
+            <complexSubstitutionModel idref="location.model"/>
+        </migrationModel>
+        <popSizes>
+            <parameter idref="popSizes"/>
+        </popSizes>
+    </structuredCoalescent>
+
+    <mascotGradient id="mascotLikelihood.migration.grad" part="migration">
+        <structuredCoalescent idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <report>
+        <mascotGradient idref="mascotLikelihood.migration.grad"/>
+    </report>
+
+</beast>

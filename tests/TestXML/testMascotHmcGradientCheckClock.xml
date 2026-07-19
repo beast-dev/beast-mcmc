@@ -2,31 +2,15 @@
 <beast>
 
     <!--
-        Minimal end-to-end smoke test: a fixed 6-tip, 2-deme, single-epoch MASCOT
-        likelihood sampled with Hamiltonian Monte Carlo over its migration-rate and
-        population-size parameters, with BEAST's built-in analytic-vs-numeric
-        gradient check enabled (gradientCheckCount/gradientCheckTolerance). The
-        tree itself is fixed: no tree operators are used, only the HMC operator on
-        "theta"/"popSizes".
-
-        Migration rates ("theta") are supplied as a positive-rate parameter inside
-        <migrationModel>, population sizes ("popSizes") are supplied separately
-        (matching BASTA's <popSizes> convention), and tip states are declared via
-        <attributePatterns>, resolved by taxon name, not a raw,
-        tree-traversal-ordered <tipStates> parameter.
-
-        theta has a positive-rate exponential prior and popSizes has a weakly
-        informative normal prior in log-space. mascotLikelihood exposes
-        migration rates and population sizes as two independent
-        GradientWrtParameterProviders (mascotGradient part="migration"/part=
-        "popSizes"): each is combined with its own prior's gradient via
-        jointGradient (likelihood + prior w.r.t. the same parameter), and the
-        two resulting posterior-gradients are concatenated via compoundGradient
-        into the one combined target the HMC operator actually moves, so
-        gradientCheckCount (which differentiates joint.getLogLikelihood(), i.e.
-        prior + likelihood) has something to check against on both sides. A flat
-        prior let early, unadapted HMC steps wander to numerically extreme theta
-        and crash the ODE integrator; this is what fixed it.
+        Clock-rate variant of testMascotHmcGradientCheck.xml: same fixed 6-tip,
+        2-deme, single-epoch tree/theta/popSizes, plus a strictClockBranchRates
+        wired into mascotLikelihood as an optional <branchRateModel> child.
+        mascotGradient part="clockRate" exposes d(logLikelihood)/d(clockRate) as
+        a third independently-addressable GradientWrtParameterProvider, combined
+        with the migration/popSizes parts via the same jointGradient/
+        compoundGradient pattern already used for those two. gradientCheckCount
+        exercises BEAST's own built-in analytic-vs-finite-difference check
+        against the full three-part combined gradient.
     -->
 
     <taxa id="taxa">
@@ -43,7 +27,6 @@
         <state code="1"/>
     </generalDataType>
 
-    <!-- tip deme assignment: alternating deme 0/1 in taxon order A..F, resolved by taxon name -->
     <attributePatterns id="tipPatterns" attribute="state">
         <taxa idref="taxa"/>
         <generalDataType idref="mascot.dataType"/>
@@ -72,6 +55,17 @@
     <!-- flat log-population-size vector: [log N0, log N1] -->
     <parameter id="popSizes" value="0.4054651081081644 0.5877866649021191"/>
 
+    <!-- natural-scale clock rate in the model, with HMC moves made through a
+         log transform below; started away from 1.0 so the gradient check
+         exercises a genuinely nontrivial clock-scaling term. -->
+    <parameter id="clockRate" value="1.2" lower="0.0"/>
+
+    <strictClockBranchRates id="clockModel">
+        <rate>
+            <parameter idref="clockRate"/>
+        </rate>
+    </strictClockBranchRates>
+
     <structuredCoalescent type="MASCOT" id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
         <attributePatterns idref="tipPatterns"/>
@@ -81,6 +75,7 @@
         <popSizes>
             <parameter idref="popSizes"/>
         </popSizes>
+        <strictClockBranchRates idref="clockModel"/>
     </structuredCoalescent>
 
     <mascotGradient id="likelihood.migration.grad" part="migration">
@@ -88,6 +83,10 @@
     </mascotGradient>
 
     <mascotGradient id="likelihood.popSizes.grad" part="popSizes">
+        <structuredCoalescent idref="mascotLikelihood"/>
+    </mascotGradient>
+
+    <mascotGradient id="likelihood.clockRate.grad" part="clockRate">
         <structuredCoalescent idref="mascotLikelihood"/>
     </mascotGradient>
 
@@ -109,6 +108,15 @@
         <parameter idref="popSizes"/>
     </gradient>
 
+    <normalPrior id="clockRate.prior" mean="1.0" stdev="0.5">
+        <parameter idref="clockRate"/>
+    </normalPrior>
+
+    <gradient id="clockRate.prior.grad">
+        <normalPrior idref="clockRate.prior"/>
+        <parameter idref="clockRate"/>
+    </gradient>
+
     <jointGradient id="theta.posterior.grad">
         <mascotGradient idref="likelihood.migration.grad"/>
         <gradient idref="theta.prior.grad"/>
@@ -119,9 +127,15 @@
         <gradient idref="popSizes.prior.grad"/>
     </jointGradient>
 
+    <jointGradient id="clockRate.posterior.grad">
+        <mascotGradient idref="likelihood.clockRate.grad"/>
+        <gradient idref="clockRate.prior.grad"/>
+    </jointGradient>
+
     <compoundGradient id="posterior.grad">
         <jointGradient idref="theta.posterior.grad"/>
         <jointGradient idref="popSizes.posterior.grad"/>
+        <jointGradient idref="clockRate.posterior.grad"/>
     </compoundGradient>
 
     <report>
@@ -135,15 +149,17 @@
             <multivariateCompoundTransform>
                 <transform type="log" dim="2"/>
                 <transform type="none" dim="2"/>
+                <transform type="log" dim="1"/>
             </multivariateCompoundTransform>
         </hamiltonianMonteCarloOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="20" autoOptimize="true">
         <joint id="joint">
             <prior id="prior">
                 <exponentialPrior idref="theta.prior"/>
                 <normalPrior idref="popSizes.prior"/>
+                <normalPrior idref="clockRate.prior"/>
             </prior>
             <likelihood id="likelihood">
                 <structuredCoalescent idref="mascotLikelihood"/>
@@ -152,7 +168,7 @@
 
         <operators idref="operators"/>
 
-        <log id="screenLog" logEvery="100">
+        <log id="screenLog" logEvery="10">
             <column label="Posterior" dp="4" width="12">
                 <posterior idref="joint"/>
             </column>
@@ -162,15 +178,19 @@
             <column label="popSizes" dp="4" width="12">
                 <parameter idref="popSizes"/>
             </column>
+            <column label="clockRate" dp="4" width="12">
+                <parameter idref="clockRate"/>
+            </column>
         </log>
 
-        <log id="fileLog" logEvery="10" fileName="testMascotHmcGradientCheck.log">
+        <log id="fileLog" logEvery="2" fileName="testMascotHmcGradientCheckClock.log">
             <posterior idref="joint"/>
             <parameter idref="theta"/>
             <parameter idref="popSizes"/>
+            <parameter idref="clockRate"/>
         </log>
     </mcmc>
 
-    <traceAnalysis id="traceAnalysis" fileName="testMascotHmcGradientCheck.log" stdError="true"/>
+    <traceAnalysis id="traceAnalysis" fileName="testMascotHmcGradientCheckClock.log" stdError="true"/>
 
 </beast>

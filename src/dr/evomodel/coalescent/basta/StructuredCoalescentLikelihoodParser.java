@@ -31,9 +31,12 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.EpochBoundaries;
+import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treedatalikelihood.markovjumps.MarkovJumpsParserUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -42,12 +45,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Parses {@code <structuredCoalescent>}, dispatching on the {@code type}
+ * attribute between BASTA's matrix-exponential/BEAGLE engine
+ * ({@code type="BASTA"}, the default, for backward compatibility with
+ * existing/Beauti-generated XML) and MASCOT's RK4/adjoint ODE engine
+ * ({@code type="MASCOT"}). The two engines share {@code popSizes}/{@code
+ * gridPoints}, tree, and tip-pattern conventions (see {@link
+ * dr.evomodel.coalescent.EpochBoundaries}); everything specific to one
+ * engine's numerics -- BASTA's ancestral-state reconstruction and
+ * growth-rate population models, MASCOT's {@code <migrationModel>} wrapper
+ * and {@code stateCount}/{@code maxStep} attributes -- stays in its own
+ * branch, since BASTA's matrix-exponential engine and MASCOT's ODE
+ * integrator don't share a common numeric shape.
+ *
  * @author Guy Baele
  */
 public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String STRUCTURED_COALESCENT = "structuredCoalescent";
     public static final String TYPE = "type";
+    public static final String BASTA_TYPE = "BASTA";
+    public static final String MASCOT_TYPE = "MASCOT";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUB_INTERVALS = "subIntervals";
@@ -71,11 +89,30 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     private static final boolean TRANSPOSE = true;
 
+    // MASCOT-only surface.
+    public static final String STATE_COUNT = "stateCount";
+    public static final String MAX_STEP = "maxStep";
+    public static final String CHECK_PROBABILITIES = "checkProbabilities";
+    public static final String MIGRATION_MODEL = "migrationModel";
+    public static final String EPOCH_TIMES = "epochTimes";
+
     public String getParserName() {
         return STRUCTURED_COALESCENT;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        String type = xo.getAttribute(TYPE, BASTA_TYPE);
+        if (type.equalsIgnoreCase(MASCOT_TYPE)) {
+            return parseMascot(xo);
+        }
+        if (!type.equalsIgnoreCase(BASTA_TYPE)) {
+            throw new XMLParseException(TYPE + " must be \"" + BASTA_TYPE + "\" or \"" + MASCOT_TYPE +
+                    "\", found \"" + type + "\"");
+        }
+        return parseBasta(xo);
+    }
+
+    private Object parseBasta(XMLObject xo) throws XMLParseException {
 
         TaxonList includeSubtree = null;
 
@@ -106,7 +143,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         DataType dataType = patternList.getDataType();
-        
+
         if (patternList.areUnique()) {
             throw new XMLParseException("Ancestral state reconstruction cannot be used with compressed (unique) patterns.");
         }
@@ -121,9 +158,9 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         Parameter anchorProportion = xo.hasChildNamed(ANCHOR_PROPORTION) ? (Parameter) xo.getElementFirstChild(ANCHOR_PROPORTION) : null;
         Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ? (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
         if (gridPoints != null) {
-            // Shared with MASCOT's epochTimes: same "strictly increasing
-            // backward-time breakpoints" validation, previously only checked
-            // by dimension here (not monotonicity).
+            // Shared with MASCOT's epochTimes/gridPoints: same "strictly
+            // increasing backward-time breakpoints" validation, previously
+            // only checked by dimension here (not monotonicity).
             try {
                 EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
             } catch (IllegalArgumentException e) {
@@ -328,16 +365,74 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
     }
 
+    private Object parseMascot(XMLObject xo) throws XMLParseException {
+        MutableTreeModel mutableTreeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
+        if (!(mutableTreeModel instanceof TreeModel)) {
+            throw new XMLParseException(STRUCTURED_COALESCENT + " type=\"" + MASCOT_TYPE +
+                    "\" requires a dr.evomodel.tree.TreeModel, found " +
+                    (mutableTreeModel == null ? "none" : mutableTreeModel.getClass().getName()));
+        }
+        TreeModel treeModel = (TreeModel) mutableTreeModel;
+        PatternList tipPatterns = (PatternList) xo.getChild(PatternList.class);
+
+        Parameter migrationRates = null;
+        SubstitutionModel migrationModel = null;
+        Object migrationSource = xo.getElementFirstChild(MIGRATION_MODEL);
+        if (migrationSource instanceof Parameter) {
+            migrationRates = (Parameter) migrationSource;
+        } else if (migrationSource instanceof SubstitutionModel) {
+            migrationModel = (SubstitutionModel) migrationSource;
+        } else {
+            throw new XMLParseException("<" + MIGRATION_MODEL + "> must contain either a Parameter " +
+                    "of native positive migration rates or a SubstitutionModel");
+        }
+
+        Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
+        Parameter epochTimes = xo.hasChildNamed(EPOCH_TIMES) ?
+                (Parameter) xo.getElementFirstChild(EPOCH_TIMES) : null;
+        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ?
+                (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
+        if (epochTimes != null && gridPoints != null) {
+            throw new XMLParseException("Cannot specify both " + EPOCH_TIMES + " and " + GRID_POINTS +
+                    " (" + GRID_POINTS + " is an alias for " + EPOCH_TIMES + ")");
+        }
+        if (gridPoints != null) {
+            epochTimes = gridPoints;
+        }
+        if (epochTimes != null) {
+            // Shared with BASTA's gridPoints: same "strictly increasing
+            // backward-time breakpoints" validation.
+            try {
+                EpochBoundaries.validateSortedTimes(epochTimes, gridPoints != null ? GRID_POINTS : EPOCH_TIMES);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        }
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        int stateCount = xo.getIntegerAttribute(STATE_COUNT);
+        double maxStep = xo.getDoubleAttribute(MAX_STEP);
+        boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
+
+        if (migrationRates != null) {
+            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, popSizes, epochTimes,
+                    stateCount, maxStep, checkProbabilities, branchRateModel);
+        }
+        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModel, popSizes, epochTimes,
+                stateCount, maxStep, checkProbabilities, branchRateModel);
+    }
+
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
     public String getParserDescription() {
-        return "A Bayesian structured coalescent approximation model.";
+        return "A Bayesian structured coalescent approximation model, either BASTA's matrix-exponential/BEAGLE " +
+                "engine (type=\"BASTA\", the default) or MASCOT's RK4/adjoint ODE engine (type=\"MASCOT\").";
     }
 
     public Class getReturnType() {
-        return BastaLikelihood.class;
+        return AbstractStructuredCoalescentLikelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -345,22 +440,34 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(TYPE, true),
+            // BASTA-only attributes.
             AttributeRule.newIntegerRule(SUB_INTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
-//            AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),
-//            AttributeRule.newBooleanRule(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, true),
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+            // MASCOT-only attributes. Declared optional here (rather than
+            // type-conditionally required, which the syntax-rule system can't
+            // express) and enforced imperatively in parseMascot instead --
+            // the same pattern popSizes/logPopSizes mutual-exclusivity
+            // already uses below.
+            AttributeRule.newIntegerRule(STATE_COUNT, true),
+            AttributeRule.newDoubleRule(MAX_STEP, true),
+            AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
+            // Shared by both types.
             new ElementRule(PatternList.class),
             new ElementRule(MutableTreeModel.class),
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(SubstitutionModel.class, true),
             new ElementRule(POPULATION_SIZES,
                     new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(ANCHOR_TIME, true),
                             AttributeRule.newBooleanRule(ROOT_ANCHORED, true),
                             new ElementRule(Parameter.class)}, true),
+            new ElementRule(GRID_POINTS,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            // BASTA-only elements.
+            new ElementRule(SubstitutionModel.class, true),
             new ElementRule(LOG_POP_SIZES,
                     new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(ANCHOR_TIME, true),
@@ -373,8 +480,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ANCHOR_PROPORTION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(GRID_POINTS,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true)
+            // MASCOT-only elements.
+            new ElementRule(MIGRATION_MODEL, new XMLSyntaxRule[]{
+                    new XORRule(
+                            new ElementRule(Parameter.class),
+                            new ElementRule(SubstitutionModel.class))}, true),
+            new ElementRule(EPOCH_TIMES,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };
 
 }

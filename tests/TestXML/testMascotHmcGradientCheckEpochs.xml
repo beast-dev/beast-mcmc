@@ -73,7 +73,7 @@
     <!-- epoch-major log-population-size vector: [e0: log N0, log N1, e1: log N0, log N1] -->
     <parameter id="popSizes" value="0.4 0.6 0.2 0.3"/>
 
-    <mascotLikelihood id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
+    <structuredCoalescent type="MASCOT" id="mascotLikelihood" stateCount="2" maxStep="0.005" checkProbabilities="false">
         <treeModel idref="treeModel"/>
         <attributePatterns idref="tipPatterns"/>
         <migrationModel>
@@ -85,14 +85,14 @@
         <epochTimes>
             <parameter idref="epochTimes"/>
         </epochTimes>
-    </mascotLikelihood>
+    </structuredCoalescent>
 
     <mascotGradient id="likelihood.migration.grad" part="migration">
-        <mascotLikelihood idref="mascotLikelihood"/>
+        <structuredCoalescent idref="mascotLikelihood"/>
     </mascotGradient>
 
     <mascotGradient id="likelihood.popSizes.grad" part="popSizes">
-        <mascotLikelihood idref="mascotLikelihood"/>
+        <structuredCoalescent idref="mascotLikelihood"/>
     </mascotGradient>
 
     <exponentialPrior id="theta.prior" mean="0.25">
@@ -150,7 +150,7 @@
                 <normalPrior idref="popSizes.prior"/>
             </prior>
             <likelihood id="likelihood">
-                <mascotLikelihood idref="mascotLikelihood"/>
+                <structuredCoalescent idref="mascotLikelihood"/>
             </likelihood>
         </joint>
 

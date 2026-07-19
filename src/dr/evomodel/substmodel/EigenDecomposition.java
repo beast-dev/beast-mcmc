@@ -56,18 +56,18 @@ public class EigenDecomposition implements Serializable {
         // note: exchange e/ivec
         int dim = (int) Math.sqrt(Ievc.length);
         double[] evec = Ievc.clone();
-        rescale(evec, Eval, 0.5, dim);
+        rescaleComplexConjugateRows(evec, Eval, 0.5, dim);
         transposeInPlace(evec, dim);
 
         double[] ievc = Evec.clone();
         transposeInPlace(ievc, dim);
-        rescale(ievc, Eval, 2.0, dim);
+        rescaleComplexConjugateRows(ievc, Eval, 2.0, dim);
 
         double[] eval = Eval.clone();
         return new EigenDecomposition(evec, ievc, eval);
     }
 
-    protected static void rescale(double[] rowVectors, double[] eval, double scalar, int dim) {
+    protected static void rescaleComplexConjugateRows(double[] rowVectors, double[] eval, double scalar, int dim) {
         if (!NEW_TRANSPOSE || eval.length != 2 * dim) {
             return;
         }

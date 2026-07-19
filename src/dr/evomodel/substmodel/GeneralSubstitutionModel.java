@@ -145,6 +145,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         this.ratesRelativeTo = ratesRelativeTo;
     }
 
+    public Parameter getRatesParameter() {
+        return ratesParameter;
+    }
+
     // *****************************************************************
     // Interface Model
     // *****************************************************************

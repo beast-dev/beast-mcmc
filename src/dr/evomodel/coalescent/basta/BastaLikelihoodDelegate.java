@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
@@ -90,7 +91,16 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         throw new RuntimeException("Not yet implemented");
     }
 
-    default void updateIsExponentialGrowth(boolean isExponentialGrowth) {
+    
+    default void updatePopulationSizeModel(AbstractPopulationSizeModel.PopulationSizeModelType modelType) {
+        throw new RuntimeException("Not yet implemented");
+    }
+    
+    default void setPopulationSizeModel(AbstractPopulationSizeModel model) {
+        throw new RuntimeException("Not yet implemented");
+    }
+    
+    default void markPopulationSizesDirty() {
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -180,7 +190,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         public int getMaxNumberOfCoalescentIntervals(Tree tree) {
-            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
+            BigFastTreeIntervals intervals = new BigFastTreeIntervals((MutableTreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
                 if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {

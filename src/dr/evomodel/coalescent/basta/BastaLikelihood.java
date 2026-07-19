@@ -71,8 +71,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private final Tree tree;
     private final PatternList patternList;
     private final SubstitutionModel substitutionModel;
-    private final Parameter popSizeParameter;
-    private final Parameter growthRateParameter;
+    private final AbstractPopulationSizeModel populationSizeModel; 
     private final BranchRateModel branchRateModel;
     private final int stateCount;
 
@@ -85,7 +84,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private double storedLogLikelihood;
     protected boolean likelihoodKnown;
 
-    private boolean populationSizesKnown;
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
 
@@ -106,25 +104,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                            Tree treeModel,
                            PatternList patternList,
                            SubstitutionModel substitutionModel,
-                           Parameter popSizeParameter,
-                           Parameter growthRateParameter,
-                           BranchRateModel branchRateModel,
-                           BastaLikelihoodDelegate likelihoodDelegate,
-                           int numberSubIntervals,
-                           boolean useAmbiguities,
-                           boolean useMAP) {
-        this(name, treeModel, patternList, substitutionModel, popSizeParameter,
-                growthRateParameter, branchRateModel, likelihoodDelegate,
-                numberSubIntervals, useAmbiguities,
-                substitutionModel.getDataType(), "states", useMAP);
-    }
-
-    public BastaLikelihood(String name,
-                           Tree treeModel,
-                           PatternList patternList,
-                           SubstitutionModel substitutionModel,
-                           Parameter popSizeParameter,
-                           Parameter growthRateParameter,
+                           AbstractPopulationSizeModel populationSizeModel,
                            BranchRateModel branchRateModel,
                            BastaLikelihoodDelegate likelihoodDelegate,
                            int numberSubIntervals,
@@ -140,6 +120,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         assert branchRateModel != null;
         assert patternList.getPatternCount() == 1;
         assert useAmbiguities;
+        assert populationSizeModel != null;
 
         if (!(branchRateModel instanceof StrictClockBranchRates)) {
             throw new RuntimeException("Not yet implemented");
@@ -162,26 +143,33 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         this.substitutionModel = substitutionModel;
         addModel(substitutionModel);
 
-        this.popSizeParameter = popSizeParameter;
-        addVariable(popSizeParameter);
-
-        this.growthRateParameter = growthRateParameter;
-
-        if (this.growthRateParameter != null) {
-            addVariable(growthRateParameter);
-            this.likelihoodDelegate.updateIsExponentialGrowth(true);
-        }
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
-        if (tree instanceof TreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+        boolean isAncestralTraitTree = false;
+
+        if (tree instanceof dr.evomodel.tree.TreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals((dr.evomodel.tree.TreeModel) treeModel);
             addModel(treeIntervals);
+        } else if (tree instanceof dr.evolution.tree.MutableTreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (dr.evolution.tree.MutableTreeModel) treeModel);
+            addModel(treeIntervals);
+            isAncestralTraitTree = true;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
 
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+
+        this.populationSizeModel = populationSizeModel;
+        addModel(populationSizeModel);
+        this.likelihoodDelegate.setPopulationSizeModel(populationSizeModel);
+
+        if (populationSizeModel instanceof PiecewiseConstantPopulationSizeModel) {
+            ((PiecewiseConstantPopulationSizeModel) populationSizeModel).setTreeIntervals(treeIntervals);
+        }
+
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, 
+                numberSubIntervals, !isAncestralTraitTree);
 
         // Initialize ancestral state reconstruction settings
         this.dataType = dataType;
@@ -204,7 +192,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         likelihoodKnown = false;
         ancestralStatesKnown = false;
-        populationSizesKnown = false;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
 
@@ -390,26 +377,16 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         likelihoodKnown = false;
         treeIntervalsKnown = false;
-        populationSizesKnown = false;
         transitionMatricesKnown = false;
 
         ancestralStatesKnown = false;
         likelihoodDelegate.makeDirty();
+        likelihoodDelegate.markPopulationSizesDirty();
         updateAllNodes();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == popSizeParameter) {
-            populationSizesKnown = false;
-        } else if (variable == growthRateParameter) {
-            populationSizesKnown = false;
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        likelihoodKnown = false;
-        ancestralStatesKnown = false;
-        fireModelChanged();
+        throw new RuntimeException("Unexpected variable change event: " + variable.getVariableName());
     }
 
     @Override
@@ -418,11 +395,16 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         if (model == treeIntervals) {
             treeIntervalsKnown = false;
             transitionMatricesKnown = false;
+            nodeIntervalMap.clear();
+            likelihoodDelegate.markPopulationSizesDirty();
         } else if (model == branchRateModel) {
             treeIntervalsKnown = false; // TODO should not be necessary
             transitionMatricesKnown = false;
+            likelihoodDelegate.markPopulationSizesDirty();
         } else if (model == substitutionModel) {
             transitionMatricesKnown = false;
+        } else if (model == populationSizeModel) {
+            likelihoodDelegate.markPopulationSizesDirty();
         } else {
             throw new RuntimeException("Not yet implemented");
         }
@@ -437,7 +419,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     @Override
     protected void storeState() {
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
-        assert (populationSizesKnown);
         assert (treeIntervalsKnown);
         assert (transitionMatricesKnown);
         storedLogLikelihood = logLikelihood;
@@ -454,12 +435,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-
     protected final void restoreState() {
-        //likelihoodDelegate.restoreState();
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = true;
-        populationSizesKnown = false;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
 
@@ -481,15 +459,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         if (!transitionMatricesKnown) {
             // update eigen-decomposition
             likelihoodDelegate.updateEigenDecomposition(0, substitutionModel.getEigenDecomposition(), false);// TODO do conditionally and double-buffer
-        }
-
-        if (!populationSizesKnown) {
-            // update population sizes
-            likelihoodDelegate.updatePopulationSizes(0, popSizeParameter.getParameterValues(), false); // TODO do conditionally and double-buffer
-        }
-
-        if (this.growthRateParameter != null) {
-            likelihoodDelegate.updateGrowthRates(0, growthRateParameter.getParameterValues(), false);
         }
 
         if (!treeIntervalsKnown) {
@@ -522,7 +491,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         setAllNodesUpdated();
 
         treeIntervalsKnown = true;
-        populationSizesKnown = true;
         transitionMatricesKnown = true;
 
         return logL;
@@ -1228,5 +1196,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     private long totalLikelihoodTime = 0;
 
-    public Parameter getPopSizes() {return popSizeParameter;}
+    public AbstractPopulationSizeModel getPopulationSizeModel() {
+        return populationSizeModel;
+    }
 }

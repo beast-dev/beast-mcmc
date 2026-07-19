@@ -174,7 +174,18 @@ public class StructuredCoalescentLikelihoodGradient implements
         POPULATION_SIZE("populationSize") {
             @Override
             Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
-                return structuredCoalescentLikelihood.getPopSizes();
+                AbstractPopulationSizeModel popModel = structuredCoalescentLikelihood.getPopulationSizeModel();
+                if (popModel instanceof ConstantPopulationSizeModel) {
+                    return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
+                    return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof AnchoredExponentialGrowthPopulationSizeModel) {
+                    return ((AnchoredExponentialGrowthPopulationSizeModel) popModel).getLogPopSizesParameter();
+                } else if (popModel instanceof SharedAncestralExponentialGrowthPopulationSizeModel) {
+                    throw new UnsupportedOperationException("Analytic population-size gradient is not implemented for the " +
+                            "shared-ancestral (divergence-anchored) exponential model; run without the population-size gradient.");
+                }
+                throw new RuntimeException("Unknown population size model type");
             }
 
             @Override
@@ -202,7 +213,18 @@ public class StructuredCoalescentLikelihoodGradient implements
             @Override
             public Parameter getChainRuleDependent(BastaLikelihood structuredCoalescentLikelihood,
                                                    SubstitutionModel substitutionModel) {
-                return structuredCoalescentLikelihood.getPopSizes();
+                AbstractPopulationSizeModel popModel = structuredCoalescentLikelihood.getPopulationSizeModel();
+                if (popModel instanceof ConstantPopulationSizeModel) {
+                    return ((ConstantPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof ExponentialGrowthPopulationSizeModel) {
+                    return ((ExponentialGrowthPopulationSizeModel) popModel).getPopulationSizeParameter();
+                } else if (popModel instanceof AnchoredExponentialGrowthPopulationSizeModel) {
+                    return ((AnchoredExponentialGrowthPopulationSizeModel) popModel).getLogPopSizesParameter();
+                } else if (popModel instanceof SharedAncestralExponentialGrowthPopulationSizeModel) {
+                    throw new UnsupportedOperationException("Analytic population-size gradient is not implemented for the " +
+                            "shared-ancestral (divergence-anchored) exponential model; run without the population-size gradient.");
+                }
+                throw new RuntimeException("Unknown population size model type");
             }
         };
 

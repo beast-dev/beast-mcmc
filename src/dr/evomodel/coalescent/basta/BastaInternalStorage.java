@@ -20,7 +20,6 @@ public class BastaInternalStorage {
     double[] g;
     double[] h;
 
-    final double[] sizes;
     final double[] rates;
 
     final EigenDecomposition[] decompositions; // TODO flatten?
@@ -37,7 +36,6 @@ public class BastaInternalStorage {
 
         this.stateCount = stateCount;
 
-        this.sizes = new double[2 * stateCount];
         this.rates = new double[2 * stateCount];
         this.decompositions = new EigenDecomposition[1];
 

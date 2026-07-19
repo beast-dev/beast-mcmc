@@ -68,6 +68,30 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
+    public void setBastaPopulationSizes(double[] combinedSizesIntegrals, int requiredStorageSize) {
+        int errCode = BastaJNIWrapper.INSTANCE.setBastaPopulationSizes(instance, combinedSizesIntegrals, requiredStorageSize);
+        if (errCode != 0) {
+            throw new BeagleException("setBastaPopulationSizes", errCode);
+        }
+    }
+
+    @Override
+    public void setBastaPopulationSizesBuffer(double[] combinedSizesIntegrals, int requiredStorageSize, int bufferIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.setBastaPopulationSizesBuffer(instance, combinedSizesIntegrals, requiredStorageSize, bufferIndex);
+        if (errCode != 0) {
+            throw new BeagleException("setBastaPopulationSizesBuffer", errCode);
+        }
+    }
+    
+    @Override
+    public void setCurrentPopulationSizeBuffer(int bufferIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.setCurrentPopulationSizeBuffer(instance, bufferIndex);
+        if (errCode != 0) {
+            throw new BeagleException("setCurrentPopulationSizeBuffer", errCode);
+        }
+    }
+
+    @Override
     public void getBastaBuffer(int index, double[] buffer) {
         int errCode = BastaJNIWrapper.INSTANCE.getBastaBuffer(instance, index, buffer);
         if (errCode != 0) {

@@ -8,7 +8,7 @@ package dr.evomodel.coalescent.mascot;
 
 import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModelGradientSupport;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 
@@ -160,18 +160,8 @@ public final class MascotDynamics {
         if (migrationRates != null) {
             return null;
         }
-        if (!(migrationModel instanceof ComplexSubstitutionModel)) {
-            return "mascotGradient part=\"migration\" with a migrationModel currently requires " +
-                    "ComplexSubstitutionModel-compatible rate ordering";
-        }
-        if (((ComplexSubstitutionModel) migrationModel).getNormalization()) {
-            return "mascotGradient part=\"migration\" with a migrationModel requires normalized=\"false\" " +
-                    "until the normalization derivative is implemented";
-        }
-        if (getMigrationModelRatesParameter() == null) {
-            return "migrationModel does not expose a rates parameter";
-        }
-        return null;
+        return ComplexSubstitutionModelGradientSupport.getCompatibilityError(
+                migrationModel, "mascotGradient part=\"migration\" with a migrationModel");
     }
 
     /** Same as {@link #extractMigrationGradient} but for the population-size slice. */
@@ -282,10 +272,7 @@ public final class MascotDynamics {
     }
 
     private Parameter getMigrationModelRatesParameter() {
-        if (migrationModel instanceof GeneralSubstitutionModel) {
-            return ((GeneralSubstitutionModel) migrationModel).getRatesParameter();
-        }
-        return null;
+        return ComplexSubstitutionModelGradientSupport.getRatesParameter(migrationModel);
     }
 
     private static double[] ensure(double[] array, int length) {

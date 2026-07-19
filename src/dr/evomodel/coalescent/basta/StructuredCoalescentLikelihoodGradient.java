@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.basta;
 
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModelGradientSupport;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.loggers.LogColumn;
@@ -125,9 +125,12 @@ public class StructuredCoalescentLikelihoodGradient implements
         MIGRATION_RATE("migrationRate") {
             @Override
             Parameter getParameter(BastaLikelihood structuredCoalescentLikelihood, SubstitutionModel substitutionModel) {
-                assert(substitutionModel instanceof SVSComplexSubstitutionModel);
-                SVSComplexSubstitutionModel svsComplexSubstitutionModel = (SVSComplexSubstitutionModel) substitutionModel;
-                return svsComplexSubstitutionModel.getRatesParameter();
+                String error = ComplexSubstitutionModelGradientSupport.getCompatibilityError(
+                        substitutionModel, "structuredCoalescentLikelihoodGradient wrtParameter=\"migrationRate\"");
+                if (error != null) {
+                    throw new IllegalArgumentException(error);
+                }
+                return ComplexSubstitutionModelGradientSupport.getRatesParameter(substitutionModel);
             }
 
             @Override

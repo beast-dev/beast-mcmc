@@ -375,15 +375,26 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         PatternList tipPatterns = (PatternList) xo.getChild(PatternList.class);
 
         Parameter migrationRates = null;
-        SubstitutionModel migrationModel = null;
-        Object migrationSource = xo.getElementFirstChild(MIGRATION_MODEL);
-        if (migrationSource instanceof Parameter) {
-            migrationRates = (Parameter) migrationSource;
-        } else if (migrationSource instanceof SubstitutionModel) {
-            migrationModel = (SubstitutionModel) migrationSource;
+        SubstitutionModel[] migrationModels = null;
+        XMLObject migrationModelElement = xo.getChild(MIGRATION_MODEL);
+        if (migrationModelElement.getChildCount() == 1 && migrationModelElement.getChild(0) instanceof Parameter) {
+            migrationRates = (Parameter) migrationModelElement.getChild(0);
         } else {
-            throw new XMLParseException("<" + MIGRATION_MODEL + "> must contain either a Parameter " +
-                    "of native positive migration rates or a SubstitutionModel");
+            // One SubstitutionModel per epoch (time-varying migration rates);
+            // a single child is the constant-through-time case.
+            migrationModels = new SubstitutionModel[migrationModelElement.getChildCount()];
+            for (int i = 0; i < migrationModelElement.getChildCount(); i++) {
+                Object child = migrationModelElement.getChild(i);
+                if (!(child instanceof SubstitutionModel)) {
+                    throw new XMLParseException("<" + MIGRATION_MODEL + "> must contain either a single Parameter " +
+                            "of native positive migration rates, or one SubstitutionModel per epoch");
+                }
+                migrationModels[i] = (SubstitutionModel) child;
+            }
+            if (migrationModels.length == 0) {
+                throw new XMLParseException("<" + MIGRATION_MODEL + "> must contain either a Parameter " +
+                        "of native positive migration rates or at least one SubstitutionModel");
+            }
         }
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
@@ -408,7 +419,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, popSizes, gridPoints,
                     stateCount, maxStep, checkProbabilities, branchRateModel);
         }
-        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModel, popSizes, gridPoints,
+        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModels, popSizes, gridPoints,
                 stateCount, maxStep, checkProbabilities, branchRateModel);
     }
 
@@ -470,11 +481,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ANCHOR_PROPORTION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            // MASCOT-only elements.
+            // MASCOT-only elements. Either a single Parameter of native
+            // positive migration rates, or one SubstitutionModel per epoch
+            // (more than one for time-varying migration rates).
             new ElementRule(MIGRATION_MODEL, new XMLSyntaxRule[]{
                     new XORRule(
                             new ElementRule(Parameter.class),
-                            new ElementRule(SubstitutionModel.class))}, true),
+                            new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE))}, true),
     };
 
 }

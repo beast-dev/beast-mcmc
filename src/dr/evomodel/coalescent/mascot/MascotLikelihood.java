@@ -45,6 +45,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     private double[] combinedGradient;
     // d(logLikelihood)/d(branchRate[lineageId]); null unless branchRateModel != null.
     private double[] clockGradient;
+    private boolean ancestralStatesKnown;
+    // Flat, node-major adjoint node-state scores (see MascotCore.Result#ancestralStateScores);
+    // null until getAncestralStateScores() is first called.
+    private double[] ancestralStateScores;
 
     // Snapshots taken by storeState() and restored by restoreState() on a
     // rejected proposal. Restoring the actual eventTape/core references (rather
@@ -61,9 +65,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     private boolean storedCoreKnown;
     private boolean storedLikelihoodKnown;
     private boolean storedGradientKnown;
+    private boolean storedAncestralStatesKnown;
     private double storedLogLikelihood;
     private double[] storedCombinedGradient;
     private double[] storedClockGradient;
+    private double[] storedAncestralStateScores;
 
     public MascotLikelihood(String name,
                             TreeModel treeModel,
@@ -241,6 +247,36 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         return clockGradient == null ? null : clockGradient.clone();
     }
 
+    /**
+     * Flat, node-major adjoint node-state scores for every internal tree
+     * node, indexed by {@code nodeNumber * getStateCount() + state} (see
+     * {@code MascotCore.Result#ancestralStateScores} and
+     * {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). Tip rows and any
+     * unused node-number slots are {@link Double#NaN}. These are exact
+     * sensitivities of the discretized RK4 likelihood, validated to be
+     * finite and (per internal-node row) sum to one within tolerance; they
+     * are not yet a validated posterior-probability interpretation across
+     * arbitrary model configurations (see the design document's Section 16).
+     */
+    public double[] getAncestralStateScores() {
+        if (!ancestralStatesKnown) {
+            evaluateAncestralStates();
+        }
+        return ancestralStateScores.clone();
+    }
+
+    /** Row-copy convenience for allocation-conscious tree logging; avoids exposing the flat layout to callers. */
+    public void getAncestralStateScores(int nodeNumber, double[] destination) {
+        if (destination.length != getStateCount()) {
+            throw new IllegalArgumentException("destination length " + destination.length +
+                    " does not match stateCount " + getStateCount());
+        }
+        if (!ancestralStatesKnown) {
+            evaluateAncestralStates();
+        }
+        System.arraycopy(ancestralStateScores, nodeNumber * getStateCount(), destination, 0, getStateCount());
+    }
+
     public Parameter getMigrationRates() {
         return dynamics.getMigrationRates();
     }
@@ -283,10 +319,16 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         coreKnown = false;
         likelihoodKnown = false;
         gradientKnown = false;
+        ancestralStatesKnown = false;
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // Ancestral states depend on every numeric model component the
+        // likelihood/gradient depend on; set this unconditionally up front
+        // (rather than in every branch below) so a future branch added here
+        // cannot forget it.
+        ancestralStatesKnown = false;
         if (model == treeIntervals) {
             eventTapeKnown = false;
         } else if (isMigrationModel(model)) {
@@ -315,6 +357,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        ancestralStatesKnown = false;
         if (variable == dynamics.getMigrationRates()) {
             // The event tape is still valid; only the numeric likelihood and gradient change.
         } else if (variable == dynamics.getEpochTimes()) {
@@ -333,12 +376,14 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         storedLogLikelihood = logLikelihood;
         storedCombinedGradient = combinedGradient;
         storedClockGradient = clockGradient;
+        storedAncestralStateScores = ancestralStateScores;
         storedEventTape = eventTape;
         storedCore = core;
         storedEventTapeKnown = eventTapeKnown;
         storedCoreKnown = coreKnown;
         storedLikelihoodKnown = likelihoodKnown;
         storedGradientKnown = gradientKnown;
+        storedAncestralStatesKnown = ancestralStatesKnown;
     }
 
     @Override
@@ -346,12 +391,14 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         logLikelihood = storedLogLikelihood;
         combinedGradient = storedCombinedGradient;
         clockGradient = storedClockGradient;
+        ancestralStateScores = storedAncestralStateScores;
         eventTape = storedEventTape;
         core = storedCore;
         eventTapeKnown = storedEventTapeKnown;
         coreKnown = storedCoreKnown;
         likelihoodKnown = storedLikelihoodKnown;
         gradientKnown = storedGradientKnown;
+        ancestralStatesKnown = storedAncestralStatesKnown;
     }
 
     @Override
@@ -450,6 +497,85 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         clockGradient = result.clockGradient;
         likelihoodKnown = true;
         gradientKnown = true;
+    }
+
+    /**
+     * Evaluates the likelihood together with adjoint node-state scores for
+     * every internal tree node. Also requests the parameter gradient from
+     * the same MascotCore evaluation (rather than a separate one) so it is
+     * cached "for free" alongside the ancestral scores when both are needed;
+     * this does not run more often than plain likelihood/gradient evaluation
+     * since it is only invoked by {@link #getAncestralStateScores()} and its
+     * row-copy overload, which tree logging calls far less frequently than
+     * every MCMC/HMC step.
+     */
+    private void evaluateAncestralStates() {
+        ensureEventTape();
+        ensureCore();
+        MascotCore.Result result;
+        try {
+            result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
+                    branchRatesOrNull(), true, true, checkProbabilities, false);
+        } catch (MascotCore.NumericalException e) {
+            throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +
+                    "parameter values: " + e.getMessage(), e);
+        }
+        if (!Double.isFinite(result.logLikelihood)) {
+            throw new IllegalStateException("MASCOT ancestral states cannot be evaluated because the current " +
+                    "log likelihood is " + result.logLikelihood);
+        }
+        validateGradient(result.gradient);
+        validateAncestralStateScores(result.ancestralStateScores);
+        logLikelihood = result.logLikelihood;
+        combinedGradient = result.gradient;
+        clockGradient = result.clockGradient;
+        ancestralStateScores = result.ancestralStateScores;
+        likelihoodKnown = true;
+        gradientKnown = true;
+        ancestralStatesKnown = true;
+    }
+
+    /**
+     * Checks finiteness and sum-to-one for every internal-node row (tip and
+     * unused rows, entirely {@link Double#NaN} by construction, are skipped).
+     * Thresholds match MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md Section 7.6;
+     * a materially negative entry throws rather than being silently clamped,
+     * per that document's Section 6.7/16.1 -- see it before loosening this.
+     */
+    private void validateAncestralStateScores(double[] scores) {
+        if (scores == null) {
+            throw new IllegalStateException("MASCOT ancestral-state evaluation returned no scores");
+        }
+        int stateCount = getStateCount();
+        int nodeCount = scores.length / stateCount;
+        for (int node = 0; node < nodeCount; node++) {
+            int offset = node * stateCount;
+            if (Double.isNaN(scores[offset])) {
+                // Tip or unused node-number slot: MascotCore writes every
+                // state of an internal-node row in one pass, so a NaN first
+                // entry means the whole row was never written.
+                continue;
+            }
+            double sum = 0.0;
+            double minValue = Double.POSITIVE_INFINITY;
+            for (int s = 0; s < stateCount; s++) {
+                double v = scores[offset + s];
+                if (!Double.isFinite(v)) {
+                    throw new IllegalStateException("MASCOT ancestral-state score is non-finite at node " +
+                            node + ", state " + s + ": " + v);
+                }
+                sum += v;
+                minValue = Math.min(minValue, v);
+            }
+            if (Math.abs(sum - 1.0) > 1.0e-8) {
+                throw new IllegalStateException("MASCOT ancestral-state row sum " + sum +
+                        " does not equal 1 within tolerance 1e-8 at node " + node + " (maxStep=" + maxStep + ")");
+            }
+            if (minValue < -1.0e-7) {
+                throw new IllegalStateException("MASCOT ancestral-state score is materially negative at node " +
+                        node + ": " + minValue + " (row sum " + sum + ", maxStep=" + maxStep + ")");
+            }
+        }
     }
 
     private static void validateGradient(double[] gradient) {

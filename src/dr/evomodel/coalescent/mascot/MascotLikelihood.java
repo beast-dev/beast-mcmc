@@ -7,6 +7,7 @@
 package dr.evomodel.coalescent.mascot;
 
 import dr.evolution.alignment.PatternList;
+import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -24,6 +25,10 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
     private final TreeModel treeModel;
+    // Shared with BASTA's BastaLikelihood: BigFastTreeIntervals is the single
+    // source of truth for "walk this tree's coalescent/sample events in time
+    // order," instead of MascotEventTape re-deriving that order itself.
+    private final BestSignalsFromBigFastTreeIntervals treeIntervals;
     private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
     private final double maxStep;
@@ -134,6 +139,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
                             BranchRateModel branchRateModel) {
         super(name == null ? MASCOT_LIKELIHOOD : name);
         this.treeModel = treeModel;
+        this.treeIntervals = new BestSignalsFromBigFastTreeIntervals(treeModel);
         this.tipPatterns = tipPatterns;
         this.dynamics = migrationRates != null ?
                 new MascotDynamics(stateCount, migrationRates, popSizes, epochTimes) :
@@ -142,7 +148,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
         this.checkProbabilities = checkProbabilities;
         this.branchRateModel = branchRateModel;
 
-        addModel(treeModel);
+        addModel(treeIntervals);
         // tipPatterns is fixed input data (like a sequence alignment), not an
         // estimated model variable, so it is not registered as a listened
         // variable here -- it never changes over the course of an analysis.
@@ -263,7 +269,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
+        if (model == treeIntervals) {
             eventTapeKnown = false;
         } else if (model == dynamics.getMigrationModel()) {
             // A substitution-model-backed migration-rate change only changes the
@@ -338,7 +344,7 @@ public class MascotLikelihood extends AbstractModelLikelihood implements Reporta
 
     private void ensureEventTape() {
         if (!eventTapeKnown) {
-            eventTape = MascotEventTape.fromTree(treeModel, tipPatterns, dynamics.getStateCount());
+            eventTape = MascotEventTape.fromTree(treeIntervals, tipPatterns, dynamics.getStateCount());
             eventTapeKnown = true;
         }
     }

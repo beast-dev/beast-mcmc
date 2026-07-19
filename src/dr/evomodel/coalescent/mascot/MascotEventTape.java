@@ -7,14 +7,20 @@
 package dr.evomodel.coalescent.mascot;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 
 /**
- * Builds a compact backward-time event list from a BEAST-X TreeModel and an
- * attributePatterns-style PatternList of tip states, resolved by taxon name
- * (not by tree traversal order — see {@link #fromTree}).
+ * Builds a compact backward-time event list from a shared {@link
+ * BigFastTreeIntervals} (the same tree-interval walk BASTA's {@code
+ * CoalescentIntervalTraversal} consumes) and an attributePatterns-style
+ * PatternList of tip states, resolved by taxon name (not by tree traversal
+ * order — see {@link #fromTree}).
  */
 public final class MascotEventTape {
 
@@ -26,9 +32,7 @@ public final class MascotEventTape {
         this.preparedEvents = MascotCore.prepareEvents(events);
     }
 
-    public static MascotEventTape fromTree(TreeModel tree, PatternList tipPatterns, int stateCount) {
-        int tipCount = tree.getExternalNodeCount();
-        int internalCount = tree.getInternalNodeCount();
+    public static MascotEventTape fromTree(BigFastTreeIntervals treeIntervals, PatternList tipPatterns, int stateCount) {
         if (tipPatterns.getPatternCount() != 1) {
             throw new IllegalArgumentException("tip-state attributePatterns must contain exactly one pattern, found " +
                     tipPatterns.getPatternCount());
@@ -39,52 +43,63 @@ public final class MascotEventTape {
                     stateCount);
         }
 
-        MascotCore.Event[] events = new MascotCore.Event[tipCount + internalCount];
-        int index = 0;
-        for (int i = 0; i < tipCount; i++) {
-            NodeRef node = tree.getExternalNode(i);
-            String taxonId = tree.getTaxonId(i);
-            int taxonIndex = tipPatterns.getTaxonIndex(taxonId);
-            if (taxonIndex < 0) {
-                throw new IllegalArgumentException("tip-state attributePatterns has no entry for " +
-                        tipDescription(tree, node, i));
-            }
-            int state = tipPatterns.getPatternState(taxonIndex, 0);
-            if (state < 0 || state >= stateCount) {
-                throw new IllegalArgumentException("tip state out of range for " +
-                        tipDescription(tree, node, i) + ": " + state +
-                        " (stateCount=" + stateCount + ")");
-            }
-            events[index++] = MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), state);
-        }
-
-        for (int i = 0; i < internalCount; i++) {
-            NodeRef node = tree.getInternalNode(i);
-            int childCount = tree.getChildCount(node);
-            if (childCount != 2) {
-                throw new IllegalArgumentException("MASCOT currently requires binary trees; node " +
-                        node.getNumber() + " has " + childCount + " children");
-            }
-            NodeRef child1 = tree.getChild(node, 0);
-            NodeRef child2 = tree.getChild(node, 1);
-            events[index++] = MascotCore.Event.coalescence(
-                    tree.getNodeHeight(node),
-                    child1.getNumber(),
-                    child2.getNumber(),
-                    node.getNumber()
-            );
+        Tree tree = treeIntervals.getTree();
+        int intervalCount = treeIntervals.getIntervalCount();
+        // BigFastTreeIntervals always has one more node/event than interval (see
+        // its own class doc): the 0th node is the start of the 0th interval, and
+        // is reached here via the interval=-1 convention that
+        // getSamplingNode/getCoalescentNode already use elsewhere in the codebase
+        // (e.g. CoalescentIntervalTraversal). That first node is always a sample
+        // event by construction -- BigFastTreeIntervals.calculateIntervals()
+        // itself throws if it isn't.
+        MascotCore.Event[] events = new MascotCore.Event[intervalCount + 1];
+        for (int interval = -1; interval < intervalCount; interval++) {
+            boolean isSample = interval == -1 || treeIntervals.getIntervalType(interval) == IntervalType.SAMPLE;
+            events[interval + 1] = isSample
+                    ? sampleEvent(tree, treeIntervals.getSamplingNode(interval), tipPatterns, stateCount)
+                    : coalescentEvent(tree, treeIntervals.getCoalescentNode(interval));
         }
 
         return new MascotEventTape(events);
     }
 
-    private static String tipDescription(TreeModel tree, NodeRef node, int externalNodeIndex) {
-        String taxonId = tree.getTaxonId(externalNodeIndex);
-        if (taxonId == null) {
-            return "external node " + externalNodeIndex + " (node " + node.getNumber() + ")";
+    private static MascotCore.Event sampleEvent(Tree tree, NodeRef node, PatternList tipPatterns, int stateCount) {
+        Taxon taxon = tree.getNodeTaxon(node);
+        String taxonId = taxon == null ? null : taxon.getId();
+        int taxonIndex = taxonId == null ? -1 : tipPatterns.getTaxonIndex(taxonId);
+        if (taxonIndex < 0) {
+            throw new IllegalArgumentException("tip-state attributePatterns has no entry for " +
+                    tipDescription(node, taxonId));
         }
-        return "external node " + externalNodeIndex + " (node " + node.getNumber() +
-                ", taxon " + taxonId + ")";
+        int state = tipPatterns.getPatternState(taxonIndex, 0);
+        if (state < 0 || state >= stateCount) {
+            throw new IllegalArgumentException("tip state out of range for " +
+                    tipDescription(node, taxonId) + ": " + state + " (stateCount=" + stateCount + ")");
+        }
+        return MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), state);
+    }
+
+    private static MascotCore.Event coalescentEvent(Tree tree, NodeRef node) {
+        int childCount = tree.getChildCount(node);
+        if (childCount != 2) {
+            throw new IllegalArgumentException("MASCOT currently requires binary trees; node " +
+                    node.getNumber() + " has " + childCount + " children");
+        }
+        NodeRef child1 = tree.getChild(node, 0);
+        NodeRef child2 = tree.getChild(node, 1);
+        return MascotCore.Event.coalescence(
+                tree.getNodeHeight(node),
+                child1.getNumber(),
+                child2.getNumber(),
+                node.getNumber()
+        );
+    }
+
+    private static String tipDescription(NodeRef node, String taxonId) {
+        if (taxonId == null) {
+            return "node " + node.getNumber();
+        }
+        return "node " + node.getNumber() + " (taxon " + taxonId + ")";
     }
 
     /**

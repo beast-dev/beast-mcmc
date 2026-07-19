@@ -1362,9 +1362,13 @@ public final class MascotCore {
          * internal active-lineage array position. Tip rows and any unused
          * node-number slots are {@link Double#NaN}. Null unless ancestral
          * reconstruction was requested. These are exact sensitivities of the
-         * discretized RK4 likelihood, not yet validated as posterior
-         * probabilities -- callers must not present them as such without the
-         * checks described in the design document.
+         * discretized RK4 likelihood, not posterior probabilities: a
+         * nonnegativity survey found a converged (step-size-independent)
+         * negative score under highly unequal population sizes, so this
+         * quantity is not always a valid probability distribution -- see
+         * MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md's "Probability
+         * interpretation" note. Callers must not present these as
+         * probabilities.
          */
         public final double[] ancestralStateScores;
 

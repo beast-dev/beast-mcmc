@@ -308,10 +308,15 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
      * {@code MascotCore.Result#ancestralStateScores} and
      * {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). Tip rows and any
      * unused node-number slots are {@link Double#NaN}. These are exact
-     * sensitivities of the discretized RK4 likelihood, validated to be
-     * finite and (per internal-node row) sum to one within tolerance; they
-     * are not yet a validated posterior-probability interpretation across
-     * arbitrary model configurations (see the design document's Section 16).
+     * sensitivities of the discretized RK4 likelihood, validated (this call)
+     * to be finite and (per internal-node row) sum to one within tolerance --
+     * but not a posterior-probability interpretation: a broad nonnegativity
+     * survey found a converged, step-size-independent negative score under
+     * highly unequal population sizes, so this quantity is not always a
+     * valid probability distribution (see the design document's
+     * "Probability interpretation" note under Section 19). This call throws
+     * if the current parameter values hit that failure mode (a materially
+     * negative entry) rather than silently returning an invalid result.
      */
     public double[] getAncestralStateScores() {
         if (!ancestralStatesKnown) {

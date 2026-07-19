@@ -10,9 +10,9 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.tree.TreeModel;
 
 /**
@@ -33,15 +33,7 @@ public final class MascotEventTape {
     }
 
     public static MascotEventTape fromTree(BigFastTreeIntervals treeIntervals, PatternList tipPatterns, int stateCount) {
-        if (tipPatterns.getPatternCount() != 1) {
-            throw new IllegalArgumentException("tip-state attributePatterns must contain exactly one pattern, found " +
-                    tipPatterns.getPatternCount());
-        }
-        if (tipPatterns.getStateCount() != stateCount) {
-            throw new IllegalArgumentException("tip-state attributePatterns dataType has " +
-                    tipPatterns.getStateCount() + " states, which does not match mascotLikelihood's stateCount=" +
-                    stateCount);
-        }
+        StructuredTipStates.validateSinglePattern(tipPatterns, stateCount, "tip-state attributePatterns");
 
         Tree tree = treeIntervals.getTree();
         int intervalCount = treeIntervals.getIntervalCount();
@@ -64,19 +56,9 @@ public final class MascotEventTape {
     }
 
     private static MascotCore.Event sampleEvent(Tree tree, NodeRef node, PatternList tipPatterns, int stateCount) {
-        Taxon taxon = tree.getNodeTaxon(node);
-        String taxonId = taxon == null ? null : taxon.getId();
-        int taxonIndex = taxonId == null ? -1 : tipPatterns.getTaxonIndex(taxonId);
-        if (taxonIndex < 0) {
-            throw new IllegalArgumentException("tip-state attributePatterns has no entry for " +
-                    tipDescription(node, taxonId));
-        }
-        int state = tipPatterns.getPatternState(taxonIndex, 0);
-        if (state < 0 || state >= stateCount) {
-            throw new IllegalArgumentException("tip state out of range for " +
-                    tipDescription(node, taxonId) + ": " + state + " (stateCount=" + stateCount + ")");
-        }
-        return MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), state);
+        double[] partials = StructuredTipStates.getPartials(tree, node, tipPatterns, stateCount,
+                true, "tip-state attributePatterns");
+        return MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), partials);
     }
 
     private static MascotCore.Event coalescentEvent(Tree tree, NodeRef node) {
@@ -93,13 +75,6 @@ public final class MascotEventTape {
                 child2.getNumber(),
                 node.getNumber()
         );
-    }
-
-    private static String tipDescription(NodeRef node, String taxonId) {
-        if (taxonId == null) {
-            return "node " + node.getNumber();
-        }
-        return "node " + node.getNumber() + " (taxon " + taxonId + ")";
     }
 
     /**

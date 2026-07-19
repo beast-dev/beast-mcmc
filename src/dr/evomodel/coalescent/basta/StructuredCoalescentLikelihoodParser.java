@@ -155,17 +155,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         Parameter r = xo.hasChildNamed(GROWTH_RATES) ? (Parameter) xo.getElementFirstChild(GROWTH_RATES) : null;
         Parameter ancestralR = xo.hasChildNamed(ANCESTRAL_GROWTH_RATE) ? (Parameter) xo.getElementFirstChild(ANCESTRAL_GROWTH_RATE) : null;
         Parameter anchorProportion = xo.hasChildNamed(ANCHOR_PROPORTION) ? (Parameter) xo.getElementFirstChild(ANCHOR_PROPORTION) : null;
-        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ? (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
-        if (gridPoints != null) {
-            // Shared with MASCOT's gridPoints: same "strictly increasing
-            // backward-time breakpoints" validation, previously only checked
-            // by dimension here (not monotonicity).
-            try {
-                EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
-            } catch (IllegalArgumentException e) {
-                throw new XMLParseException(e.getMessage());
-            }
-        }
+        Parameter gridPoints = parseGridPoints(xo);
 
         if (popSizes == null && logPopSizes == null) {
             throw new XMLParseException("Either " + POPULATION_SIZES + " or " + LOG_POP_SIZES + " must be specified");
@@ -199,35 +189,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 }
             }
 
-            if (popSizes.getDimension() != 1) {
-                if (gridPoints != null) {
-                    int numGridSegments = gridPoints.getDimension() + 1;
-                    int expectedDim = stateCount * numGridSegments;
-                    if (popSizes.getDimension() != expectedDim) {
-                        throw new XMLParseException("With grid points, popSizes dimension must be " +
-                                expectedDim + " (stateCount=" + stateCount + " × (numGridPoints+1)=" +
-                                numGridSegments + "), but got " + popSizes.getDimension());
-                    }
-                } else if (popSizes.getDimension() % stateCount != 0) {
-                    throw new XMLParseException("popSizes dimension must be a multiple of stateCount (" +
-                            stateCount + "), but got " + popSizes.getDimension());
-                }
-            }
+            validatePopSizeDimension(popSizes, gridPoints, stateCount, true, true);
         }
 
-        DataType stateDataType = generalSubstitutionModel.getDataType();
-        if (popSizes != null && popSizes.getDimension() > 1) {
-            String[] dimensionNames = new String[popSizes.getDimension()];
-            String prefix = popSizes.getParameterName();
-            // popSizes.getDimension() may be a multiple of stateCount (one block
-            // per grid segment for a piecewise-constant population size model),
-            // not just stateCount itself -- cycle the state codes per segment
-            // rather than indexing stateDataType directly by i.
-            for (int i = 0; i < popSizes.getDimension(); i++) {
-                dimensionNames[i] = prefix + "." + stateDataType.getCode(i % stateCount);
-            }
-            popSizes.setDimensionNames(dimensionNames);
-        }
+        setPopSizeDimensionNames(popSizes, generalSubstitutionModel.getDataType(), stateCount);
 
         int threads = xo.getAttribute(THREADS, 1);
 
@@ -323,12 +288,9 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                                 populationSizeModel = new ExponentialGrowthPopulationSizeModel(
                                     "exponentialGrowth", popSizes, r, stateCount, -1);
                             }
-                        } else if (gridPoints != null) {
-                            populationSizeModel = new PiecewiseConstantPopulationSizeModel(
-                                "piecewiseConstant", popSizes, gridPoints, stateCount, -1);
-                        } else if (popSizes.getDimension() == stateCount) {
-                            populationSizeModel = new ConstantPopulationSizeModel(
-                                "constant", popSizes, stateCount, -1);
+                        } else if (gridPoints != null || popSizes.getDimension() == stateCount) {
+                            populationSizeModel = constantOrGridPiecewisePopulationSizeModel(
+                                    popSizes, gridPoints, stateCount);
                         } else if (popSizes.getDimension() % stateCount == 0 && popSizes.getDimension() > stateCount) {
                             populationSizeModel = new PiecewiseConstantPopulationSizeModel(
                                 "piecewiseConstant", popSizes, stateCount, -1);
@@ -398,17 +360,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         }
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
-        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ?
-                (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
-        if (gridPoints != null) {
-            // Shared with BASTA's gridPoints: same "strictly increasing
-            // backward-time breakpoints" validation.
-            try {
-                EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
-            } catch (IllegalArgumentException e) {
-                throw new XMLParseException(e.getMessage());
-            }
-        }
+        Parameter gridPoints = parseGridPoints(xo);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         int stateCount = xo.getIntegerAttribute(STATE_COUNT);
@@ -416,7 +368,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
 
         AbstractPopulationSizeModel populationSizeModel =
-                parseConstantOrPiecewiseConstantPopulationSizeModel(popSizes, gridPoints, stateCount);
+                constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
         if (migrationRates != null) {
             return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, populationSizeModel,
@@ -426,23 +378,81 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel);
     }
 
-    /**
-     * MASCOT's population size auto-detection: the same {@code gridPoints}
-     * present/absent -> piecewise/constant dispatch as BASTA's own (see the
-     * {@code populationSizeModel} block in {@link #parseBasta}) restricted to
-     * the two model types MASCOT supports (no growth models, no BASTA
-     * tree-interval-fallback multiple-of-stateCount mode).
-     */
-    private static AbstractPopulationSizeModel parseConstantOrPiecewiseConstantPopulationSizeModel(
-            Parameter popSizes, Parameter gridPoints, int stateCount) throws XMLParseException {
+    private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {
+        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ?
+                (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
         if (gridPoints != null) {
-            return new PiecewiseConstantPopulationSizeModel("piecewiseConstant", popSizes, gridPoints, stateCount, -1);
-        } else if (popSizes.getDimension() == stateCount) {
+            try {
+                EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        }
+        return gridPoints;
+    }
+
+    private static void validatePopSizeDimension(Parameter popSizes, Parameter gridPoints, int stateCount,
+                                                 boolean allowScalar, boolean allowPiecewiseWithoutGrid)
+            throws XMLParseException {
+        if (popSizes == null) {
+            return;
+        }
+        int actual = popSizes.getDimension();
+        if (allowScalar && actual == 1) {
+            return;
+        }
+        if (gridPoints != null) {
+            int numGridSegments = gridPoints.getDimension() + 1;
+            int expectedDim = stateCount * numGridSegments;
+            if (actual != expectedDim) {
+                throw new XMLParseException("With grid points, " + POPULATION_SIZES + " dimension must be " +
+                        expectedDim + " (stateCount=" + stateCount + " × (numGridPoints+1)=" +
+                        numGridSegments + "), but got " + actual);
+            }
+        } else if (allowPiecewiseWithoutGrid) {
+            if (actual % stateCount != 0) {
+                throw new XMLParseException(POPULATION_SIZES + " dimension must be a multiple of stateCount (" +
+                        stateCount + "), but got " + actual);
+            }
+        } else if (actual != stateCount) {
+            throw new XMLParseException(POPULATION_SIZES + " dimension must be " + stateCount +
+                    " (constant, no " + GRID_POINTS + ") or stateCount * (numGridPoints+1) " +
+                    "(piecewise constant, with " + GRID_POINTS + "), but got " + actual);
+        }
+    }
+
+    private static void setPopSizeDimensionNames(Parameter popSizes, DataType stateDataType, int stateCount) {
+        if (popSizes == null || popSizes.getDimension() <= 1) {
+            return;
+        }
+        String[] dimensionNames = new String[popSizes.getDimension()];
+        String prefix = popSizes.getParameterName();
+        // popSizes may contain one state block per grid segment; cycle state
+        // codes per block rather than indexing the data type by raw dimension.
+        for (int i = 0; i < popSizes.getDimension(); i++) {
+            dimensionNames[i] = prefix + "." + stateDataType.getCode(i % stateCount);
+        }
+        popSizes.setDimensionNames(dimensionNames);
+    }
+
+    /**
+     * Shared constant/grid-piecewise population-size auto-detection. This is
+     * the subset of BASTA's population-size surface that MASCOT also supports:
+     * no growth models and no BASTA tree-interval fallback without gridPoints.
+     */
+    private static AbstractPopulationSizeModel constantOrGridPiecewisePopulationSizeModel(
+            Parameter popSizes, Parameter gridPoints, int stateCount) throws XMLParseException {
+        if (popSizes == null) {
+            throw new XMLParseException(POPULATION_SIZES + " must be specified");
+        }
+        validatePopSizeDimension(popSizes, gridPoints, stateCount, false, false);
+        try {
+            if (gridPoints != null) {
+                return new PiecewiseConstantPopulationSizeModel("piecewiseConstant", popSizes, gridPoints, stateCount, -1);
+            }
             return new ConstantPopulationSizeModel("constant", popSizes, stateCount, -1);
-        } else {
-            throw new XMLParseException(POPULATION_SIZES + " dimension must be " + stateCount + " (constant, no " +
-                    GRID_POINTS + ") or stateCount * (numGridPoints+1) (piecewise constant, with " + GRID_POINTS +
-                    "), but got " + popSizes.getDimension());
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
         }
     }
 

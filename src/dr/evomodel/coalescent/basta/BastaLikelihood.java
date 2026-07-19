@@ -30,6 +30,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
+import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -141,6 +142,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
+        StructuredTipStates.validateSinglePattern(patternList, stateCount, "BASTA tip-state attributePatterns");
 
         // buildTreeIntervals(treeModel) (passed to super() above) already threw
         // for any tree type other than these two, so this mirrors that check
@@ -254,32 +256,10 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
 
     public void setTipData() {
-
-        int[] data = patternList.getPattern(0);
-
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef node = tree.getExternalNode(i);
-
-            int index = patternList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-            int datum = data[index];
-            double[] partials = new double[stateCount];
-
-            if (dataType.isAmbiguousState(datum)) {
-                boolean[] stateSet = dataType.getStateSet(datum);
-                int possibleStateCount = 0;
-                for (int j = 0; j < stateCount; j++) {
-                    if (stateSet[j]) {
-                        partials[j] = 1.0;
-                        possibleStateCount++;
-                    }
-                }
-                for (int j = 0; j < stateCount; j++) {
-                    partials[j] /= possibleStateCount;
-                }
-            } else {
-                partials[datum] = 1.0;
-            }
-
+            double[] partials = StructuredTipStates.getPartials(tree, node, patternList, stateCount,
+                    true, "BASTA tip-state attributePatterns");
             likelihoodDelegate.setPartials(node.getNumber(), partials);
         }
     }

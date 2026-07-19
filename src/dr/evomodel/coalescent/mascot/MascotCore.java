@@ -968,20 +968,25 @@ public final class MascotCore {
             double p1 = Math.max(tape.p1[s], EPS);
             double p2 = Math.max(tape.p2[s], EPS);
             double centered = adjointAfter[parentOffset + s] - dot;
-            double bar = tape.parentProbabilities[s] * centered;
+
+            // Adjoint node-state score: pi_s = p_s * (centered + ellAdjoint), the
+            // exact derivative of logL with respect to a hypothetical local
+            // log-weight on this coalescent event's parent state s (see
+            // MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md Section 3 for the
+            // derivation). It both propagates the child adjoints and
+            // accumulates the population-size gradient below -- previously
+            // computed as two separate terms ("bar" plus an ellAdjoint term)
+            // that summed to the same value; now computed once and reused.
+            double nodeStateScore = tape.parentProbabilities[s] * (centered + ellAdjoint);
 
             // First write to each child slot must assign (=), not accumulate (+=):
             // reverseCoalescentInto may write into a reused buffer (see reverse()'s
             // operation-level ping-pong) whose child1Index/child2Index positions the
             // compaction loop above never touches, so they can hold stale data from an
             // earlier reverse-pass operation.
-            adjointBeforeOut[tape.child1Index * stateCount + s] = bar / p1;
-            adjointBeforeOut[tape.child2Index * stateCount + s] = bar / p2;
-            gradient[thetaOffset + s] += -bar;
-
-            adjointBeforeOut[tape.child1Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p1;
-            adjointBeforeOut[tape.child2Index * stateCount + s] += ellAdjoint * tape.parentProbabilities[s] / p2;
-            gradient[thetaOffset + s] += -ellAdjoint * tape.parentProbabilities[s];
+            adjointBeforeOut[tape.child1Index * stateCount + s] = nodeStateScore / p1;
+            adjointBeforeOut[tape.child2Index * stateCount + s] = nodeStateScore / p2;
+            gradient[thetaOffset + s] -= nodeStateScore;
         }
 
         adjointBeforeOut[beforeDim - 1] = ellAdjoint;

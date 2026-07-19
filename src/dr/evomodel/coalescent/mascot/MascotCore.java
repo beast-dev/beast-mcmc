@@ -118,6 +118,15 @@ public final class MascotCore {
     }
 
     /**
+     * Likelihood plus adjoint node-state scores for every internal node (see
+     * {@code Result#ancestralStateScores}), without a parameter gradient.
+     */
+    public Result likelihoodAndAncestralStates(PreparedEvents prepared, double[] theta, double[] branchRates,
+                                               boolean checkProbabilities) {
+        return evaluate(prepared, theta, branchRates, false, true, checkProbabilities, false);
+    }
+
+    /**
      * Sorts and validates an event array once so that repeated evaluations against
      * the same fixed tree (only parameters changing) do not repeat the sort or the
      * event-array clone. The returned object is immutable and safe to share across
@@ -228,6 +237,21 @@ public final class MascotCore {
 
     public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
                            boolean checkProbabilities, boolean copyFinalState) {
+        return evaluate(prepared, theta, branchRates, computeGradient, false, checkProbabilities, copyFinalState);
+    }
+
+    /**
+     * Same as {@link #evaluate(PreparedEvents, double[], double[], boolean, boolean, boolean)},
+     * plus an adjoint node-state score for every internal tree node when
+     * {@code computeAncestralStates} is true (see {@code Result#ancestralStateScores}
+     * and {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). {@code
+     * computeGradient} and {@code computeAncestralStates} are independent: both,
+     * either, or neither may be requested in one call. Requesting neither costs
+     * nothing beyond the existing forward pass (no operation tape is built, no
+     * ancestral array is allocated).
+     */
+    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
+                           boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState) {
         if (prepared == null) {
             throw new IllegalArgumentException("prepared events must not be null");
         }
@@ -249,8 +273,9 @@ public final class MascotCore {
         state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
         epochCursor = 0;
         double currentTime = 0.0;
+        boolean runReverse = computeGradient || computeAncestralStates;
         OperationTapeStore operations = null;
-        if (computeGradient) {
+        if (runReverse) {
             // One tape entry per event, plus at most one IntervalTape per epoch
             // transition between events. The store owns reusable tape objects and
             // stage arrays, so fixed-tree HMC overwrites the same storage instead
@@ -291,18 +316,30 @@ public final class MascotCore {
             }
         }
 
+        double[] ancestralStateScores = null;
+        if (computeAncestralStates) {
+            ancestralStateScores = new double[(prepared.maxLineageId + 1) * stateCount];
+            Arrays.fill(ancestralStateScores, Double.NaN);
+        }
+
         double[] gradient = null;
         double[] clockGradient = null;
-        if (computeGradient) {
+        if (runReverse) {
             if (branchRates != null) {
                 clockGradient = new double[prepared.maxLineageId + 1];
             }
-            gradient = reverse(operations, state.activeCount, clockGradient);
+            double[] reverseGradient = reverse(operations, state.activeCount, clockGradient, ancestralStateScores);
+            if (computeGradient) {
+                gradient = reverseGradient;
+            } else {
+                clockGradient = null;
+            }
         }
 
         double[] rootProbabilities = copyFinalState ? state.copyProbabilities() : null;
         int[] activeLineages = copyFinalState ? state.copyActiveIds() : null;
-        return new Result(state.logLikelihood, gradient, clockGradient, rootProbabilities, activeLineages);
+        return new Result(state.logLikelihood, gradient, clockGradient, rootProbabilities, activeLineages,
+                ancestralStateScores);
     }
 
     // ------------------------------------------------------------------
@@ -495,7 +532,8 @@ public final class MascotCore {
     // Reverse pass
     // ------------------------------------------------------------------
 
-    private double[] reverse(OperationTapeStore operations, int finalActiveCount, double[] clockGradient) {
+    private double[] reverse(OperationTapeStore operations, int finalActiveCount, double[] clockGradient,
+                             double[] ancestralStateScores) {
         double[] gradient = new double[parameterCount];
         int dim = finalActiveCount * stateCount + 1;
 
@@ -544,7 +582,7 @@ public final class MascotCore {
             if (operation instanceof IntervalTape) {
                 reverseIntervalInto((IntervalTape) operation, cursor, next, gradient, clockGradient);
             } else if (operation instanceof CoalescentTape) {
-                reverseCoalescentInto((CoalescentTape) operation, cursor, dim, next, gradient);
+                reverseCoalescentInto((CoalescentTape) operation, cursor, dim, next, gradient, ancestralStateScores);
             }
 
             cursor = next;
@@ -888,7 +926,7 @@ public final class MascotCore {
 
         if (operations != null) {
             operations.addCoalescent(epoch, first, second, parentIndexAfter,
-                    movedFromIndexBefore, movedToIndexAfter,
+                    movedFromIndexBefore, movedToIndexAfter, event.parent,
                     p1, p2, parentProbabilities, lambda, stateCount);
         }
     }
@@ -943,7 +981,8 @@ public final class MascotCore {
      * than the current logical dimension.
      */
     private void reverseCoalescentInto(CoalescentTape tape, double[] adjointAfter, int afterDim,
-                                       double[] adjointBeforeOut, double[] gradient) {
+                                       double[] adjointBeforeOut, double[] gradient,
+                                       double[] ancestralStateScores) {
         int beforeDim = afterDim + stateCount;
         int beforeCount = (beforeDim - 1) / stateCount;
 
@@ -987,6 +1026,10 @@ public final class MascotCore {
             adjointBeforeOut[tape.child1Index * stateCount + s] = nodeStateScore / p1;
             adjointBeforeOut[tape.child2Index * stateCount + s] = nodeStateScore / p2;
             gradient[thetaOffset + s] -= nodeStateScore;
+
+            if (ancestralStateScores != null) {
+                ancestralStateScores[tape.parentLineageId * stateCount + s] = nodeStateScore;
+            }
         }
 
         adjointBeforeOut[beforeDim - 1] = ellAdjoint;
@@ -1275,14 +1318,28 @@ public final class MascotCore {
         public final double[] clockGradient;
         public final double[] rootProbabilities;
         public final int[] activeLineages;
+        /**
+         * Flat, node-major adjoint node-state scores, indexed by {@code
+         * nodeId * stateCount + state} (see
+         * {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). {@code nodeId}
+         * is the stable tree node id ({@code NodeRef.getNumber()}), not an
+         * internal active-lineage array position. Tip rows and any unused
+         * node-number slots are {@link Double#NaN}. Null unless ancestral
+         * reconstruction was requested. These are exact sensitivities of the
+         * discretized RK4 likelihood, not yet validated as posterior
+         * probabilities -- callers must not present them as such without the
+         * checks described in the design document.
+         */
+        public final double[] ancestralStateScores;
 
         private Result(double logLikelihood, double[] gradient, double[] clockGradient,
-                       double[] rootProbabilities, int[] activeLineages) {
+                       double[] rootProbabilities, int[] activeLineages, double[] ancestralStateScores) {
             this.logLikelihood = logLikelihood;
             this.gradient = gradient;
             this.clockGradient = clockGradient;
             this.rootProbabilities = rootProbabilities;
             this.activeLineages = activeLineages;
+            this.ancestralStateScores = ancestralStateScores;
         }
     }
 
@@ -1516,7 +1573,7 @@ public final class MascotCore {
         }
 
         private void addCoalescent(int epoch, int child1Index, int child2Index, int parentIndexAfter,
-                                   int movedFromIndexBefore, int movedToIndexAfter,
+                                   int movedFromIndexBefore, int movedToIndexAfter, int parentLineageId,
                                    double[] p1, double[] p2,
                                    double[] parentProbabilities, double lambda, int stateCount) {
             int index = nextIndex();
@@ -1529,7 +1586,7 @@ public final class MascotCore {
                 operations[index] = tape;
             }
             tape.reset(epoch, child1Index, child2Index, parentIndexAfter,
-                    movedFromIndexBefore, movedToIndexAfter,
+                    movedFromIndexBefore, movedToIndexAfter, parentLineageId,
                     p1, p2, parentProbabilities, lambda, stateCount);
         }
 
@@ -1616,6 +1673,14 @@ public final class MascotCore {
         private int parentIndexAfter;
         private int movedFromIndexBefore;
         private int movedToIndexAfter;
+        /**
+         * Stable tree node id (the coalescent parent's {@code event.parent}),
+         * as opposed to {@link #parentIndexAfter}, which is a transient
+         * active-lineage array position reused across events. Ancestral-state
+         * reconstruction must index its output by this id, not by
+         * {@code parentIndexAfter}.
+         */
+        private int parentLineageId;
         private double[] p1;
         private double[] p2;
         private double[] parentProbabilities;
@@ -1623,7 +1688,7 @@ public final class MascotCore {
         private double lambda;
 
         private void reset(int epoch, int child1Index, int child2Index, int parentIndexAfter,
-                           int movedFromIndexBefore, int movedToIndexAfter,
+                           int movedFromIndexBefore, int movedToIndexAfter, int parentLineageId,
                            double[] p1, double[] p2,
                            double[] parentProbabilities, double lambda, int stateCount) {
             this.epoch = epoch;
@@ -1632,6 +1697,7 @@ public final class MascotCore {
             this.parentIndexAfter = parentIndexAfter;
             this.movedFromIndexBefore = movedFromIndexBefore;
             this.movedToIndexAfter = movedToIndexAfter;
+            this.parentLineageId = parentLineageId;
             this.lambda = lambda;
             this.p1 = ensure(this.p1, stateCount);
             this.p2 = ensure(this.p2, stateCount);

@@ -16,8 +16,10 @@ env:
     BEAGLE_DIR: beagle-lib
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-    BEAGLE_BRANCH: v4_release
-    BEAGLE_CACHE_VERSION: beagle-portable-v1
+    # BASTA TestXML fixtures require BEAGLE-BIT, currently available from
+    # beagle-lib's basta_development branch.
+    BEAGLE_BRANCH: basta_development
+    BEAGLE_CACHE_VERSION: beagle-bit-basta-v1
 
 jobs:
     build:

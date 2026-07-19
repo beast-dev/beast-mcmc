@@ -6,6 +6,7 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -185,21 +186,7 @@ public final class MascotDynamics {
     }
 
     public double[] getBoundaries() {
-        int epochCount = getEpochCount();
-        double[] boundaries = new double[epochCount + 1];
-        boundaries[0] = 0.0;
-        if (epochTimes != null) {
-            for (int i = 0; i < epochTimes.getDimension(); i++) {
-                boundaries[i + 1] = epochTimes.getParameterValue(i);
-            }
-        }
-        boundaries[boundaries.length - 1] = Double.POSITIVE_INFINITY;
-        for (int i = 1; i < boundaries.length; i++) {
-            if (!(boundaries[i] > boundaries[i - 1])) {
-                throw new IllegalArgumentException("epoch times must be strictly increasing in backward time");
-            }
-        }
-        return boundaries;
+        return EpochBoundaries.withSentinels(epochTimes, "epochTimes");
     }
 
     private void checkDimensions() {

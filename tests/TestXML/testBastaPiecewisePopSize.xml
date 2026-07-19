@@ -1,0 +1,106 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!--
+        Same fixture as testBastaSmoke.xml, but with a piecewise-constant
+        population size model (PiecewiseConstantPopulationSizeModel, from the
+        merged basta_development population-size-model framework) instead of a
+        single constant popSizes block: gridPoints="0.5 1.5" splits time into
+        three segments, each with its own stateCount=3 block of popSizes
+        (dimension 9 total).
+
+        Exercises: EpochBoundaries.validateSortedTimes' monotonicity check on
+        gridPoints (shared with MASCOT's epochTimes), and
+        StructuredCoalescentLikelihoodParser's popSizes-dimension-naming loop,
+        which previously indexed stateDataType.getCode(i) directly by the full
+        popSizes index (correct only when popSizes.getDimension() == stateCount)
+        and threw ArrayIndexOutOfBounds for any multi-segment popSizes, fixed
+        to cycle codes per segment (i % stateCount) as part of verifying this
+        fixture.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="A"><attr name="state">0</attr></taxon>
+        <taxon id="B"><attr name="state">1</attr></taxon>
+        <taxon id="C"><attr name="state">2</attr></taxon>
+        <taxon id="D"><attr name="state">0</attr></taxon>
+        <taxon id="E"><attr name="state">1</attr></taxon>
+        <taxon id="F"><attr name="state">2</attr></taxon>
+    </taxa>
+
+    <generalDataType id="basta.dataType">
+        <state code="0"/>
+        <state code="1"/>
+        <state code="2"/>
+    </generalDataType>
+
+    <attributePatterns id="tipPatterns" attribute="state">
+        <taxa idref="taxa"/>
+        <generalDataType idref="basta.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree">
+        (((A:1.0,B:1.0):1.0,(C:1.2,D:1.2):0.8):1.0,(E:1.7,F:1.7):1.3);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <complexSubstitutionModel id="location.model" randomizeIndicator="false"
+                              normalized="false" scaleRatesByFrequencies="false"
+                              checkConditioning="false">
+        <generalDataType idref="basta.dataType"/>
+        <frequencies>
+            <frequencyModel id="location.frequencyModel" normalize="true">
+                <generalDataType idref="basta.dataType"/>
+                <frequencies>
+                    <parameter id="location.frequencies" value="1.0 1.0 1.0" dimension="3"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="location.rates" value="0.11 0.23 0.17 0.31 0.29 0.37"
+                       dimension="6" lower="0.0"/>
+        </rates>
+        <rateIndicator>
+            <parameter id="location.indicators" value="1.0 1.0 1.0 1.0 1.0 1.0" dimension="6"/>
+        </rateIndicator>
+    </complexSubstitutionModel>
+
+    <parameter id="popSizes" value="0.1 0.2 0.3 0.1 0.2 0.3 0.1 0.2 0.3"/>
+    <parameter id="gridPoints" value="0.5 1.5"/>
+
+    <structuredCoalescent id="bastaLikelihood">
+        <attributePatterns idref="tipPatterns"/>
+        <treeModel idref="treeModel"/>
+        <generalSubstitutionModel idref="location.model"/>
+        <strictClockBranchRates idref="branchRates"/>
+        <popSizes>
+            <parameter idref="popSizes"/>
+        </popSizes>
+        <gridPoints>
+            <parameter idref="gridPoints"/>
+        </gridPoints>
+    </structuredCoalescent>
+
+    <report>
+        <structuredCoalescent idref="bastaLikelihood"/>
+    </report>
+
+</beast>

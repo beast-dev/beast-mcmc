@@ -31,6 +31,7 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodelxml.treedatalikelihood.markovjumps.MarkovJumpsParserUtils;
@@ -119,6 +120,16 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         Parameter ancestralR = xo.hasChildNamed(ANCESTRAL_GROWTH_RATE) ? (Parameter) xo.getElementFirstChild(ANCESTRAL_GROWTH_RATE) : null;
         Parameter anchorProportion = xo.hasChildNamed(ANCHOR_PROPORTION) ? (Parameter) xo.getElementFirstChild(ANCHOR_PROPORTION) : null;
         Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ? (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
+        if (gridPoints != null) {
+            // Shared with MASCOT's epochTimes: same "strictly increasing
+            // backward-time breakpoints" validation, previously only checked
+            // by dimension here (not monotonicity).
+            try {
+                EpochBoundaries.validateSortedTimes(gridPoints, GRID_POINTS);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        }
 
         if (popSizes == null && logPopSizes == null) {
             throw new XMLParseException("Either " + POPULATION_SIZES + " or " + LOG_POP_SIZES + " must be specified");
@@ -169,11 +180,15 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         }
 
         DataType stateDataType = generalSubstitutionModel.getDataType();
-        if (popSizes.getDimension() > 1) {
+        if (popSizes != null && popSizes.getDimension() > 1) {
             String[] dimensionNames = new String[popSizes.getDimension()];
             String prefix = popSizes.getParameterName();
+            // popSizes.getDimension() may be a multiple of stateCount (one block
+            // per grid segment for a piecewise-constant population size model),
+            // not just stateCount itself -- cycle the state codes per segment
+            // rather than indexing stateDataType directly by i.
             for (int i = 0; i < popSizes.getDimension(); i++) {
-                dimensionNames[i] = prefix + "." + stateDataType.getCode(i);
+                dimensionNames[i] = prefix + "." + stateDataType.getCode(i % stateCount);
             }
             popSizes.setDimensionNames(dimensionNames);
         }

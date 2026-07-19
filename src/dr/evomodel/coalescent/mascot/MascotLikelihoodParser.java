@@ -38,6 +38,9 @@ public final class MascotLikelihoodParser extends AbstractXMLObjectParser {
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String POPULATION_SIZES = "popSizes";
     public static final String EPOCH_TIMES = "epochTimes";
+    // Alias for EPOCH_TIMES matching BASTA's PiecewiseConstantPopulationSizeModel
+    // naming (same concept: strictly-increasing backward-time breakpoints).
+    public static final String GRID_POINTS = "gridPoints";
 
     @Override
     public String getParserName() {
@@ -62,6 +65,15 @@ public final class MascotLikelihoodParser extends AbstractXMLObjectParser {
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
         Parameter epochTimes = xo.hasChildNamed(EPOCH_TIMES) ?
                 (Parameter) xo.getElementFirstChild(EPOCH_TIMES) : null;
+        Parameter gridPoints = xo.hasChildNamed(GRID_POINTS) ?
+                (Parameter) xo.getElementFirstChild(GRID_POINTS) : null;
+        if (epochTimes != null && gridPoints != null) {
+            throw new XMLParseException("Cannot specify both " + EPOCH_TIMES + " and " + GRID_POINTS +
+                    " (" + GRID_POINTS + " is an alias for " + EPOCH_TIMES + ")");
+        }
+        if (gridPoints != null) {
+            epochTimes = gridPoints;
+        }
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         int stateCount = xo.getIntegerAttribute(STATE_COUNT);
@@ -93,6 +105,7 @@ public final class MascotLikelihoodParser extends AbstractXMLObjectParser {
                             new ElementRule(SubstitutionModel.class))}),
             new ElementRule(POPULATION_SIZES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(GRID_POINTS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(BranchRateModel.class, true)
     };
 

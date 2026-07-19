@@ -29,6 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
+import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -60,7 +61,7 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTr
  * @author Marc A. Suchard
  */
 
-public class BastaLikelihood extends AbstractModelLikelihood implements
+public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood implements
         TreeTraitProvider, AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
         ProcessAlongTree, DiscreteProcessAlongTree {
 
@@ -71,14 +72,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private final Tree tree;
     private final PatternList patternList;
     private final SubstitutionModel substitutionModel;
-    private final AbstractPopulationSizeModel populationSizeModel; 
-    private final BranchRateModel branchRateModel;
+    private final AbstractPopulationSizeModel populationSizeModel;
     private final int stateCount;
 
     private final Helper treeTraits = new Helper();
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
-    public final BestSignalsFromBigFastTreeIntervals treeIntervals;
 
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -113,7 +112,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
                            String tag,
                            boolean useMAP) {
 
-        super(name);
+        super(name, buildTreeIntervals(treeModel), branchRateModel);
 
         assert likelihoodDelegate != null;
         assert treeModel != null;
@@ -137,28 +136,16 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         this.tree = treeModel;
 
-        this.branchRateModel = branchRateModel;
-        addModel(branchRateModel);
-
         this.substitutionModel = substitutionModel;
         addModel(substitutionModel);
 
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
-        boolean isAncestralTraitTree = false;
-
-        if (tree instanceof dr.evomodel.tree.TreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals((dr.evomodel.tree.TreeModel) treeModel);
-            addModel(treeIntervals);
-        } else if (tree instanceof dr.evolution.tree.MutableTreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (dr.evolution.tree.MutableTreeModel) treeModel);
-            addModel(treeIntervals);
-            isAncestralTraitTree = true;
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
-
+        // buildTreeIntervals(treeModel) (passed to super() above) already threw
+        // for any tree type other than these two, so this mirrors that check
+        // rather than re-validating it.
+        boolean isAncestralTraitTree = !(tree instanceof dr.evomodel.tree.TreeModel);
 
         this.populationSizeModel = populationSizeModel;
         addModel(populationSizeModel);
@@ -198,6 +185,16 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         traitDelegate = new AbstractRealizedDiscreteTraitDelegate.Bit(tag + NAME_SUFFIX, this, useMAP);
         TreeTraitProvider ttp = new ProcessSimulation(this, traitDelegate);
         treeTraits.addTraits(ttp.getTreeTraits());
+    }
+
+    private static BestSignalsFromBigFastTreeIntervals buildTreeIntervals(Tree tree) {
+        if (tree instanceof dr.evomodel.tree.TreeModel) {
+            return new BestSignalsFromBigFastTreeIntervals((dr.evomodel.tree.TreeModel) tree);
+        } else if (tree instanceof dr.evolution.tree.MutableTreeModel) {
+            return new BestSignalsFromBigFastTreeIntervals("intervals", (dr.evolution.tree.MutableTreeModel) tree);
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
     }
 
     private final AbstractRealizedDiscreteTraitDelegate traitDelegate;
@@ -285,11 +282,6 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
             likelihoodDelegate.setPartials(node.getNumber(), partials);
         }
-    }
-
-    @Override
-    public final Model getModel() {
-        return this;
     }
 
     @Override

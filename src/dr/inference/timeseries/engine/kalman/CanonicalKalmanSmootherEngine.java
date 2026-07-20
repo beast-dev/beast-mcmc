@@ -2,7 +2,7 @@ package dr.inference.timeseries.engine.kalman;
 
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianBranchTransitionKernel;

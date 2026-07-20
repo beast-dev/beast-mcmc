@@ -8,7 +8,7 @@ import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;

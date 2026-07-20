@@ -37,7 +37,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.Homogeneou
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalNativeBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.GaussianCanonicalTipObservation;
 import dr.inference.model.GivensRotationMatrixParameter;

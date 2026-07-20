@@ -44,7 +44,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitio
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;

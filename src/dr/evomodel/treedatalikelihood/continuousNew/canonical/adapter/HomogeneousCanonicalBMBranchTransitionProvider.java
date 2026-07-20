@@ -30,7 +30,7 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuousNew.BMProcessModel;
+import dr.evomodel.continuous.canonical.BMProcessModel;
 import dr.evomodel.treedatalikelihood.continuousNew.ContinuousBranchTimeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuousNew.DefaultContinuousBranchTimeModel;

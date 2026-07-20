@@ -13,7 +13,7 @@ import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianComputationMode;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

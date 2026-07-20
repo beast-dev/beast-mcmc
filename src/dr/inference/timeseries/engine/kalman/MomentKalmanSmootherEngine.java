@@ -1,6 +1,6 @@
 package dr.inference.timeseries.engine.kalman;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

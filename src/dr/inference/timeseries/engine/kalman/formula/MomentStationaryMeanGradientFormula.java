@@ -5,7 +5,7 @@ import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.inference.timeseries.engine.kalman.MomentBranchSmootherStats;
 import dr.inference.timeseries.engine.kalman.MomentForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

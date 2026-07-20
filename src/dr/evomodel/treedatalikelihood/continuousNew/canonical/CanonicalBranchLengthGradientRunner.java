@@ -6,7 +6,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGra
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchLengthGradientEngine;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 

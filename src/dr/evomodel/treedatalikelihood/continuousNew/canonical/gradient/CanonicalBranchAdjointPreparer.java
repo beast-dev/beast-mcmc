@@ -32,9 +32,9 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTra
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.ChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.scheduling.ChunkSizeStrategy;
+import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.util.TaskPool;
 
 /**

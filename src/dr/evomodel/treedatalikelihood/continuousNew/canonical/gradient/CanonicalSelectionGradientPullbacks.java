@@ -3,7 +3,7 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 
 final class CanonicalSelectionGradientPullbacks {
 

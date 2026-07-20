@@ -15,7 +15,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalConjugateRootPriorAdapter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;

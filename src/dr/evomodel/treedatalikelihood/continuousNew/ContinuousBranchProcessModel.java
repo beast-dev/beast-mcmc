@@ -27,6 +27,8 @@
 
 package dr.evomodel.treedatalikelihood.continuousNew;
 
+import dr.evomodel.continuous.canonical.ContinuousProcessModel;
+
 /**
  * Maps tree branches or branch segments to continuous process models.
  */

@@ -27,6 +27,8 @@
 
 package dr.evomodel.treedatalikelihood.continuousNew;
 
+import dr.evomodel.continuous.canonical.ContinuousProcessModel;
+
 /**
  * One process model applied to every non-root branch.
  */

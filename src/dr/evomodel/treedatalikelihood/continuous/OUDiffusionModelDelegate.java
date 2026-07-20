@@ -35,7 +35,7 @@ import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
 import dr.evomodel.treedatalikelihood.continuousNew.GaussianBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.OUGaussianBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.branch.OUCanonicalBranchGradientBridge;
+import dr.evomodel.continuous.ou.canonical.branch.OUCanonicalBranchGradientBridge;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.OUActualizationStrategies;

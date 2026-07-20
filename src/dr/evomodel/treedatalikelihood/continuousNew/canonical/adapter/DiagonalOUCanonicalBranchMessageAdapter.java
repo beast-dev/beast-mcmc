@@ -7,7 +7,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.ContinuousBranchTimeModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalNativeBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;

@@ -1,6 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 
 /**
  * Branch-length API for linear Gaussian transitions.

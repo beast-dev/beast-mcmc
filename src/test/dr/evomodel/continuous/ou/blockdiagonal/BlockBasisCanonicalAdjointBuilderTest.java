@@ -3,7 +3,7 @@ package test.dr.evomodel.continuous.ou.blockdiagonal;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisCanonicalAdjointBuilder;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisCanonicalTransitionBuilder;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;

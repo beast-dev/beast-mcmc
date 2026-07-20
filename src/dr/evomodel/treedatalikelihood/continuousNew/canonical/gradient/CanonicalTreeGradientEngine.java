@@ -33,14 +33,14 @@ import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParamete
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.ChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
+import dr.evomodel.continuous.canonical.scheduling.ChunkSizeStrategy;
+import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchAdjointWorkspace;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.GradientPullbackWorkspace;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.workspace.BranchAdjointWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.GradientPullbackWorkspace;
 import dr.util.CanonicalPhaseTimer;
 import dr.util.TaskPool;
 

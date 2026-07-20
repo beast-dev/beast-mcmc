@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameter;
 import org.ejml.data.DenseMatrix64F;
 

@@ -5,9 +5,9 @@ import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.DenseGradientWorkspace;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.DenseGradientWorkspace;
 
 final class DenseCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
 

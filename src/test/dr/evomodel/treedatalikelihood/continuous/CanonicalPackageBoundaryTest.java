@@ -60,6 +60,9 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical"),
                 SYSTEM_PRINT);
         assertNoSourceMatch(
+                new File("src/dr/evomodel/continuous/canonical"),
+                SYSTEM_PRINT);
+        assertNoSourceMatch(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 SYSTEM_PRINT);
         assertNoSourceMatch(
@@ -90,6 +93,9 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
                 WILDCARD_IMPORT,
                 "OUCanonical");
+        assertNoSourceMatch(
+                new File("src/dr/evomodel/continuous/canonical"),
+                WILDCARD_IMPORT);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 WILDCARD_IMPORT);
@@ -149,6 +155,22 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient");
+
+        // dr.evomodel.continuous.canonical (math, contribution, workspace, scheduling,
+        // BMProcessModel/ContinuousProcessModel) is the relocated pure-math half of the former
+        // continuousNew.canonical.* subpackages (see private-code/docs/
+        // continuousNew_tree_math_separation_plan.md, "Dependency Rules"): it must never depend
+        // back on the tree-dependent traversal/adapter code it was split out of, or on the tree
+        // itself.
+        assertNoImportContaining(
+                new File("src/dr/evomodel/continuous/canonical"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal");
+        assertNoImportContaining(
+                new File("src/dr/evomodel/continuous/canonical"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
+        assertNoImportContaining(
+                new File("src/dr/evomodel/continuous/canonical"),
+                "dr.evolution.tree");
     }
 
     public void testCanonicalTreeHotPathsUseFlatMatrixOps() throws IOException {

@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 

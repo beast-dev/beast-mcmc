@@ -8,7 +8,7 @@ import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.HomogeneousCanonicalBMBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;

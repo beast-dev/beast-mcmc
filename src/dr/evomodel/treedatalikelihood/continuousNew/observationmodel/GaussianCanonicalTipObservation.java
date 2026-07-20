@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
 
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;

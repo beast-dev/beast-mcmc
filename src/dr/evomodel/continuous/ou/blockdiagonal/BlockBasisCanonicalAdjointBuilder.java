@@ -4,7 +4,7 @@ import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;

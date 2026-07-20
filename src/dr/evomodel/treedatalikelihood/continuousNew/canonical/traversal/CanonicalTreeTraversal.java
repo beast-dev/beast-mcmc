@@ -35,7 +35,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitio
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipBranchMessageProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;

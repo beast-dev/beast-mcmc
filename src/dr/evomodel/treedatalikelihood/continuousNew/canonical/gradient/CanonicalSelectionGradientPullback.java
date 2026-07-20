@@ -2,7 +2,7 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 
 interface CanonicalSelectionGradientPullback {
 

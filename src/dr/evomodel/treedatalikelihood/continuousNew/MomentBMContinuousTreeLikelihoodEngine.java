@@ -27,6 +27,7 @@
 
 package dr.evomodel.treedatalikelihood.continuousNew;
 
+import dr.evomodel.continuous.canonical.BMProcessModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.NodeOperation;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;

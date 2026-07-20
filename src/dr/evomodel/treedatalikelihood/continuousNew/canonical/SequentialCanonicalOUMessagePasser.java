@@ -27,18 +27,18 @@
 
 package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.contribution.CanonicalBranchContributionAssembler;
+import dr.evomodel.continuous.canonical.contribution.CanonicalBranchContributionAssembler;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientMessageProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchAdjointPreparer;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchLengthGradientEngine;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalTreeGradientEngine;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.StateStoreBranchGradientMessageProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
+import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeTraversal;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceFactory;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.WorkspaceFactory;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalDebugOptions;

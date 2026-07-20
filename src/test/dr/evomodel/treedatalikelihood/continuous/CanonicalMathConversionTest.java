@@ -1,8 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.CanonicalInversionResult;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.continuous.canonical.math.CanonicalInversionResult;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.GivensRotationMatrixParameter;

@@ -1,6 +1,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.continuous.canonical.math.GaussianFormConverter;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;

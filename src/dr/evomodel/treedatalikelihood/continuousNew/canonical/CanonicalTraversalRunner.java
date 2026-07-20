@@ -2,7 +2,7 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeTraversal;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.util.CanonicalTraversalTimer;
 import dr.util.TaskPool;
 

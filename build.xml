@@ -442,6 +442,9 @@
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/backprop/BlockDiagonalLyapunovEqualDiagonalPlanTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUXmlWiringTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalWorkspaceHardeningTest.java"/>
+                    <include name="test/dr/evomodel/continuous/ou/blockdiagonal/BlockBasisGlobalSnapshotTest.java"/>
+                    <include name="test/dr/evomodel/continuous/ou/blockdiagonal/BlockBasisCanonicalTransitionBuilderTest.java"/>
+                    <include name="test/dr/evomodel/continuous/ou/blockdiagonal/BlockBasisCanonicalAdjointBuilderTest.java"/>
                 </fileset>
             </batchtest>
         </junit>

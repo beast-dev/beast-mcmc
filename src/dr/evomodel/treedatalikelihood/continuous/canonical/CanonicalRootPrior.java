@@ -30,8 +30,6 @@ package dr.evomodel.treedatalikelihood.continuous.canonical;
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
 
 /**
- * Canonical-form analogue of {@link RootPrior}.
- *
  * <p>The canonical OU path uses this interface to seed the root message for the
  * downward pass and to integrate the canonical upward root message into the final
  * log-likelihood without forcing the core passer API through a moment-form seam.

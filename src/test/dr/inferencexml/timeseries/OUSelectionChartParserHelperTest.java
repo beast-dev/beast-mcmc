@@ -1,5 +1,6 @@
 package test.dr.inferencexml.timeseries;
 
+import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
@@ -61,6 +62,73 @@ public class OUSelectionChartParserHelperTest extends TestCase {
         } catch (XMLParseException expected) {
             assertTrue(expected.getMessage().contains("orthogonal-block"));
         }
+    }
+
+    public void testRotatedBlockSelectionRequiresExplicitRotatedBlockChart() throws Exception {
+        try {
+            OUSelectionChartParserHelper.validateSelectionChart(
+                    parseXml("<ouProcessModel/>"),
+                    rotatedBlockSelectionMatrix(),
+                    "ouProcessModel");
+            fail("Expected XMLParseException for rotated-block selection chart without explicit opt-in");
+        } catch (XMLParseException expected) {
+            assertTrue(expected.getMessage().contains("selectionChart=\"rotatedBlock\""));
+        }
+    }
+
+    public void testRotatedBlockSelectionAcceptedWhenExplicitlyRequested() throws Exception {
+        OUSelectionChartParserHelper.validateSelectionChart(
+                parseXml("<ouProcessModel selectionChart=\"rotatedBlock\"/>"),
+                rotatedBlockSelectionMatrix(),
+                "ouProcessModel");
+    }
+
+    public void testDenseSelectionStillAcceptedForRotatedBlockMatrix() throws Exception {
+        // Backward compatibility: "dense" remains a lenient catch-all that accepts
+        // rotated-block matrices too, since XML written before "rotatedBlock" existed
+        // already relies on this.
+        OUSelectionChartParserHelper.validateSelectionChart(
+                parseXml("<ouProcessModel selectionChart=\"dense\"/>"),
+                rotatedBlockSelectionMatrix(),
+                "ouProcessModel");
+    }
+
+    public void testRotatedBlockSelectionRejectsOrthogonalBlockMatrix() throws Exception {
+        try {
+            OUSelectionChartParserHelper.validateSelectionChart(
+                    parseXml("<ouProcessModel selectionChart=\"rotatedBlock\"/>"),
+                    orthogonalBlockSelectionMatrix(),
+                    "ouProcessModel");
+            fail("Expected XMLParseException for rotatedBlock override on an orthogonal-block matrix");
+        } catch (XMLParseException expected) {
+            assertTrue(expected.getMessage().contains("orthogonal-block"));
+        }
+    }
+
+    public void testRotatedBlockSelectionRejectsPlainDenseMatrix() throws Exception {
+        try {
+            OUSelectionChartParserHelper.validateSelectionChart(
+                    parseXml("<ouProcessModel selectionChart=\"rotatedBlock\"/>"),
+                    denseSelectionMatrix(),
+                    "ouProcessModel");
+            fail("Expected XMLParseException for rotatedBlock override on a plain dense matrix");
+        } catch (XMLParseException expected) {
+            assertTrue(expected.getMessage().contains("selectionChart=\"dense\""));
+        }
+    }
+
+    private static MatrixParameterInterface rotatedBlockSelectionMatrix() {
+        final MatrixParameter rotation = new MatrixParameter("rotation", 2, 2);
+        rotation.setParameterValue(0, 0, 1.0);
+        rotation.setParameterValue(0, 1, 0.3);
+        rotation.setParameterValue(1, 0, 0.1);
+        rotation.setParameterValue(1, 1, 1.1);
+        final Parameter scalar = new Parameter.Default(0);
+        final Parameter rho = new Parameter.Default("rho", new double[]{-0.85});
+        final Parameter theta = new Parameter.Default("theta", new double[]{0.25});
+        final Parameter t = new Parameter.Default("t", new double[]{-0.08});
+        return new BlockDiagonalPolarStableMatrixParameter(
+                "rotatedBlockSelection", rotation, scalar, rho, theta, t);
     }
 
     private static XMLObject parseXml(final String xml) throws Exception {

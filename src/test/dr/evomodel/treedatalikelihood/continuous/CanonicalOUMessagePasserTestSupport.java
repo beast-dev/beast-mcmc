@@ -41,6 +41,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
 import dr.evomodel.treedatalikelihood.continuous.observationmodel.GaussianCanonicalTipObservation;
 import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
@@ -73,6 +74,20 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
     protected static final double ORTHOGONAL_T = -0.08;
     protected static final double[] ORTHOGONAL_ANGLES = {0.2, -0.15, 0.1};
 
+    // General (non-orthogonal R) block-diagonal S = R*B*R^{-1} fixture, dimTrait = 3:
+    // one 1x1 scalar block plus one stable 2x2 block. R is deliberately not orthogonal
+    // (rows are not unit-norm/orthonormal) so this exercises the dense-rotation path
+    // that the rotated/block-basis OU work (private-code/rotatedOU/) targets.
+    protected static final double[][] GENERAL_BLOCK_R_VALUES = {
+            {1.00, 0.20, 0.05},
+            {0.10, 1.10, 0.15},
+            {0.05, 0.10, 0.95}
+    };
+    protected static final double GENERAL_BLOCK_SCALAR = -2.2;
+    protected static final double GENERAL_BLOCK_RHO = -1.8;
+    protected static final double GENERAL_BLOCK_THETA = 0.2;
+    protected static final double GENERAL_BLOCK_T = 0.15;
+
     protected CanonicalOUMessagePasserTestSupport(final String name) {
         super(name);
     }
@@ -83,11 +98,19 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
     }
 
     protected void checkGradientQ(final OUSetup setup, final String label) {
+        checkGradientQ(setup, dimTrait * dimTrait, label);
+    }
+
+    // selectionGradientDimension is the length of the "A" placeholder array passed to
+    // computeJointGradients; it must match the selection parametrization's native gradient
+    // size (dimTrait*dimTrait for a plain dense MatrixParameter, but larger for block
+    // parametrizations such as GeneralBlockOUSetup that carry extra native parameters).
+    protected void checkGradientQ(final OUSetup setup, final int selectionGradientDimension, final String label) {
         final int d2 = dimTrait * dimTrait;
 
         refreshMessages(setup);
         final double[] gradAnalytic = new double[d2];
-        computeJointGradientQ(setup, gradAnalytic, d2);
+        computeJointGradientQ(setup, gradAnalytic, selectionGradientDimension);
 
         final double[] gradNumeric = new double[d2];
         final double[] gradAnalyticSymmetric = new double[d2];
@@ -182,9 +205,13 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
     }
 
     protected void checkGradientMu(final OUSetup setup, final String label) {
+        checkGradientMu(setup, dimTrait * dimTrait, label);
+    }
+
+    protected void checkGradientMu(final OUSetup setup, final int selectionGradientDimension, final String label) {
         refreshMessages(setup);
         final double[] gradAnalytic = new double[dimTrait];
-        computeJointGradientMu(setup, gradAnalytic, dimTrait * dimTrait);
+        computeJointGradientMu(setup, gradAnalytic, selectionGradientDimension);
 
         final double[] gradNumeric = new double[dimTrait];
         for (int i = 0; i < dimTrait; i++) {
@@ -548,6 +575,93 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
         return new OrthogonalBlockOUSetup(blockSelection, blockSelection.getParameter(), orthogonalSetup, denseSetup);
     }
 
+    protected GeneralBlockOUSetup buildGeneralBlockOUSetup(final String tag,
+                                                            final CanonicalTipObservation[] tips) {
+        final MatrixParameter rParam = new MatrixParameter("R.block." + tag, dimTrait, dimTrait);
+        fillMatrixParameter(rParam, GENERAL_BLOCK_R_VALUES);
+        final Parameter scalar = new Parameter.Default("scalar.block." + tag, new double[]{GENERAL_BLOCK_SCALAR});
+        final Parameter rho = new Parameter.Default("rho.block." + tag, new double[]{GENERAL_BLOCK_RHO});
+        final Parameter theta = new Parameter.Default("theta.block." + tag, new double[]{GENERAL_BLOCK_THETA});
+        final Parameter t = new Parameter.Default("t.block." + tag, new double[]{GENERAL_BLOCK_T});
+
+        final BlockDiagonalPolarStableMatrixParameter blockSelection =
+                new BlockDiagonalPolarStableMatrixParameter("A.block." + tag, rParam, scalar, rho, theta, t);
+
+        final OUSetup blockSetup = buildOUSetupFromElasticModel(
+                "block." + tag,
+                tips,
+                new MultivariateElasticModel(blockSelection),
+                null,
+                MU_VALUES.clone());
+
+        final MatrixParameter denseSelection = new MatrixParameter("A.blockDense." + tag, dimTrait, dimTrait);
+        for (int row = 0; row < dimTrait; row++) {
+            for (int col = 0; col < dimTrait; col++) {
+                denseSelection.setParameterValueQuietly(row, col, blockSelection.getParameterValue(row, col));
+            }
+        }
+        denseSelection.fireParameterChangedEvent();
+        final OUSetup denseSetup = buildOUSetup(
+                "blockDense." + tag,
+                tips,
+                denseSelection,
+                MU_VALUES.clone());
+
+        return new GeneralBlockOUSetup(blockSelection, rParam, scalar, rho, theta, t, blockSetup, denseSetup);
+    }
+
+    protected void checkGeneralBlockLikelihoodMatchesDense(final GeneralBlockOUSetup setup, final String label) {
+        final double blockLogLikelihood =
+                setup.block.passer.computePostOrderLogLikelihood(setup.block.provider, setup.block.rootPrior);
+        final double denseLogLikelihood =
+                setup.dense.passer.computePostOrderLogLikelihood(setup.dense.provider, setup.dense.rootPrior);
+        System.out.printf("  General block logL: %.12f%n", blockLogLikelihood);
+        System.out.printf("  Dense        logL: %.12f%n", denseLogLikelihood);
+        assertEquals("general-block vs dense log-likelihood (" + label + ")",
+                denseLogLikelihood, blockLogLikelihood, 1e-8);
+    }
+
+    protected void checkGeneralBlockGradientRMatchesFiniteDifference(final GeneralBlockOUSetup setup,
+                                                                     final String label) {
+        refreshMessages(setup.block);
+        final int nativeBlockDim = setup.blockSelection.getBlockDiagonalNParameters();
+        final int gradientDimension = nativeBlockDim + dimTrait * dimTrait;
+        final double[] gradAnalytic = new double[gradientDimension];
+        computeJointGradientA(setup.block, gradAnalytic);
+
+        final double[] gradNumericR = new double[dimTrait * dimTrait];
+        for (int row = 0; row < dimTrait; row++) {
+            for (int col = 0; col < dimTrait; col++) {
+                final double original = setup.rParam.getParameterValue(row, col);
+
+                setup.rParam.setParameterValue(row, col, original + FD_DELTA);
+                final double logLPlus =
+                        setup.block.passer.computePostOrderLogLikelihood(setup.block.provider, setup.block.rootPrior);
+
+                setup.rParam.setParameterValue(row, col, original - FD_DELTA);
+                final double logLMinus =
+                        setup.block.passer.computePostOrderLogLikelihood(setup.block.provider, setup.block.rootPrior);
+
+                setup.rParam.setParameterValue(row, col, original);
+                // BlockDiagonalSelectionMatrixParameterization.flattenRotationGradientForParameter stores
+                // the rotation-gradient tail in column-major order when R is a plain (non-transposed)
+                // MatrixParameter, so match that layout here instead of row-major.
+                gradNumericR[col * dimTrait + row] = (logLPlus - logLMinus) / (2.0 * FD_DELTA);
+            }
+        }
+
+        final double[] gradAnalyticR = Arrays.copyOfRange(gradAnalytic, nativeBlockDim, gradientDimension);
+        System.out.printf("  Analytic ∂logL/∂R (col-major): %s%n", Arrays.toString(gradAnalyticR));
+        System.out.printf("  Numeric  ∂logL/∂R (col-major): %s%n", Arrays.toString(gradNumericR));
+        for (int col = 0; col < dimTrait; col++) {
+            for (int row = 0; row < dimTrait; row++) {
+                final int index = col * dimTrait + row;
+                assertEquals("∂logL/∂R[" + row + "," + col + "] (" + label + ")",
+                        gradNumericR[index], gradAnalyticR[index], TOL);
+            }
+        }
+    }
+
     protected CanonicalTipObservation[] buildFullyObservedTips() {
         final Map<String, double[]> traitValues = buildStandardTraitValues();
         final CanonicalTipObservation[] tips = new CanonicalTipObservation[treeModel.getExternalNodeCount()];
@@ -704,6 +818,35 @@ abstract class CanonicalOUMessagePasserTestSupport extends ContinuousTraitTest {
             this.blockSelection = blockSelection;
             this.nativeParameter = nativeParameter;
             this.orthogonal = orthogonal;
+            this.dense = dense;
+        }
+    }
+
+    protected static final class GeneralBlockOUSetup {
+        final BlockDiagonalPolarStableMatrixParameter blockSelection;
+        final MatrixParameter rParam;
+        final Parameter scalarParam;
+        final Parameter rhoParam;
+        final Parameter thetaParam;
+        final Parameter tParam;
+        final OUSetup block;
+        final OUSetup dense;
+
+        private GeneralBlockOUSetup(final BlockDiagonalPolarStableMatrixParameter blockSelection,
+                                    final MatrixParameter rParam,
+                                    final Parameter scalarParam,
+                                    final Parameter rhoParam,
+                                    final Parameter thetaParam,
+                                    final Parameter tParam,
+                                    final OUSetup block,
+                                    final OUSetup dense) {
+            this.blockSelection = blockSelection;
+            this.rParam = rParam;
+            this.scalarParam = scalarParam;
+            this.rhoParam = rhoParam;
+            this.thetaParam = thetaParam;
+            this.tParam = tParam;
+            this.block = block;
             this.dense = dense;
         }
     }

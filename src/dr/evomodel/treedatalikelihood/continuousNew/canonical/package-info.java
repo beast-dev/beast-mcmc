@@ -32,4 +32,4 @@
  * Backend implementation packages such as {@code blockdiagonal}
  * remain behind those capabilities.</p>
  */
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;

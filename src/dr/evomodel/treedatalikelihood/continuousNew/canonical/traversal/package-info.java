@@ -6,4 +6,4 @@
  * BEAST/CDI lifecycle, and OU backend specialization belong outside this
  * package.</p>
  */
-package dr.evomodel.treedatalikelihood.continuous.canonical.traversal;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal;

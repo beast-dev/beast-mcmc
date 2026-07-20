@@ -6,4 +6,4 @@
  * targets. It should depend on canonical provider/capability contracts, not on
  * BEAST/CDI lifecycle adapters or specialized backend implementation packages.</p>
  */
-package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;

@@ -5,4 +5,4 @@
  * BEAST {@code double[][]} and EJML matrices into flat form. New canonical
  * hot-path code should use this package directly.</p>
  */
-package dr.evomodel.treedatalikelihood.continuous.canonical.math;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.math;

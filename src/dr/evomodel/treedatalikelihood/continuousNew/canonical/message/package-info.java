@@ -7,6 +7,6 @@
  * tree-topology agnostic; traversal, branch selection, BEAST model lifecycle, and
  * general matrix utilities belong in parent/sibling packages. New canonical
  * hot-path matrix code should use
- * {@code dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps}.</p>
+ * {@code dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps}.</p>
  */
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;

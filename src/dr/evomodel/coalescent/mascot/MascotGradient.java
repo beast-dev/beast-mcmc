@@ -40,8 +40,6 @@ import dr.xml.Reportable;
  */
 public final class MascotGradient implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    public static final String MASCOT_GRADIENT = "mascotGradient";
-
     public enum Part {
         MIGRATION, POPULATION_SIZE, CLOCK_RATE
     }

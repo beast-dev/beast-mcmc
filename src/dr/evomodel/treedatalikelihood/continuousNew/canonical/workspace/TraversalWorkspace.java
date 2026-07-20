@@ -1,10 +1,10 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationModelWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipParentMessageWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationModelWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipParentMessageWorkspace;
 
 public final class TraversalWorkspace {
     public final double[] traitCovariance;

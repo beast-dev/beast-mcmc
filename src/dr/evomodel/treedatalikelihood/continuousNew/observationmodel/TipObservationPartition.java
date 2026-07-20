@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
 
 public final class TipObservationPartition {
 

@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace;
 
 import java.util.EnumSet;
 

@@ -144,19 +144,38 @@ public class TreeTipGaussianProcess implements GaussianProcessRandomGenerator, L
          return draw;
     }
 
+    private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
+
     private void doPostOrderTraversal() {
 
         if (treeTraversalDelegate != null) {
-            
-            treeTraversalDelegate.updateAllNodes();
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
 
             final NodeRef root = treeDataLikelihood.getTree().getRoot();
 
-            likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+            // calculateLikelihood() can throw LikelihoodException to signal underflow/rescaling is
+            // needed, exactly like TreeDataLikelihood's own postorder traversal; retry with the same
+            // convention (mark all nodes dirty and recompute operations) rather than treat it as fatal.
+            long underflowCount = 0;
+            boolean done = false;
+            do {
+                treeTraversalDelegate.updateAllNodes();
+                treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+
+                final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+                final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+
+                try {
+                    likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                    done = true;
+                } catch (DataLikelihoodDelegate.LikelihoodException e) {
+                    underflowCount++;
+                }
+            } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
+
+            if (!done) {
+                throw new RuntimeException("Unable to compute tree tip Gaussian process likelihood after "
+                        + MAX_UNDERFLOWS_BEFORE_ERROR + " underflow retries.");
+            }
 
         } else {
             treeDataLikelihood.fireModelChanged();

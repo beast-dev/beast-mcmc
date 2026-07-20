@@ -1,6 +1,6 @@
-package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 
 /**
  * Shared scratch buffers for computing the upward parent message from a tip observation model.

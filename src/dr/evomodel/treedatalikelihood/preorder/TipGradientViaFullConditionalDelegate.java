@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;

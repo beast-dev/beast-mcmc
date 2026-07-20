@@ -17,10 +17,12 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.DiffusionProcessDelegate;
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalActualizedWithDriftIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
@@ -354,18 +356,31 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
                 buildContinuousTraitDataModel("data." + tag, tips);
         final DiffusionProcessDelegate diffusionDelegate =
                 buildDiagonalOUDiffusionDelegate(tag);
-        final ContinuousDataLikelihoodDelegate delegate =
-                new ContinuousDataLikelihoodDelegate(
-                        treeModel,
-                        diffusionDelegate,
-                        benchmarkDataModel,
-                        buildRootPrior(tag),
-                        rateTransformation,
-                        branchRateModel,
-                        false,
-                        false);
+        final CtsCompatibility delegate;
         if (canonical) {
-            delegate.enableCanonicalOULikelihood();
+            final ContinuousDataLikelihoodDelegateNew canonicalDelegate =
+                    new ContinuousDataLikelihoodDelegateNew(
+                            treeModel,
+                            diffusionDelegate,
+                            benchmarkDataModel,
+                            buildRootPrior(tag),
+                            rateTransformation,
+                            branchRateModel,
+                            false,
+                            false,
+                            false);
+            canonicalDelegate.enableCanonicalOULikelihood();
+            delegate = canonicalDelegate;
+        } else {
+            delegate = new ContinuousDataLikelihoodDelegate(
+                    treeModel,
+                    diffusionDelegate,
+                    benchmarkDataModel,
+                    buildRootPrior(tag),
+                    rateTransformation,
+                    branchRateModel,
+                    false,
+                    false);
         }
         final TreeDataLikelihood likelihood =
                 new TreeDataLikelihood(delegate, treeModel, branchRateModel);
@@ -480,11 +495,11 @@ public final class TreeCanonicalDiagonalNativeBenchmarkTest extends CanonicalOUM
     }
 
     private static final class TreeLikelihoodSetup {
-        final ContinuousDataLikelihoodDelegate delegate;
+        final CtsCompatibility delegate;
         final TreeDataLikelihood likelihood;
         final double[] branchScale;
 
-        private TreeLikelihoodSetup(final ContinuousDataLikelihoodDelegate delegate,
+        private TreeLikelihoodSetup(final CtsCompatibility delegate,
                                     final TreeDataLikelihood likelihood,
                                     final double[] branchScale) {
             this.delegate = delegate;

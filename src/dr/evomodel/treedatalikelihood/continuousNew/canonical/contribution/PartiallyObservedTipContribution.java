@@ -1,9 +1,9 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.contribution;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientMessageBundle;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.IdentityCanonicalTipObservationModel;
 
 final class PartiallyObservedTipContribution implements BranchContributionStrategy {
 

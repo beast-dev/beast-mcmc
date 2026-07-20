@@ -1,13 +1,13 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchGradientAccumulator;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.SpecializedGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.SpecializedGradientWorkspace;
 
 final class SpecializedCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
 

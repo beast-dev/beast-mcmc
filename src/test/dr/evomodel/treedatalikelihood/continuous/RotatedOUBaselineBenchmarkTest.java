@@ -5,7 +5,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

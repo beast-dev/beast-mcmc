@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
 
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;

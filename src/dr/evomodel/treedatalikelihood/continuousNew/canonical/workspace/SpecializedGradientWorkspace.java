@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.workspace;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;

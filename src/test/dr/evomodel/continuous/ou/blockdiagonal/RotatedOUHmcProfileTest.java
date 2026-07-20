@@ -11,26 +11,24 @@ import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisCanonicalTransitionBuil
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalConjugateRootPriorAdapter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.SequentialCanonicalOUMessagePasser;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalConjugateRootPriorAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContributionUtils;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.loggers.LogColumn;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
@@ -50,7 +48,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Standalone profile for the rotated/block-basis OU prototype and the older

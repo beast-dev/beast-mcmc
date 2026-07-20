@@ -1,8 +1,8 @@
 package dr.inference.timeseries.engine.kalman;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContributionUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContributionUtils;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 
 /**
  * Shared, data-independent canonical branch schedule for independent time series.

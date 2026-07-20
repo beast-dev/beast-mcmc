@@ -30,14 +30,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.LyapunovNonStationaryException;
 import org.ejml.data.DenseMatrix64F;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
 import org.ejml.ops.CommonOps;
 
-import java.util.Arrays;
-
-import static dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver.expBlockMatrix;
+import static dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver.expBlockMatrix;
 
 /**
  * Block–Diag specialization of SafeMultivariateActualizedWithDriftIntegrator.

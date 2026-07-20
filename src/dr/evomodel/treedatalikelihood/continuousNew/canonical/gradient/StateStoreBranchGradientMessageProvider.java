@@ -1,8 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 
 /**
  * First branch-gradient message provider: a thin semantic view over the current state store.

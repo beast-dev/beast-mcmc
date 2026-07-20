@@ -1,8 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous.observationmodel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionMomentProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionMomentProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 
 public final class PartialIdentityTipProjection {
 

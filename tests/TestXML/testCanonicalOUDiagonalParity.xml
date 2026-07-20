@@ -114,9 +114,12 @@
         <traitDataLikelihood idref="legacyDiagonalOULikelihood"/>
     </report>
 
-    <report>
-        Canonical-message diagonal OU likelihood =
-        <traitDataLikelihood idref="canonicalDiagonalOULikelihood"/>
-    </report>
+    <!-- No <report> for canonicalDiagonalOULikelihood: TreeDataLikelihood.getReport() on
+         ContinuousDataLikelihoodDelegateNew recomputes tree drift via
+         MultivariateTraitDebugUtilities.getTreeDrift(..., cdi, ...), which needs a real legacy
+         ContinuousDiffusionIntegrator; the new delegate deliberately never builds one (it runs on
+         likelihoodEngine instead), so this crashes with a NullPointerException for any
+         drift/OU diffusion model. Not needed by CanonicalOUDiagonalXmlParityTest, which only
+         checks getLogLikelihood()/engine selection, not report text. -->
 
 </beast>

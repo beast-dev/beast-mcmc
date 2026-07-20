@@ -1,6 +1,6 @@
-package dr.evomodel.treedatalikelihood.continuous.observationmodel;
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
 
 public final class PartialIdentityTipObservationWorkspace {
 

@@ -33,9 +33,11 @@ import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
@@ -166,7 +168,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         final ContinuousTraitPartialsProvider dataModel;
         final ConjugateRootTraitPrior rootPrior;
         final RootProcessDelegate rootProcessDelegate;
-        final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+        final CtsCompatibility likelihoodDelegate;
 
         double[] diffusionVariance;
         DenseMatrix64F Vd;
@@ -185,7 +187,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
                                         ContinuousTraitPartialsProvider dataModel,
                                         ConjugateRootTraitPrior rootPrior,
                                         ContinuousRateTransformation rateTransformation,
-                                        ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                        CtsCompatibility likelihoodDelegate) {
             super(name, tree);
 
             dimTrait = likelihoodDelegate.getTraitDim();

@@ -2,7 +2,7 @@ package test.dr.inference.timeseries;
 
 import com.sun.management.ThreadMXBean;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;

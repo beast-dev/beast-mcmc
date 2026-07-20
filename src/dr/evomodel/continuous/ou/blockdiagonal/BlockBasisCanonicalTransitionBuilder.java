@@ -2,8 +2,8 @@ package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.continuous.ou.math.OUPositiveDefiniteMatrixInversionOptions;
 import dr.evomodel.continuous.ou.math.PositiveDefiniteMatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
 
 /**

@@ -4,8 +4,8 @@ import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;

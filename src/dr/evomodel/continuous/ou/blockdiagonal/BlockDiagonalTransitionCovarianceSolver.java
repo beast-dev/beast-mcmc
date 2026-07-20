@@ -1,7 +1,7 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 

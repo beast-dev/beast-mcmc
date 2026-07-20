@@ -1,8 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.continuous.backprop;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
 import junit.framework.TestCase;
 import org.ejml.data.DenseMatrix64F;
 

@@ -1,6 +1,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;

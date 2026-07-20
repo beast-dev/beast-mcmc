@@ -4,15 +4,15 @@ import dr.evomodel.continuous.ou.DenseSelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.TransposedMatrixParameter;
@@ -1353,7 +1353,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                                              final DenseMatrix64F yAdjoint,
                                              final DenseMatrix64F temp1,
                                              final DenseMatrix64F temp2,
-                                             final dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
+                                             final dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
         fillSharedCovarianceAdjointsInDBasis(
                 rMatrix,
                 rinvMatrix,

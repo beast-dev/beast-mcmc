@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.backprop;
+package dr.evomodel.continuous.ou.blockdiagonal.math;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -6,6 +6,7 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 /**
  * Exact block-space helper for Fréchet derivatives of exp(-D t).
@@ -15,6 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * repeated branch-local applications into tiny dense matrix-vector multiplies.</p>
  */
 public final class BlockDiagonalFrechetHelper {
+
+    private static final Logger LOGGER = Logger.getLogger("dr.evomodel.continuous.ou.blockdiagonal.math");
 
     private static final String USE_EQUAL_DIAGONAL_PLAN_PROPERTY =
             "beast.experimental.useEqualDiagonalFrechetPlan";
@@ -534,7 +537,7 @@ public final class BlockDiagonalFrechetHelper {
                 deltaCoefficientDistinctBothImagEvaluations,
                 deltaEqualDiagonalEvaluations,
                 deltaGenericSolve4x4Calls);
-        System.err.println(message);
+        LOGGER.warning(message);
 
         lastReportedParameterUpdates = parameterUpdates;
         lastReportedTimeEvaluations = timeEvaluations;

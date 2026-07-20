@@ -1,8 +1,8 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.MatrixParameterInterface;
 
 /**

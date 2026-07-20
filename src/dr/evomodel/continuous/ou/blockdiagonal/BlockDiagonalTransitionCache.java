@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.BlockDiagonalDecomposition;
 import org.ejml.data.DenseMatrix64F;
@@ -165,7 +165,7 @@ final class BlockDiagonalTransitionCache {
                         Math.abs(debugBlockRinv[rc] - debugBlockR[cr]));
             }
         }
-        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("nativeRConsistencyDebug dt=" + dt
+        dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("nativeRConsistencyDebug dt=" + dt
                 + " maxAbsRDiff=" + maxR
                 + " maxAbsRinvDiff=" + maxRinv
                 + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);

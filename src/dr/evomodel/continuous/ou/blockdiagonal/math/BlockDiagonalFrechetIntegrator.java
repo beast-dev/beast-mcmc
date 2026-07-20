@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.backprop;
+package dr.evomodel.continuous.ou.blockdiagonal.math;
 
 /**
  * Small-block numerical integrator for Fréchet derivatives in the D-basis.

@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.backprop;
+package dr.evomodel.continuous.ou.blockdiagonal.math;
 
 import org.ejml.data.DenseMatrix64F;
 

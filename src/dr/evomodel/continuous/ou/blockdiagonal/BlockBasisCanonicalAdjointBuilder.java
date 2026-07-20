@@ -1,11 +1,11 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalFrechetHelper;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovAdjointHelper;
-import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalLyapunovSolver;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 

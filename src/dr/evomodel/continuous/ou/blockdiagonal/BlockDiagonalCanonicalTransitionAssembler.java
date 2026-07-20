@@ -1,6 +1,6 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import org.ejml.data.DenseMatrix64F;
 
 final class BlockDiagonalCanonicalTransitionAssembler {

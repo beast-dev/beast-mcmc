@@ -22,6 +22,7 @@ import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -682,6 +683,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     public List<Citation> getCitations() {
-        return List.of();
+        return Collections.emptyList();
     }
 }

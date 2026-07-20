@@ -63,26 +63,17 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTr
  */
 
 public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood implements
-        TreeTraitProvider, AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
+        AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
         ProcessAlongTree, DiscreteProcessAlongTree {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
 
     private final BastaLikelihoodDelegate likelihoodDelegate;
 
-    private final Tree tree;
-    private final PatternList patternList;
     private final SubstitutionModel substitutionModel;
     private final AbstractPopulationSizeModel populationSizeModel;
-    private final int stateCount;
-
-    private final Helper treeTraits = new Helper();
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
-
-    private double logLikelihood;
-    private double storedLogLikelihood;
-    protected boolean likelihoodKnown;
 
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
@@ -104,16 +95,16 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
                            Tree treeModel,
                            PatternList patternList,
                            SubstitutionModel substitutionModel,
-                           AbstractPopulationSizeModel populationSizeModel,
                            BranchRateModel branchRateModel,
-                           BastaLikelihoodDelegate likelihoodDelegate,
+                           AbstractPopulationSizeModel populationSizeModel,
                            int numberSubIntervals,
+                           BastaLikelihoodDelegate likelihoodDelegate,
                            boolean useAmbiguities,
                            DataType dataType,
                            String tag,
                            boolean useMAP) {
 
-        super(name, buildTreeIntervals(treeModel), branchRateModel);
+        super(name, treeModel, patternList, substitutionModel.getDataType().getStateCount(), branchRateModel);
 
         assert likelihoodDelegate != null;
         assert treeModel != null;
@@ -130,19 +121,15 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
         logger.info("\nUsing BastaLikelihood with Ancestral State Reconstruction");
 
-        this.patternList = patternList;
-
         this.likelihoodDelegate = likelihoodDelegate;
         addModel(likelihoodDelegate);
-
-        this.tree = treeModel;
 
         this.substitutionModel = substitutionModel;
         addModel(substitutionModel);
 
-
-        this.stateCount = substitutionModel.getDataType().getStateCount();
-        StructuredTipStates.validateSinglePattern(patternList, stateCount, "BASTA tip-state attributePatterns");
+        // validateSinglePattern(patternList, stateCount, ...) now runs in
+        // AbstractStructuredCoalescentLikelihood's constructor (super() above),
+        // shared with MASCOT.
 
         // buildTreeIntervals(treeModel) (passed to super() above) already threw
         // for any tree type other than these two, so this mirrors that check
@@ -189,15 +176,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         treeTraits.addTraits(ttp.getTreeTraits());
     }
 
-    private static BestSignalsFromBigFastTreeIntervals buildTreeIntervals(Tree tree) {
-        if (tree instanceof dr.evomodel.tree.TreeModel) {
-            return new BestSignalsFromBigFastTreeIntervals((dr.evomodel.tree.TreeModel) tree);
-        } else if (tree instanceof dr.evolution.tree.MutableTreeModel) {
-            return new BestSignalsFromBigFastTreeIntervals("intervals", (dr.evolution.tree.MutableTreeModel) tree);
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
-    }
+    // buildTreeIntervals dispatch (TreeModel vs. MutableTreeModel) now lives
+    // in AbstractStructuredCoalescentLikelihood's constructor, shared with MASCOT.
 
     private final AbstractRealizedDiscreteTraitDelegate traitDelegate;
 
@@ -264,15 +244,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         }
     }
 
-    @Override
-    public Tree getTree() {
-        return tree;
-    }
-
-    @Override
-    public BranchRateModel getBranchRateModel() {
-        return branchRateModel;
-    }
+    // getTree() and getBranchRateModel() are inherited unchanged from
+    // AbstractStructuredCoalescentLikelihood.
 
     @Override
     public void calculatePostOrderStatistics() {
@@ -280,30 +253,34 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         getLogLikelihood();
     }
 
-    @Override @SuppressWarnings("Duplicates")
-    public double getLogLikelihood() {
+    // getLogLikelihood() itself is inherited (final) from
+    // AbstractStructuredCoalescentLikelihood; onLikelihoodRequested(),
+    // beforeLikelihoodEvaluation(), and afterLikelihoodEvaluation() below
+    // reproduce the COUNT_TOTAL_OPERATIONS profiling this method used to do
+    // inline, and calculateLogLikelihood() further down is the actual
+    // engine-specific evaluation hook it calls.
+
+    @Override
+    protected void onLikelihoodRequested() {
         if (COUNT_TOTAL_OPERATIONS) totalGetLogLikelihoodCount++;
-
-        if (!likelihoodKnown) {
-            long startTime;
-            if (COUNT_TOTAL_OPERATIONS) {
-                totalCalculateLikelihoodCount++;
-                startTime = System.nanoTime();
-            }
-
-            logLikelihood = calculateLogLikelihood();
-
-            if (COUNT_TOTAL_OPERATIONS) {
-                long endTime = System.nanoTime();
-                totalLikelihoodTime += (endTime - startTime) / 1000;
-            }
-
-            likelihoodKnown = true;
-        }
-
-        return logLikelihood;
     }
 
+    @Override
+    protected long beforeLikelihoodEvaluation() {
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalCalculateLikelihoodCount++;
+            return System.nanoTime();
+        }
+        return 0L;
+    }
+
+    @Override
+    protected void afterLikelihoodEvaluation(long startTime) {
+        if (COUNT_TOTAL_OPERATIONS) {
+            long endTime = System.nanoTime();
+            totalLikelihoodTime += (endTime - startTime) / 1000;
+        }
+    }
 
     @Override
     public void setTipStates(int tipNum, int[] states) {
@@ -333,36 +310,35 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         }
     }
 
-    @Override
-    public int getPatternCount() {
-        return 1;
-    }
+    // getPatternCount() and getTipCount() are inherited unchanged from
+    // AbstractStructuredCoalescentLikelihood (patternList.getPatternCount()
+    // is always 1 here -- enforced above by validateSinglePattern -- and
+    // tree.getExternalNodeCount() was already exactly what this override did).
 
     @Override
-    public int getTipCount() {
-        return tree.getExternalNodeCount();
-    }
-
-    @Override
-    public void makeDirty() {
+    protected void makeDirtyInternal() {
         if (COUNT_TOTAL_OPERATIONS) totalMakeDirtyCount++;
 
-        likelihoodKnown = false;
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
 
-        ancestralStatesKnown = false;
         likelihoodDelegate.makeDirty();
         likelihoodDelegate.markPopulationSizesDirty();
         updateAllNodes();
     }
 
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        throw new RuntimeException("Unexpected variable change event: " + variable.getVariableName());
+    @Override
+    protected void invalidateDerivedState() {
+        ancestralStatesKnown = false;
     }
 
+    // handleVariableChangedEvent is inherited unchanged from
+    // AbstractStructuredCoalescentLikelihood: BASTA never registers a raw
+    // Parameter as a listened variable, only Models, so the base's default
+    // (throw -- an unexpected event) is exactly this class's old override.
+
     @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleStructuredModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeIntervals) {
             treeIntervalsKnown = false;
@@ -382,18 +358,13 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         }
 
         if (COUNT_TOTAL_OPERATIONS) totalModelChangedCount++;
-
-        ancestralStatesKnown = false;
-        likelihoodKnown = false;
-        fireModelChanged();
     }
 
     @Override
-    protected void storeState() {
+    protected void storeStructuredState() {
         assert (likelihoodKnown) : "the likelihood should always be known at this point in the cycle";
         assert (treeIntervalsKnown);
         assert (transitionMatricesKnown);
-        storedLogLikelihood = logLikelihood;
 
         // Store ancestral state reconstruction information
 //        if (ancestralStatesKnown) {
@@ -407,9 +378,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     }
 
     @Override
-    protected final void restoreState() {
-        logLikelihood = storedLogLikelihood;
-        likelihoodKnown = true;
+    protected void restoreStructuredState() {
         treeIntervalsKnown = false;
         transitionMatricesKnown = false;
 
@@ -423,10 +392,10 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 //        jointLogLikelihood = storedJointLogLikelihood;
     }
 
-    @Override
-    protected void acceptState() { } // nothing to do
+    // acceptState() is inherited unchanged from AbstractStructuredCoalescentLikelihood (was already a no-op here).
 
-    private double calculateLogLikelihood() {
+    @Override
+    protected double calculateLogLikelihood() {
 
         if (!transitionMatricesKnown) {
             // update eigen-decomposition
@@ -512,14 +481,12 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     public String getReport() {
         StringBuilder sb = new StringBuilder();
 
-        double logL = getLogLikelihood();
-
         String delegateString = likelihoodDelegate.getReport();
         if (delegateString != null) {
             sb.append(delegateString);
         }
 
-        sb.append(getClass().getName()).append("(").append(logL).append(")");
+        sb.append(getDefaultReport());
 
         if (COUNT_TOTAL_OPERATIONS)
             sb.append(
@@ -538,10 +505,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         return sb.toString();
     }
 
-    @Override
-    public TreeTrait[] getTreeTraits() {
-        return treeTraits.getTreeTraits();
-    }
+    // getTreeTraits(), getTreeTrait(), addTrait(), and addTraits() are
+    // inherited unchanged from AbstractStructuredCoalescentLikelihood.
 
     @Override
     public MutableTreeModel getTreeModel() {
@@ -549,21 +514,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     }
 
     @Override
-    public TreeTrait getTreeTrait(String key) {
-        return treeTraits.getTreeTrait(key);
-    }
-
-    @Override
     public String formattedState(int[] state) {
         return null;
-    }
-
-    public void addTrait(TreeTrait trait) {
-        treeTraits.addTrait(trait);
-    }
-
-    public void addTraits(TreeTrait[] traits) {
-        treeTraits.addTraits(traits);
     }
 
     @Override
@@ -663,10 +615,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     private SiteRateModel siteRateModel = null;
     private EvolutionaryProcessDelegate evolutionaryProcessDelegate = null;
 
-    @Override
-    public PatternList getPatternList() {
-        return patternList;
-    }
+    // getPatternList() is inherited unchanged from AbstractStructuredCoalescentLikelihood.
 
     enum AncestralTraversalMethod {
         LEVEL_ORDER,

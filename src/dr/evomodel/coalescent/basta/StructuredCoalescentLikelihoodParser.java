@@ -302,7 +302,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                         }
 
                         BastaLikelihood likelihood = new BastaLikelihood(name, treeModel, patternList, generalSubstitutionModel,
-                                populationSizeModel, branchRateModel, delegate, subIntervals, useAmbiguities,
+                                branchRateModel, populationSizeModel, subIntervals, delegate, useAmbiguities,
                                 dataType, tag, useMAP);
 
                         MarkovJumpsParserUtils.parseXMLObject(xo, treeModel, likelihood, tag);
@@ -372,7 +372,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
         return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, migrationModels,
-                populationSizeModel, gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
+                branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep, checkProbabilities, tagName);
     }
 
     private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {

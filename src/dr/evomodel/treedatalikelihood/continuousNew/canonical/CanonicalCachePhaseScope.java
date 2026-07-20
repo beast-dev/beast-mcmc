@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
 final class CanonicalCachePhaseScope implements AutoCloseable {
 

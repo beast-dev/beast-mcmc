@@ -27,16 +27,16 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTransitionCachePhases;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionCachePhases;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTreeMessagePasser;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchHandle;
 

@@ -25,9 +25,9 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 
 /**
  * Tree-side provider of canonical branch transitions.

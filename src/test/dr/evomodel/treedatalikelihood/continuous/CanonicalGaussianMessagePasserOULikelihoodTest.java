@@ -27,7 +27,7 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 
 public class CanonicalGaussianMessagePasserOULikelihoodTest extends CanonicalOUMessagePasserTestSupport {
 

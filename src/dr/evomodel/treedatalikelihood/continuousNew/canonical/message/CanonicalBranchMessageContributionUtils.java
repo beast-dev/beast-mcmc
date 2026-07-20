@@ -1,6 +1,6 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;

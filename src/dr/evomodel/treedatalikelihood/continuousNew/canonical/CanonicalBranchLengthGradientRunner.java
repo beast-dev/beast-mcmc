@@ -1,14 +1,14 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchLengthGradientEngine;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.traversal.CanonicalTreeStateStore;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchLengthGradientEngine;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 
 import java.util.Arrays;
 

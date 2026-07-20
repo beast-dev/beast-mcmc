@@ -2,9 +2,13 @@ package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.DiffusionProcessDelegate;
 import dr.evomodel.treedatalikelihood.continuous.HomogeneousDiffusionModelDelegate;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalBMTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalBMTreeLikelihoodIntegrator;
 
 import java.lang.reflect.Field;
 
@@ -20,7 +24,7 @@ public final class CanonicalBMXmlWiringTest extends ContinuousTraitTest {
         final double legacy = setup.legacyLikelihood.getLogLikelihood();
         final double canonical = setup.canonicalLikelihood.getLogLikelihood();
 
-        assertTrue("CDI BM mode should be enabled", setup.canonicalDelegate.usesCdiBMLikelihood());
+        assertTrue("moment-form BM mode should be enabled", setup.canonicalDelegate.usesMomentBMLikelihood());
         assertEquals("canonical BM likelihood", legacy, canonical, 1.0e-8);
     }
 
@@ -28,11 +32,11 @@ public final class CanonicalBMXmlWiringTest extends ContinuousTraitTest {
         final BMSetup setup = buildSetup("bmXmlCdiEngineGuard");
         final Object engine = privateFieldValue(setup.canonicalDelegate, "likelihoodEngine");
 
-        assertTrue("CDI BM mode should be enabled", setup.canonicalDelegate.usesCdiBMLikelihood());
+        assertTrue("moment-form BM mode should be enabled", setup.canonicalDelegate.usesMomentBMLikelihood());
         assertNotNull("canonical BM selection should install a likelihood engine", engine);
         assertEquals(
-                "canonical BM production path should use the CDI-backed BM engine",
-                "dr.evomodel.treedatalikelihood.continuous.CdiBMContinuousTreeLikelihoodEngine",
+                "canonical BM production path should use the native moment-form BM engine",
+                "dr.evomodel.treedatalikelihood.continuousNew.MomentBMContinuousTreeLikelihoodEngine",
                 engine.getClass().getName());
         assertFalse(
                 "canonical BM production path should not select the natural-parameter BM integrator",
@@ -66,13 +70,24 @@ public final class CanonicalBMXmlWiringTest extends ContinuousTraitTest {
     }
 
     private BMSetup buildSetup(final String tag) {
+        // The native moment-form BM engine (the current "canonical BM" production backend) only
+        // supports fully-observed, scalar-precision tip data (see
+        // ContinuousTreeLikelihoodEngineFactory.momentBM). The inherited ContinuousTraitTest fixture
+        // uses PrecisionType.FULL with real missing data (for legacy CDI factor/missing-data tests),
+        // so build a fully-observed, scalar-precision view of the same underlying trait parameter
+        // here and use it for both delegates, keeping the parity comparison meaningful.
+        final boolean[] noMissingIndicators = new boolean[traitParameter.getDimension()];
+        final ContinuousTraitPartialsProvider scalarDataModel = new ContinuousTraitDataModel(
+                "scalarDataModel." + tag, traitParameter, noMissingIndicators, true,
+                dimTrait, PrecisionType.SCALAR);
+
         final DiffusionProcessDelegate legacyProcess =
                 new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
         final ContinuousDataLikelihoodDelegate legacyDelegate =
                 new ContinuousDataLikelihoodDelegate(
                         treeModel,
                         legacyProcess,
-                        dataModel,
+                        scalarDataModel,
                         rootPrior,
                         rateTransformation,
                         rateModel,
@@ -83,17 +98,18 @@ public final class CanonicalBMXmlWiringTest extends ContinuousTraitTest {
 
         final DiffusionProcessDelegate canonicalProcess =
                 new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
-        final ContinuousDataLikelihoodDelegate canonicalDelegate =
-                new ContinuousDataLikelihoodDelegate(
+        final ContinuousDataLikelihoodDelegateNew canonicalDelegate =
+                new ContinuousDataLikelihoodDelegateNew(
                         treeModel,
                         canonicalProcess,
-                        dataModel,
+                        scalarDataModel,
                         rootPrior,
                         rateTransformation,
                         rateModel,
                         false,
+                        false,
                         false);
-        canonicalDelegate.enableCdiBMLikelihood();
+        canonicalDelegate.enableMomentBMLikelihood();
         final TreeDataLikelihood canonicalLikelihood =
                 new TreeDataLikelihood(canonicalDelegate, treeModel, rateModel);
 
@@ -152,13 +168,13 @@ public final class CanonicalBMXmlWiringTest extends ContinuousTraitTest {
         final String tag;
         final ContinuousDataLikelihoodDelegate legacyDelegate;
         final TreeDataLikelihood legacyLikelihood;
-        final ContinuousDataLikelihoodDelegate canonicalDelegate;
+        final ContinuousDataLikelihoodDelegateNew canonicalDelegate;
         final TreeDataLikelihood canonicalLikelihood;
 
         private BMSetup(final String tag,
                         final ContinuousDataLikelihoodDelegate legacyDelegate,
                         final TreeDataLikelihood legacyLikelihood,
-                        final ContinuousDataLikelihoodDelegate canonicalDelegate,
+                        final ContinuousDataLikelihoodDelegateNew canonicalDelegate,
                         final TreeDataLikelihood canonicalLikelihood) {
             this.tag = tag;
             this.legacyDelegate = legacyDelegate;

@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
 /**
  * Local canonical adjoints for a single branch factor

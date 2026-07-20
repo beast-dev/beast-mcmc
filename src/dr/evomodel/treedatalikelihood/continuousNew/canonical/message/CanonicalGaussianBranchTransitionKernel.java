@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
 /**
  * Branch-length API for linear Gaussian transitions in canonical form.

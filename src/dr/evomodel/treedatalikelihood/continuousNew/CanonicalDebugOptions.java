@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuousNew;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -146,7 +146,7 @@ public final class CanonicalDebugOptions {
                 .filter(name -> name.startsWith("beast.debug."))
                 .filter(name -> !KNOWN_PROPERTIES.contains(name))
                 .sorted()
-                .forEach(name -> dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
+                .forEach(name -> dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning(
                         "WARNING: Unrecognized canonical debug property '" + name
                         + "' — check spelling against CanonicalDebugOptions.KNOWN_PROPERTIES"));
     }
@@ -218,7 +218,7 @@ public final class CanonicalDebugOptions {
         try {
             return Integer.valueOf(raw.trim());
         } catch (NumberFormatException e) {
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical debug property '" + property
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("WARNING: Canonical debug property '" + property
                     + "' has non-integer value '" + raw + "'; ignoring.");
             return null;
         }

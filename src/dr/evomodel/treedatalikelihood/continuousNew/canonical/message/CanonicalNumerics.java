@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
 import dr.evomodel.continuous.ou.math.PositiveDefiniteMatrixOps;
 import org.ejml.data.DenseMatrix64F;
@@ -248,9 +248,9 @@ public final class CanonicalNumerics {
             sb.append("}\n");
 
             Files.write(Paths.get(path), sb.toString().getBytes(StandardCharsets.UTF_8));
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP " + path);
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP " + path);
         } catch (final Exception e) {
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP_FAILED context=" + context + " reason=" + e.getMessage());
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("OU_SPD_FAILURE_DUMP_FAILED context=" + context + " reason=" + e.getMessage());
         }
     }
 

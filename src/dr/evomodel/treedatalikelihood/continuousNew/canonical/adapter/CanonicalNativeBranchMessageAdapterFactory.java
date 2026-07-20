@@ -1,11 +1,11 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
 import dr.evomodel.continuous.ou.kernel.DiagonalOUBranchTransformKernel;
 import dr.evomodel.continuous.ou.kernel.OUBranchKernel;
 import dr.evomodel.continuous.ou.kernel.OUBranchKernelCapability;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousBranchTimeModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalNativeBranchMessageProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousBranchTimeModel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalNativeBranchMessageProvider;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 

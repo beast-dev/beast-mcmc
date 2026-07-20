@@ -1,8 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUTransitionProvider;
 
 import java.util.Arrays;
 

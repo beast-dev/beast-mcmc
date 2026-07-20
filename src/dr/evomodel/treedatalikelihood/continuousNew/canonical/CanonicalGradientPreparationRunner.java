@@ -1,8 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
-import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientInputs;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalBranchAdjointPreparer;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchAdjointPreparer;
 
 final class CanonicalGradientPreparationRunner {
 

@@ -1,7 +1,7 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
 import dr.evomodel.continuous.ou.math.PositiveDefiniteMatrixInversionOptions;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog;
 
 /**
  * Numerical policy knobs for canonical Gaussian/OU code.

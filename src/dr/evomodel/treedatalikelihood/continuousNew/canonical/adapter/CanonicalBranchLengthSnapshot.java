@@ -1,10 +1,10 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousBranchTimeModel;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousBranchTimeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 
 /**

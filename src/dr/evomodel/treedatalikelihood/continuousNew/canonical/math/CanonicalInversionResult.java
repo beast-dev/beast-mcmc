@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.math;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.math;
 
 /**
  * Result metadata for canonical flat-matrix inversions that may include

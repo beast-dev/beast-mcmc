@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
 import java.util.logging.Logger;
 
@@ -7,7 +7,7 @@ import java.util.logging.Logger;
  */
 public final class CanonicalDiagnosticsLog {
 
-    private static final Logger LOGGER = Logger.getLogger("dr.evomodel.treedatalikelihood.continuous.canonical");
+    private static final Logger LOGGER = Logger.getLogger("dr.evomodel.treedatalikelihood.continuousNew.canonical");
 
     private CanonicalDiagnosticsLog() { }
 

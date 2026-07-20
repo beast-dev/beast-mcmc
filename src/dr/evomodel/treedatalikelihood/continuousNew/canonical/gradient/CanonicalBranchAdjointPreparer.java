@@ -25,16 +25,16 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUProviderSupport;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.ChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUProviderSupport;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.ChunkSizeStrategy;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
 import dr.util.TaskPool;
 
 /**

@@ -28,9 +28,9 @@
 package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.Parameter;
 
 /**
@@ -44,7 +44,7 @@ public final class CanonicalMeanParameterGradient extends AbstractDiffusionGradi
     private final boolean includeRootMean;
 
     public CanonicalMeanParameterGradient(final TreeDataLikelihood likelihood,
-                                          final ContinuousDataLikelihoodDelegate continuousData,
+                                          final CtsCompatibility continuousData,
                                           final Parameter parameter,
                                           final boolean includeStationaryMean,
                                           final boolean includeRootMean) {

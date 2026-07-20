@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.message;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.message;
 
 /**
  * Canonical-form representation of a Gaussian state density.

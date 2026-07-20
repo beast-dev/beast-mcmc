@@ -1,9 +1,9 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipBranchMessageProvider;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationMode;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipBranchMessageProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 
 /**
  * Optional provider capability for branch models that can propagate canonical messages

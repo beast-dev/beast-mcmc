@@ -1,22 +1,22 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.contribution;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.contribution;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalOUTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageBundle;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.BranchGradientMessageProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianMessageOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
-import dr.evomodel.treedatalikelihood.continuous.canonical.workspace.BranchGradientWorkspace;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.PartialIdentityTipContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientMessageBundle;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientMessageProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.BranchGradientWorkspace;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.IdentityCanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.PartialIdentityTipContribution;
 
 import java.util.Arrays;
 

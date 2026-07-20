@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous.canonical.adapter;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -33,11 +33,11 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalRootPrior;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalTreeMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.canonical.SequentialCanonicalOUMessagePasser;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTreeMessagePasser;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.SequentialCanonicalOUMessagePasser;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 
 /**
  * Likelihood-only canonical tree backend for homogeneous Brownian motion.

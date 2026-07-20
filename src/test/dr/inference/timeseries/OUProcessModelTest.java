@@ -2,7 +2,6 @@ package test.dr.inference.timeseries;
 
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.representable;
-import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.latent;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.supportsRepresentation;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionMatrix;
 import static test.dr.inference.timeseries.OUTimeSeriesTestSupport.getTransitionOffset;
@@ -19,7 +18,7 @@ import dr.inference.timeseries.model.gaussian.EulerOUProcessModel;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.KernelBackedGaussianTransitionRepresentation;
 import junit.framework.Test;

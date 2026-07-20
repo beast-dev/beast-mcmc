@@ -1,16 +1,16 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.branch;
 
-import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalGradientFallbackPolicy;
+import dr.evomodel.treedatalikelihood.continuousNew.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalNativeBranchGradientCapability;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionPullback;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.DenseBlockCanonicalSelectionPullback;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.DenseCanonicalSelectionPullback;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.NativeSpecializedCanonicalSelectionPullback;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.DenseBlockCanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.DenseCanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.NativeSpecializedCanonicalSelectionPullback;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
@@ -83,7 +83,7 @@ final class OUCanonicalBranchSelectionGradient {
         }
         computeDenseSelectionGradientComponents(branchLength, optimum, statistics);
         if (debugOptions.isSelectionComponentsEnabled()) {
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("selectionComponentsDebug branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("selectionComponentsDebug branchLength=" + branchLength
                     + " transition=" + Arrays.toString(scratch.transitionSelectionGradient)
                     + " covariance=" + Arrays.toString(scratch.covarianceSelectionGradient)
                     + " total=" + Arrays.toString(scratch.totalSelectionGradient));
@@ -248,7 +248,7 @@ final class OUCanonicalBranchSelectionGradient {
                                          final Parameter requestedParameter) {
         if (debugOptions.isNonOrthogonalOmegaEnabled()) {
             branchWiring.fillLocalAdjoints(statistics, scratch.localAdjoints);
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("NONORTH OMEGA branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("NONORTH OMEGA branchLength=" + branchLength
                     + " dOmega=" + Arrays.toString(scratch.localAdjoints.dLogL_dOmega)
                     + " drift=" + Arrays.toString(processModel.getDriftMatrix().getParameterAsMatrix()[0]));
         }
@@ -264,7 +264,7 @@ final class OUCanonicalBranchSelectionGradient {
                     optimum,
                     scratch.localAdjoints,
                     requestedParameter);
-            dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("NONORTH LOCAL branchLength=" + branchLength
+            dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("NONORTH LOCAL branchLength=" + branchLength
                     + " analytic=" + Arrays.toString(analytic)
                     + " numeric=" + Arrays.toString(numeric));
         }

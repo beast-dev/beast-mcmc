@@ -1,11 +1,7 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.branch;
 
-import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.SufficientStatisticsTipObservationPattern;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.SufficientStatisticsTipObservationPattern;
 import org.ejml.data.DenseMatrix64F;
 
 /**

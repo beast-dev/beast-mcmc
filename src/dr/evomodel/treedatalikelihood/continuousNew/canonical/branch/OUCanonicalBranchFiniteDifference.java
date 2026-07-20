@@ -1,11 +1,10 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.branch;
 
-import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalDebugOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.OUGaussianBranchTransitionProvider;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.Parameter;
 import org.ejml.data.DenseMatrix64F;
@@ -194,7 +193,7 @@ final class OUCanonicalBranchFiniteDifference {
                 maxIdx = i;
             }
         }
-        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("branchLocalSelectionFDDebug len=" + branchLength
+        dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("branchLocalSelectionFDDebug len=" + branchLength
                 + " maxAbsDiff=" + maxAbs
                 + " maxIdx=" + maxIdx
                 + " analytic=" + Arrays.toString(analytic)
@@ -240,7 +239,7 @@ final class OUCanonicalBranchFiniteDifference {
                 maxIdxFrozenFactor = i;
             }
         }
-        dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning("branchLocalMeanFDDebug node=" + nodeNumber
+        dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("branchLocalMeanFDDebug node=" + nodeNumber
                 + " len=" + branchLength
                 + " belowPrecisionHasInf=" + hasInfinity(statsBelowPrecision(statistics))
                 + " aboveParentPrecisionHasInf=" + hasInfinity(statsAboveParentPrecision(statistics))

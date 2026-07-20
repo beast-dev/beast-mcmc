@@ -1,12 +1,8 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.branch;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.branch;
 
-import dr.evomodel.treedatalikelihood.continuous.CanonicalDebugOptions;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalGradientFallbackPolicy;
-import dr.evomodel.treedatalikelihood.continuous.OUGaussianBranchTransitionProvider;
-
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumerics;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalNumericsOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalNumerics;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalNumericsOptions;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -221,7 +217,7 @@ final class OUCanonicalParentAboveResolver {
         if (mismatch || parentAboveCompareReportCount < maxReports) {
             if (parentAboveCompareReportCount < maxReports) {
                 parentAboveCompareReportCount++;
-                dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalDiagnosticsLog.warning(
+                dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning(
                         "parentAboveCompare"
                                 + " call=" + parentAboveCompareReportCount
                                 + " precision=" + precisionComparison

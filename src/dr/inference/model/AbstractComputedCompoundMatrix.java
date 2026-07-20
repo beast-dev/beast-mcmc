@@ -91,6 +91,7 @@ public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
         for (Parameter param : parameters) {
             addParameter(param);
             allParameters.addParameter(param);
+            Parameter.CONNECTED_PARAMETER_SET.add(param);
         }
     }
 

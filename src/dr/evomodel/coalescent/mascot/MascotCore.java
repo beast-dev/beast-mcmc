@@ -37,7 +37,9 @@ import java.util.Comparator;
  */
 public final class MascotCore {
 
-    private static final double TIME_TOLERANCE = 1.0e-14;
+    // Package-private (not private): also used by MascotForwardModeHelper's event-time
+    // and epoch-boundary bookkeeping.
+    static final double TIME_TOLERANCE = 1.0e-14;
 
     private final int stateCount;
     private final double[] boundaries;
@@ -50,11 +52,15 @@ public final class MascotCore {
     private final Workspace workspace = new Workspace();
     private final EpochRates[] epochRates;
     private final ActiveState activeState = new ActiveState();
+    // Owns the forward RK4 integration and event application (including
+    // recording the OperationTapeStore this instance's reverse pass replays);
+    // see its own class doc for why this is a separate top-level class rather
+    // than more private methods here.
+    private final MascotForwardModeHelper forwardHelper;
     // Owns the backward replay over this instance's OperationTapeStore; see its
     // own class doc for why this is a separate top-level class rather than more
     // private methods here.
     private final MascotReverseModeHelper reverseHelper;
-    private int epochCursor;
 
     public MascotCore(int stateCount, double[] boundaries, double maxStep) {
         if (stateCount < 2) {
@@ -91,6 +97,7 @@ public final class MascotCore {
             epochRates[epoch] = new EpochRates(stateCount);
         }
 
+        this.forwardHelper = new MascotForwardModeHelper(stateCount, maxStep, this.boundaries, epochCount);
         this.reverseHelper = new MascotReverseModeHelper(stateCount, parametersPerEpoch,
                 migrationParametersPerEpoch, parameterCount);
     }
@@ -369,11 +376,7 @@ public final class MascotCore {
             updateEpochRates(theta, epoch, epochRates[epoch]);
         }
 
-        Event[] sortedEvents = prepared.sortedEvents;
         ActiveState state = activeState;
-        state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
-        epochCursor = 0;
-        double currentTime = 0.0;
         boolean runReverse = gradientOut != null || ancestralStateScoresOut != null;
         OperationTapeStore operations = null;
         if (runReverse) {
@@ -382,40 +385,11 @@ public final class MascotCore {
             // stage arrays, so fixed-tree HMC overwrites the same storage instead
             // of rebuilding the reverse tape at every parameter evaluation.
             operations = workspace.operationTapes;
-            operations.reset(sortedEvents.length + epochCount);
+            operations.reset(prepared.sortedEvents.length + epochCount);
         }
 
-        for (Event event : sortedEvents) {
-            if (event.time < currentTime - TIME_TOLERANCE) {
-                throw new IllegalArgumentException("events must be sorted by nondecreasing time");
-            }
-
-            while (event.time > currentTime + TIME_TOLERANCE) {
-                if (state.activeCount == 0) {
-                    currentTime = event.time;
-                    break;
-                }
-                double segmentEnd = nextBoundaryAfter(currentTime, event.time);
-                int epoch = epochAt(currentTime + TIME_TOLERANCE);
-                integrateSegment(state, epochRates[epoch], currentTime, segmentEnd, epoch, branchRates, operations);
-                currentTime = segmentEnd;
-                if (checkProbabilities) {
-                    checkProbabilities(state);
-                }
-            }
-
-            currentTime = event.time;
-            if (event.type == EventType.SAMPLE) {
-                applySampleEvent(state, event, operations);
-            } else {
-                int epoch = epochAt(event.time);
-                applyCoalescentEvent(state, event, epoch, epochRates[epoch], operations, nodeLogWeights);
-            }
-
-            if (checkProbabilities) {
-                checkProbabilities(state);
-            }
-        }
+        forwardHelper.forward(state, epochRates, workspace, prepared, branchRates, checkProbabilities,
+                operations, nodeLogWeights);
 
         if (ancestralStateScoresOut != null) {
             Arrays.fill(ancestralStateScoresOut, 0, expectedLineageDimension * stateCount, Double.NaN);
@@ -437,339 +411,6 @@ public final class MascotCore {
         }
 
         return state.logLikelihood;
-    }
-
-    // ------------------------------------------------------------------
-    // Forward integration
-    // ------------------------------------------------------------------
-
-    private void integrateSegment(ActiveState state, EpochRates rates, double start, double end, int epoch,
-                                  double[] branchRates, OperationTapeStore operations) {
-        if (!(end > start)) {
-            throw new IllegalArgumentException("empty integration segment");
-        }
-
-        int steps = Math.max(1, (int) Math.ceil((end - start) / maxStep));
-        double h = (end - start) / steps;
-        int activeCount = state.activeCount;
-        int dim = activeCount * stateCount + 1;
-
-        workspace.integrationState = ensure(workspace.integrationState, dim);
-        double[] y = workspace.integrationState;
-        packStateInto(state, y);
-
-        workspace.integrationOut = ensure(workspace.integrationOut, dim);
-        double[] yOut = workspace.integrationOut;
-
-        // The active lineage set (hence which clock rate applies to each ODE
-        // slice) is fixed for the whole segment, so this snapshot is built once
-        // here rather than once per RK4 stage.
-        double[] activeClockRates = null;
-        if (branchRates != null) {
-            workspace.activeClockRates = ensure(workspace.activeClockRates, activeCount);
-            activeClockRates = workspace.activeClockRates;
-            for (int i = 0; i < activeCount; i++) {
-                activeClockRates[i] = branchRates[state.activeIds[i]];
-            }
-        }
-
-        if (operations == null) {
-            for (int i = 0; i < steps; i++) {
-                rk4StepInto(y, activeCount, rates, activeClockRates, h, yOut, workspace);
-                double[] swap = y;
-                y = yOut;
-                yOut = swap;
-            }
-        } else {
-            IntervalTape tape = operations.addInterval(steps, activeCount, dim, epoch, h,
-                    state.activeIds, activeClockRates);
-            for (int i = 0; i < steps; i++) {
-                rk4StepWithTapeInto(y, activeCount, rates, activeClockRates, h, yOut, workspace, tape, i);
-                double[] swap = y;
-                y = yOut;
-                yOut = swap;
-            }
-        }
-
-        unpackStateFrom(y, state);
-    }
-
-    private void rk4StepInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates, double h,
-                             double[] yOut, Workspace w) {
-        int dim = activeCount * stateCount + 1;
-
-        w.k1 = ensure(w.k1, dim);
-        rhsInto(y, activeCount, rates, activeClockRates, w.k1, w);
-        w.y2 = ensure(w.y2, dim);
-        addScaledInto(y, w.k1, 0.5 * h, w.y2, dim);
-        w.k2 = ensure(w.k2, dim);
-        rhsInto(w.y2, activeCount, rates, activeClockRates, w.k2, w);
-        w.y3 = ensure(w.y3, dim);
-        addScaledInto(y, w.k2, 0.5 * h, w.y3, dim);
-        w.k3 = ensure(w.k3, dim);
-        rhsInto(w.y3, activeCount, rates, activeClockRates, w.k3, w);
-        w.y4 = ensure(w.y4, dim);
-        addScaledInto(y, w.k3, h, w.y4, dim);
-        w.k4 = ensure(w.k4, dim);
-        rhsInto(w.y4, activeCount, rates, activeClockRates, w.k4, w);
-
-        for (int i = 0; i < dim; i++) {
-            yOut[i] = y[i] + (h / 6.0) * (w.k1[i] + 2.0 * w.k2[i] + 2.0 * w.k3[i] + w.k4[i]);
-        }
-    }
-
-    private void rk4StepWithTapeInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates,
-                                     double h, double[] yOut, Workspace w, IntervalTape tape, int stepIndex) {
-        int dim = tape.stateDimension;
-        int offset = stepIndex * dim;
-        System.arraycopy(y, 0, tape.y0, offset, dim);
-
-        w.k1 = ensure(w.k1, dim);
-        rhsInto(y, activeCount, rates, activeClockRates, w.k1, w);
-        w.y2 = ensure(w.y2, dim);
-        addScaledInto(y, w.k1, 0.5 * h, w.y2, dim);
-        System.arraycopy(w.y2, 0, tape.y2, offset, dim);
-
-        w.k2 = ensure(w.k2, dim);
-        rhsInto(w.y2, activeCount, rates, activeClockRates, w.k2, w);
-        w.y3 = ensure(w.y3, dim);
-        addScaledInto(y, w.k2, 0.5 * h, w.y3, dim);
-        System.arraycopy(w.y3, 0, tape.y3, offset, dim);
-
-        w.k3 = ensure(w.k3, dim);
-        rhsInto(w.y3, activeCount, rates, activeClockRates, w.k3, w);
-        w.y4 = ensure(w.y4, dim);
-        addScaledInto(y, w.k3, h, w.y4, dim);
-        System.arraycopy(w.y4, 0, tape.y4, offset, dim);
-
-        w.k4 = ensure(w.k4, dim);
-        rhsInto(w.y4, activeCount, rates, activeClockRates, w.k4, w);
-
-        for (int i = 0; i < dim; i++) {
-            yOut[i] = y[i] + (h / 6.0) * (w.k1[i] + 2.0 * w.k2[i] + 2.0 * w.k3[i] + w.k4[i]);
-        }
-    }
-
-    private void rhsInto(double[] y, int activeCount, EpochRates rates, double[] activeClockRates,
-                         double[] out, Workspace w) {
-        int K = stateCount;
-        int stateSize = activeCount * K;
-
-        w.sums = ensure(w.sums, K);
-        w.sumsSquares = ensure(w.sumsSquares, K);
-
-        // sums/sumsSquares accumulation is fused into the migration loop below
-        // (same lineage-outer traversal, reusing the already-loaded p0/p values)
-        // rather than a separate pass over activeCount * K. The migration loop's
-        // own zero-fill-avoidance ("=" for source 0, "+=" for source 1..K-1 into
-        // out) is preserved unchanged. sums/sumsSquares themselves are never
-        // clock-scaled: they feed the coalescent-hazard term below, which is a
-        // function of Ne only, per BASTA's convention that a branch clock scales
-        // the migration/transition process but never the Ne-derived rate.
-        double c0 = activeClockRates == null ? 1.0 : activeClockRates[0];
-        double p0 = y[0];
-        w.sums[0] = p0;
-        w.sumsSquares[0] = p0 * p0;
-        for (int sink = 0; sink < K; sink++) {
-            out[sink] = c0 * p0 * rates.migrationMatrix[sink];
-        }
-        for (int source = 1; source < K; source++) {
-            double p = y[source];
-            w.sums[source] = p;
-            w.sumsSquares[source] = p * p;
-            int row = source * K;
-            for (int sink = 0; sink < K; sink++) {
-                out[sink] += c0 * p * rates.migrationMatrix[row + sink];
-            }
-        }
-
-        for (int lineage = 1; lineage < activeCount; lineage++) {
-            int offset = lineage * K;
-            double c = activeClockRates == null ? 1.0 : activeClockRates[lineage];
-            p0 = y[offset];
-            w.sums[0] += p0;
-            w.sumsSquares[0] += p0 * p0;
-            for (int sink = 0; sink < K; sink++) {
-                out[offset + sink] = c * p0 * rates.migrationMatrix[sink];
-            }
-            for (int source = 1; source < K; source++) {
-                double p = y[offset + source];
-                w.sums[source] += p;
-                w.sumsSquares[source] += p * p;
-                int row = source * K;
-                for (int sink = 0; sink < K; sink++) {
-                    out[offset + sink] += c * p * rates.migrationMatrix[row + sink];
-                }
-            }
-        }
-
-        double hazard = 0.0;
-        for (int state = 0; state < K; state++) {
-            hazard += 0.5 * rates.inversePopulation[state] * (w.sums[state] * w.sums[state] - w.sumsSquares[state]);
-        }
-
-        w.hValues = ensure(w.hValues, stateSize);
-        for (int lineage = 0; lineage < activeCount; lineage++) {
-            int offset = lineage * K;
-            double r = 0.0;
-            for (int state = 0; state < K; state++) {
-                double h = (w.sums[state] - y[offset + state]) * rates.inversePopulation[state];
-                w.hValues[offset + state] = h;
-                r += y[offset + state] * h;
-            }
-            for (int state = 0; state < K; state++) {
-                out[offset + state] += -y[offset + state] * (w.hValues[offset + state] - r);
-            }
-        }
-
-        out[stateSize] = -hazard;
-    }
-
-    // ------------------------------------------------------------------
-    // Events
-    // ------------------------------------------------------------------
-
-    private void applySampleEvent(ActiveState state, Event event, OperationTapeStore operations) {
-        if (event.lineage < 0) {
-            throw new IllegalArgumentException("sample event has no lineage id");
-        }
-        if (state.isActive(event.lineage)) {
-            throw new IllegalArgumentException("lineage " + event.lineage + " is already active");
-        }
-
-        int index = state.activeCount;
-        state.ensureCapacity(index + 1);
-        writeNormalizedSampleProbabilities(event, state.probabilities, index * stateCount);
-        state.activeIds[index] = event.lineage;
-        state.setActiveIndex(event.lineage, index);
-        state.activeCount++;
-
-        if (operations != null) {
-            operations.addSample(index);
-        }
-    }
-
-    private void applyCoalescentEvent(ActiveState state, Event event, int epoch, EpochRates rates,
-                                      OperationTapeStore operations, double[] nodeLogWeights) {
-        int first = state.activeIndexOf(event.child1);
-        int second = state.activeIndexOf(event.child2);
-        if (first < 0 || second < 0) {
-            throw new IllegalArgumentException("coalescent children are not both active: " +
-                    event.child1 + ", " + event.child2);
-        }
-        if (first == second) {
-            throw new IllegalArgumentException("coalescent children must be distinct");
-        }
-        if (state.isActive(event.parent)) {
-            throw new IllegalArgumentException("coalescent parent is already active: " + event.parent);
-        }
-
-        double[] q = rates.inversePopulation;
-
-        workspace.coalP1 = ensure(workspace.coalP1, stateCount);
-        workspace.coalP2 = ensure(workspace.coalP2, stateCount);
-        double[] p1 = workspace.coalP1;
-        double[] p2 = workspace.coalP2;
-        System.arraycopy(state.probabilities, first * stateCount, p1, 0, stateCount);
-        System.arraycopy(state.probabilities, second * stateCount, p2, 0, stateCount);
-
-        workspace.coalParent = ensure(workspace.coalParent, stateCount);
-        double[] parentProbabilities = workspace.coalParent;
-
-        double lambda = 0.0;
-        if (nodeLogWeights == null) {
-            for (int s = 0; s < stateCount; s++) {
-                parentProbabilities[s] = p1[s] * p2[s] * q[s];
-                lambda += parentProbabilities[s];
-            }
-        } else {
-            // Test-only hook (see evaluateWithNodeLogWeightsForTesting): applies a
-            // hypothetical per-state log weight at this event's parent node, for
-            // finite-difference validation of the adjoint node-state score. Never
-            // exercised by the production (XML-facing) evaluate(...) overloads,
-            // which always pass nodeLogWeights == null and take the branch above
-            // without paying for exp(0).
-            int weightOffset = event.parent * stateCount;
-            for (int s = 0; s < stateCount; s++) {
-                double weighted = p1[s] * p2[s] * q[s] * Math.exp(nodeLogWeights[weightOffset + s]);
-                parentProbabilities[s] = weighted;
-                lambda += weighted;
-            }
-        }
-        if (!(lambda > 0.0) || !Double.isFinite(lambda)) {
-            throw new NumericalException("invalid coalescent rate: " + lambda);
-        }
-        for (int s = 0; s < stateCount; s++) {
-            parentProbabilities[s] /= lambda;
-        }
-
-        int beforeCount = state.activeCount;
-        int afterCount = beforeCount - 1;
-        int lastBefore = beforeCount - 1;
-        int parentIndexAfter = first == lastBefore ? second : first;
-        int removedIndex = parentIndexAfter == first ? second : first;
-        int movedFromIndexBefore = -1;
-        int movedToIndexAfter = -1;
-
-        // Active-lineage order carries no probability meaning. Keep the parent in
-        // one removed child slot and fill only the other hole with the old last
-        // lineage when needed.
-        if (removedIndex != lastBefore) {
-            movedFromIndexBefore = lastBefore;
-            movedToIndexAfter = removedIndex;
-            int movedLineage = state.activeIds[lastBefore];
-            state.activeIds[movedToIndexAfter] = movedLineage;
-            System.arraycopy(state.probabilities, lastBefore * stateCount,
-                    state.probabilities, movedToIndexAfter * stateCount, stateCount);
-            state.setActiveIndex(movedLineage, movedToIndexAfter);
-        }
-
-        state.activeIds[parentIndexAfter] = event.parent;
-        System.arraycopy(parentProbabilities, 0, state.probabilities, parentIndexAfter * stateCount, stateCount);
-        state.setActiveIndex(event.parent, parentIndexAfter);
-        state.clearActiveIndex(event.child1);
-        state.clearActiveIndex(event.child2);
-
-        state.activeCount = afterCount;
-        state.logLikelihood += Math.log(lambda);
-
-        if (operations != null) {
-            operations.addCoalescent(epoch, first, second, parentIndexAfter,
-                    movedFromIndexBefore, movedToIndexAfter, event.parent,
-                    p1, p2, parentProbabilities, lambda, stateCount);
-        }
-    }
-
-    /**
-     * Writes the normalized sample-state probability vector directly into {@code
-     * out} at {@code offset}, avoiding the per-sample-event {@code double[]}
-     * allocation an intermediate array would cost.
-     */
-    private void writeNormalizedSampleProbabilities(Event event, double[] out, int offset) {
-        if (event.stateProbabilities == null) {
-            if (event.state < 0 || event.state >= stateCount) {
-                throw new IllegalArgumentException("sample state out of range: " + event.state);
-            }
-            Arrays.fill(out, offset, offset + stateCount, 0.0);
-            out[offset + event.state] = 1.0;
-            return;
-        }
-        if (event.stateProbabilities.length != stateCount) {
-            throw new IllegalArgumentException("sample probability dimension mismatch");
-        }
-        double sum = 0.0;
-        for (int s = 0; s < stateCount; s++) {
-            if (event.stateProbabilities[s] < 0.0) {
-                throw new IllegalArgumentException("sample probabilities must be nonnegative");
-            }
-            sum += event.stateProbabilities[s];
-        }
-        if (!(sum > 0.0)) {
-            throw new IllegalArgumentException("sample probabilities must have positive sum");
-        }
-        for (int s = 0; s < stateCount; s++) {
-            out[offset + s] = event.stateProbabilities[s] / sum;
-        }
     }
 
     // ------------------------------------------------------------------
@@ -821,65 +462,8 @@ public final class MascotCore {
     }
 
     // ------------------------------------------------------------------
-    // Epoch/time bookkeeping
+    // Small array helpers
     // ------------------------------------------------------------------
-
-    /**
-     * Both {@link #epochAt} and {@link #nextBoundaryAfter} scan {@code
-     * boundaries} starting from {@link #epochCursor} instead of from the
-     * beginning: {@code evaluate(...)} only ever queries these with a
-     * nondecreasing sequence of times (both {@code currentTime} and {@code
-     * event.time} only increase over one evaluate() call), so {@code
-     * boundaries[epochCursor] <= any time queried so far} is an invariant, and
-     * every boundary at or before {@code epochCursor} is therefore already known
-     * to fail both methods' "is this boundary after the query time" tests. This
-     * changes only the scan's starting point, not either method's comparison
-     * expressions (still using the exact same TIME_TOLERANCE arithmetic), so it
-     * cannot change which epoch/boundary is returned for a given time -- only how
-     * many array entries are checked to find it.
-     */
-    private int epochAt(double t) {
-        if (t < -TIME_TOLERANCE) {
-            throw new IllegalArgumentException("time is before zero: " + t);
-        }
-        while (epochCursor + 1 < boundaries.length && t >= boundaries[epochCursor + 1] - TIME_TOLERANCE) {
-            epochCursor++;
-        }
-        if (epochCursor >= epochCount) {
-            return epochCount - 1;
-        }
-        return epochCursor;
-    }
-
-    private double nextBoundaryAfter(double start, double stop) {
-        for (int i = epochCursor + 1; i < boundaries.length; i++) {
-            double boundary = boundaries[i];
-            if (boundary > start + TIME_TOLERANCE) {
-                if (boundary <= stop + TIME_TOLERANCE) {
-                    return Math.min(boundary, stop);
-                }
-                return stop;
-            }
-        }
-        return stop;
-    }
-
-    // ------------------------------------------------------------------
-    // Pack/unpack and small array helpers
-    // ------------------------------------------------------------------
-
-    private void packStateInto(ActiveState state, double[] y) {
-        int stateSize = state.activeCount * stateCount;
-        System.arraycopy(state.probabilities, 0, y, 0, stateSize);
-        y[stateSize] = state.logLikelihood;
-    }
-
-    private void unpackStateFrom(double[] y, ActiveState state) {
-        int stateSize = state.activeCount * stateCount;
-        state.ensureCapacity(state.activeCount);
-        System.arraycopy(y, 0, state.probabilities, 0, stateSize);
-        state.logLikelihood = y[stateSize];
-    }
 
     // Package-private (not private): shared verbatim with MascotReverseModeHelper,
     // which has no MascotCore instance state of its own to call back through.
@@ -891,7 +475,8 @@ public final class MascotCore {
         return (array == null || array.length < size) ? new int[size] : array;
     }
 
-    private static void addScaledInto(double[] x, double[] dx, double scale, double[] out, int n) {
+    // Package-private (not private): also used by MascotForwardModeHelper's RK4 steps.
+    static void addScaledInto(double[] x, double[] dx, double scale, double[] out, int n) {
         for (int i = 0; i < n; i++) {
             out[i] = x[i] + scale * dx[i];
         }
@@ -912,25 +497,6 @@ public final class MascotCore {
     static void addScaledInPlace(double[] destination, double[] source, double scale, int n) {
         for (int i = 0; i < n; i++) {
             destination[i] += scale * source[i];
-        }
-    }
-
-    private void checkProbabilities(ActiveState state) {
-        for (int lineage = 0; lineage < state.activeCount; lineage++) {
-            double sum = 0.0;
-            int offset = lineage * stateCount;
-            for (int s = 0; s < stateCount; s++) {
-                double p = state.probabilities[offset + s];
-                if (p < -1.0e-8 || !Double.isFinite(p)) {
-                    throw new NumericalException("invalid probability for lineage " +
-                            state.activeIds[lineage] + ": " + p);
-                }
-                sum += p;
-            }
-            if (Math.abs(sum - 1.0) > 1.0e-6) {
-                throw new NumericalException("lineage probabilities do not sum to one for lineage " +
-                        state.activeIds[lineage] + ": " + sum);
-            }
         }
     }
 
@@ -960,15 +526,18 @@ public final class MascotCore {
         }
     }
 
+    // Fields are package-private (not private): MascotForwardModeHelper (a
+    // separate top-level class) reads them directly in its event-application
+    // hot path, the same reason Workspace's fields are package-private.
     public static final class Event {
-        private final double time;
-        private final EventType type;
-        private final int lineage;
-        private final int state;
-        private final double[] stateProbabilities;
-        private final int child1;
-        private final int child2;
-        private final int parent;
+        final double time;
+        final EventType type;
+        final int lineage;
+        final int state;
+        final double[] stateProbabilities;
+        final int child1;
+        final int child2;
+        final int parent;
 
         private Event(double time, EventType type, int lineage, int state, double[] stateProbabilities,
                       int child1, int child2, int parent) {
@@ -1041,8 +610,9 @@ public final class MascotCore {
      * change and reuse it across evaluations.
      */
     public static final class PreparedEvents {
-        private final Event[] sortedEvents;
-        private final int maxLineageId;
+        // Package-private (not private): read directly by MascotForwardModeHelper.forward().
+        final Event[] sortedEvents;
+        final int maxLineageId;
 
         private PreparedEvents(Event[] sortedEvents, int maxLineageId) {
             this.sortedEvents = sortedEvents;
@@ -1109,16 +679,19 @@ public final class MascotCore {
      * with a generation stamp instead of a {@code -1}-filled map: {@link #reset}
      * bumps {@link #currentGeneration} instead of re-filling {@code
      * lineageGeneration}, so resetting costs O(1) instead of O(maxLineageId).
+     * Class and members are package-private (not {@code private}) for the same
+     * reason as {@link Workspace}'s: {@link MascotForwardModeHelper} advances
+     * this state directly in its own hot loop.
      */
-    private static final class ActiveState {
-        private int[] activeIds;
-        private double[] probabilities;
-        private int activeCount;
-        private double logLikelihood;
-        private int stateCount;
-        private int[] lineageToActiveIndex;
-        private int[] lineageGeneration;
-        private int currentGeneration;
+    static final class ActiveState {
+        int[] activeIds;
+        double[] probabilities;
+        int activeCount;
+        double logLikelihood;
+        int stateCount;
+        int[] lineageToActiveIndex;
+        int[] lineageGeneration;
+        int currentGeneration;
 
         private ActiveState() {
             this.activeIds = new int[1];
@@ -1128,7 +701,7 @@ public final class MascotCore {
             this.currentGeneration = 1;
         }
 
-        private void reset(int stateCount, int capacity, int maxLineageId) {
+        void reset(int stateCount, int capacity, int maxLineageId) {
             this.stateCount = stateCount;
             if (activeIds.length < capacity) {
                 activeIds = new int[capacity];
@@ -1151,7 +724,7 @@ public final class MascotCore {
             }
         }
 
-        private void ensureCapacity(int capacity) {
+        void ensureCapacity(int capacity) {
             if (activeIds.length < capacity) {
                 activeIds = Arrays.copyOf(activeIds, capacity);
             }
@@ -1161,34 +734,34 @@ public final class MascotCore {
             }
         }
 
-        private boolean isActive(int lineageId) {
+        boolean isActive(int lineageId) {
             return lineageId >= 0 && lineageId < lineageGeneration.length
                     && lineageGeneration[lineageId] == currentGeneration;
         }
 
-        private int activeIndexOf(int lineageId) {
+        int activeIndexOf(int lineageId) {
             if (!isActive(lineageId)) {
                 return -1;
             }
             return lineageToActiveIndex[lineageId];
         }
 
-        private void setActiveIndex(int lineageId, int index) {
+        void setActiveIndex(int lineageId, int index) {
             lineageGeneration[lineageId] = currentGeneration;
             lineageToActiveIndex[lineageId] = index;
         }
 
-        private void clearActiveIndex(int lineageId) {
+        void clearActiveIndex(int lineageId) {
             if (lineageId >= 0 && lineageId < lineageGeneration.length) {
                 lineageGeneration[lineageId] = 0;
             }
         }
 
-        private double[] copyProbabilities() {
+        double[] copyProbabilities() {
             return Arrays.copyOf(probabilities, activeCount * stateCount);
         }
 
-        private int[] copyActiveIds() {
+        int[] copyActiveIds() {
             return Arrays.copyOf(activeIds, activeCount);
         }
     }
@@ -1308,8 +881,11 @@ public final class MascotCore {
             return operations[index];
         }
 
-        private IntervalTape addInterval(int steps, int activeCount, int stateDimension, int epoch, double h,
-                                         int[] activeIds, double[] activeClockRates) {
+        // addInterval/addSample/addCoalescent are package-private (not private):
+        // called by MascotForwardModeHelper.integrateSegment()/applySampleEvent()/
+        // applyCoalescentEvent() from a separate top-level class.
+        IntervalTape addInterval(int steps, int activeCount, int stateDimension, int epoch, double h,
+                                 int[] activeIds, double[] activeClockRates) {
             int index = nextIndex();
             OperationTape operation = operations[index];
             IntervalTape tape;
@@ -1323,7 +899,7 @@ public final class MascotCore {
             return tape;
         }
 
-        private void addSample(int sampleIndexAfter) {
+        void addSample(int sampleIndexAfter) {
             int index = nextIndex();
             OperationTape operation = operations[index];
             SampleTape tape;
@@ -1336,10 +912,10 @@ public final class MascotCore {
             tape.reset(sampleIndexAfter);
         }
 
-        private void addCoalescent(int epoch, int child1Index, int child2Index, int parentIndexAfter,
-                                   int movedFromIndexBefore, int movedToIndexAfter, int parentLineageId,
-                                   double[] p1, double[] p2,
-                                   double[] parentProbabilities, double lambda, int stateCount) {
+        void addCoalescent(int epoch, int child1Index, int child2Index, int parentIndexAfter,
+                          int movedFromIndexBefore, int movedToIndexAfter, int parentLineageId,
+                          double[] p1, double[] p2,
+                          double[] parentProbabilities, double lambda, int stateCount) {
             int index = nextIndex();
             OperationTape operation = operations[index];
             CoalescentTape tape;

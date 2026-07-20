@@ -1,6 +1,7 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.continuous.ou.DenseSelectionMatrixParameterization;
+import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
 import dr.evomodel.treedatalikelihood.continuous.backprop.BlockDiagonalExpSolver;
@@ -50,6 +51,7 @@ public class BlockDiagonalSelectionMatrixParameterization
     protected final double[] lowerInverseScratch;
     protected final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
     private final BlockDiagonalBranchGradientWorkspace currentGradientWorkspace;
+    private final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy = new BlockDiagonalDenseFallbackPolicy();
 
     public BlockDiagonalSelectionMatrixParameterization(
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter) {
@@ -133,6 +135,21 @@ public class BlockDiagonalSelectionMatrixParameterization
         }
         refreshBasisCaches(dt);
         MatrixOps.toFlat(basisCache.transitionMatrix, out, getDimension());
+    }
+
+    /**
+     * Test-only accessor exposing the internal D-basis stationary covariance
+     * {@code Vtilde = T V T^T} (T = R^{-1}), used to cross-check
+     * {@code BlockBasisGlobalSnapshot} against this class's own internal value.
+     * See private-code/rotatedOU/rotated_ou_block_basis_plan.md, Phase 1.
+     * {@code Vtilde} does not depend on branch length, so any positive {@code dt}
+     * refreshes it identically.
+     */
+    public void fillStationaryCovarianceDBasisFlatForTesting(final MatrixParameterInterface diffusionMatrix,
+                                                              final double[] out) {
+        refreshBasisCaches(1.0);
+        fillTransitionCovarianceMatrix(diffusionMatrix, transitionCovariance);
+        MatrixOps.toFlat(stationaryCovDBasis, out, getDimension());
     }
 
     @Override
@@ -668,6 +685,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                 workspace.temp1,
                 workspace.temp2,
                 workspace.temp3,
+                workspace.scaledNegativeBlockDScratch,
+                workspace.denseAdjointScratch,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -735,6 +754,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                 workspace.temp3,
                 workspace.lyapunovAdjointHelper,
                 workspace.frechetHelper,
+                workspace.scaledNegativeBlockDScratch,
+                workspace.denseAdjointScratch,
                 compressedDAccumulator,
                 rotationAccumulator);
 
@@ -780,6 +801,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                 workspace.temp1,
                 workspace.temp2,
                 workspace.temp3,
+                workspace.scaledNegativeBlockDScratch,
+                workspace.denseAdjointScratch,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -1038,12 +1061,15 @@ public class BlockDiagonalSelectionMatrixParameterization
             final DenseMatrix64F temp1,
             final DenseMatrix64F temp2,
             final DenseMatrix64F temp3,
+            final double[] scaledNegativeBlockDScratch,
+            final double[] denseAdjointScratch,
             final double[] compressedDAccumulator,
             final double[] rotationAccumulator) {
         CommonOps.multTransA(rMatrix, upstreamF, temp1);
         CommonOps.multTransB(temp1, rinvMatrix, upstreamFD);
-        frechetHelper.frechetAdjointExpInDBasis(blockDParams, upstreamFD, dt, gradD);
-        transposeInPlace(gradD);
+        fillFrechetAdjointExpWithFallback(
+                blockDParams, dt, upstreamFD, frechetHelper, temp3, gradD,
+                scaledNegativeBlockDScratch, denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         CommonOps.multTransB(upstreamF, transitionMatrix, temp1);
@@ -1051,6 +1077,72 @@ public class BlockDiagonalSelectionMatrixParameterization
         CommonOps.subtract(temp1, temp2, temp3);
         CommonOps.multTransB(temp3, rinvMatrix, gradR);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
+    }
+
+    /**
+     * Frechet-adjoint-exp computation with the same NaN-recovery fallback the orthogonal
+     * backend already relied on: if the fast Frechet-exact path produces a non-finite
+     * result (near-degenerate block eigenvalues), silently recompute via a slower dense
+     * adjoint-exp instead of propagating NaN into the gradient. Shared by both the general
+     * and orthogonal block-diagonal backends so they fail the same way on the same input.
+     */
+    private void fillFrechetAdjointExpWithFallback(final double[] blockDParams,
+                                                   final double dt,
+                                                   final DenseMatrix64F upstreamFD,
+                                                   final BlockDiagonalFrechetHelper frechetHelper,
+                                                   final DenseMatrix64F temp,
+                                                   final DenseMatrix64F gradD,
+                                                   final double[] scaledNegativeBlockDScratch,
+                                                   final double[] denseAdjointScratch) {
+        if (denseFallbackPolicy.forceDenseAdjointExp()) {
+            fillDenseAdjointExpGradient(blockDParams, dt, upstreamFD, scaledNegativeBlockDScratch,
+                    denseAdjointScratch, gradD);
+            return;
+        }
+        final DenseMatrix64F frechetInput;
+        if (denseFallbackPolicy.transposeNativeFrechetInput()) {
+            CommonOps.transpose(upstreamFD, temp);
+            frechetInput = temp;
+        } else {
+            frechetInput = upstreamFD;
+        }
+        frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInput, dt, gradD);
+        transposeInPlace(gradD);
+        if (!isFinite(gradD.data)) {
+            fillDenseAdjointExpGradient(blockDParams, dt, upstreamFD, scaledNegativeBlockDScratch,
+                    denseAdjointScratch, gradD);
+        }
+    }
+
+    private static void fillDenseAdjointExpGradient(final double[] blockDParams,
+                                                    final double dt,
+                                                    final DenseMatrix64F upstreamFD,
+                                                    final double[] scaledNegativeBlockDScratch,
+                                                    final double[] denseAdjointScratch,
+                                                    final DenseMatrix64F gradD) {
+        fillScaledNegativeBlockDMatrix(blockDParams, dt, scaledNegativeBlockDScratch, upstreamFD.numRows);
+        MatrixOps.toFlat(upstreamFD, denseAdjointScratch, upstreamFD.numRows);
+        MatrixExponentialUtils.adjointExpFlat(
+                scaledNegativeBlockDScratch, denseAdjointScratch, denseAdjointScratch, upstreamFD.numRows);
+        fillDenseMatrix(denseAdjointScratch, gradD);
+        transposeInPlace(gradD);
+        CommonOps.scale(-dt, gradD);
+    }
+
+    private static void fillScaledNegativeBlockDMatrix(final double[] blockDParams,
+                                                       final double dt,
+                                                       final double[] out,
+                                                       final int dimension) {
+        Arrays.fill(out, 0, dimension * dimension, 0.0);
+        final int upperOffset = dimension;
+        final int lowerOffset = dimension + (dimension - 1);
+        for (int i = 0; i < dimension; ++i) {
+            out[i * dimension + i] = -dt * blockDParams[i];
+            if (i < dimension - 1) {
+                out[i * dimension + i + 1] = -dt * blockDParams[upperOffset + i];
+                out[(i + 1) * dimension + i] = -dt * blockDParams[lowerOffset + i];
+            }
+        }
     }
 
     private static void fillTotalUpstreamOnTransition(final double[] stationaryMean,
@@ -1113,6 +1205,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                 workspace.temp3,
                 workspace.lyapunovAdjointHelper,
                 workspace.frechetHelper,
+                workspace.scaledNegativeBlockDScratch,
+                workspace.denseAdjointScratch,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -1138,6 +1232,8 @@ public class BlockDiagonalSelectionMatrixParameterization
             final DenseMatrix64F temp3,
             final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
             final BlockDiagonalFrechetHelper frechetHelper,
+            final double[] scaledNegativeBlockDScratch,
+            final double[] denseAdjointScratch,
             final double[] compressedDAccumulator,
             final double[] rotationAccumulator) {
         CommonOps.fill(gradD, 0.0);
@@ -1160,8 +1256,9 @@ public class BlockDiagonalSelectionMatrixParameterization
                 temp1.data);
         CommonOps.mult(temp1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
-        frechetHelper.frechetAdjointExpInDBasis(blockDParams, gECov, dt, gradD);
-        transposeInPlace(gradD);
+        fillCovarianceExpDGradientWithFallback(
+                blockDParams, dt, gECov, frechetHelper, temp3, gradD,
+                scaledNegativeBlockDScratch, denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         CommonOps.mult(gV, rMatrix, temp1);
@@ -1169,6 +1266,37 @@ public class BlockDiagonalSelectionMatrixParameterization
         CommonOps.scale(2.0, temp2);
         CommonOps.addEquals(gradR, temp2);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
+    }
+
+    /**
+     * Covariance-branch analogue of {@link #fillFrechetAdjointExpWithFallback}, matching
+     * {@code OrthogonalBlockCovarianceAdjoint.fillCovarianceExpDGradient}'s debug-toggle
+     * support (force-dense / transpose-input). Unlike the transition-branch version, no
+     * automatic NaN-retry is applied here — the orthogonal backend's own covariance path
+     * never had one either, so this preserves existing behavior rather than adding a new one.
+     */
+    private void fillCovarianceExpDGradientWithFallback(final double[] blockDParams,
+                                                        final double dt,
+                                                        final DenseMatrix64F gECov,
+                                                        final BlockDiagonalFrechetHelper frechetHelper,
+                                                        final DenseMatrix64F temp,
+                                                        final DenseMatrix64F gradD,
+                                                        final double[] scaledNegativeBlockDScratch,
+                                                        final double[] denseAdjointScratch) {
+        if (denseFallbackPolicy.forceDenseAdjointExp()) {
+            fillDenseAdjointExpGradient(blockDParams, dt, gECov, scaledNegativeBlockDScratch,
+                    denseAdjointScratch, gradD);
+            return;
+        }
+        final DenseMatrix64F frechetInput;
+        if (denseFallbackPolicy.transposeNativeFrechetInput()) {
+            CommonOps.transpose(gECov, temp);
+            frechetInput = temp;
+        } else {
+            frechetInput = gECov;
+        }
+        frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInput, dt, gradD);
+        transposeInPlace(gradD);
     }
 
     private void fillSharedCovarianceAdjointsInDBasis(final DenseMatrix64F rMatrix,

@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuous.canonical.scheduling;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.scheduling;
 
 /**
  * Chunk-size heuristic that scales with the trait dimension.

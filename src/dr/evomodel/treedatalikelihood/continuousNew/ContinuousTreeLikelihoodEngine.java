@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuousNew;
 
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.NodeOperation;

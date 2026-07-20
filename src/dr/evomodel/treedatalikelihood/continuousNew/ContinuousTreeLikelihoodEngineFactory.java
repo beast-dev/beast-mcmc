@@ -25,10 +25,11 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuousNew;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 
 /**
@@ -39,45 +40,45 @@ final class ContinuousTreeLikelihoodEngineFactory {
     private ContinuousTreeLikelihoodEngineFactory() {
     }
 
-    static Selection legacy(final ContinuousDataLikelihoodDelegate delegate) {
-        return new Selection(
-                new LegacyCdiContinuousTreeLikelihoodEngine(delegate),
-                null,
-                null,
-                false,
-                false,
-                false);
-    }
+//    static Selection legacy(final ContinuousDataLikelihoodDelegateNew delegate) {
+//        return new Selection(
+//                new LegacyCdiContinuousTreeLikelihoodEngine(delegate),
+//                null,
+//                null,
+//                false,
+//                false,
+//                false);
+//    }
 
-    static Selection canonical(final ContinuousDataLikelihoodDelegate delegate) {
+    static Selection canonical(final ContinuousDataLikelihoodDelegateNew delegate) {
         final DiffusionProcessDelegate diffusionProcessDelegate = delegate.getDiffusionProcessDelegate();
         if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
             return canonicalOU(delegate, (OUDiffusionModelDelegate) diffusionProcessDelegate);
         }
-        if (diffusionProcessDelegate instanceof HomogeneousDiffusionModelDelegate) {
-            return cdiBM(delegate);
-        }
+//        if (diffusionProcessDelegate instanceof HomogeneousDiffusionModelDelegate) {
+//            return cdiBM(delegate);
+//        }
         throw new UnsupportedOperationException(
                 "Canonical continuous likelihood currently supports only homogeneous BM and OU models.");
     }
 
-    static Selection cdiBM(final ContinuousDataLikelihoodDelegate delegate) {
-        validateSingleTrait(delegate, "CDI/moment-form BM likelihood");
-        if (!(delegate.getDiffusionProcessDelegate() instanceof HomogeneousDiffusionModelDelegate)) {
-            throw new UnsupportedOperationException(
-                    "CDI/moment-form BM likelihood is only available for homogeneous BM diffusion delegates.");
-        }
+//    static Selection cdiBM(final ContinuousDataLikelihoodDelegateNew delegate) {
+//        validateSingleTrait(delegate, "CDI/moment-form BM likelihood");
+//        if (!(delegate.getDiffusionProcessDelegate() instanceof HomogeneousDiffusionModelDelegate)) {
+//            throw new UnsupportedOperationException(
+//                    "CDI/moment-form BM likelihood is only available for homogeneous BM diffusion delegates.");
+//        }
+//
+//        return new Selection(
+//                new CdiBMContinuousTreeLikelihoodEngine(delegate),
+//                null,
+//                null,
+//                true,
+//                false,
+//                false);
+//    }
 
-        return new Selection(
-                new CdiBMContinuousTreeLikelihoodEngine(delegate),
-                null,
-                null,
-                true,
-                false,
-                false);
-    }
-
-    static Selection momentBM(final ContinuousDataLikelihoodDelegate delegate) {
+    static Selection momentBM(final ContinuousDataLikelihoodDelegateNew delegate) {
         validateSingleTrait(delegate, "Native moment-form BM likelihood");
         if (!(delegate.getDiffusionProcessDelegate() instanceof HomogeneousDiffusionModelDelegate)) {
             throw new UnsupportedOperationException(
@@ -97,7 +98,7 @@ final class ContinuousTreeLikelihoodEngineFactory {
                 false);
     }
 
-    static Selection canonicalOU(final ContinuousDataLikelihoodDelegate delegate,
+    static Selection canonicalOU(final ContinuousDataLikelihoodDelegateNew delegate,
                                  final OUDiffusionModelDelegate ouDelegate) {
         validateSingleTrait(delegate, "Canonical OU likelihood");
         if (ouDelegate instanceof IntegratedOUDiffusionModelDelegate) {
@@ -115,7 +116,7 @@ final class ContinuousTreeLikelihoodEngineFactory {
                 true);
     }
 
-    private static void validateSingleTrait(final ContinuousDataLikelihoodDelegate delegate,
+    private static void validateSingleTrait(final ContinuousDataLikelihoodDelegateNew delegate,
                                             final String label) {
         if (delegate.getTraitCount() != 1) {
             throw new UnsupportedOperationException(label + " currently supports only a single trait partition.");

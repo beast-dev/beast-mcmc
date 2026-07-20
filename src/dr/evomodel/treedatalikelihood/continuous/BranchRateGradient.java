@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -72,7 +73,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
     public BranchRateGradient(String traitName,
                               TreeDataLikelihood treeDataLikelihood,
-                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                              CtsCompatibility likelihoodDelegate,
                               Parameter rateParameter) {
 
         assert (treeDataLikelihood != null);

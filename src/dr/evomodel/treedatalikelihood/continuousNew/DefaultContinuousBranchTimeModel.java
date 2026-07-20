@@ -25,12 +25,13 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.evomodel.treedatalikelihood.continuousNew;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate.BranchOperation;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 
 /**
  * One-segment branch-time model matching the current continuous-trait behavior.

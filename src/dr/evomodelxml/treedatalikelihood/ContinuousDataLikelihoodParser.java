@@ -37,8 +37,12 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -312,19 +316,46 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
         final boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         final boolean initializeLegacyCdi = implementationMode != ImplementationMode.MOMENT_BM;
-        ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
-                forceCompletelyObserved, allowSingular, initializeLegacyCdi);
+        // The old ContinuousDataLikelihoodDelegate only ever runs the direct legacy/SafeIntegrator
+        // CDI path (see its calculateLikelihood()); it cannot support any of the newer canonical/
+        // moment-form backends (its enableCanonicalLikelihood()/enableCdiBMLikelihood()/
+        // enableMomentBMLikelihood()/enableCanonicalOULikelihood() all throw
+        // UnsupportedOperationException by design). Those backends live only on
+        // ContinuousDataLikelihoodDelegateNew, so any non-legacy implementationMode must construct
+        // that class instead, or applyImplementationMode's enable*Likelihood() call below always
+        // throws.
+        //
+        // ContinuousDataLikelihoodDelegateNew's own initializeLegacyCdi=true branch is itself
+        // deprecated (it unconditionally throws UnsupportedOperationException) since none of its
+        // enable*Likelihood() methods need an actual legacy cdi/SafeIntegrator instance - they all
+        // build their engine via applyEngineSelection on top of the initializeLegacyCdi=false
+        // baseline. So DelegateNew must always be constructed with initializeLegacyCdi=false,
+        // regardless of implementationMode; only the old delegate uses the computed flag above.
+        final CtsCompatibility delegate = implementationMode == ImplementationMode.LEGACY
+                ? new ContinuousDataLikelihoodDelegate(treeModel,
+                        diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
+                        forceCompletelyObserved, allowSingular, initializeLegacyCdi)
+                : new ContinuousDataLikelihoodDelegateNew(treeModel,
+                        diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
+                        forceCompletelyObserved, allowSingular, false);
 
-        applyImplementationMode(
-                implementationMode,
-                implementation,
-                delegateProvider,
-                delegate,
-                reconstructTraits);
+        if (implementationMode!=ImplementationMode.LEGACY) {
+            applyImplementationMode(
+                    implementationMode,
+                    implementation,
+                    delegateProvider,
+                    delegate,
+                    reconstructTraits);
+        }
+
+
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
-            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
+            if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+                throw new XMLParseException("traitDataLikelihood implementation=\"" + implementation
+                        + "\" does not yet support a factor-analysis data model; use implementation=\"legacy\".");
+            }
+            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate((ContinuousDataLikelihoodDelegate) delegate); //TODO
         }
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
@@ -386,7 +417,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static void applyImplementationMode(final ImplementationMode implementationMode,
                                                 final String implementation,
                                                 final DelegateProvider delegateProvider,
-                                                final ContinuousDataLikelihoodDelegate delegate,
+                                                final CtsCompatibility delegate,
                                                 final boolean reconstructTraits) throws XMLParseException {
         if (implementationMode.requiresLikelihoodOnly() && reconstructTraits) {
             throw new XMLParseException(

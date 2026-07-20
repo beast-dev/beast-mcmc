@@ -32,8 +32,8 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -117,9 +117,9 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
-            if (delegate instanceof ContinuousDataLikelihoodDelegate) {
+            if (delegate instanceof CtsCompatibility) {
 
-                ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+                CtsCompatibility continuousData = (CtsCompatibility) delegate;
                 if (continuousData.usesCanonicalOULikelihood()) {
                     if (useHessian) {
                         throw new XMLParseException(

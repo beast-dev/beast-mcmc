@@ -1162,7 +1162,12 @@ public final class MascotCore {
                     continue;
                 }
                 double rate = theta[thetaOffset + index];
-                if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                // >= 0, not > 0: a rate of exactly zero (e.g. a BSSVS indicator
+                // switched off) is mathematically fine here -- this value is only
+                // ever written directly into migrationMatrix/summed for the
+                // diagonal, never logged or divided into, so nothing downstream
+                // requires strict positivity. Only negative/non-finite is a bug.
+                if (!(rate >= 0.0) || !Double.isFinite(rate)) {
                     throw new NumericalException("invalid migration rate for epoch " + epoch +
                             ", source " + source + ", sink " + sink + ": " + rate);
                 }

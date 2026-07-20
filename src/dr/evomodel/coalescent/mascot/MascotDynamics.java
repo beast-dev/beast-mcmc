@@ -178,7 +178,14 @@ public final class MascotDynamics {
                 int migrationBase = epoch * migrationRatesPerEpoch;
                 for (int j = 0; j < migrationRatesPerEpoch; j++) {
                     double rate = migrationRates.getParameterValue(migrationBase + j);
-                    if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                    // >= 0, not > 0: a migration rate of exactly zero is a valid,
+                    // meaningful model state (e.g. a BSSVS indicator switched off
+                    // via bitFlipOperator zeroing out an SVSComplexSubstitutionModel
+                    // rate*indicator product) -- theta stores rates directly (unlike
+                    // population sizes, never logged), so nothing downstream divides
+                    // by or takes the log of a migration rate. Only negative/non-finite
+                    // values are genuine errors.
+                    if (!(rate >= 0.0) || !Double.isFinite(rate)) {
                         throw new MascotCore.NumericalException("invalid migration rate at index " +
                                 (migrationBase + j) + ": " + rate);
                     }
@@ -361,7 +368,10 @@ public final class MascotDynamics {
                     continue;
                 }
                 double rate = migrationModelMatrix[row + sink];
-                if (!(rate > 0.0) || !Double.isFinite(rate)) {
+                // >= 0, not > 0: see the matching note in writeThetaValues -- a
+                // BSSVS indicator of 0 legitimately zeroes this entry via
+                // SVSComplexSubstitutionModel's rate*indicator product.
+                if (!(rate >= 0.0) || !Double.isFinite(rate)) {
                     throw new MascotCore.NumericalException("invalid migrationModel rate for epoch " + epoch +
                             ", source " + source + ", sink " + sink + ": " + rate);
                 }

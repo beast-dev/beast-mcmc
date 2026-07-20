@@ -9,6 +9,8 @@ packaging_tools/**/.*
 Testing/
 tests
 test*
+!tests/
+!tests/**/
 examples/**/.*
 benchmarking
 problem_cases

@@ -371,12 +371,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         AbstractPopulationSizeModel populationSizeModel =
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
-        if (migrationRates != null) {
-            return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, populationSizeModel,
-                    gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
-        }
-        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationModels, populationSizeModel,
-                gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
+        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, migrationModels,
+                populationSizeModel, gridPoints, stateCount, maxStep, checkProbabilities, branchRateModel, tagName);
     }
 
     private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {

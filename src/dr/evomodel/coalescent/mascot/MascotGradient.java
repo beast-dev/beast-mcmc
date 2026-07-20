@@ -66,7 +66,6 @@ public final class MascotGradient implements GradientWrtParameterProvider, Repor
                     (branchRateModel == null ? "null (no branchRateModel supplied)" :
                             branchRateModel.getClass().getName()));
         }
-        this.likelihood.enableGradientPrimedLikelihood();
     }
 
     @Override

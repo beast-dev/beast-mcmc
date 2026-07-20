@@ -32,6 +32,26 @@ public final class StructuredTipStates {
         }
     }
 
+    /**
+     * Builds every external node's partial vector once, indexed by {@code
+     * NodeRef.getNumber()} (0..externalNodeCount-1 by BEAST's tree-numbering
+     * convention). Tip states are fixed input data -- like the sequence
+     * alignment, never an estimated model variable -- so unlike the tree
+     * itself, this never needs to be rebuilt after construction: callers that
+     * currently re-derive a tip's partial vector on every tree-topology change
+     * (e.g. {@code MascotEventTape.fromTree}, invoked on every tree-changing
+     * operator) should build this once and index into it instead.
+     */
+    public static double[][] buildPartialsCache(Tree tree, PatternList tipPatterns, int stateCount,
+                                                boolean allowAmbiguities, String context) {
+        double[][] cache = new double[tree.getExternalNodeCount()][];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef node = tree.getExternalNode(i);
+            cache[node.getNumber()] = getPartials(tree, node, tipPatterns, stateCount, allowAmbiguities, context);
+        }
+        return cache;
+    }
+
     public static double[] getPartials(Tree tree, NodeRef node, PatternList tipPatterns, int stateCount,
                                        boolean allowAmbiguities, String context) {
         int state = getState(tree, node, tipPatterns, context);

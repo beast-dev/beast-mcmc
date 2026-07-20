@@ -24,6 +24,7 @@ import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
 /**
+ * @author Filippo Monti
  * BEAST-X model wrapper for {@link MascotCore}.
  */
 public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood implements Reportable, TreeTraitProvider {
@@ -62,7 +63,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     private boolean coreKnown;
     private boolean likelihoodKnown;
     private boolean gradientKnown;
-    private boolean gradientPrimedLikelihood;
+    // Tip states are fixed input data, never re-estimated, so unlike eventTape
+    // (rebuilt on every tree change) this is built once and never invalidated.
+    // Avoids re-deriving every tip's partial vector -- an O(tipCount) taxon-name
+    // lookup plus a fresh allocation, per tip -- on every tree-changing operator.
+    private double[][] tipPartialsCache;
 
     private double logLikelihood;
     // The combined, MascotCore-native flat gradient (epoch-major [migration, popSizes]).
@@ -98,124 +103,21 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     private double[] storedClockGradient;
     private double[] storedAncestralStateScores;
 
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            Parameter migrationRates,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, migrationRates, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, null);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            Parameter migrationRates,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities,
-                            BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, migrationRates, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            Parameter migrationRates,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities,
-                            BranchRateModel branchRateModel,
-                            String ancestralStateTagName) {
-        this(name, treeModel, tipPatterns, migrationRates, null, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel, ancestralStateTagName);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            SubstitutionModel migrationModel,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, populationSizeModel, epochTimes,
-                stateCount, maxStep, checkProbabilities, null);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            SubstitutionModel migrationModel,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities,
-                            BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, new SubstitutionModel[]{migrationModel}, populationSizeModel, epochTimes,
-                stateCount, maxStep, checkProbabilities, branchRateModel);
-    }
-
     /**
-     * One {@link SubstitutionModel} per epoch (see {@link MascotDynamics}'s
-     * class doc), for time-varying substitution-model-backed migration rates.
-     * A single-element array behaves exactly like the single-model
-     * constructors above.
+     * Exactly one of {@code migrationRates} (a raw parameter of native
+     * positive migration rates) or {@code migrationModels} (one
+     * {@link SubstitutionModel} per epoch -- a single-element array is the
+     * constant-through-time case; see {@link MascotDynamics}'s class doc) must
+     * be non-null; the other must be null. {@code branchRateModel} may be
+     * null (no clock gradient support). Callers that don't need a custom
+     * ancestral-state tree-trait name should pass {@link
+     * #DEFAULT_ANCESTRAL_STATE_TAG_NAME}. This is the one constructor:
+     * argument defaulting (e.g. {@code null} branchRateModel, {@code
+     * DEFAULT_ANCESTRAL_STATE_TAG_NAME}) is the XML parser's job (see {@code
+     * StructuredCoalescentLikelihoodParser.parseMascot}), not a further stack
+     * of overloads here.
      */
     public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            SubstitutionModel[] migrationModels,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities) {
-        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, null, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            SubstitutionModel[] migrationModels,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities,
-                            BranchRateModel branchRateModel) {
-        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel, DEFAULT_ANCESTRAL_STATE_TAG_NAME);
-    }
-
-    public MascotLikelihood(String name,
-                            TreeModel treeModel,
-                            PatternList tipPatterns,
-                            SubstitutionModel[] migrationModels,
-                            AbstractPopulationSizeModel populationSizeModel,
-                            Parameter epochTimes,
-                            int stateCount,
-                            double maxStep,
-                            boolean checkProbabilities,
-                            BranchRateModel branchRateModel,
-                            String ancestralStateTagName) {
-        this(name, treeModel, tipPatterns, null, migrationModels, populationSizeModel, epochTimes, stateCount, maxStep,
-                checkProbabilities, branchRateModel, ancestralStateTagName);
-    }
-
-    private MascotLikelihood(String name,
                             TreeModel treeModel,
                             PatternList tipPatterns,
                             Parameter migrationRates,
@@ -305,12 +207,17 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
 
     @Override
     public double getLogLikelihood() {
+        // Deliberately never opportunistically computes the gradient here, even
+        // if some HMC operator elsewhere primed this likelihood: an operator
+        // that only needs the likelihood (tree moves, bitFlip, plain
+        // scaleOperator) must not pay for the adjoint pass on every one of its
+        // evaluations just because an unrelated structuredCoalescentLikelihoodGradient
+        // element also exists in the XML. getGradientLogDensity() below is the
+        // only path that ever computes the gradient, and only when actually
+        // called; when it is, it also caches logLikelihood/likelihoodKnown, so a
+        // getLogLikelihood() call right after a real HMC step is still a cache hit.
         if (!likelihoodKnown) {
-            if (gradientPrimedLikelihood && !gradientKnown) {
-                evaluateLikelihoodAndGradient(false);
-            } else {
-                evaluateLikelihoodOnly();
-            }
+            evaluateLikelihoodOnly();
         }
         return logLikelihood;
     }
@@ -423,10 +330,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
         return maxStep;
     }
 
-    void enableGradientPrimedLikelihood() {
-        gradientPrimedLikelihood = true;
-    }
-
     @Override
     public void makeDirty() {
         eventTapeKnown = false;
@@ -526,8 +429,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood imp
     }
 
     private void ensureEventTape() {
+        if (tipPartialsCache == null) {
+            StructuredTipStates.validateSinglePattern(tipPatterns, dynamics.getStateCount(), "tip-state attributePatterns");
+            tipPartialsCache = StructuredTipStates.buildPartialsCache(treeModel, tipPatterns, dynamics.getStateCount(),
+                    true, "tip-state attributePatterns");
+        }
         if (!eventTapeKnown) {
-            eventTape = MascotEventTape.fromTree(treeIntervals, tipPatterns, dynamics.getStateCount());
+            eventTape = MascotEventTape.fromTree(treeIntervals, tipPartialsCache, dynamics.getStateCount());
             eventTapeKnown = true;
         }
     }

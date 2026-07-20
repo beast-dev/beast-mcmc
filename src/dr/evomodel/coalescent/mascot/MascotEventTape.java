@@ -6,7 +6,6 @@
 
 package dr.evomodel.coalescent.mascot;
 
-import dr.evolution.alignment.PatternList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -32,9 +31,19 @@ public final class MascotEventTape {
         this.preparedEvents = MascotCore.prepareEvents(events);
     }
 
-    public static MascotEventTape fromTree(BigFastTreeIntervals treeIntervals, PatternList tipPatterns, int stateCount) {
-        StructuredTipStates.validateSinglePattern(tipPatterns, stateCount, "tip-state attributePatterns");
-
+    /**
+     * @param tipPartials one partial vector per external node, indexed by
+     *                    {@code NodeRef.getNumber()} -- see {@link
+     *                    StructuredTipStates#buildPartialsCache}. Built once by
+     *                    the caller (tip states never change during a run), not
+     *                    re-derived from {@code tipPatterns} here on every
+     *                    rebuild -- this method used to call {@link
+     *                    StructuredTipStates#getPartials} per tip per call,
+     *                    which re-did an O(tipCount) taxon-name lookup and a
+     *                    fresh allocation for every tip on every tree-changing
+     *                    operator, even though the result never differs.
+     */
+    public static MascotEventTape fromTree(BigFastTreeIntervals treeIntervals, double[][] tipPartials, int stateCount) {
         Tree tree = treeIntervals.getTree();
         int intervalCount = treeIntervals.getIntervalCount();
         // BigFastTreeIntervals always has one more node/event than interval (see
@@ -48,17 +57,15 @@ public final class MascotEventTape {
         for (int interval = -1; interval < intervalCount; interval++) {
             boolean isSample = interval == -1 || treeIntervals.getIntervalType(interval) == IntervalType.SAMPLE;
             events[interval + 1] = isSample
-                    ? sampleEvent(tree, treeIntervals.getSamplingNode(interval), tipPatterns, stateCount)
+                    ? sampleEvent(tree, treeIntervals.getSamplingNode(interval), tipPartials)
                     : coalescentEvent(tree, treeIntervals.getCoalescentNode(interval));
         }
 
         return new MascotEventTape(events);
     }
 
-    private static MascotCore.Event sampleEvent(Tree tree, NodeRef node, PatternList tipPatterns, int stateCount) {
-        double[] partials = StructuredTipStates.getPartials(tree, node, tipPatterns, stateCount,
-                true, "tip-state attributePatterns");
-        return MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), partials);
+    private static MascotCore.Event sampleEvent(Tree tree, NodeRef node, double[][] tipPartials) {
+        return MascotCore.Event.sample(tree.getNodeHeight(node), node.getNumber(), tipPartials[node.getNumber()]);
     }
 
     private static MascotCore.Event coalescentEvent(Tree tree, NodeRef node) {

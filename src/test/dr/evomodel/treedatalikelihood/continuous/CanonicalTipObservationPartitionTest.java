@@ -1,8 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.IdentityCanonicalTipObservationModel;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.TipObservationPartition;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.IdentityCanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationPartition;
 import junit.framework.TestCase;
 
 public final class CanonicalTipObservationPartitionTest extends TestCase {

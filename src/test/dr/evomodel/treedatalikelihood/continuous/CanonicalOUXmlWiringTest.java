@@ -31,15 +31,15 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUNodeHeightGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUNodeHeightGradient;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.OUDiffusionModelDelegate;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalTipObservationAdapter;
-import dr.evomodel.treedatalikelihood.continuous.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalTipObservationAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
@@ -304,14 +304,15 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                         optima,
                         new MultivariateElasticModel(blockSelection));
 
-        final ContinuousDataLikelihoodDelegate delegate =
-                new ContinuousDataLikelihoodDelegate(
+        final ContinuousDataLikelihoodDelegateNew delegate =
+                new ContinuousDataLikelihoodDelegateNew(
                         treeModel,
                         diffusionDelegate,
                         dataModel,
                         rootPrior,
                         rateTransformation,
                         branchRateModel,
+                        false,
                         false,
                         false);
         delegate.enableCanonicalOULikelihood();
@@ -379,14 +380,15 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                         meanParameter,
                         new Parameter.Default(Double.POSITIVE_INFINITY));
 
-        final ContinuousDataLikelihoodDelegate delegate =
-                new ContinuousDataLikelihoodDelegate(
+        final ContinuousDataLikelihoodDelegateNew delegate =
+                new ContinuousDataLikelihoodDelegateNew(
                         treeModel,
                         diffusionDelegate,
                         dataModel,
                         fixedRootPrior,
                         rateTransformation,
                         rateModel,
+                        false,
                         false,
                         false);
         delegate.enableCanonicalOULikelihood();
@@ -436,14 +438,15 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
                         optima,
                         new MultivariateElasticModel(blockSelection));
 
-        final ContinuousDataLikelihoodDelegate delegate =
-                new ContinuousDataLikelihoodDelegate(
+        final ContinuousDataLikelihoodDelegateNew delegate =
+                new ContinuousDataLikelihoodDelegateNew(
                         treeModel,
                         diffusionDelegate,
                         dataModel,
                         rootPrior,
                         rateTransformation,
                         rateModel,
+                        false,
                         false,
                         false);
         delegate.enableCanonicalOULikelihood();
@@ -465,13 +468,13 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
     private static final class XmlStyleCanonicalOUSetup {
         final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection;
         final Parameter nativeParameter;
-        final ContinuousDataLikelihoodDelegate delegate;
+        final ContinuousDataLikelihoodDelegateNew delegate;
         final TreeDataLikelihood treeDataLikelihood;
         final CanonicalOUTreeLikelihoodIntegrator standaloneIntegrator;
 
         private XmlStyleCanonicalOUSetup(final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection,
                                          final Parameter nativeParameter,
-                                         final ContinuousDataLikelihoodDelegate delegate,
+                                         final ContinuousDataLikelihoodDelegateNew delegate,
                                          final TreeDataLikelihood treeDataLikelihood,
                                          final CanonicalOUTreeLikelihoodIntegrator standaloneIntegrator) {
             this.blockSelection = blockSelection;
@@ -484,11 +487,11 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
 
     private static final class XmlStyleCanonicalMeanSetup {
         final CompoundParameter meanParameter;
-        final ContinuousDataLikelihoodDelegate delegate;
+        final ContinuousDataLikelihoodDelegateNew delegate;
         final TreeDataLikelihood treeDataLikelihood;
 
         private XmlStyleCanonicalMeanSetup(final CompoundParameter meanParameter,
-                                           final ContinuousDataLikelihoodDelegate delegate,
+                                           final ContinuousDataLikelihoodDelegateNew delegate,
                                            final TreeDataLikelihood treeDataLikelihood) {
             this.meanParameter = meanParameter;
             this.delegate = delegate;
@@ -498,11 +501,11 @@ public class CanonicalOUXmlWiringTest extends ContinuousTraitTest {
 
     private static final class XmlStyleCanonicalPrecisionSetup {
         final MatrixParameterInterface precisionMatrix;
-        final ContinuousDataLikelihoodDelegate delegate;
+        final ContinuousDataLikelihoodDelegateNew delegate;
         final TreeDataLikelihood treeDataLikelihood;
 
         private XmlStyleCanonicalPrecisionSetup(final MatrixParameterInterface precisionMatrix,
-                                                final ContinuousDataLikelihoodDelegate delegate,
+                                                final ContinuousDataLikelihoodDelegateNew delegate,
                                                 final TreeDataLikelihood treeDataLikelihood) {
             this.precisionMatrix = precisionMatrix;
             this.delegate = delegate;

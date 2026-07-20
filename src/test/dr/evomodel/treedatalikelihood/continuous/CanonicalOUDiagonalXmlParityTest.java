@@ -2,8 +2,8 @@ package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.app.beast.BeastParser;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalActualizedWithDriftIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
 
@@ -16,7 +16,7 @@ public final class CanonicalOUDiagonalXmlParityTest extends TestCase {
 
     private static final String XML_PATH = "tests/TestXML/testCanonicalOUDiagonalParity.xml";
     private static final String CANONICAL_OU_ENGINE =
-            "dr.evomodel.treedatalikelihood.continuous.CanonicalOUContinuousTreeLikelihoodEngine";
+            "dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUContinuousTreeLikelihoodEngine";
 
     public void testXmlDiagonalOULikelihoodMatchesLegacyCDI() throws Exception {
         final ParsedLikelihoods parsed = parseLikelihoods();
@@ -32,10 +32,10 @@ public final class CanonicalOUDiagonalXmlParityTest extends TestCase {
 
     public void testXmlDiagonalOUBackendsAreSelectedAsExpected() throws Exception {
         final ParsedLikelihoods parsed = parseLikelihoods();
-        final ContinuousDataLikelihoodDelegate legacyDelegate =
-                (ContinuousDataLikelihoodDelegate) parsed.legacy.getDataLikelihoodDelegate();
-        final ContinuousDataLikelihoodDelegate canonicalDelegate =
-                (ContinuousDataLikelihoodDelegate) parsed.canonical.getDataLikelihoodDelegate();
+        final CtsCompatibility legacyDelegate =
+                (CtsCompatibility) parsed.legacy.getDataLikelihoodDelegate();
+        final CtsCompatibility canonicalDelegate =
+                (CtsCompatibility) parsed.canonical.getDataLikelihoodDelegate();
 
         assertFalse("legacy XML should not select canonical OU",
                 legacyDelegate.usesCanonicalOULikelihood());

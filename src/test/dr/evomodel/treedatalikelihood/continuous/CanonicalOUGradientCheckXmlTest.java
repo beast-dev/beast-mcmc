@@ -1,8 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.app.beast.BeastParser;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUNodeHeightGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUNodeHeightGradient;
 import dr.inference.mcmc.MCMC;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;

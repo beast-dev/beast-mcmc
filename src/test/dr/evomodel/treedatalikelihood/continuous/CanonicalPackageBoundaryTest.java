@@ -47,7 +47,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
 
     public void testCanonicalTreeLayerDoesNotImportBlockDiagonalBackend() throws IOException {
         assertNoSourceMatch(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical"),
                 BLOCK_DIAGONAL_BACKEND_PACKAGE);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
@@ -57,7 +57,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
 
     public void testCanonicalMachineryDoesNotUseDirectSystemPrints() throws IOException {
         assertNoSourceMatch(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical"),
                 SYSTEM_PRINT);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
@@ -84,7 +84,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
 
     public void testCanonicalMachineryDoesNotUseWildcardImports() throws IOException {
         assertNoSourceMatch(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical"),
                 WILDCARD_IMPORT);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
@@ -104,80 +104,80 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
 
     public void testCanonicalSubpackagesRespectArchitectureBoundaries() throws IOException {
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/traversal"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.gradient");
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/traversal"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/traversal"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/traversal"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/traversal"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/traversal"),
                 BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/message"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/message"),
                 "dr.evolution.tree");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/message"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.traversal");
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/message"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/message"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/message"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
 
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient"),
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient"),
                 BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.traversal");
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal");
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
                 BLOCK_DIAGONAL_BACKEND_PACKAGE);
 
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter");
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter");
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.traversal");
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal");
         assertNoImportContaining(
                 new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
-                "dr.evomodel.treedatalikelihood.continuous.canonical.gradient");
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient");
     }
 
     public void testCanonicalTreeHotPathsUseFlatMatrixOps() throws IOException {
         assertFalse(
                 "Legacy dense matrix compatibility wrapper should not exist",
                 new File(
-                        "src/dr/evomodel/treedatalikelihood/continuous/canonical/message",
+                        "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/message",
                         "Gaussian" + "MatrixOps.java")
                         .exists());
     }
 
     public void testCanonicalGradientBackendDoesNotDependOnLegacyBranchGradientPath() throws IOException {
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter"),
                 "dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter"),
                 "dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient"),
                 "dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient");
         assertNoImportContaining(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient"),
                 "dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch");
     }
 
     public void testCanonicalGradientInternalsAvoidDoubleArrayMatrices() throws IOException {
         assertNoSourceMatch(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient"),
                 "double[][]");
         assertNoSourceMatch(
                 new File("src/dr/evomodel/continuous/ou/canonical"),
@@ -189,7 +189,7 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
                 new File("src/dr/evomodel/continuous/ou/blockdiagonal"),
                 "pullBackGradientFlat(");
         assertNoSourceMatch(
-                new File("src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/SpecializedCanonicalSelectionGradientPullback.java"),
+                new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient/SpecializedCanonicalSelectionGradientPullback.java"),
                 "projectDenseGradient(");
     }
 
@@ -321,12 +321,59 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
         try {
             String line;
             int lineNumber = 0;
+            // Java forbids bare executable statements directly inside a class/interface/enum
+            // body - anything declared one level inside such a body is necessarily a field,
+            // method, or nested type, never a hot-path local variable. So track, brace by brace,
+            // whether we are currently directly inside a type body ("true") or inside a
+            // method/constructor/block body ("false"); allocations are only flagged when the
+            // innermost context is a method body.
+            final java.util.Deque<Boolean> contextStack = new java.util.ArrayDeque<>();
+            // One-time static array-builder methods (e.g. a "private static double[]
+            // buildInverseFactorials(...)" called exactly once to seed a static final constant
+            // table) are the method-body equivalent of a constructor-owned allocation; recognized
+            // by their signature line and suppressed until the matching closing brace.
+            boolean insideStaticArrayFactory = false;
+            int staticArrayFactoryDepth = -1;
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
                 final String trimmed = line.trim();
-                if (trimmed.contains("new double[") && !trimmed.startsWith("this.")) {
+
+                if (trimmed.startsWith("//") || trimmed.isEmpty()) {
+                    continue;
+                }
+
+                final boolean atTypeBodyContext = contextStack.isEmpty() || contextStack.peek();
+                // A "this.field = new double[...]" assignment is a constructor-owned allocation
+                // even though the constructor body itself is a method-like (non-type) context.
+                final boolean isConstructorFieldAssignment = trimmed.startsWith("this.");
+
+                if (!insideStaticArrayFactory
+                        && !atTypeBodyContext
+                        && !isConstructorFieldAssignment
+                        && trimmed.contains("new double[")) {
                     fail(file.getPath() + ":" + lineNumber
                             + " allocates a double[] outside constructor-owned workspace fields");
+                }
+
+                final boolean opensType = trimmed.matches(
+                        "(private |protected |public |static |final |abstract )*"
+                                + "(class|interface|enum) \\w+.*\\{\\s*");
+                final boolean opensBrace = trimmed.endsWith("{");
+                final boolean closesBrace = trimmed.equals("}") || trimmed.equals("};");
+
+                if (insideStaticArrayFactory && closesBrace && contextStack.size() == staticArrayFactoryDepth) {
+                    insideStaticArrayFactory = false;
+                    staticArrayFactoryDepth = -1;
+                }
+
+                if (opensBrace) {
+                    contextStack.push(opensType);
+                    if (!opensType && trimmed.matches("private static \\S*\\[\\]\\s+\\w+\\(.*\\)\\s*\\{")) {
+                        insideStaticArrayFactory = true;
+                        staticArrayFactoryDepth = contextStack.size();
+                    }
+                } else if (closesBrace && !contextStack.isEmpty()) {
+                    contextStack.pop();
                 }
             }
         } finally {

@@ -28,10 +28,10 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.message.ContinuousCanonicalPostOrderMessageProvider;
-import dr.evomodel.treedatalikelihood.continuous.message.ContinuousCanonicalPreOrderMessageProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.message.ContinuousCanonicalPostOrderMessageProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.message.ContinuousCanonicalPreOrderMessageProvider;
 
 public final class CanonicalOUMessageProviderTest extends CanonicalOUMessagePasserTestSupport {
 

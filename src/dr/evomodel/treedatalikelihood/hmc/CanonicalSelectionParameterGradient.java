@@ -28,9 +28,9 @@
 package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
 
@@ -45,7 +45,7 @@ public final class CanonicalSelectionParameterGradient extends AbstractDiffusion
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter;
 
     public CanonicalSelectionParameterGradient(final TreeDataLikelihood likelihood,
-                                               final ContinuousDataLikelihoodDelegate continuousData,
+                                               final CtsCompatibility continuousData,
                                                final Parameter parameter,
                                                final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
         super(likelihood, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);

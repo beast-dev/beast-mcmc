@@ -1,10 +1,10 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.MultivariateElasticModel;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchProcessSpecification;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.HomogeneousCanonicalOUBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;

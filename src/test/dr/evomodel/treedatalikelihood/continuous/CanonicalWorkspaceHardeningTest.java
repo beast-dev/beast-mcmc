@@ -20,7 +20,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testTransitionMatrixCacheInvalidatesAcrossPasses() throws Exception {
         final Class<?> workspaceClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.GradientPullbackWorkspace");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.GradientPullbackWorkspace");
         final Object workspace = newInstance(workspaceClass, int.class, 2);
         final Method hasTransitionMatrix =
                 method(workspaceClass, "hasTransitionMatrix", double.class);
@@ -47,7 +47,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryRejectsInvalidDimension() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceFactory");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class);
         try {
             factory.invoke(null, 0);
@@ -60,7 +60,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
     public void testWorkspaceFactoryConstructsValidatedWorkspace() throws Exception {
         final int[] dimensions = {1, 2, 3, 8, 16};
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceFactory");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class);
         for (int dim : dimensions) {
             final Object workspace = factory.invoke(null, dim);
@@ -77,9 +77,9 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryAllocatesOnlyRequestedCapabilities() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceFactory");
         final Class<?> capabilityClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceCapability");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceCapability");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class, EnumSet.class);
 
         final Object traversalOnly = factory.invoke(
@@ -112,9 +112,9 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testWorkspaceFactoryRejectsUnsupportedCapabilityCombinations() throws Exception {
         final Class<?> factoryClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceFactory");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceFactory");
         final Class<?> capabilityClass =
-                Class.forName("dr.evomodel.treedatalikelihood.continuous.canonical.workspace.WorkspaceCapability");
+                Class.forName("dr.evomodel.treedatalikelihood.continuousNew.canonical.workspace.WorkspaceCapability");
         final Method factory = method(factoryClass, "branchGradientWorkspace", int.class, EnumSet.class);
 
         assertIllegalArgument(factory, capabilitySet(capabilityClass, "PARTIAL_OBSERVATION"));
@@ -176,15 +176,15 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
         assertTrue("Missing diagonal OU source directory: " + diagonalDir, diagonalDir.isDirectory());
         assertNoForbiddenText(
                 diagonalDir,
-                "dr.evomodel.treedatalikelihood.continuous.observationmodel",
-                "dr.evomodel.treedatalikelihood.continuous.canonical.message",
+                "dr.evomodel.treedatalikelihood.continuousNew.observationmodel",
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.message",
                 "BranchGradientWorkspace",
                 "CanonicalNativeBranchMessageProvider");
     }
 
     public void testHomogeneousOuProviderDoesNotKnowDiagonalMatrixType() throws Exception {
         final File provider = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter/"
                 + "HomogeneousCanonicalOUBranchTransitionProvider.java");
         final String source = read(provider);
         assertFalse(source.contains("DiagonalMatrix"));
@@ -192,7 +192,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testHomogeneousOuProviderDelegatesBranchProcessDetails() throws Exception {
         final File provider = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter/"
                 + "HomogeneousCanonicalOUBranchTransitionProvider.java");
         final String source = read(provider);
         assertTrue(source.contains("CanonicalOUBranchProcessProvider"));
@@ -204,7 +204,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testCanonicalTransitionCacheIsBranchProcessAwareWithFastPath() throws Exception {
         final File cache = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter/"
                 + "CanonicalTransitionCache.java");
         final String source = read(cache);
         assertTrue(source.contains("CanonicalOUBranchProcessProvider"));
@@ -217,31 +217,31 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testGradientInputsCarryBranchProcessIdentity() throws Exception {
         final String inputs = read(sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient/"
                 + "BranchGradientInputs.java"));
         assertTrue(inputs.contains("activeProcessIndices"));
         assertTrue(inputs.contains("getProcessIndex"));
 
         final String preparer = read(sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient/"
                 + "CanonicalBranchAdjointPreparer.java"));
         assertFalse(preparer.contains("getProcessModel()"));
 
         final String treeGradient = read(sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient/"
                 + "CanonicalTreeGradientEngine.java"));
         assertTrue(treeGradient.contains("inputs.getProcessIndex"));
         assertTrue(treeGradient.contains("validateSharedGradientTarget"));
 
         final String branchLengthGradient = read(sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/gradient/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/gradient/"
                 + "CanonicalBranchLengthGradientEngine.java"));
         assertTrue(branchLengthGradient.contains("inputs.getProcessIndex"));
     }
 
     public void testNativeMessageAdapterFactoryUsesKernelCapabilities() throws Exception {
         final File factory = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter/"
                 + "CanonicalNativeBranchMessageAdapterFactory.java");
         final String source = read(factory);
         assertFalse(source.contains("dr.evomodel.continuous.ou.diagonal"));
@@ -252,7 +252,7 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testObservationModelsDoNotDependOnFullNativeProvider() throws Exception {
         final File observationDir = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/observationmodel");
+                "src/dr/evomodel/treedatalikelihood/continuousNew/observationmodel");
         assertTrue("Missing observation-model source directory: " + observationDir,
                 observationDir.isDirectory());
         assertNoForbiddenText(observationDir, "CanonicalNativeBranchMessageProvider");
@@ -260,13 +260,13 @@ public final class CanonicalWorkspaceHardeningTest extends TestCase {
 
     public void testNativeTransitionPreloadPolicyIsTraversalAware() throws Exception {
         final File runner = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/CanonicalTraversalRunner.java");
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/CanonicalTraversalRunner.java");
         final String runnerSource = read(runner);
         assertFalse(runnerSource.contains("shouldSkipCanonicalTransitionPreload"));
         assertTrue(runnerSource.contains("postorderNativeMessagesCoverTraversal"));
 
         final File adapter = sourceFile(
-                "src/dr/evomodel/treedatalikelihood/continuous/canonical/adapter/"
+                "src/dr/evomodel/treedatalikelihood/continuousNew/canonical/adapter/"
                 + "DiagonalOUCanonicalBranchMessageAdapter.java");
         final String adapterSource = read(adapter);
         assertFalse(adapterSource.contains("shouldSkipCanonicalTransitionPreload"));

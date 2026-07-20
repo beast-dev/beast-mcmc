@@ -1,7 +1,7 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;

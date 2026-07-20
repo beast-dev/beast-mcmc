@@ -1,14 +1,14 @@
 package dr.inference.timeseries.engine.kalman.formula;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalCanonicalParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
 import dr.inference.timeseries.engine.kalman.CanonicalBranchGradientCache;
 import dr.inference.timeseries.engine.kalman.CanonicalForwardTrajectory;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;

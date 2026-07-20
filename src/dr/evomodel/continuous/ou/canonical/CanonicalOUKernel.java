@@ -5,11 +5,11 @@ import dr.evomodel.continuous.ou.MatrixExponentialUtils;
 import dr.evomodel.continuous.ou.OUCovarianceGradientMath;
 import dr.evomodel.continuous.ou.OUCovarianceGradientStrategy;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.GaussianFormConverter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianState;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.GaussianFormConverter;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.MatrixParameterInterface;
 
 /**

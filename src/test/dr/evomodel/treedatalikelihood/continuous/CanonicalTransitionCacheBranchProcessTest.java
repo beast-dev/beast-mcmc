@@ -1,8 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.CanonicalPreparedBranchSnapshot;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
@@ -52,7 +52,7 @@ public final class CanonicalTransitionCacheBranchProcessTest extends TestCase {
                                                     final double[] branchTimes,
                                                     final int[] branchProcessIndices) throws Exception {
         final Class<?> providerInterface = Class.forName(
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter."
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
                 + "CanonicalOUBranchProcessProvider");
         final InvocationHandler handler = (proxy, method, args) -> {
             final String name = method.getName();
@@ -115,17 +115,17 @@ public final class CanonicalTransitionCacheBranchProcessTest extends TestCase {
 
     private static Object newTransitionCache(final Object provider) throws Exception {
         final Class<?> providerInterface = Class.forName(
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter."
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
                 + "CanonicalOUBranchProcessProvider");
         final Class<?> optionsClass = Class.forName(
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter."
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
                 + "CanonicalTransitionCacheOptions");
         final Method optionsFactory = optionsClass.getDeclaredMethod("fromSystemProperties");
         optionsFactory.setAccessible(true);
         final Object options = optionsFactory.invoke(null);
 
         final Class<?> cacheClass = Class.forName(
-                "dr.evomodel.treedatalikelihood.continuous.canonical.adapter."
+                "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
                 + "CanonicalTransitionCache");
         final Constructor<?> constructor =
                 cacheClass.getDeclaredConstructor(providerInterface, optionsClass);

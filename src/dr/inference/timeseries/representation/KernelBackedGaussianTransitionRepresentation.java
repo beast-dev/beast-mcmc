@@ -2,8 +2,8 @@ package dr.inference.timeseries.representation;
 
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedBranchHandle;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianTransition;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.core.TimeGrid;
 
 /**

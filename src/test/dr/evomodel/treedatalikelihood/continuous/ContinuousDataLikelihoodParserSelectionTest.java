@@ -2,9 +2,9 @@ package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.app.beast.BeastParser;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUBranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.CanonicalOUNodeHeightGradient;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUNodeHeightGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
 
@@ -14,35 +14,39 @@ import java.util.Map;
 
 public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase {
 
-    private static final String CDI_BM_ENGINE =
-            "dr.evomodel.treedatalikelihood.continuous.CdiBMContinuousTreeLikelihoodEngine";
     private static final String MOMENT_BM_ENGINE =
-            "dr.evomodel.treedatalikelihood.continuous.MomentBMContinuousTreeLikelihoodEngine";
+            "dr.evomodel.treedatalikelihood.continuousNew.MomentBMContinuousTreeLikelihoodEngine";
     private static final String CANONICAL_OU_ENGINE =
-            "dr.evomodel.treedatalikelihood.continuous.CanonicalOUContinuousTreeLikelihoodEngine";
+            "dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUContinuousTreeLikelihoodEngine";
 
-    public void testParserCanonicalCompatibilityBMSelectsCdiMomentBackend() throws Exception {
-        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(bmXml("canonical"));
+    // The CDI-backed BM engine (ContinuousTreeLikelihoodEngineFactory.cdiBM(...)) has been
+    // deprecated in favor of the native moment-form engine; enableCdiBMLikelihood() is now a
+    // no-op, so both the "canonical" and "cdi-moment" BM implementation spellings fall back to
+    // whatever engine the constructor's baseline selection already installed for a homogeneous
+    // BM model, i.e. the native moment-form engine.
+    public void testParserCanonicalCompatibilityBMSelectsMomentBackend() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(bmXml("canonical"));
 
-        assertTrue("legacy canonical BM spelling should select CDI BM", delegate.usesCdiBMLikelihood());
+        assertTrue("legacy canonical BM spelling should fall back to the moment-form BM engine",
+                delegate.usesMomentBMLikelihood());
         assertFalse("BM should not select canonical OU", delegate.usesCanonicalOULikelihood());
-        assertSelectedEngine(delegate, CDI_BM_ENGINE);
+        assertSelectedEngine(delegate, MOMENT_BM_ENGINE);
     }
 
-    public void testParserExplicitCdiMomentBMSelectsCdiMomentBackend() throws Exception {
-        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(bmXml("cdi-moment"));
+    public void testParserExplicitCdiMomentBMFallsBackToMomentBackend() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(bmXml("cdi-moment"));
 
-        assertTrue("explicit CDI/moment BM spelling should select CDI BM", delegate.usesCdiBMLikelihood());
-        assertFalse("explicit CDI/moment BM should not select native BM", delegate.usesMomentBMLikelihood());
+        assertTrue("explicit CDI/moment BM spelling should fall back to the moment-form BM engine",
+                delegate.usesMomentBMLikelihood());
         assertFalse("BM should not select canonical OU", delegate.usesCanonicalOULikelihood());
-        assertSelectedEngine(delegate, CDI_BM_ENGINE);
+        assertSelectedEngine(delegate, MOMENT_BM_ENGINE);
     }
 
     public void testParserExplicitNativeMomentBMSelectsMomentBackendAndMatchesCdi() throws Exception {
         final TreeDataLikelihood cdiLikelihood = parseLikelihood(bmXml("cdi-moment"));
         final TreeDataLikelihood momentLikelihood = parseLikelihood(bmXml("bm-moment"));
-        final ContinuousDataLikelihoodDelegate momentDelegate =
-                (ContinuousDataLikelihoodDelegate) momentLikelihood.getDataLikelihoodDelegate();
+        final CtsCompatibility momentDelegate =
+                (CtsCompatibility) momentLikelihood.getDataLikelihoodDelegate();
 
         assertTrue("explicit native moment BM should select native BM", momentDelegate.usesMomentBMLikelihood());
         assertFalse("explicit native moment BM should not select CDI BM", momentDelegate.usesCdiBMLikelihood());
@@ -53,7 +57,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     public void testParserCanonicalCompatibilityOUSelectsCanonicalMessageBackend() throws Exception {
-        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(ouXml("canonical"));
+        final CtsCompatibility delegate = parseDelegate(ouXml("canonical"));
 
         assertTrue("legacy canonical OU spelling should select canonical OU", delegate.usesCanonicalOULikelihood());
         assertFalse("OU should not select CDI BM", delegate.usesCdiBMLikelihood());
@@ -61,7 +65,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     public void testParserExplicitCanonicalMessageOUSelectsCanonicalMessageBackend() throws Exception {
-        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(ouXml("canonical-message"));
+        final CtsCompatibility delegate = parseDelegate(ouXml("canonical-message"));
 
         assertTrue("explicit canonical-message OU spelling should select canonical OU", delegate.usesCanonicalOULikelihood());
         assertFalse("OU should not select CDI BM", delegate.usesCdiBMLikelihood());
@@ -69,7 +73,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     public void testParserCanonicalMessageOUBranchProcessesSelectsCanonicalMessageBackend() throws Exception {
-        final ContinuousDataLikelihoodDelegate delegate = parseDelegate(heterogeneousOuXml("canonical-message"));
+        final CtsCompatibility delegate = parseDelegate(heterogeneousOuXml("canonical-message"));
 
         assertTrue("heterogeneous OU branch processes should select canonical OU",
                 delegate.usesCanonicalOULikelihood());
@@ -156,9 +160,9 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
                 "branch rates that do not depend on node heights");
     }
 
-    private static ContinuousDataLikelihoodDelegate parseDelegate(final String xml) throws Exception {
+    private static CtsCompatibility parseDelegate(final String xml) throws Exception {
         final TreeDataLikelihood likelihood = parseLikelihood(xml);
-        return (ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate();
+        return (CtsCompatibility) likelihood.getDataLikelihoodDelegate();
     }
 
     private static TreeDataLikelihood parseLikelihood(final String xml) throws Exception {
@@ -197,7 +201,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         }
     }
 
-    private static void assertSelectedEngine(final ContinuousDataLikelihoodDelegate delegate,
+    private static void assertSelectedEngine(final CtsCompatibility delegate,
                                              final String expectedClassName) throws Exception {
         final Object engine = privateFieldValue(delegate, "likelihoodEngine");
         assertNotNull("likelihood engine should be selected", engine);

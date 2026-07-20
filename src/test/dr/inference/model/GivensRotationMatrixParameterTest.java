@@ -1,6 +1,6 @@
 package test.dr.inference.model;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.InvertibleMatrixParametrization;

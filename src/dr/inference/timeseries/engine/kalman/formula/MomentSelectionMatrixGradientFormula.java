@@ -2,7 +2,7 @@ package dr.inference.timeseries.engine.kalman.formula;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Parameter;
-import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.timeseries.core.TimeGrid;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockDiagonalNativeCanonicalParameterization;

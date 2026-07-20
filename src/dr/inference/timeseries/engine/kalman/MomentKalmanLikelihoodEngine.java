@@ -1,6 +1,6 @@
 package dr.inference.timeseries.engine.kalman;
 
-import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.math.MatrixOps;
 
 import dr.inference.timeseries.core.TimeGrid;
 import dr.inference.timeseries.engine.LikelihoodEngine;

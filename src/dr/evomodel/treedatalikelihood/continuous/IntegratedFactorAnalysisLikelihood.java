@@ -965,7 +965,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
             double[] priorMean = delegate.getRootPrior().getMean();
-            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, delegate.getIntegrator(), delegate.getDiffusionProcessDelegate()));
+            // The delegate/root prior operate in latent factor space, not the observed dimTrait
+            // space (see the dimTrait/numFactors distinction above), so the drift dimension here
+            // must be numFactors - matching what delegate.getIntegrator().getDimTrait() used to
+            // return before getTreeDrift took an explicit dimension parameter.
+            Matrix treeDrift = new Matrix(MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, numFactors, delegate.getIntegrator(), delegate.getDiffusionProcessDelegate()));
 
             if (delegate.getDiffusionProcessDelegate().hasDrift()) {
                 sb.append("Tree drift (including root mean):\n");

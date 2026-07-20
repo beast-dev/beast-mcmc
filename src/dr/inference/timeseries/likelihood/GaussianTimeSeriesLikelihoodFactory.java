@@ -28,7 +28,7 @@ import dr.inference.timeseries.model.gaussian.OUTimeSeriesProcessAdapter;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterization;
 import dr.evomodel.continuous.ou.DiffusionMatrixParameterizationFactory;
 import dr.evomodel.continuous.ou.OUProcessModel;
-import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaussianBranchTransitionKernel;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianBranchTransitionKernel;
 import dr.inference.timeseries.representation.GaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.CachedGaussianTransitionRepresentation;
 import dr.inference.timeseries.representation.RepresentableProcess;

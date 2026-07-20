@@ -85,24 +85,34 @@ public final class MascotEventTape {
     }
 
     /**
-     * Builds a {@code MascotCore}-compatible {@code branchRates} array (indexed
+     * Writes a {@code MascotCore}-compatible {@code branchRates} array (indexed
      * by lineage id, i.e. {@code NodeRef.getNumber()} -- see {@link #fromTree}),
-     * from any {@link BranchRateModel}. The root's slot is left {@code 0.0} and
-     * is never read by {@code MascotCore} (the root is never an active lineage).
-     * Rebuilt fresh on every call, deliberately uncached, matching {@link
-     * MascotDynamics#getThetaValues()}'s existing always-rebuild pattern: this is
-     * an O(nodeCount) traversal with no allocation beyond the returned array, so
-     * caching would only add an invalidation-tracking axis (tree topology change
-     * vs. clock-parameter change) for no real benefit.
+     * from any {@link BranchRateModel}, into a caller-owned {@code destination}
+     * of length {@code tree.getNodeCount()}. The root's slot is explicitly set
+     * to {@code 0.0} (never read by {@code MascotCore}, but every non-root slot
+     * must be freshly overwritten on every call regardless -- a topology change
+     * can move which node is root, which would otherwise leave a stale nonzero
+     * value in a reused buffer's old root slot). Rebuilt fresh on every call,
+     * deliberately uncached, matching {@link MascotDynamics#getThetaValues()}'s
+     * existing always-rebuild pattern: this is an O(nodeCount) traversal, so
+     * caching would only add an invalidation-tracking axis (tree topology
+     * change vs. clock-parameter change) for no real benefit.
      */
-    public static double[] buildBranchRates(TreeModel tree, BranchRateModel branchRateModel) {
-        double[] rates = new double[tree.getNodeCount()];
+    public static void writeBranchRates(TreeModel tree, BranchRateModel branchRateModel, double[] destination) {
+        if (destination.length != tree.getNodeCount()) {
+            throw new IllegalArgumentException("destination dimension " + destination.length +
+                    " does not match tree node count " + tree.getNodeCount());
+        }
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                rates[node.getNumber()] = branchRateModel.getBranchRate(tree, node);
-            }
+            destination[node.getNumber()] = tree.isRoot(node) ? 0.0 : branchRateModel.getBranchRate(tree, node);
         }
+    }
+
+    /** Allocating compatibility wrapper over {@link #writeBranchRates}; prefer the in-place form in hot paths. */
+    public static double[] buildBranchRates(TreeModel tree, BranchRateModel branchRateModel) {
+        double[] rates = new double[tree.getNodeCount()];
+        writeBranchRates(tree, branchRateModel, rates);
         return rates;
     }
 

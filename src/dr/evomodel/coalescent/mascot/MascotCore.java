@@ -273,6 +273,55 @@ public final class MascotCore {
     private Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
                             boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState,
                             double[] nodeLogWeights) {
+        double[] gradientOut = computeGradient ? new double[parameterCount] : null;
+        double[] clockGradientOut = computeGradient && branchRates != null
+                ? new double[prepared.maxLineageId + 1] : null;
+        double[] ancestralStateScoresOut = computeAncestralStates
+                ? new double[(prepared.maxLineageId + 1) * stateCount] : null;
+
+        double logLikelihood = evaluateCore(prepared, theta, branchRates, checkProbabilities, nodeLogWeights,
+                gradientOut, clockGradientOut, ancestralStateScoresOut);
+
+        ActiveState state = activeState;
+        double[] rootProbabilities = copyFinalState ? state.copyProbabilities() : null;
+        int[] activeLineages = copyFinalState ? state.copyActiveIds() : null;
+        return new Result(logLikelihood, gradientOut, clockGradientOut, rootProbabilities, activeLineages,
+                ancestralStateScoresOut);
+    }
+
+    /**
+     * Caller-owned-output evaluation: writes into {@code gradientOut}/{@code
+     * clockGradientOut}/{@code ancestralStateScoresOut} instead of allocating
+     * them, and never constructs a {@link Result}. Each output array is
+     * requested by passing a non-null, exactly-sized destination; passing
+     * {@code null} skips exposing (not necessarily computing -- see below)
+     * that output. This is the production path {@link
+     * dr.evomodel.coalescent.mascot.MascotLikelihood} uses; {@link #evaluate}
+     * and friends remain allocating compatibility wrappers over the same
+     * {@link #evaluateCore} implementation, for tests and callers that want a
+     * self-contained {@link Result}.
+     * <p/>
+     * The reverse traversal computes the parameter gradient and the
+     * ancestral-state scores together (shared VJP), so requesting only one of
+     * the two still runs the same reverse pass; the unrequested output is
+     * written into a reused scratch buffer instead of the caller's array.
+     */
+    public double evaluateInto(PreparedEvents prepared, double[] theta, double[] branchRates,
+                               double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScoresOut,
+                               boolean checkProbabilities) {
+        return evaluateCore(prepared, theta, branchRates, checkProbabilities, null,
+                gradientOut, clockGradientOut, ancestralStateScoresOut);
+    }
+
+    /** Scalar-only evaluation: never builds the reverse tape, never allocates a {@link Result}. */
+    public double evaluateLikelihood(PreparedEvents prepared, double[] theta, double[] branchRates,
+                                     boolean checkProbabilities) {
+        return evaluateCore(prepared, theta, branchRates, checkProbabilities, null, null, null, null);
+    }
+
+    private double evaluateCore(PreparedEvents prepared, double[] theta, double[] branchRates,
+                                boolean checkProbabilities, double[] nodeLogWeights,
+                                double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScoresOut) {
         if (prepared == null) {
             throw new IllegalArgumentException("prepared events must not be null");
         }
@@ -291,6 +340,24 @@ public final class MascotCore {
                         " does not match expected dimension " + expectedLength);
             }
         }
+        if (gradientOut != null && gradientOut.length != parameterCount) {
+            throw new IllegalArgumentException("gradientOut dimension " + gradientOut.length +
+                    " does not match expected dimension " + parameterCount);
+        }
+        int expectedLineageDimension = prepared.maxLineageId + 1;
+        if (clockGradientOut != null) {
+            if (branchRates == null) {
+                throw new IllegalArgumentException("clockGradientOut was requested but branchRates is null");
+            }
+            if (clockGradientOut.length != expectedLineageDimension) {
+                throw new IllegalArgumentException("clockGradientOut dimension " + clockGradientOut.length +
+                        " does not match expected dimension " + expectedLineageDimension);
+            }
+        }
+        if (ancestralStateScoresOut != null && ancestralStateScoresOut.length != expectedLineageDimension * stateCount) {
+            throw new IllegalArgumentException("ancestralStateScoresOut dimension " + ancestralStateScoresOut.length +
+                    " does not match expected dimension " + (expectedLineageDimension * stateCount));
+        }
 
         for (int epoch = 0; epoch < epochCount; epoch++) {
             updateEpochRates(theta, epoch, epochRates[epoch]);
@@ -301,7 +368,7 @@ public final class MascotCore {
         state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
         epochCursor = 0;
         double currentTime = 0.0;
-        boolean runReverse = computeGradient || computeAncestralStates;
+        boolean runReverse = gradientOut != null || ancestralStateScoresOut != null;
         OperationTapeStore operations = null;
         if (runReverse) {
             // One tape entry per event, plus at most one IntervalTape per epoch
@@ -344,30 +411,25 @@ public final class MascotCore {
             }
         }
 
-        double[] ancestralStateScores = null;
-        if (computeAncestralStates) {
-            ancestralStateScores = new double[(prepared.maxLineageId + 1) * stateCount];
-            Arrays.fill(ancestralStateScores, Double.NaN);
+        if (ancestralStateScoresOut != null) {
+            Arrays.fill(ancestralStateScoresOut, 0, expectedLineageDimension * stateCount, Double.NaN);
         }
 
-        double[] gradient = null;
-        double[] clockGradient = null;
         if (runReverse) {
-            if (branchRates != null) {
-                clockGradient = new double[prepared.maxLineageId + 1];
+            double[] gradientBuffer = gradientOut;
+            if (gradientBuffer == null) {
+                workspace.gradientScratch = ensure(workspace.gradientScratch, parameterCount);
+                gradientBuffer = workspace.gradientScratch;
             }
-            double[] reverseGradient = reverse(operations, state.activeCount, clockGradient, ancestralStateScores);
-            if (computeGradient) {
-                gradient = reverseGradient;
-            } else {
-                clockGradient = null;
+            double[] clockGradientBuffer = clockGradientOut;
+            if (clockGradientBuffer == null && branchRates != null) {
+                workspace.clockGradientScratch = ensure(workspace.clockGradientScratch, expectedLineageDimension);
+                clockGradientBuffer = workspace.clockGradientScratch;
             }
+            reverse(operations, state.activeCount, gradientBuffer, clockGradientBuffer, ancestralStateScoresOut);
         }
 
-        double[] rootProbabilities = copyFinalState ? state.copyProbabilities() : null;
-        int[] activeLineages = copyFinalState ? state.copyActiveIds() : null;
-        return new Result(state.logLikelihood, gradient, clockGradient, rootProbabilities, activeLineages,
-                ancestralStateScores);
+        return state.logLikelihood;
     }
 
     // ------------------------------------------------------------------
@@ -560,9 +622,18 @@ public final class MascotCore {
     // Reverse pass
     // ------------------------------------------------------------------
 
-    private double[] reverse(OperationTapeStore operations, int finalActiveCount, double[] clockGradient,
-                             double[] ancestralStateScores) {
-        double[] gradient = new double[parameterCount];
+    /**
+     * Writes into {@code gradient} (caller/scratch-owned, length {@link
+     * #parameterCount}) instead of allocating one: fixed-tree HMC calls this
+     * once per gradient evaluation, so a fresh array here would be the single
+     * largest per-call allocation in the reverse pass.
+     */
+    private void reverse(OperationTapeStore operations, int finalActiveCount, double[] gradient,
+                         double[] clockGradient, double[] ancestralStateScores) {
+        Arrays.fill(gradient, 0, parameterCount, 0.0);
+        if (clockGradient != null) {
+            Arrays.fill(clockGradient, 0, clockGradient.length, 0.0);
+        }
         int dim = finalActiveCount * stateCount + 1;
 
         // Ping-pong between two reusable buffers across the whole reverse traversal
@@ -617,8 +688,6 @@ public final class MascotCore {
             cursorIsA = !cursorIsA;
             dim = nextDim;
         }
-
-        return gradient;
     }
 
     private void reverseIntervalInto(IntervalTape tape, double[] adjointAfter, double[] adjointBeforeOut,
@@ -1545,6 +1614,16 @@ public final class MascotCore {
         double[] coalP1;
         double[] coalP2;
         double[] coalParent;
+
+        /**
+         * Discardable reverse-pass output buffers, used only when a caller of
+         * {@link #evaluateInto} wants ancestral-state scores but not the
+         * parameter/clock gradient: the reverse traversal always computes both
+         * together (shared VJP), so something must receive the unwanted one.
+         * Reused/grown across calls like every other workspace array.
+         */
+        double[] gradientScratch;
+        double[] clockGradientScratch;
 
         final OperationTapeStore operationTapes = new OperationTapeStore();
     }

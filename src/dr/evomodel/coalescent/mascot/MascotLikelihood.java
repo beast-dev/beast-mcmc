@@ -69,15 +69,39 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     // lookup plus a fresh allocation, per tip -- on every tree-changing operator.
     private double[][] tipPartialsCache;
 
-    // The combined, MascotCore-native flat gradient (epoch-major [migration, popSizes]).
-    // MascotGradient slices this per-part; callers outside this package never see it directly.
-    private double[] combinedGradient;
-    // d(logLikelihood)/d(branchRate[lineageId]); null unless branchRateModel != null.
-    private double[] clockGradient;
+    // Reused, caller-owned inputs to MascotCore.evaluateLikelihood/evaluateInto,
+    // sized once (theta/branchRate dimension is fixed for this instance's
+    // lifetime) instead of allocated fresh on every likelihood/gradient call.
+    private double[] thetaBuffer;
+    private double[] branchRateBuffer;
+
     private boolean ancestralStatesKnown;
-    // Flat, node-major adjoint node-state scores (see MascotCore.Result#ancestralStateScores);
-    // null until getAncestralStateScores() is first called.
-    private double[] ancestralStateScores;
+
+    /**
+     * Reused output buffers for one MascotCore.evaluateInto call: the
+     * combined, MascotCore-native flat gradient (epoch-major [migration,
+     * popSizes]; MascotGradient slices this per-part), the per-lineage clock
+     * gradient (null unless branchRateModel != null), and the flat, node-major
+     * adjoint node-state scores (see MascotCore.Result#ancestralStateScores).
+     */
+    private static final class DerivedBuffers {
+        double[] combinedGradient;
+        double[] clockGradient;
+        double[] ancestralStateScores;
+    }
+
+    // Double-buffered per MASCOT_PRIMITIVE_ARRAY_REFACTORING_PLAN.md Section 8.1:
+    // a rejected proposal must restore the exact previous gradient/ancestral-score
+    // values, but derived buffers are now written in place rather than freshly
+    // allocated per call, so the "current" (possibly-proposed) and "stored"
+    // (last-accepted) values cannot share one buffer. evaluateLikelihoodAndGradient()/
+    // evaluateAncestralStates() always write into derivedBuffers[1 - storedDerivedIndex]
+    // -- the buffer storedDerivedIndex is NOT pointing at -- so a subsequent
+    // restoreStructuredState() (currentDerivedIndex = storedDerivedIndex) can never
+    // return a buffer whose contents were just overwritten by the rejected proposal.
+    private final DerivedBuffers[] derivedBuffers = {new DerivedBuffers(), new DerivedBuffers()};
+    private int currentDerivedIndex;
+    private int storedDerivedIndex;
 
     // Snapshots taken by storeStructuredState() and restored by restoreStructuredState()
     // on a rejected proposal. Restoring the actual eventTape/core references (rather
@@ -94,9 +118,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private boolean storedCoreKnown;
     private boolean storedGradientKnown;
     private boolean storedAncestralStatesKnown;
-    private double[] storedCombinedGradient;
-    private double[] storedClockGradient;
-    private double[] storedAncestralStateScores;
 
     /**
      * Exactly one of {@code migrationRates} (a raw parameter of native
@@ -211,18 +232,34 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
         }
-        // Clone on every return, not just on a cache hit: the stored gradient array
-        // is reused across calls, so a caller that mutated the returned array in
-        // place would otherwise silently corrupt the cache for the next caller.
-        return combinedGradient.clone();
+        // Clone on every return, not just on a cache hit: the buffer is reused
+        // across calls, so a caller that mutated the returned array in place
+        // would otherwise silently corrupt the cache for the next caller.
+        return currentDerived().combinedGradient.clone();
     }
 
+    /**
+     * Reads directly from the reused combined-gradient buffer instead of going
+     * through {@link #getGradientLogDensity()}: that method's defensive clone
+     * would otherwise be allocated only to be immediately discarded once
+     * {@link MascotDynamics#writeMigrationGradient} extracts this part from it.
+     */
     public double[] getMigrationGradientLogDensity() {
-        return dynamics.extractMigrationGradient(getGradientLogDensity());
+        if (!gradientKnown) {
+            evaluateLikelihoodAndGradient(true);
+        }
+        double[] result = new double[dynamics.getMigrationRates().getDimension()];
+        dynamics.writeMigrationGradient(currentDerived().combinedGradient, result);
+        return result;
     }
 
     public double[] getPopSizeGradientLogDensity() {
-        return dynamics.extractPopSizeGradient(getGradientLogDensity());
+        if (!gradientKnown) {
+            evaluateLikelihoodAndGradient(true);
+        }
+        double[] result = new double[dynamics.getPopSizes().getDimension()];
+        dynamics.writePopSizeGradient(currentDerived().combinedGradient, result);
+        return result;
     }
 
     /**
@@ -234,6 +271,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
         }
+        double[] clockGradient = currentDerived().clockGradient;
         return clockGradient == null ? null : clockGradient.clone();
     }
 
@@ -260,7 +298,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         if (!ancestralStatesKnown) {
             evaluateAncestralStates();
         }
-        return ancestralStateScores.clone();
+        return currentDerived().ancestralStateScores.clone();
     }
 
     /** Row-copy convenience for allocation-conscious tree logging; avoids exposing the flat layout to callers. */
@@ -272,6 +310,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         if (!ancestralStatesKnown) {
             evaluateAncestralStates();
         }
+        double[] ancestralStateScores = currentDerived().ancestralStateScores;
         if (nodeNumber < 0 || (nodeNumber + 1) * getStateCount() > ancestralStateScores.length) {
             throw new IllegalArgumentException("node number out of range: " + nodeNumber);
         }
@@ -357,9 +396,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected void storeStructuredState() {
-        storedCombinedGradient = combinedGradient;
-        storedClockGradient = clockGradient;
-        storedAncestralStateScores = ancestralStateScores;
+        storedDerivedIndex = currentDerivedIndex;
         storedEventTape = eventTape;
         storedCore = core;
         storedEventTapeKnown = eventTapeKnown;
@@ -370,9 +407,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected void restoreStructuredState() {
-        combinedGradient = storedCombinedGradient;
-        clockGradient = storedClockGradient;
-        ancestralStateScores = storedAncestralStateScores;
+        currentDerivedIndex = storedDerivedIndex;
         eventTape = storedEventTape;
         core = storedCore;
         eventTapeKnown = storedEventTapeKnown;
@@ -384,6 +419,14 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     // acceptState() and getReport() are inherited unchanged: both engines'
     // acceptState() was already a no-op, and this class's getReport() always
     // matched AbstractStructuredCoalescentLikelihood.getDefaultReport() exactly.
+    // acceptState() does not need to touch currentDerivedIndex/storedDerivedIndex
+    // either: on acceptance, currentDerivedIndex already points at the
+    // just-computed (now accepted) buffer, and storedDerivedIndex is simply
+    // stale until the next storeStructuredState() call refreshes it.
+
+    private DerivedBuffers currentDerived() {
+        return derivedBuffers[currentDerivedIndex];
+    }
 
     private void ensureEventTape() {
         // validateSinglePattern(tipPatterns, stateCount, ...) already ran in
@@ -405,8 +448,41 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
     }
 
-    private double[] branchRatesOrNull() {
-        return branchRateModel == null ? null : MascotEventTape.buildBranchRates(treeModel, branchRateModel);
+    /** Lazily sized once (parameterCount is fixed for this instance's lifetime), then reused across every call. */
+    private double[] thetaBuffer() {
+        if (thetaBuffer == null) {
+            thetaBuffer = new double[dynamics.getParameterCount()];
+        }
+        dynamics.writeThetaValues(thetaBuffer);
+        return thetaBuffer;
+    }
+
+    /** Same reuse pattern as {@link #thetaBuffer()}; null (no allocation at all) when there is no clock. */
+    private double[] branchRateBufferOrNull() {
+        if (branchRateModel == null) {
+            return null;
+        }
+        if (branchRateBuffer == null) {
+            branchRateBuffer = new double[treeModel.getNodeCount()];
+        }
+        MascotEventTape.writeBranchRates(treeModel, branchRateModel, branchRateBuffer);
+        return branchRateBuffer;
+    }
+
+    /**
+     * Ensures {@code buffers}' arrays are allocated (once; sizes are fixed for
+     * this instance's lifetime) before a {@code core.evaluateInto} call writes
+     * into them. {@code clockGradient} is left permanently {@code null} when
+     * there is no branch-rate model, matching {@code getClockGradientLogDensity()}'s
+     * existing null contract.
+     */
+    private void ensureDerivedBuffers(DerivedBuffers buffers, boolean needsClockGradient) {
+        if (buffers.combinedGradient == null) {
+            buffers.combinedGradient = new double[dynamics.getParameterCount()];
+        }
+        if (needsClockGradient && buffers.clockGradient == null) {
+            buffers.clockGradient = new double[treeModel.getNodeCount()];
+        }
     }
 
     private boolean isMigrationModel(Model model) {
@@ -427,8 +503,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ensureEventTape();
         ensureCore();
         try {
-            double value = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
-                    branchRatesOrNull(), false, checkProbabilities, false).logLikelihood;
+            double value = core.evaluateLikelihood(eventTape.getPreparedEvents(), thetaBuffer(),
+                    branchRateBufferOrNull(), checkProbabilities);
             return Double.isFinite(value) ? value : Double.NEGATIVE_INFINITY;
         } catch (MascotCore.NumericalException e) {
             return Double.NEGATIVE_INFINITY;
@@ -438,10 +514,20 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private void evaluateLikelihoodAndGradient(boolean failOnGradientFailure) {
         ensureEventTape();
         ensureCore();
-        MascotCore.Result result;
+        double[] branchRates = branchRateBufferOrNull();
+        // See the DerivedBuffers double-buffering note above the field
+        // declarations: writing into 1 - storedDerivedIndex (never the buffer
+        // storeStructuredState() last snapshotted) is what lets a rejected
+        // proposal's restoreStructuredState() safely fall back to the
+        // untouched, previously-accepted values.
+        currentDerivedIndex = 1 - storedDerivedIndex;
+        DerivedBuffers buffers = currentDerived();
+        ensureDerivedBuffers(buffers, branchRates != null);
+
+        double logLikelihood;
         try {
-            result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
-                    branchRatesOrNull(), true, checkProbabilities, false);
+            logLikelihood = core.evaluateInto(eventTape.getPreparedEvents(), thetaBuffer(), branchRates,
+                    buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             if (failOnGradientFailure) {
                 throw new IllegalStateException("MASCOT gradient cannot be evaluated for the current " +
@@ -451,25 +537,23 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             gradientKnown = false;
             return;
         }
-        if (!Double.isFinite(result.logLikelihood)) {
+        if (!Double.isFinite(logLikelihood)) {
             if (failOnGradientFailure) {
                 throw new IllegalStateException("MASCOT gradient cannot be evaluated because the current " +
-                        "log likelihood is " + result.logLikelihood);
+                        "log likelihood is " + logLikelihood);
             }
             cacheLogLikelihood(Double.NEGATIVE_INFINITY);
             gradientKnown = false;
             return;
         }
         if (failOnGradientFailure) {
-            validateGradient(result.gradient);
-        } else if (!isValidGradient(result.gradient)) {
-            cacheLogLikelihood(result.logLikelihood);
+            validateGradient(buffers.combinedGradient);
+        } else if (!isValidGradient(buffers.combinedGradient)) {
+            cacheLogLikelihood(logLikelihood);
             gradientKnown = false;
             return;
         }
-        cacheLogLikelihood(result.logLikelihood);
-        combinedGradient = result.gradient;
-        clockGradient = result.clockGradient;
+        cacheLogLikelihood(logLikelihood);
         gradientKnown = true;
     }
 
@@ -486,24 +570,29 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private void evaluateAncestralStates() {
         ensureEventTape();
         ensureCore();
-        MascotCore.Result result;
+        double[] branchRates = branchRateBufferOrNull();
+        currentDerivedIndex = 1 - storedDerivedIndex;
+        DerivedBuffers buffers = currentDerived();
+        ensureDerivedBuffers(buffers, branchRates != null);
+        if (buffers.ancestralStateScores == null) {
+            buffers.ancestralStateScores = new double[treeModel.getNodeCount() * getStateCount()];
+        }
+
+        double logLikelihood;
         try {
-            result = core.evaluate(eventTape.getPreparedEvents(), dynamics.getThetaValues(),
-                    branchRatesOrNull(), true, true, checkProbabilities, false);
+            logLikelihood = core.evaluateInto(eventTape.getPreparedEvents(), thetaBuffer(), branchRates,
+                    buffers.combinedGradient, buffers.clockGradient, buffers.ancestralStateScores, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +
                     "parameter values: " + e.getMessage(), e);
         }
-        if (!Double.isFinite(result.logLikelihood)) {
+        if (!Double.isFinite(logLikelihood)) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated because the current " +
-                    "log likelihood is " + result.logLikelihood);
+                    "log likelihood is " + logLikelihood);
         }
-        validateGradient(result.gradient);
-        validateAncestralStateScores(result.ancestralStateScores);
-        cacheLogLikelihood(result.logLikelihood);
-        combinedGradient = result.gradient;
-        clockGradient = result.clockGradient;
-        ancestralStateScores = result.ancestralStateScores;
+        validateGradient(buffers.combinedGradient);
+        validateAncestralStateScores(buffers.ancestralStateScores);
+        cacheLogLikelihood(logLikelihood);
         gradientKnown = true;
         ancestralStatesKnown = true;
     }

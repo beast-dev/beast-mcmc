@@ -36,7 +36,7 @@ import dr.util.HeapSort;
 import java.util.*;
 
 public class AnnotateHeightsAction implements CladeAction {
-    private static final boolean DEBUG_NEGATIVE = true;
+    private static final boolean DEBUG_NEGATIVE = false;
     private static final boolean TIP_HEIGHT_HPDS = true;
 
     // the smallest a height range can be before we consider it a single value
@@ -80,7 +80,6 @@ public class AnnotateHeightsAction implements CladeAction {
 
     private void annotateNode(MutableTree tree, NodeRef node, Clade clade) {
         assert clade != null;
-        assert clade.getHeightValues() != null && !clade.getHeightValues().isEmpty();
 
         setNodeHeightAnnotations(tree, node, clade.getHeightValues());
     }
@@ -90,6 +89,8 @@ public class AnnotateHeightsAction implements CladeAction {
             return;
         }
 
+        assert heights != null && !heights.isEmpty();
+
         double[] values = heights.stream().mapToDouble(Double::doubleValue).toArray();
 
         int[] indices = new int[values.length];
@@ -98,12 +99,12 @@ public class AnnotateHeightsAction implements CladeAction {
         double mean = getMean(values);
         double median = getMedian(values, indices);
 
-        tree.setNodeAttribute(node, "height_mean", mean);
-        tree.setNodeAttribute(node, "height_median", median);
-
         Double[] range = getRange(values, indices);
 
         if (Math.abs(range[0] - range[1]) > HEIGHT_EPSILON) {
+            // only create these annotation if there is some variation in height
+            tree.setNodeAttribute(node, "height_mean", mean);
+            tree.setNodeAttribute(node, "height_median", median);
             tree.setNodeAttribute(node, "height_range", range);
 
              if (heights.size() >= hpdLimit) {

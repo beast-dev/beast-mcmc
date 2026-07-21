@@ -77,6 +77,7 @@ class CollectionAction implements CladeAction {
             i++;
         }
         clade.addAttributeValues(values);
-        ((BiClade)clade).addHeightValue(tree.getNodeHeight(node));
+        // heights added in AnnotateHeightsAction
+//        ((BiClade)clade).addHeightValue(tree.getNodeHeight(node));
     }
 }

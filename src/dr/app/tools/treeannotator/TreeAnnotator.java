@@ -69,7 +69,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static final HeightsSummary DEFAULT_HEIGHTS_SUMMARY = HeightsSummary.MEAN_HEIGHTS;
     private static final boolean COUNT_TREES = true;
 
-    private static final boolean THREADED_READING = true;
+    private static final boolean THREADED_READING = false;
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
@@ -225,15 +225,16 @@ public class TreeAnnotator extends BaseTreeTool {
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
-
-        CladeSystem targetCladeSystem = new CladeSystem(targetTree);
+        // create a new CladeSystem containing only clades from the target tree,
+        // copying the credibilities over from the full cladeSystem.
+        CladeSystem targetCladeSystem = new CladeSystem(targetTree, cladeSystem);
 
         if (referenceTreeFileName != null) {
 
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 
             MutableTree referenceTree = readTreeFile(referenceTreeFileName);
-            CladeSystem referenceCladeSystem = new CladeSystem(referenceTree);
+            CladeSystem referenceCladeSystem = new CladeSystem(referenceTree, cladeSystem);
 
             int commonCladeCount = targetCladeSystem.getCommonCladeCount(referenceCladeSystem);
             progressStream.println("Clades in common with reference tree: " + commonCladeCount +
@@ -242,13 +243,13 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         // collect all the attributes for the clades across all trees
-        collectNodeAttributes(cladeSystem, inputFileName, burnin);
+        collectNodeAttributes(targetCladeSystem, inputFileName, burnin);
 
         // get the clade heights for the clades in the target tree
-        cladeSystem.traverseTree(targetTree, new SetCladeHeightsAction(rootHeights));
+//        cladeSystem.traverseTree(targetTree, new SetCladeHeightsAction(rootHeights));
 
         // annotate the target tree with the summaries of attributes for each clade
-        annotateTargetTree(cladeSystem, targetTree);
+        annotateTargetTree(targetCladeSystem, targetTree);
 
         // write the annotated tree
         writeAnnotatedTree(outputFileName, targetTree, includeNexusHeader);
@@ -1042,7 +1043,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
                         new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
                         new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
-                        new Arguments.Option("nexusHeader", "nh", "include the full nexus taxon block (default off)"),
+                        new Arguments.Option("nexusHeader", "nx", "include the full nexus taxon block (default off)"),
                         new Arguments.Option("forceDiscrete", null,"forces integer traits to be treated as discrete traits."),
                         new Arguments.StringOption("hpd2D", null,"the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
                         new Arguments.Option("ess", null,"compute ess for branch parameters"),

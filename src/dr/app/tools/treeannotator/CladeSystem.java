@@ -42,7 +42,6 @@ public final class CladeSystem {
     private final boolean keepSubClades;
     private final boolean keepParents;
     private double treeCount = 0;
-    private boolean storeTipHeights = false;
 
     /**
      * Constructor starting with an empty clade system
@@ -57,10 +56,16 @@ public final class CladeSystem {
     /**
      * Constructor adding a single target tree
      */
-    public CladeSystem(Tree targetTree) {
+    public CladeSystem(Tree targetTree, CladeSystem sourceCladeSystem) {
         this.keepSubClades = false;
         this.keepParents = false;
         add(targetTree);
+        for (Clade clade : this.getClades()) {
+            Clade sourceClade = sourceCladeSystem.getClade(clade.getKey());
+            assert sourceClade != null;
+            clade.setCredibility(sourceClade.getCredibility());
+            clade.setCount(sourceClade.getCount());
+        }
     }
 
     /**
@@ -187,7 +192,7 @@ public final class CladeSystem {
         if (clade == null) {
             clade = tipCladeMap.get(key);
         }
-        assert clade != null;
+//        assert clade != null;
         return clade;
     }
 
@@ -233,7 +238,8 @@ public final class CladeSystem {
 //        Object key;
 //
 //        if (tree.isExternal(node)) {
-////            key = node.getNumber();
+
+    /// /            key = node.getNumber();
 //            key = taxonNumberMap.get(tree.getNodeTaxon(node));
 //        } else {
 //            List<Object> keys = new ArrayList<>();
@@ -252,7 +258,6 @@ public final class CladeSystem {
 //
 //        return key;
 //    }
-
     public void collectCladeHeights(Tree tree) {
         collectCladeHeights(tree, tree.getRoot());
     }
@@ -268,10 +273,8 @@ public final class CladeSystem {
             }
             key = BiClade.getTaxonKey(index);
 
-            if (storeTipHeights) {
-                BiClade tip = (BiClade) getClade(key);
-                tip.addHeightValue(tree.getNodeHeight(node));
-            }
+            BiClade tip = (BiClade) getClade(key);
+            tip.addHeightValue(tree.getNodeHeight(node));
         } else {
             assert tree.getChildCount(node) == 2;
 
@@ -283,16 +286,19 @@ public final class CladeSystem {
 
             key = BiClade.getParentKey(key1, key2);
 
-            BiClade clade = (BiClade)getClade(key);
+            BiClade clade = (BiClade) getClade(key);
+            if (clade != null) {
+                // parent is in the Clade set
 
-            if (clade.getBestLeft() == child1 && clade.getBestRight() == child2) {
-//                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
-                clade.addHeightValue(tree.getNodeHeight(node));
-            } else if (clade.getBestLeft() == child2 && clade.getBestRight() == child1) {
-//                clade.addChildHeightValues(tree.getNodeHeight(tree.getChild(node, 1)), tree.getNodeHeight(tree.getChild(node, 0)));
-                clade.addHeightValue(tree.getNodeHeight(node));
-            } else {
-                clade.addHeightValue(tree.getNodeHeight(node));
+                if (child1 != null && child1.getSize() > 1 &&
+                        (clade.getBestLeft() == child1 || clade.getBestRight() == child1)) {
+                    child1.addHeightValue(tree.getNodeHeight(tree.getChild(node, 0)));
+                }
+
+                if (child2 != null && child2.getSize() > 1 &&
+                        (clade.getBestLeft() == child2 || clade.getBestRight() == child2)) {
+                    child2.addHeightValue(tree.getNodeHeight(tree.getChild(node, 1)));
+                }
             }
         }
 
@@ -421,7 +427,7 @@ public final class CladeSystem {
             @Override
             public void actOnClade(Clade clade, Tree tree, NodeRef node) {
                 if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
-                    clades.add((BiClade)clade);
+                    clades.add((BiClade) clade);
                 }
             }
 

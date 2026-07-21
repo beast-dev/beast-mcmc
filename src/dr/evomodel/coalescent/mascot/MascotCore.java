@@ -114,20 +114,12 @@ public final class MascotCore {
         return parameterCount;
     }
 
-    public double logLikelihood(Event[] events, double[] theta) {
-        return evaluate(events, theta, false, false).logLikelihood;
+    public double logLikelihood(PreparedEvents prepared, double[] theta) {
+        return evaluate(prepared, theta, null, false, false, false, false).logLikelihood;
     }
 
-    public double logLikelihood(PreparedEvents events, double[] theta) {
-        return evaluate(events, theta, false, false).logLikelihood;
-    }
-
-    public Result likelihoodAndGradient(Event[] events, double[] theta) {
-        return evaluate(events, theta, true, false);
-    }
-
-    public Result likelihoodAndGradient(PreparedEvents events, double[] theta) {
-        return evaluate(events, theta, true, false);
+    public Result likelihoodAndGradient(PreparedEvents prepared, double[] theta) {
+        return evaluate(prepared, theta, null, true, false, false, false);
     }
 
     /**
@@ -143,7 +135,8 @@ public final class MascotCore {
      * Sorts and validates an event array once so that repeated evaluations against
      * the same fixed tree (only parameters changing) do not repeat the sort or the
      * event-array clone. The returned object is immutable and safe to share across
-     * many {@link #evaluate(PreparedEvents, double[], boolean, boolean)} calls.
+     * many {@link #evaluate} (or {@link #evaluateInto}/{@link #evaluateLikelihood})
+     * calls.
      */
     public static PreparedEvents prepareEvents(Event[] events) {
         if (events == null || events.length == 0) {
@@ -204,64 +197,32 @@ public final class MascotCore {
         return Math.abs(first - second) <= TIME_TOLERANCE;
     }
 
-    public Result evaluate(Event[] events, double[] theta, boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepareEvents(events), theta, null, computeGradient, checkProbabilities, true);
-    }
-
-    public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepared, theta, null, computeGradient, checkProbabilities, true);
-    }
-
     /**
-     * Same as {@link #evaluate(PreparedEvents, double[], boolean, boolean)}, but
-     * skips copying the final root probabilities and active-lineage ids into the
-     * returned {@link Result} when {@code copyFinalState} is false. Callers that
-     * only need {@code logLikelihood}/{@code gradient} (the normal BEAST
-     * likelihood and gradient-provider paths) should use {@code false} to avoid
-     * two allocations and copies per call that nobody reads.
-     */
-    public Result evaluate(PreparedEvents prepared, double[] theta, boolean computeGradient,
-                           boolean checkProbabilities, boolean copyFinalState) {
-        return evaluate(prepared, theta, null, computeGradient, checkProbabilities, copyFinalState);
-    }
-
-    /**
-     * Same as {@link #evaluate(Event[], double[], boolean, boolean)}, but with an
-     * optional branch-specific clock-rate multiplier on the migration/transition
+     * The one public, allocating, {@link Result}-returning evaluation entry
+     * point. {@code branchRates}, when non-null, applies an optional
+     * branch-specific clock-rate multiplier on the migration/transition
      * process only (never on the Ne-derived coalescent rate), matching BASTA's
-     * {@code branchRateModel.getBranchRate(tree, child) * branchTime} convention.
-     * {@code branchRates}, when non-null, must be indexed by lineage id (the same
-     * ids used in {@link Event#getLineage()}/child1/child2/parent) and sized
-     * larger than the maximum lineage id among {@code events}; the root's slot is
-     * never read. {@code branchRates == null} takes the exact same code path as
-     * the no-clock overloads above (a multiply-by-1.0 no-op in every hot loop),
-     * so every existing caller of those overloads is bit-for-bit unaffected by
-     * this parameter's existence.
-     */
-    public Result evaluate(Event[] events, double[] theta, double[] branchRates,
-                           boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepareEvents(events), theta, branchRates, computeGradient, checkProbabilities, true);
-    }
-
-    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates,
-                           boolean computeGradient, boolean checkProbabilities) {
-        return evaluate(prepared, theta, branchRates, computeGradient, checkProbabilities, true);
-    }
-
-    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
-                           boolean checkProbabilities, boolean copyFinalState) {
-        return evaluate(prepared, theta, branchRates, computeGradient, false, checkProbabilities, copyFinalState);
-    }
-
-    /**
-     * Same as {@link #evaluate(PreparedEvents, double[], double[], boolean, boolean, boolean)},
-     * plus an adjoint node-state score for every internal tree node when
-     * {@code computeAncestralStates} is true (see {@code Result#ancestralStateScores}
-     * and {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). {@code
-     * computeGradient} and {@code computeAncestralStates} are independent: both,
-     * either, or neither may be requested in one call. Requesting neither costs
-     * nothing beyond the existing forward pass (no operation tape is built, no
-     * ancestral array is allocated).
+     * {@code branchRateModel.getBranchRate(tree, child) * branchTime}
+     * convention; it must be indexed by lineage id (the same ids used in
+     * {@link Event#getLineage()}/child1/child2/parent) and sized larger than
+     * the maximum lineage id among {@code prepared}'s events (the root's slot
+     * is never read). {@code computeGradient} and {@code computeAncestralStates}
+     * are independent: both, either, or neither may be requested in one call
+     * (see {@code Result#ancestralStateScores} and {@code
+     * MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}); requesting neither costs
+     * nothing beyond the forward pass (no operation tape is built, no
+     * ancestral array is allocated). {@code copyFinalState=false} skips
+     * copying the final root probabilities and active-lineage ids into the
+     * returned {@code Result}; callers that only need {@code
+     * logLikelihood}/{@code gradient} should use {@code false} to avoid two
+     * allocations and copies per call that nobody reads.
+     * <p/>
+     * Production BEAST code (see {@link
+     * dr.evomodel.coalescent.mascot.MascotLikelihood}) does not use this --
+     * it calls {@link #evaluateLikelihood}/{@link #evaluateInto} directly, to
+     * avoid the {@link Result} allocation entirely. This method exists for
+     * tests and other callers that want a self-contained {@code Result}
+     * object rather than caller-owned output buffers.
      */
     public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
                            boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState) {

@@ -71,7 +71,6 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     private final BastaLikelihoodDelegate likelihoodDelegate;
 
     private final SubstitutionModel substitutionModel;
-    private final AbstractPopulationSizeModel populationSizeModel;
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
 
@@ -104,7 +103,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
                            String tag,
                            boolean useMAP) {
 
-        super(name, treeModel, patternList, substitutionModel.getDataType().getStateCount(), branchRateModel);
+        super(name, treeModel, patternList, substitutionModel.getDataType().getStateCount(), branchRateModel, substitutionModel, populationSizeModel);
 
         assert likelihoodDelegate != null;
         assert treeModel != null;
@@ -124,8 +123,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         this.likelihoodDelegate = likelihoodDelegate;
         addModel(likelihoodDelegate);
 
-        this.substitutionModel = substitutionModel;
-        addModel(substitutionModel);
+        this.substitutionModel = getSubstitutionModel();
 
         // validateSinglePattern(patternList, stateCount, ...) now runs in
         // AbstractStructuredCoalescentLikelihood's constructor (super() above),
@@ -136,13 +134,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         // rather than re-validating it.
         boolean isAncestralTraitTree = !(tree instanceof dr.evomodel.tree.TreeModel);
 
-        this.populationSizeModel = populationSizeModel;
-        addModel(populationSizeModel);
         this.likelihoodDelegate.setPopulationSizeModel(populationSizeModel);
-
-        if (populationSizeModel instanceof PiecewiseConstantPopulationSizeModel) {
-            ((PiecewiseConstantPopulationSizeModel) populationSizeModel).setTreeIntervals(treeIntervals);
-        }
 
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, 
                 numberSubIntervals, !isAncestralTraitTree);
@@ -233,7 +225,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     public CoalescentIntervalTraversal getTraversalDelegate() { return treeTraversalDelegate; }
 
-    public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
+//    public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
 
     public void setTipData() {
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {

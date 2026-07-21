@@ -42,7 +42,8 @@ import java.util.Arrays;
  * the d(logL)/dN = d(logL)/d(logN) / N chain rule for population size), so
  * migration rates and population sizes can be exposed as independent
  * {@link dr.inference.hmc.GradientWrtParameterProvider}s (see
- * {@link MascotGradient}) without MascotCore's own math changing at all.
+ * {@link dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient})
+ * without MascotCore's own math changing at all.
  */
 public final class MascotDynamics {
 

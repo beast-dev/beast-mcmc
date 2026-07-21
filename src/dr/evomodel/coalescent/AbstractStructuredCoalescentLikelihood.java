@@ -13,6 +13,10 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
+import dr.evomodel.coalescent.basta.PiecewiseConstantPopulationSizeModel;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -21,6 +25,11 @@ import dr.inference.model.Variable;
 import dr.xml.Reportable;
 
 /**
+ * @author Filippo Monti
+ * @author Yucai Shao
+ * @author Marc A. Suchard
+ * @author Guy Baele
+ *
  * Shared wrapper infrastructure for structured-coalescent likelihoods:
  * BASTA's matrix-exponential/BEAGLE engine ({@code BastaLikelihood}) and
  * MASCOT's RK4/adjoint ODE engine ({@code MascotLikelihood}). This class
@@ -48,6 +57,10 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
     // (MASCOT allows null, meaning no rate scaling of the migration process).
     protected final BranchRateModel branchRateModel;
 
+    protected final SubstitutionModel[] substitutionModels;
+
+    protected final AbstractPopulationSizeModel populationSizeModel;
+
     protected final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
     protected double logLikelihood;
@@ -57,10 +70,22 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
     private boolean storedLikelihoodKnown;
 
     protected AbstractStructuredCoalescentLikelihood(String name,
-                                                       Tree tree,
-                                                       PatternList patternList,
-                                                       int stateCount,
-                                                       BranchRateModel branchRateModel) {
+                                                     Tree tree,
+                                                     PatternList patternList,
+                                                     int stateCount,
+                                                     BranchRateModel branchRateModel,
+                                                     SubstitutionModel substitutionModel,
+                                                     AbstractPopulationSizeModel populationSizeModel) {
+        this(name, tree, patternList, stateCount, branchRateModel, new SubstitutionModel[]{substitutionModel}, populationSizeModel);
+    }
+
+    protected AbstractStructuredCoalescentLikelihood(String name,
+                                                     Tree tree,
+                                                     PatternList patternList,
+                                                     int stateCount,
+                                                     BranchRateModel branchRateModel,
+                                                     SubstitutionModel[] substitutionModels,
+                                                     AbstractPopulationSizeModel populationSizeModel) {
         super(name);
 
         if (tree == null) {
@@ -84,6 +109,13 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
         this.branchRateModel = branchRateModel;
         if (branchRateModel != null) {
             addModel(branchRateModel);
+        }
+        this.substitutionModels = substitutionModels;
+
+        this.populationSizeModel = populationSizeModel;
+        addModel(populationSizeModel);
+        if (populationSizeModel instanceof PiecewiseConstantPopulationSizeModel) {
+            ((PiecewiseConstantPopulationSizeModel) populationSizeModel).setTreeIntervals(treeIntervals);
         }
 
         likelihoodKnown = false;
@@ -144,6 +176,31 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
 
     public void addTraits(TreeTrait[] traits) {
         treeTraits.addTraits(traits);
+    }
+
+    public SubstitutionModel[] getSubstitutionModels() {
+        return substitutionModels;
+    }
+
+    public final SubstitutionModel getSubstitutionModel() {
+        if (substitutionModels.length != 1) {
+            throw new IllegalStateException(
+                    "Expected exactly one substitution model, but found "
+                            + substitutionModels.length);
+        }
+        return substitutionModels[0];
+    }
+
+    public final int getSubstitutionModelCount() {
+        return substitutionModels.length;
+    }
+
+    public final SubstitutionModel getSubstitutionModel(int index) {
+        return substitutionModels[index];
+    }
+
+    public AbstractPopulationSizeModel getPopulationSizeModel() {
+        return populationSizeModel;
     }
 
     @Override
@@ -276,5 +333,9 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
     @Override
     public String getReport() {
         return getDefaultReport();
+    }
+
+    public double[] getGradientLogDensity(StructuredCoalescentLikelihoodGradient wrt) {
+       throw new UnsupportedOperationException("Supported only in subclasses.");
     }
 }

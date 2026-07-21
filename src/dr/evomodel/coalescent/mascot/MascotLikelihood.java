@@ -11,9 +11,12 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
+import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -81,7 +84,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     /**
      * Reused output buffers for one MascotCore.evaluateInto call: the
      * combined, MascotCore-native flat gradient (epoch-major [migration,
-     * popSizes]; MascotGradient slices this per-part), the per-lineage clock
+     * popSizes]; StructuredCoalescentLikelihoodGradient slices this per-part), the per-lineage clock
      * gradient (null unless branchRateModel != null), and the flat, node-major
      * adjoint node-state scores (see MascotCore.Result#ancestralStateScores).
      */
@@ -146,7 +149,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                             double maxStep,
                             boolean checkProbabilities,
                             String ancestralStateTagName) {
-        super(name == null ? MASCOT_LIKELIHOOD : name, treeModel, tipPatterns, stateCount, branchRateModel);
+        super(name == null ? MASCOT_LIKELIHOOD : name, treeModel, tipPatterns, stateCount, branchRateModel,
+                migrationModels, populationSizeModel);
         this.treeModel = treeModel;
         this.tipPatterns = tipPatterns;
         this.dynamics = migrationRates != null ?
@@ -227,7 +231,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     /**
      * MascotCore's own combined flat gradient (epoch-major [migration, popSizes]).
      * Most callers want {@link #getMigrationGradientLogDensity()} or
-     * {@link #getPopSizeGradientLogDensity()} instead (see {@link MascotGradient}).
+     * {@link #getPopSizeGradientLogDensity()} instead (see {@link
+     * dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient}).
      */
     public double[] getGradientLogDensity() {
         if (!gradientKnown) {
@@ -669,6 +674,47 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             }
         }
         return true;
+    }
+
+    public double[] getGradientLogDensity(StructuredCoalescentLikelihoodGradient wrt) {
+        switch (wrt.getType()) {
+            case MIGRATION_RATE:
+                return getMigrationGradientLogDensity();
+            case POPULATION_SIZE:
+                return getPopSizeGradientLogDensity();
+            case CLOCK_RATE:
+                return getClockRateGradientLogDensity();
+            default:
+                throw new IllegalArgumentException("Unsupported wrtParameter for a MASCOT likelihood: " + wrt.getType());
+        }
+    }
+
+    /**
+     * d(logLikelihood)/d(clock-rate parameter), reduced from the raw,
+     * node-number-indexed {@link #getClockGradientLogDensity()} via the
+     * branchRateModel's own {@link DifferentiableBranchRates} reduction --
+     * the same generic mechanism the rest of BEAST-X already uses for e.g.
+     * {@code ArbitraryBranchRates}, {@code LocalClockModel}, etc. Requires
+     * {@link #getBranchRateModel()} to implement {@link DifferentiableBranchRates};
+     * {@link StructuredCoalescentLikelihoodGradient.WrtParameter#CLOCK_RATE}'s
+     * {@code getParameter()} already enforces this at construction time.
+     */
+    public double[] getClockRateGradientLogDensity() {
+        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
+            throw new IllegalStateException("clockRate gradient requires a branchRateModel that implements " +
+                    "DifferentiableBranchRates, got: " +
+                    (branchRateModel == null ? "null (no branchRateModel supplied)" : branchRateModel.getClass().getName()));
+        }
+        DifferentiableBranchRates branchRates = (DifferentiableBranchRates) branchRateModel;
+        double[] raw = getClockGradientLogDensity();
+        double[] result = new double[treeModel.getNodeCount() - 1];
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
+                result[branchRates.getParameterIndexFromNode(node)] = raw[node.getNumber()];
+            }
+        }
+        return branchRates.updateGradientLogDensity(result, null, 0, result.length);
     }
 
     @Override

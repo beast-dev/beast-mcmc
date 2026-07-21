@@ -28,7 +28,6 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
-import dr.evomodel.coalescent.mascot.MascotGradient;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -36,12 +35,12 @@ import dr.inference.hmc.NumericGradientStepSizeProvider;
 import dr.xml.*;
 
 /**
- * Parses {@code <structuredCoalescentLikelihoodGradient>}, dispatching on
- * the Java type of the referenced likelihood (a {@link BastaLikelihood} or a
- * {@link MascotLikelihood}) rather than a separate {@code type} attribute --
- * unlike {@link StructuredCoalescentLikelihoodParser}, the likelihood object
- * is already resolved by the time this parser runs, so there's nothing to
- * dispatch on except that.
+ * Parses {@code <structuredCoalescentLikelihoodGradient>} into one shared
+ * {@link StructuredCoalescentLikelihoodGradient}, regardless of whether the
+ * referenced likelihood is a {@link BastaLikelihood} or a {@link
+ * MascotLikelihood} -- {@link StructuredCoalescentLikelihoodGradient.WrtParameter}
+ * itself dispatches on the likelihood's Java type where the two engines'
+ * numerics genuinely differ (see that class's doc comment).
  * <p/>
  * {@code wrtParameter} keeps BASTA's existing vocabulary
  * ({@code "migrationRate"}/{@code "populationSize"}) for both engines;
@@ -65,40 +64,24 @@ public class StructuredCoalescentLikelihoodGradientParser extends AbstractXMLObj
                 (AbstractStructuredCoalescentLikelihood) xo.getChild(AbstractStructuredCoalescentLikelihood.class);
         String wrtParameter = xo.getStringAttribute(WRT_PARAMETER);
 
-        if (likelihood instanceof MascotLikelihood) {
-            return parseMascotGradient((MascotLikelihood) likelihood, wrtParameter, xo);
-        }
-        return parseBastaGradient((BastaLikelihood) likelihood, wrtParameter, xo);
-    }
-
-    private Object parseBastaGradient(BastaLikelihood likelihood, String wrtParameter, XMLObject xo) throws XMLParseException {
-        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        if (substitutionModel == null) {
-            throw new XMLParseException(NAME + " requires a SubstitutionModel child for a BASTA likelihood");
-        }
         StructuredCoalescentLikelihoodGradient.WrtParameter type =
                 StructuredCoalescentLikelihoodGradient.WrtParameter.factory(wrtParameter);
         if (type == null) {
-            throw new XMLParseException(WRT_PARAMETER + " must be \"" + MIGRATION_RATE + "\" or \"" +
-                    POPULATION_SIZE + "\" for a BASTA likelihood, found \"" + wrtParameter + "\"");
-        }
-        return new StructuredCoalescentLikelihoodGradient(likelihood, substitutionModel, type);
-    }
-
-    private Object parseMascotGradient(MascotLikelihood likelihood, String wrtParameter, XMLObject xo) throws XMLParseException {
-        MascotGradient.Part part;
-        if (wrtParameter.equalsIgnoreCase(MIGRATION_RATE)) {
-            part = MascotGradient.Part.MIGRATION;
-        } else if (wrtParameter.equalsIgnoreCase(POPULATION_SIZE)) {
-            part = MascotGradient.Part.POPULATION_SIZE;
-        } else if (wrtParameter.equalsIgnoreCase(CLOCK_RATE)) {
-            part = MascotGradient.Part.CLOCK_RATE;
-        } else {
             throw new XMLParseException(WRT_PARAMETER + " must be \"" + MIGRATION_RATE + "\", \"" +
-                    POPULATION_SIZE + "\", or \"" + CLOCK_RATE + "\" for a MASCOT likelihood, found \"" +
-                    wrtParameter + "\"");
+                    POPULATION_SIZE + "\", or \"" + CLOCK_RATE + "\", found \"" + wrtParameter + "\"");
         }
-        MascotGradient gradient = new MascotGradient(likelihood, part);
+        if (type == StructuredCoalescentLikelihoodGradient.WrtParameter.CLOCK_RATE
+                && !(likelihood instanceof MascotLikelihood)) {
+            throw new XMLParseException(WRT_PARAMETER + "=\"" + CLOCK_RATE + "\" is only supported for a MASCOT likelihood");
+        }
+
+        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        if (likelihood instanceof BastaLikelihood && substitutionModel == null) {
+            throw new XMLParseException(NAME + " requires a SubstitutionModel child for a BASTA likelihood");
+        }
+
+        StructuredCoalescentLikelihoodGradient gradient =
+                new StructuredCoalescentLikelihoodGradient(likelihood, substitutionModel, type);
         gradient.setNumericGradientStepSize(NumericGradientStepSizeProvider.parseStepSizeRatio(xo));
         return gradient;
     }
@@ -112,10 +95,9 @@ public class StructuredCoalescentLikelihoodGradientParser extends AbstractXMLObj
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(AbstractStructuredCoalescentLikelihood.class),
             // Required for a BASTA likelihood, unused for a MASCOT one --
-            // declared optional here and enforced imperatively in
-            // parseBastaGradient, the same pattern used for BASTA's
-            // popSizes/logPopSizes mutual exclusivity in
-            // StructuredCoalescentLikelihoodParser.
+            // declared optional here and enforced imperatively above, the
+            // same pattern used for BASTA's popSizes/logPopSizes mutual
+            // exclusivity in StructuredCoalescentLikelihoodParser.
             new ElementRule(SubstitutionModel.class, true),
     };
 

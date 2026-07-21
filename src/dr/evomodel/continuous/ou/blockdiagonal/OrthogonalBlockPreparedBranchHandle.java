@@ -1,7 +1,9 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
 /**
- * Opaque public handle for an orthogonal block-diagonal prepared branch basis.
+ * Handle for an orthogonal block-diagonal prepared branch basis. See
+ * {@link BlockDiagonalPreparedBranchHandle} for the {@link #getBasis()}
+ * access contract.
  */
 public final class OrthogonalBlockPreparedBranchHandle extends BlockDiagonalPreparedBranchHandle {
 

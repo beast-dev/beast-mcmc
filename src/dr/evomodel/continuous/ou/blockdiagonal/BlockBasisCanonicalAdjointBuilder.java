@@ -10,10 +10,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 /**
- * Rotated/block-basis OU work, Phase 3 (see
- * private-code/rotatedOU/rotated_ou_block_basis_plan.md).
- *
- * <p>Converts per-branch {@code Ytilde}-basis transition adjoints
+ * Converts per-branch {@code Ytilde}-basis transition adjoints
  * ({@code dLogL_dF} where {@code F = Atilde_k}, {@code dLogL_dOmega} where
  * {@code Omega = Omegatilde_k}) into gradients with respect to the
  * compressed block-diagonal {@code B} parameters, the rotation {@code R},
@@ -32,10 +29,15 @@ import org.ejml.ops.CommonOps;
  * {@code R}/{@code Q} gradients once, via {@link #finalizeGlobalPullback}.
  *
  * <p>Stationary-mean ({@code beta}) gradients are out of scope for this
- * class — see the plan's Phase 3 scope note.
+ * class.
+ *
+ * <p>Status: not yet wired into the production tree-likelihood traversal;
+ * see {@link BlockBasisGlobalSnapshot} for the current status and the
+ * wiring plan.</p>
  */
 public final class BlockBasisCanonicalAdjointBuilder {
 
+    private final BlockDiagonalStructure structure;
     private final int dimension;
     private final int[] blockStarts;
     private final int[] blockSizes;
@@ -53,21 +55,19 @@ public final class BlockBasisCanonicalAdjointBuilder {
     private final DenseMatrix64F yAdjoint;
     private final DenseMatrix64F negatedGS;
 
-    public BlockBasisCanonicalAdjointBuilder(final int dimension,
-                                             final int[] blockStarts,
-                                             final int[] blockSizes) {
-        this.dimension = dimension;
-        this.blockStarts = blockStarts;
-        this.blockSizes = blockSizes;
-        final BlockDiagonalExpSolver.BlockStructure structure =
-                new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes);
-        this.expSolver = new BlockDiagonalExpSolver(structure);
-        this.frechetHelper = new BlockDiagonalFrechetHelper(structure);
+    public BlockBasisCanonicalAdjointBuilder(final BlockDiagonalStructure structure) {
+        this.structure = structure;
+        this.dimension = structure.getDimension();
+        this.blockStarts = structure.getBlockStarts();
+        this.blockSizes = structure.getBlockSizes();
+        this.expSolver = new BlockDiagonalExpSolver(structure.getMathStructure());
+        this.frechetHelper = new BlockDiagonalFrechetHelper(structure.getMathStructure());
         final BlockDiagonalLyapunovSolver solver =
                 new BlockDiagonalLyapunovSolver(dimension, blockStarts, blockSizes);
-        this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(dimension, solver, structure);
+        this.lyapunovAdjointHelper =
+                new BlockDiagonalLyapunovAdjointHelper(dimension, solver, structure.getMathStructure());
 
-        this.expD = new double[dimension + 2 * countTwoByTwoBlocks(blockSizes)];
+        this.expD = new double[structure.getCompressedDimension()];
         this.dLogL_dF_mat = new DenseMatrix64F(dimension, dimension);
         this.dLogL_dOmega_mat = new DenseMatrix64F(dimension, dimension);
         this.gradD = new DenseMatrix64F(dimension, dimension);
@@ -90,6 +90,7 @@ public final class BlockBasisCanonicalAdjointBuilder {
                                          final double[] compressedDAccumulator,
                                          final DenseMatrix64F gSAccumulator) {
         snapshot.ensureCurrent();
+        structure.checkMatches(snapshot.getStructure());
         final double[] blockDParams = snapshot.getBlockDiagonalCompressed();
         final DenseMatrix64F vTilde = snapshot.getStationaryCovarianceDBasis();
         expSolver.computeCompressed(blockDParams, dt, expD);
@@ -149,6 +150,7 @@ public final class BlockBasisCanonicalAdjointBuilder {
                                        final DenseMatrix64F rGradAccumulator,
                                        final double[] qGradFlatAccumulator) {
         snapshot.ensureCurrent();
+        structure.checkMatches(snapshot.getStructure());
         final double[] blockDParams = snapshot.getBlockDiagonalCompressed();
         symmetrize(gSAccumulator);
 
@@ -183,6 +185,7 @@ public final class BlockBasisCanonicalAdjointBuilder {
     public void addJacobianTermGradient(final BlockBasisGlobalSnapshot snapshot,
                                         final int numObservedTips,
                                         final DenseMatrix64F rGradAccumulator) {
+        structure.checkMatches(snapshot.getStructure());
         final DenseMatrix64F t = snapshot.getRotationInverse();
         final double[] data = rGradAccumulator.data;
         for (int i = 0; i < dimension; ++i) {
@@ -201,6 +204,7 @@ public final class BlockBasisCanonicalAdjointBuilder {
                                         final double[] yTilde,
                                         final double[] dLogL_dYTilde,
                                         final DenseMatrix64F rGradAccumulator) {
+        structure.checkMatches(snapshot.getStructure());
         final DenseMatrix64F t = snapshot.getRotationInverse();
         final double[] data = rGradAccumulator.data;
         for (int i = 0; i < dimension; ++i) {
@@ -218,7 +222,7 @@ public final class BlockBasisCanonicalAdjointBuilder {
                                               final double[] compressedAccumulator) {
         final double[] data = denseGradient.data;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + structure.getNumTwoByTwoBlocks();
         int blockIndex = 0;
 
         for (int i = 0; i < dimension; ++i) {
@@ -273,13 +277,4 @@ public final class BlockBasisCanonicalAdjointBuilder {
         }
     }
 
-    private static int countTwoByTwoBlocks(final int[] blockSizes) {
-        int count = 0;
-        for (final int size : blockSizes) {
-            if (size == 2) {
-                count++;
-            }
-        }
-        return count;
-    }
 }

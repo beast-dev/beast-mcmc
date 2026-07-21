@@ -951,14 +951,8 @@ public final class RotatedOUHmcProfileTest extends TestCase {
             this.dim = dim;
             this.snapshot = new BlockBasisGlobalSnapshot(parameters.blockParameter, parameters.qMatrix);
             this.snapshot.ensureCurrent();
-            this.builder = new BlockBasisCanonicalTransitionBuilder(
-                    dim,
-                    snapshot.getBlockStarts(),
-                    snapshot.getBlockSizes());
-            this.adjointBuilder = new BlockBasisCanonicalAdjointBuilder(
-                    dim,
-                    snapshot.getBlockStarts(),
-                    snapshot.getBlockSizes());
+            this.builder = new BlockBasisCanonicalTransitionBuilder(snapshot.getStructure());
+            this.adjointBuilder = new BlockBasisCanonicalAdjointBuilder(snapshot.getStructure());
             this.tipValuesNatural = data.tipValues;
             this.beta = data.beta;
 

@@ -685,8 +685,8 @@ public final class BlockBasisGradientBenchmarkTest extends TestCase {
             this.blockParameter = fixture.blockParameter;
             this.snapshot = new BlockBasisGlobalSnapshot(fixture.blockParameter, fixture.diffusion);
             this.snapshot.ensureCurrent();
-            this.builder = new BlockBasisCanonicalTransitionBuilder(dim, snapshot.getBlockStarts(), snapshot.getBlockSizes());
-            this.adjointBuilder = new BlockBasisCanonicalAdjointBuilder(dim, snapshot.getBlockStarts(), snapshot.getBlockSizes());
+            this.builder = new BlockBasisCanonicalTransitionBuilder(snapshot.getStructure());
+            this.adjointBuilder = new BlockBasisCanonicalAdjointBuilder(snapshot.getStructure());
 
             this.tipValuesTilde = new double[TIP_COUNT][dim];
             this.zeroMean = new double[dim];

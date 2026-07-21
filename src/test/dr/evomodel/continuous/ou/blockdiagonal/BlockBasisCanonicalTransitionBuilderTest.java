@@ -144,8 +144,8 @@ public class BlockBasisCanonicalTransitionBuilderTest extends TestCase {
                                                 final double[][] tipValues) {
         final BlockBasisGlobalSnapshot snapshot = new BlockBasisGlobalSnapshot(blockParameter, diffusion);
         snapshot.ensureCurrent();
-        final BlockBasisCanonicalTransitionBuilder builder = new BlockBasisCanonicalTransitionBuilder(
-                DIM, snapshot.getBlockStarts(), snapshot.getBlockSizes());
+        final BlockBasisCanonicalTransitionBuilder builder =
+                new BlockBasisCanonicalTransitionBuilder(snapshot.getStructure());
 
         final CanonicalGaussianTransition transitionLen1 = new CanonicalGaussianTransition(DIM);
         builder.fillCanonicalTransition(snapshot, 1.0, transitionLen1);

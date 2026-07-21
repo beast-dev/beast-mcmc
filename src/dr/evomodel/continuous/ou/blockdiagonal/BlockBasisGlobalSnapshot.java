@@ -11,9 +11,7 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 /**
- * Rotated/block-basis OU work (see
- * private-code/rotatedOU/rotated_ou_block_basis_plan.md, Phase 1):
- * one-time, per-model-change cache of the quantities a block-basis
+ * One-time, per-model-change cache of the quantities a block-basis
  * evaluation path needs but that do not depend on branch length:
  *
  * <pre>
@@ -30,12 +28,18 @@ import java.util.Arrays;
  * {@code fillTransitionCovarianceMatrix} call) so a single instance here can
  * be cached once per likelihood evaluation and reused across all branches,
  * instead of being paid {@code O(p^3)} per branch.</p>
+ *
+ * <p>Status: not yet wired into the production tree-likelihood traversal;
+ * currently consumed only by {@link BlockBasisCanonicalTransitionBuilder},
+ * {@link BlockBasisCanonicalAdjointBuilder}, and their tests. See
+ * private-code/rotatedOU/rotated_ou_block_basis_plan.md for the wiring plan.</p>
  */
 public final class BlockBasisGlobalSnapshot {
 
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final MatrixParameterInterface diffusionMatrix;
     private final int dimension;
+    private final BlockDiagonalStructure structure;
     private final BlockDiagonalDecomposition decomposition;
     private final BlockDiagonalLyapunovSolver lyapunovSolver;
 
@@ -59,6 +63,7 @@ public final class BlockBasisGlobalSnapshot {
         this.blockParameter = blockParameter;
         this.diffusionMatrix = diffusionMatrix;
         this.dimension = blockParameter.getRowDimension();
+        this.structure = BlockDiagonalStructure.from(blockParameter);
         this.decomposition = blockParameter.createBlockDiagonalDecomposition();
         this.lyapunovSolver = new BlockDiagonalLyapunovSolver(
                 dimension, blockParameter.getBlockStarts(), blockParameter.getBlockSizes());
@@ -80,6 +85,11 @@ public final class BlockBasisGlobalSnapshot {
 
     public int getDimension() {
         return dimension;
+    }
+
+    /** The block topology of this snapshot, for structural-compatibility checks. */
+    public BlockDiagonalStructure getStructure() {
+        return structure;
     }
 
     /** Refreshes {@code R}, {@code T = R^{-1}}, {@code Vtilde}, and {@code log|det R|} if anything changed. */
@@ -119,17 +129,29 @@ public final class BlockBasisGlobalSnapshot {
         valid = true;
     }
 
-    /** {@code R}, the rotation/change-of-basis matrix in {@code S = R B R^{-1}}. Read-only. */
+    /**
+     * {@code R}, the rotation/change-of-basis matrix in {@code S = R B R^{-1}}.
+     * Returns the live internal buffer, not a copy; callers must treat it as
+     * trusted-access and not mutate it.
+     */
     public DenseMatrix64F getRotation() {
         return rMatrix;
     }
 
-    /** {@code T = R^{-1}}, mapping natural coordinates to the rotated basis {@code Ytilde = T(Y - beta)}. Read-only. */
+    /**
+     * {@code T = R^{-1}}, mapping natural coordinates to the rotated basis
+     * {@code Ytilde = T(Y - beta)}. Returns the live internal buffer, not a
+     * copy; callers must treat it as trusted-access and not mutate it.
+     */
     public DenseMatrix64F getRotationInverse() {
         return rinvMatrix;
     }
 
-    /** {@code Vtilde = T V T^T}, the stationary covariance expressed in the D-basis. Read-only. */
+    /**
+     * {@code Vtilde = T V T^T}, the stationary covariance expressed in the
+     * D-basis. Returns the live internal buffer, not a copy; callers must
+     * treat it as trusted-access and not mutate it.
+     */
     public DenseMatrix64F getStationaryCovarianceDBasis() {
         return stationaryCovDBasis;
     }
@@ -138,12 +160,20 @@ public final class BlockBasisGlobalSnapshot {
         return logAbsDetR;
     }
 
-    /** {@code Qtilde = T Q T^T}, the diffusion matrix expressed in the D-basis. Read-only. */
+    /**
+     * {@code Qtilde = T Q T^T}, the diffusion matrix expressed in the
+     * D-basis. Returns the live internal buffer, not a copy; callers must
+     * treat it as trusted-access and not mutate it.
+     */
     public DenseMatrix64F getQDBasis() {
         return qDBasis;
     }
 
-    /** Compressed tridiagonal-form {@code B} (diag/upper/lower), as used by {@link BlockDiagonalExpSolver}. Read-only. */
+    /**
+     * Compressed tridiagonal-form {@code B} (diag/upper/lower), as used by
+     * {@link BlockDiagonalExpSolver}. Returns the live internal buffer, not a
+     * copy; callers must treat it as trusted-access and not mutate it.
+     */
     public double[] getBlockDiagonalCompressed() {
         return decomposition.getBlockDiagonal();
     }

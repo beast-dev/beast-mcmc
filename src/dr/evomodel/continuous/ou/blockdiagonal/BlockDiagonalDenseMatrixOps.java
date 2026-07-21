@@ -12,7 +12,6 @@ final class BlockDiagonalDenseMatrixOps {
     static void mult(final DenseMatrix64F left,
                      final DenseMatrix64F right,
                      final DenseMatrix64F out) {
-//        CommonOps.mult(left, right, out);
         final int dimension = left.numRows;
         MatrixOps.matMul(left.data, right.data, out.data, dimension);
     }
@@ -20,7 +19,6 @@ final class BlockDiagonalDenseMatrixOps {
     static void multSymmetricLeft(final DenseMatrix64F symmetricLeft,
                                   final DenseMatrix64F right,
                                   final DenseMatrix64F out) {
-//        CommonOps.mult(symmetricLeft, right, out);
         final int dimension = symmetricLeft.numRows;
         MatrixOps.multiplySymmetricLeft(
                 symmetricLeft.data,
@@ -32,7 +30,6 @@ final class BlockDiagonalDenseMatrixOps {
     static void multSymmetricRight(final DenseMatrix64F left,
                                    final DenseMatrix64F symmetricRight,
                                    final DenseMatrix64F out) {
-//        CommonOps.mult(left, symmetricRight, out);
         final int dimension = left.numRows;
         MatrixOps.multiplySymmetricRight(
                 left.data,

@@ -30,6 +30,7 @@ public class BlockDiagonalSelectionMatrixParameterization
         implements BlockDiagonalNativeCanonicalParameterization {
 
     protected final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
+    protected final BlockDiagonalStructure structure;
     protected final BlockDiagonalExpSolver expSolver;
     protected final BlockDiagonalLyapunovSolver lyapunovSolver;
     protected final BlockDiagonalTransitionCache basisCache;
@@ -57,11 +58,8 @@ public class BlockDiagonalSelectionMatrixParameterization
             final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter) {
         super(blockParameter);
         this.blockParameter = blockParameter;
-        this.expSolver = new BlockDiagonalExpSolver(
-                new BlockDiagonalExpSolver.BlockStructure(
-                        blockParameter.getRowDimension(),
-                        blockParameter.getBlockStarts(),
-                        blockParameter.getBlockSizes()));
+        this.structure = BlockDiagonalStructure.from(blockParameter);
+        this.expSolver = new BlockDiagonalExpSolver(structure.getMathStructure());
         this.basisCache = new BlockDiagonalTransitionCache(blockParameter, expSolver);
         this.lyapunovSolver = new BlockDiagonalLyapunovSolver(
                 getDimension(),
@@ -86,10 +84,7 @@ public class BlockDiagonalSelectionMatrixParameterization
         this.choleskyScratch = new double[d * d];
         this.lowerInverseScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
-        this.currentGradientWorkspace = new BlockDiagonalBranchGradientWorkspace(
-                d,
-                blockParameter.getBlockStarts(),
-                blockParameter.getBlockSizes());
+        this.currentGradientWorkspace = new BlockDiagonalBranchGradientWorkspace(structure);
     }
 
     public AbstractBlockDiagonalTwoByTwoMatrixParameter getBlockParameter() {
@@ -141,7 +136,6 @@ public class BlockDiagonalSelectionMatrixParameterization
      * Test-only accessor exposing the internal D-basis stationary covariance
      * {@code Vtilde = T V T^T} (T = R^{-1}), used to cross-check
      * {@code BlockBasisGlobalSnapshot} against this class's own internal value.
-     * See private-code/rotatedOU/rotated_ou_block_basis_plan.md, Phase 1.
      * {@code Vtilde} does not depend on branch length, so any positive {@code dt}
      * refreshes it identically.
      */
@@ -234,10 +228,7 @@ public class BlockDiagonalSelectionMatrixParameterization
 
     @Override
     public BlockDiagonalBranchGradientWorkspace createBranchGradientWorkspace() {
-        return new BlockDiagonalBranchGradientWorkspace(
-                getDimension(),
-                blockParameter.getBlockStarts(),
-                blockParameter.getBlockSizes());
+        return new BlockDiagonalBranchGradientWorkspace(structure);
     }
 
     @Override
@@ -677,16 +668,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 prepared.transitionMatrix,
                 prepared.blockDParams,
                 prepared.dt,
-                workspace.upstreamF,
-                workspace.upstreamFD,
-                workspace.frechetHelper,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
+                workspace,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -742,20 +724,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 workspace.qDBasis,
                 workspace.stationaryCovDBasis,
                 workspace.transitionCovDBasis,
-                workspace.gV,
-                workspace.hDBasis,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.gECov,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.lyapunovAdjointHelper,
-                workspace.frechetHelper,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
+                workspace,
                 compressedDAccumulator,
                 rotationAccumulator);
 
@@ -793,16 +762,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 basisCache.transitionMatrix,
                 basisCache.blockDParams,
                 dt,
-                workspace.upstreamF,
-                workspace.upstreamFD,
-                workspace.frechetHelper,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
+                workspace,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -839,13 +799,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 basisCache.rinvMatrix,
                 basisCache.expD,
                 basisCache.blockDParams,
-                workspace.gV,
-                workspace.hDBasis,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.lyapunovAdjointHelper);
+                workspace);
         rotateDBasisDiffusionGradientToOriginalBasis(
                 basisCache.rinvMatrix,
                 workspace.yAdjoint,
@@ -1053,23 +1007,22 @@ public class BlockDiagonalSelectionMatrixParameterization
             final DenseMatrix64F transitionMatrix,
             final double[] blockDParams,
             final double dt,
-            final DenseMatrix64F upstreamF,
-            final DenseMatrix64F upstreamFD,
-            final BlockDiagonalFrechetHelper frechetHelper,
-            final DenseMatrix64F gradD,
-            final DenseMatrix64F gradR,
-            final DenseMatrix64F temp1,
-            final DenseMatrix64F temp2,
-            final DenseMatrix64F temp3,
-            final double[] scaledNegativeBlockDScratch,
-            final double[] denseAdjointScratch,
+            final BlockDiagonalBranchGradientWorkspace workspace,
             final double[] compressedDAccumulator,
             final double[] rotationAccumulator) {
+        final DenseMatrix64F upstreamF = workspace.upstreamF;
+        final DenseMatrix64F upstreamFD = workspace.upstreamFD;
+        final DenseMatrix64F temp1 = workspace.temp1;
+        final DenseMatrix64F temp2 = workspace.temp2;
+        final DenseMatrix64F temp3 = workspace.temp3;
+        final DenseMatrix64F gradD = workspace.gradD;
+        final DenseMatrix64F gradR = workspace.gradR;
+
         CommonOps.multTransA(rMatrix, upstreamF, temp1);
         CommonOps.multTransB(temp1, rinvMatrix, upstreamFD);
         fillFrechetAdjointExpWithFallback(
-                blockDParams, dt, upstreamFD, frechetHelper, temp3, gradD,
-                scaledNegativeBlockDScratch, denseAdjointScratch);
+                blockDParams, dt, upstreamFD, workspace.frechetHelper, temp3, gradD,
+                workspace.scaledNegativeBlockDScratch, workspace.denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         CommonOps.multTransB(upstreamF, transitionMatrix, temp1);
@@ -1193,20 +1146,7 @@ public class BlockDiagonalSelectionMatrixParameterization
                 qDBasis,
                 stationaryCovDBasis,
                 transitionCovDBasis,
-                workspace.gV,
-                workspace.hDBasis,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.gECov,
-                workspace.gradD,
-                workspace.gradR,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.temp3,
-                workspace.lyapunovAdjointHelper,
-                workspace.frechetHelper,
-                workspace.scaledNegativeBlockDScratch,
-                workspace.denseAdjointScratch,
+                workspace,
                 compressedDAccumulator,
                 rotationAccumulator);
     }
@@ -1220,22 +1160,24 @@ public class BlockDiagonalSelectionMatrixParameterization
             final DenseMatrix64F qDBasis,
             final DenseMatrix64F stationaryCovDBasis,
             final DenseMatrix64F transitionCovDBasis,
-            final DenseMatrix64F gV,
-            final DenseMatrix64F hDBasis,
-            final DenseMatrix64F gS,
-            final DenseMatrix64F yAdjoint,
-            final DenseMatrix64F gECov,
-            final DenseMatrix64F gradD,
-            final DenseMatrix64F gradR,
-            final DenseMatrix64F temp1,
-            final DenseMatrix64F temp2,
-            final DenseMatrix64F temp3,
-            final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
-            final BlockDiagonalFrechetHelper frechetHelper,
-            final double[] scaledNegativeBlockDScratch,
-            final double[] denseAdjointScratch,
+            final BlockDiagonalBranchGradientWorkspace workspace,
             final double[] compressedDAccumulator,
             final double[] rotationAccumulator) {
+        final DenseMatrix64F gV = workspace.gV;
+        final DenseMatrix64F hDBasis = workspace.hDBasis;
+        final DenseMatrix64F gS = workspace.gS;
+        final DenseMatrix64F yAdjoint = workspace.yAdjoint;
+        final DenseMatrix64F gECov = workspace.gECov;
+        final DenseMatrix64F gradD = workspace.gradD;
+        final DenseMatrix64F gradR = workspace.gradR;
+        final DenseMatrix64F temp1 = workspace.temp1;
+        final DenseMatrix64F temp2 = workspace.temp2;
+        final DenseMatrix64F temp3 = workspace.temp3;
+        final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper = workspace.lyapunovAdjointHelper;
+        final BlockDiagonalFrechetHelper frechetHelper = workspace.frechetHelper;
+        final double[] scaledNegativeBlockDScratch = workspace.scaledNegativeBlockDScratch;
+        final double[] denseAdjointScratch = workspace.denseAdjointScratch;
+
         CommonOps.fill(gradD, 0.0);
         lyapunovAdjointHelper.accumulateLyapunovContributionInDBasis(
                 stationaryCovDBasis, gS, blockDParams, gradD);
@@ -1334,38 +1276,26 @@ public class BlockDiagonalSelectionMatrixParameterization
                 prepared.rinvMatrix,
                 prepared.expD,
                 prepared.blockDParams,
-                workspace.gV,
-                workspace.hDBasis,
-                workspace.gS,
-                workspace.yAdjoint,
-                workspace.temp1,
-                workspace.temp2,
-                workspace.lyapunovAdjointHelper);
+                workspace);
     }
 
     private void fillDiffusionGradientDBasis(final DenseMatrix64F rMatrix,
                                              final DenseMatrix64F rinvMatrix,
                                              final double[] expD,
                                              final double[] blockDParams,
-                                             final DenseMatrix64F gV,
-                                             final DenseMatrix64F hDBasis,
-                                             final DenseMatrix64F gS,
-                                             final DenseMatrix64F yAdjoint,
-                                             final DenseMatrix64F temp1,
-                                             final DenseMatrix64F temp2,
-                                             final dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper) {
+                                             final BlockDiagonalBranchGradientWorkspace workspace) {
         fillSharedCovarianceAdjointsInDBasis(
                 rMatrix,
                 rinvMatrix,
                 expD,
-                gV,
-                hDBasis,
-                gS,
-                temp1);
-        symmetrize(gS);
-        yAdjoint.set(gS);
-        CommonOps.scale(-1.0, yAdjoint);
-        lyapunovAdjointHelper.solveAdjointInDBasis(yAdjoint, blockDParams, yAdjoint);
+                workspace.gV,
+                workspace.hDBasis,
+                workspace.gS,
+                workspace.temp1);
+        symmetrize(workspace.gS);
+        workspace.yAdjoint.set(workspace.gS);
+        CommonOps.scale(-1.0, workspace.yAdjoint);
+        workspace.lyapunovAdjointHelper.solveAdjointInDBasis(workspace.yAdjoint, blockDParams, workspace.yAdjoint);
     }
 
     private void rotateDBasisDiffusionGradientToOriginalBasis(final DenseMatrix64F rinvMatrix,

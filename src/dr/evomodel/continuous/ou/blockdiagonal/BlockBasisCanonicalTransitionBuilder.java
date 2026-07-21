@@ -7,10 +7,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalG
 import org.ejml.data.DenseMatrix64F;
 
 /**
- * Rotated/block-basis OU work, Phase 2 (see
- * private-code/rotatedOU/rotated_ou_block_basis_plan.md).
- *
- * <p>Fills a {@link CanonicalGaussianTransition} entirely in the rotated
+ * Fills a {@link CanonicalGaussianTransition} entirely in the rotated
  * {@code Ytilde = T(Y - beta)} basis, for a single branch of length {@code dt}:
  *
  * <pre>
@@ -21,22 +18,27 @@ import org.ejml.data.DenseMatrix64F;
  * </pre>
  *
  * <p>Because the tree's working coordinate is centered at the stationary mean
- * ({@code Ytilde}'s own stationary mean is exactly zero by construction — see
- * the plan's Phase 2 section), every branch transition here is driftless:
+ * ({@code Ytilde}'s own stationary mean is exactly zero by construction),
+ * every branch transition here is driftless:
  * {@code informationX = informationY = 0}. The four dense precision blocks
  * are then assembled from {@code Atilde_k} (block-sparse) and
  * {@code branchPrecision = Omegatilde_k^{-1}} (dense, via the same one
- * unavoidable {@code O(p^3)} positive-definite inversion any backend needs —
- * see the plan's section 1) using only block-sparse multiplies, so the only
- * per-branch {@code O(p^3)} cost left is that one inversion, not the two
- * dense rotations ({@code R*expD*R^{-1}} and {@code R*Omegatilde_k*R^T})
- * the existing natural-basis path pays every branch.</p>
+ * unavoidable {@code O(p^3)} positive-definite inversion any backend needs)
+ * using only block-sparse multiplies, so the only per-branch {@code O(p^3)}
+ * cost left is that one inversion, not the two dense rotations
+ * ({@code R*expD*R^{-1}} and {@code R*Omegatilde_k*R^T}) the existing
+ * natural-basis path pays every branch.</p>
  *
  * <p>{@code Vtilde} itself is supplied by a cached {@link BlockBasisGlobalSnapshot}
- * (Phase 1) and is not recomputed here.</p>
+ * and is not recomputed here.</p>
+ *
+ * <p>Status: not yet wired into the production tree-likelihood traversal;
+ * see {@link BlockBasisGlobalSnapshot} for the current status and the
+ * wiring plan.</p>
  */
 public final class BlockBasisCanonicalTransitionBuilder {
 
+    private final BlockDiagonalStructure structure;
     private final int dimension;
     private final BlockDiagonalExpSolver expSolver;
     private final double[] expD;
@@ -49,13 +51,12 @@ public final class BlockBasisCanonicalTransitionBuilder {
     private final double[] mFlat;
     private final double[] xxFlat;
 
-    public BlockBasisCanonicalTransitionBuilder(final int dimension,
-                                                final int[] blockStarts,
-                                                final int[] blockSizes) {
+    public BlockBasisCanonicalTransitionBuilder(final BlockDiagonalStructure structure) {
+        this.structure = structure;
+        final int dimension = structure.getDimension();
         this.dimension = dimension;
-        this.expSolver = new BlockDiagonalExpSolver(
-                new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes));
-        this.expD = new double[dimension + 2 * countTwoByTwoBlocks(blockSizes)];
+        this.expSolver = new BlockDiagonalExpSolver(structure.getMathStructure());
+        this.expD = new double[structure.getCompressedDimension()];
         this.atildeVTilde = new DenseMatrix64F(dimension, dimension);
         this.omegaTilde = new DenseMatrix64F(dimension, dimension);
         this.omegaSymmetrizedFlat = new double[dimension * dimension];
@@ -70,6 +71,7 @@ public final class BlockBasisCanonicalTransitionBuilder {
                                         final double dt,
                                         final CanonicalGaussianTransition out) {
         snapshot.ensureCurrent();
+        structure.checkMatches(snapshot.getStructure());
         final int[] blockStarts = snapshot.getBlockStarts();
         final int[] blockSizes = snapshot.getBlockSizes();
         final DenseMatrix64F vTilde = snapshot.getStationaryCovarianceDBasis();
@@ -132,16 +134,6 @@ public final class BlockBasisCanonicalTransitionBuilder {
                 data[j * dimension + i] = value;
             }
         }
-    }
-
-    private static int countTwoByTwoBlocks(final int[] blockSizes) {
-        int count = 0;
-        for (final int size : blockSizes) {
-            if (size == 2) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private static void symmetrizeFlat(final double[] data, final int dimension) {

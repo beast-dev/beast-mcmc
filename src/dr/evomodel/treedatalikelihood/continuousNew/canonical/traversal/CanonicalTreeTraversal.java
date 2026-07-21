@@ -38,7 +38,6 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalG
 import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipBranchMessageProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 import dr.util.CanonicalTraversalTimer;
 
 /**
@@ -494,7 +493,7 @@ public final class CanonicalTreeTraversal {
     private CanonicalTransitionMomentProvider momentProviderIfNeeded(
             final CanonicalTipObservationModel observationModel,
             final CanonicalBranchTransitionProvider transitionProvider) {
-        if (observationModel.getMode() != TipObservationMode.PARTIAL_EXACT_IDENTITY) {
+        if (!observationModel.requiresTransitionMomentProvider()) {
             return null;
         }
         if (transitionProvider instanceof CanonicalTransitionMomentProvider) {

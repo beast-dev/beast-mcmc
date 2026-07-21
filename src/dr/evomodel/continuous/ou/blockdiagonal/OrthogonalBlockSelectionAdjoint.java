@@ -33,7 +33,7 @@ final class OrthogonalBlockSelectionAdjoint {
                                              final double[] dLogL_df,
                                              final double[] dBasisGradientAccumulator,
                                              final BlockDiagonalBranchGradientWorkspace workspace) {
-        multiplyRowMajorVector(prepared.rtMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
+        multiplyRowMajorVector(prepared.rinvMatrix.data, dLogL_df, workspace.tempVector1, prepared.dimension);
         BlockDiagonalMatrixOps.applyBlockDiagonalTranspose(
                 prepared.expD, workspace.tempVector1, workspace.tempVector2,
                 prepared.dimension, blockStarts, blockSizes);

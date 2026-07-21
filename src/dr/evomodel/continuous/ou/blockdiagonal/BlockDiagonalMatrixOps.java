@@ -16,7 +16,7 @@ final class BlockDiagonalMatrixOps {
                                            final double[] outData) {
         int block2x2Index = 0;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + BlockDiagonalStructure.numTwoByTwoBlocks(blockSizes);
         for (int row = 0; row < dimension; ++row) {
             final int rowOffset = row * dimension;
             for (int b = 0; b < blockStarts.length; ++b) {
@@ -48,7 +48,7 @@ final class BlockDiagonalMatrixOps {
                                           final int[] blockSizes) {
         int block2x2Index = 0;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + BlockDiagonalStructure.numTwoByTwoBlocks(blockSizes);
         for (int b = 0; b < blockStarts.length; ++b) {
             final int start = blockStarts[b];
             final int size = blockSizes[b];
@@ -83,7 +83,7 @@ final class BlockDiagonalMatrixOps {
                                                     final int[] blockSizes) {
         int block2x2Index = 0;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + BlockDiagonalStructure.numTwoByTwoBlocks(blockSizes);
         for (int row = 0; row < dimension; ++row) {
             final int rowOffset = row * dimension;
             for (int b = 0; b < blockStarts.length; ++b) {
@@ -115,7 +115,7 @@ final class BlockDiagonalMatrixOps {
                                                    final int[] blockSizes) {
         int block2x2Index = 0;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + BlockDiagonalStructure.numTwoByTwoBlocks(blockSizes);
         for (int b = 0; b < blockStarts.length; ++b) {
             final int start = blockStarts[b];
             final int size = blockSizes[b];
@@ -150,7 +150,7 @@ final class BlockDiagonalMatrixOps {
                                             final int[] blockSizes) {
         int block2x2Index = 0;
         final int upperBase = dimension;
-        final int lowerBase = dimension + countTwoByTwoBlocks(blockSizes);
+        final int lowerBase = dimension + BlockDiagonalStructure.numTwoByTwoBlocks(blockSizes);
         for (int b = 0; b < blockStarts.length; ++b) {
             final int start = blockStarts[b];
             final int size = blockSizes[b];
@@ -183,13 +183,4 @@ final class BlockDiagonalMatrixOps {
         MatrixOps.matMul(workMatrix, rinvData, transitionData, dimension);
     }
 
-    private static int countTwoByTwoBlocks(final int[] blockSizes) {
-        int count = 0;
-        for (int size : blockSizes) {
-            if (size == 2) {
-                count++;
-            }
-        }
-        return count;
-    }
 }

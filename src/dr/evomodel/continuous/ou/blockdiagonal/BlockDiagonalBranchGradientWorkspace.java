@@ -1,7 +1,6 @@
 package dr.evomodel.continuous.ou.blockdiagonal;
 
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
-import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalExpSolver;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalFrechetHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovAdjointHelper;
 import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
@@ -40,14 +39,14 @@ public class BlockDiagonalBranchGradientWorkspace implements CanonicalBranchWork
     final double[] tempVector1;
     final double[] tempVector2;
 
-    public BlockDiagonalBranchGradientWorkspace(final int dimension,
-                                                final int[] blockStarts,
-                                                final int[] blockSizes) {
-        final BlockDiagonalExpSolver.BlockStructure structure =
-                new BlockDiagonalExpSolver.BlockStructure(dimension, blockStarts, blockSizes);
-        this.frechetHelper = new BlockDiagonalFrechetHelper(structure);
+    public BlockDiagonalBranchGradientWorkspace(final BlockDiagonalStructure structure) {
+        final int dimension = structure.getDimension();
+        final int[] blockStarts = structure.getBlockStarts();
+        final int[] blockSizes = structure.getBlockSizes();
+        this.frechetHelper = new BlockDiagonalFrechetHelper(structure.getMathStructure());
         this.lyapunovSolver = new BlockDiagonalLyapunovSolver(dimension, blockStarts, blockSizes);
-        this.lyapunovAdjointHelper = new BlockDiagonalLyapunovAdjointHelper(dimension, lyapunovSolver, structure);
+        this.lyapunovAdjointHelper =
+                new BlockDiagonalLyapunovAdjointHelper(dimension, lyapunovSolver, structure.getMathStructure());
         this.qMatrix = new DenseMatrix64F(dimension, dimension);
         this.qDBasis = new DenseMatrix64F(dimension, dimension);
         this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);

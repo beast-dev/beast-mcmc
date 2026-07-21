@@ -16,6 +16,17 @@ public interface CanonicalTipObservationModel {
     boolean isEmpty();
 
     /**
+     * Whether this model needs a {@link CanonicalTransitionMomentProvider} passed into
+     * {@link #fillParentMessage} to fill moment-form matrices on demand. Only
+     * {@link TipObservationMode#PARTIAL_EXACT_IDENTITY} currently needs this; the default
+     * implementation captures that association so callers (e.g. the traversal) don't need to
+     * know about specific {@link TipObservationMode} values themselves.
+     */
+    default boolean requiresTransitionMomentProvider() {
+        return getMode() == TipObservationMode.PARTIAL_EXACT_IDENTITY;
+    }
+
+    /**
      * Fills {@code out} with the upward parent-side canonical message produced by this tip
      * observation model after marginalising or conditioning on the observed tip data through
      * the supplied branch transition.

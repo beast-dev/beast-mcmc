@@ -7,7 +7,12 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.datatype.HiddenCodons;
+import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
@@ -23,6 +28,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.Reportable;
+
+import java.util.function.Function;
 
 /**
  * @author Filippo Monti
@@ -63,6 +70,15 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
 
     protected final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
+    // Ancestral/mode-state-label plumbing shared by BASTA's up-down
+    // reconstruction and MASCOT's argmax-over-adjoint-scores mode state (see
+    // addModeStateTrait below): the "index -> state name" step is identical
+    // between the two engines even though how each gets its winning index is
+    // not.
+    protected final DataType dataType;
+    protected final String tag;
+    private final CodeFormatter formatter;
+
     protected double logLikelihood;
     protected boolean likelihoodKnown;
 
@@ -75,8 +91,10 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
                                                      int stateCount,
                                                      BranchRateModel branchRateModel,
                                                      SubstitutionModel substitutionModel,
-                                                     AbstractPopulationSizeModel populationSizeModel) {
-        this(name, tree, patternList, stateCount, branchRateModel, new SubstitutionModel[]{substitutionModel}, populationSizeModel);
+                                                     AbstractPopulationSizeModel populationSizeModel,
+                                                     DataType dataType,
+                                                     String tag) {
+        this(name, tree, patternList, stateCount, branchRateModel, new SubstitutionModel[]{substitutionModel}, populationSizeModel, dataType, tag);
     }
 
     protected AbstractStructuredCoalescentLikelihood(String name,
@@ -85,7 +103,9 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
                                                      int stateCount,
                                                      BranchRateModel branchRateModel,
                                                      SubstitutionModel[] substitutionModels,
-                                                     AbstractPopulationSizeModel populationSizeModel) {
+                                                     AbstractPopulationSizeModel populationSizeModel,
+                                                     DataType dataType,
+                                                     String tag) {
         super(name);
 
         if (tree == null) {
@@ -117,6 +137,10 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
         if (populationSizeModel instanceof PiecewiseConstantPopulationSizeModel) {
             ((PiecewiseConstantPopulationSizeModel) populationSizeModel).setTreeIntervals(treeIntervals);
         }
+
+        this.dataType = dataType;
+        this.tag = tag;
+        this.formatter = new CodeFormatter(dataType, false);
 
         likelihoodKnown = false;
     }
@@ -176,6 +200,113 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
 
     public void addTraits(TreeTrait[] traits) {
         treeTraits.addTraits(traits);
+    }
+
+    public final DataType getDataType() {
+        return dataType;
+    }
+
+    public final String getTag() {
+        return tag;
+    }
+
+    /**
+     * Quotes and formats a single resolved state index through this
+     * likelihood's {@link DataType}, e.g. {@code "Region1"} -- the same
+     * label format {@code location="Region1"}-style tree annotation expects.
+     */
+    protected final String formattedState(int state) {
+        formatter.reset();
+        return "\"" + formatter.getCodeString(state) + "\"";
+    }
+
+    /** Index of the largest entry; ties favor the earliest index. */
+    protected static int argmax(double[] values) {
+        double max = values[0];
+        int choice = 0;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] > max) {
+                max = values[i];
+                choice = i;
+            }
+        }
+        return choice;
+    }
+
+    @FunctionalInterface
+    protected interface NodeStateFunction {
+        int getState(Tree tree, NodeRef node);
+    }
+
+    /**
+     * Registers a {@code TreeTrait<Integer>} under {@code traitName} whose
+     * {@link TreeTrait#getTraitString} is the resolved state's name via this
+     * likelihood's {@link DataType} (e.g. {@code location="Region1"}), while
+     * {@link TreeTrait#getTrait} stays the plain state index for programmatic
+     * use. This is the plumbing BASTA's up-down reconstruction and MASCOT's
+     * argmax-over-adjoint-scores mode state both need identically; only "how
+     * do I get a winning state index for this node" differs per engine,
+     * supplied here as {@code stateFunction}.
+     */
+    protected final void addModeStateTrait(String traitName, NodeStateFunction stateFunction) {
+        treeTraits.addTrait(new TreeTrait.I() {
+            public String getTraitName() {
+                return traitName;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Integer getTrait(Tree tree, NodeRef node) {
+                return stateFunction.getState(tree, node);
+            }
+
+            public String getTraitString(Tree tree, NodeRef node) {
+                return formattedState(stateFunction.getState(tree, node));
+            }
+        });
+    }
+
+    /**
+     * Maps a state index to its {@link DataType} code string, matching
+     * {@code GeneralDataType}/{@code HiddenCodons}/{@code HiddenDataType}
+     * conventions. Moved here (from what was originally a BASTA-only private
+     * helper) since MASCOT's mode-state label needs exactly the same mapping.
+     */
+    private static final class CodeFormatter {
+        private final Function<String, String> appender;
+        private final Function<Integer, String> getter;
+        private boolean first = true;
+
+        CodeFormatter(DataType dataType, boolean stripHiddenState) {
+            this.appender = (dataType instanceof GeneralDataType) ?
+                    (codeString) -> codeString + " " : Function.identity();
+
+            if (dataType instanceof HiddenCodons) {
+                this.getter = (stripHiddenState) ?
+                        ((HiddenCodons) dataType)::getTripletWithoutHiddenCode :
+                        dataType::getTriplet;
+            } else if (dataType instanceof HiddenDataType && stripHiddenState) {
+                this.getter = ((HiddenDataType) dataType)::getCodeWithoutHiddenState;
+            } else {
+                this.getter = dataType::getCode;
+            }
+        }
+
+        String getCodeString(int state) {
+            String code = getter.apply(state);
+            if (first) {
+                first = false;
+            } else {
+                code = appender.apply(code);
+            }
+            return code;
+        }
+
+        void reset() {
+            first = true;
+        }
     }
 
     public SubstitutionModel[] getSubstitutionModels() {

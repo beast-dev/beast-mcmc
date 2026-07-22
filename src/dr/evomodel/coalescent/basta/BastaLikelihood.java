@@ -50,7 +50,6 @@ import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
@@ -77,10 +76,9 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
 
-    // Ancestral state reconstruction variables
-    private final DataType dataType;
-    private final String tag;
-    private final CodeFormatter formatter;
+    // dataType/tag/formattedState(int) are inherited from
+    // AbstractStructuredCoalescentLikelihood, shared with MASCOT's mode-state
+    // label trait.
 
     // State reconstruction settings
     private final boolean useMAP;
@@ -103,7 +101,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
                            String tag,
                            boolean useMAP) {
 
-        super(name, treeModel, patternList, substitutionModel.getDataType().getStateCount(), branchRateModel, substitutionModel, populationSizeModel);
+        super(name, treeModel, patternList, substitutionModel.getDataType().getStateCount(), branchRateModel, substitutionModel, populationSizeModel,
+                dataType, tag);
 
         assert likelihoodDelegate != null;
         assert treeModel != null;
@@ -140,8 +139,6 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
                 numberSubIntervals, !isAncestralTraitTree);
 
         // Initialize ancestral state reconstruction settings
-        this.dataType = dataType;
-        this.tag = tag;
         this.useMAP = useMAP;
 
         // Initialize state storage arrays
@@ -149,9 +146,6 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
         // Initialize sub-interval states
         initializeSubIntervalStates(treeIntervals, numberSubIntervals);
-
-        boolean stripHiddenState = false;
-        this.formatter = new CodeFormatter(dataType, stripHiddenState);
 
         // Add tree trait for accessing reconstructed states
         setupTraits();
@@ -195,32 +189,15 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
     }
 
     /**
-     * Set up tree traits for accessing reconstructed states
+     * Set up tree traits for accessing reconstructed states. Uses the shared
+     * {@code AbstractStructuredCoalescentLikelihood#addModeStateTrait} label
+     * plumbing (also used by MASCOT's mode state, see {@code
+     * MascotLikelihood}); {@code getStatesForNode(...)[0]} is always the
+     * single reconstructed state since {@code patternList.getPatternCount()}
+     * is always 1 here (enforced in the base class constructor).
      */
     private void setupTraits() {
-        TreeTrait<int[]> ancestralStateTrait = new TreeTrait.IA() {
-            public String getTraitName() {
-                return tag + "_old";
-            }
-
-            public Intent getIntent() {
-                return Intent.NODE;
-            }
-
-            public Class getTraitClass() {
-                return int[].class;
-            }
-
-            public int[] getTrait(Tree tree, NodeRef node) {
-                return getStatesForNode(tree, node);
-            }
-
-            public String getTraitString(Tree tree, NodeRef node) {
-                return formattedState(getStatesForNode(tree, node), formatter);
-            }
-        };
-
-        treeTraits.addTrait(ancestralStateTrait);
+        addModeStateTrait(tag + "_old", (t, n) -> getStatesForNode(t, n)[0]);
     }
 
     public CoalescentIntervalTraversal getTraversalDelegate() { return treeTraversalDelegate; }
@@ -1046,53 +1023,9 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         }
     }
 
-    private static String formattedState(int[] state, CodeFormatter formatter) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\"");
-        formatter.reset();
-        for (int i : state) {
-            sb.append(formatter.getCodeString(i));
-        }
-        sb.append("\"");
-        return sb.toString();
-    }
-
-
-    private static class CodeFormatter {
-        private final DataType dataType;
-        private final Function<String, String> appender;
-        private final Function<Integer, String> getter;
-        private boolean first = true;
-
-        CodeFormatter(DataType dataType, boolean stripHiddenState) {
-            this.dataType = dataType;
-
-            this.appender = (dataType instanceof GeneralDataType) ?
-                    (codeString) -> codeString + " " : Function.identity();
-
-            if (dataType instanceof HiddenCodons) {
-                this.getter = (stripHiddenState) ?
-                        ((HiddenCodons) dataType)::getTripletWithoutHiddenCode :
-                        dataType::getTriplet;
-            } else if (dataType instanceof HiddenDataType && stripHiddenState) {
-                this.getter = ((HiddenDataType) dataType)::getCodeWithoutHiddenState;
-            } else {
-                this.getter = dataType::getCode;
-            }
-        }
-
-        String getCodeString(int state) {
-            String code = getter.apply(state);
-            if (first) {
-                first = false;
-            } else {
-                code = appender.apply(code);
-            }
-            return code;
-        }
-
-        void reset() { first = true; }
-    }
+    // formattedState(int)/CodeFormatter are now inherited from
+    // AbstractStructuredCoalescentLikelihood (shared with MASCOT's mode-state
+    // label trait).
 
     private final List<TransitionMatrixOperation> NO_OPT = new ArrayList<>();
 

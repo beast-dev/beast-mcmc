@@ -94,6 +94,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String MAX_STEP = "maxStep";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
+    public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -367,12 +368,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         double maxStep = xo.getDoubleAttribute(MAX_STEP);
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
         String tagName = xo.getAttribute(RECONSTRUCTION_TAG_NAME, MascotLikelihood.DEFAULT_ANCESTRAL_STATE_TAG_NAME);
+        String modeStateTagName = xo.getAttribute(MODE_STATE_TAG_NAME, MascotLikelihood.DEFAULT_MODE_STATE_TAG_NAME);
 
         AbstractPopulationSizeModel populationSizeModel =
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
         return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, migrationModels,
-                branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep, checkProbabilities, tagName);
+                branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep, checkProbabilities, tagName,
+                modeStateTagName);
     }
 
     private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {
@@ -489,6 +492,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newIntegerRule(STATE_COUNT, true),
             AttributeRule.newDoubleRule(MAX_STEP, true),
             AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
+            AttributeRule.newStringRule(MODE_STATE_TAG_NAME, true),
             // Shared by both types.
             new ElementRule(PatternList.class),
             new ElementRule(MutableTreeModel.class),

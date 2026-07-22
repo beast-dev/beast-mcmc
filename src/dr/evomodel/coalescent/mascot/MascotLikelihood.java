@@ -55,6 +55,18 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
      */
     public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
+    /**
+     * Default {@link TreeTrait} name for the mode (highest-scoring) state at
+     * each node, e.g. {@code mascot.state="Region1"} -- the argmax of {@link
+     * #getAncestralStateScores()}, registered via the same {@code
+     * AbstractStructuredCoalescentLikelihood#addModeStateTrait} plumbing
+     * BASTA's up-down reconstruction uses for its own {@code states} tag.
+     * Distinct from {@link #DEFAULT_ANCESTRAL_STATE_TAG_NAME}: that tag logs
+     * the raw per-state score vector, this one logs the single winning
+     * state's name.
+     */
+    public static final String DEFAULT_MODE_STATE_TAG_NAME = "mascot.state";
+
     private final TreeModel treeModel;
     private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
@@ -129,10 +141,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
      * {@link SubstitutionModel} per epoch -- a single-element array is the
      * constant-through-time case; see {@link MascotDynamics}'s class doc) must
      * be non-null; the other must be null. {@code branchRateModel} may be
-     * null (no clock gradient support). Callers that don't need a custom
-     * ancestral-state tree-trait name should pass {@link
-     * #DEFAULT_ANCESTRAL_STATE_TAG_NAME}. This is the one constructor:
-     * argument defaulting (e.g. {@code null} branchRateModel, {@code
+     * null (no clock gradient support). Callers that don't need custom
+     * ancestral-state tree-trait names should pass {@link
+     * #DEFAULT_ANCESTRAL_STATE_TAG_NAME} and {@link
+     * #DEFAULT_MODE_STATE_TAG_NAME}. This is the one constructor: argument
+     * defaulting (e.g. {@code null} branchRateModel, {@code
      * DEFAULT_ANCESTRAL_STATE_TAG_NAME}) is the XML parser's job (see {@code
      * StructuredCoalescentLikelihoodParser.parseMascot}), not a further stack
      * of overloads here.
@@ -148,9 +161,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                             Parameter epochTimes,
                             double maxStep,
                             boolean checkProbabilities,
-                            String ancestralStateTagName) {
+                            String ancestralStateTagName,
+                            String modeStateTagName) {
         super(name == null ? MASCOT_LIKELIHOOD : name, treeModel, tipPatterns, stateCount, branchRateModel,
-                migrationModels, populationSizeModel);
+                migrationModels, populationSizeModel, tipPatterns.getDataType(), modeStateTagName);
         this.treeModel = treeModel;
         this.tipPatterns = tipPatterns;
         this.dynamics = migrationRates != null ?
@@ -212,6 +226,31 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 return row;
             }
         });
+
+        // Same shared plumbing BASTA's up-down reconstruction uses for its
+        // own "states" tag (AbstractStructuredCoalescentLikelihood#addModeStateTrait):
+        // here the winning state is the argmax of the adjoint score vector
+        // above, rather than a sampled/MAP joint state, but the "index ->
+        // state name" formatting step is identical.
+        addModeStateTrait(tag, this::getModeState);
+    }
+
+    /**
+     * The mode (highest-scoring) state at {@code node}: the argmax of {@link
+     * #getAncestralStateScores()} for an internal node, or the observed tip
+     * state for an external one. Backs the {@link #DEFAULT_MODE_STATE_TAG_NAME}
+     * tree trait; see that field's javadoc for why this is an argmax over a
+     * sensitivity score, not a literal posterior-probability mode.
+     */
+    public int getModeState(Tree tree, NodeRef node) {
+        if (tree.isExternal(node)) {
+            double[] tipPartials = StructuredTipStates.getPartials(tree, node, tipPatterns, getStateCount(), true,
+                    tag + " tip trait");
+            return argmax(tipPartials);
+        }
+        double[] row = new double[getStateCount()];
+        getAncestralStateScores(node.getNumber(), row);
+        return argmax(row);
     }
 
     // getLogLikelihood() itself, getTreeTraits()/getTreeTrait(), and
